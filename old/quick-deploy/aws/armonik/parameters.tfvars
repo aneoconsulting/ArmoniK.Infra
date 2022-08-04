@@ -68,6 +68,7 @@ control_plane = {
       },
     ]
   }
+  default_partition  = "athos"
 }
 
 # Parameters of admin GUI
@@ -76,7 +77,7 @@ admin_gui = {
     name     = "admin-api"
     replicas = 1
     image    = "125796369274.dkr.ecr.eu-west-3.amazonaws.com/armonik-admin-api"
-    tag      = "0.3.0"
+    tag      = "0.4.0"
     port     = 3333
     limits   = {
       cpu    = "1000m"
@@ -91,7 +92,7 @@ admin_gui = {
     name     = "admin-app"
     replicas = 1
     image    = "125796369274.dkr.ecr.eu-west-3.amazonaws.com/armonik-admin-app"
-    tag      = "0.3.0"
+    tag      = "0.4.0"
     port     = 1080
     limits   = {
       cpu    = "1000m"
@@ -110,9 +111,8 @@ admin_gui = {
 }
 
 # Parameters of the compute plane
-compute_plane = [
-  {
-    name                             = "compute-plane"
+compute_plane = {
+  athos   = {
     # number of replicas for each deployment of compute plane
     replicas                         = 1
     termination_grace_period_seconds = 30
@@ -138,7 +138,7 @@ compute_plane = [
       {
         name              = "worker"
         image             = "125796369274.dkr.ecr.eu-west-3.amazonaws.com/armonik-worker"
-        tag               = "0.6.2"
+        tag               = "0.6.4"
         image_pull_policy = "IfNotPresent"
         limits            = {
           cpu    = "1000m"
@@ -171,8 +171,67 @@ compute_plane = [
         },
       ]
     }
-  }
-]
+  },
+  porthos = {
+    # number of replicas for each deployment of compute plane
+    replicas                         = 1
+    termination_grace_period_seconds = 30
+    image_pull_secrets               = ""
+    node_selector                    = {}
+    annotations                      = {}
+    # ArmoniK polling agent
+    polling_agent                    = {
+      image             = "dockerhubaneo/armonik_pollingagent"
+      tag               = "0.5.15"
+      image_pull_policy = "IfNotPresent"
+      limits            = {
+        cpu    = null # set to null if you don't want to set it
+        memory = null # set to null if you don't want to set it
+      }
+      requests          = {
+        cpu    = null # set to null if you don't want to set it
+        memory = null # set to null if you don't want to set it
+      }
+    }
+    # ArmoniK workers
+    worker                           = [
+      {
+        name              = "worker"
+        image             = "dockerhubaneo/armonik_worker_dll"
+        tag               = "0.6.4"
+        image_pull_policy = "IfNotPresent"
+        limits            = {
+          cpu    = null # set to null if you don't want to set it
+          memory = null # set to null if you don't want to set it
+        }
+        requests          = {
+          cpu    = null # set to null if you don't want to set it
+          memory = null # set to null if you don't want to set it
+        }
+      }
+    ]
+    hpa                              = {
+      polling_interval  = 15
+      cooldown_period   = 300
+      min_replica_count = 1
+      max_replica_count = 5
+      behavior          = {
+        restore_to_original_replica_count = true
+        stabilization_window_seconds      = 300
+        type                              = "Percent"
+        value                             = 100
+        period_seconds                    = 15
+      }
+      triggers          = [
+        {
+          type        = "prometheus"
+          metric_name = "fake_parameter"
+          threshold   = "2"
+        },
+      ]
+    }
+  },
+}
 
 # Deploy ingress
 # PS: to not deploy ingress put: "ingress=null"

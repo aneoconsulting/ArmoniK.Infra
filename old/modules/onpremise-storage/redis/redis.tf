@@ -28,6 +28,7 @@ resource "kubernetes_deployment" "redis" {
         }
       }
       spec {
+        node_selector = var.redis.node_selector
         dynamic toleration {
           for_each = (var.redis.node_selector != {} ? [
           for index in range(0, length(local.node_selector_keys)) : {
@@ -49,10 +50,11 @@ resource "kubernetes_deployment" "redis" {
           }
         }
         container {
-          name    = "redis"
-          image   = "${var.redis.image}:${var.redis.tag}"
-          command = ["redis-server"]
-          args    = [
+          name              = "redis"
+          image             = "${var.redis.image}:${var.redis.tag}"
+          image_pull_policy = "IfNotPresent"
+          command           = ["redis-server"]
+          args              = [
             "--tls-port 6379",
             "--port 0",
             "--tls-cert-file /certificates/cert.pem",

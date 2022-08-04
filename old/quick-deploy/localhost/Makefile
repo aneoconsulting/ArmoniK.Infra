@@ -3,7 +3,9 @@ export ARMONIK_SHARED_HOST_PATH?=$(HOME)/data
 export ARMONIK_FILE_STORAGE_FILE?=HostPath
 export ARMONIK_FILE_SERVER_IP?=
 export KEDA_KUBERNETES_NAMESPACE?=default
+export METRICS_SERVER_KUBERNETES_NAMESPACE?=kube-system
 export KEDA=$(shell kubectl get deploy -A -l app=keda-operator --no-headers=true -o name)
+export METRICS_SERVER=$(shell kubectl get deploy -A -l k8s-app=metrics-server --no-headers=true -o name)
 
 CURRENT_DIR=$(shell pwd)
 STORAGE_PARAMETERS_FILE?=$(CURRENT_DIR)/storage/generated/storage-output.json
@@ -16,10 +18,12 @@ MONITORING_PARAMETERS_FILE?=$(CURRENT_DIR)/monitoring/generated/monitoring-outpu
 create-namespace:
 	kubectl create namespace $(ARMONIK_KUBERNETES_NAMESPACE) || true
 	kubectl create namespace $(KEDA_KUBERNETES_NAMESPACE) || true
+	kubectl create namespace $(METRICS_SERVER_KUBERNETES_NAMESPACE) || true
 
 delete-namespace:
 	kubectl delete namespace $(ARMONIK_KUBERNETES_NAMESPACE) || true
 	kubectl delete namespace $(KEDA_KUBERNETES_NAMESPACE) || true
+	kubectl delete namespace $(METRICS_SERVER_KUBERNETES_NAMESPACE) || true
 
 ####################################
 #              KEDA                #
@@ -35,6 +39,21 @@ destroy-keda:
 
 clean-keda:
 	$(MAKE) -C $(CURRENT_DIR)/keda clean
+
+####################################
+#         Metrics server           #
+####################################
+
+deploy-metrics-server:
+	@if [ "${METRICS_SERVER}" = "" ]; then\
+		$(MAKE) -C $(CURRENT_DIR)/metrics-server deploy NAMESPACE=$(METRICS_SERVER_KUBERNETES_NAMESPACE);\
+	fi
+
+destroy-metrics-server:
+	$(MAKE) -C $(CURRENT_DIR)/metrics-server destroy NAMESPACE=$(METRICS_SERVER_KUBERNETES_NAMESPACE)
+
+clean-metrics-server:
+	$(MAKE) -C $(CURRENT_DIR)/metrics-server clean
 
 ####################################
 #            Storage               #
@@ -97,8 +116,8 @@ clean-armonik:
 #               All                #
 ####################################
 
-deploy-all: create-namespace deploy-keda deploy-storage deploy-monitoring deploy-armonik
+deploy-all: create-namespace deploy-keda deploy-metrics-server deploy-storage deploy-monitoring deploy-armonik
 
-destroy-all: destroy-armonik destroy-monitoring destroy-storage destroy-keda
+destroy-all: destroy-armonik destroy-monitoring destroy-storage destroy-metrics-server destroy-keda
 
-clean-all: clean-armonik clean-monitoring clean-storage clean-keda
+clean-all: clean-armonik clean-monitoring clean-storage clean-metrics-server clean-keda

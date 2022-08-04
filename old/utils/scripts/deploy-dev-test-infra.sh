@@ -19,23 +19,30 @@ WORKER_IMAGE="dockerhubaneo/armonik_worker_dll"
 METRICS_EXPORTER_IMAGE="dockerhubaneo/armonik_control_metrics"
 CORE_TAG=None
 WORKER_TAG=None
-HPA_MAX_REPLICAS=None
-HPA_MIN_REPLICAS=None
-HPA_IDLE_REPLICAS=None
+HPA_MAX_COMPUTE_PLANE_REPLICAS=None
+HPA_MIN_COMPUTE_PLANE_REPLICAS=None
+HPA_IDLE_COMPUTE_PLANE_REPLICAS=None
+HPA_MAX_CONTROL_PLANE_REPLICAS=None
+HPA_MIN_CONTROL_PLANE_REPLICAS=None
+HPA_IDLE_CONTROL_PLANE_REPLICAS=None
 INGRESS=None
 WITH_TLS=false
 WITH_MTLS=false
 LOGGING_LEVEL="Information"
-HPA_TARGET_VALUE=None
+COMPUTE_PLANE_HPA_TARGET_VALUE=None
+CONTROL_PLANE_HPA_TARGET_VALUE=None
 KEDA=""
+METRICS_SERVER=""
 STORAGE_PARAMETERS_FILE="${SOURCE_CODES_LOCALHOST_DIR}/storage/parameters.tfvars"
 MONITORING_PARAMETERS_FILE="${SOURCE_CODES_LOCALHOST_DIR}/monitoring/parameters.tfvars"
 ARMONIK_PARAMETERS_FILE="${SOURCE_CODES_LOCALHOST_DIR}/armonik/parameters.tfvars"
 KEDA_PARAMETERS_FILE="${SOURCE_CODES_LOCALHOST_DIR}/keda/parameters.tfvars"
+METRICS_SERVER_PARAMETERS_FILE="${SOURCE_CODES_LOCALHOST_DIR}/metrics-server/parameters.tfvars"
 GENERATED_STORAGE_PARAMETERS_FILE="${BASEDIR}/storage-parameters.tfvars.json"
 GENERATED_MONITORING_PARAMETERS_FILE="${BASEDIR}/monitoring-parameters.tfvars.json"
 GENERATED_ARMONIK_PARAMETERS_FILE="${BASEDIR}/armonik-parameters.tfvars.json"
 GENERATED_KEDA_PARAMETERS_FILE="${BASEDIR}/keda-parameters.tfvars.json"
+GENERATED_METRICS_SERVER_PARAMETERS_FILE="${BASEDIR}/metrics-server-parameters.tfvars.json"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -95,21 +102,24 @@ usage() {
   echo "   -m, --mode <Possible options below>"
   cat <<-EOF
   Where --mode should be :
-        deploy-storage      : To deploy Storage independently on master machine. Available (Cluster or single node)
-        deploy-monitoring   : To deploy monitoring independently on master machine. Available (Cluster or single node)
-        deploy-armonik      : To deploy ArmoniK on master machine. Available (Cluster or single node)
-        deploy-keda         : To deploy KEDA on master machine. Available (Cluster or single node)
-        deploy-all          : To deploy Storage, Monitoring and ArmoniK
-        redeploy-storage    : To REdeploy storage
-        redeploy-monitoring : To REdeploy monitoring
-        redeploy-armonik    : To REdeploy ArmoniK
-        redeploy-keda       : To REdeploy KEDA
-        redeploy-all        : To REdeploy storage, monitoring and ArmoniK
-        destroy-storage     : To destroy storage deployment only
-        destroy-monitoring  : To destroy monitoring deployment only
-        destroy-armonik     : To destroy Armonik deployment only
-        destroy-keda        : To destroy KEDA deployment only
-        destroy-all         : To destroy all storage, monitoring and ArmoniK in the same command
+        deploy-storage          : To deploy Storage independently on master machine. Available (Cluster or single node)
+        deploy-monitoring       : To deploy monitoring independently on master machine. Available (Cluster or single node)
+        deploy-armonik          : To deploy ArmoniK on master machine. Available (Cluster or single node)
+        deploy-keda             : To deploy KEDA on master machine. Available (Cluster or single node)
+        deploy-metrics-server   : To deploy Metrics server on master machine. Available (Cluster or single node)
+        deploy-all              : To deploy Storage, Monitoring and ArmoniK
+        redeploy-storage        : To REdeploy storage
+        redeploy-monitoring     : To REdeploy monitoring
+        redeploy-armonik        : To REdeploy ArmoniK
+        redeploy-keda           : To REdeploy KEDA
+        redeploy-metrics-server : To REdeploy Metrics server
+        redeploy-all            : To REdeploy storage, monitoring and ArmoniK
+        destroy-storage         : To destroy storage deployment only
+        destroy-monitoring      : To destroy monitoring deployment only
+        destroy-armonik         : To destroy Armonik deployment only
+        destroy-keda            : To destroy KEDA deployment only
+        destroy-metrics-server  : To destroy Metrics server deployment only
+        destroy-all             : To destroy all storage, monitoring and ArmoniK in the same command
 EOF
   echo "   -n, --namespace <NAMESPACE>"
   echo
@@ -136,15 +146,23 @@ EOF
   echo
   echo "   --worker-tag <WORKER_TAG>"
   echo
-  echo "   --hpa-min-replicas <HPA_MIN_REPLICAS>"
+  echo "   --hpa-min-compute-plane-replicas <HPA_MIN_COMPUTE_PLANE_REPLICAS>"
   echo
-  echo "   --hpa-max-replicas <HPA_MAX_REPLICAS>"
+  echo "   --hpa-max-compute-plane-replicas <HPA_MAX_COMPUTE_PLANE_REPLICAS>"
   echo
-  echo "   --hpa-idle-replicas <HPA_IDLE_REPLICAS>"
+  echo "   --hpa-idle-compute-plane-replicas <HPA_IDLE_COMPUTE_PLANE_REPLICAS>"
+  echo
+  echo "   --hpa-min-control-plane-replicas <HPA_MIN_CONTROL_PLANE_REPLICAS>"
+  echo
+  echo "   --hpa-max-control-plane-replicas <HPA_MAX_CONTROL_PLANE_REPLICAS>"
+  echo
+  echo "   --hpa-idle-control-plane-replicas <HPA_IDLE_CONTROL_PLANE_REPLICAS>"
   echo
   echo "   --logging-level <LOGGING_LEVEL_FOR_ARMONIK>"
   echo
-  echo "   --hpa-target-value <TARGET_VALUE_FOR_HPA>"
+  echo "   --compute-plane-hpa-target-value <TARGET_VALUE_FOR_HPA_OF_COMPUTE_PLANE>"
+  echo
+  echo "   --control-plane-hpa-target-value <TARGET_VALUE_FOR_HPA_OF_CONTROL_PLANE>"
   echo
   echo "   --without-ingress"
   echo
@@ -155,11 +173,12 @@ EOF
   echo "   -c, --clean <Possible options below>"
   cat <<-EOF
   Where --clean should be :
-        storage      : Clean generated files for storage
-        monitoring   : Clean generated files for monitoring
-        armonik      : Clean generated files for armonik
-        keda         : Clean generated files for keda
-        all          : Clean all generated
+        storage        : Clean generated files for storage
+        monitoring     : Clean generated files for monitoring
+        armonik        : Clean generated files for armonik
+        keda           : Clean generated files for keda
+        metrics-server : Clean generated files for keda
+        all            : Clean all generated
 EOF
   exit 1
 }
@@ -171,6 +190,7 @@ set_envvars() {
   export ARMONIK_FILE_STORAGE_FILE="${SHARED_STORAGE_TYPE}"
   export ARMONIK_FILE_SERVER_IP="${SERVER_NFS_IP}"
   export KEDA_KUBERNETES_NAMESPACE="default"
+  export METRICS_SERVER_KUBERNETES_NAMESPACE="kube-system"
 }
 
 # Create shared storage
@@ -191,6 +211,16 @@ create_kubernetes_namespace() {
 check_keda_instance() {
   KEDA=$(kubectl get deploy -A -l app=keda-operator --no-headers=true -o name)
   if [ -z "${KEDA}" ]; then
+    echo 0
+  else
+    echo 1
+  fi
+}
+
+# Check if Metrics server is deployed
+check_metrics_server_instance() {
+  METRICS_SERVER=$(kubectl get deploy -A -l k8s-app=metrics-server --no-headers=true -o name)
+  if [ -z "${METRICS_SERVER}" ]; then
     echo 0
   else
     echo 1
@@ -222,13 +252,16 @@ prepare_armonik_parameters() {
   python3 "${MODIFY_PARAMETERS_SCRIPT}" \
     -kv control_plane.image="${CONTROL_PLANE_IMAGE}" \
     -kv control_plane.tag="${CORE_TAG}" \
-    -kv compute_plane[*].polling_agent.image="${POLLING_AGENT_IMAGE}" \
-    -kv compute_plane[*].polling_agent.tag="${CORE_TAG}" \
-    -kv compute_plane[*].worker[*].image="${WORKER_IMAGE}" \
-    -kv compute_plane[*].worker[*].tag="${WORKER_TAG}" \
-    -kv compute_plane[*].hpa.min_replica_count="${HPA_MIN_REPLICAS}" \
-    -kv compute_plane[*].hpa.max_replica_count="${HPA_MAX_REPLICAS}" \
-    -kv compute_plane[*].hpa.triggers.threshold="${HPA_TARGET_VALUE}" \
+    -kv control_plane.hpa.min_replica_count="${HPA_MIN_CONTROL_PLANE_REPLICAS}" \
+    -kv control_plane.hpa.max_replica_count="${HPA_MAX_CONTROL_PLANE_REPLICAS}" \
+    -kv control_plane.hpa.triggers[*].value="${CONTROL_PLANE_HPA_TARGET_VALUE}" \
+    -kv compute_plane[athos].polling_agent.image="${POLLING_AGENT_IMAGE}" \
+    -kv compute_plane[athos].polling_agent.tag="${CORE_TAG}" \
+    -kv compute_plane[athos].worker[*].image="${WORKER_IMAGE}" \
+    -kv compute_plane[athos].worker[*].tag="${WORKER_TAG}" \
+    -kv compute_plane[athos].hpa.min_replica_count="${HPA_MIN_COMPUTE_PLANE_REPLICAS}" \
+    -kv compute_plane[athos].hpa.max_replica_count="${HPA_MAX_COMPUTE_PLANE_REPLICAS}" \
+    -kv compute_plane[athos].hpa.triggers.threshold="${COMPUTE_PLANE_HPA_TARGET_VALUE}" \
     -kv logging_level="${LOGGING_LEVEL}" \
     -kv ingress="${INGRESS}" \
     -kv ingress.tls="${WITH_TLS}" \
@@ -242,6 +275,13 @@ prepare_keda_parameters() {
   python3 "${MODIFY_PARAMETERS_SCRIPT}" \
     "${KEDA_PARAMETERS_FILE}" \
     "${GENERATED_KEDA_PARAMETERS_FILE}"
+}
+
+# Prepare metrics server parameters
+prepare_metrics_server_parameters() {
+  python3 "${MODIFY_PARAMETERS_SCRIPT}" \
+    "${METRICS_SERVER_PARAMETERS_FILE}" \
+    "${GENERATED_METRICS_SERVER_PARAMETERS_FILE}"
 }
 
 # Deploy storage
@@ -277,7 +317,6 @@ deploy_armonik() {
 # Deploy KEDA
 deploy_keda() {
   if [ $(check_keda_instance) -eq 0 ]; then
-    # Prepare armonik parameters
     prepare_keda_parameters
     cd "${SOURCE_CODES_LOCALHOST_DIR}"
     echo "Deploying KEDA..."
@@ -287,8 +326,21 @@ deploy_keda() {
   fi
 }
 
+# Deploy Metrics server
+deploy_metrics_server() {
+  if [ $(check_metrics_server_instance) -eq 0 ]; then
+    prepare_metrics_server_parameters
+    cd "${SOURCE_CODES_LOCALHOST_DIR}"
+    echo "Deploying Metrics server..."
+    make deploy-metrics-server PARAMETERS_FILE="${GENERATED_METRICS_SERVER_PARAMETERS_FILE}"
+  else
+    echo "Metrics server is already deployed"
+  fi
+}
+
 # Deploy storage, monitoring and ArmoniK
 deploy_all() {
+  deploy_metrics_server
   deploy_keda
   deploy_storage
   deploy_monitoring
@@ -327,12 +379,26 @@ destroy_armonik() {
 
 # Destroy KEDA
 destroy_keda() {
-  if [ ! -f "${GENERATED_KEDA_PARAMETERS_FILE}" ]; then
-    prepare_keda_parameters
-  fi
+  if [ -z "${KEDA}" ]; then
+    if [ ! -f "${GENERATED_KEDA_PARAMETERS_FILE}" ]; then
+      prepare_keda_parameters
+    fi
 
-  cd "${SOURCE_CODES_LOCALHOST_DIR}"
-  make destroy-keda PARAMETERS_FILE="${GENERATED_KEDA_PARAMETERS_FILE}"
+    cd "${SOURCE_CODES_LOCALHOST_DIR}"
+    make destroy-keda PARAMETERS_FILE="${GENERATED_KEDA_PARAMETERS_FILE}"
+  fi
+}
+
+# Destroy Metrics server
+destroy_metrics_server() {
+  if [ -z "${METRICS_SERVER}" ]; then
+    if [ ! -f "${GENERATED_METRICS_SERVER_PARAMETERS_FILE}" ]; then
+      prepare_metrics_server_parameters
+    fi
+
+    cd "${SOURCE_CODES_LOCALHOST_DIR}"
+    make destroy-metrics-server PARAMETERS_FILE="${GENERATED_METRICS_SERVER_PARAMETERS_FILE}"
+  fi
 }
 
 # Destroy storage, monitoring and ArmoniK
@@ -341,6 +407,7 @@ destroy_all() {
   destroy_monitoring
   destroy_storage
   destroy_keda
+  destroy_metrics_server
 }
 
 # Redeploy storage
@@ -369,6 +436,13 @@ redeploy_keda() {
   cd "${SOURCE_CODES_LOCALHOST_DIR}"
   destroy_keda
   deploy_keda
+}
+
+# Redeploy Metrics server
+redeploy_metrics_server() {
+  cd "${SOURCE_CODES_LOCALHOST_DIR}"
+  destroy_metrics_server
+  deploy_metrics_server
 }
 
 # Redeploy storage, monitoring and ArmoniK
@@ -404,6 +478,12 @@ clean_keda() {
   make clean-keda
   rm -f "${GENERATED_KEDA_PARAMETERS_FILE}"
 }
+# Clean Metrics server
+clean_metrics_server() {
+  cd "${SOURCE_CODES_LOCALHOST_DIR}"
+  make clean-metrics-server
+  rm -f "${GENERATED_METRICS_SERVER_PARAMETERS_FILE}"
+}
 
 # Clean storage, monitoring and ArmoniK
 clean_all() {
@@ -411,6 +491,7 @@ clean_all() {
   clean_monitoring
   clean_storage
   clean_keda
+  clean_metrics_server
 }
 
 # Main
@@ -498,18 +579,33 @@ function main() {
       shift
       shift
       ;;
-    --hpa-min-replicas)
-      HPA_MIN_REPLICAS="$2"
+    --hpa-min-compute-plane-replicas)
+      HPA_MIN_COMPUTE_PLANE_REPLICAS="$2"
       shift
       shift
       ;;
-    --hpa-max-replicas)
-      HPA_MAX_REPLICAS="$2"
+    --hpa-max-compute-plane-replicas)
+      HPA_MAX_COMPUTE_PLANE_REPLICAS="$2"
       shift
       shift
       ;;
-    --hpa-idle-replicas)
-      HPA_IDLE_REPLICAS="$2"
+    --hpa-idle-compute-plane-replicas)
+      HPA_IDLE_COMPUTE_PLANE_REPLICAS="$2"
+      shift
+      shift
+      ;;
+    --hpa-min-control-plane-replicas)
+      HPA_MIN_CONTROL_PLANE_REPLICAS="$2"
+      shift
+      shift
+      ;;
+    --hpa-max-control-plane-replicas)
+      HPA_MAX_CONTROL_PLANE_REPLICAS="$2"
+      shift
+      shift
+      ;;
+    --hpa-idle-control-plane-replicas)
+      HPA_IDLE_CONTROL_PLANE_REPLICAS="$2"
       shift
       shift
       ;;
@@ -518,8 +614,13 @@ function main() {
       shift
       shift
       ;;
-    --hpa-target-value)
-      HPA_TARGET_VALUE="$2"
+    --compute-plane-hpa-target-value)
+      COMPUTE_PLANE_HPA_TARGET_VALUE="$2"
+      shift
+      shift
+      ;;
+    --control-plane-hpa-target-value)
+      CONTROL_PLANE_HPA_TARGET_VALUE="$2"
       shift
       shift
       ;;
@@ -561,6 +662,9 @@ function main() {
   elif [ "${CLEAN}" == "keda" ]; then
     clean_kda
     exit
+  elif [ "${CLEAN}" == "metrics-server" ]; then
+    clean_metrics_server
+    exit
   elif [ "${CLEAN}" == "all" ]; then
     clean_all
     exit
@@ -591,6 +695,8 @@ function main() {
     deploy_armonik
   elif [ "${MODE}" == "deploy-keda" ]; then
     deploy_keda
+  elif [ "${MODE}" == "deploy-metrics-server" ]; then
+    deploy_metrics_server
   elif [ "${MODE}" == "deploy-all" ]; then
     deploy_all
   elif [ "${MODE}" == "redeploy-storage" ]; then
@@ -601,6 +707,8 @@ function main() {
     redeploy_armonik
   elif [ "${MODE}" == "redeploy-keda" ]; then
     redeploy_keda
+  elif [ "${MODE}" == "redeploy-metrics-server" ]; then
+    redeploy_metrics_server
   elif [ "${MODE}" == "redeploy-all" ]; then
     redeploy_all
   elif [ "${MODE}" == "destroy-storage" ]; then
@@ -611,6 +719,8 @@ function main() {
     destroy_armonik
   elif [ "${MODE}" == "destroy-keda" ]; then
     destroy_keda
+  elif [ "${MODE}" == "destroy-metrics-server" ]; then
+    destroy_metrics_server
   elif [ "${MODE}" == "destroy-all" ]; then
     destroy_all
   else

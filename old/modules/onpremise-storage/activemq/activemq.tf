@@ -30,6 +30,7 @@ resource "kubernetes_deployment" "activemq" {
         }
       }
       spec {
+        node_selector = var.activemq.node_selector
         dynamic toleration {
           for_each = (var.activemq.node_selector != {} ? [
           for index in range(0, length(local.node_selector_keys)) : {
@@ -51,8 +52,9 @@ resource "kubernetes_deployment" "activemq" {
           }
         }
         container {
-          name  = "activemq"
-          image = "${var.activemq.image}:${var.activemq.tag}"
+          name              = "activemq"
+          image             = "${var.activemq.image}:${var.activemq.tag}"
+          image_pull_policy = "IfNotPresent"
           volume_mount {
             name       = "activemq-storage-secret-volume"
             mount_path = "/credentials/"

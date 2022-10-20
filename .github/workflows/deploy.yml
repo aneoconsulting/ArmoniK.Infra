@@ -29,7 +29,7 @@ jobs:
         id: genver
         run: |
           VERSION=$(docker run --rm -v $(pwd):/repo codacy/git-version /bin/git-version --folder=/repo --release-branch=release --dev-branch=main)
-          echo "version=$VERSION" >> $GITHUB_STATE
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Version :" >> $GITHUB_STEP_SUMMARY
           echo "$VERSION" >> $GITHUB_STEP_SUMMARY
           echo $VERSION
@@ -53,19 +53,19 @@ jobs:
         id: core
         run: |
           TAG=$(grep "core" armonik-versions.txt | tail -1 | cut -d "=" -f 2)
-          echo "tag=$TAG" >> $GITHUB_STATE
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
 
       - name: Get Worker Tag
         id: worker
         run: |
           TAG=$(grep "worker" armonik-versions.txt | tail -1 | cut -d "=" -f 2)
-          echo "tag=$TAG" >> $GITHUB_STATE
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
 
       - name: Get Admin GUI Tag
         id: admin-gui
         run: |
           TAG=$(grep "admin-gui" armonik-versions.txt | tail -1 | cut -d "=" -f 2)
-          echo "tag=$TAG" >> $GITHUB_STATE
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
 
       - uses: ./
         name: Deploy infrastructure
@@ -116,13 +116,13 @@ jobs:
         id: core
         run: |
           TAG=$(grep "core" armonik-versions.txt | tail -1 | cut -d "=" -f 2)
-          echo "tag=$TAG" >> $GITHUB_STATE
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
 
       - name: Get Admin GUI Tag
         id: admin-gui
         run: |
           TAG=$(grep "admin-gui" armonik-versions.txt | tail -1 | cut -d "=" -f 2)
-          echo "tag=$TAG" >> $GITHUB_STATE
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
 
       - uses: ./
         name: Deploy infrastructure
@@ -197,13 +197,13 @@ jobs:
         id: core
         run: |
           TAG=$(grep "core" armonik-versions.txt | tail -1 | cut -d "=" -f 2)
-          echo "tag=$TAG" >> $GITHUB_STATE
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
 
       - name: Get Admin GUI Tag
         id: admin-gui
         run: |
           TAG=$(grep "admin-gui" armonik-versions.txt | tail -1 | cut -d "=" -f 2)
-          echo "tag=$TAG" >> $GITHUB_STATE
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
 
       - uses: ./
         name: Deploy infrastructure
@@ -290,13 +290,13 @@ jobs:
         id: core
         run: |
           TAG=$(grep "core" armonik-versions.txt | tail -1 | cut -d "=" -f 2)
-          echo "tag=$TAG" >> $GITHUB_STATE
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
 
       - name: Get Admin GUI Tag
         id: admin-gui
         run: |
           TAG=$(grep "admin-gui" armonik-versions.txt | tail -1 | cut -d "=" -f 2)
-          echo "tag=$TAG" >> $GITHUB_STATE
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
 
       - uses: ./
         name: Deploy infrastructure
@@ -392,13 +392,13 @@ jobs:
         id: core
         run: |
           TAG=$(grep "core" armonik-versions.txt | tail -1 | cut -d "=" -f 2)
-          echo "tag=$TAG" >> $GITHUB_STATE
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
 
       - name: Get Admin GUI Tag
         id: admin-gui
         run: |
           TAG=$(grep "admin-gui" armonik-versions.txt | tail -1 | cut -d "=" -f 2)
-          echo "tag=$TAG" >> $GITHUB_STATE
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
 
       - uses: ./
         name: Deploy infrastructure
@@ -481,13 +481,13 @@ jobs:
         id: core
         run: |
           TAG=$(grep "core" armonik-versions.txt | tail -1 | cut -d "=" -f 2)
-          echo "tag=$TAG" >> $GITHUB_STATE
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
 
       - name: Get Admin GUI Tag
         id: admin-gui
         run: |
           TAG=$(grep "admin-gui" armonik-versions.txt | tail -1 | cut -d "=" -f 2)
-          echo "tag=$TAG" >> $GITHUB_STATE
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
 
       - uses: ./
         name: Deploy infrastructure

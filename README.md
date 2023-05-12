@@ -1,6 +1,11 @@
 # Table of contents
 
+- [Introduction](#introduction)
 - [Bugs/Support](#bugssupport)
+
+# Introduction
+
+In this project contains Terraform modules for the different resources and components of ArmoniK.
 
 # Bugs/Support
 

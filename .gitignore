@@ -43,5 +43,3 @@ terraform-plugins
 .idea
 kubeconfig_*
 generated
-
-

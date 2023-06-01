@@ -28,5 +28,3 @@ behavior: # Optional. Section to specify advanced options
   periodSeconds: 15
 
 triggers: []
-
-

@@ -94,4 +94,3 @@ resource "local_sensitive_file" "activemq_client_certificate" {
   filename        = "${path.root}/generated/certificates/activemq/chain.pem"
   file_permission = "0600"
 }
-

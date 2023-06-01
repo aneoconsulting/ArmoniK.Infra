@@ -27,7 +27,7 @@ scrape_configs:
   - job_name: "kubernetes-apiservers"
     kubernetes_sd_configs:
       - role: endpoints
-    scheme: https 
+    scheme: https
     tls_config:
       ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
     bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
@@ -105,7 +105,7 @@ scrape_configs:
     relabel_configs:
       - action: labelmap
         regex: __meta_kubernetes_node_label_(.+)
-  
+
 EOF
 }
 

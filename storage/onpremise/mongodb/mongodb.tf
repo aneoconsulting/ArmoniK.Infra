@@ -167,4 +167,3 @@ resource "kubernetes_service" "mongodb" {
     }
   }
 }
-

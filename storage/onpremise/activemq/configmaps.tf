@@ -90,7 +90,7 @@ EOF
     <bean id="adminSecurityConstraint" class="org.eclipse.jetty.util.security.Constraint">
         <property name="name" value="BASIC" />
         <property name="roles" value="admin" />
-         <!-- set authenticate=false to disable login -->
+        <!-- set authenticate=false to disable login -->
         <property name="authenticate" value="true" />
     </bean>
     <bean id="securityConstraintMapping" class="org.eclipse.jetty.security.ConstraintMapping">
@@ -174,7 +174,7 @@ EOF
     </bean>
 
     <bean id="jettyPort" class="org.apache.activemq.web.WebConsolePort" init-method="start">
-             <!-- the default port number for the web console -->
+            <!-- the default port number for the web console -->
         <property name="host" value="0.0.0.0"/>
         <property name="port" value="8161"/>
     </bean>
@@ -203,9 +203,9 @@ EOF
                 <bean id="Connector" class="org.eclipse.jetty.server.ServerConnector">
                         <constructor-arg ref="Server" />
                     <!-- see the jettyPort bean -->
-                   <property name="host" value="#{systemProperties['jetty.host']}" />
-                   <property name="port" value="#{systemProperties['jetty.port']}" />
-               </bean>
+                  <property name="host" value="#{systemProperties['jetty.host']}" />
+                  <property name="port" value="#{systemProperties['jetty.port']}" />
+              </bean>
                 <!--
                     Enable this connector if you wish to use https with web console
                 -->
@@ -269,11 +269,11 @@ EOF
                 <policyEntry queue=">" prioritizedMessages="true" />
                 <policyEntry topic=">" >
                     <!-- The constantPendingMessageLimitStrategy is used to prevent
-                         slow topic consumers to block producers and affect other consumers
-                         by limiting the number of messages that are retained
-                         For more information, see:
+                        slow topic consumers to block producers and affect other consumers
+                        by limiting the number of messages that are retained
+                        For more information, see:
 
-                         http://activemq.apache.org/slow-consumer-handling.html
+                        http://activemq.apache.org/slow-consumer-handling.html
 
                     -->
                   <pendingMessageLimitStrategy>

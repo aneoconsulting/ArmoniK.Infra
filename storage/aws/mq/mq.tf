@@ -56,10 +56,10 @@ resource "aws_mq_configuration" "mq_configuration" {
         <policyEntry prioritizedMessages="true" queue="&gt;"/>
         <policyEntry topic="&gt;">
           <!-- The constantPendingMessageLimitStrategy is used to prevent
-             slow topic consumers to block producers and affect other consumers
-             by limiting the number of messages that are retained
-             For more information, see:
-             http://activemq.apache.org/slow-consumer-handling.html
+            slow topic consumers to block producers and affect other consumers
+            by limiting the number of messages that are retained
+            For more information, see:
+            http://activemq.apache.org/slow-consumer-handling.html
         -->
           <pendingMessageLimitStrategy>
             <constantPendingMessageLimitStrategy limit="100000000"/>

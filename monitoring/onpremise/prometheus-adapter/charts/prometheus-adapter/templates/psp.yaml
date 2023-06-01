@@ -42,7 +42,7 @@ metadata:
     {{- include "k8s-prometheus-adapter.labels" . | indent 4 }}
   name: {{ template "k8s-prometheus-adapter.name" . }}-psp
 rules:
-- apiGroups: 
+- apiGroups:
   - 'policy'
   resources: ['podsecuritypolicies']
   verbs:     ['use']

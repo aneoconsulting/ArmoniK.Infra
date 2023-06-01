@@ -179,5 +179,3 @@ resource "aws_iam_policy_attachment" "workers_autoscaling" {
   values(module.eks.fargate_profiles)[*].iam_role_name)
   policy_arn = aws_iam_policy.worker_autoscaling.arn
 }
-
-

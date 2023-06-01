@@ -22,4 +22,3 @@ resource "kubernetes_config_map" "fluent_bit_config" {
     "parsers.conf"           = file("${path.module}/configs/parser/parsers.conf")
   }
 }
-

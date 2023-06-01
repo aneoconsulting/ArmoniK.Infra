@@ -22,4 +22,3 @@ locals {
   activemq_url     = "amqp://${local.activemq_endpoints.ip}:${local.activemq_endpoints.port}"
   activemq_web_url = "http://${local.activemq_endpoints.ip}:${local.activemq_endpoints.web_port}"
 }
-

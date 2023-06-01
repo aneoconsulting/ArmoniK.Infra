@@ -17,4 +17,3 @@ locals {
 
   redis_url = "${local.redis_endpoints.ip}:${local.redis_endpoints.port}"
 }
-

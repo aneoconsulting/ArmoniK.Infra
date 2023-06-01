@@ -34,4 +34,3 @@ resource "null_resource" "encrypt" {
     interpreter = ["bash", "-c"]
   }
 }
-

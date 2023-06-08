@@ -5,6 +5,7 @@ repos:
       - id: terraform_fmt
       - id: terraform_validate
       - id: terraform_docs
+        entry: quay.io/terraform-docs/terraform-docs:latest
         args:
           - '--args=--lockfile=false'
       - id: terraform_tflint

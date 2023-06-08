@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - master
+  push:
 
 env:
   TERRAFORM_DOCS_VERSION: v0.16.0

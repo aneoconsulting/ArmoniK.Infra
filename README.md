@@ -17,3 +17,29 @@ See also [Issues](https://github.com/aneoconsulting/ArmoniK/issues) of ArmoniK p
 To report a bug or request a feature, please use and follow the instructions in one of
 the [issue templates](https://github.com/aneoconsulting/ArmoniK/issues/new/choose). Don't forget to include the version of
 ArmoniK you are using.
+
+<!-- BEGIN_TF_DOCS -->
+## Requirements
+
+No requirements.
+
+## Providers
+
+No providers.
+
+## Modules
+
+No modules.
+
+## Resources
+
+No resources.
+
+## Inputs
+
+No inputs.
+
+## Outputs
+
+No outputs.
+<!-- END_TF_DOCS -->

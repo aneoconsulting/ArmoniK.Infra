@@ -1,13 +1,14 @@
 repos:
+  - repo: https://github.com/terraform-docs/terraform-docs
+    rev: v0.16.0
+    hooks:
+      - id: terraform-docs-go
+        args: [ "markdown", "table", "--output-file", "README.md", "./" ]
   - repo: https://github.com/antonbabenko/pre-commit-terraform
     rev: v1.80.0
     hooks:
       - id: terraform_fmt
       - id: terraform_validate
-      - id: terraform_docs
-        language: docker_image
-        entry: quay.io/terraform-docs/terraform-docs:0.16.0
-        args: [ "markdown", "table", "--output-file", "README.md", "./" ]
       - id: terraform_tflint
         args:
           - '--args=--only=terraform_deprecated_interpolation'

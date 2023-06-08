@@ -1,4 +1,5 @@
-{{ if .Values.triggers }}
+{{- if .Values.triggers }}
+---
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
@@ -29,5 +30,6 @@ spec:
               value: {{ .Values.behavior.value }}
               periodSeconds: {{ .Values.behavior.periodSeconds }}
   triggers:
-{{ toYaml .Values.triggers | indent 8 }}
-{{ end }}
+{{- toYaml .Values.triggers | indent 4 }}
+---
+{{- end }}

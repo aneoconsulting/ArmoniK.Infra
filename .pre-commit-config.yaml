@@ -8,7 +8,9 @@ repos:
         language: docker_image
         entry: quay.io/terraform-docs/terraform-docs:latest
         args:
-          - '--args=--lockfile=false'
+          - --hook-config=--path-to-file=README.md        # Valid UNIX path. I.e. ../TFDOC.md or docs/README.md etc.
+          - --hook-config=--add-to-existing-file=true     # Boolean. true or false
+          - --hook-config=--create-file-if-not-exist=true # Boolean. true or false
       - id: terraform_tflint
         args:
           - '--args=--only=terraform_deprecated_interpolation'
@@ -31,7 +33,7 @@ repos:
       - id: check-merge-conflict
       - id: check-shebang-scripts-are-executable
       - id: check-symlinks
-#      - id: check-yaml
-#        args: [--allow-multiple-documents]
+      #      - id: check-yaml
+      #        args: [--allow-multiple-documents]
       - id: end-of-file-fixer
       - id: pretty-format-json

@@ -30,7 +30,6 @@ repos:
       - id: check-shebang-scripts-are-executable
       - id: check-symlinks
       - id: check-yaml
-        args:
-          - '--allow-multiple-documents'
+        args: [--allow-multiple-documents]
       - id: end-of-file-fixer
       - id: pretty-format-json

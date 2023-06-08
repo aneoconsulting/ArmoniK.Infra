@@ -5,12 +5,12 @@ repos:
       - id: terraform_fmt
       - id: terraform_validate
       - id: terraform_docs
-        language: docker_image
-        entry: quay.io/terraform-docs/terraform-docs:latest
-        args:
-          - --hook-config=--path-to-file=README.md        # Valid UNIX path. I.e. ../TFDOC.md or docs/README.md etc.
-          - --hook-config=--add-to-existing-file=true     # Boolean. true or false
-          - --hook-config=--create-file-if-not-exist=true # Boolean. true or false
+#        language: docker_image
+#        entry: quay.io/terraform-docs/terraform-docs:latest
+#        args:
+#          - --hook-config=--path-to-file=README.md        # Valid UNIX path. I.e. ../TFDOC.md or docs/README.md etc.
+#          - --hook-config=--add-to-existing-file=true     # Boolean. true or false
+#          - --hook-config=--create-file-if-not-exist=true # Boolean. true or false
       - id: terraform_tflint
         args:
           - '--args=--only=terraform_deprecated_interpolation'

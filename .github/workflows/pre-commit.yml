@@ -15,7 +15,7 @@ jobs:
 #          tar -xzf terraform-docs.tar.gz
 #          chmod +x terraform-docs
 #          sudo mv terraform-docs /usr/bin
-#          rm terraform-docs.tar.gz
+#          rm terraform-docs.tar.gz LICENCE README.md
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0

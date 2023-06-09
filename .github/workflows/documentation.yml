@@ -1,7 +1,6 @@
 name: Generate terraform docs
 on:
   push:
-    branches: [ '**' ]
 
 jobs:
   docs:

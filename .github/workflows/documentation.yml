@@ -1,10 +1,17 @@
 name: Generate terraform docs
 on:
   push:
+    branches: [ '**' ]
 
 jobs:
   docs:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        modules:
+          - ./armonik
+          - ./storage/onpremise/redis
     steps:
       - uses: actions/checkout@v3
         with:
@@ -13,7 +20,7 @@ jobs:
       - name: Render terraform docs and push changes back to PR
         uses: terraform-docs/gh-actions@main
         with:
-          working-dir: .
+          working-dir: ${{ matrix.modules }}
           output-file: README.md
           output-method: inject
           git-push: "true"

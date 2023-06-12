@@ -1,6 +1,3 @@
-# Current account
-data "aws_caller_identity" "current" {}
-
 # EKS certificate
 data "tls_certificate" "eks" {
   url = var.eks_issuer

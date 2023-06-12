@@ -33,13 +33,6 @@ variable "service_type" {
   type        = string
 }
 
-# Working dir
-variable "working_dir" {
-  description = "Working directory"
-  type        = string
-  default     = ".."
-}
-
 # Prometheus url
 variable "prometheus_url" {
   description = "Prometheus URL"

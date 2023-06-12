@@ -1,14 +1,17 @@
 # Redis
 output "host" {
-  value = local.redis_endpoints.ip
+  description = "Host of Redis"
+  value       = local.redis_endpoints.ip
 }
 
 output "port" {
-  value = local.redis_endpoints.port
+  description = "Port of Redis"
+  value       = local.redis_endpoints.port
 }
 
 output "url" {
-  value = local.redis_url
+  description = "URL of Redis"
+  value       = local.redis_url
 }
 
 output "user_certificate" {

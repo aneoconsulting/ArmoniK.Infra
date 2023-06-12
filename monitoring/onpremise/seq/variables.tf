@@ -44,13 +44,6 @@ variable "service_type" {
   type        = string
 }
 
-# Working dir
-variable "working_dir" {
-  description = "Working directory"
-  type        = string
-  default     = ".."
-}
-
 # Enable authentication
 variable "authentication" {
   description = "Enables the authentication form"

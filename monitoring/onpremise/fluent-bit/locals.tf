@@ -27,6 +27,5 @@ locals {
   s3_name    = try(var.s3.name, "armonik-logs")
   s3_region  = try(var.s3.region, "eu-west-3")
   s3_prefix  = try(var.s3.prefix, "main")
-  s3_arn     = try(var.s3.arn, "arn:aws:s3:::armonik-logs")
   s3_enabled = tobool(try(var.s3.enabled, false))
 }

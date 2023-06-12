@@ -1,11 +1,14 @@
 output "selected" {
-  value = aws_kms_key.kms
+  description = "Create KMS"
+  value       = aws_kms_key.kms
 }
 
 output "arn" {
-  value = aws_kms_key.kms.arn
+  description = "ARN of KMS"
+  value       = aws_kms_key.kms.arn
 }
 
 output "kms_alias" {
-  value = aws_kms_alias.kms_alias
+  description = "Alias KMS"
+  value       = aws_kms_alias.kms_alias
 }

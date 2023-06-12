@@ -1,5 +1,5 @@
 # node-exporter daemonset
-resource "kubernetes_daemonset" "node-exporter" {
+resource "kubernetes_daemonset" "node_exporter" {
   metadata {
     name      = "node-exporter"
     namespace = var.namespace

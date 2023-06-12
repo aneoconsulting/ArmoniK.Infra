@@ -1,9 +1,3 @@
-# Current account
-data "aws_caller_identity" "current" {}
-
-# Current AWS region
-data "aws_region" "current" {}
-
 locals {
   tags = merge(var.tags, { module = "amazon-mq" })
   subnet_ids = (var.mq.deployment_mode == "SINGLE_INSTANCE" ? [var.vpc.subnet_ids[0]] : [

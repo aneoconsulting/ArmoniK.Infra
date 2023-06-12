@@ -31,8 +31,13 @@ jobs:
         uses: terraform-docs/gh-actions@v1.0.0
         with:
           working-dir: ./armonik #${{ needs.collectInputs.outputs.directories }}
-          config-file: .terraform-docs.yml
           output-file: README.md
+          template: |-
+            <!-- BEGIN_TF_DOCS -->
+            {{ .Content }}
+            <!-- END_TF_DOCS -->
+
+
           output-method: inject
           indention: 2
           git-push: true

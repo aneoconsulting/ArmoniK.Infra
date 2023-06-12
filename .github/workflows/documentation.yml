@@ -31,7 +31,6 @@ jobs:
         with:
           working-dir: ./armonik #${{ needs.collectInputs.outputs.directories }}
           output-file: README.md
-          output-format: markdown document
           template: |-
             <!-- BEGIN_TF_DOCS -->
             {{ .Content }}

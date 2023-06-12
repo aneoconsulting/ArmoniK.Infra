@@ -1,9 +1,3 @@
-# Current account
-data "aws_caller_identity" "current" {}
-
-# Current AWS region
-data "aws_region" "current" {}
-
 # Availability zones
 data "aws_subnet" "private_subnet" {
   for_each   = toset(var.vpc.cidr_block_private)

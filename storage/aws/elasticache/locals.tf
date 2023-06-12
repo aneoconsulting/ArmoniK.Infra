@@ -1,9 +1,3 @@
-# Current account
-data "aws_caller_identity" "current" {}
-
-# Current AWS region
-data "aws_region" "current" {}
-
 locals {
   tags                       = merge(var.tags, { module = "elasticache" })
   automatic_failover_enabled = (var.elasticache.multi_az_enabled ? true : var.elasticache.automatic_failover_enabled)

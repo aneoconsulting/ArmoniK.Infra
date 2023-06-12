@@ -7,13 +7,18 @@ jobs:
     name: Collect workflow inputs
     runs-on: ubuntu-latest
     outputs:
-      directories: ${{ steps.dirs.outputs.directories }}
+      directories: ${{ steps.list.outputs.directories }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Get root directories
         id: dirs
         uses: clowdhaus/terraform-composite-actions/directories@v1.8.3
+      - name: Get list of directories separated with comma
+        id: list
+        run: |
+          DIRS=$(echo {{ steps.dirs.outputs.directories }} | jq -r '. | join(",")')
+          echo "directories=$DIRS" >> $GITHUB_OUTPUT
   docs:
     runs-on: ubuntu-latest
     needs: collectInputs
@@ -29,7 +34,7 @@ jobs:
         uses: terraform-docs/gh-actions@v1.0.0
         with:
 #          working-dir: ${{ matrix.directory }}
-          working-dir: ${{ fromJson(needs.collectInputs.outputs.directories) }}
+          working-dir: ${{ needs.collectInputs.outputs.directories }}
           output-file: README.md
           output-method: inject
           git-push: "true"

@@ -5,6 +5,7 @@ on:
       - opened
       - edited
       - synchronize
+permissions: {}
 jobs:
   main:
     name: Validate PR title

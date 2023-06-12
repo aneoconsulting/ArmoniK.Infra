@@ -16,15 +16,13 @@ resource "random_string" "random_resources" {
 }
 
 locals {
-  account_id                                           = data.aws_caller_identity.current.id
-  region                                               = data.aws_region.current.name
-  tags                                                 = merge({ module = "eks-${var.name}" }, var.tags)
-  iam_worker_autoscaling_policy_name                   = "eks-worker-autoscaling-${var.name}"
-  iam_worker_assume_role_agent_permissions_policy_name = "eks-worker-assume-agent-${var.name}"
-  ima_aws_node_termination_handler_name                = "${var.name}-aws-node-termination-handler-${random_string.random_resources.result}"
-  aws_node_termination_handler_asg_name                = "${var.name}-asg-termination"
-  aws_node_termination_handler_spot_name               = "${var.name}-spot-termination"
-  kubeconfig_output_path                               = coalesce(var.kubeconfig_file, "${path.root}/generated/kubeconfig")
+  region                                 = data.aws_region.current.name
+  tags                                   = merge({ module = "eks-${var.name}" }, var.tags)
+  iam_worker_autoscaling_policy_name     = "eks-worker-autoscaling-${var.name}"
+  ima_aws_node_termination_handler_name  = "${var.name}-aws-node-termination-handler-${random_string.random_resources.result}"
+  aws_node_termination_handler_asg_name  = "${var.name}-asg-termination"
+  aws_node_termination_handler_spot_name = "${var.name}-spot-termination"
+  kubeconfig_output_path                 = coalesce(var.kubeconfig_file, "${path.root}/generated/kubeconfig")
 
   # Custom ENI
   subnets = {

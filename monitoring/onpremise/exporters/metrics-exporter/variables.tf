@@ -4,20 +4,6 @@ variable "namespace" {
   type        = string
 }
 
-# Working dir
-variable "working_dir" {
-  description = "Working directory"
-  type        = string
-  default     = ".."
-}
-
-# List of needed storage
-variable "storage_endpoint_url" {
-  description = "List of storage needed by ArmoniK"
-  type        = any
-  default     = {}
-}
-
 # Docker image
 variable "docker_image" {
   description = "Docker image for Metrics exporter"

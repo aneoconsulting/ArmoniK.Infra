@@ -1,5 +1,6 @@
 # AWS Elastic Filesystem Service
 variable "efs" {
+  description = "Info about the EFS"
   type = object({
     name                            = string
     kms_key_id                      = string

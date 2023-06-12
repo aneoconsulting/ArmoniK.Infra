@@ -4,10 +4,6 @@ data "aws_caller_identity" "current" {}
 # Current AWS region
 data "aws_region" "current" {}
 
-data "aws_availability_zones" "az" {
-  all_availability_zones = true
-}
-
 # Availability zones
 data "aws_subnet" "private_subnet" {
   for_each   = toset(var.vpc.cidr_block_private)
@@ -18,8 +14,6 @@ data "aws_subnet" "private_subnet" {
 }
 
 locals {
-  account_id = data.aws_caller_identity.current.id
-  region     = data.aws_region.current.name
-  tags       = merge(var.tags, { module = "efs" })
-  encrypt    = (var.efs.kms_key_id != "" && var.efs.kms_key_id != null)
+  tags    = merge(var.tags, { module = "efs" })
+  encrypt = (var.efs.kms_key_id != "" && var.efs.kms_key_id != null)
 }

@@ -14,10 +14,3 @@ variable "activemq" {
     image_pull_secrets = string
   })
 }
-
-# Working dir
-variable "working_dir" {
-  description = "Working directory"
-  type        = string
-  default     = "../.."
-}

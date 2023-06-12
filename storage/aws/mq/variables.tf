@@ -5,12 +5,6 @@ variable "tags" {
   default     = {}
 }
 
-# Kubernetes namespace
-variable "namespace" {
-  description = "Kubernetes namespace for ArmoniK"
-  type        = string
-}
-
 # MQ name
 variable "name" {
   description = "AWS MQ service name"

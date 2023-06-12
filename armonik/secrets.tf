@@ -32,14 +32,14 @@ data "kubernetes_secret" "metrics_exporter" {
     namespace = var.namespace
   }
 }
-
+/*
 data "kubernetes_secret" "partition_metrics_exporter" {
   metadata {
     name      = local.secrets.partition_metrics_exporter
     namespace = var.namespace
   }
 }
-
+*/
 data "kubernetes_secret" "fluent_bit" {
   metadata {
     name      = local.secrets.fluent_bit

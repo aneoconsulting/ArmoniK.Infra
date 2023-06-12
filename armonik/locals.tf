@@ -36,16 +36,11 @@ locals {
   # Authentication
   authentication_require_authentication = try(var.authentication.require_authentication, false)
   authentication_require_authorization  = try(var.authentication.require_authorization, false)
-  authentication_datafile               = try(var.authentication.authentication_datafile, "")
 
   # Annotations
   control_plane_annotations              = try(var.control_plane.annotations, {})
   compute_plane_annotations              = { for partition in local.partition_names : partition => try(var.compute_plane[partition].annotations, {}) }
   ingress_annotations                    = try(var.ingress.annotations, {})
-  job_partitions_in_database_annotations = try(var.job_partitions_in_database.annotations, {})
-
-  # ingress ports
-  ingress_ports = var.ingress != null ? distinct(compact([var.ingress.http_port, var.ingress.grpc_port])) : []
 
   # Secrets
   secrets = {

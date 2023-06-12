@@ -1,4 +1,5 @@
 output "endpoint_urls" {
+  description = "List of URL endpoints for: control-plane, Seq, Grafana and Admin GUI"
   value = var.ingress != null ? {
     control_plane_url = local.ingress_grpc_url != "" ? local.ingress_grpc_url : local.control_plane_url
     grafana_url       = data.kubernetes_secret.grafana.data.enabled ? (local.ingress_http_url != "" ? "${local.ingress_http_url}/grafana/" : nonsensitive(data.kubernetes_secret.grafana.data.url)) : ""
@@ -17,6 +18,7 @@ output "endpoint_urls" {
 }
 
 output "object_storage_adapter" {
+  description = "Adapter used for the object storage"
   value = local.object_storage_adapter_from_secret
   precondition {
     condition     = can(coalesce(local.object_storage_adapter_from_secret)) || contains(["mongodb", "redis", "s3", "localstorage"], local.object_storage_adapter_from_secret)
@@ -25,6 +27,7 @@ output "object_storage_adapter" {
 }
 
 output "table_storage_adapter" {
+  description = "Adapter used for the table storage"
   value = local.table_storage_adapter_from_secret
   precondition {
     condition     = can(coalesce(local.table_storage_adapter_from_secret)) || contains(["mongodb"], local.table_storage_adapter_from_secret)
@@ -33,6 +36,7 @@ output "table_storage_adapter" {
 }
 
 output "queue_storage_adapter" {
+  description = "Adapter used for the quque storage"
   value = local.queue_storage_adapter_from_secret
   precondition {
     condition     = can(coalesce(local.queue_storage_adapter_from_secret)) || contains(["amqp"], local.queue_storage_adapter_from_secret)
@@ -41,6 +45,7 @@ output "queue_storage_adapter" {
 }
 
 output "object_storage_adapter_check" {
+  description = "Check the adapter used for the object storage"
   value = local.object_storage_adapter_from_secret
   precondition {
     condition     = contains([for each in local.deployed_object_storages : lower(each)], local.object_storage_adapter_from_secret)
@@ -49,6 +54,7 @@ output "object_storage_adapter_check" {
 }
 
 output "table_storage_adapter_check" {
+  description = "Check the adapter used for the table storage"
   value = local.table_storage_adapter_from_secret
   precondition {
     condition     = contains([for each in local.deployed_table_storages : lower(each)], local.table_storage_adapter_from_secret)
@@ -57,6 +63,7 @@ output "table_storage_adapter_check" {
 }
 
 output "queue_storage_adapter_check" {
+  description = "Check the adapter used for the queue storage"
   value = local.queue_storage_adapter_from_secret
   precondition {
     condition     = contains([for each in local.deployed_queue_storages : lower(each)], local.queue_storage_adapter_from_secret)

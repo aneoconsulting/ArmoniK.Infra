@@ -35,8 +35,8 @@ jobs:
           template: |-
             <!-- BEGIN_TF_DOCS -->
             {{ .Content }}
+            {{- printf "\n" -}}
             <!-- END_TF_DOCS -->
-
           output-method: inject
           indention: 2
           git-push: true

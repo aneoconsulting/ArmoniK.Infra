@@ -204,9 +204,9 @@ resource "kubernetes_service" "admin_old_gui" {
       protocol    = "TCP"
     }
     port {
-      name        = kubernetes_deployment.admin_old_gui[0].spec[0].template[0].spec[0].container.1.port[0].name
+      name        = kubernetes_deployment.admin_old_gui[0].spec[0].template[0].spec[0].container[1].port[0].name
       port        = var.admin_old_gui.old.port
-      target_port = kubernetes_deployment.admin_old_gui[0].spec[0].template[0].spec[0].container.1.port[0].container_port
+      target_port = kubernetes_deployment.admin_old_gui[0].spec[0].template[0].spec[0].container[1].port[0].container_port
       protocol    = "TCP"
     }
   }

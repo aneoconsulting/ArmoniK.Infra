@@ -34,7 +34,7 @@ locals {
   admin_old_gui_load_balancer = length(kubernetes_service.admin_old_gui) > 0 ? (kubernetes_service.admin_old_gui[0].spec[0].type == "LoadBalancer" ? {
     ip       = (kubernetes_service.admin_old_gui[0].status[0].load_balancer[0].ingress[0].ip == "" ? kubernetes_service.admin_old_gui[0].status[0].load_balancer[0].ingress[0].hostname : kubernetes_service.admin_old_gui[0].status[0].load_balancer[0].ingress[0].ip)
     api_port = kubernetes_service.admin_old_gui[0].spec[0].port[0].port
-    app_port = kubernetes_service.admin_old_gui[0].spec[0].port.1.port
+    app_port = kubernetes_service.admin_old_gui[0].spec[0].port[1].port
     } : {
     ip       = ""
     api_port = ""
@@ -44,7 +44,7 @@ locals {
   admin_old_gui_endpoints = length(kubernetes_service.admin_old_gui) > 0 ? (local.admin_old_gui_load_balancer.ip == "" && kubernetes_service.admin_old_gui[0].spec[0].type == "ClusterIP" ? {
     ip       = kubernetes_service.admin_old_gui[0].spec[0].cluster_ip
     api_port = kubernetes_service.admin_old_gui[0].spec[0].port[0].port
-    app_port = kubernetes_service.admin_old_gui[0].spec[0].port.1.port
+    app_port = kubernetes_service.admin_old_gui[0].spec[0].port[1].port
     } : {
     ip       = local.admin_old_gui_load_balancer.ip
     api_port = local.admin_old_gui_load_balancer.api_port

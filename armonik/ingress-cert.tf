@@ -10,7 +10,7 @@ resource "tls_private_key" "root_ingress" {
 
 resource "tls_self_signed_cert" "root_ingress" {
   count                 = length(tls_private_key.root_ingress)
-  private_key_pem       = tls_private_key.root_ingress.0.private_key_pem
+  private_key_pem       = tls_private_key.root_ingress[0].private_key_pem
   is_ca_certificate     = true
   validity_period_hours = "168"
   allowed_uses = [
@@ -37,7 +37,7 @@ resource "tls_private_key" "client_root_ingress" {
 
 resource "tls_self_signed_cert" "client_root_ingress" {
   count                 = length(tls_private_key.client_root_ingress)
-  private_key_pem       = tls_private_key.client_root_ingress.0.private_key_pem
+  private_key_pem       = tls_private_key.client_root_ingress[0].private_key_pem
   is_ca_certificate     = true
   validity_period_hours = "168"
   allowed_uses = [
@@ -64,7 +64,7 @@ resource "tls_private_key" "ingress_private_key" {
 
 resource "tls_cert_request" "ingress_cert_request" {
   count           = length(tls_private_key.ingress_private_key)
-  private_key_pem = tls_private_key.ingress_private_key.0.private_key_pem
+  private_key_pem = tls_private_key.ingress_private_key[0].private_key_pem
   subject {
     country     = "France"
     common_name = "armonik.local"
@@ -73,9 +73,9 @@ resource "tls_cert_request" "ingress_cert_request" {
 
 resource "tls_locally_signed_cert" "ingress_certificate" {
   count                 = length(tls_cert_request.ingress_cert_request)
-  cert_request_pem      = tls_cert_request.ingress_cert_request.0.cert_request_pem
-  ca_private_key_pem    = tls_private_key.root_ingress.0.private_key_pem
-  ca_cert_pem           = tls_self_signed_cert.root_ingress.0.cert_pem
+  cert_request_pem      = tls_cert_request.ingress_cert_request[0].cert_request_pem
+  ca_private_key_pem    = tls_private_key.root_ingress[0].private_key_pem
+  ca_cert_pem           = tls_self_signed_cert.root_ingress[0].cert_pem
   validity_period_hours = "168"
   allowed_uses = [
     "key_encipherment",
@@ -92,9 +92,9 @@ resource "kubernetes_secret" "ingress_certificate" {
     namespace = var.namespace
   }
   data = length(tls_locally_signed_cert.ingress_certificate) > 0 ? {
-    "ingress.pem" = format("%s\n%s", tls_locally_signed_cert.ingress_certificate.0.cert_pem, tls_private_key.ingress_private_key.0.private_key_pem)
-    "ingress.crt" = tls_locally_signed_cert.ingress_certificate.0.cert_pem
-    "ingress.key" = tls_private_key.ingress_private_key.0.private_key_pem
+    "ingress.pem" = format("%s\n%s", tls_locally_signed_cert.ingress_certificate[0].cert_pem, tls_private_key.ingress_private_key[0].private_key_pem)
+    "ingress.crt" = tls_locally_signed_cert.ingress_certificate[0].cert_pem
+    "ingress.key" = tls_private_key.ingress_private_key[0].private_key_pem
   } : {}
 }
 
@@ -134,8 +134,8 @@ resource "tls_cert_request" "ingress_client_cert_request" {
 resource "tls_locally_signed_cert" "ingress_client_certificate" {
   for_each              = tls_cert_request.ingress_client_cert_request
   cert_request_pem      = each.value.cert_request_pem
-  ca_private_key_pem    = tls_private_key.client_root_ingress.0.private_key_pem
-  ca_cert_pem           = tls_self_signed_cert.client_root_ingress.0.cert_pem
+  ca_private_key_pem    = tls_private_key.client_root_ingress[0].private_key_pem
+  ca_cert_pem           = tls_self_signed_cert.client_root_ingress[0].cert_pem
   validity_period_hours = "168"
   allowed_uses = [
     "key_encipherment",
@@ -151,7 +151,7 @@ resource "pkcs12_from_pem" "ingress_client_pkcs12" {
   password        = ""
   cert_pem        = each.value.cert_pem
   private_key_pem = tls_private_key.ingress_client_private_key[each.key].private_key_pem
-  ca_pem          = tls_self_signed_cert.client_root_ingress.0.cert_pem
+  ca_pem          = tls_self_signed_cert.client_root_ingress[0].cert_pem
 }
 
 resource "kubernetes_secret" "ingress_client_certificate" {
@@ -174,7 +174,7 @@ resource "kubernetes_secret" "ingress_client_certificate_authority" {
     namespace = var.namespace
   }
   data = length(tls_locally_signed_cert.ingress_client_certificate) > 0 ? {
-    "ca.pem" = tls_self_signed_cert.client_root_ingress.0.cert_pem
+    "ca.pem" = tls_self_signed_cert.client_root_ingress[0].cert_pem
     } : var.ingress != null ? var.ingress.custom_client_ca_file != "" && var.ingress.mtls ? {
     "ca.pem" = file(var.ingress.custom_client_ca_file)
   } : {} : {}
@@ -182,14 +182,14 @@ resource "kubernetes_secret" "ingress_client_certificate_authority" {
 
 resource "local_sensitive_file" "ingress_ca" {
   count           = length(tls_self_signed_cert.root_ingress)
-  content         = tls_self_signed_cert.root_ingress.0.cert_pem
+  content         = tls_self_signed_cert.root_ingress[0].cert_pem
   filename        = "${path.root}/generated/certificates/ingress/ca.crt"
   file_permission = "0600"
 }
 
 resource "local_sensitive_file" "ingress_client_ca" {
   count           = length(tls_self_signed_cert.client_root_ingress)
-  content         = tls_self_signed_cert.client_root_ingress.0.cert_pem
+  content         = tls_self_signed_cert.client_root_ingress[0].cert_pem
   filename        = "${path.root}/generated/certificates/ingress/client_ca.crt"
   file_permission = "0600"
 }

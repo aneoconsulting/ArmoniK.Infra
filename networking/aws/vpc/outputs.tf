@@ -42,6 +42,3 @@ output "kms_key_id" {
   description = "ARN of KMS used for VPC"
   value       = var.vpc.flow_log_cloudwatch_log_group_kms_key_id
 }
-
-
-

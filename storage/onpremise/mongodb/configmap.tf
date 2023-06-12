@@ -6,11 +6,11 @@ db = db.getSiblingDB("database");
 db.createCollection("sample");
 db.sample.insertOne({test:1})
 db.createUser(
-   {
-     user: "${random_string.mongodb_application_user.result}",
-     pwd: "${random_password.mongodb_application_password.result}",
-     roles: [ { role: "readWrite", db: "database" }, { role: "dbAdmin", db: "database" } ]
-   }
+  {
+    user: "${random_string.mongodb_application_user.result}",
+    pwd: "${random_password.mongodb_application_password.result}",
+    roles: [ { role: "readWrite", db: "database" }, { role: "dbAdmin", db: "database" } ]
+  }
 );
 db.sample.drop()
 
@@ -22,7 +22,7 @@ rs.initiate({
   _id :  "rs0",
   members: [
 %{for i, service in kubernetes_service.mongodb~}
-    { _id:  ${i}, host:  "${service.metadata.0.name}.${service.metadata.0.namespace}:${service.spec.0.port.0.port}" },
+    { _id:  ${i}, host:  "${service.metadata[0].name}.${service.metadata[0].namespace}:${service.spec[0].port[0].port}" },
 %{endfor~}
   ]
 })

@@ -1,9 +1,3 @@
-# Tags
-variable "tags" {
-  description = "Tags for resource"
-  type        = any
-}
-
 # Region
 variable "region" {
   description = "Region"

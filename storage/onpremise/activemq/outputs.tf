@@ -1,18 +1,22 @@
 # ActiveMQ
 output "host" {
-  value = local.activemq_endpoints.ip
+  description = "Host of ActiveMQ"
+  value       = local.activemq_endpoints.ip
 }
 
 output "port" {
-  value = local.activemq_endpoints.port
+  description = "Port of ActiveMQ"
+  value       = local.activemq_endpoints.port
 }
 
 output "url" {
-  value = local.activemq_url
+  description = "URL of ActiveMQ"
+  value       = local.activemq_url
 }
 
 output "web_url" {
-  value = local.activemq_web_url
+  description = "Web URL of ActiveMQ"
+  value       = local.activemq_web_url
 }
 
 output "user_certificate" {

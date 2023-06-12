@@ -63,7 +63,7 @@ resource "kubernetes_deployment" "admin_gui" {
           }
           env_from {
             config_map_ref {
-              name = kubernetes_config_map.core_config.metadata.0.name
+              name = kubernetes_config_map.core_config.metadata[0].name
             }
           }
           env {
@@ -126,23 +126,23 @@ resource "kubernetes_deployment" "admin_gui" {
 resource "kubernetes_service" "admin_gui" {
   count = length(kubernetes_deployment.admin_gui)
   metadata {
-    name      = kubernetes_deployment.admin_gui[0].metadata.0.name
-    namespace = kubernetes_deployment.admin_gui[0].metadata.0.namespace
+    name      = kubernetes_deployment.admin_gui[0].metadata[0].name
+    namespace = kubernetes_deployment.admin_gui[0].metadata[0].namespace
     labels = {
-      app     = kubernetes_deployment.admin_gui[0].metadata.0.labels.app
-      service = kubernetes_deployment.admin_gui[0].metadata.0.labels.service
+      app     = kubernetes_deployment.admin_gui[0].metadata[0].labels.app
+      service = kubernetes_deployment.admin_gui[0].metadata[0].labels.service
     }
   }
   spec {
     type = var.admin_gui.service_type
     selector = {
-      app     = kubernetes_deployment.admin_gui[0].metadata.0.labels.app
-      service = kubernetes_deployment.admin_gui[0].metadata.0.labels.service
+      app     = kubernetes_deployment.admin_gui[0].metadata[0].labels.app
+      service = kubernetes_deployment.admin_gui[0].metadata[0].labels.service
     }
     port {
-      name        = kubernetes_deployment.admin_gui[0].spec.0.template.0.spec.0.container.0.port.0.name
+      name        = kubernetes_deployment.admin_gui[0].spec[0].template[0].spec[0].container[0].port[0].name
       port        = var.admin_gui.port
-      target_port = kubernetes_deployment.admin_gui[0].spec.0.template.0.spec.0.container.0.port.0.container_port
+      target_port = kubernetes_deployment.admin_gui[0].spec[0].template[0].spec[0].container[0].port[0].container_port
       protocol    = "TCP"
     }
   }

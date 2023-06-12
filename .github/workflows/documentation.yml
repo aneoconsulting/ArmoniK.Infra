@@ -19,44 +19,17 @@ jobs:
     needs: collectInputs
     strategy:
       fail-fast: false
-      matrix:
-        directory: ${{ fromJson(needs.collectInputs.outputs.directories) }}
-#        modules:
-#          - ./armonik
-#          - ./storage/onpremise/redis
-#          - ./container-registry/aws/ecr
-#          - ./kubernetes/aws/eks
-#          - ./monitoring/aws/cloudwatch-log-group
-#          - ./monitoring/onpremise/exporters/metrics-exporter
-#          - ./monitoring/onpremise/exporters/node-exporter
-#          - ./monitoring/onpremise/exporters/partition-metrics-exporter
-#          - ./monitoring/onpremise/fluent-bit
-#          - ./monitoring/onpremise/grafana
-#          - ./monitoring/onpremise/keda
-#          - ./monitoring/onpremise/metrics-server
-#          - ./monitoring/onpremise/prometheus
-#          - ./monitoring/onpremise/seq
-#          - ./persistent-volume/aws/efs
-#          - ./storage/aws/efs
-#          - ./storage/aws/elasticache
-#          - ./storage/aws/mq
-#          - ./storage/aws/s3
-#          - ./storage/onpremise/activemq
-#          - ./storage/onpremise/minio
-#          - ./storage/onpremise/mongodb
-#          - ./storage/onpremise/redis
-#          - ./utils/aws/credentials
-#          - ./utils/default-images
-#          - ./storage/needed-storage
+#      matrix:
+#        directory: ${{ fromJson(needs.collectInputs.outputs.directories) }}
     steps:
       - uses: actions/checkout@v3
         with:
           ref: ${{ github.event.pull_request.head.ref }}
-
       - name: Render terraform docs and push changes back to PR
-        uses: terraform-docs/gh-actions@main
+        uses: terraform-docs/gh-actions@v1.0.0
         with:
-          working-dir: ${{ matrix.directory }}
+#          working-dir: ${{ matrix.directory }}
+          working-dir: ${{ fromJson(needs.collectInputs.outputs.directories) }}
           output-file: README.md
           output-method: inject
           git-push: "true"

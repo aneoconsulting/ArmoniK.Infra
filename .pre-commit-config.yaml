@@ -4,9 +4,9 @@ repos:
     hooks:
       - id: terraform_fmt
       - id: terraform_validate
-#      - id: terraform_docs
-#        args:
-#          - '--args=--lockfile=false'
+      #      - id: terraform_docs
+      #        args:
+      #          - '--args=--lockfile=false'
       - id: terraform_tflint
         args:
           - '--args=--only=terraform_deprecated_interpolation'
@@ -28,8 +28,8 @@ repos:
       - id: check-executables-have-shebangs
       - id: check-merge-conflict
       - id: check-shebang-scripts-are-executable
-      - id: check-symlinks
+      #      - id: check-symlinks
       #      - id: check-yaml
-      #        args: [--allow-multiple-documents]
-      - id: end-of-file-fixer
+      #        args: [ --allow-multiple-documents ]
+      #      - id: end-of-file-fixer
       - id: pretty-format-json

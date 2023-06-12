@@ -17,7 +17,7 @@ jobs:
       - name: Get list of directories separated with comma
         id: search
         run: |
-          DIRS=$(echo ${{ steps.dirs.outputs.directories }} | jq -r '. | join(",")')
+          DIRS=$(echo '${{ steps.dirs.outputs.directories }}' | jq -r '. | join(",")')
           echo "directories=$DIRS" >> $GITHUB_OUTPUT
   docs:
     runs-on: ubuntu-latest

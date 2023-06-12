@@ -16,7 +16,7 @@ output "host" {
 
 output "name" {
   description = "Name of partition metrics exporter"
-  value       = kubernetes_service.partition_metrics_exporter.metadata.0.name
+  value       = kubernetes_service.partition_metrics_exporter.metadata[0].name
 }
 
 output "namespace" {

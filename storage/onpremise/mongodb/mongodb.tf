@@ -101,14 +101,14 @@ resource "kubernetes_deployment" "mongodb" {
         volume {
           name = "init-files"
           config_map {
-            name     = kubernetes_config_map.mongodb_js.metadata.0.name
+            name     = kubernetes_config_map.mongodb_js.metadata[0].name
             optional = false
           }
         }
         volume {
           name = "start-files"
           config_map {
-            name     = kubernetes_config_map.mongo_start_sh.metadata.0.name
+            name     = kubernetes_config_map.mongo_start_sh.metadata[0].name
             optional = false
           }
         }
@@ -131,7 +131,7 @@ resource "kubernetes_deployment" "mongodb" {
           content {
             name = "database"
             persistent_volume_claim {
-              claim_name = kubernetes_persistent_volume_claim.mongodb.0.metadata.0.name
+              claim_name = kubernetes_persistent_volume_claim.mongodb[0].metadata[0].name
             }
           }
         }

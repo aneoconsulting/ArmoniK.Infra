@@ -48,14 +48,14 @@ resource "kubernetes_cluster_role_binding" "fluent_bit_role_binding" {
   role_ref {
     api_group = "rbac.authorization.k8s.io"
     kind      = "ClusterRole"
-    name      = kubernetes_cluster_role.fluent_bit_role.0.metadata.0.name
+    name      = kubernetes_cluster_role.fluent_bit_role[0].metadata[0].name
   }
   subject {
     kind = "ServiceAccount"
     # To use kubernetes_manifest, you should have Kubernetes already installed !!
-    name      = kubernetes_service_account.fluent_bit.0.metadata.0.name
-    namespace = kubernetes_service_account.fluent_bit.0.metadata.0.namespace
-    #name      = kubernetes_manifest.service_account_fluent_bit.0.manifest.metadata.name
-    #namespace = kubernetes_manifest.service_account_fluent_bit.0.manifest.metadata.namespace
+    name      = kubernetes_service_account.fluent_bit[0].metadata[0].name
+    namespace = kubernetes_service_account.fluent_bit[0].metadata[0].namespace
+    #name      = kubernetes_manifest.service_account_fluent_bit[0].manifest.metadata.name
+    #namespace = kubernetes_manifest.service_account_fluent_bit[0].manifest.metadata.namespace
   }
 }

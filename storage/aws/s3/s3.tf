@@ -110,7 +110,7 @@ resource "aws_s3_bucket_public_access_block" "s3_bucket" {
   # Ref: https://github.com/hashicorp/terraform-provider-aws/issues/7628
 
   count                   = (var.s3.attach_public_policy ? 1 : 0)
-  bucket                  = local.attach_policy ? aws_s3_bucket_policy.s3_bucket.0.id : aws_s3_bucket.s3_bucket.id
+  bucket                  = local.attach_policy ? aws_s3_bucket_policy.s3_bucket[0].id : aws_s3_bucket.s3_bucket.id
   block_public_acls       = var.s3.block_public_acls
   block_public_policy     = var.s3.block_public_policy
   ignore_public_acls      = var.s3.ignore_public_acls

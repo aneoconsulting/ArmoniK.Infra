@@ -19,11 +19,11 @@ resource "helm_release" "keda_hpa_control_plane" {
   }
   set {
     name  = "scaleTargetRef.name"
-    value = kubernetes_deployment.control_plane.metadata.0.name
+    value = kubernetes_deployment.control_plane.metadata[0].name
   }
   set {
     name  = "scaleTargetRef.envSourceContainerName"
-    value = kubernetes_deployment.control_plane.spec.0.template.0.spec.0.container.0.name
+    value = kubernetes_deployment.control_plane.spec[0].template[0].spec[0].container[0].name
   }
   set {
     name  = "pollingInterval"

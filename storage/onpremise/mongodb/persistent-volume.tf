@@ -26,7 +26,7 @@ resource "kubernetes_persistent_volume_claim" "mongodb" {
   }
   spec {
     access_modes       = ["ReadWriteMany"]
-    storage_class_name = kubernetes_storage_class.mongodb.0.metadata.0.name
+    storage_class_name = kubernetes_storage_class.mongodb[0].metadata[0].name
     resources {
       requests = var.persistent_volume.resources.requests
       limits   = var.persistent_volume.resources.limits

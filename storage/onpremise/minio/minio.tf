@@ -83,29 +83,29 @@ resource "kubernetes_deployment" "minio" {
 # Kubernetes Minio service
 resource "kubernetes_service" "minio" {
   metadata {
-    name      = kubernetes_deployment.minio.metadata.0.name
-    namespace = kubernetes_deployment.minio.metadata.0.namespace
+    name      = kubernetes_deployment.minio.metadata[0].name
+    namespace = kubernetes_deployment.minio.metadata[0].namespace
     labels = {
-      app     = kubernetes_deployment.minio.metadata.0.labels.app
-      type    = kubernetes_deployment.minio.metadata.0.labels.type
-      service = kubernetes_deployment.minio.metadata.0.labels.service
+      app     = kubernetes_deployment.minio.metadata[0].labels.app
+      type    = kubernetes_deployment.minio.metadata[0].labels.type
+      service = kubernetes_deployment.minio.metadata[0].labels.service
     }
   }
   spec {
     type = "ClusterIP"
     selector = {
-      app     = kubernetes_deployment.minio.metadata.0.labels.app
-      type    = kubernetes_deployment.minio.metadata.0.labels.type
-      service = kubernetes_deployment.minio.metadata.0.labels.service
+      app     = kubernetes_deployment.minio.metadata[0].labels.app
+      type    = kubernetes_deployment.minio.metadata[0].labels.type
+      service = kubernetes_deployment.minio.metadata[0].labels.service
     }
     port {
-      name        = "${kubernetes_deployment.minio.metadata.0.name}-${local.port}"
+      name        = "${kubernetes_deployment.minio.metadata[0].name}-${local.port}"
       port        = local.port
       target_port = local.port
       protocol    = "TCP"
     }
     port {
-      name        = "${kubernetes_deployment.minio.metadata.0.name}-${local.console_port}"
+      name        = "${kubernetes_deployment.minio.metadata[0].name}-${local.console_port}"
       port        = local.console_port
       target_port = local.console_port
       protocol    = "TCP"

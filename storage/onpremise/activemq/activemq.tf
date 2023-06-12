@@ -84,21 +84,21 @@ resource "kubernetes_deployment" "activemq" {
         volume {
           name = "activemq-storage-secret-volume"
           secret {
-            secret_name = kubernetes_secret.activemq_certificate.metadata.0.name
+            secret_name = kubernetes_secret.activemq_certificate.metadata[0].name
             optional    = false
           }
         }
         volume {
           name = "activemq-jetty-xml"
           config_map {
-            name     = kubernetes_config_map.activemq_configs.metadata.0.name
+            name     = kubernetes_config_map.activemq_configs.metadata[0].name
             optional = false
           }
         }
         volume {
           name = "activemq-jolokia-xml"
           config_map {
-            name     = kubernetes_config_map.activemq_jolokia_configs.metadata.0.name
+            name     = kubernetes_config_map.activemq_jolokia_configs.metadata[0].name
             optional = false
           }
         }
@@ -110,20 +110,20 @@ resource "kubernetes_deployment" "activemq" {
 # Kubernetes ActiveMQ service
 resource "kubernetes_service" "activemq" {
   metadata {
-    name      = kubernetes_deployment.activemq.metadata.0.name
-    namespace = kubernetes_deployment.activemq.metadata.0.namespace
+    name      = kubernetes_deployment.activemq.metadata[0].name
+    namespace = kubernetes_deployment.activemq.metadata[0].namespace
     labels = {
-      app     = kubernetes_deployment.activemq.metadata.0.labels.app
-      type    = kubernetes_deployment.activemq.metadata.0.labels.type
-      service = kubernetes_deployment.activemq.metadata.0.labels.service
+      app     = kubernetes_deployment.activemq.metadata[0].labels.app
+      type    = kubernetes_deployment.activemq.metadata[0].labels.type
+      service = kubernetes_deployment.activemq.metadata[0].labels.service
     }
   }
   spec {
     type = "ClusterIP"
     selector = {
-      app     = kubernetes_deployment.activemq.metadata.0.labels.app
-      type    = kubernetes_deployment.activemq.metadata.0.labels.type
-      service = kubernetes_deployment.activemq.metadata.0.labels.service
+      app     = kubernetes_deployment.activemq.metadata[0].labels.app
+      type    = kubernetes_deployment.activemq.metadata[0].labels.type
+      service = kubernetes_deployment.activemq.metadata[0].labels.service
     }
     port {
       name        = "amqp"

@@ -38,7 +38,7 @@ locals {
       affinity                 = {}
       serviceAccount = {
         create      = false
-        name        = kubernetes_service_account.efs_csi_driver.metadata.0.name
+        name        = kubernetes_service_account.efs_csi_driver.metadata[0].name
         annotations = {}
       }
       healthPort           = 9909

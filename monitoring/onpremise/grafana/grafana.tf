@@ -86,28 +86,28 @@ resource "kubernetes_deployment" "grafana" {
         volume {
           name = "datasources-configmap"
           config_map {
-            name     = kubernetes_config_map.datasources_config.metadata.0.name
+            name     = kubernetes_config_map.datasources_config.metadata[0].name
             optional = false
           }
         }
         volume {
           name = "dashboards-json-configmap"
           config_map {
-            name     = kubernetes_config_map.dashboards_json_config.metadata.0.name
+            name     = kubernetes_config_map.dashboards_json_config.metadata[0].name
             optional = false
           }
         }
         volume {
           name = "dashboards-configmap"
           config_map {
-            name     = kubernetes_config_map.dashboards_config.metadata.0.name
+            name     = kubernetes_config_map.dashboards_config.metadata[0].name
             optional = false
           }
         }
         volume {
           name = "grafana-ini-configmap"
           config_map {
-            name     = kubernetes_config_map.grafana_ini.metadata.0.name
+            name     = kubernetes_config_map.grafana_ini.metadata[0].name
             optional = false
           }
         }
@@ -119,20 +119,20 @@ resource "kubernetes_deployment" "grafana" {
 # Kubernetes grafana service
 resource "kubernetes_service" "grafana" {
   metadata {
-    name      = kubernetes_deployment.grafana.metadata.0.name
-    namespace = kubernetes_deployment.grafana.metadata.0.namespace
+    name      = kubernetes_deployment.grafana.metadata[0].name
+    namespace = kubernetes_deployment.grafana.metadata[0].namespace
     labels = {
-      app     = kubernetes_deployment.grafana.metadata.0.labels.app
-      type    = kubernetes_deployment.grafana.metadata.0.labels.type
-      service = kubernetes_deployment.grafana.metadata.0.labels.service
+      app     = kubernetes_deployment.grafana.metadata[0].labels.app
+      type    = kubernetes_deployment.grafana.metadata[0].labels.type
+      service = kubernetes_deployment.grafana.metadata[0].labels.service
     }
   }
   spec {
     type = var.service_type
     selector = {
-      app     = kubernetes_deployment.grafana.metadata.0.labels.app
-      type    = kubernetes_deployment.grafana.metadata.0.labels.type
-      service = kubernetes_deployment.grafana.metadata.0.labels.service
+      app     = kubernetes_deployment.grafana.metadata[0].labels.app
+      type    = kubernetes_deployment.grafana.metadata[0].labels.type
+      service = kubernetes_deployment.grafana.metadata[0].labels.service
     }
     port {
       name        = "grafana"

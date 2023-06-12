@@ -59,7 +59,7 @@ resource "kubernetes_daemonset" "fluent_bit" {
           }
           env_from {
             config_map_ref {
-              name = kubernetes_config_map.fluent_bit_envvars_config.metadata.0.name
+              name = kubernetes_config_map.fluent_bit_envvars_config.metadata[0].name
             }
           }
           # Please don't change below read-only permissions
@@ -125,15 +125,15 @@ resource "kubernetes_daemonset" "fluent_bit" {
         volume {
           name = "fluent-bit-config"
           config_map {
-            name = kubernetes_config_map.fluent_bit_config.metadata.0.name
+            name = kubernetes_config_map.fluent_bit_config.metadata[0].name
           }
         }
         host_network                     = true
         dns_policy                       = "ClusterFirstWithHostNet"
         termination_grace_period_seconds = 10
-        service_account_name             = kubernetes_service_account.fluent_bit.0.metadata.0.name
+        service_account_name             = kubernetes_service_account.fluent_bit[0].metadata[0].name
         # To use kubernetes_manifest, you should have Kubernetes already installed !!
-        #service_account_name = kubernetes_manifest.service_account_fluent_bit.0.manifest.metadata.name
+        #service_account_name = kubernetes_manifest.service_account_fluent_bit[0].manifest.metadata.name
         toleration {
           key      = "node-role.kubernetes.io/master"
           operator = "Exists"

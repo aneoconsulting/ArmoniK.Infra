@@ -70,7 +70,7 @@ resource "kubernetes_deployment" "ingress" {
           }
           env_from {
             config_map_ref {
-              name = kubernetes_config_map.ingress.0.metadata.0.name
+              name = kubernetes_config_map.ingress[0].metadata[0].name
             }
           }
           volume_mount {
@@ -106,7 +106,7 @@ resource "kubernetes_deployment" "ingress" {
         volume {
           name = "ingress-nginx"
           config_map {
-            name     = kubernetes_config_map.ingress.0.metadata[0].name
+            name     = kubernetes_config_map.ingress[0].metadata[0].name
             optional = false
           }
         }
@@ -120,18 +120,18 @@ resource "kubernetes_service" "ingress" {
   count = var.ingress != null ? 1 : 0
 
   metadata {
-    name      = kubernetes_deployment.ingress.0.metadata.0.name
-    namespace = kubernetes_deployment.ingress.0.metadata.0.namespace
+    name      = kubernetes_deployment.ingress[0].metadata[0].name
+    namespace = kubernetes_deployment.ingress[0].metadata[0].namespace
     labels = {
-      app     = kubernetes_deployment.ingress.0.metadata.0.labels.app
-      service = kubernetes_deployment.ingress.0.metadata.0.labels.service
+      app     = kubernetes_deployment.ingress[0].metadata[0].labels.app
+      service = kubernetes_deployment.ingress[0].metadata[0].labels.service
     }
   }
   spec {
     type = var.ingress.service_type
     selector = {
-      app     = kubernetes_deployment.ingress.0.metadata.0.labels.app
-      service = kubernetes_deployment.ingress.0.metadata.0.labels.service
+      app     = kubernetes_deployment.ingress[0].metadata[0].labels.app
+      service = kubernetes_deployment.ingress[0].metadata[0].labels.service
     }
     dynamic "port" {
       for_each = var.ingress.http_port == var.ingress.grpc_port ? {
@@ -141,8 +141,8 @@ resource "kubernetes_service" "ingress" {
         "1" : var.ingress.grpc_port
       }
       content {
-        name        = kubernetes_deployment.ingress.0.spec.0.template.0.spec.0.container.0.port[port.key].name
-        target_port = kubernetes_deployment.ingress.0.spec.0.template.0.spec.0.container.0.port[port.key].container_port
+        name        = kubernetes_deployment.ingress[0].spec[0].template[0].spec[0].container[0].port[port.key].name
+        target_port = kubernetes_deployment.ingress[0].spec[0].template[0].spec[0].container[0].port[port.key].container_port
         port        = port.value
         protocol    = "TCP"
       }

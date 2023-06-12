@@ -60,7 +60,7 @@ resource "kubernetes_deployment" "partition_metrics_exporter" {
           }
           env_from {
             config_map_ref {
-              name = kubernetes_config_map.partition_metrics_exporter_config.metadata.0.name
+              name = kubernetes_config_map.partition_metrics_exporter_config.metadata[0].name
             }
           }
           dynamic "env" {
@@ -103,21 +103,21 @@ resource "kubernetes_deployment" "partition_metrics_exporter" {
 # Control plane service
 resource "kubernetes_service" "partition_metrics_exporter" {
   metadata {
-    name      = kubernetes_deployment.partition_metrics_exporter.metadata.0.name
-    namespace = kubernetes_deployment.partition_metrics_exporter.metadata.0.namespace
+    name      = kubernetes_deployment.partition_metrics_exporter.metadata[0].name
+    namespace = kubernetes_deployment.partition_metrics_exporter.metadata[0].namespace
     labels = {
-      app     = kubernetes_deployment.partition_metrics_exporter.metadata.0.labels.app
-      service = kubernetes_deployment.partition_metrics_exporter.metadata.0.labels.service
+      app     = kubernetes_deployment.partition_metrics_exporter.metadata[0].labels.app
+      service = kubernetes_deployment.partition_metrics_exporter.metadata[0].labels.service
     }
   }
   spec {
     type = var.service_type
     selector = {
-      app     = kubernetes_deployment.partition_metrics_exporter.metadata.0.labels.app
-      service = kubernetes_deployment.partition_metrics_exporter.metadata.0.labels.service
+      app     = kubernetes_deployment.partition_metrics_exporter.metadata[0].labels.app
+      service = kubernetes_deployment.partition_metrics_exporter.metadata[0].labels.service
     }
     port {
-      name        = kubernetes_deployment.partition_metrics_exporter.spec.0.template.0.spec.0.container.0.port.0.name
+      name        = kubernetes_deployment.partition_metrics_exporter.spec[0].template[0].spec[0].container[0].port[0].name
       port        = 9420
       target_port = 1080
       protocol    = "TCP"

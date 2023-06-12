@@ -72,7 +72,7 @@ resource "kubernetes_deployment" "prometheus" {
         volume {
           name = "prometheus-configmap"
           config_map {
-            name     = kubernetes_config_map.prometheus_config.metadata.0.name
+            name     = kubernetes_config_map.prometheus_config.metadata[0].name
             optional = false
           }
         }
@@ -84,20 +84,20 @@ resource "kubernetes_deployment" "prometheus" {
 # Kubernetes prometheus service
 resource "kubernetes_service" "prometheus" {
   metadata {
-    name      = kubernetes_deployment.prometheus.metadata.0.name
-    namespace = kubernetes_deployment.prometheus.metadata.0.namespace
+    name      = kubernetes_deployment.prometheus.metadata[0].name
+    namespace = kubernetes_deployment.prometheus.metadata[0].namespace
     labels = {
-      app     = kubernetes_deployment.prometheus.metadata.0.labels.app
-      type    = kubernetes_deployment.prometheus.metadata.0.labels.type
-      service = kubernetes_deployment.prometheus.metadata.0.labels.service
+      app     = kubernetes_deployment.prometheus.metadata[0].labels.app
+      type    = kubernetes_deployment.prometheus.metadata[0].labels.type
+      service = kubernetes_deployment.prometheus.metadata[0].labels.service
     }
   }
   spec {
     type = var.service_type
     selector = {
-      app     = kubernetes_deployment.prometheus.metadata.0.labels.app
-      type    = kubernetes_deployment.prometheus.metadata.0.labels.type
-      service = kubernetes_deployment.prometheus.metadata.0.labels.service
+      app     = kubernetes_deployment.prometheus.metadata[0].labels.app
+      type    = kubernetes_deployment.prometheus.metadata[0].labels.type
+      service = kubernetes_deployment.prometheus.metadata[0].labels.service
     }
     port {
       name        = "prometheus"
@@ -110,7 +110,7 @@ resource "kubernetes_service" "prometheus" {
 
 resource "kubernetes_cluster_role" "prometheus" {
   metadata {
-    name = "${kubernetes_deployment.prometheus.metadata.0.name}-${var.namespace}-${random_string.random_resources.result}"
+    name = "${kubernetes_deployment.prometheus.metadata[0].name}-${var.namespace}-${random_string.random_resources.result}"
     labels = {
       app     = "armonik"
       type    = "monitoring"
@@ -135,7 +135,7 @@ resource "kubernetes_cluster_role" "prometheus" {
 
 resource "kubernetes_cluster_role_binding" "prometheus" {
   metadata {
-    name = "${kubernetes_deployment.prometheus.metadata.0.name}-${var.namespace}-${random_string.random_resources.result}"
+    name = "${kubernetes_deployment.prometheus.metadata[0].name}-${var.namespace}-${random_string.random_resources.result}"
     labels = {
       app     = "armonik"
       type    = "monitoring"
@@ -145,7 +145,7 @@ resource "kubernetes_cluster_role_binding" "prometheus" {
   role_ref {
     api_group = "rbac.authorization.k8s.io"
     kind      = "ClusterRole"
-    name      = kubernetes_cluster_role.prometheus.metadata.0.name
+    name      = kubernetes_cluster_role.prometheus.metadata[0].name
   }
   # subject {
   #   kind      = "User"
@@ -166,7 +166,7 @@ resource "kubernetes_cluster_role_binding" "prometheus" {
 
 resource "kubernetes_cluster_role_binding" "prometheus_ns_armonik" {
   metadata {
-    name = "${kubernetes_deployment.prometheus.metadata.0.name}-${var.namespace}-ns-${random_string.random_resources.result}"
+    name = "${kubernetes_deployment.prometheus.metadata[0].name}-${var.namespace}-ns-${random_string.random_resources.result}"
     labels = {
       app     = "armonik"
       type    = "monitoring"
@@ -176,7 +176,7 @@ resource "kubernetes_cluster_role_binding" "prometheus_ns_armonik" {
   role_ref {
     api_group = "rbac.authorization.k8s.io"
     kind      = "ClusterRole"
-    name      = kubernetes_cluster_role.prometheus.metadata.0.name
+    name      = kubernetes_cluster_role.prometheus.metadata[0].name
   }
   subject {
     kind      = "ServiceAccount"

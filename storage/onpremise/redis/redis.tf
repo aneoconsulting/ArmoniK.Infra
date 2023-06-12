@@ -88,23 +88,23 @@ resource "kubernetes_deployment" "redis" {
 # Kubernetes Redis service
 resource "kubernetes_service" "redis" {
   metadata {
-    name      = kubernetes_deployment.redis.metadata.0.name
-    namespace = kubernetes_deployment.redis.metadata.0.namespace
+    name      = kubernetes_deployment.redis.metadata[0].name
+    namespace = kubernetes_deployment.redis.metadata[0].namespace
     labels = {
-      app     = kubernetes_deployment.redis.metadata.0.labels.app
-      type    = kubernetes_deployment.redis.metadata.0.labels.type
-      service = kubernetes_deployment.redis.metadata.0.labels.service
+      app     = kubernetes_deployment.redis.metadata[0].labels.app
+      type    = kubernetes_deployment.redis.metadata[0].labels.type
+      service = kubernetes_deployment.redis.metadata[0].labels.service
     }
   }
   spec {
     type = "ClusterIP"
     selector = {
-      app     = kubernetes_deployment.redis.metadata.0.labels.app
-      type    = kubernetes_deployment.redis.metadata.0.labels.type
-      service = kubernetes_deployment.redis.metadata.0.labels.service
+      app     = kubernetes_deployment.redis.metadata[0].labels.app
+      type    = kubernetes_deployment.redis.metadata[0].labels.type
+      service = kubernetes_deployment.redis.metadata[0].labels.service
     }
     port {
-      name        = kubernetes_deployment.redis.metadata.0.name
+      name        = kubernetes_deployment.redis.metadata[0].name
       port        = 6379
       target_port = 6379
       protocol    = "TCP"

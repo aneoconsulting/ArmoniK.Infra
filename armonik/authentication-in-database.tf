@@ -85,7 +85,7 @@ resource "kubernetes_job" "authentication_in_database" {
         volume {
           name = "mongodb-script"
           config_map {
-            name     = kubernetes_config_map.authmongo.0.metadata[0].name
+            name     = kubernetes_config_map.authmongo[0].metadata[0].name
             optional = false
           }
         }
@@ -110,7 +110,7 @@ locals {
     certificates_list = [
       for name, cert in data.tls_certificate.certificate_data : {
         Fingerprint = cert.certificates[length(cert.certificates) - 1].sha1_fingerprint,
-        CN          = tls_cert_request.ingress_client_cert_request[name].subject.0.common_name,
+        CN          = tls_cert_request.ingress_client_cert_request[name].subject[0].common_name,
         Username    = name
       }
     ]

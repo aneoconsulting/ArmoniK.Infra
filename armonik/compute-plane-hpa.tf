@@ -20,11 +20,11 @@ resource "helm_release" "keda_hpa_compute_plane" {
   }
   set {
     name  = "scaleTargetRef.name"
-    value = each.value.metadata.0.name
+    value = each.value.metadata[0].name
   }
   set {
     name  = "scaleTargetRef.envSourceContainerName"
-    value = each.value.spec.0.template.0.spec.0.container.0.name
+    value = each.value.spec[0].template[0].spec[0].container[0].name
   }
   set {
     name  = "pollingInterval"

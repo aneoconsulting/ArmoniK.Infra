@@ -88,20 +88,20 @@ resource "kubernetes_deployment" "seq" {
 # Kubernetes Seq service
 resource "kubernetes_service" "seq" {
   metadata {
-    name      = kubernetes_deployment.seq.metadata.0.name
-    namespace = kubernetes_deployment.seq.metadata.0.namespace
+    name      = kubernetes_deployment.seq.metadata[0].name
+    namespace = kubernetes_deployment.seq.metadata[0].namespace
     labels = {
-      app     = kubernetes_deployment.seq.metadata.0.labels.app
-      type    = kubernetes_deployment.seq.metadata.0.labels.type
-      service = kubernetes_deployment.seq.metadata.0.labels.service
+      app     = kubernetes_deployment.seq.metadata[0].labels.app
+      type    = kubernetes_deployment.seq.metadata[0].labels.type
+      service = kubernetes_deployment.seq.metadata[0].labels.service
     }
   }
   spec {
     type = "ClusterIP"
     selector = {
-      app     = kubernetes_deployment.seq.metadata.0.labels.app
-      type    = kubernetes_deployment.seq.metadata.0.labels.type
-      service = kubernetes_deployment.seq.metadata.0.labels.service
+      app     = kubernetes_deployment.seq.metadata[0].labels.app
+      type    = kubernetes_deployment.seq.metadata[0].labels.type
+      service = kubernetes_deployment.seq.metadata[0].labels.service
     }
     port {
       name        = "ingestion"
@@ -116,19 +116,19 @@ resource "kubernetes_service" "seq" {
 resource "kubernetes_service" "seq_web_console" {
   metadata {
     name      = "seq-web-console"
-    namespace = kubernetes_deployment.seq.metadata.0.namespace
+    namespace = kubernetes_deployment.seq.metadata[0].namespace
     labels = {
-      app     = kubernetes_deployment.seq.metadata.0.labels.app
-      type    = kubernetes_deployment.seq.metadata.0.labels.type
-      service = kubernetes_deployment.seq.metadata.0.labels.service
+      app     = kubernetes_deployment.seq.metadata[0].labels.app
+      type    = kubernetes_deployment.seq.metadata[0].labels.type
+      service = kubernetes_deployment.seq.metadata[0].labels.service
     }
   }
   spec {
     type = var.service_type
     selector = {
-      app     = kubernetes_deployment.seq.metadata.0.labels.app
-      type    = kubernetes_deployment.seq.metadata.0.labels.type
-      service = kubernetes_deployment.seq.metadata.0.labels.service
+      app     = kubernetes_deployment.seq.metadata[0].labels.app
+      type    = kubernetes_deployment.seq.metadata[0].labels.type
+      service = kubernetes_deployment.seq.metadata[0].labels.service
     }
     port {
       name        = "web"

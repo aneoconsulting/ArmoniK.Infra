@@ -21,7 +21,7 @@ output "is_daemonset" {
 output "configmaps" {
   description = "Configmaps of Fluent-bit"
   value = {
-    envvars = kubernetes_config_map.fluent_bit_envvars_config.metadata.0.name
-    config  = kubernetes_config_map.fluent_bit_config.metadata.0.name
+    envvars = kubernetes_config_map.fluent_bit_envvars_config.metadata[0].name
+    config  = kubernetes_config_map.fluent_bit_config.metadata[0].name
   }
 }

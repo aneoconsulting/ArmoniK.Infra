@@ -174,24 +174,24 @@ resource "kubernetes_deployment" "control_plane" {
 # Control plane service
 resource "kubernetes_service" "control_plane" {
   metadata {
-    name      = kubernetes_deployment.control_plane.metadata.0.name
-    namespace = kubernetes_deployment.control_plane.metadata.0.namespace
+    name      = kubernetes_deployment.control_plane.metadata[0].name
+    namespace = kubernetes_deployment.control_plane.metadata[0].namespace
     labels = {
-      app     = kubernetes_deployment.control_plane.metadata.0.labels.app
-      service = kubernetes_deployment.control_plane.metadata.0.labels.service
+      app     = kubernetes_deployment.control_plane.metadata[0].labels.app
+      service = kubernetes_deployment.control_plane.metadata[0].labels.service
     }
     annotations = var.control_plane.annotations
   }
   spec {
     type = var.control_plane.service_type
     selector = {
-      app     = kubernetes_deployment.control_plane.metadata.0.labels.app
-      service = kubernetes_deployment.control_plane.metadata.0.labels.service
+      app     = kubernetes_deployment.control_plane.metadata[0].labels.app
+      service = kubernetes_deployment.control_plane.metadata[0].labels.service
     }
     port {
-      name        = kubernetes_deployment.control_plane.spec.0.template.0.spec.0.container.0.port.0.name
+      name        = kubernetes_deployment.control_plane.spec[0].template[0].spec[0].container[0].port[0].name
       port        = var.control_plane.port
-      target_port = kubernetes_deployment.control_plane.spec.0.template.0.spec.0.container.0.port.0.container_port
+      target_port = kubernetes_deployment.control_plane.spec[0].template[0].spec[0].container[0].port[0].container_port
       protocol    = "TCP"
     }
   }

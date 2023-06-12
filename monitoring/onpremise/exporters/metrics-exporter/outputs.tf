@@ -16,7 +16,7 @@ output "host" {
 
 output "name" {
   description = "Name of Metrics exporter"
-  value       = kubernetes_service.metrics_exporter.metadata.0.name
+  value       = kubernetes_service.metrics_exporter.metadata[0].name
 }
 
 output "namespace" {

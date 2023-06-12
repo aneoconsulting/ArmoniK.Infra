@@ -24,14 +24,19 @@ jobs:
     runs-on: ubuntu-latest
     needs: collectInputs
     steps:
-      - uses: actions/checkout@v3
+      - name: Get Terraform docs config-file
+        id: config
+        uses: actions/checkout@v3
         with:
           ref: ${{ github.event.pull_request.head.ref }}
+        run: |
+          FILE="$(pwd)/.terraform-docs.yml"
+          echo "file=$FILE" >> $GITHUB_OUTPUT
       - name: Render terraform docs and push changes back to PR
         uses: terraform-docs/gh-actions@v1.0.0
         with:
           working-dir: ${{ needs.collectInputs.outputs.directories }}
-          config-file: .terraform-docs.yml
+          config-file: ${{ steps.config.outputs.file }}
           output-file: README.md
           output-method: inject
           indention: 2

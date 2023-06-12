@@ -1,6 +1,3 @@
-# Current account
-data "aws_caller_identity" "current" {}
-
 # EKS certificate
 data "tls_certificate" "eks" {
   url = var.eks_issuer
@@ -38,7 +35,7 @@ locals {
       affinity                 = {}
       serviceAccount = {
         create      = false
-        name        = kubernetes_service_account.efs_csi_driver.metadata.0.name
+        name        = kubernetes_service_account.efs_csi_driver.metadata[0].name
         annotations = {}
       }
       healthPort           = 9909

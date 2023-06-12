@@ -20,10 +20,3 @@ variable "node_selector" {
   type        = any
   default     = {}
 }
-
-# Working dir
-variable "working_dir" {
-  description = "Working directory"
-  type        = string
-  default     = ".."
-}

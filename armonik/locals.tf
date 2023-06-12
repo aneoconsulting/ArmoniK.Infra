@@ -36,16 +36,11 @@ locals {
   # Authentication
   authentication_require_authentication = try(var.authentication.require_authentication, false)
   authentication_require_authorization  = try(var.authentication.require_authorization, false)
-  authentication_datafile               = try(var.authentication.authentication_datafile, "")
 
   # Annotations
-  control_plane_annotations              = try(var.control_plane.annotations, {})
-  compute_plane_annotations              = { for partition in local.partition_names : partition => try(var.compute_plane[partition].annotations, {}) }
-  ingress_annotations                    = try(var.ingress.annotations, {})
-  job_partitions_in_database_annotations = try(var.job_partitions_in_database.annotations, {})
-
-  # ingress ports
-  ingress_ports = var.ingress != null ? distinct(compact([var.ingress.http_port, var.ingress.grpc_port])) : []
+  control_plane_annotations = try(var.control_plane.annotations, {})
+  compute_plane_annotations = { for partition in local.partition_names : partition => try(var.compute_plane[partition].annotations, {}) }
+  ingress_annotations       = try(var.ingress.annotations, {})
 
   # Secrets
   secrets = {
@@ -250,24 +245,24 @@ locals {
 
   # Configmaps for polling agent
   polling_agent_configmaps = {
-    log           = kubernetes_config_map.log_config.metadata.0.name
-    polling_agent = kubernetes_config_map.polling_agent_config.metadata.0.name
-    core          = kubernetes_config_map.core_config.metadata.0.name
-    compute_plane = kubernetes_config_map.compute_plane_config.metadata.0.name
+    log           = kubernetes_config_map.log_config.metadata[0].name
+    polling_agent = kubernetes_config_map.polling_agent_config.metadata[0].name
+    core          = kubernetes_config_map.core_config.metadata[0].name
+    compute_plane = kubernetes_config_map.compute_plane_config.metadata[0].name
   }
 
   # Configmaps for worker
   worker_configmaps = {
-    worker        = kubernetes_config_map.worker_config.metadata.0.name
-    compute_plane = kubernetes_config_map.compute_plane_config.metadata.0.name
-    log           = kubernetes_config_map.log_config.metadata.0.name
+    worker        = kubernetes_config_map.worker_config.metadata[0].name
+    compute_plane = kubernetes_config_map.compute_plane_config.metadata[0].name
+    log           = kubernetes_config_map.log_config.metadata[0].name
   }
 
   # Configmaps for control plane
   control_plane_configmaps = {
-    core          = kubernetes_config_map.core_config.metadata.0.name
-    log           = kubernetes_config_map.log_config.metadata.0.name
-    control_plane = kubernetes_config_map.control_plane_config.metadata.0.name
+    core          = kubernetes_config_map.core_config.metadata[0].name
+    log           = kubernetes_config_map.log_config.metadata[0].name
+    control_plane = kubernetes_config_map.control_plane_config.metadata[0].name
   }
 
   # Partitions data

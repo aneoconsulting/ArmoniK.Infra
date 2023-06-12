@@ -1,0 +1,50 @@
+<!-- BEGIN_TF_DOCS -->
+## Requirements
+
+| Name | Version |
+|------|---------|
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0 |
+| <a name="requirement_kubernetes"></a> [kubernetes](#requirement\_kubernetes) | >= 2.21.1 |
+
+## Providers
+
+| Name | Version |
+|------|---------|
+| <a name="provider_kubernetes"></a> [kubernetes](#provider\_kubernetes) | >= 2.21.1 |
+
+## Modules
+
+No modules.
+
+## Resources
+
+| Name | Type |
+|------|------|
+| [kubernetes_cluster_role.fluent_bit_role](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/cluster_role) | resource |
+| [kubernetes_cluster_role_binding.fluent_bit_role_binding](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/cluster_role_binding) | resource |
+| [kubernetes_config_map.fluent_bit_config](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/config_map) | resource |
+| [kubernetes_config_map.fluent_bit_envvars_config](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/config_map) | resource |
+| [kubernetes_daemonset.fluent_bit](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/daemonset) | resource |
+| [kubernetes_service_account.fluent_bit](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/service_account) | resource |
+
+## Inputs
+
+| Name | Description | Type | Default | Required |
+|------|-------------|------|---------|:--------:|
+| <a name="input_cloudwatch"></a> [cloudwatch](#input\_cloudwatch) | CloudWatch info | `any` | `{}` | no |
+| <a name="input_fluent_bit"></a> [fluent\_bit](#input\_fluent\_bit) | Parameters of Fluent bit | <pre>object({<br>    container_name     = string<br>    image              = string<br>    tag                = string<br>    is_daemonset       = bool<br>    http_server        = string<br>    http_port          = string<br>    read_from_head     = string<br>    read_from_tail     = string<br>    image_pull_secrets = string<br>    parser             = string<br>  })</pre> | n/a | yes |
+| <a name="input_namespace"></a> [namespace](#input\_namespace) | Namespace of ArmoniK monitoring | `string` | n/a | yes |
+| <a name="input_node_selector"></a> [node\_selector](#input\_node\_selector) | Node selector for Seq | `any` | `{}` | no |
+| <a name="input_s3"></a> [s3](#input\_s3) | S3 for logs | `any` | `{}` | no |
+| <a name="input_seq"></a> [seq](#input\_seq) | Seq info | `any` | `{}` | no |
+
+## Outputs
+
+| Name | Description |
+|------|-------------|
+| <a name="output_configmaps"></a> [configmaps](#output\_configmaps) | Configmaps of Fluent-bit |
+| <a name="output_container_name"></a> [container\_name](#output\_container\_name) | Container name of Fluent-bit |
+| <a name="output_image"></a> [image](#output\_image) | image of Fluent-bit |
+| <a name="output_is_daemonset"></a> [is\_daemonset](#output\_is\_daemonset) | Is Fluent-bit a daemonset |
+| <a name="output_tag"></a> [tag](#output\_tag) | tag of Fluent-bit |
+<!-- END_TF_DOCS -->

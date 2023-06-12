@@ -10,27 +10,6 @@ variable "logging_level" {
   type        = string
 }
 
-# Working dir
-variable "working_dir" {
-  description = "Working directory"
-  type        = string
-  default     = ".."
-}
-
-# List of needed storage
-variable "storage_endpoint_url" {
-  description = "List of storage needed by ArmoniK"
-  type        = any
-  default     = {}
-}
-
-# Monitoring
-variable "monitoring" {
-  description = "Monitoring info"
-  type        = any
-  default     = {}
-}
-
 # Parameters of ingress
 variable "ingress" {
   description = "Parameters of the ingress controller"

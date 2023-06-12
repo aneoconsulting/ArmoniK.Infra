@@ -16,13 +16,6 @@ variable "mongodb" {
   })
 }
 
-# Working dir
-variable "working_dir" {
-  description = "Working directory"
-  type        = string
-  default     = "../.."
-}
-
 # Persistent volume
 variable "persistent_volume" {
   description = "Persistent volume info"

@@ -99,8 +99,8 @@ server {
     }
 
 
-   proxy_buffering off;
-   proxy_request_buffering off;
+  proxy_buffering off;
+  proxy_request_buffering off;
 
 %{if data.kubernetes_secret.shared_storage.data.file_storage_type == "s3"~}
  location / {

@@ -33,9 +33,7 @@ jobs:
           working-dir: ${{ needs.collectInputs.outputs.directories }}
           output-file: README.md
           template: |-
-            <!-- BEGIN_TF_DOCS -->
-            {{ .Content }}
-            <!-- END_TF_DOCS -->\n
+            <!-- BEGIN_TF_DOCS -->\n{{ .Content }}\n<!-- END_TF_DOCS -->\n
           output-method: inject
           indention: 2
           git-push: true

@@ -38,9 +38,9 @@ locals {
   authentication_require_authorization  = try(var.authentication.require_authorization, false)
 
   # Annotations
-  control_plane_annotations              = try(var.control_plane.annotations, {})
-  compute_plane_annotations              = { for partition in local.partition_names : partition => try(var.compute_plane[partition].annotations, {}) }
-  ingress_annotations                    = try(var.ingress.annotations, {})
+  control_plane_annotations = try(var.control_plane.annotations, {})
+  compute_plane_annotations = { for partition in local.partition_names : partition => try(var.compute_plane[partition].annotations, {}) }
+  ingress_annotations       = try(var.ingress.annotations, {})
 
   # Secrets
   secrets = {

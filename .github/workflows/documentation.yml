@@ -7,7 +7,7 @@ jobs:
     name: Collect workflow inputs
     runs-on: ubuntu-latest
     outputs:
-      directories: ${{ steps.list.outputs.directories }}
+      directories: ${{ steps.search.outputs.directories }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -15,9 +15,9 @@ jobs:
         id: dirs
         uses: clowdhaus/terraform-composite-actions/directories@v1.8.3
       - name: Get list of directories separated with comma
-        id: list
+        id: search
         run: |
-          DIRS=$(echo {{ steps.dirs.outputs.directories }} | jq -r '. | join(",")')
+          DIRS=$(echo ${{ steps.dirs.outputs.directories }} | jq -r '. | join(",")')
           echo "directories=$DIRS" >> $GITHUB_OUTPUT
   docs:
     runs-on: ubuntu-latest
@@ -37,4 +37,6 @@ jobs:
           working-dir: ${{ needs.collectInputs.outputs.directories }}
           output-file: README.md
           output-method: inject
-          git-push: "true"
+          indention: 2
+          git-push: true
+          git-commit-message: "terraform-docs: automated action"

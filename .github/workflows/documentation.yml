@@ -1,7 +1,7 @@
 name: Generate terraform docs
 on:
-#  pull_request:
-#    branches: [ main, master ]
+  #  pull_request:
+  #    branches: [ main, master ]
   push:
 jobs:
   collectInputs:
@@ -24,11 +24,11 @@ jobs:
     runs-on: ubuntu-latest
     needs: collectInputs
     steps:
-      - name: Get Terraform docs config-file
-        id: config
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
         with:
           ref: ${{ github.event.pull_request.head.ref }}
+      - name: Get Terraform docs config-file
+        id: config
         run: |
           FILE="$(pwd)/.terraform-docs.yml"
           echo "file=$FILE" >> $GITHUB_OUTPUT

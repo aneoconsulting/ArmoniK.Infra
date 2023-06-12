@@ -11,6 +11,30 @@ jobs:
         modules:
           - ./armonik
           - ./storage/onpremise/redis
+          - ./container-registry/aws/ecr
+          - ./kubernetes/aws/eks
+          - ./monitoring/aws/cloudwatch-log-group
+          - ./monitoring/onpremise/exporters/metrics-exporter
+          - ./monitoring/onpremise/exporters/node-exporter
+          - ./monitoring/onpremise/exporters/partition-metrics-exporter
+          - ./monitoring/onpremise/fluent-bit
+          - ./monitoring/onpremise/grafana
+          - ./monitoring/onpremise/keda
+          - ./monitoring/onpremise/metrics-server
+          - ./monitoring/onpremise/prometheus
+          - ./monitoring/onpremise/seq
+          - ./persistent-volume/aws/efs
+          - ./storage/aws/efs
+          - ./storage/aws/elasticache
+          - ./storage/aws/mq
+          - ./storage/aws/s3
+          - ./storage/onpremise/activemq
+          - ./storage/onpremise/minio
+          - ./storage/onpremise/mongodb
+          - ./storage/onpremise/redis
+          - ./utils/aws/credentials
+          - ./utils/default-images
+          - ./storage/needed-storage
     steps:
       - uses: actions/checkout@v3
         with:

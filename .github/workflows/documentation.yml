@@ -1,8 +1,7 @@
 name: Generate terraform docs
 on:
-  #  pull_request:
-  #    branches: [ main, master ]
-  push:
+  pull_request:
+    branches: [ main, master ]
 jobs:
   collectInputs:
     name: Collect workflow inputs

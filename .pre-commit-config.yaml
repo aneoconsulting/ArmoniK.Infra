@@ -33,3 +33,7 @@ repos:
       #        args: [ --allow-multiple-documents ]
       #      - id: end-of-file-fixer
       - id: pretty-format-json
+        args:
+          - "--autofix"
+          - "--indent=2"
+          - "--no-sort-keys"

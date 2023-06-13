@@ -28,10 +28,12 @@ repos:
       - id: check-executables-have-shebangs
       - id: check-merge-conflict
       - id: check-shebang-scripts-are-executable
-      #      - id: check-symlinks
+      - id: check-symlinks
+      - id: check-json
       #      - id: check-yaml
       #        args: [ --allow-multiple-documents ]
-      #      - id: end-of-file-fixer
+      - id: end-of-file-fixer
+        exclude: "**/*.md"
       - id: pretty-format-json
         args:
           - "--autofix"

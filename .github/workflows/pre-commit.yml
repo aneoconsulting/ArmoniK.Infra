@@ -8,16 +8,10 @@ jobs:
   pre-commit:
     runs-on: ubuntu-latest
     steps:
-#      - name: Install tfsec for static analysis of Terraform code to spot potential misconfigurations
-#        run: |
-#          curl -s https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash
+      - name: Install tfsec for static analysis of Terraform code to spot potential misconfigurations
+        run: |
+          curl -s https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash
       - uses: terraform-linters/setup-tflint@v3
-#      - uses: aquasecurity/tfsec-pr-commenter-action@v1.3.1
-#        with:
-#          github_token: ${{ github.token }}
-      - uses: tfsec/tfsec-pr-commenter-action@main
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0

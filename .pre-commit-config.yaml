@@ -22,6 +22,7 @@ repos:
           - '--args=--only=terraform_required_providers'
           - '--args=--only=terraform_standard_module_structure'
           - '--args=--only=terraform_workspace_remote'
+      - id: terraform_tfsec
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
     hooks:
@@ -30,10 +31,10 @@ repos:
       - id: check-shebang-scripts-are-executable
       - id: check-symlinks
       - id: check-json
-      #      - id: check-yaml
-      #        args: [ --allow-multiple-documents ]
+#      - id: check-yaml
+#        args: [ --allow-multiple-documents ]
       - id: end-of-file-fixer
-        exclude: "**/*.md"
+        exclude: ".*md$"
       - id: pretty-format-json
         args:
           - "--autofix"

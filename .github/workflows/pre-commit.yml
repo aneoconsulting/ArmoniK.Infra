@@ -12,6 +12,9 @@ jobs:
         run: |
           curl -s https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash
       - uses: terraform-linters/setup-tflint@v3
+      - uses: HENNGE/tfupdate-action@v1.0.7
+        with:
+          resource: terraform, providers, module
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0

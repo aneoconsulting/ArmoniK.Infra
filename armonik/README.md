@@ -4,23 +4,22 @@
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0 |
-| <a name="requirement_helm"></a> [helm](#requirement\_helm) | >= 2.7.0 |
-| <a name="requirement_kubectl"></a> [kubectl](#requirement\_kubectl) | >= 1.14.0 |
+| <a name="requirement_helm"></a> [helm](#requirement\_helm) | >= 2.10.1 |
 | <a name="requirement_kubernetes"></a> [kubernetes](#requirement\_kubernetes) | >= 2.21.1 |
 | <a name="requirement_local"></a> [local](#requirement\_local) | >= 2.1.0 |
 | <a name="requirement_pkcs12"></a> [pkcs12](#requirement\_pkcs12) | >= 0.0.7 |
-| <a name="requirement_random"></a> [random](#requirement\_random) | >= 3.4.3 |
+| <a name="requirement_random"></a> [random](#requirement\_random) | >= 3.5.1 |
 | <a name="requirement_tls"></a> [tls](#requirement\_tls) | >= 4.0.4 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_helm"></a> [helm](#provider\_helm) | >= 2.7.0 |
+| <a name="provider_helm"></a> [helm](#provider\_helm) | >= 2.10.1 |
 | <a name="provider_kubernetes"></a> [kubernetes](#provider\_kubernetes) | >= 2.21.1 |
 | <a name="provider_local"></a> [local](#provider\_local) | >= 2.1.0 |
 | <a name="provider_pkcs12"></a> [pkcs12](#provider\_pkcs12) | >= 0.0.7 |
-| <a name="provider_random"></a> [random](#provider\_random) | >= 3.4.3 |
+| <a name="provider_random"></a> [random](#provider\_random) | >= 3.5.1 |
 | <a name="provider_tls"></a> [tls](#provider\_tls) | >= 4.0.4 |
 
 ## Modules

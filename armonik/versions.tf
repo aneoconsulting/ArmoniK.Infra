@@ -1,17 +1,13 @@
 terraform {
   required_version = ">= 1.0"
   required_providers {
-    kubectl = {
-      source  = "gavinbunney/kubectl"
-      version = ">= 1.14.0"
-    }
     kubernetes = {
       source  = "hashicorp/kubernetes"
       version = ">= 2.21.1"
     }
     helm = {
       source  = "hashicorp/helm"
-      version = ">= 2.7.0"
+      version = ">= 2.10.1"
     }
     pkcs12 = {
       source  = "chilicat/pkcs12"
@@ -19,7 +15,7 @@ terraform {
     }
     random = {
       source  = "hashicorp/random"
-      version = ">= 3.4.3"
+      version = ">= 3.5.1"
     }
     local = {
       source  = "hashicorp/local"

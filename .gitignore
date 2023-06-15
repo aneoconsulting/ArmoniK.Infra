@@ -43,3 +43,4 @@ terraform-plugins
 .idea
 kubeconfig_*
 generated
+.external_modules

@@ -92,4 +92,3 @@ output "tags" {
   description = "List of tags"
   value       = local.tags
 }
-

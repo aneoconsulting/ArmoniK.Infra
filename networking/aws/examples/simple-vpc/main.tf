@@ -35,7 +35,7 @@ locals {
   private_subnets       = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 4, k)]
   public_subnets        = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 8, k + 48)]
   #  pod_subnets           = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 8, k + 52)]
-  tags                  = {
+  tags = {
     env             = "test"
     app             = "simple-vpc"
     "create by"     = data.aws_caller_identity.current.arn

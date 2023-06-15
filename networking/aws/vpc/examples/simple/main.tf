@@ -28,27 +28,22 @@ resource "null_resource" "timestamp" {
 }
 
 locals {
-  name                  = "simple-vpc-${random_string.suffix.result}"
-  azs                   = data.aws_availability_zones.available.names
-  vpc_cidr              = "10.0.0.0/16"
-  secondary_cidr_blocks = ["20.0.0.0/16"]
-  private_subnets       = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 4, k)]
-  public_subnets        = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 8, k + 48)]
-  #  pod_subnets           = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 8, k + 52)]
-  tags = {
-    env             = "test"
-    app             = "simple-vpc"
-    "create by"     = data.aws_caller_identity.current.arn
-    "creation date" = null_resource.timestamp.triggers["creation_date"]
-  }
+  azs      = data.aws_availability_zones.available.names
+  vpc_cidr = "10.0.0.0/16"
 }
 
 module "simple_vpc" {
-  source                = "../../vpc"
-  name                  = local.name
+  source                = "../.."
+  name                  = "simple-${random_string.suffix.result}"
   cidr                  = local.vpc_cidr
-  secondary_cidr_blocks = local.secondary_cidr_blocks
-  private_subnets       = local.private_subnets
-  public_subnets        = local.public_subnets
-  tags                  = local.tags
+  secondary_cidr_blocks = ["20.0.0.0/16"]
+  private_subnets       = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 4, k)]
+  public_subnets        = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 8, k + 48)]
+  tags = {
+    env             = "test"
+    app             = "simple"
+    module          = "AWS VPC"
+    "create by"     = data.aws_caller_identity.current.arn
+    "creation date" = null_resource.timestamp.triggers["creation_date"]
+  }
 }

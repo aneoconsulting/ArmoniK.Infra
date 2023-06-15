@@ -47,7 +47,7 @@ module "complete_vpc" {
   flow_log_file_format                            = "plain-text"
   flow_log_max_aggregation_interval               = 60
   use_karpenter                                   = true
-  tags                                            = {
+  tags = {
     env             = "test"
     app             = "complete"
     module          = "AWS VPC"

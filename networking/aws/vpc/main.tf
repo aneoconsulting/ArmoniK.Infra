@@ -5,8 +5,8 @@ locals {
   tags                           = merge(var.tags, { module = "vpc" })
   kubernetes_public_subnet_tags  = can(coalesce(var.eks_name)) ? { "kubernetes.io/role/elb" = 1 } : null
   kubernetes_private_subnet_tags = can(coalesce(var.eks_name)) ? merge({ "kubernetes.io/role/internal-elb" = 1 }, (var.use_karpenter ? { "karpenter.sh/discovery" = var.eks_name } : null)) : null
-  secondary_cidr_blocks          = can(coalesce(var.eks_name)) ? concat(var.secondary_cidr_blocks, var.pod_subnets) : var.secondary_cidr_blocks
-  private_subnets                = can(coalesce(var.eks_name)) ? concat(var.private_subnets, var.pod_subnets) : var.private_subnets
+  secondary_cidr_blocks          = can(coalesce(var.eks_name)) ? distinct(compact(concat(var.secondary_cidr_blocks, var.pod_subnets))) : var.secondary_cidr_blocks
+  private_subnets                = can(coalesce(var.eks_name)) ? distinct(compact(concat(var.private_subnets, var.pod_subnets))) : var.private_subnets
   public_subnets                 = var.enable_external_access ? var.public_subnets : []
 }
 
@@ -48,4 +48,5 @@ data "aws_subnet" "pod_subnets" {
   for_each   = can(coalesce(var.eks_name)) ? toset(var.pod_subnets) : []
   vpc_id     = module.vpc.vpc_id
   cidr_block = each.key
+  depends_on = [module.vpc]
 }

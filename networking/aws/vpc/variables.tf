@@ -1,34 +1,91 @@
-# Tags
+variable "name" {
+  description = "Name of the VPC"
+  type        = string
+  default     = ""
+}
+
+variable "cidr" {
+  description = "Main CIDR bloc for the VPC"
+  type        = string
+  default     = "10.0.0.0/16"
+}
+
+variable "secondary_cidr_blocks" {
+  description = "List of secondary CIDR blocks to associate with the VPC to extend the IP Address pool"
+  type        = list(string)
+  default     = []
+}
+
+variable "private_subnets" {
+  description = "A list of private subnets inside the VPC"
+  type        = list(string)
+  default     = []
+}
+
+variable "public_subnets" {
+  description = "A list of public subnets inside the VPC"
+  type        = list(string)
+  default     = []
+}
+
+variable "enable_external_access" {
+  description = "Boolean to disable external access"
+  type        = bool
+  default     = true
+}
+
+variable "flow_log_cloudwatch_log_group_kms_key_id" {
+  description = "ARN of the KMS to encrypt/decrypt VPC flow logs"
+  type        = string
+  default     = null
+}
+
+variable "flow_log_cloudwatch_log_group_retention_in_days" {
+  description = "Number of days for retention of VPC flow logs in the CloudWatch"
+  type        = number
+  default     = null
+}
+
+variable "flow_log_file_format" {
+  description = "The format for the flow log"
+  type        = string
+  default     = "plain-text"
+  validation {
+    condition     = contains(["plain-text", "parquet"], var.flow_log_file_format)
+    error_message = "The valid values for the VPC flow log format for the flow log: \"plain-text\" | \"parque\"."
+  }
+}
+
+variable "flow_log_max_aggregation_interval" {
+  description = "The maximum interval of time during which a flow of packets is captured and aggregated into a flow log"
+  type        = number
+  default     = 60
+  validation {
+    condition     = contains([60, 600], var.flow_log_max_aggregation_interval)
+    error_message = "The valid values for tThe maximum interval of time during which a flow of packets is captured and aggregated into a flow log: 60 | 600."
+  }
+}
+
 variable "tags" {
-  description = "Tags for resource"
-  type        = any
+  description = "Map of keys,values to tags VPC resources"
+  type        = map(string)
   default     = {}
 }
 
-# VPC name
-variable "name" {
-  description = "AWS VPC service name"
+variable "eks_name" {
+  description = "Name of the EKS to be deployed in this VPC"
   type        = string
-  default     = "armonik-vpc"
+  default     = null
 }
 
-# VPC
-variable "vpc" {
-  description = "Parameters of AWS VPC"
-  type = object({
-    cluster_name                                    = string
-    main_cidr_block                                 = string
-    pod_cidr_block_private                          = list(string)
-    private_subnets                                 = list(string)
-    public_subnets                                  = list(string)
-    enable_private_subnet                           = bool
-    enable_nat_gateway                              = bool
-    single_nat_gateway                              = bool
-    flow_log_cloudwatch_log_group_kms_key_id        = string
-    flow_log_cloudwatch_log_group_retention_in_days = number
-    peering = object({
-      enabled      = bool
-      peer_vpc_ids = list(string)
-    })
-  })
+variable "pod_subnets" {
+  description = "List of CIDR blocks fot Pods"
+  type        = list(string)
+  default     = []
+}
+
+variable "use_karpenter" {
+  description = "Use Karpenter for the cluster autoscaling"
+  type        = bool
+  default     = false
 }

@@ -1,3 +1,14 @@
+# OnPremise kubeadm
+
+Create an kubernetes cluster
+
+* CNI : calico or flannel
+* Load balancer : MetalLB
+* VMs must already exists
+* VMs dns/ip must be reachable
+* need ssh access
+* linux only
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 

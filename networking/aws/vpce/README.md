@@ -1,8 +1,8 @@
 # AWS VPC endpoints
 
-This module provides a VPC endpoints in a given AWS VPC.
+This module provides AWS VPC endpoints in a given AWS VPC.
 
-Give for each endpoint object the following information:
+Give for each endpoint object to be created the following information:
 
 * `vpc_id`: (Required) The ID of the VPC in which the endpoint will be used.
 * `service`: (Optional) Common name of an AWS service (e.g., `s3`).

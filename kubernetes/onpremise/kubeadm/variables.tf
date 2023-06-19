@@ -1,16 +1,6 @@
 # AWS EC2 Instance Terraform Variables
 # EC2 Instance Variables
 
-# AWS EC2 Instance Type
-variable "node_type" {
-  description = "Node type: master or worker"
-  type        = string
-  validation {
-    condition     = contains(["master", "worker"], var.node_type)
-    error_message = "Possible values for the parameter node_type are \"master\" or \"worker\"."
-  }
-}
-
 variable "master_node_name" {
   description = "The name of the cluster master node."
   type        = string

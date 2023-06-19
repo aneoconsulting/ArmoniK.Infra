@@ -72,7 +72,7 @@ sudo kubeadm init \
   --token-ttl 40320m \
   --apiserver-cert-extra-sans "${master_public_ip}" \
   --pod-network-cidr "${cni_cidr}" \ 
-  --node-name master
+  --node-name ${node_name}
 
 # #Calico
 # sudo curl -s https://docs.projectcalico.org/manifests/calico.yaml > calico.yaml
@@ -168,5 +168,5 @@ kubectl replace --force -f /tmp/metallbipaddressrange.yaml
 sudo kubeadm join "${master_private_ip}:6443" \
   --token "${token}" \
   --discovery-token-unsafe-skip-ca-verification \
-  --node-name ${worker_name}
+  --node-name ${node_name}
 %{~ endif }

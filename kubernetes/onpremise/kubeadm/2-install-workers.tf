@@ -14,7 +14,7 @@ resource "null_resource" "install_kubernetes_cluster_node_worker" {
         master_private_ip = var.master_private_ip
         token             = var.kubeadm_token
         node              = "worker"
-        worker_name       = each.value.name
+        node_name         = each.value.name
         user              = var.user
         cni_pluggin       = var.cni_pluggin
     })
@@ -33,7 +33,7 @@ resource "null_resource" "install_kubernetes_cluster_node_worker" {
         master_private_ip   = var.master_private_ip
         token               = var.kubeadm_token
         node                = "worker"
-        worker_name         = each.value.name
+        node_name           = each.value.name
         user                = var.user
         cni_pluggin         = var.cni_pluggin
         loadbalancer_plugin = ""

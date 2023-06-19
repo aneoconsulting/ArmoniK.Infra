@@ -35,7 +35,6 @@ jobs:
             <!-- BEGIN_TF_DOCS -->
             {{ .Content }}
             <!-- END_TF_DOCS -->
-
           output-method: inject
           indention: 2
           git-push: true

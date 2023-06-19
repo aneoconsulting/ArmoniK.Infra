@@ -39,7 +39,7 @@ module "vpc" {
   eks_name        = "complete-vpce"
   private_subnets = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 4, k)]
   public_subnets  = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 8, k + 48)]
-  tags            = {
+  tags = {
     env             = "test"
     app             = "complete"
     module          = "AWS VPCE"
@@ -50,12 +50,12 @@ module "vpc" {
 
 # Create a VPC endpoint for S3
 module "vpce" {
-  source    = "../.."
-  vpc_id    = module.vpc.vpc_id
+  source = "../.."
+  vpc_id = module.vpc.vpc_id
   endpoints = {
     s3 = {
-      service         = "s3"
-      service_type    = "Gateway"
+      service      = "s3"
+      service_type = "Gateway"
       route_table_ids = flatten([
         module.vpc.this.intra_route_table_ids,
         module.vpc.this.private_route_table_ids,
@@ -139,7 +139,7 @@ module "vpce" {
   }
   security_group_ids = []
   subnet_ids         = []
-  tags               = {
+  tags = {
     env             = "test"
     app             = "complete"
     module          = "AWS VPCE"

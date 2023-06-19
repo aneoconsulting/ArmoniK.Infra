@@ -11,6 +11,12 @@ variable "node_type" {
   }
 }
 
+variable master_node_name {
+  description = "The name of the cluster master node."
+  type = string
+  default = "master"
+}
+
 # AWS EC2 Instance Key Pair
 variable "master_public_ip" {
   description = "The public ip of the master node."

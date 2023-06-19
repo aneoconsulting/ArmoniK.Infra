@@ -3,7 +3,7 @@
 
 # AWS EC2 Instance Type
 variable "node_type" {
-  description = "node_type"
+  description = "Node type: master or worker"
   type        = string
   validation {
     condition     = contains(["master", "worker"], var.node_type)

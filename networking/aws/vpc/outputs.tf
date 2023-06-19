@@ -1,44 +1,94 @@
-output "selected" {
-  description = "Created VPC"
-  value       = module.vpc
+output "azs" {
+  description = "A list of availability zones"
+  value       = module.vpc.azs
 }
 
-output "eks_cluster_name" {
-  description = "EKS cluster name"
-  value       = var.vpc.cluster_name
+output "name" {
+  description = "The name of the VPC"
+  value       = module.vpc.name
 }
 
-output "id" {
-  description = "ID of the VPC"
-  value       = module.vpc.vpc_id
+output "private_subnet_arns" {
+  description = "List of ARNs of private subnets"
+  value       = module.vpc.private_subnet_arns
 }
 
-output "cidr_block" {
-  description = "ID of the VPC"
+output "private_subnets" {
+  description = "List of IDs of private subnets"
+  value       = module.vpc.private_subnets
+}
+
+output "private_subnets_cidr_blocks" {
+  description = "List of cidr_blocks of private subnets"
+  value       = module.vpc.private_subnets_cidr_blocks
+}
+
+output "public_subnet_arns" {
+  description = "List of ARNs of public subnets"
+  value       = module.vpc.public_subnet_arns
+}
+
+output "public_subnets" {
+  description = "List of IDs of public subnets"
+  value       = module.vpc.public_subnets
+}
+
+output "public_subnets_cidr_blocks" {
+  description = "List of cidr_blocks of public subnets"
+  value       = module.vpc.public_subnets_cidr_blocks
+}
+
+output "vpc_arn" {
+  description = "The ARN of the VPC"
+  value       = module.vpc.vpc_arn
+}
+
+output "vpc_cidr_block" {
+  description = "The CIDR block of the VPC"
   value       = module.vpc.vpc_cidr_block
 }
 
-output "private_subnet_ids" {
-  description = "ids of the private subnet created"
-  value       = matchkeys(module.vpc.private_subnets, tolist(module.vpc.private_subnets_cidr_blocks), var.vpc.private_subnets)
+output "vpc_flow_log_cloudwatch_iam_role_arn" {
+  description = "The ARN of the IAM role used when pushing logs to Cloudwatch log group"
+  value       = module.vpc.vpc_flow_log_cloudwatch_iam_role_arn
 }
 
-output "public_subnet_ids" {
-  description = "ids of the public subnet created"
-  value       = matchkeys(module.vpc.public_subnets, tolist(module.vpc.public_subnets_cidr_blocks), var.vpc.public_subnets)
+output "vpc_flow_log_destination_arn" {
+  description = "The ARN of the destination for VPC Flow Logs"
+  value       = module.vpc.vpc_flow_log_destination_arn
 }
 
-output "pods_subnet_ids" {
-  description = "ids of the private subnet created"
-  value       = matchkeys(module.vpc.private_subnets, tolist(module.vpc.private_subnets_cidr_blocks), var.vpc.pod_cidr_block_private)
+output "vpc_flow_log_id" {
+  description = "The ID of the Flow Log resource"
+  value       = module.vpc.vpc_flow_log_id
 }
 
-output "pod_cidr_block_private" {
-  description = "CIDR Pod private subnets"
-  value       = var.vpc.pod_cidr_block_private
+output "vpc_id" {
+  description = "The ID of the VPC"
+  value       = module.vpc.vpc_id
 }
 
-output "kms_key_id" {
-  description = "ARN of KMS used for VPC"
-  value       = var.vpc.flow_log_cloudwatch_log_group_kms_key_id
+output "vpc_secondary_cidr_blocks" {
+  description = "List of secondary CIDR blocks of the VPC"
+  value       = module.vpc.vpc_secondary_cidr_blocks
+}
+
+output "pod_subnets_cidr_blocks" {
+  description = "List of Pods subnet CIDR blocks"
+  value       = var.pod_subnets
+}
+
+output "pod_subnet_arns" {
+  description = "List of ARNs of Pods subnets"
+  value       = [for subnet in data.aws_subnet.pod_subnets : subnet.arn]
+}
+
+output "pod_subnets" {
+  description = "List of IDs of Pods subnets"
+  value       = [for subnet in data.aws_subnet.pod_subnets : subnet.id]
+}
+
+output "tags" {
+  description = "List of tags"
+  value       = local.tags
 }

@@ -2,6 +2,7 @@ locals {
   tags = merge(var.tags, { module = "vpce" })
 }
 
+# Get the service name of each the VPC endpoints
 data "aws_vpc_endpoint_service" "endpoints" {
   for_each = var.endpoints
   service  = try(each.value["service"], null)
@@ -11,6 +12,7 @@ data "aws_vpc_endpoint_service" "endpoints" {
   }
 }
 
+# Create the VPC endpoints
 resource "aws_vpc_endpoint" "endpoints" {
   for_each            = var.endpoints
   service_name        = data.aws_vpc_endpoint_service.endpoints[each.key].service_name

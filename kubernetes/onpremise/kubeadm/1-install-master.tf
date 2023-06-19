@@ -57,4 +57,3 @@ resource "null_resource" "install_kubernetes_cluster_node_masters" {
     ]
   }
 }
-

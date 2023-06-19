@@ -30,7 +30,7 @@ locals {
 
 # call the module for kubeadm cluster creation
 module "install_kubeadm_cluster" {
-  source              = "../../install_kubeadm"
+  source              = "../.."
   master_public_ip    = local.master.public_dns
   master_private_ip   = local.master.private_dns
   tls_private_key_pem = local.master.private_key_pem

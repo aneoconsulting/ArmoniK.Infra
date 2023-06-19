@@ -3,6 +3,11 @@ output "azs" {
   value       = module.vpc.azs
 }
 
+output "enable_external_access" {
+  description = "Boolean to disable external access"
+  value       = var.enable_external_access
+}
+
 output "name" {
   description = "The name of the VPC"
   value       = module.vpc.name
@@ -91,4 +96,9 @@ output "pod_subnets" {
 output "tags" {
   description = "List of tags"
   value       = local.tags
+}
+
+output "this" {
+  description = "Object VPC"
+  value       = module.vpc
 }

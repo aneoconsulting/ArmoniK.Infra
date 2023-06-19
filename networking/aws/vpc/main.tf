@@ -1,37 +1,52 @@
 # Availability zones
 data "aws_availability_zones" "available" {}
 
+locals {
+  tags                           = merge(var.tags, { module = "vpc" })
+  kubernetes_public_subnet_tags  = can(coalesce(var.eks_name)) ? { "kubernetes.io/role/elb" = 1 } : null
+  kubernetes_private_subnet_tags = can(coalesce(var.eks_name)) ? merge({ "kubernetes.io/role/internal-elb" = 1 }, (var.use_karpenter ? { "karpenter.sh/discovery" = var.eks_name } : null)) : null
+  secondary_cidr_blocks          = can(coalesce(var.eks_name)) ? distinct(compact(concat(var.secondary_cidr_blocks, var.pod_subnets))) : var.secondary_cidr_blocks
+  private_subnets                = can(coalesce(var.eks_name)) ? distinct(compact(concat(var.private_subnets, var.pod_subnets))) : var.private_subnets
+  public_subnets                 = var.enable_external_access ? var.public_subnets : []
+}
+
 # VPC
 module "vpc" {
   source                = "terraform-aws-modules/vpc/aws"
   version               = "5.0.0"
   name                  = var.name
-  cidr                  = var.vpc.main_cidr_block
-  secondary_cidr_blocks = var.vpc.pod_cidr_block_private
   azs                   = data.aws_availability_zones.available.names
-  private_subnets       = concat(var.vpc.private_subnets, var.vpc.pod_cidr_block_private)
-  public_subnets        = (var.vpc.enable_private_subnet ? [] : var.vpc.public_subnets)
-  enable_nat_gateway    = !var.vpc.enable_nat_gateway
-  single_nat_gateway    = !var.vpc.single_nat_gateway
-  # required for private endpoint
-  enable_dns_hostnames                            = true
-  enable_dns_support                              = true
+  cidr                  = var.cidr
+  secondary_cidr_blocks = local.secondary_cidr_blocks
+  private_subnets       = local.private_subnets
+  public_subnets        = local.public_subnets
+  # DNS info, required for private endpoint
+  enable_dns_hostnames = true
+  enable_dns_support   = true
+  # External access
+  enable_nat_gateway = var.enable_external_access
+  single_nat_gateway = var.enable_external_access
+  # Cloudwatch log group and IAM role will be created
   enable_flow_log                                 = true
-  create_flow_log_cloudwatch_iam_role             = true
+  flow_log_destination_type                       = "cloud-watch-logs"
+  flow_log_file_format                            = var.flow_log_file_format
   create_flow_log_cloudwatch_log_group            = true
-  flow_log_cloudwatch_log_group_kms_key_id        = var.vpc.flow_log_cloudwatch_log_group_kms_key_id
-  flow_log_cloudwatch_log_group_retention_in_days = var.vpc.flow_log_cloudwatch_log_group_retention_in_days
-  tags = merge({
-    "kubernetes.io/cluster/${var.vpc.cluster_name}" = "shared"
-  }, local.tags)
-  public_subnet_tags = {
-    "kubernetes.io/cluster/${var.vpc.cluster_name}" = "shared"
-    "kubernetes.io/role/elb"                        = "1"
-    Tier                                            = "Public"
-  }
-  private_subnet_tags = {
-    "kubernetes.io/cluster/${var.vpc.cluster_name}" = "shared"
-    "kubernetes.io/role/internal-elb"               = "1"
-    Tier                                            = "Private"
-  }
+  create_flow_log_cloudwatch_iam_role             = true
+  flow_log_max_aggregation_interval               = var.flow_log_max_aggregation_interval
+  flow_log_cloudwatch_log_group_name_prefix       = "/aws/${var.name}-vpc-flow-logs/"
+  flow_log_cloudwatch_log_group_kms_key_id        = var.flow_log_cloudwatch_log_group_kms_key_id
+  flow_log_cloudwatch_log_group_retention_in_days = var.flow_log_cloudwatch_log_group_retention_in_days
+  # tags
+  tags                = local.tags
+  vpc_flow_log_tags   = local.tags
+  private_subnet_tags = merge(local.tags, local.kubernetes_private_subnet_tags, { Tier = "Private" })
+  public_subnet_tags  = merge(local.tags, local.kubernetes_public_subnet_tags, { Tier = "Public" })
+}
+
+# Pod subnets
+data "aws_subnet" "pod_subnets" {
+  for_each   = can(coalesce(var.eks_name)) ? toset(var.pod_subnets) : []
+  vpc_id     = module.vpc.vpc_id
+  cidr_block = each.key
+  depends_on = [module.vpc]
 }

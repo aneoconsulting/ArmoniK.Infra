@@ -11,10 +11,10 @@ variable "node_type" {
   }
 }
 
-variable master_node_name {
+variable "master_node_name" {
   description = "The name of the cluster master node."
-  type = string
-  default = "master"
+  type        = string
+  default     = "master"
 }
 
 # AWS EC2 Instance Key Pair

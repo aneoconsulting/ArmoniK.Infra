@@ -38,7 +38,7 @@ module "vpc" {
   name            = "vpce-simple-${random_string.suffix.result}"
   private_subnets = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 4, k)]
   public_subnets  = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 8, k + 48)]
-  tags            = {
+  tags = {
     env             = "test"
     app             = "simple"
     module          = "AWS VPCE"
@@ -49,8 +49,8 @@ module "vpc" {
 
 # Create a VPC endpoint for S3
 module "vpce" {
-  source    = "../.."
-  vpc_id    = module.vpc.vpc_id
+  source = "../.."
+  vpc_id = module.vpc.vpc_id
   endpoints = {
     s3 = {
       service      = "s3"

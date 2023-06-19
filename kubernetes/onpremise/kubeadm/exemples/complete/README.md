@@ -16,7 +16,7 @@
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_install_kubeadm_cluster"></a> [install\_kubeadm\_cluster](#module\_install\_kubeadm\_cluster) | ../install_kubeadm | n/a |
+| <a name="module_install_kubeadm_cluster"></a> [install\_kubeadm\_cluster](#module\_install\_kubeadm\_cluster) | ../../install_kubeadm | n/a |
 
 ## Resources
 

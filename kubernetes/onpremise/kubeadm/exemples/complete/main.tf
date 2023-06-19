@@ -38,7 +38,7 @@ module "install_kubeadm_cluster" {
   kubeadm_token       = local.token
   cni_pluggin         = "flannel" # calico or flannel
   loadbalancer_plugin = "metalLB"
-  workers             = local.workers_cluster_with_ip
+  workers             = local.workers
 }
 
 # left part of the kubeadm token.

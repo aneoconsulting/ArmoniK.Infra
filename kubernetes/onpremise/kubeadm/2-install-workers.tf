@@ -47,4 +47,3 @@ resource "null_resource" "install_kubernetes_cluster_node_worker" {
   }
   depends_on = [null_resource.install_kubernetes_cluster_node_masters]
 }
-

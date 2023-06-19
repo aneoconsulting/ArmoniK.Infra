@@ -14,13 +14,13 @@ Create an AWS VPC with these constraints:
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.3.0 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.4.0 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 5.3.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 5.4.0 |
 
 ## Modules
 
@@ -59,6 +59,7 @@ Create an AWS VPC with these constraints:
 | Name | Description |
 |------|-------------|
 | <a name="output_azs"></a> [azs](#output\_azs) | A list of availability zones |
+| <a name="output_enable_external_access"></a> [enable\_external\_access](#output\_enable\_external\_access) | Boolean to disable external access |
 | <a name="output_name"></a> [name](#output\_name) | The name of the VPC |
 | <a name="output_pod_subnet_arns"></a> [pod\_subnet\_arns](#output\_pod\_subnet\_arns) | List of ARNs of Pods subnets |
 | <a name="output_pod_subnets"></a> [pod\_subnets](#output\_pod\_subnets) | List of IDs of Pods subnets |
@@ -70,6 +71,7 @@ Create an AWS VPC with these constraints:
 | <a name="output_public_subnets"></a> [public\_subnets](#output\_public\_subnets) | List of IDs of public subnets |
 | <a name="output_public_subnets_cidr_blocks"></a> [public\_subnets\_cidr\_blocks](#output\_public\_subnets\_cidr\_blocks) | List of cidr\_blocks of public subnets |
 | <a name="output_tags"></a> [tags](#output\_tags) | List of tags |
+| <a name="output_this"></a> [this](#output\_this) | Object VPC |
 | <a name="output_vpc_arn"></a> [vpc\_arn](#output\_vpc\_arn) | The ARN of the VPC |
 | <a name="output_vpc_cidr_block"></a> [vpc\_cidr\_block](#output\_vpc\_cidr\_block) | The CIDR block of the VPC |
 | <a name="output_vpc_flow_log_cloudwatch_iam_role_arn"></a> [vpc\_flow\_log\_cloudwatch\_iam\_role\_arn](#output\_vpc\_flow\_log\_cloudwatch\_iam\_role\_arn) | The ARN of the IAM role used when pushing logs to Cloudwatch log group |

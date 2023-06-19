@@ -36,6 +36,7 @@ resource "null_resource" "install_kubernetes_cluster_node_worker" {
         node_name           = each.value.name
         user                = var.user
         cni_pluggin         = var.cni_pluggin
+        cni_cidr            = local.cni_cidr
         loadbalancer_plugin = ""
     })
     destination = "/tmp/${local.script_install_kubernetes}"

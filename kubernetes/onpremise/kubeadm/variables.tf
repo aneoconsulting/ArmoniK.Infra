@@ -70,15 +70,3 @@ variable "workers" {
     taints         = optional(list(string), [])
   }))
 }
-#ex:
-# "worker-1" = {
-#   "instance_count" = 1
-#   "labels" = tolist([
-#     "workers",
-#   ])
-#   "name" = "worker-1"
-#   "public_dns" = "ec2-3-8-5-81.eu-west-2.compute.amazonaws.com"
-#   "taints" = tolist([
-#     "workers",
-#   ])
-# }

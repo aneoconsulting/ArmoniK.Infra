@@ -3,11 +3,11 @@
 Create an kubernetes cluster
 
 * Red Hat or CentOs only
-* CNI : calico or flannel
+* CNI : Calico or Flannel
 * Load balancer : MetalLB
 * VMs must already exists
-* VMs dns/ip must be reachable
-* need ssh access
+* VMs DNS/IP must be reachable
+* Need SSH access
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements

@@ -29,14 +29,12 @@ jobs:
       - name: Render terraform docs and push changes back to PR
         uses: terraform-docs/gh-actions@v1.0.0
         with:
-          working-dir: ./armonik #${{ needs.collectInputs.outputs.directories }}
+          working-dir: ${{ needs.collectInputs.outputs.directories }}
           output-file: README.md
           template: |-
             <!-- BEGIN_TF_DOCS -->
             {{ .Content }}
             <!-- END_TF_DOCS -->
-
-
           output-method: inject
           indention: 2
           git-push: true

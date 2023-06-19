@@ -4,7 +4,7 @@ output "activemq_endpoint_url" {
   value = {
     url  = aws_mq_broker.mq.instances[0].endpoints[1]
     host = trim(split(":", aws_mq_broker.mq.instances[0].endpoints[1])[1], "//")
-    port = tonumber(split(":", aws_mq_broker.mq.instances[0].endpoints[1]).2)
+    port = tonumber(split(":", aws_mq_broker.mq.instances[0].endpoints[1])[2])
   }
 }
 

@@ -4,7 +4,7 @@ locals {
   master = {
     name                = "worker-1"
     public_dns          = "ec2-3-8-5-81.master.eu-west-2.compute.amazonaws.com"
-    private_dns          = "10.0.0.1"
+    private_dns         = "10.0.0.1"
     tls_private_key_pem = "my master node ssh private key"
 
   }

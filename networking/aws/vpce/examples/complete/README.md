@@ -39,7 +39,7 @@ terraform destroy
 | Name | Source | Version |
 |------|--------|---------|
 | <a name="module_vpc"></a> [vpc](#module\_vpc) | ../../../vpc | n/a |
-| <a name="module_vpce"></a> [vpce](#module\_vpce) | ../.. | n/a |
+| <a name="module_vpce"></a> [vpce](#module\_vpce) | ../../../vpce | n/a |
 
 ## Resources
 

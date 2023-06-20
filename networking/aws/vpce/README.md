@@ -1,11 +1,21 @@
 # AWS VPC endpoints
 
+A VPC endpoint enables customers to privately connect to supported AWS services and VPC endpoint services powered by AWS
+PrivateLink. Amazon VPC instances do not require public IP addresses to communicate with resources of the service. Traffic
+between an Amazon VPC and a service does not leave the Amazon network.
+
+VPC endpoints are virtual devices. They are horizontally scaled, redundant, and highly available Amazon VPC components that
+allow communication between instances in an Amazon VPC and services without imposing availability risks or bandwidth
+constraints on network traffic. There are two types of VPC endpoints:
+
+* interface endpoints 
+* gateway endpoints
+
 This module provides AWS VPC endpoints in a given AWS VPC.
 
-Give for each endpoint object to be created the following information:
+Give for each endpoint object to be created the following information (variable `endpoints`):
 
-* `vpc_id`: (Required) The ID of the VPC in which the endpoint will be used.
-* `service`: (Optional) Common name of an AWS service (e.g., `s3`).
+* `service`: (Required) Common name of an AWS service (e.g., `s3`).
 * `auto_accept`: (Optional) Accept the VPC endpoint (the VPC endpoint and service need to be in the same AWS account).
 * `policy`: (Optional) A policy to attach to the endpoint that controls access to the service. This is a JSON formatted
   string. Defaults to full access. All `Gateway` and some `Interface` endpoints support policies - see the [relevant AWS
@@ -26,7 +36,6 @@ Give for each endpoint object to be created the following information:
   block present, tags with matching keys will overwrite those defined at the provider-level.
 * `vpc_endpoint_type`: (Optional) The VPC endpoint type, `Gateway`, `GatewayLoadBalancer`, or `Interface`. Defaults
   to `Interface`.
-
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
@@ -57,9 +66,9 @@ No modules.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_endpoints"></a> [endpoints](#input\_endpoints) | A map of interface and/or gateway endpoints containing their properties and configurations | `any` | `{}` | no |
-| <a name="input_security_group_ids"></a> [security\_group\_ids](#input\_security\_group\_ids) | The IDs of security groups to associate with the network interfaces | `list(string)` | `[]` | no |
-| <a name="input_subnet_ids"></a> [subnet\_ids](#input\_subnet\_ids) | The IDs of subnets in which to create the network interfaces for the endpoints | `list(string)` | `[]` | no |
+| <a name="input_endpoints"></a> [endpoints](#input\_endpoints) | A map of interface and/or gateway endpoints containing their properties and configurations. See Section "AWS VPC endpoints" for the different arguments of an endpoint object. | `any` | `{}` | no |
+| <a name="input_security_group_ids"></a> [security\_group\_ids](#input\_security\_group\_ids) | The IDs of security groups to associate with the network interfaces | `set(string)` | `[]` | no |
+| <a name="input_subnet_ids"></a> [subnet\_ids](#input\_subnet\_ids) | The IDs of subnets in which to create the network interfaces for the endpoints | `set(string)` | `[]` | no |
 | <a name="input_tags"></a> [tags](#input\_tags) | A map of tags to use on all resources | `map(string)` | `{}` | no |
 | <a name="input_timeouts"></a> [timeouts](#input\_timeouts) | Define maximum timeout for creating, updating, and deleting VPC endpoint resources | `map(string)` | `{}` | no |
 | <a name="input_vpc_id"></a> [vpc\_id](#input\_vpc\_id) | The ID of the VPC in which the endpoint will be used | `string` | n/a | yes |

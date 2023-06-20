@@ -33,7 +33,7 @@ locals {
 }
 
 module "simple_vpc" {
-  source                = "../.."
+  source                = "../../../vpc"
   name                  = "simple-${random_string.suffix.result}"
   cidr                  = local.vpc_cidr
   secondary_cidr_blocks = ["20.0.0.0/16"]

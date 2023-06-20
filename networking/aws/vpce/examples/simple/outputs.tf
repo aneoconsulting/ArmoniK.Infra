@@ -1,6 +1,6 @@
 output "vpc_id" {
   description = "The ID of the VPC in which are created the VPC endpoints."
-  value       = module.vpc.vpc_id
+  value       = module.vpc.id
 }
 
 output "endpoints" {

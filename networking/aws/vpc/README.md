@@ -1,6 +1,10 @@
 # AWS VPC
 
-Create an AWS VPC with these constraints:
+With Amazon Virtual Private Cloud (Amazon VPC), you can launch AWS resources in a logically isolated virtual network that
+you've defined. This virtual network closely resembles a traditional network that you'd operate in your own data center,
+with the benefits of using the scalable infrastructure of AWS.
+
+This module creates an AWS VPC with these constraints:
 
 * Use all availability zones
 * Create VPC flow logs in CloudWatch
@@ -9,6 +13,7 @@ Create an AWS VPC with these constraints:
 * Possibility to set the use of the VPC for an AWS EKS (only one EKS)
 
 <!-- BEGIN_TF_DOCS -->
+
 ## Requirements
 
 | Name | Version |
@@ -79,4 +84,5 @@ Create an AWS VPC with these constraints:
 | <a name="output_vpc_flow_log_id"></a> [vpc\_flow\_log\_id](#output\_vpc\_flow\_log\_id) | The ID of the Flow Log resource |
 | <a name="output_vpc_id"></a> [vpc\_id](#output\_vpc\_id) | The ID of the VPC |
 | <a name="output_vpc_secondary_cidr_blocks"></a> [vpc\_secondary\_cidr\_blocks](#output\_vpc\_secondary\_cidr\_blocks) | List of secondary CIDR blocks of the VPC |
+
 <!-- END_TF_DOCS -->

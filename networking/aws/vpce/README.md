@@ -1,10 +1,20 @@
 # AWS VPC endpoints
 
+A VPC endpoint enables customers to privately connect to supported AWS services and VPC endpoint services powered by AWS
+PrivateLink. Amazon VPC instances do not require public IP addresses to communicate with resources of the service. Traffic
+between an Amazon VPC and a service does not leave the Amazon network.
+
+VPC endpoints are virtual devices. They are horizontally scaled, redundant, and highly available Amazon VPC components that
+allow communication between instances in an Amazon VPC and services without imposing availability risks or bandwidth
+constraints on network traffic. There are two types of VPC endpoints:
+
+* interface endpoints 
+* gateway endpoints
+
 This module provides AWS VPC endpoints in a given AWS VPC.
 
-Give for each endpoint object to be created the following information:
+Give for each endpoint object to be created the following information (variable `endpoints`):
 
-* `vpc_id`: (Required) The ID of the VPC in which the endpoint will be used.
 * `service`: (Optional) Common name of an AWS service (e.g., `s3`).
 * `auto_accept`: (Optional) Accept the VPC endpoint (the VPC endpoint and service need to be in the same AWS account).
 * `policy`: (Optional) A policy to attach to the endpoint that controls access to the service. This is a JSON formatted
@@ -27,8 +37,8 @@ Give for each endpoint object to be created the following information:
 * `vpc_endpoint_type`: (Optional) The VPC endpoint type, `Gateway`, `GatewayLoadBalancer`, or `Interface`. Defaults
   to `Interface`.
 
-
 <!-- BEGIN_TF_DOCS -->
+
 ## Requirements
 
 | Name | Version |
@@ -69,4 +79,5 @@ No modules.
 | Name | Description |
 |------|-------------|
 | <a name="output_endpoints"></a> [endpoints](#output\_endpoints) | Array containing the full resource object and attributes for all endpoints created |
+
 <!-- END_TF_DOCS -->

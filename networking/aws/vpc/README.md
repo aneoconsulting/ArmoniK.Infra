@@ -13,7 +13,6 @@ This module creates an AWS VPC with these constraints:
 * Possibility to set the use of the VPC for an AWS EKS (only one EKS)
 
 <!-- BEGIN_TF_DOCS -->
-
 ## Requirements
 
 | Name | Version |
@@ -84,5 +83,4 @@ This module creates an AWS VPC with these constraints:
 | <a name="output_vpc_flow_log_id"></a> [vpc\_flow\_log\_id](#output\_vpc\_flow\_log\_id) | The ID of the Flow Log resource |
 | <a name="output_vpc_id"></a> [vpc\_id](#output\_vpc\_id) | The ID of the VPC |
 | <a name="output_vpc_secondary_cidr_blocks"></a> [vpc\_secondary\_cidr\_blocks](#output\_vpc\_secondary\_cidr\_blocks) | List of secondary CIDR blocks of the VPC |
-
 <!-- END_TF_DOCS -->

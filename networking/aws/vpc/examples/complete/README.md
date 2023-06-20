@@ -38,7 +38,7 @@ terraform destroy
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_complete_vpc"></a> [complete\_vpc](#module\_complete\_vpc) | ../.. | n/a |
+| <a name="module_complete_vpc"></a> [complete\_vpc](#module\_complete\_vpc) | ../../../vpc | n/a |
 
 ## Resources
 

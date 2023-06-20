@@ -38,7 +38,7 @@ terraform destroy
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_simple_vpc"></a> [simple\_vpc](#module\_simple\_vpc) | ../.. | n/a |
+| <a name="module_simple_vpc"></a> [simple\_vpc](#module\_simple\_vpc) | ../../../vpc | n/a |
 
 ## Resources
 

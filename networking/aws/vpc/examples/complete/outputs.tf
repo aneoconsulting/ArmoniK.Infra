@@ -23,24 +23,24 @@ output "public_subnets_cidr_blocks" {
   value       = module.complete_vpc.public_subnets_cidr_blocks
 }
 
-output "vpc_cidr_block" {
+output "cidr_block" {
   description = "The CIDR block of the VPC"
-  value       = module.complete_vpc.vpc_cidr_block
+  value       = module.complete_vpc.cidr_block
 }
 
-output "vpc_id" {
+output "id" {
   description = "The ID of the VPC"
-  value       = module.complete_vpc.vpc_id
+  value       = module.complete_vpc.id
 }
 
-output "vpc_flow_log_id" {
+output "flow_log_id" {
   description = "The ID of the Flow Log resource"
-  value       = module.complete_vpc.vpc_flow_log_id
+  value       = module.complete_vpc.flow_log_id
 }
 
-output "vpc_secondary_cidr_blocks" {
+output "secondary_cidr_blocks" {
   description = "List of secondary CIDR blocks of the VPC"
-  value       = module.complete_vpc.vpc_secondary_cidr_blocks
+  value       = module.complete_vpc.secondary_cidr_blocks
 }
 
 output "pod_subnets_cidr_blocks" {

@@ -50,7 +50,7 @@ module "vpc" {
 # Create a VPC endpoint for S3
 module "vpce" {
   source = "../../../vpce"
-  vpc_id = module.vpc.vpc_id
+  vpc_id = module.vpc.id
   endpoints = {
     s3 = {
       service      = "s3"

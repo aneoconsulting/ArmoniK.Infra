@@ -1,5 +1,5 @@
 {
-  "branch": "release"
+  "branch": "release",
   "ci": false,
   "plugins": [
     [

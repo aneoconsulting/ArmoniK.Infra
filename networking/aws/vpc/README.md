@@ -1,6 +1,10 @@
 # AWS VPC
 
-Create an AWS VPC with these constraints:
+With Amazon Virtual Private Cloud (Amazon VPC), you can launch AWS resources in a logically isolated virtual network that
+you've defined. This virtual network closely resembles a traditional network that you'd operate in your own data center,
+with the benefits of using the scalable infrastructure of AWS.
+
+This module creates an AWS VPC with these constraints:
 
 * Use all availability zones
 * Create VPC flow logs in CloudWatch
@@ -14,13 +18,13 @@ Create an AWS VPC with these constraints:
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.3.0 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.4.0 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 5.3.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 5.4.0 |
 
 ## Modules
 
@@ -58,7 +62,14 @@ Create an AWS VPC with these constraints:
 
 | Name | Description |
 |------|-------------|
+| <a name="output_arn"></a> [arn](#output\_arn) | The ARN of the VPC |
 | <a name="output_azs"></a> [azs](#output\_azs) | A list of availability zones |
+| <a name="output_cidr_block"></a> [cidr\_block](#output\_cidr\_block) | The CIDR block of the VPC |
+| <a name="output_enable_external_access"></a> [enable\_external\_access](#output\_enable\_external\_access) | Boolean to disable external access |
+| <a name="output_flow_log_cloudwatch_iam_role_arn"></a> [flow\_log\_cloudwatch\_iam\_role\_arn](#output\_flow\_log\_cloudwatch\_iam\_role\_arn) | The ARN of the IAM role used when pushing logs to Cloudwatch log group |
+| <a name="output_flow_log_destination_arn"></a> [flow\_log\_destination\_arn](#output\_flow\_log\_destination\_arn) | The ARN of the destination for VPC Flow Logs |
+| <a name="output_flow_log_id"></a> [flow\_log\_id](#output\_flow\_log\_id) | The ID of the Flow Log resource |
+| <a name="output_id"></a> [id](#output\_id) | The ID of the VPC |
 | <a name="output_name"></a> [name](#output\_name) | The name of the VPC |
 | <a name="output_pod_subnet_arns"></a> [pod\_subnet\_arns](#output\_pod\_subnet\_arns) | List of ARNs of Pods subnets |
 | <a name="output_pod_subnets"></a> [pod\_subnets](#output\_pod\_subnets) | List of IDs of Pods subnets |
@@ -69,12 +80,7 @@ Create an AWS VPC with these constraints:
 | <a name="output_public_subnet_arns"></a> [public\_subnet\_arns](#output\_public\_subnet\_arns) | List of ARNs of public subnets |
 | <a name="output_public_subnets"></a> [public\_subnets](#output\_public\_subnets) | List of IDs of public subnets |
 | <a name="output_public_subnets_cidr_blocks"></a> [public\_subnets\_cidr\_blocks](#output\_public\_subnets\_cidr\_blocks) | List of cidr\_blocks of public subnets |
+| <a name="output_secondary_cidr_blocks"></a> [secondary\_cidr\_blocks](#output\_secondary\_cidr\_blocks) | List of secondary CIDR blocks of the VPC |
 | <a name="output_tags"></a> [tags](#output\_tags) | List of tags |
-| <a name="output_vpc_arn"></a> [vpc\_arn](#output\_vpc\_arn) | The ARN of the VPC |
-| <a name="output_vpc_cidr_block"></a> [vpc\_cidr\_block](#output\_vpc\_cidr\_block) | The CIDR block of the VPC |
-| <a name="output_vpc_flow_log_cloudwatch_iam_role_arn"></a> [vpc\_flow\_log\_cloudwatch\_iam\_role\_arn](#output\_vpc\_flow\_log\_cloudwatch\_iam\_role\_arn) | The ARN of the IAM role used when pushing logs to Cloudwatch log group |
-| <a name="output_vpc_flow_log_destination_arn"></a> [vpc\_flow\_log\_destination\_arn](#output\_vpc\_flow\_log\_destination\_arn) | The ARN of the destination for VPC Flow Logs |
-| <a name="output_vpc_flow_log_id"></a> [vpc\_flow\_log\_id](#output\_vpc\_flow\_log\_id) | The ID of the Flow Log resource |
-| <a name="output_vpc_id"></a> [vpc\_id](#output\_vpc\_id) | The ID of the VPC |
-| <a name="output_vpc_secondary_cidr_blocks"></a> [vpc\_secondary\_cidr\_blocks](#output\_vpc\_secondary\_cidr\_blocks) | List of secondary CIDR blocks of the VPC |
+| <a name="output_this"></a> [this](#output\_this) | Object VPC |
 <!-- END_TF_DOCS -->

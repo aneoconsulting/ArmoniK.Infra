@@ -15,7 +15,7 @@ This module provides AWS VPC endpoints in a given AWS VPC.
 
 Give for each endpoint object to be created the following information (variable `endpoints`):
 
-* `service`: (Optional) Common name of an AWS service (e.g., `s3`).
+* `service`: (Required) Common name of an AWS service (e.g., `s3`).
 * `auto_accept`: (Optional) Accept the VPC endpoint (the VPC endpoint and service need to be in the same AWS account).
 * `policy`: (Optional) A policy to attach to the endpoint that controls access to the service. This is a JSON formatted
   string. Defaults to full access. All `Gateway` and some `Interface` endpoints support policies - see the [relevant AWS

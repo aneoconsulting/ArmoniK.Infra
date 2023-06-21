@@ -1,5 +1,7 @@
 {
-  "branches": ["release"],
+  "branches": [
+    "release"
+  ],
   "ci": false,
   "plugins": [
     [

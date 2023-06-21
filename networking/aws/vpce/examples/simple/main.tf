@@ -32,17 +32,35 @@ locals {
   vpc_cidr = "10.0.0.0/16"
 }
 
-module "simple_vpc" {
-  source                = "../../../vpc"
-  name                  = "simple-${random_string.suffix.result}"
-  cidr                  = local.vpc_cidr
-  secondary_cidr_blocks = ["20.0.0.0/16"]
-  private_subnets       = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 4, k)]
-  public_subnets        = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 8, k + 48)]
+# Create VPC
+module "vpc" {
+  source          = "../../../vpc"
+  name            = "vpce-simple-${random_string.suffix.result}"
+  private_subnets = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 4, k)]
+  public_subnets  = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 8, k + 48)]
   tags = {
     env             = "test"
     app             = "simple"
-    module          = "AWS VPC"
+    module          = "AWS VPCE"
+    "create by"     = data.aws_caller_identity.current.arn
+    "creation date" = null_resource.timestamp.triggers["creation_date"]
+  }
+}
+
+# Create a VPC endpoint for S3
+module "vpce" {
+  source = "../../../vpce"
+  vpc_id = module.vpc.id
+  endpoints = {
+    s3 = {
+      service      = "s3"
+      service_type = "Gateway"
+    }
+  }
+  tags = {
+    env             = "test"
+    app             = "simple"
+    module          = "AWS VPCE"
     "create by"     = data.aws_caller_identity.current.arn
     "creation date" = null_resource.timestamp.triggers["creation_date"]
   }

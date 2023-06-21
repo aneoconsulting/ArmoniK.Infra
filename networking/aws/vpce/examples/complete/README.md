@@ -1,6 +1,6 @@
-# AWS VPC
+# AWS VPC endpoints for EKS
 
-To create an AWS VPC for an AWS EKS:
+To create AWS VPC endpoints for EKS:
 
 ```bash
 terraform init
@@ -38,7 +38,8 @@ terraform destroy
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_complete_vpc"></a> [complete\_vpc](#module\_complete\_vpc) | ../../../vpc | n/a |
+| <a name="module_vpc"></a> [vpc](#module\_vpc) | ../../../vpc | n/a |
+| <a name="module_vpce"></a> [vpce](#module\_vpce) | ../../../vpce | n/a |
 
 ## Resources
 
@@ -61,15 +62,6 @@ terraform destroy
 
 | Name | Description |
 |------|-------------|
-| <a name="output_cidr_block"></a> [cidr\_block](#output\_cidr\_block) | The CIDR block of the VPC |
-| <a name="output_flow_log_id"></a> [flow\_log\_id](#output\_flow\_log\_id) | The ID of the Flow Log resource |
-| <a name="output_id"></a> [id](#output\_id) | The ID of the VPC |
-| <a name="output_name"></a> [name](#output\_name) | The name of the VPC |
-| <a name="output_pod_subnets"></a> [pod\_subnets](#output\_pod\_subnets) | List of IDs of Pods subnets |
-| <a name="output_pod_subnets_cidr_blocks"></a> [pod\_subnets\_cidr\_blocks](#output\_pod\_subnets\_cidr\_blocks) | List of Pods subnet CIDR blocks |
-| <a name="output_private_subnets"></a> [private\_subnets](#output\_private\_subnets) | List of IDs of private subnets |
-| <a name="output_private_subnets_cidr_blocks"></a> [private\_subnets\_cidr\_blocks](#output\_private\_subnets\_cidr\_blocks) | List of cidr\_blocks of private subnets |
-| <a name="output_public_subnets"></a> [public\_subnets](#output\_public\_subnets) | List of IDs of public subnets |
-| <a name="output_public_subnets_cidr_blocks"></a> [public\_subnets\_cidr\_blocks](#output\_public\_subnets\_cidr\_blocks) | List of cidr\_blocks of public subnets |
-| <a name="output_secondary_cidr_blocks"></a> [secondary\_cidr\_blocks](#output\_secondary\_cidr\_blocks) | List of secondary CIDR blocks of the VPC |
+| <a name="output_endpoints"></a> [endpoints](#output\_endpoints) | Array containing the full resource object and attributes for all endpoints created |
+| <a name="output_vpc_id"></a> [vpc\_id](#output\_vpc\_id) | The ID of the VPC in which are created the VPC endpoints. |
 <!-- END_TF_DOCS -->

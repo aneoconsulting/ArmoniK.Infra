@@ -3,6 +3,11 @@ output "azs" {
   value       = module.vpc.azs
 }
 
+output "enable_external_access" {
+  description = "Boolean to disable external access"
+  value       = var.enable_external_access
+}
+
 output "name" {
   description = "The name of the VPC"
   value       = module.vpc.name
@@ -38,37 +43,37 @@ output "public_subnets_cidr_blocks" {
   value       = module.vpc.public_subnets_cidr_blocks
 }
 
-output "vpc_arn" {
+output "arn" {
   description = "The ARN of the VPC"
   value       = module.vpc.vpc_arn
 }
 
-output "vpc_cidr_block" {
+output "cidr_block" {
   description = "The CIDR block of the VPC"
   value       = module.vpc.vpc_cidr_block
 }
 
-output "vpc_flow_log_cloudwatch_iam_role_arn" {
+output "flow_log_cloudwatch_iam_role_arn" {
   description = "The ARN of the IAM role used when pushing logs to Cloudwatch log group"
   value       = module.vpc.vpc_flow_log_cloudwatch_iam_role_arn
 }
 
-output "vpc_flow_log_destination_arn" {
+output "flow_log_destination_arn" {
   description = "The ARN of the destination for VPC Flow Logs"
   value       = module.vpc.vpc_flow_log_destination_arn
 }
 
-output "vpc_flow_log_id" {
+output "flow_log_id" {
   description = "The ID of the Flow Log resource"
   value       = module.vpc.vpc_flow_log_id
 }
 
-output "vpc_id" {
+output "id" {
   description = "The ID of the VPC"
   value       = module.vpc.vpc_id
 }
 
-output "vpc_secondary_cidr_blocks" {
+output "secondary_cidr_blocks" {
   description = "List of secondary CIDR blocks of the VPC"
   value       = module.vpc.vpc_secondary_cidr_blocks
 }
@@ -91,4 +96,9 @@ output "pod_subnets" {
 output "tags" {
   description = "List of tags"
   value       = local.tags
+}
+
+output "this" {
+  description = "Object VPC"
+  value       = module.vpc
 }

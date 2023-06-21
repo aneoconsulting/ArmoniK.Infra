@@ -4,11 +4,6 @@ on:
   push:
     branches:
       - release
-    paths:
-      - '**/*.tpl'
-      - '**/*.py'
-      - '**/*.tf'
-      - '.github/workflows/release.yml'
 jobs:
   release:
     name: Release

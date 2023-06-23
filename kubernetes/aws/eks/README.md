@@ -7,7 +7,7 @@
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.3.0 |
 | <a name="requirement_helm"></a> [helm](#requirement\_helm) | >= 2.10.1 |
 | <a name="requirement_null"></a> [null](#requirement\_null) | >= 3.2.1 |
-| <a name="requirement_random"></a> [random](#requirement\_random) | >= 3.4.3 |
+| <a name="requirement_random"></a> [random](#requirement\_random) | >= 3.5.1 |
 
 ## Providers
 

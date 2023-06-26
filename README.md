@@ -1,19 +1,19 @@
 # Table of contents
 
 - [Introduction](#introduction)
-- [ConventionalCommit](#conventional-commits-rules)
+- [PR_ConventionalCommit](#PR-conventional-commits-rules)
 - [Bugs/Support](#bugssupport)
 
 # Introduction
 
 In this project contains Terraform modules for the different resources and components of ArmoniK.
-# Conventional Commits Rules
+# Conventional PULL REQUEST Commits Rules
 
-This GitHub repository follows the "Conventional Commits" rules for managing commits and releases, making it easier to find and understand commits. "Conventional Commits" is a convention for structuring commit messages to describe changes.
+This GitHub repository follows the "Conventional Commits" rules for managing PR commits and releases, making it easier to find and understand commits of the main branch. "Conventional Commits" is a convention for structuring PR commit messages to describe changes.
 
-- **Commit Message Format**:
+- **PULL REQUEST Message Format**:
 
-Each commit message consists of a **header**, a **body** and a **footer**.  The header has a special
+Each PR commit message consists of a **header**, a **body** and a **footer**.  The header has a special
 format that includes a **type**, a **scope** and a **subject**:
 
 ```
@@ -35,7 +35,7 @@ format that includes a **type**, a **scope** and a **subject**:
   - `chore`: maintenance or organizational tasks.
   - `build`: Changes that affect the build system or external dependencies (example scopes: gulp, broccoli, npm)
 
-Example of a Conventional Commit:
+Example of a Conventional Commit of PULL REQUEST:
 
 ```
 docs(changelog): update changelog to beta.5

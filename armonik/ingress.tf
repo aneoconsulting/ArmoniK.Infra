@@ -88,6 +88,11 @@ resource "kubernetes_deployment" "ingress" {
             mount_path = "/etc/nginx/conf.d"
             read_only  = true
           }
+          volume_mount {
+            name       = "static"
+            mount_path = "/static"
+            read_only  = true
+          }
         }
         volume {
           name = "ingress-secret-volume"
@@ -107,6 +112,13 @@ resource "kubernetes_deployment" "ingress" {
           name = "ingress-nginx"
           config_map {
             name     = kubernetes_config_map.ingress.0.metadata[0].name
+            optional = false
+          }
+        }
+        volume {
+          name = "static"
+          config_map {
+            name     = kubernetes_config_map.static.0.metadata[0].name
             optional = false
           }
         }

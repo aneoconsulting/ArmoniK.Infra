@@ -19,9 +19,9 @@ variable "kms_key_id" {
 }
 
 # List of ECR repositories to create
-variable "repositories" {
+/*variable "repositories" {
   description = "List of ECR repositories to create"
-  type        = list(any)
+  type        = list(any) // TODO : we want a map of objects (key is name and values are image and tag)
   default = [
     {
       name  = "mongodb"
@@ -84,4 +84,19 @@ variable "repositories" {
       tag   = "1.3.11"
     }
   ]
+} */
+
+# List of ECR repositories to create
+variable "repositories" {
+  description = "List of ECR repositories to create"
+  type = map(object({
+    image = string
+    tag   = string
+  }))
+  default = {
+    armonik-control-plane = {
+      image = "dockerhubaneo/armonik_control"
+      tag   = "0.4.0"
+    }
+  }
 }

@@ -110,20 +110,20 @@ resource "kubernetes_deployment" "activemq" {
 # Kubernetes ActiveMQ service
 resource "kubernetes_service" "activemq" {
   metadata {
-    name      = kubernetes_deployment.activemq.metadata[0].name
-    namespace = kubernetes_deployment.activemq.metadata[0].namespace
+    name      = "activemq"
+    namespace = var.namespace
     labels = {
-      app     = kubernetes_deployment.activemq.metadata[0].labels.app
-      type    = kubernetes_deployment.activemq.metadata[0].labels.type
-      service = kubernetes_deployment.activemq.metadata[0].labels.service
+      app     = "storage"
+          type    = "queue"
+          service = "activemq"
     }
   }
   spec {
     type = "ClusterIP"
     selector = {
-      app     = kubernetes_deployment.activemq.metadata[0].labels.app
-      type    = kubernetes_deployment.activemq.metadata[0].labels.type
-      service = kubernetes_deployment.activemq.metadata[0].labels.service
+      app     = "storage"
+          type    = "queue"
+          service = "activemq"
     }
     port {
       name        = "amqp"

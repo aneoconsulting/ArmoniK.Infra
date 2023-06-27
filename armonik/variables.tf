@@ -355,3 +355,9 @@ variable "metrics_server_chart_name" {
   type        = string
   default     = "metrics-server"
 }
+
+variable "environment_description" {
+  description = "Description of the environment deployed"
+  type        = any
+  default     = null
+}

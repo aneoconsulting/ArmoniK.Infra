@@ -114,16 +114,16 @@ resource "kubernetes_service" "activemq" {
     namespace = var.namespace
     labels = {
       app     = "storage"
-          type    = "queue"
-          service = "activemq"
+      type    = "queue"
+      service = "activemq"
     }
   }
   spec {
     type = "ClusterIP"
     selector = {
       app     = "storage"
-          type    = "queue"
-          service = "activemq"
+      type    = "queue"
+      service = "activemq"
     }
     port {
       name        = "amqp"

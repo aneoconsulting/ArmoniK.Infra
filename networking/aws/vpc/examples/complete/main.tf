@@ -33,7 +33,7 @@ locals {
 }
 
 module "complete_vpc" {
-  source                                          = "../.."
+  source                                          = "../../../vpc"
   name                                            = "complete-${random_string.suffix.result}"
   eks_name                                        = "complete-vpc"
   cidr                                            = local.vpc_cidr

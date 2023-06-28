@@ -44,13 +44,13 @@ data "aws_iam_policy_document" "iam-ecr" {
   }
 }
 
-resource "aws_ecr_repository_policy" "ecr-policy" {
+resource "aws_ecr_repository_policy" "ecr_policy" {
   repository = aws_ecr_repository.ecr.name
   policy     = data.aws_iam_policy_document.iam-ecr.json
 }
 
 # Copy images
-resource "null_resource" "copy_images" {
+/*resource "null_resource" "copy_images" {
   count = length(var.repositories)
   triggers = {
     state = join("-", [
@@ -77,6 +77,43 @@ fi
 if ! docker push ${data.aws_caller_identity.current.account_id}.dkr.ecr.${local.region}.amazonaws.com/${var.repositories[count.index].name}:${var.repositories[count.index].tag}
 then
   echo "cannot push image ${data.aws_caller_identity.current.account_id}.dkr.ecr.${local.region}.amazonaws.com/${var.repositories[count.index].name}:${var.repositories[count.index].tag}"
+  exit 1
+fi
+EOT
+  }
+  depends_on = [
+    aws_ecr_repository.ecr
+  ]
+}*/
+
+# Copy images
+resource "null_resource" "copy_images" {
+  for_each = var.repositories
+  triggers = {
+    state = join("-", [
+      var.repositories[each.key], var.repositories[each.key].image, var.repositories[each.key].tag
+    ])
+  }
+  provisioner "local-exec" {
+    command = <<-EOT
+aws ecr get-login-password --profile ${var.profile} --region ${local.region}  | docker login --username AWS --password-stdin ${data.aws_caller_identity.current.account_id}.dkr.ecr.${local.region}.amazonaws.com
+aws ecr-public get-login-password --profile ${var.profile} --region us-east-1  | docker login --username AWS --password-stdin public.ecr.aws
+if [ -z "$(docker images -q '${var.repositories[each.key].image}:${var.repositories[each.key].tag}')" ]
+then
+  if ! docker pull ${var.repositories[each.key].image}:${var.repositories[each.key].tag}
+  then
+    echo "cannot download image ${var.repositories[each.key].image}:${var.repositories[each.key].tag}"
+    exit 1
+  fi
+fi
+if ! docker tag ${var.repositories[each.key].image}:${var.repositories[each.key].tag} ${data.aws_caller_identity.current.account_id}.dkr.ecr.${local.region}.amazonaws.com/${var.repositories[each.key].name}:${var.repositories[each.key].tag}
+then
+  echo "cannot tag image ${var.repositories[each.key].image}:${var.repositories[each.key].tag} to ${data.aws_caller_identity.current.account_id}.dkr.ecr.${local.region}.amazonaws.com/${var.repositories[each.key]}:${var.repositories[each.key].tag}"
+  exit 1
+fi
+if ! docker push ${data.aws_caller_identity.current.account_id}.dkr.ecr.${local.region}.amazonaws.com/${var.repositories[each.key]}:${var.repositories[each.key].tag}
+then
+  echo "cannot push image ${data.aws_caller_identity.current.account_id}.dkr.ecr.${local.region}.amazonaws.com/${var.repositories[each.key]}:${var.repositories[each.key].tag}"
   exit 1
 fi
 EOT

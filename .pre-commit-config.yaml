@@ -34,8 +34,9 @@ repos:
       - id: check-shebang-scripts-are-executable
       - id: check-symlinks
       - id: check-json
-#      - id: check-yaml
-#        args: [ --allow-multiple-documents ]
+      - id: check-yaml
+        args: [ --allow-multiple-documents]
+        exclude: .*/charts/.*/template\.*
       - id: end-of-file-fixer
         exclude: ".*md$"
       - id: pretty-format-json

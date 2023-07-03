@@ -24,7 +24,7 @@ variable "user" {
   type        = string
 }
 
-variable "tls_private_key_pem" {
+variable "tls_private_key_pem_content" {
   description = "The private key of the master node."
   type        = string
 }

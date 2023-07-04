@@ -4,7 +4,7 @@ locals {
     name                = "master-1"
     public_dns          = "PUBLIC_DNS_HERE" # it can be private if you are in the dest network
     private_dns         = "PRIVATE_DNS_HERE"
-    tls_private_key_pem = "my master node ssh private key"
+    tls_private_key_pem_file = "my master node ssh private key"
   }
   workers = {
     "worker-1" = {
@@ -31,7 +31,7 @@ module "install_kubeadm_cluster" {
   source                      = "../.."
   master_public_ip            = local.master.public_dns
   master_private_ip           = local.master.private_dns
-  tls_private_key_pem_content = file(local.master.tls_private_key_pem)
+  tls_private_key_pem_content = file(local.master.tls_private_key_pem_file)
   user                        = local.user
   kubeadm_token               = local.token
   cni_pluggin                 = "flannel" # calico or flannel

@@ -1,6 +1,7 @@
 # OnPremise kubeadm
-how to use it : 
-you have update values PUBLIC_DNS_HERE, PRIVATE_DNS_HERE and TLS_PRIVATE_KEY_FILE_HERE in the file terraform.tfvars
+### how to use it : 
+You have to update values PUBLIC_DNS_HERE, PRIVATE_DNS_HERE and TLS_PRIVATE_KEY_FILE_HERE
+in the file [terraform.tfvars](terraform.tfvars)
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements

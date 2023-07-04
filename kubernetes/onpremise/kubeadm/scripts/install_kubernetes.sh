@@ -1,5 +1,3 @@
-#! /bin/sh
-
 # The goal of this script is to install kubernetes on centos/Red Hat through kubeadm on master and slaves nodes
 # On master  it will install : kubectl + kubeadm + CNI + LB
 # On workers it will install : kubeadm +  

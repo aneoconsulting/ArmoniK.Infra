@@ -21,4 +21,3 @@ workers = {
 }
 
 user = "ec2-user" #ec2-user is used for redhat image by default
-

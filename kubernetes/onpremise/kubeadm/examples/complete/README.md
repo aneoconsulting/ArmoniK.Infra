@@ -4,13 +4,14 @@
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0 |
+| <a name="requirement_null"></a> [null](#requirement\_null) | >= 3.2.1 |
 | <a name="requirement_random"></a> [random](#requirement\_random) | ~> 3.5.1 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_null"></a> [null](#provider\_null) | n/a |
+| <a name="provider_null"></a> [null](#provider\_null) | >= 3.2.1 |
 | <a name="provider_random"></a> [random](#provider\_random) | ~> 3.5.1 |
 
 ## Modules
@@ -35,5 +36,6 @@ No inputs.
 
 | Name | Description |
 |------|-------------|
-| <a name="output_kubeconfig_file"></a> [kubeconfig\_file](#output\_kubeconfig\_file) | A sample command to display nodes of your cluster |
+| <a name="output_display_nodes_command_jelp"></a> [display\_nodes\_command\_jelp](#output\_display\_nodes\_command\_jelp) | A sample command to display nodes of your cluster |
+| <a name="output_kubeconfig_file_export_help"></a> [kubeconfig\_file\_export\_help](#output\_kubeconfig\_file\_export\_help) | Use this export to begin to use your cluster |
 <!-- END_TF_DOCS -->

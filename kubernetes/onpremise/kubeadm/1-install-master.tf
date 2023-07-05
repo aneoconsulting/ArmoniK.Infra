@@ -13,7 +13,7 @@ resource "null_resource" "install_kubernetes_cluster_node_masters" {
   connection {
     type        = "ssh"
     user        = var.user
-    private_key = var.tls_private_key_pem
+    private_key = var.tls_private_key_pem_content
     host        = var.master_public_ip
     port        = 22
   }

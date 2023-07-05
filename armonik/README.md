@@ -39,6 +39,7 @@ No modules.
 | [kubernetes_config_map.ingress](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/config_map) | resource |
 | [kubernetes_config_map.log_config](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/config_map) | resource |
 | [kubernetes_config_map.polling_agent_config](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/config_map) | resource |
+| [kubernetes_config_map.static](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/config_map) | resource |
 | [kubernetes_config_map.worker_config](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/config_map) | resource |
 | [kubernetes_cron_job_v1.partitions_in_database](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/cron_job_v1) | resource |
 | [kubernetes_deployment.admin_gui](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/deployment) | resource |
@@ -97,6 +98,7 @@ No modules.
 | <a name="input_deployed_object_storage_secret_name"></a> [deployed\_object\_storage\_secret\_name](#input\_deployed\_object\_storage\_secret\_name) | the name of the deployed-object-storage secret | `string` | `"deployed-object-storage"` | no |
 | <a name="input_deployed_queue_storage_secret_name"></a> [deployed\_queue\_storage\_secret\_name](#input\_deployed\_queue\_storage\_secret\_name) | the name of the deployed-queue-storage secret | `string` | `"deployed-queue-storage"` | no |
 | <a name="input_deployed_table_storage_secret_name"></a> [deployed\_table\_storage\_secret\_name](#input\_deployed\_table\_storage\_secret\_name) | the name of the deployed-table-storage secret | `string` | `"deployed-table-storage"` | no |
+| <a name="input_environment_description"></a> [environment\_description](#input\_environment\_description) | Description of the environment deployed | `any` | `null` | no |
 | <a name="input_extra_conf"></a> [extra\_conf](#input\_extra\_conf) | Add extra configuration in the configmaps | <pre>object({<br>    compute = map(string)<br>    control = map(string)<br>    core    = map(string)<br>    log     = map(string)<br>    polling = map(string)<br>    worker  = map(string)<br>  })</pre> | <pre>{<br>  "compute": {},<br>  "control": {},<br>  "core": {},<br>  "log": {},<br>  "polling": {},<br>  "worker": {}<br>}</pre> | no |
 | <a name="input_fluent_bit_secret_name"></a> [fluent\_bit\_secret\_name](#input\_fluent\_bit\_secret\_name) | the name of the fluent-bit secret | `string` | `"fluent-bit"` | no |
 | <a name="input_grafana_secret_name"></a> [grafana\_secret\_name](#input\_grafana\_secret\_name) | the name of the grafana secret | `string` | `"grafana"` | no |

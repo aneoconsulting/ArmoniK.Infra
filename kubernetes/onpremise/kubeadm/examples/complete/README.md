@@ -1,7 +1,9 @@
 # Onpremise Kubeadm
+
 The Terraform scripts use the module [kubeadm](../../kubeadm) to install and configure a Kubernetes cluster with `Kubeadm`.
 
-First, you should have a list of barre metal ou virtual machines, and then you have to update values `PUBLIC_DNS_HERE`, `PRIVATE_DNS_HERE` and `TLS_PRIVATE_KEY_FILE_HERE` in the file [terraform.tfvars](terraform.tfvars).
+First, you should have a list of barre metal ou virtual machines, and then you have to update values `PUBLIC_DNS_HERE`
+, `PRIVATE_DNS_HERE` and `TLS_PRIVATE_KEY_FILE_HERE` in the file [terraform.tfvars](terraform.tfvars).
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
@@ -9,14 +11,14 @@ First, you should have a list of barre metal ou virtual machines, and then you h
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0 |
-| <a name="requirement_null"></a> [null](#requirement\_null) | >= 3.2.1 |
+| <a name="requirement_null"></a> [null](#requirement\_null) | ~> 3.2.1 |
 | <a name="requirement_random"></a> [random](#requirement\_random) | ~> 3.5.1 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_null"></a> [null](#provider\_null) | >= 3.2.1 |
+| <a name="provider_null"></a> [null](#provider\_null) | ~> 3.2.1 |
 | <a name="provider_random"></a> [random](#provider\_random) | ~> 3.5.1 |
 
 ## Modules

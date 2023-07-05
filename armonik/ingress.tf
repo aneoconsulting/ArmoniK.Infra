@@ -118,7 +118,7 @@ resource "kubernetes_deployment" "ingress" {
         volume {
           name = "static"
           config_map {
-            name     = kubernetes_config_map.static.0.metadata[0].name
+            name     = kubernetes_config_map.static[0].metadata[0].name
             optional = false
           }
         }

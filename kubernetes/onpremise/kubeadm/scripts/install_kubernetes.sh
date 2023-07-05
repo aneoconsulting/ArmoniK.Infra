@@ -1,6 +1,12 @@
+# The goal of this script is to install kubernetes on centos/Red Hat through kubeadm on master and slaves nodes
+# On master  it will install : kubectl + kubeadm + CNI + LB
+# On workers it will install : kubeadm +  
+
 # install Kubectl
-curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-curl -LO "https://dl.k8s.io/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl.sha256"
+VERSION="$(curl -fsSL https://dl.k8s.io/release/stable.txt)"
+curl -fsSLO "https://dl.k8s.io/release/$VERSION/bin/linux/amd64/kubectl"
+curl -fsSLO "https://dl.k8s.io/$VERSION/bin/linux/amd64/kubectl.sha256"
+
 echo "$(<kubectl.sha256) kubectl" | sha256sum --check
 sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
 
@@ -71,25 +77,18 @@ sudo kubeadm init \
   --token "${token}" \
   --token-ttl 40320m \
   --apiserver-cert-extra-sans "${master_public_ip}" \
-  --pod-network-cidr "${cni_cidr}" \ 
-  --node-name ${node_name}
-
-# #Calico
-# sudo curl -s https://docs.projectcalico.org/manifests/calico.yaml > calico.yaml
-# sudo curl -s https://docs.tigera.io/calico/latest/manifests/calico.yaml > calico.yaml
-# sudo sed -i -e 's?# - name: CALICO_IPV4POOL_CIDR?- name: CALICO_IPV4POOL_CIDR?g' calico.yaml
-# sudo sed -i -e 's?#   value: "192.168.0.0/16"?  value: "192.168.0.0/16"?g' calico.yaml
-# sudo kubectl apply -f calico.yaml
+  --pod-network-cidr "${cni_cidr}" \
+  --node-name "${node_name}"
 
 mkdir -p $HOME/.kube
-sudo cp /etc/kubernetes/admin.conf $HOME/.kube/config
-sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+# copy kubeconfig to be used on remote master using admin account
+sudo install -v /etc/kubernetes/admin.conf $HOME/.kube/config -o $(id -u) -g $(id -g)
+
 
 # Prepare kubeconfig file for downloading
-#sudo chmod 660 /etc/kubernetes/admin.conf
-sudo cp /etc/kubernetes/admin.conf /tmp/admin.conf
-sudo chown ${user}:${user} /tmp/admin.conf
-chmod 660 /tmp/admin.conf
+sudo install -v -m 660 /etc/kubernetes/admin.conf /tmp/admin.conf -o ${user} -g ${user}
+
 kubectl --kubeconfig /tmp/admin.conf config set-cluster kubernetes --server "https://${master_public_ip}:6443"
 
 #------------------------------------------------------------------------------#

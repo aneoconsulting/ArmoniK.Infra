@@ -15,7 +15,7 @@ variable "namespace" {
 variable "image" {
   description = "value"
   type        = string
-  
+
 }
 variable "tag" {
   description = "value"
@@ -45,8 +45,8 @@ variable "min_ready_seconds" {
 #########################################################################c
 variable "progress_deadline_seconds" {
   description = "value"
-  type = number
-  default = 600
+  type        = number
+  default     = 600
 }
 variable "active_deadline_seconds" {
   description = "value"
@@ -78,7 +78,7 @@ variable "strategy_update" {
 }
 variable "node_name" {
   description = "value"
-  type          = string
+  type        = string
   default     = ""
 }
 variable "priority_class_name" {

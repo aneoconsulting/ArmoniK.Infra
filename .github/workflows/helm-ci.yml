@@ -1,4 +1,4 @@
-name: Helm chart Lint
+name: Helm charts linter
 on: pull_request
 jobs:
   lint:

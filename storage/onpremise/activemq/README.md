@@ -57,7 +57,7 @@ No modules.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_active_deadline_seconds"></a> [active\_deadline\_seconds](#input\_active\_deadline\_seconds) | value | `numbre` | `null` | no |
+| <a name="input_active_deadline_seconds"></a> [active\_deadline\_seconds](#input\_active\_deadline\_seconds) | value | `number` | `null` | no |
 | <a name="input_image"></a> [image](#input\_image) | value | `string` | n/a | yes |
 | <a name="input_image_pull_secrets"></a> [image\_pull\_secrets](#input\_image\_pull\_secrets) | value | `string` | n/a | yes |
 | <a name="input_min_ready_seconds"></a> [min\_ready\_seconds](#input\_min\_ready\_seconds) | Field that specifies the minimum number of seconds for which a newly created Pod should be ready without any of its containers crashing, for it to be considered available | `number` | `null` | no |

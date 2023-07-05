@@ -2,8 +2,8 @@ name: Pre-commit
 on:
   pull_request:
     branches: [ main, master ]
-#  push:
-#    branches: [ '**' ]
+  push:
+    branches: [ '**' ]
 jobs:
   pre-commit:
     runs-on: ubuntu-latest
@@ -11,6 +11,7 @@ jobs:
       - name: Install tfsec for static analysis of Terraform code to spot potential misconfigurations
         run: |
           curl -s https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash
+          tfsec --force-all-dirs
       - name: Install Terraform Linter
         uses: terraform-linters/setup-tflint@v3
       - uses: actions/checkout@v3

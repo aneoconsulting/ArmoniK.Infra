@@ -11,11 +11,13 @@ jobs:
       - name: Install tfsec for static analysis of Terraform code to spot potential misconfigurations
         run: |
           curl -s https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash
-          tfsec --force-all-dirs
       - name: Install Terraform Linter
         uses: terraform-linters/setup-tflint@v3
-      - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
+      - name: Security analysis
+        uses: tfsec --force-all-dirs
       - uses: actions/setup-python@v3
       - uses: pre-commit/action@v3.0.0

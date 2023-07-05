@@ -45,12 +45,12 @@ variable "min_ready_seconds" {
 #########################################################################c
 variable "progress_deadline_seconds" {
   description = "value"
-  type = "number"
+  type = number
   default = 600
 }
 variable "active_deadline_seconds" {
   description = "value"
-  type        = "numbre"
+  type        = number
   default     = null
   #doit etre positive
 }

@@ -30,9 +30,9 @@ resource "kubernetes_deployment" "activemq" {
         }
       }
       spec {
-        node_selector = var.activemq.node_selector
+        node_selector = var.node_selector
         dynamic "toleration" {
-          for_each = (var.activemq.node_selector != {} ? [
+          for_each = (var.node_selector != {} ? [
             for index in range(0, length(local.node_selector_keys)) : {
               key   = local.node_selector_keys[index]
               value = local.node_selector_values[index]
@@ -46,14 +46,14 @@ resource "kubernetes_deployment" "activemq" {
           }
         }
         dynamic "image_pull_secrets" {
-          for_each = (var.activemq.image_pull_secrets != "" ? [1] : [])
+          for_each = (var.image_pull_secrets != "" ? [1] : [])
           content {
-            name = var.activemq.image_pull_secrets
+            name = var.image_pull_secrets
           }
         }
         container {
           name              = "activemq"
-          image             = "${var.activemq.image}:${var.activemq.tag}"
+          image             = "${var.image}:${var.tag}"
           image_pull_policy = "IfNotPresent"
           volume_mount {
             name       = "activemq-storage-secret-volume"

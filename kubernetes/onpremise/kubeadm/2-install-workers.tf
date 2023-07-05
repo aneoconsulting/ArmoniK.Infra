@@ -3,7 +3,7 @@ resource "null_resource" "install_kubernetes_cluster_node_worker" {
   connection {
     type        = "ssh"
     user        = var.user
-    private_key = var.tls_private_key_pem
+    private_key = var.tls_private_key_pem_content
     host        = each.value.public_dns
     port        = 22
   }

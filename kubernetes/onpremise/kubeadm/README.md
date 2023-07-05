@@ -1,6 +1,6 @@
-# OnPremise kubeadm
+# Onpremise Kubeadm
 
-Create an kubernetes cluster
+Create a Kubernetes cluster with Kubeadm.
 
 * Red Hat or CentOs only
 * CNI : Calico or Flannel

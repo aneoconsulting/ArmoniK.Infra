@@ -77,9 +77,9 @@ variable "strategy_update" {
 
 }
 variable "node_name" {
-  dedescription = "value"
+  description = "value"
   type          = string
-  dedefault     = ""
+  default     = ""
 }
 variable "priority_class_name" {
   description = "Indicates the pod's priority. Requires an existing priority class name resource if not 'system-node-critical' and 'system-cluster-critical"
@@ -98,7 +98,7 @@ variable "restart_policy" {
 ##############################################
 variable "rolling_update" {
   description = "Rolling update config params. Present only if strategy_update = RollingUpdate"
-  type        = object({ max_surge = string, max_unavailable = string })
+  type        = object({ max_surge = optional(string), max_unavailable = optional(string) })
   default     = {}
 
 }

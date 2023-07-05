@@ -5,19 +5,59 @@ on:
   push:
     branches: [ '**' ]
 jobs:
-  pre-commit:
+
+
+
+  linter:
     runs-on: ubuntu-latest
     steps:
-      - name: Install tfsec for static analysis of Terraform code to spot potential misconfigurations
-        run: |
-          curl -s https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash
       - name: Install Terraform Linter
         uses: terraform-linters/setup-tflint@v3
+
       - name: Checkout code
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
+
+      - name: Use Terraform Linter
+        run: |
+          tflint /recursive
+
+      - name: Check Diff
+        id: check-diff
+        run: |
+          DIFF="$(git diff --name-only)"
+
+          if [ -z "$DIFF" ]; then
+            echo "OK: Format is clean"
+          else
+            echo "Error: Format was not clean"
+            echo "List of files:"
+            echo "$DIFF"
+            git diff
+            exit 1
+          fi
+
+      - name: Generate patch
+        if: ${{ failure() && steps.check-diff.conclusion == 'failure' }}
+        run: |
+          git diff > patch-csharp.diff
+
+      - uses: actions/upload-artifact@v3
+        if: ${{ failure() && steps.check-diff.conclusion == 'failure' }}
+        with:
+          name: patch-terraform
+          path: ./patch-terraform.diff
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Install tfsec for static analysis of Terraform code to spot potential misconfigurations
+        run: |
+          curl -s https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash
       - name: Security analysis
-        uses: tfsec --force-all-dirs
-      - uses: actions/setup-python@v3
-      - uses: pre-commit/action@v3.0.0
+        run: tfsec --force-all-dirs

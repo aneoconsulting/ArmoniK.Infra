@@ -12,9 +12,10 @@ resource "null_resource" "trigger_custom_cni" {
 
 resource "helm_release" "eni_config" {
   name       = "add-subnet"
-  chart      = "eniconfig"
-  namespace  = "default"
-  repository = "${path.module}/charts"
+  chart      = var.chart_name
+  version    = var.chart_version
+  namespace  = var.chart_namespace
+  repository = "${path.module}/${var.charts_repository}"
   values     = [yamlencode(local.subnets)]
   depends_on = [
     null_resource.update_kubeconfig

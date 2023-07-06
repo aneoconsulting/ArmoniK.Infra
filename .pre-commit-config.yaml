@@ -26,6 +26,8 @@ repos:
           - '--args=--only=terraform_empty_list_equality'
           - '--args=--only=terraform_module_version'
       - id: terraform_tfsec
+        args:
+          - '--args=--force-all-dirs'
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
     hooks:

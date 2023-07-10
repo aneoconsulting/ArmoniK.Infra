@@ -3,10 +3,10 @@ repos:
     rev: v1.80.0
     hooks:
       - id: terraform_fmt
+        args: 
+          - '--args=-recursive'
+          - '--args=-diff'
       - id: terraform_validate
-      #      - id: terraform_docs
-      #        args:
-      #          - '--args=--lockfile=false'
       - id: terraform_tflint
         args:
           - '--args=--only=terraform_deprecated_interpolation'
@@ -38,7 +38,7 @@ repos:
       - id: check-json
       - id: check-yaml
         args: [ --allow-multiple-documents]
-        exclude: .*/charts/.*/template\.*
+        exclude: '.*/charts/.*|.*/charts/.*/templates/.*'
       - id: end-of-file-fixer
         exclude: ".*md$"
       - id: pretty-format-json

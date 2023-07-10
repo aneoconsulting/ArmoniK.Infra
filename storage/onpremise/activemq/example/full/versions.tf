@@ -8,6 +8,6 @@ terraform {
   }
 }
 provider "kubernetes" {
-  config_path    = var.config_path
-  config_context = "default"
+  config_path    = var.kub_config_path
+  config_context = var.kub_config_context
 }

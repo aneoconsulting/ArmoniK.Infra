@@ -44,9 +44,12 @@ resource "kubernetes_deployment" "activemq" {
         }
       }
       spec {
-        #termination_grace_period_seconds = 20
-        node_selector  = var.node_selector
-        restart_policy = var.restart_policy
+        termination_grace_period_seconds = var.termination_grace_period_seconds
+        priority_class_name              = var.priority_class_name
+        node_selector                    = var.node_selector
+        restart_policy                   = var.restart_policy
+        node_name                        = var.node_name
+        active_deadline_seconds          = var.active_deadline_seconds
         dynamic "image_pull_secrets" {
           for_each = var.image_pull_secrets
           content {

@@ -1,25 +1,26 @@
 #########################################################################
 #                              Metadata                                 #
 #########################################################################
+
 variable "namespace" {
   description = "Namespace of ArmoniK storage resources"
   type        = string
 }
+
 variable "name" {
   description = "value"
   type        = string
 }
 
-
-
 #########################################################################
 #                             Spec/container                            #
+
 #########################################################################
 variable "image" {
   description = "images of services"
   type        = string
-
 }
+
 variable "tag" {
   description = "tag of images"
   type        = string
@@ -42,42 +43,51 @@ variable "min_ready_seconds" {
   type        = number
   default     = null
 }
+
 #########################################################################
 #                                 Spec                                  #
 #########################################################################c
+
 variable "progress_deadline_seconds" {
   type        = number
   description = "The maximum time in seconds for a deployment to make progress before it is considered to be failed"
   default     = 600
 }
+
 variable "active_deadline_seconds" {
-  description = "value"
+  description = "Optional duration in seconds the pod may be active on the node relative to StartTime before the system will actively try to mark it failed and kill associated containers. Value must be a positive integer"
   type        = number
   default     = null
   #doit etre positive
 }
+
 variable "revision_history_limit" {
   description = "The number of revision hitory to keep."
   type        = number
   default     = 10
 }
+
 ############################################
+
 variable "termination_grace_period_seconds" {
   type        = number
   description = "Duration in seconds the pod needs to terminate gracefully"
   default     = null
 }
+
 variable "image_pull_secrets" {
   description = "(Optional) Specify list of pull secrets"
   type        = map(string)
 
 }
+
 variable "strategy_update" {
   description = "Rolling update config params. Present only if strategy_update = RollingUpdate"
   type        = string
   default     = null
 
 }
+
 variable "node_name" {
   description = "value"
   type        = string
@@ -90,23 +100,19 @@ variable "priority_class_name" {
   default     = ""
 }
 
-
-
-
-
 variable "restart_policy" {
   type        = string
   description = "Restart policy for all containers within the pod. One of Always, OnFailure, Never"
   default     = "Always"
 }
+
 ##############################################
+
 variable "rolling_update" {
   description = "Rolling update config params. Present only if strategy_update = RollingUpdate"
   type        = object({ max_surge = optional(string), max_unavailable = optional(string) })
   default     = {}
-
 }
-
 
 variable "node_selector" {
   description = "Specify node selector for pod"
@@ -132,8 +138,13 @@ variable "toleration" {
   default     = []
 }
 
-#faut un local
-variable "config_path" {
+variable "kub_config_context" {
+  description = "value"
+  type        = string
+
+}
+
+variable "kub_config_path" {
   description = "value"
   type        = string
 

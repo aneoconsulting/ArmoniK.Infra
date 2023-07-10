@@ -53,8 +53,9 @@ variable "progress_deadline_seconds" {
   description = "The maximum time in seconds for a deployment to make progress before it is considered to be failed"
   default     = 600
 }
+###
 variable "active_deadline_seconds" {
-  description = "value"
+  description = "Optional duration in seconds the pod may be active on the node relative to StartTime before the system will actively try to mark it failed and kill associated containers. Value must be a positive integer"
   type        = number
   default     = null
   #doit etre positive
@@ -68,7 +69,7 @@ variable "revision_history_limit" {
 variable "termination_grace_period_seconds" {
   type        = number
   description = "Duration in seconds the pod needs to terminate gracefully"
-  default     = null
+  default     = 20
 }
 variable "image_pull_secrets" {
   description = "(Optional) Specify list of pull secrets"
@@ -81,15 +82,16 @@ variable "strategy_update" {
   default     = null
 
 }
+###
 variable "node_name" {
-  description = "value"
+  description = " (Optional) NodeName is a request to schedule this pod onto a specific node. If it is non-empty, the scheduler simply schedules this pod onto that node, assuming that it fits resource requirements"
   type        = string
-  default     = ""
+  default     = null
 }
-
+####
 variable "priority_class_name" {
-  description = "value"
   type        = string
+  description = "Indicates the pod's priority. Requires an existing priority class name resource if not 'system-node-critical' and 'system-cluster-critical'"
   default     = ""
 }
 

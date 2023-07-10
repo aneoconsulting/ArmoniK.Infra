@@ -6,8 +6,8 @@ module "activemq" {
   tag                = var.tag
   node_selector      = var.node_selector
   image_pull_secrets = var.image_pull_secrets
-
 }
+
 resource "kubernetes_namespace" "armonik" {
   metadata {
     name = var.namespace

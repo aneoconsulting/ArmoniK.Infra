@@ -14,8 +14,10 @@ module "activemq" {
   strategy_update                  = var.strategy_update
   restart_policy                   = var.restart_policy
   rolling_update                   = var.rolling_update
-
-  toleration = var.toleration
+  priority_class_name              = var.priority_class_name
+  node_name                        = var.node_name
+  active_deadline_seconds          = var.active_deadline_seconds
+  toleration                       = var.toleration
 
 }
 resource "kubernetes_namespace" "armonik" {

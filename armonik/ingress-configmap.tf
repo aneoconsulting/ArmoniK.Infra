@@ -98,6 +98,10 @@ server {
         grpc_send_timeout 1d;
     }
 
+    location /static/ {
+        alias /static/;
+    }
+
 
   proxy_buffering off;
   proxy_request_buffering off;
@@ -207,6 +211,17 @@ resource "kubernetes_config_map" "ingress" {
   }
   data = {
     "armonik.conf" = local.armonik_conf
+  }
+}
+
+resource "kubernetes_config_map" "static" {
+  count = (var.ingress != null ? 1 : 0)
+  metadata {
+    name      = "ingress-nginx-static"
+    namespace = var.namespace
+  }
+  data = {
+    "environment.json" = jsonencode(var.environment_description)
   }
 }
 

@@ -3,54 +3,77 @@
 # Kubernetes ActiveMQ deployment
 resource "kubernetes_deployment" "activemq" {
   metadata {
-    name      = "activemq"
+    name      = var.name
     namespace = var.namespace
     labels = {
       app     = "storage"
       type    = "queue"
-      service = "activemq"
+      service = var.name
     }
   }
   spec {
-    replicas = 1
+    replicas                  = 1
+    min_ready_seconds         = var.min_ready_seconds
+    revision_history_limit    = var.revision_history_limit
+    progress_deadline_seconds = var.progress_deadline_seconds
+
+    strategy {
+      type = var.strategy_update
+      dynamic "rolling_update" {
+        for_each = flatten([var.rolling_update])
+        content {
+          max_surge       = lookup(rolling_update.value, "max_surge", "25%")
+          max_unavailable = lookup(rolling_update.value, "max_unavailable", "25%")
+        }
+      }
+    }
     selector {
       match_labels = {
         app     = "storage"
         type    = "queue"
-        service = "activemq"
+        service = var.name
       }
     }
     template {
       metadata {
-        name = "activemq"
+        name = var.name
         labels = {
           app     = "storage"
           type    = "queue"
-          service = "activemq"
+          service = var.name
         }
       }
       spec {
-        node_selector = var.node_selector
-        dynamic "toleration" {
-          for_each = (var.node_selector != {} ? [
-            for index in range(0, length(local.node_selector_keys)) : {
-              key   = local.node_selector_keys[index]
-              value = local.node_selector_values[index]
-            }
-          ] : [])
-          content {
-            key      = toleration.value.key
-            operator = "Equal"
-            value    = toleration.value.value
-            effect   = "NoSchedule"
-          }
-        }
+        #termination_grace_period_seconds = 20
+        node_selector  = var.node_selector
+        restart_policy = var.restart_policy
         dynamic "image_pull_secrets" {
-          for_each = (var.image_pull_secrets != "" ? [1] : [])
+          for_each = var.image_pull_secrets
           content {
-            name = var.image_pull_secrets
+            name = image_pull_secrets.value
           }
         }
+        dynamic "toleration" {
+          for_each = var.toleration
+          content {
+            effect             = lookup(toleration.value, "effect", null)
+            key                = lookup(toleration.value, "key", local.node_selector_keys[index])
+            operator           = lookup(toleration.value, "operator", null)
+            toleration_seconds = lookup(toleration.value, "toleration_seconds", null)
+            value              = lookup(toleration.value, "value", local.node_selector_values[index])
+          }
+        }
+
+        dynamic "security_context" {
+          for_each = flatten([var.security_context])
+          content {
+            fs_group        = lookup(security_context.value, "fs_group", null)
+            run_as_group    = lookup(security_context.value, "run_as_group", null)
+            run_as_user     = lookup(security_context.value, "run_as_user", null)
+            run_as_non_root = lookup(security_context.value, "run_as_non_root", null)
+          }
+        }
+
         container {
           name              = "activemq"
           image             = "${var.image}:${var.tag}"
@@ -110,7 +133,7 @@ resource "kubernetes_deployment" "activemq" {
 # Kubernetes ActiveMQ service
 resource "kubernetes_service" "activemq" {
   metadata {
-    name      = "activemq"
+    name      = var.name
     namespace = var.namespace
     labels = {
       app     = "storage"
@@ -123,7 +146,7 @@ resource "kubernetes_service" "activemq" {
     selector = {
       app     = "storage"
       type    = "queue"
-      service = "activemq"
+      service = var.name
     }
     port {
       name        = "amqp"

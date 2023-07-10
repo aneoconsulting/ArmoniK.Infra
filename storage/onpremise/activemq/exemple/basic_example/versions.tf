@@ -8,6 +8,6 @@ terraform {
   }
 }
 provider "kubernetes" {
-  config_path    = "/home/adem/.kube/config"
+  config_path    = var.config_path
   config_context = "default"
 }

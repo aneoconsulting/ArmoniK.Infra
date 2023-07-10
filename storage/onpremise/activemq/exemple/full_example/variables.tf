@@ -8,7 +8,6 @@ variable "namespace" {
 variable "name" {
   description = "value"
   type        = string
-  default     = "activemq"
 }
 
 
@@ -19,13 +18,11 @@ variable "name" {
 variable "image" {
   description = "images of services"
   type        = string
-  default     = "symptoma/activemq"
 
 }
 variable "tag" {
   description = "tag of images"
   type        = string
-  default     = "5.17.0"
 }
 
 variable "security_context" {
@@ -73,7 +70,7 @@ variable "termination_grace_period_seconds" {
 variable "image_pull_secrets" {
   description = "(Optional) Specify list of pull secrets"
   type        = map(string)
-  default     = {}
+
 }
 variable "strategy_update" {
   description = "Rolling update config params. Present only if strategy_update = RollingUpdate"
@@ -136,3 +133,8 @@ variable "toleration" {
 }
 
 #faut un local
+variable "config_path" {
+  description = "value"
+  type        = string
+
+}

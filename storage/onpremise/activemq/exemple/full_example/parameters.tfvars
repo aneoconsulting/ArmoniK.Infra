@@ -1,0 +1,16 @@
+namespace                        = "armonik"
+image                            = "symptoma/activemq"
+tag                              = "5.17.0"
+node_selector                    = {}
+image_pull_secrets               = {}
+config_path                      = "/home/adem/.kube/config"
+name                             = "activemq"
+security_context                 = []
+min_ready_seconds                = null
+progress_deadline_seconds        = 600
+revision_history_limit           = 10
+termination_grace_period_seconds = null
+strategy_update                  = null
+restart_policy                   = "Always"
+rolling_update                   = {}
+toleration                       = []

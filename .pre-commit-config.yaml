@@ -4,9 +4,6 @@ repos:
     hooks:
       - id: terraform_fmt
       - id: terraform_validate
-      #      - id: terraform_docs
-      #        args:
-      #          - '--args=--lockfile=false'
       - id: terraform_tflint
         args:
           - '--args=--only=terraform_deprecated_interpolation'
@@ -27,7 +24,12 @@ repos:
           - '--args=--only=terraform_module_version'
       - id: terraform_tfsec
         args:
+          - '--args=--no-module-downloads'
           - '--args=--force-all-dirs'
+      - id: terraform_checkov
+        args:
+          - '--args=--quiet'
+          - '--args=--skip-framework github_configuration github_actions'
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
     hooks:

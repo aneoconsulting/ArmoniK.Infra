@@ -9,3 +9,4 @@ resource "google_artifact_registry_repository" "my-repo" {
   description = var.repositories[count.index].description
   format = var.repositories[count.index].format
   kms_key_name = var.kms_key_id
+}

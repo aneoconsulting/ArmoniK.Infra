@@ -22,19 +22,19 @@ variable "kms_key_name" {
 # List of AR repositories to create
 variable "repositories" {
   description = "List of AR repositories to create"
-  type        = list(object({
-    location           = string
-    repository_id      = string
-    description        = string
-    format             = string
+  type = list(object({
+    location      = string
+    repository_id = string
+    description   = string
+    format        = string
   }))
 
   default = [
     {
-      location       = "aneo.fr" 
-      repository_id  = "my-id-repository"
-      description    = "my first artifact registry with TF"
-      format         = "docker"
+      location      = "aneo.fr"
+      repository_id = "my-id-repository"
+      description   = "my first artifact registry with TF"
+      format        = "docker"
     }
   ]
 }

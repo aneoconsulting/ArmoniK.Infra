@@ -1,5 +1,5 @@
 # Profile
-variable "profile" {
+variable "aws_profile" {
   description = "Profile of AWS credentials to deploy Terraform sources"
   type        = string
 }
@@ -18,73 +18,16 @@ variable "kms_key_id" {
   default     = ""
 }
 
-# List of ECR repositories to create
-/*variable "repositories" {
-  description = "List of ECR repositories to create"
-  type        = list(any) // TODO : we want a map of objects (key is name and values are image and tag)
-  default = [
-    {
-      name  = "mongodb"
-      image = "mongo"
-      tag   = "4.4.11"
-    },
-    {
-      name  = "redis"
-      image = "redis"
-      tag   = "bullseye"
-    },
-    {
-      name  = "activemq"
-      image = "symptoma/activemq"
-      tag   = "5.16.3"
-    },
-    {
-      name  = "armonik-control-plane"
-      image = "dockerhubaneo/armonik_control"
-      tag   = "0.4.0"
-    },
-    {
-      name  = "armonik-polling-agent"
-      image = "dockerhubaneo/armonik_pollingagent"
-      tag   = "0.4.0"
-    },
-    {
-      name  = "armonik-worker"
-      image = "dockerhubaneo/armonik_worker_dll"
-      tag   = "0.1.2-SNAPSHOT.4.cfda5d1"
-    },
-    {
-      name  = "seq"
-      image = "datalust/seq"
-      tag   = "2021.4"
-    },
-    {
-      name  = "grafana"
-      image = "grafana/grafana"
-      tag   = "latest"
-    },
-    {
-      name  = "prometheus"
-      image = "prom/prometheus"
-      tag   = "latest"
-    },
-    {
-      name  = "cluster-autoscaler"
-      image = "k8s.gcr.io/autoscaling/cluster-autoscaler"
-      tag   = "v1.21.0"
-    },
-    {
-      name  = "aws-node-termination-handler"
-      image = "amazon/aws-node-termination-handler"
-      tag   = "v1.10.0"
-    },
-    {
-      name  = "fluent-bit"
-      image = "fluent/fluent-bit"
-      tag   = "1.3.11"
-    }
-  ]
-} */
+# Variable to enable mutability
+variable "mutability" {
+  description = "Variable to enable mutability"
+  type        = string
+  default     = "MUTABLE"
+  validation {
+    condition     = contains(["MUTABLE", "IMMUTABLE"], var.mutability)
+    error_message = "Valid values for \"mutability\" : \"MUTABLE\" | \"IMMUTABLE\"."
+  }
+}
 
 # List of ECR repositories to create
 variable "repositories" {
@@ -93,10 +36,5 @@ variable "repositories" {
     image = string
     tag   = string
   }))
-  default = {
-    armonik-control-plane = {
-      image = "dockerhubaneo/armonik_control"
-      tag   = "0.4.0"
-    }
-  }
+  default = {}
 }

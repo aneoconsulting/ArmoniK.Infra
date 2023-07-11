@@ -22,3 +22,15 @@ version: 0.1.0
 # follow Semantic Versioning. They should reflect the version the application is using.
 # It is recommended to use it with quotes.
 appVersion: "1.16.0"
+
+# Maintainers
+maintainers:
+  - name: Aneo
+    email: armonik-support@aneo.fr
+    url: armonik.fr
+  - name: Lilia ZIANE KHODJA
+    email: lzianekhodja@aneo.fr
+    url: https://fr.linkedin.com/in/lilia-ziane-khodja
+  - name: Imad ADJADJ
+    email: iadjadj@aneo.fr
+    url: https://fr.linkedin.com/in/imad-adjadj-b316601bb

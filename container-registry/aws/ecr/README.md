@@ -1,3 +1,15 @@
+
+
+Amazon Elastic Container Registry (Amazon ECR) is a fully managed container registry offering high-performance hosting, so you can reliably deploy application images and artifacts anywhere. 
+
+This module creates an AWS ECR with these possibilities :
+
+* Enable or disable mutability
+* Enable or disable the scan on push
+* Enable or disable the force delete
+* Choose the encryption type 
+* Set a lifecycle policy
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 

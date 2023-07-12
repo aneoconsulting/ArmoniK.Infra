@@ -52,7 +52,7 @@ variable "flow_log_file_format" {
   default     = "plain-text"
   validation {
     condition     = contains(["plain-text", "parquet"], var.flow_log_file_format)
-    error_message = "The valid values for the VPC flow log format for the flow log: \"plain-text\" | \"parque\"."
+    error_message = "The valid values for the VPC flow log format for the flow log: \"plain-text\" | \"parquet\"."
   }
 }
 

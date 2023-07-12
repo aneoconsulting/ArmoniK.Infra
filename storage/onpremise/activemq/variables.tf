@@ -77,9 +77,10 @@ variable "image_pull_secrets" {
   default     = {}
 }
 variable "strategy_update" {
-  description = "Rolling update config params. Present only if strategy_update = RollingUpdate"
+  description = "(Optional) Type of deployment. Can be 'Recreate' or 'RollingUpdate'"
   type        = string
   default     = null
+
 
 }
 ###
@@ -93,6 +94,10 @@ variable "priority_class_name" {
   type        = string
   description = "Indicates the pod's priority. Requires an existing priority class name resource if not 'system-node-critical' and 'system-cluster-critical'"
   default     = ""
+  validation {
+    condition     = contains(["system-node-critical", "system-cluster-critical", ""], var.priority_class_name)
+    error_message = "The valid values for the priority_class_name: \"system-node-critical\", \"system-cluster-critical\", \"\"."
+  }
 }
 
 
@@ -103,12 +108,17 @@ variable "restart_policy" {
   type        = string
   description = "Restart policy for all containers within the pod. One of Always, OnFailure, Never"
   default     = "Always"
+  validation {
+    condition     = contains(["Never", "Always", "OnFailure"], var.restart_policy)
+    error_message = "The valid values for the priority_class_name: \"Never\", \"Always\", \"OnFailure\"."
+  }
 }
 ##############################################
 variable "rolling_update" {
   description = "Rolling update config params. Present only if strategy_update = RollingUpdate"
   type        = object({ max_surge = optional(string), max_unavailable = optional(string) })
   default     = {}
+
 
 }
 

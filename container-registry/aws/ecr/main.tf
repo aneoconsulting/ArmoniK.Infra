@@ -5,26 +5,32 @@ data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
 
 locals {
-  mutability = var.mutability
-  region     = data.aws_region.current.name
-  tags       = merge({ module = "ecr" }, var.tags)
+  region = data.aws_region.current.name
+  tags   = merge({ module = "ecr" }, var.tags)
 }
 
 # create ECR repositories
 resource "aws_ecr_repository" "ecr" {
   for_each             = var.repositories
   name                 = each.key
-  image_tag_mutability = local.mutability
-  image_scanning_configuration {
-    scan_on_push = true
+  image_tag_mutability = var.mutability
+  dynamic "image_scanning_configuration" {
+    for_each = can(coalesce(var.scan_on_push)) ? [1] : []
+    content {
+      scan_on_push = var.scan_on_push
+    }
   }
-  encryption_configuration {
-    encryption_type = "KMS"
-    kms_key         = var.kms_key_id
+  dynamic "encryption_configuration" {
+    for_each = can(coalesce(var.encryption_type)) ? [1] : []
+    content {
+      encryption_type = var.encryption_type
+      kms_key         = var.encryption_type == "KMS" && can(coalesce(var.kms_key_id)) ? var.kms_key_id : null
+    }
   }
   tags         = local.tags
-  force_delete = true #(Optional) If true, will delete the repository even if it contains images. Defaults to false.
+  force_delete = var.force_delete
 }
+
 
 # lifecycle policy
 resource "aws_ecr_lifecycle_policy" "ecr_lifecycle_policy" {
@@ -89,7 +95,7 @@ resource "aws_ecr_repository_policy" "ecr_policy" {
 }
 # Copy images
 resource "null_resource" "copy_images" {
-  for_each = var.repositories
+  for_each = aws_ecr_repository.ecr
   triggers = {
     state = join("-", [
       each.key, var.repositories[each.key].image, var.repositories[each.key].tag

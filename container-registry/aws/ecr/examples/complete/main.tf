@@ -132,11 +132,14 @@ locals {
 
 # AWS ECR
 module "ecr" {
-  source       = "../../../ecr"
-  aws_profile  = var.aws_profile
-  kms_key_id   = null
-  repositories = local.new_repositories
-  mutability   = "IMMUTABLE"
+  source          = "../../../ecr"
+  aws_profile     = var.aws_profile
+  kms_key_id      = null
+  repositories    = local.new_repositories
+  mutability      = "IMMUTABLE"
+  scan_on_push    = true
+  force_delete    = true
+  encryption_type = "AES256"
   tags = {
     env             = "test"
     app             = "complete"

@@ -71,7 +71,7 @@ No modules.
 | <a name="input_revision_history_limit"></a> [revision\_history\_limit](#input\_revision\_history\_limit) | The number of revision hitory to keep. | `number` | `10` | no |
 | <a name="input_rolling_update"></a> [rolling\_update](#input\_rolling\_update) | Rolling update config params. Present only if strategy\_update = RollingUpdate | `object({ max_surge = optional(string), max_unavailable = optional(string) })` | `{}` | no |
 | <a name="input_security_context"></a> [security\_context](#input\_security\_context) | (Optional) SecurityContext holds pod-level security attributes and common container settings | `list(any)` | `[]` | no |
-| <a name="input_strategy_update"></a> [strategy\_update](#input\_strategy\_update) | Rolling update config params. Present only if strategy\_update = RollingUpdate | `string` | `null` | no |
+| <a name="input_strategy_update"></a> [strategy\_update](#input\_strategy\_update) | (Optional) Type of deployment. Can be 'Recreate' or 'RollingUpdate' | `string` | `null` | no |
 | <a name="input_tag"></a> [tag](#input\_tag) | tag of images | `string` | `"5.17.0"` | no |
 | <a name="input_termination_grace_period_seconds"></a> [termination\_grace\_period\_seconds](#input\_termination\_grace\_period\_seconds) | Duration in seconds the pod needs to terminate gracefully | `number` | `20` | no |
 | <a name="input_toleration"></a> [toleration](#input\_toleration) | (Optional) Pod node tolerations | <pre>list(object({<br>    effect             = optional(string)<br>    key                = optional(string)<br>    operator           = optional(string)<br>    toleration_seconds = optional(string)<br>    value              = optional(string)<br>  }))</pre> | `[]` | no |

@@ -1,3 +1,19 @@
+# AWS ECR
+
+To create a simple AWS ECR:
+
+```bash
+terraform init
+terraform plan
+terraform apply
+```
+
+To delete all resource:
+
+```bash
+terraform destroy
+```
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 

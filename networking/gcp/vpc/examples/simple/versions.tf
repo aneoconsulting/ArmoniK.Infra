@@ -11,14 +11,6 @@ terraform {
       source  = "hashicorp/google"
       version = "~> 3.0"
     }
-    external = {
-      source  = "hashicorp/external"
-      version = "~> 2.3.1"
-    }
-    null = {
-      source  = "hashicorp/null"
-      version = "~> 3.2.1"
-    }
     random = {
       source  = "hashicorp/random"
       version = "~> 3.5.1"

@@ -1,3 +1,8 @@
+locals {
+  location = (var.zone == null || var.zone == "") ? var.region : "${var.region}-${var.zone}"
+}
+
+
 resource "null_resource" "gcp_copy_images" {
 
   for_each = var.registryImages

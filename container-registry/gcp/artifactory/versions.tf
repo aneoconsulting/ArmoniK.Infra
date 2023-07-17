@@ -8,13 +8,9 @@ terraform {
 }
 
 provider "google" {
-  credentials = file("/home/hbitoun/.config/gcloud/application_default_credentials.json")
+  credentials = file(var.credentials_file)
 
   project = var.project_id
   region  = var.region
   zone    = var.zone
-}
-
-resource "google_compute_network" "vpc_network" {
-  name = "terraform-network"
 }

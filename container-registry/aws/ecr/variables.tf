@@ -32,7 +32,7 @@ variable "mutability" {
 # List of ECR repositories to create
 variable "repositories" {
   description = "Map of ECR repositories to create. Each repository is an object of \"image\" and \"tag\" parameters"
-  type = map(object({
+  type        = map(object({
     image = string
     tag   = string
   }))
@@ -60,3 +60,16 @@ variable "encryption_type" {
     error_message = "Valid values for \"encryption_type\" are: \"AES256\" | \"KMS\"."
   }
 }
+
+variable "only_pull_accounts" {
+  description = "List of accounts having pull permission"
+  type        = list(string)
+  default     = []
+}
+
+variable "push_and_pull_accounts" {
+  description = "List of accounts having push and pull permissions"
+  type        = list(string)
+  default     = []
+}
+

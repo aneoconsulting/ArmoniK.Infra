@@ -127,20 +127,22 @@ locals {
       tag   = "v3.4.0-eks-1-22-19"
     }
   }
-  new_repositories = { for k, v in local.repositories : "test/${k}" => v }
+  new_repositories = {for k, v in local.repositories : "test/${k}" => v}
 }
 
 # AWS ECR
 module "complete_ecr" {
-  source          = "../../../ecr"
-  aws_profile     = var.aws_profile
-  kms_key_id      = null
-  repositories    = local.new_repositories
-  mutability      = "IMMUTABLE"
-  scan_on_push    = true
-  force_delete    = true
-  encryption_type = "AES256"
-  tags = {
+  source                 = "../../../ecr"
+  aws_profile            = var.aws_profile
+  kms_key_id             = null
+  repositories           = local.new_repositories
+  mutability             = "IMMUTABLE"
+  scan_on_push           = true
+  force_delete           = true
+  encryption_type        = "AES256"
+  only_pull_accounts     = ["125796369274"]
+  push_and_pull_accounts = ["125796369274"]
+  tags                   = {
     env             = "test"
     app             = "complete"
     module          = "AWS ECR"

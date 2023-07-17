@@ -9,20 +9,20 @@ resource "null_resource" "gcp_copy_images" {
     command = <<-EOT
         if [ -z "$(docker images -q '${each.value.image_name}:${each.value.image_tag}')" ]
         then
-          if ! docker pull ${each.value.location}-docker.pkg.dev/${var.project_id}/${each.value.repository_name}/${each.value.name}:${each.value.tag}
+          if ! docker pull ${local.location}-docker.pkg.dev/${var.project_id}/${each.value.repository_name}/${each.value.image_name}:${each.value.image_tag}
           then
-            echo "cannot download image ${each.value.name}:${each.value.tag}"
+            echo "cannot download image ${each.value.image_name}:${each.value.image_tag}"
             exit 1
           fi
         fi
-        if ! docker tag ${each.value.name} ${each.value.repository_location}-docker.pkg.dev/${var.project_id}/${each.value.repository_name}/${each.value.name}:${each.value.tag}
+        if ! docker tag ${each.value.image_name} ${local.location}-docker.pkg.dev/${var.project_id}/${each.value.repository_name}/${each.value.image_name}:${each.value.image_tag}
         then
-          echo "cannot tag image ${each.value.name}:${each.value.tag} to ${each.value.repository_location}-docker.pkg.dev/${var.project_id}/${each.value.repository_name}/${each.value.name}:${each.value.tag}"
+          echo "cannot tag image ${each.value.image_name}:${each.value.image_tag} to ${local.location}-docker.pkg.dev/${var.project_id}/${each.value.repository_name}/${each.value.image_name}:${each.value.image_tag}"
           exit 1
         fi
-        if ! docker push ${each.value.repository_location}-docker.pkg.dev/${var.project_id}/${each.value.repository_name}/${each.value.name}:${each.value.tag}
+        if ! docker push ${local.location}-docker.pkg.dev/${var.project_id}/${each.value.repository_name}/${each.value.image_name}:${each.value.image_tag}
         then
-          echo "cannot push image ${each.value.repository_location}-docker.pkg.dev/${var.project_id}/${each.value.repository_name}/${each.value.name}:${each.value.tag}"
+          echo "cannot push image ${local.location}-docker.pkg.dev/${var.project_id}/${each.value.repository_name}/${each.value.image_name}:${each.value.image_tag}"
           exit 1
         fi
       
@@ -35,8 +35,8 @@ resource "null_resource" "gcp_copy_images" {
 
 resource "google_artifact_registry_repository" "artifact_registry_creation" {
   count         = length(var.repositories)
-  location      = var.repositories[count.index].location
-  repository_id = var.repositories[count.index].repository_id
+  location      = local.location
+  repository_id = var.repositories[count.index].artifact_repository_name
   description   = var.repositories[count.index].description
   format        = var.repositories[count.index].format
 }

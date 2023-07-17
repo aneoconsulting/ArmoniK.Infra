@@ -8,7 +8,7 @@ resource "kubernetes_config_map" "grafana_ini" {
     [server]
     domain=localhost
     root_url = %(protocol)s://%(domain)s:%(http_port)s/grafana
-    serve_from_sub_path = true
+    serve_from_sub_path = false
     %{if !var.authentication}
     [auth.anonymous]
     enabled = true

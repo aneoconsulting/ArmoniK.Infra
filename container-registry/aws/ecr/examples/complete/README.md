@@ -36,7 +36,7 @@ terraform destroy
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_ecr"></a> [ecr](#module\_ecr) | ../../../ecr | n/a |
+| <a name="module_complete_ecr"></a> [complete\_ecr](#module\_complete\_ecr) | ../../../ecr | n/a |
 
 ## Resources
 

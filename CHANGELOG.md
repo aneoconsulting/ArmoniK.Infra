@@ -14,7 +14,6 @@ Added
 -
 
 * Module of AWS VPC endpoints
-* Module to push container images of AWS ECR
 
 Breaking changes
 -

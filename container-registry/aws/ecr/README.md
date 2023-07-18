@@ -57,6 +57,7 @@ No modules.
 | <a name="input_encryption_type"></a> [encryption\_type](#input\_encryption\_type) | The encryption type to use for the repository. | `string` | `"AES256"` | no |
 | <a name="input_force_delete"></a> [force\_delete](#input\_force\_delete) | If true, will delete the repository even if it contains images. | `bool` | `true` | no |
 | <a name="input_kms_key_id"></a> [kms\_key\_id](#input\_kms\_key\_id) | KMS to encrypt ECR repositories | `string` | `null` | no |
+| <a name="input_lifecycle_policy"></a> [lifecycle\_policy](#input\_lifecycle\_policy) | Manages an ECR repository lifecycle policy | `map(any)` | `null` | no |
 | <a name="input_mutability"></a> [mutability](#input\_mutability) | The tag mutability setting for the repository | `string` | `"MUTABLE"` | no |
 | <a name="input_only_pull_accounts"></a> [only\_pull\_accounts](#input\_only\_pull\_accounts) | List of accounts having pull permission | `list(string)` | `[]` | no |
 | <a name="input_push_and_pull_accounts"></a> [push\_and\_pull\_accounts](#input\_push\_and\_pull\_accounts) | List of accounts having push and pull permissions | `list(string)` | `[]` | no |

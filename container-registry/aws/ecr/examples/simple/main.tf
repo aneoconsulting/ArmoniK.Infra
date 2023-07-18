@@ -33,7 +33,7 @@ module "simple_ecr" {
   repositories = local.new_repositories
   tags = {
     env             = "test"
-    app             = "complete"
+    app             = "simple"
     module          = "AWS ECR"
     "create by"     = data.aws_caller_identity.current.arn
     "creation date" = null_resource.timestamp.triggers["creation_date"]

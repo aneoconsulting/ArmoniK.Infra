@@ -10,7 +10,7 @@ locals {
   only_pull_accounts_root     = formatlist("arn:aws:iam::%s:root", var.only_pull_accounts)
   push_and_pull_accounts_root = formatlist("arn:aws:iam::%s:root", var.push_and_pull_accounts)
   current_account_root        = format("arn:aws:iam::%s:root", local.current_account)
-  pull_actions = [
+  pull_actions                = [
     "ecr:GetDownloadUrlForLayer",
     "ecr:BatchGetImage",
     "ecr:BatchCheckLayerAvailability",
@@ -30,7 +30,8 @@ locals {
     "ecr:SetRepositoryPolicy",
     "ecr:DeleteRepositoryPolicy",
   ]
-  tags = merge({ module = "ecr" }, var.tags)
+  lifecycle_policy = can(coalesce(var.lifecycle_policy)) ? jsonencode(var.lifecycle_policy) : null
+  tags             = merge({ module = "ecr" }, var.tags)
 }
 
 # create ECR repositories
@@ -112,27 +113,9 @@ resource "aws_ecr_repository_policy" "policy" {
 
 # Lifecycle policy
 resource "aws_ecr_lifecycle_policy" "ecr_lifecycle_policy" {
-  for_each   = aws_ecr_repository.ecr
+  for_each   = can(coalesce(local.lifecycle_policy)) ? aws_ecr_repository.ecr : {}
   repository = each.key
-  policy     = <<EOF
-{
-    "rules": [
-        {
-            "rulePriority": 1,
-            "description": "Expire images older than 14 days",
-            "selection": {
-                "tagStatus": "untagged",
-                "countType": "sinceImagePushed",
-                "countUnit": "days",
-                "countNumber": 14
-            },
-            "action": {
-                "type": "expire"
-            }
-        }
-    ]
-}
-EOF
+  policy     = local.lifecycle_policy
 }
 
 # Push images

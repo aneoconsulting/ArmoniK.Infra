@@ -1,6 +1,6 @@
 # Profile
-variable "profile" {
-  description = "Profile of AWS credentials to deploy Terraform sources"
+variable "aws_profile" {
+  description = "AWS Profile used to login and push container images on ECR"
   type        = string
 }
 
@@ -15,73 +15,66 @@ variable "tags" {
 variable "kms_key_id" {
   description = "KMS to encrypt ECR repositories"
   type        = string
-  default     = ""
+  default     = null
+}
+
+# Variable to enable mutability
+variable "mutability" {
+  description = "The tag mutability setting for the repository"
+  type        = string
+  default     = "MUTABLE"
+  validation {
+    condition     = contains(["MUTABLE", "IMMUTABLE"], var.mutability)
+    error_message = "Valid values for \"mutability\" : \"MUTABLE\" | \"IMMUTABLE\"."
+  }
 }
 
 # List of ECR repositories to create
 variable "repositories" {
-  description = "List of ECR repositories to create"
-  type        = list(any)
-  default = [
-    {
-      name  = "mongodb"
-      image = "mongo"
-      tag   = "4.4.11"
-    },
-    {
-      name  = "redis"
-      image = "redis"
-      tag   = "bullseye"
-    },
-    {
-      name  = "activemq"
-      image = "symptoma/activemq"
-      tag   = "5.16.3"
-    },
-    {
-      name  = "armonik-control-plane"
-      image = "dockerhubaneo/armonik_control"
-      tag   = "0.4.0"
-    },
-    {
-      name  = "armonik-polling-agent"
-      image = "dockerhubaneo/armonik_pollingagent"
-      tag   = "0.4.0"
-    },
-    {
-      name  = "armonik-worker"
-      image = "dockerhubaneo/armonik_worker_dll"
-      tag   = "0.1.2-SNAPSHOT.4.cfda5d1"
-    },
-    {
-      name  = "seq"
-      image = "datalust/seq"
-      tag   = "2021.4"
-    },
-    {
-      name  = "grafana"
-      image = "grafana/grafana"
-      tag   = "latest"
-    },
-    {
-      name  = "prometheus"
-      image = "prom/prometheus"
-      tag   = "latest"
-    },
-    {
-      name  = "cluster-autoscaler"
-      image = "k8s.gcr.io/autoscaling/cluster-autoscaler"
-      tag   = "v1.21.0"
-    },
-    {
-      name  = "aws-node-termination-handler"
-      image = "amazon/aws-node-termination-handler"
-      tag   = "v1.10.0"
-    },
-    {
-      name  = "fluent-bit"
-      image = "fluent/fluent-bit"
-      tag   = "1.3.11"
-    }
-  ]
+  description = "Map of ECR repositories to create. Each repository is an object of \"image\" and \"tag\" parameters"
+  type = map(object({
+    image = string
+    tag   = string
+  }))
+  default = {}
+}
+
+variable "scan_on_push" {
+  description = " Indicates whether images are scanned after being pushed to the repository or not scanned"
+  type        = bool
+  default     = null
+}
+
+variable "force_delete" {
+  description = "If true, will delete the repository even if it contains images."
+  type        = bool
+  default     = true
+}
+
+variable "encryption_type" {
+  description = "The encryption type to use for the repository."
+  type        = string
+  default     = "AES256"
+  validation {
+    condition     = contains(["AES256", "KMS"], var.encryption_type)
+    error_message = "Valid values for \"encryption_type\" are: \"AES256\" | \"KMS\"."
+  }
+}
+
+variable "only_pull_accounts" {
+  description = "List of accounts having pull permission"
+  type        = list(string)
+  default     = []
+}
+
+variable "push_and_pull_accounts" {
+  description = "List of accounts having push and pull permissions"
+  type        = list(string)
+  default     = []
+}
+
+variable "lifecycle_policy" {
+  description = "Manages an ECR repository lifecycle policy"
+  type        = map(any)
+  default     = null
 }

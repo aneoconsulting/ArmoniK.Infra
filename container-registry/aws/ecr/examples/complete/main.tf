@@ -127,7 +127,7 @@ locals {
       tag   = "v3.4.0-eks-1-22-19"
     }
   }
-  new_repositories = {for k, v in local.repositories : "test/${k}" => v}
+  new_repositories = { for k, v in local.repositories : "test/${k}" => v }
 }
 
 # AWS ECR
@@ -142,7 +142,7 @@ module "complete_ecr" {
   encryption_type        = "AES256"
   only_pull_accounts     = ["125796369274"]
   push_and_pull_accounts = ["125796369274"]
-  tags                   = {
+  tags = {
     env             = "test"
     app             = "complete"
     module          = "AWS ECR"

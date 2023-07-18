@@ -32,7 +32,7 @@ variable "mutability" {
 # List of ECR repositories to create
 variable "repositories" {
   description = "Map of ECR repositories to create. Each repository is an object of \"image\" and \"tag\" parameters"
-  type        = map(object({
+  type = map(object({
     image = string
     tag   = string
   }))
@@ -72,4 +72,3 @@ variable "push_and_pull_accounts" {
   type        = list(string)
   default     = []
 }
-

@@ -2,6 +2,7 @@ name: Generate Terraform documentation
 on:
   pull_request:
     branches: [ main, master ]
+  push:
 jobs:
   collectInputs:
     name: Collect workflow inputs
@@ -19,7 +20,7 @@ jobs:
         run: |
           DIRS=$(echo '${{ steps.dirs.outputs.directories }}' | jq -r '. | join(",")')
           echo "directories=$DIRS" >> $GITHUB_OUTPUT
-  docs:
+  terraformDocs:
     runs-on: ubuntu-latest
     needs: collectInputs
     steps:
@@ -39,3 +40,18 @@ jobs:
           indention: 2
           git-push: true
           git-commit-message: "terraform-docs: automated action"
+
+  helmDocs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+      - name: Install helm-docs
+        uses: envoy/install-helm-docs@v1.0.0
+        with:
+          version: 1.11.0
+      - name: Update README files with helm-docs
+        run: |
+          cd charts
+          helm-docs

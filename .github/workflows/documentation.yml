@@ -2,7 +2,6 @@ name: Generate Terraform documentation
 on:
   pull_request:
     branches: [ main, master ]
-  push:
 jobs:
   collectInputs:
     name: Collect workflow inputs
@@ -40,7 +39,6 @@ jobs:
           indention: 2
           git-push: true
           git-commit-message: "terraform-docs: automated action"
-
   helmDocs:
     runs-on: ubuntu-latest
     steps:

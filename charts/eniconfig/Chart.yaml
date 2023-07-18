@@ -1,5 +1,5 @@
 apiVersion: v2
-name: keda-hpa-activemq
+name: eniconfig
 description: A Helm chart for Kubernetes
 
 # A chart can be either an 'application' or a 'library' chart.
@@ -28,9 +28,3 @@ maintainers:
   - name: Aneo
     email: armonik-support@aneo.fr
     url: armonik.fr
-  - name: Lilia ZIANE KHODJA
-    email: lzianekhodja@aneo.fr
-    url: https://fr.linkedin.com/in/lilia-ziane-khodja
-  - name: Imad ADJADJ
-    email: iadjadj@aneo.fr
-    url: https://fr.linkedin.com/in/imad-adjadj-b316601bb

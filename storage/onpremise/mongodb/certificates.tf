@@ -10,7 +10,7 @@ resource "tls_private_key" "root_mongodb" {
 resource "tls_self_signed_cert" "root_mongodb" {
   private_key_pem       = tls_private_key.root_mongodb.private_key_pem
   is_ca_certificate     = true
-  validity_period_hours = "168"
+  validity_period_hours = var.validity_period_hours
   allowed_uses = [
     "cert_signing",
     "key_encipherment",

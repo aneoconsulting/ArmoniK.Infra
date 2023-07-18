@@ -1,27 +1,18 @@
-
-# # Tags
-# variable "tags" {
-#   description = "Tags for resource"
-#   type        = any
-#   default     = {}
-# }
-
-# Profile
 variable "project_id" {
   description = "Project ID on which to create artifact registry (AR)"
   type        = string
 }
 
-# KMS to encrypt GCP repositories
 variable "kms_key" {
   description = "KMS to encrypt GCP repositories"
   type        = string
-  default     = ""
+  default     = null
 }
 
 variable "zone" {
   description = "Zone of the project"
   type        = string
+  default     = null
 }
 
 variable "region" {
@@ -38,30 +29,32 @@ variable "credentials_file" {
   }
 }
 
-variable "registryName" {
+variable "registry_name" {
   description = "Name of the registry to create"
   type        = string
 }
 
-variable "registryFormat" {
-  description = "Format of packages that are going to be stocked inside the registry"
-  type        = string
-}
-
-variable "registryLabels" {
+variable "registry_labels" {
   description = "Labels for the registry"
   type        = map(string)
+  default     = null
 }
 
-variable "registryImages" {
+variable "registry_images" {
   description = "Images to push inside the registry"
-  type = map(object({
+  type        = map(object({
     image = string
     tag   = string
   }))
 }
 
-variable "registryDescription" {
+variable "registry_description" {
   description = "Description of the registry"
   type        = string
+}
+
+variable "immutable_tags" {
+  description = "If the registry is a docker format then tags can be immutable (true or false)"
+  type        = bool
+  default     = null
 }

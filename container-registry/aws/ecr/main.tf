@@ -10,7 +10,7 @@ locals {
   only_pull_accounts_root     = formatlist("arn:aws:iam::%s:root", var.only_pull_accounts)
   push_and_pull_accounts_root = formatlist("arn:aws:iam::%s:root", var.push_and_pull_accounts)
   current_account_root        = format("arn:aws:iam::%s:root", local.current_account)
-  pull_actions                = [
+  pull_actions = [
     "ecr:GetDownloadUrlForLayer",
     "ecr:BatchGetImage",
     "ecr:BatchCheckLayerAvailability",

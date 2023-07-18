@@ -1,9 +1,9 @@
 resource "helm_release" "keda_hpa_control_plane" {
   name       = "hpa-${var.control_plane.name}"
   namespace  = var.namespace
-  chart      = "keda-hpa"
-  repository = "${path.module}/charts"
-  version    = "0.1.0"
+  chart      = var.chart_name
+  repository = "${path.module}/${var.charts_repository}"
+  version    = var.chart_version
 
   set {
     name  = "suffix"

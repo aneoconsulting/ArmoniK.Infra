@@ -42,7 +42,7 @@ variable "registry_labels" {
 
 variable "registry_images" {
   description = "Images to push inside the registry"
-  type        = map(object({
+  type = map(object({
     image = string
     tag   = string
   }))
@@ -62,5 +62,5 @@ variable "immutable_tags" {
 variable "registry_iam" {
   description = "Assign role on the repository for a list of users"
   type        = map(list(string))
-  default = null
+  default     = null
 }

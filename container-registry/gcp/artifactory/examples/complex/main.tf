@@ -7,7 +7,7 @@ locals {
     node-exporter = {
       image = "prom/node-exporter"
       tag   = "latest"
-    }, 
+    },
     redis = {
       image = "redis"
       tag   = "6.0.20"
@@ -15,7 +15,7 @@ locals {
     grafana = {
       image = "grafana/grafana"
       tag   = "9.5.6"
-    }, 
+    },
     nginx = {
       image = "nginx"
       tag   = "stable"
@@ -23,7 +23,7 @@ locals {
     rabbitmq = {
       image = "rabbitmq"
       tag   = "latest"
-    }, 
+    },
     busybox = {
       image = "busybox"
       tag   = "stable"
@@ -52,7 +52,7 @@ module "simple_artifact_registry" {
   registry_name        = "my_registry"
   registry_labels      = local.registry_labels
   registry_description = "One registry example"
-  immutable_tags       = true 
+  immutable_tags       = true
   region               = "euope-west9"
   zone                 = "a"
   kms_key              = "my_kms_key"

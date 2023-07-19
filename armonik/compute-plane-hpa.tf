@@ -3,7 +3,7 @@ resource "helm_release" "keda_hpa_compute_plane" {
   name       = "compute-plane-${each.key}"
   namespace  = var.namespace
   chart      = var.chart_name
-  repository = var.charts_repository
+  repository = "${path.module}/${var.charts_repository}"
   version    = var.chart_version
 
   set {

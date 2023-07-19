@@ -4,12 +4,39 @@ variable "profile" {
   type        = string
 }
 
+# Namespace helm chart
+variable "chart_namespace" {
+  type        = string
+  description = "Version for chart"
+  default     = "default" # Enter your desired namespace of helm chart here
+}
+
+# Version helm chart
+variable "chart_version" {
+  type        = string
+  description = "Version for chart"
+  default     = "0.1.0" # Enter your desired version of helm chart here
+}
+
+# Name helm chart
+variable "chart_name" {
+  type        = string
+  description = "Name for chart"
+  default     = "eniconfig" # Enter your desired name of Helm chart here
+}
+
+# Path helm chart
+variable "chart_repository" {
+  type        = string
+  description = "Path to the charts repository"
+  default     = "../../../charts" # Enter your desired relative path here
+}
+
 # Kubeconfig file path
 variable "kubeconfig_file" {
   description = "Kubeconfig file path"
   type        = string
 }
-
 
 # Tags
 variable "tags" {

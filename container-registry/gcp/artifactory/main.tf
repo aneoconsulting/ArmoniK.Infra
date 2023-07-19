@@ -48,11 +48,10 @@ resource "google_artifact_registry_repository" "artifact_registry_docker" {
 }
 
 resource "google_artifact_registry_repository_iam_binding" "binding" {
+  for_each   = var.registry_iam != null ? var.registry_iam : {}
   project    = var.project_id
   location   = local.location
   repository = var.registry_name
-  role       = "roles/artifactregistry.reader"
-  members = [
-    "user:jane@example.com",
-  ]
-}*
+  role       = each.key
+  members    = tolist(each.value)
+}

@@ -58,3 +58,9 @@ variable "immutable_tags" {
   type        = bool
   default     = null
 }
+
+variable "registry_iam" {
+  description = "Assign role on the repository for a list of users"
+  type        = map(list(string))
+  default = null
+}

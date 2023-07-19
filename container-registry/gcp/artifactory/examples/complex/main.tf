@@ -48,7 +48,7 @@ module "simple_artifact_registry" {
   source               = "../../../artifactory"
   registry_images      = local.registry_images
   project_id           = "my_project_id"
-  credentials_file     = "/home/hbitoun/.config/gcloud/application_default_credentials.json"
+  credentials_file     = "~/.config/gcloud/application_default_credentials.json"
   registry_name        = "my_registry"
   registry_labels      = local.registry_labels
   registry_description = "One registry example"

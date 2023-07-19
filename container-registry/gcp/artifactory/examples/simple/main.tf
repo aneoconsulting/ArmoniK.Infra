@@ -5,10 +5,6 @@ locals {
       tag   = "1.5.0"
     }
   }
-
-  registry_lables = {
-    label-test = "test"
-  }
 }
 
 module "simple_artifact_registry" {

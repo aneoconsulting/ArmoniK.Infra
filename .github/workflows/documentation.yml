@@ -39,17 +39,3 @@ jobs:
           indention: 2
           git-push: true
           git-commit-message: "terraform-docs: automated action"
-  helmDocs:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          ref: ${{ github.event.pull_request.head.ref }}
-      - name: Install helm-docs
-        uses: envoy/install-helm-docs@v1.0.0
-        with:
-          version: 1.11.0
-      - name: Update README files with helm-docs
-        run: |
-          cd charts
-          helm-docs

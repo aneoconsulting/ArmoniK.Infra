@@ -1,6 +1,9 @@
 apiVersion: v2
 name: keda-hpa-activemq
-description: A Helm chart for Kubernetes
+description: Keda scaledobject for HPA in ArmoniK
+
+# Specify the Kubernetes version range that we support.
+kubeVersion: ">=v1.23.0-0"
 
 # A chart can be either an 'application' or a 'library' chart.
 #
@@ -21,7 +24,11 @@ version: 0.1.0
 # incremented each time you make changes to the application. Versions are not expected to
 # follow Semantic Versioning. They should reflect the version the application is using.
 # It is recommended to use it with quotes.
-appVersion: "1.16.0"
+appVersion: "0.1.0"
+
+home: https://github.com/aneoconsulting/ArmoniK.Infra/tree/main/charts/keda-hpa
+sources:
+  - https://github.com/aneoconsulting/ArmoniK.Infra/tree/main/charts/keda-hpa
 
 # Maintainers
 maintainers:

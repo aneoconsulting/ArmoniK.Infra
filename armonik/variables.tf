@@ -4,6 +4,27 @@ variable "namespace" {
   type        = string
 }
 
+# Version helm chart
+variable "chart_version" {
+  type        = string
+  description = "Version for chart"
+  default     = "0.1.0" # Enter your desired version of helm chart here
+}
+
+# Name Helm chart
+variable "chart_name" {
+  type        = string
+  description = "Name for chart"
+  default     = "keda-hpa" # Enter your desired name of Helm chart here
+}
+
+# Path helm chart
+variable "charts_repository" {
+  type        = string
+  description = "Path to the charts repository"
+  default     = "../charts" # Enter your desired relative path here
+}
+
 # Logging level
 variable "logging_level" {
   description = "Logging level in ArmoniK"

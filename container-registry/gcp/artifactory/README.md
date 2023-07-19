@@ -3,6 +3,7 @@ Artifact Registry provides a single location for storing and managing your packa
 This module creates an artifact registry of docker images with these possibilities :
 
 Enable or disable mutability
+Add some rights for a list of users
 <!-- Enable or disable the force delete -->
 <!-- Choose the encryption type -->
 <!-- Set a lifecycle policy -->

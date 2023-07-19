@@ -36,13 +36,19 @@ locals {
     label_key_2 = "value-label-2",
     label_key_3 = "value-label-3"
   }
+
+  registry_iam = {
+    "roles/artifactregistry.repoAdmin" = ["user:user1@example.com"],
+    "roles/artifactregistry.reader"    = ["user:user2@example.com", "user:user3@example.com", "user:user4@example.com"],
+    "roles/artifactregistry.writer"    = ["user:user2@example.com", "user:user3@example.com"]
+  }
 }
 
 module "simple_artifact_registry" {
   source               = "../../../artifactory"
   registry_images      = local.registry_images
   project_id           = "my_project_id"
-  credentials_file     = "my_json_file"
+  credentials_file     = "/home/hbitoun/.config/gcloud/application_default_credentials.json"
   registry_name        = "my_registry"
   registry_labels      = local.registry_labels
   registry_description = "One registry example"
@@ -50,5 +56,5 @@ module "simple_artifact_registry" {
   region               = "euope-west9"
   zone                 = "a"
   kms_key              = "my_kms_key"
-
+  registry_iam         = local.registry_iam
 }

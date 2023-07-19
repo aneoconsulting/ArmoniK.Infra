@@ -5,7 +5,7 @@ output "s3_bucket_name" {
 
 output "kms_key_id" {
   description = "ARN of KMS used for S3"
-  value       = var.s3.kms_key_id
+  value       = var.kms_key_id
 }
 
 output "arn" {

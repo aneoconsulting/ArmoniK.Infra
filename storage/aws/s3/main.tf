@@ -1,5 +1,5 @@
 locals {
-  attach_policy = (var.s3.attach_require_latest_tls_policy || var.s3.attach_deny_insecure_transport_policy || var.s3.attach_policy)
+  attach_policy = (var.attach_require_latest_tls_policy || var.attach_deny_insecure_transport_policy || var.attach_policy)
   tags          = merge(var.tags, { module = "s3" })
 }
 
@@ -12,14 +12,14 @@ resource "aws_s3_bucket" "s3_bucket" {
 resource "aws_s3_bucket_versioning" "versioning" {
   bucket = aws_s3_bucket.s3_bucket.id
   versioning_configuration {
-    status = var.s3.versioning
+    status = var.versioning
   }
 }
 
 resource "aws_s3_bucket_ownership_controls" "ownership" {
   bucket = aws_s3_bucket.s3_bucket.id
   rule {
-    object_ownership = var.s3.ownership
+    object_ownership = var.ownership
   }
 }
 
@@ -36,14 +36,14 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "encryption" {
   bucket = aws_s3_bucket.s3_bucket.bucket
   rule {
     apply_server_side_encryption_by_default {
-      sse_algorithm     = var.s3.sse_algorithm
-      kms_master_key_id = var.s3.kms_key_id
+      sse_algorithm     = var.sse_algorithm
+      kms_master_key_id = var.kms_key_id
     }
   }
 }
 
 data "aws_iam_policy_document" "deny_insecure_transport" {
-  count = (var.s3.attach_deny_insecure_transport_policy ? 1 : 0)
+  count = (var.attach_deny_insecure_transport_policy ? 1 : 0)
   statement {
     sid    = "denyInsecureTransport"
     effect = "Deny"
@@ -69,7 +69,7 @@ data "aws_iam_policy_document" "deny_insecure_transport" {
 }
 
 data "aws_iam_policy_document" "require_latest_tls" {
-  count = (var.s3.attach_require_latest_tls_policy ? 1 : 0)
+  count = (var.attach_require_latest_tls_policy ? 1 : 0)
   statement {
     sid    = "denyOutdatedTLS"
     effect = "Deny"
@@ -97,9 +97,9 @@ data "aws_iam_policy_document" "require_latest_tls" {
 data "aws_iam_policy_document" "combined" {
   count = (local.attach_policy ? 1 : 0)
   source_policy_documents = compact([
-    var.s3.attach_require_latest_tls_policy ? data.aws_iam_policy_document.require_latest_tls[0].json : "",
-    var.s3.attach_deny_insecure_transport_policy ? data.aws_iam_policy_document.deny_insecure_transport[0].json : "",
-    var.s3.attach_policy ? var.s3.policy : ""
+    var.attach_require_latest_tls_policy ? data.aws_iam_policy_document.require_latest_tls[0].json : "",
+    var.attach_deny_insecure_transport_policy ? data.aws_iam_policy_document.deny_insecure_transport[0].json : "",
+    var.attach_policy ? var.policy : ""
   ])
 }
 
@@ -114,10 +114,10 @@ resource "aws_s3_bucket_public_access_block" "s3_bucket" {
   # to prevent "A conflicting conditional operation is currently in progress against this resource."
   # Ref: https://github.com/hashicorp/terraform-provider-aws/issues/7628
 
-  count                   = (var.s3.attach_public_policy ? 1 : 0)
+  count                   = (var.attach_public_policy ? 1 : 0)
   bucket                  = local.attach_policy ? aws_s3_bucket_policy.s3_bucket[0].id : aws_s3_bucket.s3_bucket.id
-  block_public_acls       = var.s3.block_public_acls
-  block_public_policy     = var.s3.block_public_policy
-  ignore_public_acls      = var.s3.ignore_public_acls
-  restrict_public_buckets = var.s3.restrict_public_buckets
+  block_public_acls       = var.block_public_acls
+  block_public_policy     = var.block_public_policy
+  ignore_public_acls      = var.ignore_public_acls
+  restrict_public_buckets = var.restrict_public_buckets
 }

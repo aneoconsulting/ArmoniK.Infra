@@ -84,7 +84,7 @@ server {
         grpc_set_header X-Certificate-Client-CN $ssl_client_s_dn_cn;
         grpc_set_header X-Certificate-Client-Fingerprint $ssl_client_fingerprint;
 %{endif~}
-        grpc_pass grpc://${local.control_plane_endpoints.ip}:${local.control_plane_endpoints.port};
+        grpc_pass grpc://${local.control_plane_endpoints.service_dns_name}:${local.control_plane_endpoints.port};
 
         # Apparently, multiple chunks in a grpc stream is counted has a single body
         # So disable the limit

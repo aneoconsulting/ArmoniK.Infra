@@ -12,6 +12,7 @@ locals {
 
   seq_endpoints = (local.load_balancer.ip == "" && kubernetes_service.seq_web_console.spec.0.type == "ClusterIP" ? {
     ip           = kubernetes_service.seq_web_console.spec.0.cluster_ip
+    service_dns = "${kubernetes_service.seq_web_console.metadata[0].name}.${kubernetes_service.seq_web_console.metadata[0].namespace}"
     seq_web_port = kubernetes_service.seq_web_console.spec.0.port.0.port
     } : {
     ip           = local.load_balancer.ip
@@ -19,6 +20,6 @@ locals {
   })
 
 
-  seq_url     = "http://${kubernetes_service.seq.spec.0.cluster_ip}:${kubernetes_service.seq.spec.0.port.0.port}"
-  seq_web_url = "http://${local.seq_endpoints.ip}:${local.seq_endpoints.seq_web_port}"
+  seq_url     = "http://${kubernetes_service.seq.metadata[0].name}.${kubernetes_service.seq.metadata[0].namespace}:${kubernetes_service.seq.spec[0].port[0].port}"
+  seq_web_url = "http://${local.seq_endpoints.service_dns}:${local.seq_endpoints.seq_web_port}"
 }

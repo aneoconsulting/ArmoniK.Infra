@@ -1,6 +1,6 @@
 # ActiveMQ
 output "host" {
-  value = local.activemq_endpoints.ip
+  value = local.activemq_endpoints.service_dns
 }
 
 output "port" {

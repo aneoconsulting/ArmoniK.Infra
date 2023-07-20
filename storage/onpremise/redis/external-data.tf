@@ -9,12 +9,13 @@ locals {
 
   redis_endpoints = (local.redis_load_balancer.ip == "" && kubernetes_service.redis.spec.0.type == "ClusterIP" ? {
     ip   = kubernetes_service.redis.spec.0.cluster_ip
+    service_dns = "${kubernetes_service.redis.metadata[0].name}.${kubernetes_service.redis.metadata[0].namespace}"     
     port = kubernetes_service.redis.spec.0.port.0.port
     } : {
     ip   = local.redis_load_balancer.ip
     port = local.redis_load_balancer.port
   })
 
-  redis_url = "${local.redis_endpoints.ip}:${local.redis_endpoints.port}"
+  redis_url = "${local.redis_endpoints.service_dns}:${local.redis_endpoints.port}"
 }
 

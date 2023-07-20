@@ -1,6 +1,6 @@
 # Redis
 output "host" {
-  value = local.redis_endpoints.ip
+  value = local.redis_endpoints.service_dns
 }
 
 output "port" {

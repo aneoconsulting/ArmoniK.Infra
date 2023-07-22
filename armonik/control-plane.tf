@@ -183,14 +183,15 @@ resource "kubernetes_service" "control_plane" {
     annotations = var.control_plane.annotations
   }
   spec {
-    type = var.control_plane.service_type
+    type       = var.control_plane.service_type == "HeadLess" ? "ClusterIP" : var.control_plane.service_type
+    cluster_ip = var.control_plane.service_type == "HeadLess" ? "None" : null
     selector = {
       app     = kubernetes_deployment.control_plane.metadata[0].labels.app
       service = kubernetes_deployment.control_plane.metadata[0].labels.service
     }
     port {
       name        = kubernetes_deployment.control_plane.spec[0].template[0].spec[0].container[0].port[0].name
-      port        = var.control_plane.port
+      port        = var.control_plane.service_type == "HeadLess" ? kubernetes_deployment.control_plane.spec[0].template[0].spec[0].container[0].port[0].container_port : var.control_plane.port
       target_port = kubernetes_deployment.control_plane.spec[0].template[0].spec[0].container[0].port[0].container_port
       protocol    = "TCP"
     }

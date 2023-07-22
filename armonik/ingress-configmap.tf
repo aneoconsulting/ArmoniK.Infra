@@ -44,6 +44,7 @@ server {
 %{endif~}
 
     sendfile on;
+    resolver kube-dns.kube-system ipv6=off;
 
     if ($accept_language ~ "^$") {
         set $accept_language "en";
@@ -68,23 +69,27 @@ server {
         rewrite ^ $scheme://$http_host/old-admin/ permanent;
     }
 %{if var.admin_gui != null~}
+    set $admin_app_upstream ${local.admin_app_url};
+    set $admin_old_upstream ${local.admin_old_url};
+    set $admin_api_upstream ${local.admin_api_url};
     location /admin/ {
-        proxy_pass ${local.admin_app_url};
+        proxy_pass $admin_app_upstream;
     }
     location /old-admin/ {
-        proxy_pass ${local.admin_old_url};
+        proxy_pass $admin_old_upstream;
     }
     location /api {
-        proxy_pass ${local.admin_api_url};
+        proxy_pass $admin_api_upstream;
     }
 %{endif~}
 
+    set $armonik_upstream grpc://${local.control_plane_endpoints.ip}:${local.control_plane_endpoints.port};
     location ~* ^/armonik\. {
 %{if var.ingress != null ? var.ingress.mtls : false~}
         grpc_set_header X-Certificate-Client-CN $ssl_client_s_dn_cn;
         grpc_set_header X-Certificate-Client-Fingerprint $ssl_client_fingerprint;
 %{endif~}
-        grpc_pass grpc://${local.control_plane_endpoints.ip}:${local.control_plane_endpoints.port};
+        grpc_pass $armonik_upstream;
 
         # Apparently, multiple chunks in a grpc stream is counted has a single body
         # So disable the limit
@@ -107,6 +112,7 @@ server {
   proxy_request_buffering off;
 
 %{if data.kubernetes_secret.shared_storage.data.file_storage_type == "s3"~}
+ set $minio_upstream ${data.kubernetes_secret.shared_storage.data.service_url};
  location / {
     client_max_body_size 0;
     proxy_set_header Host $http_host;
@@ -120,9 +126,10 @@ server {
     proxy_set_header Connection "";
     chunked_transfer_encoding off;
 
-    proxy_pass ${data.kubernetes_secret.shared_storage.data.service_url}; # This uses the upstream directive definition to load balance
+    proxy_pass $minio_upstream; # This uses the upstream directive definition to load balance
  }
 
+ set $minioconsole_upstream ${data.kubernetes_secret.shared_storage.data.console_url};
  location /minioconsole {
     proxy_set_header Host $http_host;
     proxy_set_header X-Real-IP $remote_addr;
@@ -145,12 +152,13 @@ server {
     proxy_set_header Connection "upgrade";
     chunked_transfer_encoding off;
 
-    proxy_pass ${data.kubernetes_secret.shared_storage.data.console_url}; # This uses the upstream directive definition to load balance and assumes a static Console port of 9001
+    proxy_pass $minioconsole_upstream; # This uses the upstream directive definition to load balance and assumes a static Console port of 9001
  }
  %{endif~}
 
 
 %{if data.kubernetes_secret.seq.data.enabled~}
+    set $seq_upstream ${data.kubernetes_secret.seq.data.web_url}/;
     location = /seq {
         rewrite ^ $scheme://$http_host/seq/ permanent;
     }
@@ -162,13 +170,14 @@ server {
         proxy_set_header Host $http_host;
         proxy_set_header Accept-Encoding "";
         rewrite  ^/seq/(.*)  /$1 break;
-        proxy_pass ${data.kubernetes_secret.seq.data.web_url}/;
+        proxy_pass $seq_upstream;
         sub_filter '<head>' '<head><base href="$${scheme}://$${http_host}/seq/">';
         sub_filter_once on;
         proxy_hide_header content-security-policy;
     }
 %{endif~}
 %{if data.kubernetes_secret.grafana.data.enabled != ""~}
+    set $grafana_upstream ${data.kubernetes_secret.grafana.data.url}/;
     location = /grafana {
         rewrite ^ $scheme://$http_host/grafana/ permanent;
     }
@@ -178,7 +187,7 @@ server {
         proxy_set_header X-Certificate-Client-Fingerprint $ssl_client_fingerprint;
 %{endif~}
         proxy_set_header Host $http_host;
-        proxy_pass ${data.kubernetes_secret.grafana.data.url}/;
+        proxy_pass $grafana_upstream;
         sub_filter '<head>' '<head><base href="$${scheme}://$${http_host}/grafana/">';
         sub_filter_once on;
         proxy_intercept_errors on;

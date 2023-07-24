@@ -1,5 +1,5 @@
 output "id" {
-  description = "The memorystore instance ID." 
+  description = "The memorystore instance ID."
   value       = module.simple_memorystore.id
 }
 
@@ -43,21 +43,4 @@ output "server_ca_certs" {
   description = "List of server CA certificates for the instance"
   value       = module.simple_memorystore.server_ca_certs
   sensitive   = false
-}
-
-############# SECTION - PROJECT SERVICE
-
-output "project_id" {
-  description = "The GCP project you want to enable APIs on"
-  value       = module.simple_memorystore.project_id
-}
-
-output "enabled_apis" {
-  description = "Enabled APIs in the project"
-  value       = module.simple_memorystore.enabled_apis
-}
-
-output "enabled_api_identities" {
-  description = "Enabled API identities in the project"
-  value       = module.simple_memorystore.enabled_api_identities
 }

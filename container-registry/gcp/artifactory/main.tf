@@ -45,6 +45,10 @@ resource "google_artifact_registry_repository" "artifact_registry_docker" {
   docker_config {
     immutable_tags = var.immutable_tags
   }
+
+  depends_on = [
+    google_project_service.enable_service_api
+  ]
 }
 
 resource "google_artifact_registry_repository_iam_binding" "binding" {
@@ -54,4 +58,15 @@ resource "google_artifact_registry_repository_iam_binding" "binding" {
   repository = var.registry_name
   role       = each.key
   members    = tolist(each.value)
+
+  depends_on = [
+    google_project_service.enable_service_api,
+    google_artifact_registry_repository.artifact_registry_docker
+  ]
+}
+
+resource "google_project_service" "enable_service_api" {
+  project                    = var.project_id
+  service                    = "artifactregistry.googleapis.com"
+  disable_dependent_services = true
 }

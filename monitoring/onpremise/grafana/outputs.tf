@@ -11,5 +11,5 @@ output "port" {
 
 output "host" {
   description = "Host of Grafana"
-  value       = local.grafana_endpoints.ip
+  value       = local.grafana_endpoints.service_dns
 }

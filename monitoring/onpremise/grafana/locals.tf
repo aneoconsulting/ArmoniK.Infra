@@ -11,12 +11,13 @@ locals {
   })
 
   grafana_endpoints = (local.load_balancer.ip == "" && kubernetes_service.grafana.spec[0].type == "ClusterIP" ? {
-    ip   = kubernetes_service.grafana.spec[0].cluster_ip
-    port = kubernetes_service.grafana.spec[0].port[0].port
+    ip          = kubernetes_service.grafana.spec[0].cluster_ip
+    service_dns = "${kubernetes_service.grafana.metadata[0].name}.${kubernetes_service.grafana.metadata[0].namespace}"
+    port        = kubernetes_service.grafana.spec[0].port[0].port
     } : {
     ip   = local.load_balancer.ip
     port = local.load_balancer.port
   })
 
-  grafana_url = "http://${local.grafana_endpoints.ip}:${local.grafana_endpoints.port}"
+  grafana_url = "http://${local.grafana_endpoints.service_dns}:${local.grafana_endpoints.port}"
 }

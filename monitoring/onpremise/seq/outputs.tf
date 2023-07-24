@@ -11,7 +11,7 @@ output "port" {
 
 output "host" {
   description = "Host of Seq"
-  value       = kubernetes_service.seq.spec[0].cluster_ip
+  value       = local.seq_endpoints.service_dns
 }
 
 output "web_url" {

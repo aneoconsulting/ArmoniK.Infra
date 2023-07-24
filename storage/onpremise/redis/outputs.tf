@@ -1,7 +1,7 @@
 # Redis
 output "host" {
   description = "Host of Redis"
-  value       = local.redis_endpoints.ip
+  value       = local.redis_endpoints.service_dns
 }
 
 output "port" {

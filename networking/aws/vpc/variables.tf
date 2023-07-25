@@ -12,26 +12,20 @@ variable "cidr" {
 
 variable "secondary_cidr_blocks" {
   description = "List of secondary CIDR blocks to associate with the VPC to extend the IP Address pool"
-  type        = list(string)
+  type        = set(string)
   default     = []
 }
 
 variable "private_subnets" {
   description = "A list of private subnets inside the VPC"
-  type        = list(string)
+  type        = set(string)
   default     = []
 }
 
 variable "public_subnets" {
   description = "A list of public subnets inside the VPC"
-  type        = list(string)
+  type        = set(string)
   default     = []
-}
-
-variable "enable_external_access" {
-  description = "Boolean to disable external access"
-  type        = bool
-  default     = true
 }
 
 variable "flow_log_cloudwatch_log_group_kms_key_id" {
@@ -79,8 +73,8 @@ variable "eks_name" {
 }
 
 variable "pod_subnets" {
-  description = "List of CIDR blocks fot Pods"
-  type        = list(string)
+  description = "List of CIDR blocks for Pods"
+  type        = set(string)
   default     = []
 }
 

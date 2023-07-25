@@ -1,6 +1,6 @@
 locals {
-  pod_subnets                    = can(coalesce(var.gke_name)) ? var.pod_subnets : []
-  public_subnets                 = var.enable_external_access ? var.public_subnets : []
+  pod_subnets    = can(coalesce(var.gke_name)) ? var.pod_subnets : []
+  public_subnets = var.enable_external_access ? var.public_subnets : []
 }
 
 # VPC
@@ -14,13 +14,13 @@ resource "google_compute_network" "vpc" {
 
 # Private subnets
 resource "google_compute_subnetwork" "private_subnets" {
-  count                            = length(var.private_subnets)
+  count = length(var.private_subnets)
 
-  name                             = "${var.name}-private-subnet-${count.index}"
-  project                          = var.project
-  region                           = var.region
-  network                          = google_compute_network.vpc.name
-  ip_cidr_range                    = var.private_subnets[count.index]
+  name                     = "${var.name}-private-subnet-${count.index}"
+  project                  = var.project
+  region                   = var.region
+  network                  = google_compute_network.vpc.name
+  ip_cidr_range            = var.private_subnets[count.index]
   private_ip_google_access = var.enable_google_access
 
   log_config {
@@ -32,13 +32,13 @@ resource "google_compute_subnetwork" "private_subnets" {
 
 # Pod subnets
 resource "google_compute_subnetwork" "pod_subnets" {
-  count                            = length(local.pod_subnets)
+  count = length(local.pod_subnets)
 
-  name                             = "${var.name}-pod-subnet-${count.index}"
-  project                          = var.project
-  region                           = var.region
-  network                          = google_compute_network.vpc.name
-  ip_cidr_range                    = var.pod_subnets[count.index]
+  name                     = "${var.name}-pod-subnet-${count.index}"
+  project                  = var.project
+  region                   = var.region
+  network                  = google_compute_network.vpc.name
+  ip_cidr_range            = var.pod_subnets[count.index]
   private_ip_google_access = var.enable_google_access
 
   log_config {
@@ -50,13 +50,13 @@ resource "google_compute_subnetwork" "pod_subnets" {
 
 # Public subnets
 resource "google_compute_subnetwork" "public_subnets" {
-  count                            = length(local.public_subnets)
+  count = length(local.public_subnets)
 
-  name                             = "${var.name}-public-subnet-${count.index}"
-  project                          = var.project
-  region                           = var.region
-  network                          = google_compute_network.vpc.id
-  ip_cidr_range                    = local.public_subnets[count.index]
+  name                     = "${var.name}-public-subnet-${count.index}"
+  project                  = var.project
+  region                   = var.region
+  network                  = google_compute_network.vpc.id
+  ip_cidr_range            = local.public_subnets[count.index]
   private_ip_google_access = var.enable_google_access
 
   log_config {
@@ -68,7 +68,7 @@ resource "google_compute_subnetwork" "public_subnets" {
 
 # External access for public subnets
 resource "google_compute_router" "router" {
-  count   = var.enable_external_access ? 1 : 0
+  count = var.enable_external_access ? 1 : 0
 
   name    = "${var.name}-router"
   project = var.project
@@ -77,7 +77,7 @@ resource "google_compute_router" "router" {
 }
 
 resource "google_compute_router_nat" "nat_gateway" {
-  count                              = var.enable_external_access ? 1 : 0
+  count = var.enable_external_access ? 1 : 0
 
   name                               = "${var.name}-nat"
   project                            = var.project
@@ -88,8 +88,8 @@ resource "google_compute_router_nat" "nat_gateway" {
   dynamic "subnetwork" {
     for_each = google_compute_subnetwork.public_subnets
     content {
-      name                     = subnetwork.value.name
-      source_ip_ranges_to_nat  = ["PRIMARY_IP_RANGE"]
+      name                    = subnetwork.value.name
+      source_ip_ranges_to_nat = ["PRIMARY_IP_RANGE"]
     }
   }
 

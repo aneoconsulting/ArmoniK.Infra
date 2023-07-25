@@ -11,7 +11,7 @@ In this project contains Terraform modules for the different resources and compo
 # Contributing
 
 Some conventional rules to contribute to ArmoniK.Infra are mentioned
-in [Contributing to ArmoniK Infrastructure](./CINTRIBUTING.md).
+in [Contributing to ArmoniK Infrastructure](./CONTRIBUTING.md).
 
 # Bugs/Support
 

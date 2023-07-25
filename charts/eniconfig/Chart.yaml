@@ -1,6 +1,9 @@
 apiVersion: v2
 name: eniconfig
-description: A Helm chart for Kubernetes
+description: Patch CNI in AWS EKS
+
+# Specify the Kubernetes version range that we support.
+kubeVersion: ">=v1.23.0-0"
 
 # A chart can be either an 'application' or a 'library' chart.
 #
@@ -21,16 +24,14 @@ version: 0.1.0
 # incremented each time you make changes to the application. Versions are not expected to
 # follow Semantic Versioning. They should reflect the version the application is using.
 # It is recommended to use it with quotes.
-appVersion: "1.16.0"
+appVersion: "0.1.0"
+
+home: https://github.com/aneoconsulting/ArmoniK.Infra/tree/main/charts/eniconfig
+sources:
+  - https://github.com/aneoconsulting/ArmoniK.Infra/tree/main/charts/eniconfig
 
 # Maintainers
 maintainers:
   - name: Aneo
     email: armonik-support@aneo.fr
     url: armonik.fr
-  - name: Lilia ZIANE KHODJA
-    email: lzianekhodja@aneo.fr
-    url: https://fr.linkedin.com/in/lilia-ziane-khodja
-  - name: Imad ADJADJ
-    email: iadjadj@aneo.fr
-    url: https://fr.linkedin.com/in/imad-adjadj-b316601bb

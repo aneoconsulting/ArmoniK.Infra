@@ -1,6 +1,6 @@
 output "repositories" {
-  description = "List of ECR repositories"
-  value       = [for repo in aws_ecr_repository.ecr : repo.repository_url]
+  description = "Map of ECR repositories created on AWS"
+  value       = { for repo in aws_ecr_repository.ecr : repo.name => repo.repository_url }
 }
 
 output "kms_key_id" {

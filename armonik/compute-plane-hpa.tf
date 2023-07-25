@@ -2,9 +2,9 @@ resource "helm_release" "keda_hpa_compute_plane" {
   for_each   = kubernetes_deployment.compute_plane
   name       = "compute-plane-${each.key}"
   namespace  = var.namespace
-  chart      = "keda-hpa"
-  repository = "${path.module}/charts"
-  version    = "0.1.0"
+  chart      = var.chart_name
+  repository = "${path.module}/${var.charts_repository}"
+  version    = var.chart_version
 
   set {
     name  = "suffix"

@@ -39,7 +39,6 @@ module "complex_memorystore" {
   zone                    = "a"
   project_id              = "armonik-gcp-13469"
   name                    = "redis-test"
-  enable_apis             = true
   authorized_network      = "my-network-example"
   tier                    = "BASIC"
   memory_size_gb          = 2

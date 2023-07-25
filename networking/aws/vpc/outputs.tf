@@ -5,7 +5,7 @@ output "azs" {
 
 output "enable_external_access" {
   description = "Boolean to disable external access"
-  value       = var.enable_external_access
+  value       = local.enable_external_access
 }
 
 output "name" {
@@ -96,6 +96,11 @@ output "pod_subnets" {
 output "tags" {
   description = "List of tags"
   value       = local.tags
+}
+
+output "eks_cluster_name" {
+  description = "Name of the AWS EKS cluster"
+  value       = var.eks_name
 }
 
 output "this" {

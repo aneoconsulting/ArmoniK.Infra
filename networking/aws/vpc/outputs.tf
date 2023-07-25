@@ -94,7 +94,7 @@ output "pod_subnets" {
 }
 
 output "tags" {
-  description = "List of tags"
+  description = "List of tags for VPC resources"
   value       = local.tags
 }
 

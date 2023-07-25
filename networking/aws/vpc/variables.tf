@@ -1,7 +1,6 @@
 variable "name" {
-  description = "Name of the VPC"
+  description = "Name of the AWS VPC"
   type        = string
-  default     = ""
 }
 
 variable "cidr" {
@@ -12,19 +11,19 @@ variable "cidr" {
 
 variable "secondary_cidr_blocks" {
   description = "List of secondary CIDR blocks to associate with the VPC to extend the IP Address pool"
-  type        = set(string)
+  type        = list(string)
   default     = []
 }
 
 variable "private_subnets" {
   description = "A list of private subnets inside the VPC"
-  type        = set(string)
+  type        = list(string)
   default     = []
 }
 
 variable "public_subnets" {
   description = "A list of public subnets inside the VPC"
-  type        = set(string)
+  type        = list(string)
   default     = []
 }
 
@@ -74,7 +73,7 @@ variable "eks_name" {
 
 variable "pod_subnets" {
   description = "List of CIDR blocks for Pods"
-  type        = set(string)
+  type        = list(string)
   default     = []
 }
 

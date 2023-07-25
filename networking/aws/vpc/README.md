@@ -50,10 +50,10 @@ This module creates an AWS VPC with these constraints:
 | <a name="input_flow_log_file_format"></a> [flow\_log\_file\_format](#input\_flow\_log\_file\_format) | The format for the flow log | `string` | `"plain-text"` | no |
 | <a name="input_flow_log_max_aggregation_interval"></a> [flow\_log\_max\_aggregation\_interval](#input\_flow\_log\_max\_aggregation\_interval) | The maximum interval of time during which a flow of packets is captured and aggregated into a flow log | `number` | `60` | no |
 | <a name="input_name"></a> [name](#input\_name) | Name of the VPC | `string` | `""` | no |
-| <a name="input_pod_subnets"></a> [pod\_subnets](#input\_pod\_subnets) | List of CIDR blocks for Pods | `set(string)` | `[]` | no |
-| <a name="input_private_subnets"></a> [private\_subnets](#input\_private\_subnets) | A list of private subnets inside the VPC | `set(string)` | `[]` | no |
-| <a name="input_public_subnets"></a> [public\_subnets](#input\_public\_subnets) | A list of public subnets inside the VPC | `set(string)` | `[]` | no |
-| <a name="input_secondary_cidr_blocks"></a> [secondary\_cidr\_blocks](#input\_secondary\_cidr\_blocks) | List of secondary CIDR blocks to associate with the VPC to extend the IP Address pool | `set(string)` | `[]` | no |
+| <a name="input_pod_subnets"></a> [pod\_subnets](#input\_pod\_subnets) | List of CIDR blocks for Pods | `list(string)` | `[]` | no |
+| <a name="input_private_subnets"></a> [private\_subnets](#input\_private\_subnets) | A list of private subnets inside the VPC | `list(string)` | `[]` | no |
+| <a name="input_public_subnets"></a> [public\_subnets](#input\_public\_subnets) | A list of public subnets inside the VPC | `list(string)` | `[]` | no |
+| <a name="input_secondary_cidr_blocks"></a> [secondary\_cidr\_blocks](#input\_secondary\_cidr\_blocks) | List of secondary CIDR blocks to associate with the VPC to extend the IP Address pool | `list(string)` | `[]` | no |
 | <a name="input_tags"></a> [tags](#input\_tags) | Map of keys,values to tags VPC resources | `map(string)` | `{}` | no |
 | <a name="input_use_karpenter"></a> [use\_karpenter](#input\_use\_karpenter) | Use Karpenter for the cluster autoscaling | `bool` | `false` | no |
 
@@ -81,6 +81,6 @@ This module creates an AWS VPC with these constraints:
 | <a name="output_public_subnets"></a> [public\_subnets](#output\_public\_subnets) | List of IDs of public subnets |
 | <a name="output_public_subnets_cidr_blocks"></a> [public\_subnets\_cidr\_blocks](#output\_public\_subnets\_cidr\_blocks) | List of cidr\_blocks of public subnets |
 | <a name="output_secondary_cidr_blocks"></a> [secondary\_cidr\_blocks](#output\_secondary\_cidr\_blocks) | List of secondary CIDR blocks of the VPC |
-| <a name="output_tags"></a> [tags](#output\_tags) | List of tags |
+| <a name="output_tags"></a> [tags](#output\_tags) | List of tags for VPC resources |
 | <a name="output_this"></a> [this](#output\_this) | Object VPC |
 <!-- END_TF_DOCS -->

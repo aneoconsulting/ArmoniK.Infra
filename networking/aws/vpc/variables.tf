@@ -73,7 +73,7 @@ variable "eks_name" {
 }
 
 variable "pod_subnets" {
-  description = "List of CIDR blocks fot Pods"
+  description = "List of CIDR blocks for Pods"
   type        = set(string)
   default     = []
 }

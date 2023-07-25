@@ -40,8 +40,8 @@ variable "enable_external_access" {
 
 variable "enable_google_access" {
   description = "Enable the access to Google APIs to VMs without public IP"
-  type    = bool
-  default = true
+  type        = bool
+  default     = true
 }
 
 variable "flow_log_max_aggregation_interval" {

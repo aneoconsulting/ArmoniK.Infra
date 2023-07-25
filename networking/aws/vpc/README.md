@@ -50,7 +50,7 @@ This module creates an AWS VPC with these constraints:
 | <a name="input_flow_log_file_format"></a> [flow\_log\_file\_format](#input\_flow\_log\_file\_format) | The format for the flow log | `string` | `"plain-text"` | no |
 | <a name="input_flow_log_max_aggregation_interval"></a> [flow\_log\_max\_aggregation\_interval](#input\_flow\_log\_max\_aggregation\_interval) | The maximum interval of time during which a flow of packets is captured and aggregated into a flow log | `number` | `60` | no |
 | <a name="input_name"></a> [name](#input\_name) | Name of the VPC | `string` | `""` | no |
-| <a name="input_pod_subnets"></a> [pod\_subnets](#input\_pod\_subnets) | List of CIDR blocks fot Pods | `set(string)` | `[]` | no |
+| <a name="input_pod_subnets"></a> [pod\_subnets](#input\_pod\_subnets) | List of CIDR blocks for Pods | `set(string)` | `[]` | no |
 | <a name="input_private_subnets"></a> [private\_subnets](#input\_private\_subnets) | A list of private subnets inside the VPC | `set(string)` | `[]` | no |
 | <a name="input_public_subnets"></a> [public\_subnets](#input\_public\_subnets) | A list of public subnets inside the VPC | `set(string)` | `[]` | no |
 | <a name="input_secondary_cidr_blocks"></a> [secondary\_cidr\_blocks](#input\_secondary\_cidr\_blocks) | List of secondary CIDR blocks to associate with the VPC to extend the IP Address pool | `set(string)` | `[]` | no |

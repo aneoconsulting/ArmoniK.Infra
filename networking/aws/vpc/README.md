@@ -81,6 +81,6 @@ This module creates an AWS VPC with these constraints:
 | <a name="output_public_subnets"></a> [public\_subnets](#output\_public\_subnets) | List of IDs of public subnets |
 | <a name="output_public_subnets_cidr_blocks"></a> [public\_subnets\_cidr\_blocks](#output\_public\_subnets\_cidr\_blocks) | List of cidr\_blocks of public subnets |
 | <a name="output_secondary_cidr_blocks"></a> [secondary\_cidr\_blocks](#output\_secondary\_cidr\_blocks) | List of secondary CIDR blocks of the VPC |
-| <a name="output_tags"></a> [tags](#output\_tags) | List of tags |
+| <a name="output_tags"></a> [tags](#output\_tags) | List of tags for VPC resources |
 | <a name="output_this"></a> [this](#output\_this) | Object VPC |
 <!-- END_TF_DOCS -->

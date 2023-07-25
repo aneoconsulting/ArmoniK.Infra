@@ -1,74 +1,50 @@
-locals {
-  control_plane_load_balancer = (kubernetes_service.control_plane.spec.0.type == "LoadBalancer" ? {
-    ip   = (kubernetes_service.control_plane.status.0.load_balancer.0.ingress.0.ip == "" ? kubernetes_service.control_plane.status.0.load_balancer.0.ingress.0.hostname : kubernetes_service.control_plane.status.0.load_balancer.0.ingress.0.ip)
-    port = kubernetes_service.control_plane.spec.0.port.0.port
-    } : {
-    ip   = ""
-    port = ""
-  })
-
-  control_plane_endpoints = (local.control_plane_load_balancer.ip == "" && kubernetes_service.control_plane.spec.0.type == "ClusterIP" ? {
-    ip   = kubernetes_service.control_plane.spec.0.cluster_ip
-    port = kubernetes_service.control_plane.spec.0.port.0.port
-    } : {
-    ip   = local.control_plane_load_balancer.ip
-    port = local.control_plane_load_balancer.port
-  })
-
-  admin_gui_load_balancer = length(kubernetes_service.admin_gui) > 0 ? (kubernetes_service.admin_gui[0].spec.0.type == "LoadBalancer" ? {
-    ip       = (kubernetes_service.admin_gui[0].status.0.load_balancer.0.ingress.0.ip == "" ? kubernetes_service.admin_gui[0].status.0.load_balancer.0.ingress.0.hostname : kubernetes_service.admin_gui[0].status.0.load_balancer.0.ingress.0.ip)
-    app_port = kubernetes_service.admin_gui[0].spec.0.port.0.port
-    } : {
-    ip       = ""
-    app_port = ""
-  }) : null
-
-  admin_gui_endpoints = length(kubernetes_service.admin_gui) > 0 ? (local.admin_gui_load_balancer.ip == "" && kubernetes_service.admin_gui[0].spec.0.type == "ClusterIP" ? {
-    ip       = kubernetes_service.admin_gui[0].spec.0.cluster_ip
-    app_port = kubernetes_service.admin_gui[0].spec.0.port.0.port
-    } : {
-    ip       = local.admin_gui_load_balancer.ip
-    app_port = local.admin_gui_load_balancer.app_port
-  }) : null
-
-  admin_old_gui_load_balancer = length(kubernetes_service.admin_old_gui) > 0 ? (kubernetes_service.admin_old_gui[0].spec.0.type == "LoadBalancer" ? {
-    ip       = (kubernetes_service.admin_old_gui[0].status.0.load_balancer.0.ingress.0.ip == "" ? kubernetes_service.admin_old_gui[0].status.0.load_balancer.0.ingress.0.hostname : kubernetes_service.admin_old_gui[0].status.0.load_balancer.0.ingress.0.ip)
-    api_port = kubernetes_service.admin_old_gui[0].spec.0.port.0.port
-    app_port = kubernetes_service.admin_old_gui[0].spec.0.port.1.port
-    } : {
-    ip       = ""
-    api_port = ""
-    app_port = ""
-  }) : null
-
-  admin_old_gui_endpoints = length(kubernetes_service.admin_old_gui) > 0 ? (local.admin_old_gui_load_balancer.ip == "" && kubernetes_service.admin_old_gui[0].spec.0.type == "ClusterIP" ? {
-    ip       = kubernetes_service.admin_old_gui[0].spec.0.cluster_ip
-    api_port = kubernetes_service.admin_old_gui[0].spec.0.port.0.port
-    app_port = kubernetes_service.admin_old_gui[0].spec.0.port.1.port
-    } : {
-    ip       = local.admin_old_gui_load_balancer.ip
-    api_port = local.admin_old_gui_load_balancer.api_port
-    app_port = local.admin_old_gui_load_balancer.app_port
-  }) : null
-
-  ingress_load_balancer = (var.ingress != null ? kubernetes_service.ingress.0.spec.0.type == "LoadBalancer" : false) ? {
-    ip        = (kubernetes_service.ingress.0.status.0.load_balancer.0.ingress.0.ip == "" ? kubernetes_service.ingress.0.status.0.load_balancer.0.ingress.0.hostname : kubernetes_service.ingress.0.status.0.load_balancer.0.ingress.0.ip)
-    http_port = var.ingress.http_port
-    grpc_port = var.ingress.grpc_port
-    } : {
-    ip        = ""
-    http_port = ""
-    grpc_port = ""
+data "kubernetes_config_map" "dns" {
+  metadata {
+    name      = "coredns"
+    namespace = replace(data.kubernetes_secret.deployed_object_storage.id, "/.*/", "kube-system")
   }
+}
 
-  ingress_endpoint = (var.ingress != null ? local.ingress_load_balancer.ip == "" && kubernetes_service.ingress.0.spec.0.type == "ClusterIP" : false) ? {
-    ip        = kubernetes_service.ingress.0.spec.0.cluster_ip
+module "control_plane_endpoint" {
+  source  = "../utils/service-ip"
+  service = kubernetes_service.control_plane
+  domain  = local.cluster_domain
+}
+module "admin_gui_endpoint" {
+  source  = "../utils/service-ip"
+  service = one(kubernetes_service.admin_gui)
+  domain  = local.cluster_domain
+}
+module "admin_old_gui_endpoint" {
+  source  = "../utils/service-ip"
+  service = one(kubernetes_service.admin_old_gui)
+  domain  = local.cluster_domain
+}
+module "ingress_endpoint" {
+  source  = "../utils/service-ip"
+  service = one(kubernetes_service.ingress)
+  domain  = local.cluster_domain
+}
+
+locals {
+  cluster_domain = try(regex("kubernetes\\s+(\\S+)\\s", data.kubernetes_config_map.dns.data["Corefile"])[0], "cluster.local")
+  control_plane_endpoints = {
+    ip   = module.control_plane_endpoint.ip
+    port = module.control_plane_endpoint.ports[0]
+  }
+  admin_gui_endpoints = {
+    ip       = module.admin_gui_endpoint.ip
+    app_port = try(module.admin_gui_endpoint.ports[0], null)
+  }
+  admin_old_gui_endpoints = {
+    ip       = module.admin_old_gui_endpoint.ip
+    api_port = try(module.admin_old_gui_endpoint.ports[0], null)
+    app_port = try(module.admin_old_gui_endpoint.ports[1], null)
+  }
+  ingress_endpoint = {
+    ip        = module.ingress_endpoint.ip
     http_port = var.ingress.http_port
     grpc_port = var.ingress.grpc_port
-    } : {
-    ip        = local.ingress_load_balancer.ip
-    http_port = local.ingress_load_balancer.http_port
-    grpc_port = local.ingress_load_balancer.grpc_port
   }
 
   control_plane_url = "http://${local.control_plane_endpoints.ip}:${local.control_plane_endpoints.port}"

@@ -44,6 +44,7 @@ server {
 %{endif~}
 
     sendfile on;
+    resolver kube-dns.kube-system ipv6=off;
 
     if ($accept_language ~ "^$") {
         set $accept_language "en";
@@ -79,12 +80,13 @@ server {
     }
 %{endif~}
 
+    set $armonik_backend ${local.control_plane_endpoints.ip}:${local.control_plane_endpoints.port};
     location ~* ^/armonik\. {
 %{if var.ingress != null ? var.ingress.mtls : false~}
         grpc_set_header X-Certificate-Client-CN $ssl_client_s_dn_cn;
         grpc_set_header X-Certificate-Client-Fingerprint $ssl_client_fingerprint;
 %{endif~}
-        grpc_pass grpc://${local.control_plane_endpoints.ip}:${local.control_plane_endpoints.port};
+        grpc_pass grpc://$armonik_backend;
 
         # Apparently, multiple chunks in a grpc stream is counted has a single body
         # So disable the limit

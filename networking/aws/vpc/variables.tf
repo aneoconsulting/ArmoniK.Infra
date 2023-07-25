@@ -1,5 +1,5 @@
 variable "name" {
-  description = "Name of the VPC"
+  description = "Name of the AWS VPC"
   type        = string
 }
 

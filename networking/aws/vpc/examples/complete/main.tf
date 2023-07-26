@@ -41,7 +41,6 @@ module "complete_vpc" {
   private_subnets                                 = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 4, k)]
   public_subnets                                  = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 8, k + 48)]
   pod_subnets                                     = ["10.1.0.0/16", "10.2.0.0/16", "10.3.0.0/16"]
-  enable_external_access                          = true
   flow_log_cloudwatch_log_group_kms_key_id        = null
   flow_log_cloudwatch_log_group_retention_in_days = 30
   flow_log_file_format                            = "plain-text"

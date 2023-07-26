@@ -6,7 +6,7 @@ on:
 #    branches: [ '**' ]
 jobs:
   pre-commit:
-    name: Pre-commit cheks
+    name: Pre-commit checks
     runs-on: ubuntu-latest
     steps:
       - name: Install tfsec for static analysis of Terraform code to spot potential misconfigurations

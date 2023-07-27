@@ -6,24 +6,24 @@ data "kubernetes_config_map" "dns" {
 }
 
 module "control_plane_endpoint" {
-  source  = "../utils/service-ip"
-  service = kubernetes_service.control_plane
-  domain  = local.cluster_domain
+  source          = "../utils/service-ip"
+  service         = kubernetes_service.control_plane
+  cluster_domain  = local.cluster_domain
 }
 module "admin_gui_endpoint" {
-  source  = "../utils/service-ip"
-  service = one(kubernetes_service.admin_gui)
-  domain  = local.cluster_domain
+  source          = "../utils/service-ip"
+  service         = one(kubernetes_service.admin_gui)
+  cluster_domain  = local.cluster_domain
 }
 module "admin_old_gui_endpoint" {
-  source  = "../utils/service-ip"
-  service = one(kubernetes_service.admin_old_gui)
-  domain  = local.cluster_domain
+  source          = "../utils/service-ip"
+  service         = one(kubernetes_service.admin_old_gui)
+  cluster_domain  = local.cluster_domain
 }
 module "ingress_endpoint" {
-  source  = "../utils/service-ip"
-  service = one(kubernetes_service.ingress)
-  domain  = local.cluster_domain
+  source         = "../utils/service-ip"
+  service        = one(kubernetes_service.ingress)
+  cluster_domain = local.cluster_domain
 }
 
 locals {

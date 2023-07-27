@@ -50,9 +50,3 @@ resource "google_redis_instance" "default" {
     ignore_changes = [maintenance_schedule]
   }
 }
-
-resource "google_project_service" "enable_service_api" {
-  project                    = var.project_id
-  service                    = "redis.googleapis.com"
-  disable_dependent_services = true
-}

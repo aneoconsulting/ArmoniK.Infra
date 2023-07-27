@@ -6,10 +6,9 @@ resource "random_string" "suffix" {
   numeric = true
 }
 
+# VPC
 module "simple_vpc" {
   source          = "../../../vpc"
-  project         = var.project
-  region          = var.region
   name            = "simple-${random_string.suffix.result}"
   private_subnets = ["10.0.0.0/16"]
   public_subnets  = ["10.1.0.0/16"]

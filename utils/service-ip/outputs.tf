@@ -1,16 +1,6 @@
 output "ip" {
   description = "IP of the service"
-  value = var.service != null ? try(
-    # load balancer
-    coalesce(var.service.status[0].load_balancer[0].ingress[0].ip),
-    coalesce(var.service.status[0].load_balancer[0].ingress[0].hostname),
-
-    # cluster ip
-    coalesce(var.service.spec[0].cluster_ip != "None" ? var.service.spec[0].cluster_ip : null),
-
-    # Headless
-    local.fqdn
-  ) : null
+  value       = local.ip
 }
 
 output "domain" {
@@ -21,6 +11,11 @@ output "domain" {
 output "fqdn" {
   description = "Fully Qualified Domain Name (FQDN) of the service"
   value       = local.fqdn
+}
+
+output "host" {
+  description = "Either the IP or the FQDN of the service"
+  value       = coalesce(local.ip, local.fqdn)
 }
 
 output "ports" {

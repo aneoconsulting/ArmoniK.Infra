@@ -1,10 +1,6 @@
 variable "credentials_file" {
   description = "Path to credential json file"
   type        = string
-  validation {
-    condition     = can(regex(".*\\.json", var.credentials_file))
-    error_message = "The value of credentials_file need to be a json"
-  }
 }
 
 variable "region" {
@@ -36,27 +32,30 @@ variable "authorized_network" {
 }
 
 variable "tier" {
-  description = "The service tier of the instance. https://cloud.google.com/memorystore/docs/redis/reference/rest/v1/projects.locations.instances#Tier"
+  description = "The service tier of the instance."
   type        = string
   default     = "STANDARD_HA"
 }
 
 variable "memory_size_gb" {
-  description = "Redis memory size in GiB. Defaulted to 1 GiB"
+  description = "Redis memory size in GiB."
   type        = number
   default     = 1
 }
 
 variable "replica_count" {
-  description = "The number of replicas. can"
+  description = "The number of replicas."
   type        = number
   default     = null
 }
 
 variable "read_replicas_mode" {
-  description = "Read replicas mode. https://cloud.google.com/memorystore/docs/redis/reference/rest/v1/projects.locations.instances#readreplicasmode "
+  description = "Read replicas mode."
   type        = string
   default     = "READ_REPLICAS_DISABLED"
+  validation {
+    condition = can(regex("READ_REPLICAS_(ENABLED|DISABLED|MODE_UNSPECIFIED)", var.read_replicas_mode))
+  }
 }
 
 variable "location_id" {
@@ -78,7 +77,7 @@ variable "redis_version" {
 }
 
 variable "redis_configs" {
-  description = "The Redis configuration parameters. See [more details](https://cloud.google.com/memorystore/docs/redis/reference/rest/v1/projects.locations.instances#Instance.FIELDS.redis_configs)"
+  description = "The Redis configuration parameters."
   type        = map(any)
   default     = {}
 }
@@ -147,7 +146,7 @@ variable "customer_managed_key" {
 }
 
 variable "persistence_config" {
-  description = "The Redis persistence configuration parameters. https://cloud.google.com/memorystore/docs/redis/reference/rest/v1/projects.locations.instances#persistenceconfig"
+  description = "The Redis persistence configuration parameters."
   type = object({
     persistence_mode        = string
     rdb_snapshot_period     = string

@@ -52,10 +52,10 @@ terraform destroy
 
 | Name | Description |
 |------|-------------|
+| <a name="output_gke_subnets"></a> [gke\_subnets](#output\_gke\_subnets) | Map of GKE subnets |
 | <a name="output_id"></a> [id](#output\_id) | The VPC |
 | <a name="output_name"></a> [name](#output\_name) | The name of the VPC |
-| <a name="output_pod_subnets"></a> [pod\_subnets](#output\_pod\_subnets) | List of Pods subnets |
-| <a name="output_private_subnets"></a> [private\_subnets](#output\_private\_subnets) | List of private subnets |
-| <a name="output_public_subnets"></a> [public\_subnets](#output\_public\_subnets) | List of public subnets |
+| <a name="output_private_subnets"></a> [private\_subnets](#output\_private\_subnets) | Map of private subnets |
+| <a name="output_public_subnets"></a> [public\_subnets](#output\_public\_subnets) | Map of public subnets |
 | <a name="output_region"></a> [region](#output\_region) | Region used for the subnets |
 <!-- END_TF_DOCS -->

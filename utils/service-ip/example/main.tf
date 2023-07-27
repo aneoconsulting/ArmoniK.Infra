@@ -31,7 +31,7 @@ locals {
 }
 
 module "my_svc_ip" {
-  source         = "./.."
+  source         = "../../service-ip"
   service        = kubernetes_service.my_svc
   cluster_domain = local.cluster_domain
 }

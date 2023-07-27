@@ -41,34 +41,51 @@ No modules.
 | [google_compute_network.vpc](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_network) | resource |
 | [google_compute_router.router](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_router) | resource |
 | [google_compute_router_nat.nat_gateway](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_router_nat) | resource |
-| [google_compute_subnetwork.pod_subnets](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_subnetwork) | resource |
+| [google_compute_shared_vpc_host_project.shared](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_shared_vpc_host_project) | resource |
+| [google_compute_subnetwork.gke_subnets](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_subnetwork) | resource |
 | [google_compute_subnetwork.private_subnets](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_subnetwork) | resource |
 | [google_compute_subnetwork.public_subnets](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_subnetwork) | resource |
+| [google_client_config.current](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/client_config) | data source |
 
 ## Inputs
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_enable_external_access"></a> [enable\_external\_access](#input\_enable\_external\_access) | Boolean to disable external access | `bool` | `true` | no |
-| <a name="input_enable_google_access"></a> [enable\_google\_access](#input\_enable\_google\_access) | Enable the access to Google APIs to VMs without public IP | `bool` | `true` | no |
-| <a name="input_flow_log_max_aggregation_interval"></a> [flow\_log\_max\_aggregation\_interval](#input\_flow\_log\_max\_aggregation\_interval) | The maximum interval of time during which a flow of packets is captured and aggregated into a flow log | `string` | `"INTERVAL_1_MIN"` | no |
-| <a name="input_gke_name"></a> [gke\_name](#input\_gke\_name) | Name of the GKE to be deployed in this VPC | `string` | `null` | no |
-| <a name="input_name"></a> [name](#input\_name) | Name of the VPC | `string` | `"armonik-vpc"` | no |
-| <a name="input_pod_subnets"></a> [pod\_subnets](#input\_pod\_subnets) | List of CIDR blocks for Pods | `list(string)` | `[]` | no |
-| <a name="input_private_subnets"></a> [private\_subnets](#input\_private\_subnets) | A list of private subnets inside the VPC | `list(string)` | `[]` | no |
-| <a name="input_project"></a> [project](#input\_project) | Project name | `string` | n/a | yes |
-| <a name="input_public_subnets"></a> [public\_subnets](#input\_public\_subnets) | A list of public subnets inside the VPC | `list(string)` | `[]` | no |
-| <a name="input_region"></a> [region](#input\_region) | Region where to deploy the different subnets | `string` | n/a | yes |
+| <a name="input_auto_create_subnetworks"></a> [auto\_create\_subnetworks](#input\_auto\_create\_subnetworks) | Creation of a subnet for each region automatically | `bool` | `false` | no |
+| <a name="input_delete_default_routes_on_create"></a> [delete\_default\_routes\_on\_create](#input\_delete\_default\_routes\_on\_create) | Default routes (0.0.0.0/0) will be deleted immediately after network creation | `bool` | `null` | no |
+| <a name="input_enable_google_access"></a> [enable\_google\_access](#input\_enable\_google\_access) | Access Google APIs and services by using Private Google Access | `bool` | `true` | no |
+| <a name="input_enable_ula_internal_ipv6"></a> [enable\_ula\_internal\_ipv6](#input\_enable\_ula\_internal\_ipv6) | Enable ULA internal ipv6 on this network | `bool` | `null` | no |
+| <a name="input_flow_log_max_aggregation_interval"></a> [flow\_log\_max\_aggregation\_interval](#input\_flow\_log\_max\_aggregation\_interval) | The maximum interval of time during which a flow of packets is captured and aggregated into a flow log | `string` | `"INTERVAL_5_SEC"` | no |
+| <a name="input_gke_subnets"></a> [gke\_subnets](#input\_gke\_subnets) | Map of subnets for GKE. Each subnet object contains a CIDR block for nodes, a CIDR block for Pods and a CIDR block for services | <pre>map(object({<br>    nodes_cidr_block    = string<br>    pods_cidr_block     = string<br>    services_cidr_block = string<br>  }))</pre> | `{}` | no |
+| <a name="input_internal_ipv6_range"></a> [internal\_ipv6\_range](#input\_internal\_ipv6\_range) | Specify the /48 range they want from the google defined ULA prefix fd20::/20 | `string` | `null` | no |
+| <a name="input_mtu"></a> [mtu](#input\_mtu) | Maximum Transmission Unit in bytes | `number` | `1460` | no |
+| <a name="input_name"></a> [name](#input\_name) | Name of the VPC | `string` | n/a | yes |
+| <a name="input_network_firewall_policy_enforcement_order"></a> [network\_firewall\_policy\_enforcement\_order](#input\_network\_firewall\_policy\_enforcement\_order) | Set the order that Firewall Rules and Firewall Policies are evaluated | `string` | `"AFTER_CLASSIC_FIREWALL"` | no |
+| <a name="input_private_subnets"></a> [private\_subnets](#input\_private\_subnets) | A list of private subnets inside the VPC | `set(string)` | `[]` | no |
+| <a name="input_public_subnets"></a> [public\_subnets](#input\_public\_subnets) | A list of public subnets inside the VPC | `set(string)` | `[]` | no |
+| <a name="input_routing_mode"></a> [routing\_mode](#input\_routing\_mode) | The network-wide routing mode to use | `string` | `"GLOBAL"` | no |
+| <a name="input_shared_vpc_host_project"></a> [shared\_vpc\_host\_project](#input\_shared\_vpc\_host\_project) | Share the VPC with other projects | `bool` | `false` | no |
 
 ## Outputs
 
 | Name | Description |
 |------|-------------|
 | <a name="output_enable_external_access"></a> [enable\_external\_access](#output\_enable\_external\_access) | Boolean to disable external access |
-| <a name="output_id"></a> [id](#output\_id) | The VPC |
+| <a name="output_gateway_ipv4"></a> [gateway\_ipv4](#output\_gateway\_ipv4) | The gateway address for default routing out of the network. This value is selected by GCP |
+| <a name="output_gke_subnet_cidr_blocks"></a> [gke\_subnet\_cidr\_blocks](#output\_gke\_subnet\_cidr\_blocks) | Map of GKE subnet CIDR blocks |
+| <a name="output_gke_subnet_ids"></a> [gke\_subnet\_ids](#output\_gke\_subnet\_ids) | Map of GKE subnet IDs |
+| <a name="output_gke_subnet_pod_ranges"></a> [gke\_subnet\_pod\_ranges](#output\_gke\_subnet\_pod\_ranges) | Map of range names and IP CIDR ranges of GKE Pod |
+| <a name="output_gke_subnet_self_links"></a> [gke\_subnet\_self\_links](#output\_gke\_subnet\_self\_links) | Map of GKE subnet self links |
+| <a name="output_gke_subnet_svc_ranges"></a> [gke\_subnet\_svc\_ranges](#output\_gke\_subnet\_svc\_ranges) | Map of range names and IP CIDR ranges of GKE services |
+| <a name="output_id"></a> [id](#output\_id) | The ID of the VPC |
 | <a name="output_name"></a> [name](#output\_name) | The name of the VPC |
-| <a name="output_pod_subnets"></a> [pod\_subnets](#output\_pod\_subnets) | List of Pods subnets |
-| <a name="output_private_subnets"></a> [private\_subnets](#output\_private\_subnets) | List of private subnets |
-| <a name="output_public_subnets"></a> [public\_subnets](#output\_public\_subnets) | List  of public subnets |
-| <a name="output_region"></a> [region](#output\_region) | Region used for the subnets |
+| <a name="output_private_subnet_cidr_blocks"></a> [private\_subnet\_cidr\_blocks](#output\_private\_subnet\_cidr\_blocks) | List of private subnet CIDR blocks |
+| <a name="output_private_subnet_ids"></a> [private\_subnet\_ids](#output\_private\_subnet\_ids) | List of private subnet IDs |
+| <a name="output_private_subnet_self_links"></a> [private\_subnet\_self\_links](#output\_private\_subnet\_self\_links) | List of private subnet self links |
+| <a name="output_public_subnet_cidr_blocks"></a> [public\_subnet\_cidr\_blocks](#output\_public\_subnet\_cidr\_blocks) | List of public subnet CIDR blocks |
+| <a name="output_public_subnet_ids"></a> [public\_subnet\_ids](#output\_public\_subnet\_ids) | List of public subnet IDs |
+| <a name="output_public_subnet_self_links"></a> [public\_subnet\_self\_links](#output\_public\_subnet\_self\_links) | List of public subnet self links |
+| <a name="output_self_link"></a> [self\_link](#output\_self\_link) | The URI of the created resource |
+| <a name="output_shared_vpc_host_project"></a> [shared\_vpc\_host\_project](#output\_shared\_vpc\_host\_project) | Share the VPC with other projects |
+| <a name="output_shared_vpc_host_project_id"></a> [shared\_vpc\_host\_project\_id](#output\_shared\_vpc\_host\_project\_id) | ID of the shared VPC host project |
 <!-- END_TF_DOCS -->

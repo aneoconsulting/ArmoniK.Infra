@@ -54,7 +54,8 @@ variable "read_replicas_mode" {
   type        = string
   default     = "READ_REPLICAS_DISABLED"
   validation {
-    condition = can(regex("READ_REPLICAS_(ENABLED|DISABLED|MODE_UNSPECIFIED)", var.read_replicas_mode))
+    condition     = can(regex("READ_REPLICAS_(ENABLED|DISABLED|MODE_UNSPECIFIED)", var.read_replicas_mode))
+    error_message = "The specified value must be one of theses: READ_REPLICAS_DISABLED, READ_REPLICAS_ENABLED, READ_REPLICAS_MODE_UNSPECIFIED"
   }
 }
 

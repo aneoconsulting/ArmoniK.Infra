@@ -32,7 +32,7 @@ terraform destroy
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_my_svc_ip"></a> [my\_svc\_ip](#module\_my\_svc\_ip) | ./.. | n/a |
+| <a name="module_my_svc_ip"></a> [my\_svc\_ip](#module\_my\_svc\_ip) | ../../service-ip | n/a |
 
 ## Resources
 

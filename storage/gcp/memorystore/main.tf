@@ -1,6 +1,4 @@
 resource "google_redis_instance" "default" {
-  depends_on = [google_project_service.enable_service_api]
-
   project                 = var.project_id
   name                    = var.name
   tier                    = var.tier

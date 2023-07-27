@@ -88,6 +88,7 @@ resource "google_compute_subnetwork" "gke_subnets" {
 }
 
 # External access for public subnets
+# Router
 resource "google_compute_router" "router" {
   count       = local.enable_external_access ? 1 : 0
   name        = "${google_compute_network.vpc.name}-router"
@@ -97,6 +98,7 @@ resource "google_compute_router" "router" {
   project     = data.google_client_config.current.project
 }
 
+# NAT gateway
 resource "google_compute_router_nat" "nat_gateway" {
   for_each                           = length(google_compute_router.router) > 0 ? [1] : []
   name                               = "${google_compute_network.vpc.name}-nat"

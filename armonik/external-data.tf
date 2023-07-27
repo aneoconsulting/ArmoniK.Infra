@@ -1,24 +1,26 @@
 data "kubernetes_config_map" "dns" {
   metadata {
-    name      = "coredns"
+    name = "coredns"
+
+    # This dummy regex replace is used to ensure this data source is read *after* Kubernetes is up and running
     namespace = replace(data.kubernetes_secret.deployed_object_storage.id, "/.*/", "kube-system")
   }
 }
 
 module "control_plane_endpoint" {
-  source          = "../utils/service-ip"
-  service         = kubernetes_service.control_plane
-  cluster_domain  = local.cluster_domain
+  source         = "../utils/service-ip"
+  service        = kubernetes_service.control_plane
+  cluster_domain = local.cluster_domain
 }
 module "admin_gui_endpoint" {
-  source          = "../utils/service-ip"
-  service         = one(kubernetes_service.admin_gui)
-  cluster_domain  = local.cluster_domain
+  source         = "../utils/service-ip"
+  service        = one(kubernetes_service.admin_gui)
+  cluster_domain = local.cluster_domain
 }
 module "admin_old_gui_endpoint" {
-  source          = "../utils/service-ip"
-  service         = one(kubernetes_service.admin_old_gui)
-  cluster_domain  = local.cluster_domain
+  source         = "../utils/service-ip"
+  service        = one(kubernetes_service.admin_old_gui)
+  cluster_domain = local.cluster_domain
 }
 module "ingress_endpoint" {
   source         = "../utils/service-ip"
@@ -29,20 +31,20 @@ module "ingress_endpoint" {
 locals {
   cluster_domain = try(regex("kubernetes\\s+(\\S+)\\s", data.kubernetes_config_map.dns.data["Corefile"])[0], "cluster.local")
   control_plane_endpoints = {
-    ip   = module.control_plane_endpoint.ip
+    ip   = module.control_plane_endpoint.host
     port = module.control_plane_endpoint.ports[0]
   }
   admin_gui_endpoints = {
-    ip       = module.admin_gui_endpoint.ip
+    ip       = module.admin_gui_endpoint.host
     app_port = try(module.admin_gui_endpoint.ports[0], null)
   }
   admin_old_gui_endpoints = {
-    ip       = module.admin_old_gui_endpoint.ip
+    ip       = module.admin_old_gui_endpoint.host
     api_port = try(module.admin_old_gui_endpoint.ports[0], null)
     app_port = try(module.admin_old_gui_endpoint.ports[1], null)
   }
   ingress_endpoint = {
-    ip        = module.ingress_endpoint.ip
+    ip        = module.ingress_endpoint.host
     http_port = var.ingress.http_port
     grpc_port = var.ingress.grpc_port
   }

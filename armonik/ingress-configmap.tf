@@ -73,13 +73,13 @@ server {
     set $admin_old_upstream ${local.admin_old_url};
     set $admin_api_upstream ${local.admin_api_url};
     location /admin/ {
-        proxy_pass $admin_app_upstream;
+        proxy_pass $admin_app_upstream$uri$is_args$args;
     }
     location /old-admin/ {
-        proxy_pass $admin_old_upstream;
+        proxy_pass $admin_old_upstream$uri$is_args$args;
     }
     location /api {
-        proxy_pass $admin_api_upstream;
+        proxy_pass $admin_api_upstream$uri$is_args$args;
     }
 %{endif~}
 
@@ -126,7 +126,7 @@ server {
     proxy_set_header Connection "";
     chunked_transfer_encoding off;
 
-    proxy_pass $minio_upstream; # This uses the upstream directive definition to load balance
+    proxy_pass $minio_upstream$uri$is_args$args; # This uses the upstream directive definition to load balance
  }
 
  set $minioconsole_upstream ${data.kubernetes_secret.shared_storage.data.console_url};
@@ -152,13 +152,13 @@ server {
     proxy_set_header Connection "upgrade";
     chunked_transfer_encoding off;
 
-    proxy_pass $minioconsole_upstream; # This uses the upstream directive definition to load balance and assumes a static Console port of 9001
+    proxy_pass $minioconsole_upstream$uri$is_args$args; # This uses the upstream directive definition to load balance and assumes a static Console port of 9001
  }
  %{endif~}
 
 
 %{if data.kubernetes_secret.seq.data.enabled~}
-    set $seq_upstream ${data.kubernetes_secret.seq.data.web_url}/;
+    set $seq_upstream ${data.kubernetes_secret.seq.data.web_url};
     location = /seq {
         rewrite ^ $scheme://$http_host/seq/ permanent;
     }
@@ -170,24 +170,25 @@ server {
         proxy_set_header Host $http_host;
         proxy_set_header Accept-Encoding "";
         rewrite  ^/seq/(.*)  /$1 break;
-        proxy_pass $seq_upstream;
+        proxy_pass $seq_upstream$uri$is_args$args;
         sub_filter '<head>' '<head><base href="$${scheme}://$${http_host}/seq/">';
         sub_filter_once on;
         proxy_hide_header content-security-policy;
     }
 %{endif~}
 %{if data.kubernetes_secret.grafana.data.enabled != ""~}
-    set $grafana_upstream ${data.kubernetes_secret.grafana.data.url}/;
+    set $grafana_upstream ${data.kubernetes_secret.grafana.data.url};
     location = /grafana {
         rewrite ^ $scheme://$http_host/grafana/ permanent;
     }
     location /grafana/ {
+        rewrite  ^/grafana/(.*)  /$1 break;
 %{if var.ingress != null ? var.ingress.mtls : false~}
         proxy_set_header X-Certificate-Client-CN $ssl_client_s_dn_cn;
         proxy_set_header X-Certificate-Client-Fingerprint $ssl_client_fingerprint;
 %{endif~}
         proxy_set_header Host $http_host;
-        proxy_pass $grafana_upstream;
+        proxy_pass $grafana_upstream$uri$is_args$args;
         sub_filter '<head>' '<head><base href="$${scheme}://$${http_host}/grafana/">';
         sub_filter_once on;
         proxy_intercept_errors on;
@@ -205,7 +206,7 @@ server {
 %{endif~}
         proxy_http_version 1.1;
         proxy_set_header Host $http_host;
-        proxy_pass ${data.kubernetes_secret.grafana.data.url}/;
+        proxy_pass $grafana_upstream$uri$is_args$args;
     }
 %{endif~}
 }

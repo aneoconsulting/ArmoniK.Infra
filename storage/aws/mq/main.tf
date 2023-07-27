@@ -2,7 +2,7 @@ locals {
   tags = merge(var.tags, { module = "amazon-mq" })
   subnet_ids = (var.deployment_mode == "SINGLE_INSTANCE" ? [var.vpc_subnet_ids[0]] : [
     var.vpc_subnet_ids[0],
-    var.vpc_subnet_ids[1]
+    var.vpc_subnet_ids[1],
   ])
   username = can(coalesce(var.username)) ? var.username : random_string.user.result
   password = can(coalesce(var.password)) ? var.password : random_password.password.result
@@ -32,8 +32,8 @@ resource "aws_mq_broker" "mq" {
   engine_version          = var.engine_version
   host_instance_type      = var.host_instance_type
   apply_immediately       = var.apply_immediately
-  deployment_mode         = var.deployment_mode
-  storage_type            = var.engine_type == "RabbitMQ" ? "ebs" : var.storage_type               # only ebs is supported for RabbitMQ
+  deployment_mode         = (var.engine_type == "RabbitMQ"  && var.deployment_mode == "ACTIVE_STANDBY_MULTI_AZ") ? "CLUSTER_MULTI_AZ" : (var.engine_type == "ActiveMQ"  && var.deployment_mode == "CLUSTER_MULTI_AZ") ? "ACTIVE_STANDBY_MULTI_AZ" : var.deployment_mode
+  storage_type            = var.engine_type == "RabbitMQ" ? "ebs" : var.deployment_mode == "ACTIVE_STANDBY_MULTI_AZ" ? "efs" : var.storage_type               # only ebs is supported for RabbitMQ
   authentication_strategy = var.engine_type == "RabbitMQ" ? "simple" : var.authentication_strategy # ldap is not supported for RabbitMQ
   publicly_accessible     = var.publicly_accessible
   security_groups         = [aws_security_group.mq.id]
@@ -100,6 +100,18 @@ resource "aws_mq_configuration" "mq_configuration" {
       </policyEntries>
     </policyMap>
   </destinationPolicy>
+  <transportConnectors>
+    <!-- DOS protection, limit concurrent connections to 1000 and frame size to 100MB -->
+    <!--
+    <transportConnector name="openwire" uri="tcp://0.0.0.0:61616?maximumConnections=1000&amp;wireFormat.maxFrameSize=104857600"/>
+    <transportConnector name="amqp" uri="amqp://0.0.0.0:5672?maximumConnections=1000&amp;wireFormat.maxFrameSize=104857600"/>
+    <transportConnector name="stomp" uri="stomp://0.0.0.0:61613?maximumConnections=1000&amp;wireFormat.maxFrameSize=104857600"/>
+    <transportConnector name="mqtt" uri="mqtt://0.0.0.0:1883?maximumConnections=1000&amp;wireFormat.maxFrameSize=104857600"/>
+    <transportConnector name="ws" uri="ws://0.0.0.0:61614?maximumConnections=1000&amp;wireFormat.maxFrameSize=104857600"/>
+    -->
+    <transportConnector name="openwire" uri="amqp+ssl://0.0.0.0:5672?maximumConnections=1000000&amp;wireFormat.maxFrameSize=1048576000" updateClusterClients="true" rebalanceClusterClients="true" updateClusterClientsOnRemove="true"/>
+
+  </transportConnectors>
 </broker>
 DATA
   tags           = local.tags

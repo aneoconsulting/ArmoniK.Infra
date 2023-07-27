@@ -9,8 +9,18 @@ output "ip" {
     coalesce(var.service.spec[0].cluster_ip != "None" ? var.service.spec[0].cluster_ip : null),
 
     # Headless
-    "${var.service.metadata[0].name}.${var.service.metadata[0].namespace}.svc.${var.domain}"
+    local.fqdn
   ) : null
+}
+
+output "domain" {
+  description = "Domain Name of the service"
+  value       = local.domain
+}
+
+output "fqdn" {
+  description = "Fully Qualified Domain Name (FQDN) of the service"
+  value       = local.fqdn
 }
 
 output "ports" {

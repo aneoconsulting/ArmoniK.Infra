@@ -28,10 +28,10 @@ data "aws_subnets" "subnets" {
 }
 
 module "elasticache" {
-  source      = "../../../elasticache"
-  name        = "test-elasticache"
-  engine                      = "redis"
-  engine_version              = "6.x"
+  source         = "../../../elasticache"
+  name           = "test-elasticache"
+  engine         = "redis"
+  engine_version = "6.x"
   tags = {
     env             = "test"
     app             = "complete"
@@ -43,5 +43,3 @@ module "elasticache" {
   vpc_id          = data.aws_vpc.default.id
   vpc_subnet_ids  = data.aws_subnets.subnets.ids
 }
-
-

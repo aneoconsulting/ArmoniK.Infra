@@ -1,16 +1,16 @@
 output "endpoint_url" {
   description = "AWS Elastichache (Redis) endpoint url"
-  value = "${aws_elasticache_replication_group.elasticache.primary_endpoint_address}:${aws_elasticache_replication_group.elasticache.port}"
+  value       = "${aws_elasticache_replication_group.elasticache.primary_endpoint_address}:${aws_elasticache_replication_group.elasticache.port}"
 }
 
 output "endpoint_host" {
   description = "AWS Elastichache (Redis) endpoint host"
-  value = aws_elasticache_replication_group.elasticache.primary_endpoint_address
+  value       = aws_elasticache_replication_group.elasticache.primary_endpoint_address
 }
 
 output "endpoint_port" {
   description = "AWS Elastichache (Redis) endpoint port"
-  value = aws_elasticache_replication_group.elasticache.port
+  value       = aws_elasticache_replication_group.elasticache.port
 }
 
 output "name" {

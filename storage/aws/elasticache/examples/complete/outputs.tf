@@ -1,16 +1,16 @@
 output "endpoint_url" {
   description = "AWS Elastichache (Redis) endpoint url"
-  value = module.elasticache.endpoint_url
+  value       = module.elasticache.endpoint_url
 }
 
 output "endpoint_host" {
   description = "AWS Elastichache (Redis) endpoint host"
-  value = module.elasticache.endpoint_host
+  value       = module.elasticache.endpoint_host
 }
 
 output "endpoint_port" {
   description = "AWS Elastichache (Redis) endpoint port"
-  value = module.elasticache.endpoint_port
+  value       = module.elasticache.endpoint_port
 }
 
 output "name" {

@@ -45,7 +45,7 @@ resource "tls_locally_signed_cert" "mongodb_certificate" {
   cert_request_pem      = tls_cert_request.mongodb_cert_request.cert_request_pem
   ca_private_key_pem    = tls_private_key.root_mongodb.private_key_pem
   ca_cert_pem           = tls_self_signed_cert.root_mongodb.cert_pem
-  validity_period_hours = "168"
+  validity_period_hours = var.validity_period_hours
   allowed_uses = [
     "key_encipherment",
     "digital_signature",

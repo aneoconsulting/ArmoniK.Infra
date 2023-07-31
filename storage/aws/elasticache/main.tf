@@ -32,10 +32,10 @@ resource "aws_elasticache_replication_group" "elasticache" {
   port                        = 6379
   apply_immediately           = var.apply_immediately
   multi_az_enabled            = var.multi_az_enabled
-  automatic_failover_enabled  = local.automatic_failover_enabled # if enabled num_cache_cluster must be > 1
-  num_cache_clusters          = local.num_cache_clusters
+  automatic_failover_enabled  = var.multi_az_enabled ? true : var.automatic_failover_enabled # if enabled num_cache_cluster must be > 1
+  num_cache_clusters          = (var.automatic_failover_enabled  && var.num_cache_clusters < 2 ) ? 2 : var.num_cache_clusters
   preferred_cache_cluster_azs = var.preferred_cache_cluster_azs
-  data_tiering_enabled        = var.data_tiering_enabled # if node type is r6gd
+  data_tiering_enabled        = var.node_type == "r6gd" ? true : var.data_tiering_enabled # if node type is r6gd
   at_rest_encryption_enabled  = true
   transit_encryption_enabled  = true
   kms_key_id                  = var.kms_key_id

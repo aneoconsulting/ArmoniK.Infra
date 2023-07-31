@@ -31,7 +31,7 @@ module "rabbitmq" {
   source = "../../../../mq"
   tags = {
     env             = "test"
-    app             = "complete"
+    app             = "simple"
     module          = "AWS S3"
     "create by"     = data.aws_caller_identity.current.arn
     "creation date" = null_resource.timestamp.triggers["creation_date"]

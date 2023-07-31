@@ -59,12 +59,6 @@ variable "delete_default_routes_on_create" {
   default     = null
 }
 
-variable "shared_vpc_host_project" {
-  description = "Share the VPC with other projects"
-  type        = bool
-  default     = false
-}
-
 variable "private_subnets" {
   description = "A list of private subnets inside the VPC"
   type        = set(string)

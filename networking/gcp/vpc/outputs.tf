@@ -18,44 +18,34 @@ output "self_link" {
   value       = google_compute_network.vpc.self_link
 }
 
-output "shared_vpc_host_project" {
-  description = "Share the VPC with other projects"
-  value       = length(google_compute_shared_vpc_host_project.shared) > 0
-}
-
-output "shared_vpc_host_project_id" {
-  description = "ID of the shared VPC host project"
-  value       = length(google_compute_shared_vpc_host_project.shared) > 0 ? one(google_compute_shared_vpc_host_project.shared[*].id) : null
-}
-
 output "private_subnet_ids" {
   description = "List of private subnet IDs"
-  value       = { for key, value in google_compute_subnetwork.private_subnets : key => value.id }
+  value       = { for subnet in var.private_subnets : subnet => google_compute_subnetwork.subnets[subnet].id }
 }
 
 output "private_subnet_cidr_blocks" {
   description = "List of private subnet CIDR blocks"
-  value       = { for key, value in google_compute_subnetwork.private_subnets : key => value.ip_cidr_range }
+  value       = { for subnet in var.private_subnets : subnet => google_compute_subnetwork.subnets[subnet].ip_cidr_range }
 }
 
 output "private_subnet_self_links" {
   description = "List of private subnet self links"
-  value       = { for key, value in google_compute_subnetwork.private_subnets : key => value.self_link }
+  value       = { for subnet in var.private_subnets : subnet => google_compute_subnetwork.subnets[subnet].self_link }
 }
 
 output "public_subnet_ids" {
   description = "List of public subnet IDs"
-  value       = { for key, value in google_compute_subnetwork.public_subnets : key => value.id }
+  value       = { for subnet in var.public_subnets : subnet => google_compute_subnetwork.subnets[subnet].id }
 }
 
 output "public_subnet_cidr_blocks" {
   description = "List of public subnet CIDR blocks"
-  value       = { for key, value in google_compute_subnetwork.public_subnets : key => value.ip_cidr_range }
+  value       = { for subnet in var.public_subnets : subnet => google_compute_subnetwork.subnets[subnet].ip_cidr_range }
 }
 
 output "public_subnet_self_links" {
   description = "List of public subnet self links"
-  value       = { for key, value in google_compute_subnetwork.public_subnets : key => value.self_link }
+  value       = { for subnet in var.private_subnets : subnet => google_compute_subnetwork.subnets[subnet].self_link }
 }
 
 output "gke_subnet_ids" {

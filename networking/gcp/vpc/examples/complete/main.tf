@@ -7,7 +7,7 @@ resource "random_string" "suffix" {
 }
 
 locals {
-  cidr = "10.0.0.0/16"
+  cidr = "10.0.0.0/8"
 }
 
 module "complete_vpc" {
@@ -20,12 +20,11 @@ module "complete_vpc" {
   internal_ipv6_range                       = null
   network_firewall_policy_enforcement_order = "AFTER_CLASSIC_FIREWALL"
   delete_default_routes_on_create           = true
-  shared_vpc_host_project                   = false
   private_subnets                           = [for k in range(3) : cidrsubnet(local.cidr, 4, k)]
   public_subnets                            = [for k in range(3) : cidrsubnet(local.cidr, 8, k + 48)]
   gke_subnets = {
     "gke-alpha" = {
-      nodes_cidr_block    = "10.10.0.0/8",
+      nodes_cidr_block    = "10.10.0.0/16",
       pods_cidr_block     = "192.168.64.0/22"
       services_cidr_block = "192.168.1.0/24"
     }

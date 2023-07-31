@@ -11,9 +11,8 @@ resource "kubernetes_config_map" "core_config" {
     Components__QueueAdaptorSettings__ClassName           = data.kubernetes_secret.deployed_queue_storage.data.adapter_class_name
     Components__QueueAdaptorSettings__AdapterAbsolutePath = data.kubernetes_secret.deployed_queue_storage.data.adapter_absolute_path
     MongoDB__CAFile                                       = local.table_storage_adapter_from_secret == "mongodb" ? local.secrets.mongodb.ca_filename : ""
-    MongoDB__ReplicaSet                                   = "rs0"
     MongoDB__DatabaseName                                 = "database"
-    MongoDB__DirectConnection                             = "false"
+    MongoDB__DirectConnection                             = "true"
     MongoDB__Tls                                          = "true"
     Redis__CaPath                                         = local.object_storage_adapter_from_secret == "redis" ? local.secrets.redis.ca_filename : ""
     Redis__InstanceName                                   = "ArmoniKRedis"

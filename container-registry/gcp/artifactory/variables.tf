@@ -1,32 +1,7 @@
-variable "project_id" {
-  description = "Project ID on which to create artifact registry (AR)"
-  type        = string
-}
-
 variable "kms_key" {
   description = "KMS to encrypt GCP repositories"
   type        = string
   default     = null
-}
-
-variable "zone" {
-  description = "Zone of the project"
-  type        = string
-  default     = null
-}
-
-variable "region" {
-  description = "Region of the project"
-  type        = string
-}
-
-variable "credentials_file" {
-  description = "Path to credential json file"
-  type        = string
-  validation {
-    condition     = can(regex(".*\\.json", var.credentials_file))
-    error_message = "The value of credentials_file need to be a json"
-  }
 }
 
 variable "registry_name" {

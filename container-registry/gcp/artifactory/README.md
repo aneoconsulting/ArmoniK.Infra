@@ -40,22 +40,19 @@ No modules.
 | [google_artifact_registry_repository_iam_binding.binding](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/artifact_registry_repository_iam_binding) | resource |
 | [google_project_service.enable_service_api](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/project_service) | resource |
 | [null_resource.gcp_copy_images](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
+| [google_client_config.current](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/client_config) | data source |
 
 ## Inputs
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_credentials_file"></a> [credentials\_file](#input\_credentials\_file) | Path to credential json file | `string` | n/a | yes |
 | <a name="input_immutable_tags"></a> [immutable\_tags](#input\_immutable\_tags) | If the registry is a docker format then tags can be immutable (true or false) | `bool` | `null` | no |
 | <a name="input_kms_key"></a> [kms\_key](#input\_kms\_key) | KMS to encrypt GCP repositories | `string` | `null` | no |
-| <a name="input_project_id"></a> [project\_id](#input\_project\_id) | Project ID on which to create artifact registry (AR) | `string` | n/a | yes |
-| <a name="input_region"></a> [region](#input\_region) | Region of the project | `string` | n/a | yes |
 | <a name="input_registry_description"></a> [registry\_description](#input\_registry\_description) | Description of the registry | `string` | n/a | yes |
 | <a name="input_registry_iam"></a> [registry\_iam](#input\_registry\_iam) | Assign role on the repository for a list of users | `map(list(string))` | `null` | no |
 | <a name="input_registry_images"></a> [registry\_images](#input\_registry\_images) | Images to push inside the registry | <pre>map(object({<br>    image = string<br>    tag   = string<br>  }))</pre> | n/a | yes |
 | <a name="input_registry_labels"></a> [registry\_labels](#input\_registry\_labels) | Labels for the registry | `map(string)` | `null` | no |
 | <a name="input_registry_name"></a> [registry\_name](#input\_registry\_name) | Name of the registry to create | `string` | n/a | yes |
-| <a name="input_zone"></a> [zone](#input\_zone) | Zone of the project | `string` | `null` | no |
 
 ## Outputs
 

@@ -1,8 +1,10 @@
 name: Helm charts linter
-on: pull_request
+on:
+  pull_request:
+    branches: [ main, master ]
 jobs:
-  lint:
-    name: Lint Helm charts
+  helmcChartLinter:
+    name: Helm charts linter
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code

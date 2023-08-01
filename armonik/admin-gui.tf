@@ -134,14 +134,15 @@ resource "kubernetes_service" "admin_gui" {
     }
   }
   spec {
-    type = var.admin_gui.service_type
+    type       = var.admin_gui.service_type == "HeadLess" ? "ClusterIP" : var.admin_gui.service_type
+    cluster_ip = var.admin_gui.service_type == "HeadLess" ? "None" : null
     selector = {
       app     = kubernetes_deployment.admin_gui[0].metadata[0].labels.app
       service = kubernetes_deployment.admin_gui[0].metadata[0].labels.service
     }
     port {
       name        = kubernetes_deployment.admin_gui[0].spec[0].template[0].spec[0].container[0].port[0].name
-      port        = var.admin_gui.port
+      port        = var.admin_gui.service_type == "HeadLess" ? kubernetes_deployment.admin_gui[0].spec[0].template[0].spec[0].container[0].port[0].container_port : var.admin_gui.port
       target_port = kubernetes_deployment.admin_gui[0].spec[0].template[0].spec[0].container[0].port[0].container_port
       protocol    = "TCP"
     }

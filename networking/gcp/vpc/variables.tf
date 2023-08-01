@@ -59,24 +59,23 @@ variable "delete_default_routes_on_create" {
   default     = null
 }
 
-variable "private_subnets" {
-  description = "A list of private subnets inside the VPC"
-  type        = set(string)
-  default     = []
-}
-
-variable "public_subnets" {
-  description = "A list of public subnets inside the VPC"
-  type        = set(string)
-  default     = []
+variable "subnets" {
+  description = "A map of private subnets inside the VPC. Each subnet has a CIDR block, a region, and a boolean set to true if the subnet is public, or false if the subnet is private"
+  type = map(object({
+    cidr_block    = string
+    region        = string
+    public_access = bool
+  }))
+  default     = {}
 }
 
 variable "gke_subnets" {
-  description = "Map of subnets for GKE. Each subnet object contains a CIDR block for nodes, a CIDR block for Pods and a CIDR block for services"
+  description = "Map of subnets for GKE. Each subnet object contains a CIDR block for nodes, a CIDR block for Pods, a CIDR block for services and a region"
   type = map(object({
     nodes_cidr_block    = string
     pods_cidr_block     = string
     services_cidr_block = string
+    region              = string
   }))
   default = {}
 }

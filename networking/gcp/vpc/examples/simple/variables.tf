@@ -1,5 +1,5 @@
 variable "region" {
-  description = "The GCP region to deploy the VPC and subnets in"
+  description = "The GCP region used to deploy NAT routers if used"
   type        = string
   default     = "europe-west9"
 }

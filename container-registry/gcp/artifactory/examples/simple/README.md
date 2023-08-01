@@ -4,7 +4,7 @@
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0 |
-| <a name="requirement_google"></a> [google](#requirement\_google) | >= 4.51.0 |
+| <a name="requirement_google"></a> [google](#requirement\_google) | >= 4.75.0 |
 
 ## Providers
 
@@ -22,7 +22,10 @@ No resources.
 
 ## Inputs
 
-No inputs.
+| Name | Description | Type | Default | Required |
+|------|-------------|------|---------|:--------:|
+| <a name="input_project"></a> [project](#input\_project) | Project name | `string` | `"armonik-gcp-13469"` | no |
+| <a name="input_region"></a> [region](#input\_region) | The GCP region to deploy the VPC and subnets in | `string` | `"europe-west9"` | no |
 
 ## Outputs
 

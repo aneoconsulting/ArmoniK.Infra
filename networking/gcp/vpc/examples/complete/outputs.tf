@@ -20,6 +20,7 @@ output "private_subnets" {
       id         = module.complete_vpc.private_subnet_ids[key],
       cidr_block = module.complete_vpc.private_subnet_cidr_blocks[key],
       self_link  = module.complete_vpc.private_subnet_self_links[key]
+      region     = module.complete_vpc.private_subnet_regions[key]
     }
   }
 }
@@ -31,6 +32,7 @@ output "public_subnets" {
       id         = module.complete_vpc.public_subnet_ids[key],
       cidr_block = module.complete_vpc.public_subnet_cidr_blocks[key],
       self_link  = module.complete_vpc.public_subnet_self_links[key]
+      region     = module.complete_vpc.public_subnet_regions[key]
     }
   }
 }

@@ -1,8 +1,3 @@
-output "region" {
-  description = "Region used for the subnets"
-  value       = var.region
-}
-
 output "name" {
   description = "The name of the VPC"
   value       = module.simple_vpc.name
@@ -19,7 +14,8 @@ output "private_subnets" {
     for key in keys(module.simple_vpc.private_subnet_ids) : key => {
       id         = module.simple_vpc.private_subnet_ids[key],
       cidr_block = module.simple_vpc.private_subnet_cidr_blocks[key],
-      self_link  = module.simple_vpc.private_subnet_self_links[key]
+      self_link  = module.simple_vpc.private_subnet_self_links[key],
+      region     = module.simple_vpc.private_subnet_regions[key]
     }
   }
 }
@@ -31,6 +27,7 @@ output "public_subnets" {
       id         = module.simple_vpc.public_subnet_ids[key],
       cidr_block = module.simple_vpc.public_subnet_cidr_blocks[key],
       self_link  = module.simple_vpc.public_subnet_self_links[key]
+      region     = module.simple_vpc.public_subnet_regions[key]
     }
   }
 }

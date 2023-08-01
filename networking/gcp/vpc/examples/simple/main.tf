@@ -10,6 +10,16 @@ resource "random_string" "suffix" {
 module "simple_vpc" {
   source          = "../../../vpc"
   name            = "simple-${random_string.suffix.result}"
-  private_subnets = ["10.0.0.0/16"]
-  public_subnets  = ["10.1.0.0/16"]
+  subnets = {
+    "private-subnet-1" = {
+      cidr_block    = "10.0.0.0/16"
+      region        = "europe-west9"
+      public_access = false
+    }
+    "public-subnet-1" = {
+      cidr_block    = "10.1.0.0/16"
+      region        = "europe-west9"
+      public_access = true
+    }
+  }
 }

@@ -20,13 +20,30 @@ module "complete_vpc" {
   internal_ipv6_range                       = null
   network_firewall_policy_enforcement_order = "AFTER_CLASSIC_FIREWALL"
   delete_default_routes_on_create           = true
-  private_subnets                           = [for k in range(3) : cidrsubnet(local.cidr, 4, k)]
-  public_subnets                            = [for k in range(3) : cidrsubnet(local.cidr, 8, k + 48)]
+  subnets = merge(
+    {
+      for k in range(3) :
+        "private-subnet-${k}" => {
+          cidr_block    = cidrsubnet(local.cidr, 4, k)
+          region        = "europe-west${k+1}"
+          public_access = false
+      }
+    },
+    {
+      for k in range(3) :
+        "public-subnet-${k}" => {
+          cidr_block    = cidrsubnet(local.cidr, 8, k + 48)
+          region        = "europe-west${k%2+1}"
+          public_access = true
+      }
+    }
+  )
   gke_subnets = {
     "gke-alpha" = {
-      nodes_cidr_block    = "10.10.0.0/16",
+      nodes_cidr_block    = "10.51.0.0/16",
       pods_cidr_block     = "192.168.64.0/22"
       services_cidr_block = "192.168.1.0/24"
+      region              = "europe-west9"
     }
   }
   enable_google_access              = true

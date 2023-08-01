@@ -46,7 +46,7 @@ terraform destroy
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_project"></a> [project](#input\_project) | Project name | `string` | `"armonik-gcp-13469"` | no |
-| <a name="input_region"></a> [region](#input\_region) | The GCP region to deploy the VPC and subnets in | `string` | `"europe-west9"` | no |
+| <a name="input_region"></a> [region](#input\_region) | The GCP region used to deploy NAT routers if used | `string` | `"europe-west9"` | no |
 
 ## Outputs
 
@@ -56,5 +56,4 @@ terraform destroy
 | <a name="output_name"></a> [name](#output\_name) | The name of the VPC |
 | <a name="output_private_subnets"></a> [private\_subnets](#output\_private\_subnets) | Map of private subnets |
 | <a name="output_public_subnets"></a> [public\_subnets](#output\_public\_subnets) | Map of public subnets |
-| <a name="output_region"></a> [region](#output\_region) | Region used for the subnets |
 <!-- END_TF_DOCS -->

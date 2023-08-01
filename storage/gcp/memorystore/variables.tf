@@ -1,25 +1,3 @@
-variable "credentials_file" {
-  description = "Path to credential json file"
-  type        = string
-}
-
-variable "region" {
-  description = "The GCP region to use."
-  type        = string
-  default     = null
-}
-
-variable "zone" {
-  description = "The GCP zone to use."
-  type        = string
-  default     = null
-}
-
-variable "project_id" {
-  description = "The ID of the project in which the resource belongs to."
-  type        = string
-}
-
 variable "name" {
   description = "The ID of the instance or a fully qualified identifier for the instance."
   type        = string
@@ -57,12 +35,6 @@ variable "read_replicas_mode" {
     condition     = can(regex("READ_REPLICAS_(ENABLED|DISABLED|MODE_UNSPECIFIED)", var.read_replicas_mode))
     error_message = "The specified value must be one of theses: READ_REPLICAS_DISABLED, READ_REPLICAS_ENABLED, READ_REPLICAS_MODE_UNSPECIFIED"
   }
-}
-
-variable "location_id" {
-  description = "The zone where the instance will be provisioned. If not provided, the service will choose a zone for the instance. For STANDARD_HA tier, instances will be created across two zones for protection against zonal failures. If [alternativeLocationId] is also provided, it must be different from [locationId]."
-  type        = string
-  default     = null
 }
 
 variable "alternative_location_id" {

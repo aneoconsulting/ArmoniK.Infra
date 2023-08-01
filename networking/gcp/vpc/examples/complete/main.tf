@@ -35,7 +35,7 @@ module "complete_vpc" {
         cidr_block    = cidrsubnet(local.cidr, 8, k + 48)
         region        = "europe-west${k % 2 + 1}"
         public_access = true
-    }
+      }
     }
   )
   gke_subnets = {

@@ -46,7 +46,7 @@ terraform destroy
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_project"></a> [project](#input\_project) | Project name | `string` | `"armonik-gcp-13469"` | no |
-| <a name="input_region"></a> [region](#input\_region) | The GCP region to deploy the subnets in | `string` | `"europe-west9"` | no |
+| <a name="input_region"></a> [region](#input\_region) | The GCP region used to deploy NAT routers if used | `string` | `"europe-west9"` | no |
 
 ## Outputs
 

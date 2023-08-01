@@ -1,9 +1,10 @@
 locals {
   tags                       = merge(var.tags, { module = "elasticache" })
-  automatic_failover_enabled = (var.multi_az_enabled ? true : var.automatic_failover_enabled)
-  num_cache_clusters         = (var.multi_az_enabled ? (var.num_cache_clusters < 1 ? var.num_cache_clusters + 2 : (var.num_cache_clusters == 1 ? var.num_cache_clusters + 1 : var.num_cache_clusters)) : (var.automatic_failover_enabled ? (var.num_cache_clusters < 1 ? var.num_cache_clusters + 1 : var.num_cache_clusters) : var.num_cache_clusters))
+  automatic_failover_enabled = var.multi_az_enabled ? true : var.automatic_failover_enabled
+  num_cache_clusters         = (var.automatic_failover_enabled && var.num_cache_clusters < 2) ? 2 : var.num_cache_clusters
   slow_log_name              = try(var.slow_log, "") == "" ? "/aws/elasticache/${var.name}/slow-log" : var.slow_log
   engine_log_name            = try(var.engine_log, "") == "" ? "/aws/elasticache/${var.name}/engine-log" : var.engine_log
+  data_tiering_enabled       = var.node_type == "r6gd" ? true : var.data_tiering_enabled
 }
 
 # Slow log and engine log not yet available in Terraform
@@ -32,10 +33,10 @@ resource "aws_elasticache_replication_group" "elasticache" {
   port                        = 6379
   apply_immediately           = var.apply_immediately
   multi_az_enabled            = var.multi_az_enabled
-  automatic_failover_enabled  = var.multi_az_enabled ? true : var.automatic_failover_enabled # if enabled num_cache_cluster must be > 1
-  num_cache_clusters          = (var.automatic_failover_enabled  && var.num_cache_clusters < 2 ) ? 2 : var.num_cache_clusters
+  automatic_failover_enabled  = local.automatic_failover_enabled # if enabled num_cache_cluster must be > 1
+  num_cache_clusters          = local.num_cache_clusters
   preferred_cache_cluster_azs = var.preferred_cache_cluster_azs
-  data_tiering_enabled        = var.node_type == "r6gd" ? true : var.data_tiering_enabled # if node type is r6gd
+  data_tiering_enabled        = local.data_tiering_enabled # if node type is r6gd
   at_rest_encryption_enabled  = true
   transit_encryption_enabled  = true
   kms_key_id                  = var.kms_key_id

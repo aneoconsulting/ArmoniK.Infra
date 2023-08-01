@@ -2,7 +2,6 @@
 data "google_client_config" "current" {}
 
 locals {
-  enable_external_access = length([for key, value in var.subnets : value.public_access == true]) > 0
   public_subnets         = { for key, value in var.subnets : key => value if value.public_access == true }
   private_subnets        = { for key, value in var.subnets : key => value if value.public_access == false }
   public_regions         = toset(distinct([for key, value in local.public_subnets : value.region]))

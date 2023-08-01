@@ -86,4 +86,3 @@ output "gke_subnet_svc_ranges" {
     for key, value in google_compute_subnetwork.gke_subnets : key => value.secondary_ip_range[1]
   }
 }
-

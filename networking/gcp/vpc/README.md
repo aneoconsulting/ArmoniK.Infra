@@ -41,10 +41,8 @@ No modules.
 | [google_compute_network.vpc](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_network) | resource |
 | [google_compute_router.router](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_router) | resource |
 | [google_compute_router_nat.nat_gateway](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_router_nat) | resource |
-| [google_compute_shared_vpc_host_project.shared](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_shared_vpc_host_project) | resource |
 | [google_compute_subnetwork.gke_subnets](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_subnetwork) | resource |
-| [google_compute_subnetwork.private_subnets](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_subnetwork) | resource |
-| [google_compute_subnetwork.public_subnets](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_subnetwork) | resource |
+| [google_compute_subnetwork.subnets](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_subnetwork) | resource |
 | [google_client_config.current](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/client_config) | data source |
 
 ## Inputs
@@ -64,7 +62,6 @@ No modules.
 | <a name="input_private_subnets"></a> [private\_subnets](#input\_private\_subnets) | A list of private subnets inside the VPC | `set(string)` | `[]` | no |
 | <a name="input_public_subnets"></a> [public\_subnets](#input\_public\_subnets) | A list of public subnets inside the VPC | `set(string)` | `[]` | no |
 | <a name="input_routing_mode"></a> [routing\_mode](#input\_routing\_mode) | The network-wide routing mode to use | `string` | `"GLOBAL"` | no |
-| <a name="input_shared_vpc_host_project"></a> [shared\_vpc\_host\_project](#input\_shared\_vpc\_host\_project) | Share the VPC with other projects | `bool` | `false` | no |
 
 ## Outputs
 
@@ -86,6 +83,4 @@ No modules.
 | <a name="output_public_subnet_ids"></a> [public\_subnet\_ids](#output\_public\_subnet\_ids) | List of public subnet IDs |
 | <a name="output_public_subnet_self_links"></a> [public\_subnet\_self\_links](#output\_public\_subnet\_self\_links) | List of public subnet self links |
 | <a name="output_self_link"></a> [self\_link](#output\_self\_link) | The URI of the created resource |
-| <a name="output_shared_vpc_host_project"></a> [shared\_vpc\_host\_project](#output\_shared\_vpc\_host\_project) | Share the VPC with other projects |
-| <a name="output_shared_vpc_host_project_id"></a> [shared\_vpc\_host\_project\_id](#output\_shared\_vpc\_host\_project\_id) | ID of the shared VPC host project |
 <!-- END_TF_DOCS -->

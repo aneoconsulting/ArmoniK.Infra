@@ -20,42 +20,42 @@ output "self_link" {
 
 output "private_subnet_ids" {
   description = "List of private subnet IDs"
-  value       = { for subnet,_ in local.private_subnets : subnet => google_compute_subnetwork.subnets[subnet].id }
+  value       = { for subnet, _ in local.private_subnets : subnet => google_compute_subnetwork.subnets[subnet].id }
 }
 
 output "private_subnet_cidr_blocks" {
   description = "List of private subnet CIDR blocks"
-  value       = { for subnet,_ in local.private_subnets : subnet => google_compute_subnetwork.subnets[subnet].ip_cidr_range }
+  value       = { for subnet, _ in local.private_subnets : subnet => google_compute_subnetwork.subnets[subnet].ip_cidr_range }
 }
 
 output "private_subnet_self_links" {
   description = "List of private subnet self links"
-  value       = { for subnet,_ in local.private_subnets : subnet => google_compute_subnetwork.subnets[subnet].self_link }
+  value       = { for subnet, _ in local.private_subnets : subnet => google_compute_subnetwork.subnets[subnet].self_link }
 }
 
 output "private_subnet_regions" {
   description = "List of private subnet regions"
-  value       = { for subnet,_ in local.private_subnets : subnet => google_compute_subnetwork.subnets[subnet].region }
+  value       = { for subnet, _ in local.private_subnets : subnet => google_compute_subnetwork.subnets[subnet].region }
 }
 
 output "public_subnet_ids" {
   description = "List of public subnet IDs"
-  value       = { for subnet,_ in local.public_subnets : subnet => google_compute_subnetwork.subnets[subnet].id }
+  value       = { for subnet, _ in local.public_subnets : subnet => google_compute_subnetwork.subnets[subnet].id }
 }
 
 output "public_subnet_cidr_blocks" {
   description = "List of public subnet CIDR blocks"
-  value       = { for subnet,_ in local.public_subnets : subnet => google_compute_subnetwork.subnets[subnet].ip_cidr_range }
+  value       = { for subnet, _ in local.public_subnets : subnet => google_compute_subnetwork.subnets[subnet].ip_cidr_range }
 }
 
 output "public_subnet_self_links" {
   description = "List of public subnet self links"
-  value       = { for subnet,_ in local.public_subnets : subnet => google_compute_subnetwork.subnets[subnet].self_link }
+  value       = { for subnet, _ in local.public_subnets : subnet => google_compute_subnetwork.subnets[subnet].self_link }
 }
 
 output "public_subnet_regions" {
   description = "List of public subnet regions"
-  value       = { for subnet,_ in local.public_subnets : subnet => google_compute_subnetwork.subnets[subnet].region }
+  value       = { for subnet, _ in local.public_subnets : subnet => google_compute_subnetwork.subnets[subnet].region }
 }
 
 output "gke_subnet_ids" {

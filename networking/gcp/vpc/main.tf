@@ -5,7 +5,7 @@ locals {
   enable_external_access = length([for key, value in var.subnets : value.public_access == true]) > 0
   public_subnets         = { for key, value in var.subnets : key => value if value.public_access == true }
   private_subnets        = { for key, value in var.subnets : key => value if value.public_access == false }
-  public_regions         = toset(distinct([ for key,value in local.public_subnets : value.region ]))
+  public_regions         = toset(distinct([for key,value in local.public_subnets : value.region]))
 }
 
 # VPC
@@ -86,7 +86,7 @@ resource "google_compute_router_nat" "nat_gateway" {
   region                             = each.value.region
   project                            = data.google_client_config.current.project
   dynamic "subnetwork" {
-    for_each = [ for key,value in local.public_subnets : key if value.region == each.value.region ]
+    for_each = [for key, value in local.public_subnets : key if value.region == each.value.region]
     content {
       name                    = google_compute_subnetwork.subnets[subnetwork.value].id
       source_ip_ranges_to_nat = ["PRIMARY_IP_RANGE"]

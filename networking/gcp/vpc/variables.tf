@@ -66,7 +66,7 @@ variable "subnets" {
     region        = string
     public_access = bool
   }))
-  default     = {}
+  default = {}
 }
 
 variable "gke_subnets" {

@@ -8,8 +8,8 @@ resource "random_string" "suffix" {
 
 # VPC
 module "simple_vpc" {
-  source          = "../../../vpc"
-  name            = "simple-${random_string.suffix.result}"
+  source = "../../../vpc"
+  name   = "simple-${random_string.suffix.result}"
   subnets = {
     "private-subnet-1" = {
       cidr_block    = "10.0.0.0/16"

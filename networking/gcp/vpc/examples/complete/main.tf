@@ -23,19 +23,19 @@ module "complete_vpc" {
   subnets = merge(
     {
       for k in range(3) :
-        "private-subnet-${k}" => {
-          cidr_block    = cidrsubnet(local.cidr, 4, k)
-          region        = "europe-west${k+1}"
-          public_access = false
+      "private-subnet-${k}" => {
+        cidr_block    = cidrsubnet(local.cidr, 4, k)
+        region        = "europe-west${k + 1}"
+        public_access = false
       }
     },
     {
       for k in range(3) :
-        "public-subnet-${k}" => {
-          cidr_block    = cidrsubnet(local.cidr, 8, k + 48)
-          region        = "europe-west${k%2+1}"
-          public_access = true
-      }
+      "public-subnet-${k}" => {
+        cidr_block    = cidrsubnet(local.cidr, 8, k + 48)
+        region        = "europe-west${k % 2 + 1}"
+        public_access = true
+    }
     }
   )
   gke_subnets = {

@@ -1,6 +1,8 @@
+data "google_client_config" "current" {}
+
 resource "google_storage_bucket" "bucket_creation" {
   name                        = var.bucket_name
-  location                    = (var.zone == "" || var.zone == null) ? "${var.region}" : "${var.region}-${var.zone}"
+  location                    = data.google_client_config.current.region
   storage_class               = var.storage_class
   uniform_bucket_level_access = var.uniform_bucket_level_access
   public_access_prevention    = var.public_access_prevention

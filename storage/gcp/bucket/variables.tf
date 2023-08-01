@@ -1,19 +1,3 @@
-variable "region" {
-  description = "the region where to create the bucket"
-  type        = string
-}
-
-variable "zone" {
-  description = "The zone where to create the bucket"
-  type        = string
-  default     = null
-}
-
-variable "project_id" {
-  description = "The id project where to create the bucket"
-  type        = string
-}
-
 variable "bucket_name" {
   description = "The name of the bucket."
   type        = string
@@ -153,15 +137,6 @@ variable "custom_placement_config" {
     data_locations = list(string)
   })
   default = null
-}
-
-variable "credentials_file" {
-  description = "The credential json file"
-  type        = string
-  validation {
-    condition     = can(regex(".*\\.json", var.credentials_file))
-    error_message = "The value of credentials_file need to be a json"
-  }
 }
 
 ############### SECTION - Bucket acl

@@ -14,13 +14,13 @@ Use the same availability zone and region to all the repositories.
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0 |
-| <a name="requirement_google"></a> [google](#requirement\_google) | >= 4.38.0, < 5.0 |
+| <a name="requirement_google"></a> [google](#requirement\_google) | >= 4.75.0 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_google"></a> [google](#provider\_google) | >= 4.38.0, < 5.0 |
+| <a name="provider_google"></a> [google](#provider\_google) | >= 4.75.0 |
 
 ## Modules
 
@@ -31,6 +31,7 @@ No modules.
 | Name | Type |
 |------|------|
 | [google_redis_instance.default](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/redis_instance) | resource |
+| [google_client_config.current](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/client_config) | data source |
 
 ## Inputs
 
@@ -40,26 +41,21 @@ No modules.
 | <a name="input_auth_enabled"></a> [auth\_enabled](#input\_auth\_enabled) | Indicates whether OSS Redis AUTH is enabled for the instance. If set to true AUTH is enabled on the instance. | `bool` | `false` | no |
 | <a name="input_authorized_network"></a> [authorized\_network](#input\_authorized\_network) | The full name of the Google Compute Engine network to which the instance is connected. If left unspecified, the default network will be used. | `string` | `null` | no |
 | <a name="input_connect_mode"></a> [connect\_mode](#input\_connect\_mode) | The connection mode of the Redis instance. Can be either DIRECT\_PEERING or PRIVATE\_SERVICE\_ACCESS. The default connect mode if not provided is DIRECT\_PEERING. | `string` | `null` | no |
-| <a name="input_credentials_file"></a> [credentials\_file](#input\_credentials\_file) | Path to credential json file | `string` | n/a | yes |
 | <a name="input_customer_managed_key"></a> [customer\_managed\_key](#input\_customer\_managed\_key) | Default encryption key to apply to the Redis instance. Defaults to null (Google-managed). | `string` | `null` | no |
 | <a name="input_display_name"></a> [display\_name](#input\_display\_name) | An arbitrary and optional user-provided name for the instance. | `string` | `null` | no |
 | <a name="input_labels"></a> [labels](#input\_labels) | The resource labels to represent user provided metadata. | `map(string)` | `null` | no |
-| <a name="input_location_id"></a> [location\_id](#input\_location\_id) | The zone where the instance will be provisioned. If not provided, the service will choose a zone for the instance. For STANDARD\_HA tier, instances will be created across two zones for protection against zonal failures. If [alternativeLocationId] is also provided, it must be different from [locationId]. | `string` | `null` | no |
 | <a name="input_maintenance_policy"></a> [maintenance\_policy](#input\_maintenance\_policy) | The maintenance policy for an instance. | <pre>object({<br>    day = string<br>    start_time = object({<br>      hours   = number<br>      minutes = number<br>      seconds = number<br>      nanos   = number<br>    })<br>  })</pre> | `null` | no |
 | <a name="input_memory_size_gb"></a> [memory\_size\_gb](#input\_memory\_size\_gb) | Redis memory size in GiB. | `number` | `1` | no |
 | <a name="input_name"></a> [name](#input\_name) | The ID of the instance or a fully qualified identifier for the instance. | `string` | n/a | yes |
 | <a name="input_persistence_config"></a> [persistence\_config](#input\_persistence\_config) | The Redis persistence configuration parameters. | <pre>object({<br>    persistence_mode        = string<br>    rdb_snapshot_period     = string<br>    rdb_snapshot_start_time = string<br>  })</pre> | `null` | no |
-| <a name="input_project_id"></a> [project\_id](#input\_project\_id) | The ID of the project in which the resource belongs to. | `string` | n/a | yes |
 | <a name="input_read_replicas_mode"></a> [read\_replicas\_mode](#input\_read\_replicas\_mode) | Read replicas mode. | `string` | `"READ_REPLICAS_DISABLED"` | no |
 | <a name="input_redis_configs"></a> [redis\_configs](#input\_redis\_configs) | The Redis configuration parameters. | `map(any)` | `{}` | no |
 | <a name="input_redis_version"></a> [redis\_version](#input\_redis\_version) | The version of Redis software. | `string` | `null` | no |
-| <a name="input_region"></a> [region](#input\_region) | The GCP region to use. | `string` | `null` | no |
 | <a name="input_replica_count"></a> [replica\_count](#input\_replica\_count) | The number of replicas. | `number` | `null` | no |
 | <a name="input_reserved_ip_range"></a> [reserved\_ip\_range](#input\_reserved\_ip\_range) | The CIDR range of internal addresses that are reserved for this instance. | `string` | `null` | no |
 | <a name="input_secondary_ip_range"></a> [secondary\_ip\_range](#input\_secondary\_ip\_range) | Optional. Additional IP range for node placement. Required when enabling read replicas on an existing instance. | `string` | `null` | no |
 | <a name="input_tier"></a> [tier](#input\_tier) | The service tier of the instance. | `string` | `"STANDARD_HA"` | no |
 | <a name="input_transit_encryption_mode"></a> [transit\_encryption\_mode](#input\_transit\_encryption\_mode) | The TLS mode of the Redis instance, If not provided, TLS is enabled for the instance. | `string` | `"SERVER_AUTHENTICATION"` | no |
-| <a name="input_zone"></a> [zone](#input\_zone) | The GCP zone to use. | `string` | `null` | no |
 
 ## Outputs
 

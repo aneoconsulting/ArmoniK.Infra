@@ -33,18 +33,13 @@ locals {
 }
 
 module "complex_memorystore" {
-  credentials_file        = "~/.config/gcloud/application_default_credentials.json"
   source                  = "../../../memorystore"
-  region                  = "europe-west9"
-  zone                    = "a"
-  project_id              = "armonik-gcp-13469"
   name                    = "redis-test"
   authorized_network      = "my-network-example"
   tier                    = "BASIC"
   memory_size_gb          = 2
   replica_count           = 3
   read_replicas_mode      = "READ_REPLICAS_ENABLED"
-  location_id             = "europe-west9-a"
   alternative_location_id = "europe-west9-b"
   redis_version           = "latest"
   redis_configs           = local.redis_configs

@@ -1,13 +1,14 @@
+data "google_client_config" "current" {}
+
 resource "google_redis_instance" "default" {
-  project                 = var.project_id
+  project                 = data.google_client_config.current.project
   name                    = var.name
   tier                    = var.tier
   replica_count           = var.tier == "STANDARD_HA" ? var.replica_count : null
   read_replicas_mode      = var.tier == "STANDARD_HA" ? var.read_replicas_mode : null
   memory_size_gb          = var.memory_size_gb
   connect_mode            = var.connect_mode
-  region                  = var.region
-  location_id             = var.location_id
+  location_id             = data.google_client_config.current.region
   alternative_location_id = var.alternative_location_id
   authorized_network      = var.authorized_network
   customer_managed_key    = var.customer_managed_key

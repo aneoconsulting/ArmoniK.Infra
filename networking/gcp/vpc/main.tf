@@ -28,7 +28,6 @@ resource "google_compute_subnetwork" "subnets" {
   name                     = each.key
   network                  = google_compute_network.vpc.name
   description              = "${each.value.public_access ? "Public" : "Private"} subnet of IP address range ${each.value.cidr_block} in VPC ${google_compute_network.vpc.name}"
-  purpose                  = "PRIVATE_RFC_1918"
   private_ip_google_access = var.enable_google_access
   region                   = each.value.region
   project                  = data.google_client_config.current.project
@@ -46,7 +45,6 @@ resource "google_compute_subnetwork" "gke_subnets" {
   name                     = each.key
   network                  = google_compute_network.vpc.name
   description              = "GKE private subnet of IP address range ${each.value.nodes_cidr_block} in VPC ${google_compute_network.vpc.name}"
-  purpose                  = "PRIVATE_RFC_1918"
   private_ip_google_access = var.enable_google_access
   region                   = each.value.region
   project                  = data.google_client_config.current.project

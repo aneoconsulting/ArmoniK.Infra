@@ -70,7 +70,7 @@ resource "google_compute_router" "routers" {
   for_each    = local.public_regions
   name        = "${google_compute_network.vpc.name}-router-${each.value}"
   network     = google_compute_network.vpc.self_link
-  description = "Router in the VPC ${google_compute_network.vpc.name}"
+  description = "Router for the VPC ${google_compute_network.vpc.name} in region ${each.key}"
   region      = each.value
   project     = data.google_client_config.current.project
 }

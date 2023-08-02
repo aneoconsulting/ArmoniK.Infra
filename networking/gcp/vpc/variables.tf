@@ -60,7 +60,7 @@ variable "delete_default_routes_on_create" {
 }
 
 variable "subnets" {
-  description = "A map of private subnets inside the VPC. Each subnet has a CIDR block, a region, and a boolean set to true if the subnet is public, or false if the subnet is private"
+  description = "A map of subnets inside the VPC. Each subnet object has a CIDR block, a region, and a boolean set to true if the subnet is public, or false if the subnet is private"
   type = map(object({
     cidr_block    = string
     region        = string

@@ -2,9 +2,9 @@
 data "google_client_config" "current" {}
 
 locals {
-  public_subnets  = { for key, value in var.subnets : key => value if value.public_access == true }
-  private_subnets = { for key, value in var.subnets : key => value if value.public_access == false }
-  public_regions  = toset(distinct([for key, value in local.public_subnets : value.region]))
+  public_subnets  = { for key, value in var.subnets : key => value if value.public_access }
+  private_subnets = { for key, value in var.subnets : key => value if !value.public_access }
+  public_regions  = toset([for key, value in local.public_subnets : value.region])
 }
 
 # VPC
@@ -70,7 +70,7 @@ resource "google_compute_router" "routers" {
   for_each    = local.public_regions
   name        = "${google_compute_network.vpc.name}-router-${each.value}"
   network     = google_compute_network.vpc.self_link
-  description = "Router in the VPC ${google_compute_network.vpc.name}"
+  description = "Router for the VPC ${google_compute_network.vpc.name} in region ${each.key}"
   region      = each.value
   project     = data.google_client_config.current.project
 }

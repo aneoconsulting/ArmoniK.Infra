@@ -3,8 +3,8 @@ on:
   pull_request:
     branches: [ main, master ]
 jobs:
-  helmcChartLinter:
-    name: Helm charts linter
+  HelmChartlint:
+    name: Lint Helm charts
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code

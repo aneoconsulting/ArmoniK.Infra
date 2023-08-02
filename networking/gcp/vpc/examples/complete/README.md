@@ -57,5 +57,4 @@ terraform destroy
 | <a name="output_name"></a> [name](#output\_name) | The name of the VPC |
 | <a name="output_private_subnets"></a> [private\_subnets](#output\_private\_subnets) | Map of private subnets |
 | <a name="output_public_subnets"></a> [public\_subnets](#output\_public\_subnets) | Map of public subnets |
-| <a name="output_region"></a> [region](#output\_region) | Region used for the subnets |
 <!-- END_TF_DOCS -->

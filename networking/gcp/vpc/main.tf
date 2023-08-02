@@ -4,7 +4,7 @@ data "google_client_config" "current" {}
 locals {
   public_subnets  = { for key, value in var.subnets : key => value if value.public_access == true }
   private_subnets = { for key, value in var.subnets : key => value if value.public_access == false }
-  public_regions  = toset(distinct([for key, value in local.public_subnets : value.region]))
+  public_regions  = toset([for key, value in local.public_subnets : value.region])
 }
 
 # VPC

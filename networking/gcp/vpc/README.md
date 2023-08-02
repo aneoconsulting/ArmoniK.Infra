@@ -60,7 +60,7 @@ No modules.
 | <a name="input_name"></a> [name](#input\_name) | Name of the VPC | `string` | n/a | yes |
 | <a name="input_network_firewall_policy_enforcement_order"></a> [network\_firewall\_policy\_enforcement\_order](#input\_network\_firewall\_policy\_enforcement\_order) | Set the order that Firewall Rules and Firewall Policies are evaluated | `string` | `"AFTER_CLASSIC_FIREWALL"` | no |
 | <a name="input_routing_mode"></a> [routing\_mode](#input\_routing\_mode) | The network-wide routing mode to use | `string` | `"GLOBAL"` | no |
-| <a name="input_subnets"></a> [subnets](#input\_subnets) | A map of private subnets inside the VPC. Each subnet has a CIDR block, a region, and a boolean set to true if the subnet is public, or false if the subnet is private | <pre>map(object({<br>    cidr_block    = string<br>    region        = string<br>    public_access = bool<br>  }))</pre> | `{}` | no |
+| <a name="input_subnets"></a> [subnets](#input\_subnets) | A map of subnets inside the VPC. Each subnet object has a CIDR block, a region, and a boolean set to true if the subnet is public, or false if the subnet is private | <pre>map(object({<br>    cidr_block    = string<br>    region        = string<br>    public_access = bool<br>  }))</pre> | `{}` | no |
 
 ## Outputs
 

@@ -5,7 +5,7 @@ output "name" {
 
 output "id" {
   description = "The ID of the VPC"
-  value       = google_compute_network.vpc
+  value       = google_compute_network.vpc.id
 }
 
 output "gateway_ipv4" {

@@ -1,8 +1,3 @@
-output "region" {
-  description = "Region used for the subnets"
-  value       = var.region
-}
-
 output "name" {
   description = "The name of the VPC"
   value       = module.complete_vpc.name

@@ -20,7 +20,6 @@ resource "google_kms_key_ring_iam_policy" "key_ring_iam_policy" {
   policy_data = var.google_kms_key_ring_iam_policy_data
 }
 
-
 ###### SECTION - KMS KEY RING
 
 resource "google_kms_key_ring" "key_ring" {
@@ -53,15 +52,6 @@ resource "google_kms_crypto_key" "kms_crypto_key" {
     prevent_destroy = true
   }
 
-}
-
-###### SECTION - KMS CRYPTO KEY VERSION
-
-resource "google_kms_crypto_key_version" "kms_crypto_key_version" {
-  depends_on = [google_kms_crypto_key.kms_crypto_key]
-
-  crypto_key = google_kms_crypto_key.kms_crypto_key.id
-  state      = var.kms_crypto_key_version_state
 }
 
 ###### SECTION - KMS RING IMPORT JOB

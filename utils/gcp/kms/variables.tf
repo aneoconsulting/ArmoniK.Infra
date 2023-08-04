@@ -51,14 +51,6 @@ variable "kms_key_ring_name" {
   type        = string
 }
 
-###### SECTION - KMS CRYPTO KEY VERSION
-
-variable "kms_crypto_key_version_state" {
-  description = ""
-  type        = string
-  default     = null
-}
-
 ###### SECTION - KMS RING IMPORT JOB
 
 variable "google_kms_key_ring_import_job_id" {

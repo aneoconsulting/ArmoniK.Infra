@@ -1,3 +1,5 @@
 module "complete_kms_example" {
-  source = "../../../kms"
+  source              = "../../../kms"
+  kms_crypto_key_name = "test-2"
+  kms_key_ring_name   = "test"
 }

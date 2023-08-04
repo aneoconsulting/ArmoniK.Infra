@@ -54,7 +54,7 @@ variable "kms_key_ring_name" {
 ###### SECTION - KMS RING IMPORT JOB
 
 variable "google_kms_key_ring_import_job_id" {
-  description = "It must be unique within a KeyRing."
+  description = "It must be unique within a KeyRing. If not specified it will not create an import job."
   type        = string
   validation {
     condition     = can(regex("[a-zA-Z0-9_-]{1,63}", var.google_kms_key_ring_import_job_id)) || var.google_kms_key_ring_import_job_id == null
@@ -102,7 +102,7 @@ variable "google_kms_crypto_key_iam_policy_data" {
 ###### SECTION - KMS CIPHERTEXT
 
 variable "google_kms_secret_ciphertext_plaintext" {
-  description = "The plaintext to be encrypted."
+  description = "The plaintext to be encrypted. If not specified it will not create the KMS Ciphertext"
   type        = string
   default     = null
 }

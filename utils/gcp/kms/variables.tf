@@ -1,30 +1,34 @@
 # SECTION - KMS CRYPTO KEY
 
 variable "kms_crypto_key_name" {
-  description = ""
+  description = "The resource name for the CryptoKey."
   type        = string
 }
 
 variable "kms_crypto_key_labels" {
-  description = ""
+  description = "Labels with user-defined metadata to apply to this resource."
   type        = map(string)
   default     = null
 }
 
 variable "kms_crypto_key_purpose" {
-  description = ""
+  description = "The immutable purpose of this CryptoKey."
   type        = string
   default     = "ENCRYPT_DECRYPT"
 }
 
 variable "kms_crypto_key_rotation_period" {
-  description = ""
-  type        = string
+  description = "Every time this period passes, generate a new CryptoKeyVersion and set it as the primary. The first rotation will take place after the specified period."
+  type        = number
   default     = null
+  validation {
+    condition     = var.kms_crypto_key_rotation_period > 86400
+    error_message = "The rotation period has the format of a decimal number with up to 9 fractional digits. It must be greater than a day (86400)"
+  }
 }
 
 variable "kms_crypto_key_version_template" {
-  description = ""
+  description = "A template describing settings for new crypto key versions."
   type = object({
     algorithm        = string
     protection_level = optional(string)
@@ -33,13 +37,13 @@ variable "kms_crypto_key_version_template" {
 }
 
 variable "kms_crypto_key_import_only" {
-  description = ""
+  description = "Whether this key may contain imported versions only."
   type        = bool
   default     = false
 }
 
 variable "kms_crypto_key_skip_initial_version_creation" {
-  description = ""
+  description = "If set to true, the request will create a CryptoKey without any CryptoKeyVersions."
   type        = bool
   default     = false
 }
@@ -47,7 +51,7 @@ variable "kms_crypto_key_skip_initial_version_creation" {
 ###### SECTION - KMS KEY RING
 
 variable "kms_key_ring_name" {
-  description = ""
+  description = "The resource name for the KeyRing."
   type        = string
 }
 
@@ -86,7 +90,7 @@ variable "google_kms_key_ring_import_job_protection_level" {
 ###### SECTION - IAM POLICY KMS RING
 
 variable "google_kms_key_ring_iam_policy_data" {
-  description = ""
+  description = "The policy data for the kms ring"
   type        = string
   default     = null
 }
@@ -94,7 +98,7 @@ variable "google_kms_key_ring_iam_policy_data" {
 ###### SECTION - IAM POLICY KMS
 
 variable "google_kms_crypto_key_iam_policy_data" {
-  description = ""
+  description = "The policy data for the crypto key"
   type        = string
   default     = null
 }

@@ -8,7 +8,7 @@ locals {
 }
 
 module "simple_artifact_registry" {
-  source               = "../../../artifactory"
+  source               = "../.."
   registry_images      = local.registry_images
   registry_name        = "test"
   registry_description = "un registry"

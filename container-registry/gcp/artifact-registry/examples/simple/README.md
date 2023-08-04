@@ -14,7 +14,7 @@ No providers.
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_simple_artifact_registry"></a> [simple\_artifact\_registry](#module\_simple\_artifact\_registry) | ../../../artifactory | n/a |
+| <a name="module_simple_artifact_registry"></a> [simple\_artifact\_registry](#module\_simple\_artifact\_registry) | ../.. | n/a |
 
 ## Resources
 

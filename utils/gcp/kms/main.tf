@@ -33,7 +33,7 @@ resource "google_kms_key_ring" "key_ring" {
 resource "google_kms_crypto_key" "kms_crypto_key" {
   name                          = var.kms_crypto_key_name
   key_ring                      = google_kms_key_ring.key_ring.id
-  rotation_period               = var.kms_crypto_key_rotation_period
+  rotation_period               = "${var.kms_crypto_key_rotation_period}s"
   labels                        = var.kms_crypto_key_labels
   purpose                       = var.kms_crypto_key_purpose
   import_only                   = var.kms_crypto_key_import_only

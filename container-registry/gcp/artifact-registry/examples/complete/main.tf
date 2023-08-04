@@ -45,7 +45,7 @@ locals {
 }
 
 module "simple_artifact_registry" {
-  source               = "../../../artifactory"
+  source               = "../.."
   registry_images      = local.registry_images
   registry_name        = "my_registry"
   registry_labels      = local.registry_labels

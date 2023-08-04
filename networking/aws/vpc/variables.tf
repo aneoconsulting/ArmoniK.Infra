@@ -1,7 +1,6 @@
 variable "name" {
-  description = "Name of the VPC"
+  description = "Name of the AWS VPC"
   type        = string
-  default     = ""
 }
 
 variable "cidr" {
@@ -26,12 +25,6 @@ variable "public_subnets" {
   description = "A list of public subnets inside the VPC"
   type        = list(string)
   default     = []
-}
-
-variable "enable_external_access" {
-  description = "Boolean to disable external access"
-  type        = bool
-  default     = true
 }
 
 variable "flow_log_cloudwatch_log_group_kms_key_id" {
@@ -79,7 +72,7 @@ variable "eks_name" {
 }
 
 variable "pod_subnets" {
-  description = "List of CIDR blocks fot Pods"
+  description = "List of CIDR blocks for Pods"
   type        = list(string)
   default     = []
 }

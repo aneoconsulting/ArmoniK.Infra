@@ -14,3 +14,9 @@ variable "activemq" {
     image_pull_secrets = string
   })
 }
+
+variable "validity_period_hours" {
+  description = "validity period of the certificate in hours"
+  type        = string
+  default     = "8760" # 1 year
+}

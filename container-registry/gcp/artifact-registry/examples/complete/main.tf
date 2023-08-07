@@ -1,5 +1,5 @@
 locals {
-  registry_images = {
+  docker_images = {
     prometheus = {
       image = "prom/prometheus"
       tag   = "1.5.0"
@@ -31,7 +31,7 @@ locals {
 
   }
 
-  registry_labels = {
+  labels = {
     label_key_1 = "value-label-1",
     label_key_2 = "value-label-2",
     label_key_3 = "value-label-3"
@@ -44,13 +44,13 @@ locals {
   }
 }
 
-module "simple_artifact_registry" {
-  source               = "../.."
-  registry_images      = local.registry_images
-  registry_name        = "my_registry"
-  registry_labels      = local.registry_labels
-  registry_description = "One registry example"
+module "complete_artifact_registry" {
+  source               = "../../../artifact-registry"
+  docker_images        = local.docker_images
+  name                 = "complete"
+  labels               = local.labels
+  description          = "A complete artifact registry"
   immutable_tags       = true
-  kms_key              = "my_kms_key"
-  registry_iam         = local.registry_iam
+  kms_key_name         = null
+  iam_bindings         = local.registry_iam
 }

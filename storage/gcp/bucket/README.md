@@ -27,9 +27,9 @@ No modules.
 
 | Name | Type |
 |------|------|
-| [google_storage_bucket.bucket_creation](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/storage_bucket) | resource |
-| [google_storage_bucket_acl.bucket_acls_creation](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/storage_bucket_acl) | resource |
-| [google_storage_bucket_iam_binding.bucket_policy_creation](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/storage_bucket_iam_binding) | resource |
+| [google_storage_bucket.bucket](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/storage_bucket) | resource |
+| [google_storage_bucket_acl.acl](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/storage_bucket_acl) | resource |
+| [google_storage_bucket_iam_member.role](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/storage_bucket_iam_member) | resource |
 | [google_client_config.current](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/client_config) | data source |
 
 ## Inputs
@@ -46,11 +46,11 @@ No modules.
 | <a name="input_labels"></a> [labels](#input\_labels) | A map of key/value label pairs to assign to the bucket. | `map(string)` | `{}` | no |
 | <a name="input_lifecycle_rule"></a> [lifecycle\_rule](#input\_lifecycle\_rule) | The bucket's Lifecycle Rules configuration. | <pre>object({<br>    action        = object({<br>      type          = string<br>      storage_class = string<br>    })<br>    condition = object ({<br>      age                        = optional(number)<br>      created_before             = optional(string)<br>      with_state                 = optional(string)<br>      matches_storage_class      = optional(list(string))<br>      matches_prefix             = optional(list(string))<br>      matches_suffix             = optional(list(string))<br>      num_newer_versions         = optional(number)<br>      custom_time_before         = optional(string)<br>      days_since_custom_time     = optional(string)<br>      days_since_noncurrent_time = optional(string)<br>      noncurrent_time_before     = optional(string)<br>    })<br>  })</pre> | `null` | no |
 | <a name="input_logging"></a> [logging](#input\_logging) | The bucket's Access & Storage Logs configuration. | <pre>object({<br>    log_bucket        = string<br>    log_object_prefix = optional(string)<br>  })</pre> | `null` | no |
-| <a name="input_policy_data"></a> [policy\_data](#input\_policy\_data) | Policy data to bind to the bucket | `map(list(string))` | `null` | no |
 | <a name="input_public_access_prevention"></a> [public\_access\_prevention](#input\_public\_access\_prevention) | Prevents public access to a bucket. Acceptable values are 'inherited' or 'enforced' | `string` | `"inherited"` | no |
 | <a name="input_requester_pays"></a> [requester\_pays](#input\_requester\_pays) | Enables Requester Pays on a storage bucket. | `bool` | `false` | no |
 | <a name="input_retention_policy"></a> [retention\_policy](#input\_retention\_policy) | Configuration of the bucket's data retention policy for how long objects in the bucket should be retained. | <pre>object({<br>    is_locked        = optional(bool)<br>    retention_period = number<br>  })</pre> | `null` | no |
 | <a name="input_role_entity"></a> [role\_entity](#input\_role\_entity) | List of role/entity pairs for acls bucket | `list(string)` | `[]` | no |
+| <a name="input_roles"></a> [roles](#input\_roles) | Roles to bind to the bucket | `map(set(string))` | `null` | no |
 | <a name="input_storage_class"></a> [storage\_class](#input\_storage\_class) | The Storage Class of the new bucket. Supported values include: STANDARD (default), MULTI\_REGIONAL, REGIONAL, NEARLINE, COLDLINE, ARCHIVE. | `string` | `"STANDARD"` | no |
 | <a name="input_uniform_bucket_level_access"></a> [uniform\_bucket\_level\_access](#input\_uniform\_bucket\_level\_access) | Enables Uniform bucket-level access access to a bucket | `bool` | `false` | no |
 | <a name="input_versioning"></a> [versioning](#input\_versioning) | The bucket's Versioning configuration. | <pre>object({<br>    enabled = bool<br>  })</pre> | `null` | no |

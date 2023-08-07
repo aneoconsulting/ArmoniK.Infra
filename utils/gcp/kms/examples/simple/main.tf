@@ -1,5 +1,5 @@
 module "simple_kms_example" {
   source              = "../../../kms"
-  kms_crypto_key_name = "test-2"
-  kms_key_ring_name   = "test"
+  kms_crypto_key_name = "simple-key-test"
+  kms_key_ring_name   = "simple-key-ring"
 }

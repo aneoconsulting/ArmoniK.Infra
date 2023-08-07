@@ -22,7 +22,7 @@ variable "kms_crypto_key_rotation_period" {
   type        = number
   default     = null
   validation {
-    condition     = var.kms_crypto_key_rotation_period > 86400
+    condition     = var.kms_crypto_key_rotation_period == null || coalesce(var.kms_crypto_key_rotation_period, 86401) > 86400
     error_message = "The rotation period has the format of a decimal number with up to 9 fractional digits. It must be greater than a day (86400)"
   }
 }
@@ -89,17 +89,17 @@ variable "google_kms_key_ring_import_job_protection_level" {
 
 ###### SECTION - IAM POLICY KMS RING
 
-variable "google_kms_key_ring_iam_policy_data" {
-  description = "The policy data for the kms ring"
-  type        = string
+variable "key_ring_roles" {
+  description = "Roles to bind to the key ring"
+  type        = map(set(string))
   default     = null
 }
 
 ###### SECTION - IAM POLICY KMS
 
-variable "google_kms_crypto_key_iam_policy_data" {
-  description = "The policy data for the crypto key"
-  type        = string
+variable "crypto_key_roles" {
+  description = "Roles to bind to the crypto key"
+  type        = map(set(string))
   default     = null
 }
 

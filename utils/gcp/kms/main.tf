@@ -3,21 +3,20 @@ data "google_client_config" "current" {}
 
 ###### SECTION - IAM POLICY KMS
 
-resource "google_kms_crypto_key_iam_policy" "crypto_key_iam_policy" {
-  count = var.google_kms_crypto_key_iam_policy_data != null ? 1 : 0
-
+resource "google_kms_crypto_key_iam_member" "crypto_key_role" {
+  for_each      = var.crypto_key_roles != null ? merge([for role, members in var.crypto_key_roles : { for member in members : "${role}-${member}" => { role = role, member = member } }]...) : {}
   crypto_key_id = google_kms_crypto_key.kms_crypto_key.id
-  policy_data   = var.google_kms_crypto_key_iam_policy_data
+  role          = each.value.role
+  member        = each.value.member
 }
 
 ###### SECTION - IAM POLICY KMS RING
 
-resource "google_kms_key_ring_iam_policy" "key_ring_iam_policy" {
-  depends_on = [google_kms_key_ring.key_ring]
-  count      = var.google_kms_key_ring_iam_policy_data != null ? 1 : 0
-
+resource "google_kms_key_ring_iam_member" "key_ring_role" {
+  for_each    = var.key_ring_roles != null ? merge([for role, members in var.key_ring_roles : { for member in members : "${role}-${member}" => { role = role, member = member } }]...) : {}
   key_ring_id = google_kms_key_ring.key_ring.id
-  policy_data = var.google_kms_key_ring_iam_policy_data
+  role        = each.value.role
+  member      = each.value.member
 }
 
 ###### SECTION - KMS KEY RING

@@ -57,7 +57,7 @@ locals {
       data_locations = ["europe-west9", "europe-west5"]
     }
 
-    policy_data = {
+    roles = {
       "roles/storage.objectCreator" = ["user:jane@example.com", "user:jane2@example.com"],
       "roles/storage.admin"         = ["user:jane@example.com"]
     }
@@ -86,5 +86,5 @@ module "complex_bucket_example" {
     public_access_prevention    = "inherited"
     custom_placement_config     = local.custom_placement_config
     role_entity                 = local.role_entity
-    policy_data                 = local.policy_data
+    roles                       = local.roles
 }

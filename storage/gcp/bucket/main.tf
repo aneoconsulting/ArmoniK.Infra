@@ -1,8 +1,8 @@
 data "google_client_config" "current" {}
 
-resource "google_storage_bucket" "bucket_creation" {
+resource "google_storage_bucket" "bucket" {
   name                        = var.bucket_name
-  location                    = data.google_client_config.current.region
+  location                    = var.alternative_location != null ? var.alternative_location : data.google_client_config.current.region
   storage_class               = var.storage_class
   uniform_bucket_level_access = var.uniform_bucket_level_access
   public_access_prevention    = var.public_access_prevention
@@ -99,20 +99,16 @@ resource "google_storage_bucket" "bucket_creation" {
 
 ############### SECTION - Bucket acl
 
-resource "google_storage_bucket_acl" "bucket_acls_creation" {
-  depends_on  = [google_storage_bucket.bucket_creation]
-
-  bucket      = var.bucket_name
+resource "google_storage_bucket_acl" "acl" {
+  bucket      = google_storage_bucket.bucket.name
   role_entity = var.role_entity
 }
 
 ############### SECTION - Bucket policy
 
-resource "google_storage_bucket_iam_binding" "bucket_policy_creation" {
-  depends_on  = [google_storage_bucket.bucket_creation]
-
-  for_each    = var.policy_data != null ? var.policy_data : {}
-  bucket      = var.bucket_name
-  role        = each.key
-  members     = each.value
+resource "google_storage_bucket_iam_member" "role" {
+  for_each    = var.roles != null ?  merge([ for role, members in var.roles: { for member in members: "${role}-${member}" => {role = role, member = member }}]...) : {}
+  bucket      = google_storage_bucket.bucket.name
+  role        = each.value.role
+  member      = each.value.member
 }

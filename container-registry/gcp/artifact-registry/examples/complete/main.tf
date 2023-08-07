@@ -2,7 +2,7 @@ locals {
   docker_images = {
     prometheus = {
       image = "prom/prometheus"
-      tag   = "1.5.0"
+      tag   = "latest"
     },
     node-exporter = {
       image = "prom/node-exporter"
@@ -10,15 +10,15 @@ locals {
     },
     redis = {
       image = "redis"
-      tag   = "6.0.20"
+      tag   = "latest"
     },
     grafana = {
       image = "grafana/grafana"
-      tag   = "9.5.6"
+      tag   = "latest"
     },
     nginx = {
       image = "nginx"
-      tag   = "stable"
+      tag   = "latest"
     },
     rabbitmq = {
       image = "rabbitmq"
@@ -26,31 +26,55 @@ locals {
     },
     busybox = {
       image = "busybox"
-      tag   = "stable"
+      tag   = "latest"
     }
-
   }
-
-  labels = {
-    label_key_1 = "value-label-1",
-    label_key_2 = "value-label-2",
-    label_key_3 = "value-label-3"
-  }
-
   registry_iam = {
-    "roles/artifactregistry.repoAdmin" = ["user:user1@example.com"],
-    "roles/artifactregistry.reader"    = ["user:user2@example.com", "user:user3@example.com", "user:user4@example.com"],
-    "roles/artifactregistry.writer"    = ["user:user2@example.com", "user:user3@example.com"]
+    "roles/artifactregistry.repoAdmin" = ["user:lzianekhodja@aneo.fr"],
+    "roles/artifactregistry.reader"    = ["user:hbitoun@aneo.fr", "user:lzianekhodja@aneo.fr", "user:flecomte@aneo.fr"],
+    "roles/artifactregistry.writer"    = ["user:aabla@aneo.fr", "user:flecomte@aneo.fr"]
+  }
+  date = <<-EOT
+#!/bin/bash
+set -e
+DATE=$(date +%F-%H-%M-%S)
+jq -n --arg date "$DATE" '{"date":$date}'
+  EOT
+}
+
+resource "local_file" "date_sh" {
+  filename = "${path.module}/generated/date.sh"
+  content  = local.date
+}
+
+data "external" "static_timestamp" {
+  program     = ["bash", "date.sh"]
+  working_dir = "${path.module}/generated"
+  depends_on  = [local_file.date_sh]
+}
+
+resource "null_resource" "timestamp" {
+  triggers = {
+    date = data.external.static_timestamp.result.date
+  }
+  lifecycle {
+    ignore_changes = [triggers]
   }
 }
 
 module "complete_artifact_registry" {
-  source               = "../../../artifact-registry"
-  docker_images        = local.docker_images
-  name                 = "complete"
-  labels               = local.labels
-  description          = "A complete artifact registry"
-  immutable_tags       = true
-  kms_key_name         = null
-  iam_bindings         = local.registry_iam
+  source         = "../../../artifact-registry"
+  docker_images  = local.docker_images
+  name           = "complete-test"
+  description    = "A complete artifact registry"
+  immutable_tags = true
+  kms_key_name   = null
+  iam_bindings   = local.registry_iam
+  labels = {
+    env             = "test"
+    app             = "complete"
+    module          = "GCP Artifact Registry"
+    "create_by"     = "me"
+    "creation_date" = null_resource.timestamp.triggers["date"]
+  }
 }

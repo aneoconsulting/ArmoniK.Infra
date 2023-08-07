@@ -20,11 +20,18 @@ terraform destroy
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0 |
-| <a name="requirement_google"></a> [google](#requirement\_google) | >= 4.75.0 |
+| <a name="requirement_external"></a> [external](#requirement\_external) | ~> 2.3.1 |
+| <a name="requirement_google"></a> [google](#requirement\_google) | ~> 4.75.0 |
+| <a name="requirement_local"></a> [local](#requirement\_local) | ~> 2.4.0 |
+| <a name="requirement_null"></a> [null](#requirement\_null) | ~> 3.2.1 |
 
 ## Providers
 
-No providers.
+| Name | Version |
+|------|---------|
+| <a name="provider_external"></a> [external](#provider\_external) | ~> 2.3.1 |
+| <a name="provider_local"></a> [local](#provider\_local) | ~> 2.4.0 |
+| <a name="provider_null"></a> [null](#provider\_null) | ~> 3.2.1 |
 
 ## Modules
 
@@ -34,7 +41,11 @@ No providers.
 
 ## Resources
 
-No resources.
+| Name | Type |
+|------|------|
+| [local_file.date_sh](https://registry.terraform.io/providers/hashicorp/local/latest/docs/resources/file) | resource |
+| [null_resource.timestamp](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
+| [external_external.static_timestamp](https://registry.terraform.io/providers/hashicorp/external/latest/docs/data-sources/external) | data source |
 
 ## Inputs
 

@@ -147,10 +147,10 @@ variable "role_entity" {
   default     = []
 }
 
-############### SECTION - Bucket policy
+############### SECTION - Bucket permissions
 
-variable "policy_data" {
-  description = "Policy data to bind to the bucket"
-  type        = map(list(string))
+variable "roles" {
+  description = "Roles to bind to the bucket"
+  type        = map(set(string))
   default     = null
 }

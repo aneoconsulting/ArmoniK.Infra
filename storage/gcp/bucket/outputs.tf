@@ -1,14 +1,14 @@
 output "bucket" {
     description = "bucket created on GCP"
-    value       = google_storage_bucket.bucket_creation
+    value       = google_storage_bucket.bucket
 }
 
 output "iam_bucket" {
     description = "The associated IAM policy"
-    value       = google_storage_bucket_iam_binding.bucket_policy_creation
+    value       = google_storage_bucket_iam_member.role
 }
 
 output "acls_bucket" {
     description = "The associated ACLS"
-    value       = google_storage_bucket_acl.bucket_acls_creation
+    value       = google_storage_bucket_acl.acl
 }

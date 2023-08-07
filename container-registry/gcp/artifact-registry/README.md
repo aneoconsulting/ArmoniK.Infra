@@ -40,9 +40,8 @@ No modules.
 
 | Name | Type |
 |------|------|
-| [google_artifact_registry_repository.artifact_registry_docker](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/artifact_registry_repository) | resource |
+| [google_artifact_registry_repository.docker](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/artifact_registry_repository) | resource |
 | [google_artifact_registry_repository_iam_binding.binding](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/artifact_registry_repository_iam_binding) | resource |
-| [google_project_service.enable_service_api](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/project_service) | resource |
 | [null_resource.gcp_copy_images](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
 | [google_client_config.current](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/client_config) | data source |
 
@@ -50,18 +49,18 @@ No modules.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_immutable_tags"></a> [immutable\_tags](#input\_immutable\_tags) | If the registry is a docker format then tags can be immutable (true or false) | `bool` | `null` | no |
-| <a name="input_kms_key"></a> [kms\_key](#input\_kms\_key) | KMS to encrypt GCP repositories | `string` | `null` | no |
-| <a name="input_registry_description"></a> [registry\_description](#input\_registry\_description) | Description of the registry | `string` | n/a | yes |
-| <a name="input_registry_iam"></a> [registry\_iam](#input\_registry\_iam) | Assign role on the repository for a list of users | `map(list(string))` | `null` | no |
-| <a name="input_registry_images"></a> [registry\_images](#input\_registry\_images) | Images to push inside the registry | <pre>map(object({<br>    image = string<br>    tag   = string<br>  }))</pre> | n/a | yes |
-| <a name="input_registry_labels"></a> [registry\_labels](#input\_registry\_labels) | Labels for the registry | `map(string)` | `null` | no |
-| <a name="input_registry_name"></a> [registry\_name](#input\_registry\_name) | Name of the registry to create | `string` | n/a | yes |
+| <a name="input_description"></a> [description](#input\_description) | Description of the registry | `string` | `""` | no |
+| <a name="input_docker_images"></a> [docker\_images](#input\_docker\_images) | Docker container images to push inside the registry | <pre>map(object({<br>    image = string<br>    tag   = string<br>  }))</pre> | n/a | yes |
+| <a name="input_iam_bindings"></a> [iam\_bindings](#input\_iam\_bindings) | Assign role on the repository for a list of users | `map(list(string))` | `{}` | no |
+| <a name="input_immutable_tags"></a> [immutable\_tags](#input\_immutable\_tags) | If the registry is a docker format then tags can be immutable (true or false) | `bool` | `true` | no |
+| <a name="input_kms_key_name"></a> [kms\_key\_name](#input\_kms\_key\_name) | KMS key name to encrypt GCP repositories | `string` | `null` | no |
+| <a name="input_labels"></a> [labels](#input\_labels) | Labels for the registry | `map(string)` | `{}` | no |
+| <a name="input_name"></a> [name](#input\_name) | Name of the registry to create | `string` | n/a | yes |
 
 ## Outputs
 
 | Name | Description |
 |------|-------------|
-| <a name="output_artifact_registry"></a> [artifact\_registry](#output\_artifact\_registry) | Registry created on GCP |
-| <a name="output_kms_key"></a> [kms\_key](#output\_kms\_key) | KMS used for registry |
+| <a name="output_docker_repositories"></a> [docker\_repositories](#output\_docker\_repositories) | Docker repositories in Artifactory Registry created on GCP |
+| <a name="output_kms_key_name"></a> [kms\_key\_name](#output\_kms\_key\_name) | KMS key name used to encrypt the registry |
 <!-- END_TF_DOCS -->

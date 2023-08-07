@@ -20,43 +20,37 @@ terraform destroy
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | ~> 5.4.0 |
-| <a name="requirement_external"></a> [external](#requirement\_external) | ~> 2.3.1 |
-| <a name="requirement_null"></a> [null](#requirement\_null) | ~> 3.2.1 |
+| <a name="requirement_google"></a> [google](#requirement\_google) | >= 4.75.0 |
 
 ## Providers
 
-| Name | Version |
-|------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | ~> 5.4.0 |
-| <a name="provider_external"></a> [external](#provider\_external) | ~> 2.3.1 |
-| <a name="provider_null"></a> [null](#provider\_null) | ~> 3.2.1 |
+No providers.
 
 ## Modules
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_complete_ecr"></a> [complete\_ecr](#module\_complete\_ecr) | ../../../ecr | n/a |
+| <a name="module_complete_kms_example"></a> [complete\_kms\_example](#module\_complete\_kms\_example) | ../../../kms | n/a |
 
 ## Resources
 
-| Name | Type |
-|------|------|
-| [null_resource.timestamp](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
-| [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
-| [external_external.static_timestamp](https://registry.terraform.io/providers/hashicorp/external/latest/docs/data-sources/external) | data source |
+No resources.
 
 ## Inputs
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_aws_profile"></a> [aws\_profile](#input\_aws\_profile) | Profile of AWS credentials to deploy Terraform sources | `string` | `"default"` | no |
-| <a name="input_aws_region"></a> [aws\_region](#input\_aws\_region) | AWS region where the infrastructure will be deployed | `string` | `"eu-west-3"` | no |
+| <a name="input_project"></a> [project](#input\_project) | Project name | `string` | `"armonik-gcp-13469"` | no |
+| <a name="input_region"></a> [region](#input\_region) | The GCP region used to deploy NAT routers if used | `string` | `"europe-west9"` | no |
 
 ## Outputs
 
 | Name | Description |
 |------|-------------|
-| <a name="output_kms_key_id"></a> [kms\_key\_id](#output\_kms\_key\_id) | ARN of KMS used for ECR |
-| <a name="output_repositories"></a> [repositories](#output\_repositories) | Map of ECR repositories |
+| <a name="output_crypto_key"></a> [crypto\_key](#output\_crypto\_key) | The generated crytpo key. |
+| <a name="output_kms_ciphertext"></a> [kms\_ciphertext](#output\_kms\_ciphertext) | The ciphertext used to encrypt secret data. |
+| <a name="output_kms_crypto_roles"></a> [kms\_crypto\_roles](#output\_kms\_crypto\_roles) | The associated roles on the crytpo key. |
+| <a name="output_kms_key_ring"></a> [kms\_key\_ring](#output\_kms\_key\_ring) | The generated key ring. |
+| <a name="output_kms_key_ring_import_job"></a> [kms\_key\_ring\_import\_job](#output\_kms\_key\_ring\_import\_job) | The import generated import job. |
+| <a name="output_kms_ring_roles"></a> [kms\_ring\_roles](#output\_kms\_ring\_roles) | The associated roles on the key ring. |
 <!-- END_TF_DOCS -->

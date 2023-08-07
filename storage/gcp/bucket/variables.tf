@@ -3,6 +3,12 @@ variable "bucket_name" {
   type        = string
 }
 
+variable "alternative_location" {
+  description = "Alternative location for the bucket, by default it will use the project region."
+  type        = string
+  default     = null
+}
+
 variable "force_destroy" {
   description = "When deleting a bucket, this boolean option will delete all contained objects."
   type        = bool
@@ -147,10 +153,10 @@ variable "role_entity" {
   default     = []
 }
 
-############### SECTION - Bucket policy
+############### SECTION - Bucket permissions
 
-variable "policy_data" {
-  description = "Policy data to bind to the bucket"
-  type        = map(list(string))
+variable "roles" {
+  description = "Roles to bind to the bucket"
+  type        = map(set(string))
   default     = null
 }

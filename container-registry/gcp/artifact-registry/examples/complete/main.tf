@@ -30,9 +30,9 @@ locals {
     }
   }
   registry_iam = {
-    "roles/artifactregistry.repoAdmin" = ["user:lzianekhodja@aneo.fr"],
-    "roles/artifactregistry.reader"    = ["user:hbitoun@aneo.fr", "user:lzianekhodja@aneo.fr", "user:flecomte@aneo.fr"],
-    "roles/artifactregistry.writer"    = ["user:aabla@aneo.fr", "user:flecomte@aneo.fr"]
+    "roles/artifactregistry.repoAdmin" = [],
+    "roles/artifactregistry.reader"    = [],
+    "roles/artifactregistry.writer"    = []
   }
   date = <<-EOT
 #!/bin/bash

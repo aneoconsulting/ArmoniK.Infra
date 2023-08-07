@@ -1,41 +1,42 @@
-variable "kms_key" {
-  description = "KMS to encrypt GCP repositories"
+variable "kms_key_name" {
+  description = "KMS key name to encrypt GCP repositories"
   type        = string
   default     = null
 }
 
-variable "registry_name" {
+variable "name" {
   description = "Name of the registry to create"
   type        = string
 }
 
-variable "registry_labels" {
+variable "labels" {
   description = "Labels for the registry"
   type        = map(string)
-  default     = null
+  default     = {}
 }
 
-variable "registry_images" {
-  description = "Images to push inside the registry"
+variable "docker_images" {
+  description = "Docker container images to push inside the registry"
   type = map(object({
     image = string
     tag   = string
   }))
 }
 
-variable "registry_description" {
+variable "description" {
   description = "Description of the registry"
   type        = string
+  default     = ""
 }
 
 variable "immutable_tags" {
   description = "If the registry is a docker format then tags can be immutable (true or false)"
   type        = bool
-  default     = null
+  default     = true
 }
 
-variable "registry_iam" {
+variable "iam_bindings" {
   description = "Assign role on the repository for a list of users"
   type        = map(list(string))
-  default     = null
+  default     = {}
 }

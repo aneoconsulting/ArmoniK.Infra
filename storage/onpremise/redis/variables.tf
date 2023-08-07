@@ -19,5 +19,5 @@ variable "redis" {
 variable "validity_period_hours" {
   description = "Validity period of the certificate in hours"
   type        = string
-  default     = "8760" # 1 year
+  default     = "8760" # 1 year 
 }

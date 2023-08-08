@@ -19,7 +19,7 @@ jobs:
         run: |
           DIRS=$(echo '${{ steps.dirs.outputs.directories }}' | jq -r '. | join(",")')
           echo "directories=$DIRS" >> $GITHUB_OUTPUT
-  terraformDocumentation:
+  terraformDocs:
     name: Generate Terraform documentation
     runs-on: ubuntu-latest
     needs: collectInputs

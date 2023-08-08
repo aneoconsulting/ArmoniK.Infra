@@ -7,7 +7,7 @@
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.3.0 |
 | <a name="requirement_helm"></a> [helm](#requirement\_helm) | >= 2.10.1 |
 | <a name="requirement_null"></a> [null](#requirement\_null) | >= 3.2.1 |
-| <a name="requirement_random"></a> [random](#requirement\_random) | >= 3.4.3 |
+| <a name="requirement_random"></a> [random](#requirement\_random) | >= 3.5.1 |
 
 ## Providers
 
@@ -55,6 +55,10 @@
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
+| <a name="input_chart_name"></a> [chart\_name](#input\_chart\_name) | Name for chart | `string` | `"eniconfig"` | no |
+| <a name="input_chart_namespace"></a> [chart\_namespace](#input\_chart\_namespace) | Version for chart | `string` | `"default"` | no |
+| <a name="input_chart_repository"></a> [chart\_repository](#input\_chart\_repository) | Path to the charts repository | `string` | `"../../../charts"` | no |
+| <a name="input_chart_version"></a> [chart\_version](#input\_chart\_version) | Version for chart | `string` | `"0.1.0"` | no |
 | <a name="input_eks"></a> [eks](#input\_eks) | Parameters of AWS EKS | <pre>object({<br>    cluster_version                       = string<br>    cluster_endpoint_private_access       = bool<br>    cluster_endpoint_private_access_cidrs = list(string)<br>    cluster_endpoint_private_access_sg    = list(string)<br>    cluster_endpoint_public_access        = bool<br>    cluster_endpoint_public_access_cidrs  = list(string)<br>    cluster_log_retention_in_days         = number<br>    docker_images = object({<br>      cluster_autoscaler = object({<br>        image = string<br>        tag   = string<br>      })<br>      instance_refresh = object({<br>        image = string<br>        tag   = string<br>      })<br>    })<br>    cluster_autoscaler = object({<br>      expander                              = string<br>      scale_down_enabled                    = bool<br>      min_replica_count                     = number<br>      scale_down_utilization_threshold      = number<br>      scale_down_non_empty_candidates_count = number<br>      max_node_provision_time               = string<br>      scan_interval                         = string<br>      scale_down_delay_after_add            = string<br>      scale_down_delay_after_delete         = string<br>      scale_down_delay_after_failure        = string<br>      scale_down_unneeded_time              = string<br>      skip_nodes_with_system_pods           = bool<br>      version                               = string<br>      repository                            = string<br>      namespace                             = string<br>    })<br>    instance_refresh = object({<br>      namespace  = string<br>      repository = string<br>      version    = string<br>    })<br>    encryption_keys = object({<br>      cluster_log_kms_key_id    = string<br>      cluster_encryption_config = string<br>      ebs_kms_key_id            = string<br>    })<br>    map_roles = list(object({<br>      rolearn  = string<br>      username = string<br>      groups   = list(string)<br>    }))<br>    map_users = list(object({<br>      userarn  = string<br>      username = string<br>      groups   = list(string)<br>    }))<br>  })</pre> | n/a | yes |
 | <a name="input_eks_managed_node_groups"></a> [eks\_managed\_node\_groups](#input\_eks\_managed\_node\_groups) | List of EKS managed node groups | `any` | `null` | no |
 | <a name="input_fargate_profiles"></a> [fargate\_profiles](#input\_fargate\_profiles) | List of fargate profiles | `any` | `null` | no |

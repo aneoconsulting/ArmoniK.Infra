@@ -88,6 +88,11 @@ resource "kubernetes_deployment" "ingress" {
             mount_path = "/etc/nginx/conf.d"
             read_only  = true
           }
+          volume_mount {
+            name       = "static"
+            mount_path = "/static"
+            read_only  = true
+          }
         }
         volume {
           name = "ingress-secret-volume"
@@ -110,6 +115,13 @@ resource "kubernetes_deployment" "ingress" {
             optional = false
           }
         }
+        volume {
+          name = "static"
+          config_map {
+            name     = kubernetes_config_map.static[0].metadata[0].name
+            optional = false
+          }
+        }
       }
     }
   }
@@ -128,7 +140,8 @@ resource "kubernetes_service" "ingress" {
     }
   }
   spec {
-    type = var.ingress.service_type
+    type       = var.ingress.service_type == "HeadLess" ? "ClusterIP" : var.ingress.service_type
+    cluster_ip = var.ingress.service_type == "HeadLess" ? "None" : null
     selector = {
       app     = kubernetes_deployment.ingress[0].metadata[0].labels.app
       service = kubernetes_deployment.ingress[0].metadata[0].labels.service
@@ -143,7 +156,7 @@ resource "kubernetes_service" "ingress" {
       content {
         name        = kubernetes_deployment.ingress[0].spec[0].template[0].spec[0].container[0].port[port.key].name
         target_port = kubernetes_deployment.ingress[0].spec[0].template[0].spec[0].container[0].port[port.key].container_port
-        port        = port.value
+        port        = var.ingress.service_type == "HeadLess" ? kubernetes_deployment.ingress[0].spec[0].template[0].spec[0].container[0].port[port.key].container_port : port.value
         protocol    = "TCP"
       }
     }

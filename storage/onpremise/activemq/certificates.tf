@@ -10,7 +10,7 @@ resource "tls_private_key" "root_activemq" {
 resource "tls_self_signed_cert" "root_activemq" {
   private_key_pem       = tls_private_key.root_activemq.private_key_pem
   is_ca_certificate     = true
-  validity_period_hours = "168"
+  validity_period_hours = var.validity_period_hours
   allowed_uses = [
     "cert_signing",
     "key_encipherment",
@@ -46,7 +46,7 @@ resource "tls_locally_signed_cert" "activemq_certificate" {
   ca_private_key_pem = tls_private_key.root_activemq.private_key_pem
   ca_cert_pem        = tls_self_signed_cert.root_activemq.cert_pem
 
-  validity_period_hours = "168"
+  validity_period_hours = var.validity_period_hours
 
   allowed_uses = [
     "key_encipherment",

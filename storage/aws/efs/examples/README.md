@@ -1,8 +1,8 @@
 
 # Simple AWS EFS
 
-Terraform scripts to create a simple AWS ECR using the [module efs](..) are defined in folder [simple](simple).
+Terraform scripts to create a simple AWS EFS using the [module efs](..) are defined in folder [simple](simple).
 
-# AWS ECR for AWS EFS
+# Complete AWS EFS
 
-Terraform scripts to create an AWS ECR using the [module efs](..) are defined in folder [complete](complete).
+Terraform scripts to create a complete AWS EFS using the [module efs](..) are defined in folder [complete](complete).

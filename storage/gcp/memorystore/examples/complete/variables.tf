@@ -1,5 +1,5 @@
 variable "region" {
-  description = "The GCP region to deploy the subnets in"
+  description = "The GCP region to deploy the Memorystore"
   type        = string
   default     = "europe-west9"
 }

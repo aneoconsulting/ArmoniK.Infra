@@ -1,4 +1,4 @@
-# Allow EKS and the driver to interact with EFS
+/*# Allow EKS and the driver to interact with EFS
 data "aws_iam_policy_document" "efs_csi_driver" {
   statement {
     sid = "Describe"
@@ -44,13 +44,13 @@ resource "aws_iam_policy" "efs_csi_driver" {
   description = "Policy to allow EKS and the driver to interact with EFS"
   policy      = data.aws_iam_policy_document.efs_csi_driver.json
   tags        = local.tags
-}
+}*/
 
-resource "aws_iam_openid_connect_provider" "eks_oidc" {
+/*resource "aws_iam_openid_connect_provider" "eks_oidc" {
   client_id_list  = ["sts.amazonaws.com"]
   thumbprint_list = concat([data.tls_certificate.eks.certificates[0].sha1_fingerprint], local.oidc_thumbprint_list)
-  url             = var.eks_issuer
-}
+  url             = var.oidc_url
+}*/
 
 resource "aws_iam_role" "efs_csi_driver" {
   name = local.efs_csi_name
@@ -72,12 +72,11 @@ resource "aws_iam_role" "efs_csi_driver" {
       }
     ]
   })
-  tags       = local.tags
-  depends_on = [aws_iam_openid_connect_provider.eks_oidc]
+  tags = local.tags
 }
 
 resource "aws_iam_role_policy_attachment" "efs_csi_driver" {
-  policy_arn = aws_iam_policy.efs_csi_driver.arn
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEFSCSIDriverPolicy"
   role       = aws_iam_role.efs_csi_driver.name
 }
 
@@ -89,4 +88,5 @@ resource "kubernetes_service_account" "efs_csi_driver" {
     }
     namespace = local.efs_csi_namespace
   }
+  depends_on = [aws_iam_role.efs_csi_driver]
 }

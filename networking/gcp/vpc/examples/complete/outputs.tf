@@ -32,17 +32,15 @@ output "public_subnets" {
   }
 }
 
-output "gke_subnets" {
-  description = "Map of GKE subnets"
+output "gke_subnet" {
+  description = "GKE subnet"
   value = {
-    for key in keys(module.complete_vpc.gke_subnet_ids) : key => {
-      id                = module.complete_vpc.gke_subnet_ids[key],
-      cidr_block        = module.complete_vpc.gke_subnet_cidr_blocks[key],
-      self_link         = module.complete_vpc.gke_subnet_self_links[key],
-      pod_range_name    = module.complete_vpc.gke_subnet_pod_ranges[key].range_name,
-      pod_ip_cidr_range = module.complete_vpc.gke_subnet_pod_ranges[key].ip_cidr_range,
-      svc_range_name    = module.complete_vpc.gke_subnet_svc_ranges[key].range_name,
-      svc_ip_cidr_range = module.complete_vpc.gke_subnet_svc_ranges[key].ip_cidr_range
-    }
+    name                = module.vpc.gke_subnet_name,
+    nodes_cidr_block    = module.vpc.gke_subnet_cidr_block
+    pods_range_name     = module.vpc.gke_subnet_pods_range_name
+    pods_cidr_block     = module.vpc.gke_subnet_pods_cidr_block
+    services_range_name = module.vpc.gke_subnet_svc_range_name
+    services_cidr_block = module.vpc.gke_subnet_svc_cidr_block
+    region              = module.vpc.gke_subnet_region
   }
 }

@@ -58,31 +58,47 @@ output "public_subnet_regions" {
   value       = { for subnet, _ in local.public_subnets : subnet => google_compute_subnetwork.subnets[subnet].region }
 }
 
-output "gke_subnet_ids" {
-  description = "Map of GKE subnet IDs"
-  value       = { for key, value in google_compute_subnetwork.gke_subnets : key => value.id }
+output "gke_subnet_name" {
+  description = "GKE subnet name"
+  value       = try(google_compute_subnetwork.gke_subnet[0].name, null)
 }
 
-output "gke_subnet_cidr_blocks" {
-  description = "Map of GKE subnet CIDR blocks"
-  value       = { for key, value in google_compute_subnetwork.gke_subnets : key => value.ip_cidr_range }
+output "gke_subnet_region" {
+  description = "GKE subnet region"
+  value = try(google_compute_subnetwork.gke_subnet[0].region, null)
 }
 
-output "gke_subnet_self_links" {
-  description = "Map of GKE subnet self links"
-  value       = { for key, value in google_compute_subnetwork.gke_subnets : key => value.self_link }
-}
-
-output "gke_subnet_pod_ranges" {
-  description = "Map of range names and IP CIDR ranges of GKE Pod"
-  value = {
-    for key, value in google_compute_subnetwork.gke_subnets : key => value.secondary_ip_range[0]
+output "gke_subnet_id" {
+  description = "GKE subnet ID"
+  value       = try(google_compute_subnetwork.gke_subnet[0].id, null)
   }
+
+output "gke_subnet_cidr_block" {
+  description = "GKE subnet CIDR block"
+  value       = try(google_compute_subnetwork.gke_subnet[0].ip_cidr_range, null)
 }
 
-output "gke_subnet_svc_ranges" {
-  description = "Map of range names and IP CIDR ranges of GKE services"
-  value = {
-    for key, value in google_compute_subnetwork.gke_subnets : key => value.secondary_ip_range[1]
-  }
+output "gke_subnet_self_link" {
+  description = "GKE subnet self link"
+  value       = try(google_compute_subnetwork.gke_subnet[0].self_link, null)
+}
+
+output "gke_subnet_pods_cidr_block" {
+  description = "IP CIDR block of GKE Pods"
+  value       = try(google_compute_subnetwork.gke_subnet[0].secondary_ip_range[0].ip_cidr_range, null)
+}
+
+output "gke_subnet_pods_range_name" {
+  description = "IP CIDR range name of GKE Pods"
+  value       = try(google_compute_subnetwork.gke_subnet[0].secondary_ip_range[0].range_name, null)
+}
+
+output "gke_subnet_svc_cidr_block" {
+  description = "IP CIDR block of GKE services"
+  value       = try(google_compute_subnetwork.gke_subnet[0].secondary_ip_range[1].ip_cidr_range, null)
+}
+
+output "gke_subnet_svc_range_name" {
+  description = "IP CIDR range name of GKE services"
+  value       = try(google_compute_subnetwork.gke_subnet[0].secondary_ip_range[1].range_name, null)
 }

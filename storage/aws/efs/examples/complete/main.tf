@@ -37,18 +37,6 @@ module "efs" {
   transition_to_ia       = "AFTER_30_DAYS"
   throughput_mode        = "bursting"
   performance_mode       = "generalPurpose"
-  #image_pull_secrets = ""
-  #node_selector      = { service = "state-database" }
-  #repository         = "https://kubernetes-sigs.github.io/aws-efs-csi-driver/"
-  #version            = "2.3.0"
-  #efs_csi_image = "125796369274.dkr.ecr.eu-west-3.amazonaws.com/aws-efs-csi-driver"
-  #efs_csi_tag   = "v1.5.1"
-  #livenessprobe_image = "125796369274.dkr.ecr.eu-west-3.amazonaws.com/livenessprobe"
-  #livenessprobe_tag   = "v2.9.0-eks-1-22-19"
-  #node_driver_registrar_image = "125796369274.dkr.ecr.eu-west-3.amazonaws.com/node-driver-registrar"
-  #node_driver_registrar_image_tag   = "v2.7.0-eks-1-22-19"
-  #external_provisioner_image = "125796369274.dkr.ecr.eu-west-3.amazonaws.com/external-provisioner"
-  #external_provisioner_tag   = "v3.4.0-eks-1-22-19"
   tags = {
     env             = "test"
     app             = "complete"

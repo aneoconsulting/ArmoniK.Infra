@@ -1,4 +1,4 @@
 module "simple_memorystore" {
-  source           = "../../../memorystore"
-  name             = "redis-test"
+  source = "../../../memorystore"
+  name   = "redis-test"
 }

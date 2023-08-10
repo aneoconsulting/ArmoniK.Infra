@@ -38,7 +38,7 @@ terraform destroy
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_complete_memorystore_for_redis"></a> [complete\_memorystore\_for\_redis](#module\_complete\_memorystore\_for\_redis) | ../../../redis | n/a |
+| <a name="module_complete_memorystore_for_memcached_instance"></a> [complete\_memorystore\_for\_memcached\_instance](#module\_complete\_memorystore\_for\_memcached\_instance) | ../../../memcache | n/a |
 
 ## Resources
 
@@ -48,7 +48,6 @@ terraform destroy
 | [null_resource.timestamp](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
 | [external_external.static_timestamp](https://registry.terraform.io/providers/hashicorp/external/latest/docs/data-sources/external) | data source |
 | [google_compute_network.vpc](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/compute_network) | data source |
-| [google_compute_subnetwork.subnet](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/compute_subnetwork) | data source |
 | [google_compute_zones.available](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/compute_zones) | data source |
 
 ## Inputs
@@ -56,21 +55,14 @@ terraform destroy
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_project"></a> [project](#input\_project) | Project name | `string` | `"armonik-gcp-13469"` | no |
-| <a name="input_region"></a> [region](#input\_region) | The GCP region to deploy the Memorystore | `string` | `"europe-west9"` | no |
+| <a name="input_region"></a> [region](#input\_region) | The GCP region to deploy the Memorystore for Memcached Instance | `string` | `"europe-west9"` | no |
 
 ## Outputs
 
 | Name | Description |
 |------|-------------|
-| <a name="output_auth_string"></a> [auth\_string](#output\_auth\_string) | AUTH String set on the instance. This field will only be populated if auth\_enabled is true. |
-| <a name="output_current_location_id"></a> [current\_location\_id](#output\_current\_location\_id) | The current zone where the Redis endpoint is placed. |
-| <a name="output_host"></a> [host](#output\_host) | The IP address of the instance. |
+| <a name="output_discovery_endpoint"></a> [discovery\_endpoint](#output\_discovery\_endpoint) | Endpoint for Discovery API |
 | <a name="output_id"></a> [id](#output\_id) | The Memorystore instance ID. |
-| <a name="output_nodes"></a> [nodes](#output\_nodes) | Info per node |
-| <a name="output_persistence_iam_identity"></a> [persistence\_iam\_identity](#output\_persistence\_iam\_identity) | Cloud IAM identity used by import/export operations. Format is 'serviceAccount:'. May change over time |
-| <a name="output_port"></a> [port](#output\_port) | The port number of the exposed Redis endpoint. |
-| <a name="output_read_endpoint"></a> [read\_endpoint](#output\_read\_endpoint) | The IP address of the exposed readonly Redis endpoint. |
-| <a name="output_read_endpoint_port"></a> [read\_endpoint\_port](#output\_read\_endpoint\_port) | The port number of the exposed readonly redis endpoint. Standard tier only. Write requests should target 'port'. |
-| <a name="output_region"></a> [region](#output\_region) | The region the instance lives in. |
-| <a name="output_server_ca_certs"></a> [server\_ca\_certs](#output\_server\_ca\_certs) | List of server CA certificates for the instance |
+| <a name="output_memcache_full_version"></a> [memcache\_full\_version](#output\_memcache\_full\_version) | The full version of memcached server running on this instance. |
+| <a name="output_memcache_nodes"></a> [memcache\_nodes](#output\_memcache\_nodes) | Additional information about the instance state, if available. The parameters: "node\_id", "zone", "port", "host", "state". |
 <!-- END_TF_DOCS -->

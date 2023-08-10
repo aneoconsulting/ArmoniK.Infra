@@ -1,6 +1,6 @@
-# GCP Memorystore for Redis
+# GCP Memorystore for Memcache Instance
 
-To create a simple GCP Memorystore for Redis:
+To create a simple GCP Memorystore for Memcache Instance:
 
 ```bash
 terraform init

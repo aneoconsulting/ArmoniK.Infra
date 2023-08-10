@@ -1,8 +1,8 @@
 data "google_client_config" "current" {}
 
 locals {
-  location_id             = data.google_client_config.current.zone
-  alternative_location_id = var.tier == "STANDARD_HA" && coalesce(var.alternative_location_id, local.location_id) != local.location_id ? var.alternative_location_id : null
+  alternative_location_id = var.tier == "STANDARD_HA" && length(var.locations) == 2 ? tolist(var.locations)[1] : null
+  location_id             = length(var.locations) >= 1 ? tolist(var.locations)[0] : null
   labels                  = merge(var.labels, { module = "memorystore" })
   replica_count           = var.tier == "STANDARD_HA" ? (var.read_replicas_mode == "READ_REPLICAS_ENABLED" ? coalesce(var.replica_count, 2) : 1) : 0
   read_replicas_mode      = var.tier == "STANDARD_HA" ? var.read_replicas_mode : null
@@ -50,8 +50,5 @@ resource "google_redis_instance" "cache" {
         }
       }
     }
-  }
-  lifecycle {
-    ignore_changes = [maintenance_schedule]
   }
 }

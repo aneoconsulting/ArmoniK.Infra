@@ -6,13 +6,6 @@ variable "name" {
 variable "memory_size_gb" {
   description = "Redis memory size in GiB."
   type        = number
-  default     = 1
-}
-
-variable "alternative_location_id" {
-  description = "The alternative zone where the instance will be provisioned."
-  type        = string
-  default     = null
 }
 
 variable "auth_enabled" {
@@ -49,8 +42,18 @@ variable "labels" {
   default     = null
 }
 
+variable "locations" {
+  description = "The zones where the instance will be provisioned. If two zones are given, HA is enabled."
+  type        = set(string)
+  default     = []
+  validation {
+    condition     = length(var.locations) <= 2
+    error_message = "The list \"locations\" must contain one or two elements."
+  }
+}
+
 variable "redis_configs" {
-  description = "The Redis configuration parameters. See documentation in [Redis configuration](http://redis.io/topics/config) and [Google Memorystore](https://cloud.google.com/memorystore/docs/redis/reference/rest/v1/projects.locations.instances#Instance.FIELDS.redis_configs)."
+  description = "The Redis configuration parameters. See documentation in [Supported Redis configuration](https://cloud.google.com/memorystore/docs/redis/supported-redis-configurations)."
   type        = map(any)
   default     = {}
 }

@@ -47,7 +47,7 @@ output "read_endpoint" {
 
 output "read_endpoint_port" {
   description = "The port number of the exposed readonly redis endpoint. Standard tier only. Write requests should target 'port'."
-  value       = google_redis_instance.cache.read_endpoint
+  value       = google_redis_instance.cache.read_endpoint_port
 }
 
 output "region" {

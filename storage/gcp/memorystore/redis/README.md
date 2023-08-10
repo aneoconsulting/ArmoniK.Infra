@@ -1,7 +1,9 @@
-# GCP Memorystore
+# GCP Memorystore for Redis
 
 Google Memorystore for Redis provides a fully-managed service that is powered by the Redis in-memory data store to build
-application caches that provide sub-millisecond data access.
+application caches that provide sub-millisecond data access. The official
+documentations: [Google Memorystore](https://cloud.google.com/memorystore/docs/redis/)
+and [Memorystore configuration](https://cloud.google.com/memorystore/docs/redis/reference/rest/v1/projects.locations.instances#Instance.FIELDS.redis_configs).
 
 This module creates a Memorystore with these possibilities :
 
@@ -9,8 +11,8 @@ This module creates a Memorystore with these possibilities :
 * Configure the maintenance policy for the Memorystore.
 * The Transit encryption is set to true by default.
 
-
 <!-- BEGIN_TF_DOCS -->
+
 ## Requirements
 
 | Name | Version |
@@ -74,4 +76,5 @@ No modules.
 | <a name="output_read_endpoint_port"></a> [read\_endpoint\_port](#output\_read\_endpoint\_port) | The port number of the exposed readonly redis endpoint. Standard tier only. Write requests should target 'port'. |
 | <a name="output_region"></a> [region](#output\_region) | The region the instance lives in. |
 | <a name="output_server_ca_certs"></a> [server\_ca\_certs](#output\_server\_ca\_certs) | List of server CA certificates for the instance |
+
 <!-- END_TF_DOCS -->

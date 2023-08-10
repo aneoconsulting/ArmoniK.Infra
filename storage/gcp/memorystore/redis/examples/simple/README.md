@@ -1,4 +1,4 @@
-# GCP Memorystore
+# GCP Memorystore for Redis
 
 To create a simple GCP Memorystore:
 

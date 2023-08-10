@@ -2,10 +2,10 @@
 
 Google Memorystore for Redis provides a fully-managed service that is powered by the Redis in-memory data store to build
 application caches that provide sub-millisecond data access. The official
-documentations: [Google Memorystore](https://cloud.google.com/memorystore/docs/redis/)
-and [Memorystore configuration](https://cloud.google.com/memorystore/docs/redis/reference/rest/v1/projects.locations.instances#Instance.FIELDS.redis_configs).
+documentations: [Google Memorystore for Redis](https://cloud.google.com/memorystore/docs/redis/)
+and [Memorystore configuration for Redis](https://cloud.google.com/memorystore/docs/redis/reference/rest/v1/projects.locations.instances).
 
-This module creates a Memorystore with these possibilities :
+This module creates a Memorystore for Redis with these possibilities :
 
 * Configure the persistence for the Memorystore.
 * Configure the maintenance policy for the Memorystore.

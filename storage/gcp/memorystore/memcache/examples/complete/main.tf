@@ -12,18 +12,18 @@ locals {
     "max-reqs-per-event"      = "20"
     "reserved-memory-percent" = "10.0"
     # Supported extended options
-    "track_sizes"             = "false"
-    "watcher_logbuf_size"     = "262144"
-    "worker_logbuf_size"      = "65536"
-    "lru_crawler"             = "true"
-    "idle_timeout"            = "0"
-    "lru_maintainer"          = "true"
-    "maxconns_fast"           = "false"
-    "hash_algorithm"          = "murmur3"
+    "track_sizes"         = "false"
+    "watcher_logbuf_size" = "262144"
+    "worker_logbuf_size"  = "65536"
+    "lru_crawler"         = "true"
+    "idle_timeout"        = "0"
+    "lru_maintainer"      = "true"
+    "maxconns_fast"       = "false"
+    "hash_algorithm"      = "murmur3"
   }
   maintenance_policy = {
-    day        = "MONDAY"
-    duration   = "3.5s"
+    day      = "MONDAY"
+    duration = "3.5s"
     start_time = {
       hours   = 12
       minutes = 0

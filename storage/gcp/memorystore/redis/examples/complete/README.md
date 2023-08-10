@@ -20,21 +20,25 @@ terraform destroy
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0 |
+| <a name="requirement_external"></a> [external](#requirement\_external) | ~> 2.3.1 |
 | <a name="requirement_google"></a> [google](#requirement\_google) | ~> 4.75.0 |
+| <a name="requirement_local"></a> [local](#requirement\_local) | ~> 2.4.0 |
+| <a name="requirement_null"></a> [null](#requirement\_null) | ~> 3.2.1 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_external"></a> [external](#provider\_external) | n/a |
-| <a name="provider_local"></a> [local](#provider\_local) | n/a |
-| <a name="provider_null"></a> [null](#provider\_null) | n/a |
+| <a name="provider_external"></a> [external](#provider\_external) | ~> 2.3.1 |
+| <a name="provider_google"></a> [google](#provider\_google) | ~> 4.75.0 |
+| <a name="provider_local"></a> [local](#provider\_local) | ~> 2.4.0 |
+| <a name="provider_null"></a> [null](#provider\_null) | ~> 3.2.1 |
 
 ## Modules
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_complete_memorystore"></a> [complete\_memorystore](#module\_complete\_memorystore) | ../../../memorystore | n/a |
+| <a name="module_complete_memorystore_for_redis"></a> [complete\_memorystore\_for\_redis](#module\_complete\_memorystore\_for\_redis) | ../../../redis | n/a |
 
 ## Resources
 
@@ -43,6 +47,9 @@ terraform destroy
 | [local_file.date_sh](https://registry.terraform.io/providers/hashicorp/local/latest/docs/resources/file) | resource |
 | [null_resource.timestamp](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
 | [external_external.static_timestamp](https://registry.terraform.io/providers/hashicorp/external/latest/docs/data-sources/external) | data source |
+| [google_compute_network.vpc](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/compute_network) | data source |
+| [google_compute_subnetwork.subnet](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/compute_subnetwork) | data source |
+| [google_compute_zones.available](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/compute_zones) | data source |
 
 ## Inputs
 

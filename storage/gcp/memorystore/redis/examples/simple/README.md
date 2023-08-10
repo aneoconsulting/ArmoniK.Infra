@@ -30,7 +30,7 @@ No providers.
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_simple_memorystore"></a> [simple\_memorystore](#module\_simple\_memorystore) | ../../../memorystore | n/a |
+| <a name="module_simple_memorystore_for_redis"></a> [simple\_memorystore\_for\_redis](#module\_simple\_memorystore\_for\_redis) | ../../../redis | n/a |
 
 ## Resources
 

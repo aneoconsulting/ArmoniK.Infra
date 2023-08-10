@@ -1,5 +1,5 @@
 variable "region" {
-  description = "The GCP region to deploy the Memorystore"
+  description = "The GCP region to deploy the Memorystore for Redis."
   type        = string
   default     = "europe-west9"
 }

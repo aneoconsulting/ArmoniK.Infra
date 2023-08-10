@@ -32,7 +32,7 @@ locals {
   labels = {
     env             = "test"
     app             = "complete"
-    module          = "GCP Memorystore"
+    module          = "GCP Memorystore for Redis"
     "create_by"     = "me"
     "creation_date" = null_resource.timestamp.triggers["date"]
   }

@@ -17,4 +17,3 @@ output "memcache_full_version" {
   description = "The full version of memcached server running on this instance."
   value       = module.complete_memorystore_for_memcached_instance.memcache_full_version
 }
-

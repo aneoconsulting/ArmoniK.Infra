@@ -2,7 +2,7 @@ data "google_client_config" "current" {}
 
 resource "google_storage_bucket" "bucket" {
   name                        = var.bucket_name
-  location                    = var.alternative_location != null ? var.alternative_location : data.google_client_config.current.region
+  location                    = var.location != null ? var.location : data.google_client_config.current.region
   storage_class               = var.storage_class
   uniform_bucket_level_access = var.uniform_bucket_level_access
   public_access_prevention    = var.public_access_prevention

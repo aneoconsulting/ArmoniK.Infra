@@ -87,4 +87,5 @@ module "complex_bucket_example" {
     custom_placement_config     = local.custom_placement_config
     role_entity                 = local.role_entity
     roles                       = local.roles
+    location                    = "europe-west9"
 }

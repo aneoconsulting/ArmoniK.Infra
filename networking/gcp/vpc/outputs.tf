@@ -65,13 +65,13 @@ output "gke_subnet_name" {
 
 output "gke_subnet_region" {
   description = "GKE subnet region"
-  value = try(google_compute_subnetwork.gke_subnet[0].region, null)
+  value       = try(google_compute_subnetwork.gke_subnet[0].region, null)
 }
 
 output "gke_subnet_id" {
   description = "GKE subnet ID"
   value       = try(google_compute_subnetwork.gke_subnet[0].id, null)
-  }
+}
 
 output "gke_subnet_cidr_block" {
   description = "GKE subnet CIDR block"

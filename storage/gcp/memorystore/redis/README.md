@@ -68,7 +68,7 @@ No modules.
 | <a name="output_current_location_id"></a> [current\_location\_id](#output\_current\_location\_id) | The current zone where the Redis endpoint is placed. |
 | <a name="output_host"></a> [host](#output\_host) | The IP address of the instance. |
 | <a name="output_id"></a> [id](#output\_id) | The Memorystore instance ID. |
-| <a name="output_nodes"></a> [nodes](#output\_nodes) | Info per node |
+| <a name="output_nodes"></a> [nodes](#output\_nodes) | Info per node. The parameters are: "id" and "zone". |
 | <a name="output_persistence_iam_identity"></a> [persistence\_iam\_identity](#output\_persistence\_iam\_identity) | Cloud IAM identity used by import/export operations. Format is 'serviceAccount:'. May change over time |
 | <a name="output_port"></a> [port](#output\_port) | The port number of the exposed Redis endpoint. |
 | <a name="output_read_endpoint"></a> [read\_endpoint](#output\_read\_endpoint) | The IP address of the exposed readonly Redis endpoint. |

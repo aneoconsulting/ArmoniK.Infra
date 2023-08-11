@@ -14,6 +14,7 @@ and [Memorystore for Memcached instance configuration](https://cloud.google.com/
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0 |
 | <a name="requirement_google"></a> [google](#requirement\_google) | >= 4.75.0 |
+| <a name="requirement_google-beta"></a> [google-beta](#requirement\_google-beta) | ~> 4.75.0 |
 
 ## Providers
 
@@ -40,7 +41,7 @@ No modules.
 | <a name="input_cpu_count"></a> [cpu\_count](#input\_cpu\_count) | Number of CPUs per node. | `number` | n/a | yes |
 | <a name="input_display_name"></a> [display\_name](#input\_display\_name) | A user-visible name for the instance. | `string` | `null` | no |
 | <a name="input_labels"></a> [labels](#input\_labels) | Resource labels to represent user-provided metadata. | `map(string)` | `null` | no |
-| <a name="input_maintenance_policy"></a> [maintenance\_policy](#input\_maintenance\_policy) | Maintenance policy for an instance. For more information see [maintenance\_policy](https://registry.terraform.io/providers/hashicorp/google/4.77.0/docs/resources/memcache_instance). | <pre>object({<br>    day      = string<br>    duration = string<br>    start_time = object({<br>      hours   = number<br>      minutes = number<br>      seconds = number<br>      nanos   = number<br>    })<br>  })</pre> | `null` | no |
+| <a name="input_maintenance_policy"></a> [maintenance\_policy](#input\_maintenance\_policy) | Maintenance policy for an instance. For more information see [maintenance\_policy](https://registry.terraform.io/providers/hashicorp/google/4.77.0/docs/resources/memcache_instance). | <pre>object({<br>    day        = string<br>    duration   = string<br>    start_time = object({<br>      hours   = number<br>      minutes = number<br>      seconds = number<br>      nanos   = number<br>    })<br>  })</pre> | `null` | no |
 | <a name="input_memcache_parameters"></a> [memcache\_parameters](#input\_memcache\_parameters) | User-specified parameters for this memcache instance. [Supported configuration for Memcached Instance](https://cloud.google.com/memorystore/docs/memcached/supported-memcached-configurations). | `map(string)` | `null` | no |
 | <a name="input_memcache_version"></a> [memcache\_version](#input\_memcache\_version) | The major version of Memcached software. If not provided, latest supported version will be used. | `string` | `null` | no |
 | <a name="input_memory_size_mb"></a> [memory\_size\_mb](#input\_memory\_size\_mb) | Memory size in Mebibytes for each memcache node. | `number` | n/a | yes |

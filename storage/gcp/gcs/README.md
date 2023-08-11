@@ -49,7 +49,7 @@ No modules.
 | <a name="input_default_acl"></a> [default\_acl](#input\_default\_acl) | Configure this ACL to be the default ACL. | `string` | `null` | no |
 | <a name="input_default_event_based_hold"></a> [default\_event\_based\_hold](#input\_default\_event\_based\_hold) | Whether or not to automatically apply an eventBasedHold to new objects added to the bucket. | `bool` | `null` | no |
 | <a name="input_default_kms_key_name"></a> [default\_kms\_key\_name](#input\_default\_kms\_key\_name) | The id of a Cloud KMS key that will be used to encrypt objects inserted into this bucket, if no encryption method is specified. | `string` | `null` | no |
-| <a name="input_entity_bucket_access_control"></a> [entity\_bucket\_access\_control](#input\_entity\_bucket\_access\_control) | he entity holding the permission. | `string` | `null` | no |
+| <a name="input_entity_bucket_access_control"></a> [entity\_bucket\_access\_control](#input\_entity\_bucket\_access\_control) | The entity holding the permission. | `string` | `null` | no |
 | <a name="input_force_destroy"></a> [force\_destroy](#input\_force\_destroy) | When deleting a bucket, this boolean option will delete all contained objects. | `bool` | `false` | no |
 | <a name="input_labels"></a> [labels](#input\_labels) | A map of key/value label pairs to assign to the bucket. | `map(string)` | `{}` | no |
 | <a name="input_lifecycle_rule"></a> [lifecycle\_rule](#input\_lifecycle\_rule) | The bucket's lifecycle rules configuration. | <pre>map(object({<br>    action = object({<br>      type          = string<br>      storage_class = string<br>    })<br>    condition = object({<br>      age                        = number<br>      created_before             = string<br>      with_state                 = string<br>      matches_storage_class      = list(string)<br>      matches_prefix             = list(string)<br>      matches_suffix             = list(string)<br>      num_newer_versions         = number<br>      custom_time_before         = string<br>      days_since_custom_time     = string<br>      days_since_noncurrent_time = string<br>      noncurrent_time_before     = string<br>    })<br>  }))</pre> | `null` | no |
@@ -70,5 +70,15 @@ No modules.
 
 ## Outputs
 
-No outputs.
+| Name | Description |
+|------|-------------|
+| <a name="output_access_control_domain"></a> [access\_control\_domain](#output\_access\_control\_domain) | The domain associated with the bucket access control. |
+| <a name="output_access_control_email"></a> [access\_control\_email](#output\_access\_control\_email) | The email address associated with the bucket access control. |
+| <a name="output_access_control_id"></a> [access\_control\_id](#output\_access\_control\_id) | An identifier for the bucket access control |
+| <a name="output_acls"></a> [acls](#output\_acls) | The associated ACLs |
+| <a name="output_bucket"></a> [bucket](#output\_bucket) | bucket created on GCP |
+| <a name="output_iam_members"></a> [iam\_members](#output\_iam\_members) | The associated IAM policy |
+| <a name="output_name"></a> [name](#output\_name) | Name of the bucket |
+| <a name="output_self_link"></a> [self\_link](#output\_self\_link) | The URI of the created bucket |
+| <a name="output_url"></a> [url](#output\_url) | The base URL of the bucket, in the format gs://<bucket-name> |
 <!-- END_TF_DOCS -->

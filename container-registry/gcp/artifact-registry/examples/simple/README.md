@@ -30,6 +30,7 @@ terraform destroy
 | Name | Version |
 |------|---------|
 | <a name="provider_external"></a> [external](#provider\_external) | ~> 2.3.1 |
+| <a name="provider_google"></a> [google](#provider\_google) | ~> 4.75.0 |
 | <a name="provider_local"></a> [local](#provider\_local) | ~> 2.4.0 |
 | <a name="provider_null"></a> [null](#provider\_null) | ~> 3.2.1 |
 
@@ -46,6 +47,7 @@ terraform destroy
 | [local_file.date_sh](https://registry.terraform.io/providers/hashicorp/local/latest/docs/resources/file) | resource |
 | [null_resource.timestamp](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
 | [external_external.static_timestamp](https://registry.terraform.io/providers/hashicorp/external/latest/docs/data-sources/external) | data source |
+| [google_client_openid_userinfo.current](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/client_openid_userinfo) | data source |
 
 ## Inputs
 

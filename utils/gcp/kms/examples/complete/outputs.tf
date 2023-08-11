@@ -18,11 +18,6 @@ output "kms_crypto_roles" {
   value       = module.complete_kms_example.kms_crypto_roles
 }
 
-output "kms_ciphertext" {
-  description = "The ciphertext used to encrypt secret data."
-  value       = module.complete_kms_example.kms_ciphertext
-}
-
 output "kms_key_ring_import_job" {
   description = "The import generated import job."
   value       = module.complete_kms_example.kms_key_ring_import_job

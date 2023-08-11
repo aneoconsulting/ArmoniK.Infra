@@ -18,12 +18,7 @@ output "kms_crypto_roles" {
   value       = google_kms_crypto_key_iam_member.crypto_key_role
 }
 
-output "kms_ciphertext" {
-  description = "The ciphertext used to encrypt secret data."
-  value       = google_kms_secret_ciphertext.ciphertext_password
-}
-
 output "kms_key_ring_import_job" {
   description = "The import generated import job."
-  value       = google_kms_key_ring_import_job.kms_key_ring_import_job
+  value       = google_kms_key_ring_import_job.import_job
 }

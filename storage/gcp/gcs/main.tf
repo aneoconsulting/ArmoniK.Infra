@@ -12,7 +12,7 @@ resource "google_storage_bucket" "gcs" {
   uniform_bucket_level_access = var.uniform_bucket_level_access
   public_access_prevention    = var.public_access_prevention
   dynamic "autoclass" {
-    for_each = var.autoclass != null ? [1] : []
+    for_each = var.autoclass != null && var.lifecycle_rule == null ? [1] : []
     content {
       enabled = var.autoclass
     }
@@ -40,7 +40,7 @@ resource "google_storage_bucket" "gcs" {
     }
   }
   dynamic "versioning" {
-    for_each = var.versioning != null ? [1] : []
+    for_each = var.versioning != null && var.retention_policy == null ? [1] : []
     content {
       enabled = var.versioning
     }
@@ -90,27 +90,27 @@ resource "google_storage_bucket" "gcs" {
 }
 
 resource "google_storage_bucket_access_control" "access_control" {
-  count  = can(coalesce(var.entity_bucket_access_control)) ? 1 : 0
+  count  = can(coalesce(var.entity_bucket_access_control)) && can(coalesce(var.role_bucket_access_control)) && !coalesce(var.uniform_bucket_level_access, true) ? 1 : 0
   bucket = google_storage_bucket.gcs.name
   entity = var.entity_bucket_access_control
   role   = var.role_bucket_access_control
 }
 
 resource "google_storage_bucket_acl" "default_acl" {
-  count       = can(coalesce(var.default_acl)) && !can(coalesce(var.predefined_acl)) && !can(coalesce(var.role_entity_acl)) ? 1 : 0
+  count       = can(coalesce(var.default_acl)) && !can(coalesce(var.predefined_acl)) && !can(coalesce(var.role_entity_acl)) && !coalesce(var.uniform_bucket_level_access, true) ? 1 : 0
   bucket      = google_storage_bucket.gcs.name
   default_acl = var.default_acl
 }
 
 resource "google_storage_bucket_acl" "predefined_acl" {
-  count          = can(coalesce(var.predefined_acl)) && !can(coalesce(var.role_entity_acl)) ? 1 : 0
+  count          = can(coalesce(var.predefined_acl)) && !can(coalesce(var.role_entity_acl)) && !coalesce(var.uniform_bucket_level_access, true) ? 1 : 0
   bucket         = google_storage_bucket.gcs.name
   default_acl    = var.default_acl
   predefined_acl = var.predefined_acl
 }
 
 resource "google_storage_bucket_acl" "role_entity_acl" {
-  count       = !can(coalesce(var.predefined_acl)) && can(coalesce(var.role_entity_acl)) ? 1 : 0
+  count       = !can(coalesce(var.predefined_acl)) && can(coalesce(var.role_entity_acl)) && !coalesce(var.uniform_bucket_level_access, true) ? 1 : 0
   bucket      = google_storage_bucket.gcs.name
   default_acl = var.default_acl
   role_entity = var.role_entity_acl
@@ -118,12 +118,12 @@ resource "google_storage_bucket_acl" "role_entity_acl" {
 
 resource "google_storage_bucket_iam_member" "role" {
   for_each = var.roles != null ? merge([
-  for role, members in var.roles : {
-  for member in members : "${role}-${member}" => {
-    role   = role,
-    member = member
-  }
-  }
+    for role, members in var.roles : {
+      for member in members : "${role}-${member}" => {
+        role   = role,
+        member = member
+      }
+    }
   ]...) : {}
   bucket = google_storage_bucket.gcs.name
   role   = each.value.role

@@ -34,7 +34,7 @@ variable "autoclass" {
 
 variable "lifecycle_rule" {
   description = "The bucket's lifecycle rules configuration."
-  type        = map(object({
+  type = map(object({
     action = object({
       type          = string
       storage_class = string
@@ -64,7 +64,7 @@ variable "versioning" {
 
 variable "website" {
   description = "Configuration if the bucket acts as a website. Structure is documented below."
-  type        = object({
+  type = object({
     main_page_suffix = string
     not_found_page   = string
   })
@@ -73,7 +73,7 @@ variable "website" {
 
 variable "cors" {
   description = "The bucket's Cross-Origin Resource Sharing (CORS) configuration."
-  type        = object({
+  type = object({
     origin          = list(string)
     method          = list(string)
     response_header = list(string)
@@ -90,7 +90,7 @@ variable "default_event_based_hold" {
 
 variable "retention_policy" {
   description = "Configuration of the bucket's data retention policy for how long objects in the bucket should be retained."
-  type        = object({
+  type = object({
     is_locked        = bool
     retention_period = number
   })
@@ -105,7 +105,7 @@ variable "labels" {
 
 variable "logging" {
   description = "The bucket's Access & Storage Logs configuration."
-  type        = object({
+  type = object({
     log_bucket        = string
     log_object_prefix = string
   })
@@ -147,7 +147,7 @@ variable "data_locations" {
 }
 
 variable "entity_bucket_access_control" {
-  description = "he entity holding the permission."
+  description = "The entity holding the permission."
   type        = string
   default     = null
 }

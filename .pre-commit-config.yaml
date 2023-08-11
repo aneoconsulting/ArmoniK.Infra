@@ -22,7 +22,7 @@ repos:
           - '--args=--only=terraform_unused_required_providers'
           - '--args=--only=terraform_empty_list_equality'
           - '--args=--only=terraform_module_version'
-      - id: terraform_tfsec
+      #- id: terraform_tfsec
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
     hooks:

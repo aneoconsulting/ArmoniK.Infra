@@ -23,7 +23,7 @@ resource "google_kms_key_ring_iam_member" "key_ring_role" {
 
 resource "google_kms_key_ring" "key_ring" {
   name     = var.kms_key_ring_name
-  location = data.google_client_config.current.region
+  location = var.location != null ? var.location : data.google_client_config.current.region
   project  = data.google_client_config.current.project
 }
 
@@ -55,19 +55,10 @@ resource "google_kms_crypto_key" "kms_crypto_key" {
 
 ###### SECTION - KMS RING IMPORT JOB
 
-resource "google_kms_key_ring_import_job" "kms_key_ring_import_job" {
+resource "google_kms_key_ring_import_job" "import_job" {
   count            = var.google_kms_key_ring_import_job_id != null ? 1 : 0
   key_ring         = google_kms_key_ring.key_ring.id
   import_job_id    = var.google_kms_key_ring_import_job_id
   import_method    = var.google_kms_key_ring_import_job_method
   protection_level = var.google_kms_key_ring_import_job_protection_level
-}
-
-###### SECTION - KMS CIPHERTEXT
-
-resource "google_kms_secret_ciphertext" "ciphertext_password" {
-  count                         = var.google_kms_secret_ciphertext_plaintext != null ? 1 : 0
-  crypto_key                    = google_kms_crypto_key.kms_crypto_key.id
-  plaintext                     = var.google_kms_secret_ciphertext_plaintext
-  additional_authenticated_data = var.google_kms_secret_ciphertext_additional_authenticated_data
 }

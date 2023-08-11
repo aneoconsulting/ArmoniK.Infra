@@ -55,6 +55,12 @@ variable "kms_key_ring_name" {
   type        = string
 }
 
+variable "location" {
+  description = "The location of the Key Ring, if not precised it will use the default project location of the GCP console"
+  type        = string
+  default     = null
+}
+
 ###### SECTION - KMS RING IMPORT JOB
 
 variable "google_kms_key_ring_import_job_id" {
@@ -103,16 +109,3 @@ variable "crypto_key_roles" {
   default     = null
 }
 
-###### SECTION - KMS CIPHERTEXT
-
-variable "google_kms_secret_ciphertext_plaintext" {
-  description = "The plaintext to be encrypted. If not specified it will not create the KMS Ciphertext"
-  type        = string
-  default     = null
-}
-
-variable "google_kms_secret_ciphertext_additional_authenticated_data" {
-  description = "The additional authenticated data used for integrity checks during encryption and decryption."
-  type        = string
-  default     = null
-}

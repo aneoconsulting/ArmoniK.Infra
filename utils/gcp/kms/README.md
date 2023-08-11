@@ -5,7 +5,9 @@ This module create a crypto key and a key ring with these possibilities :
 Configure the IAM policy for the newly created crypto key.
 Configure the IAM policy for the newly created key ring.
 Create a KMS key import job.
-Create a ciphertext encryption on a key.
+
+Be aware that a Key cannot be deleted from GCP, terraform will only remove the state of it.
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 

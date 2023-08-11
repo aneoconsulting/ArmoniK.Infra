@@ -1,3 +1,5 @@
+data "google_client_openid_userinfo" "current" {}
+
 locals {
   memcache_parameters = {
     # Modifiable configuration parameters
@@ -35,7 +37,7 @@ locals {
     env             = "test"
     app             = "complete"
     module          = "memcache"
-    "create_by"     = "me"
+    "create_by"     = split("@", data.google_client_openid_userinfo.current.email)[0]
     "creation_date" = null_resource.timestamp.triggers["date"]
   }
   date = <<-EOT

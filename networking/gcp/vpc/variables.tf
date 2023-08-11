@@ -69,15 +69,16 @@ variable "subnets" {
   default = {}
 }
 
-variable "gke_subnets" {
-  description = "Map of subnets for GKE. Each subnet object contains a CIDR block for nodes, a CIDR block for Pods, a CIDR block for services and a region"
-  type = map(object({
+variable "gke_subnet" {
+  description = "The GKE subnet. The subnet contains a name, a CIDR block for nodes, a CIDR block for Pods, a CIDR block for services and a region"
+  type = object({
+    name                = string
     nodes_cidr_block    = string
     pods_cidr_block     = string
     services_cidr_block = string
     region              = string
-  }))
-  default = {}
+  })
+  default = null
 }
 
 variable "enable_google_access" {

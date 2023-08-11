@@ -14,6 +14,7 @@ Added
 
 * Module of GCP Memorystore for Redis.
 * Module of GCP Memorystore for Memcached Instance.
+* Module of GCP Cloud Storage.
 
 ## [0.1.0](https://github.com/aneoconsulting/ArmoniK.Infra/releases/tag/0.1.0) (2023-08-11)
 

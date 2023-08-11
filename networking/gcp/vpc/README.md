@@ -41,7 +41,7 @@ No modules.
 | [google_compute_network.vpc](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_network) | resource |
 | [google_compute_router.routers](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_router) | resource |
 | [google_compute_router_nat.nat_gateway](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_router_nat) | resource |
-| [google_compute_subnetwork.gke_subnets](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_subnetwork) | resource |
+| [google_compute_subnetwork.gke_subnet](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_subnetwork) | resource |
 | [google_compute_subnetwork.subnets](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_subnetwork) | resource |
 | [google_client_config.current](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/client_config) | data source |
 
@@ -54,7 +54,7 @@ No modules.
 | <a name="input_enable_google_access"></a> [enable\_google\_access](#input\_enable\_google\_access) | Access Google APIs and services by using Private Google Access | `bool` | `true` | no |
 | <a name="input_enable_ula_internal_ipv6"></a> [enable\_ula\_internal\_ipv6](#input\_enable\_ula\_internal\_ipv6) | Enable ULA internal ipv6 on this network | `bool` | `null` | no |
 | <a name="input_flow_log_max_aggregation_interval"></a> [flow\_log\_max\_aggregation\_interval](#input\_flow\_log\_max\_aggregation\_interval) | The maximum interval of time during which a flow of packets is captured and aggregated into a flow log | `string` | `"INTERVAL_5_SEC"` | no |
-| <a name="input_gke_subnets"></a> [gke\_subnets](#input\_gke\_subnets) | Map of subnets for GKE. Each subnet object contains a CIDR block for nodes, a CIDR block for Pods, a CIDR block for services and a region | <pre>map(object({<br>    nodes_cidr_block    = string<br>    pods_cidr_block     = string<br>    services_cidr_block = string<br>    region              = string<br>  }))</pre> | `{}` | no |
+| <a name="input_gke_subnet"></a> [gke\_subnet](#input\_gke\_subnet) | The GKE subnet. The subnet contains a name, a CIDR block for nodes, a CIDR block for Pods, a CIDR block for services and a region | <pre>object({<br>    name                = string<br>    nodes_cidr_block    = string<br>    pods_cidr_block     = string<br>    services_cidr_block = string<br>    region              = string<br>  })</pre> | `null` | no |
 | <a name="input_internal_ipv6_range"></a> [internal\_ipv6\_range](#input\_internal\_ipv6\_range) | Specify the /48 range they want from the google defined ULA prefix fd20::/20 | `string` | `null` | no |
 | <a name="input_mtu"></a> [mtu](#input\_mtu) | Maximum Transmission Unit in bytes | `number` | `1460` | no |
 | <a name="input_name"></a> [name](#input\_name) | Name of the VPC | `string` | n/a | yes |
@@ -67,11 +67,15 @@ No modules.
 | Name | Description |
 |------|-------------|
 | <a name="output_gateway_ipv4"></a> [gateway\_ipv4](#output\_gateway\_ipv4) | The gateway address for default routing out of the network. This value is selected by GCP |
-| <a name="output_gke_subnet_cidr_blocks"></a> [gke\_subnet\_cidr\_blocks](#output\_gke\_subnet\_cidr\_blocks) | Map of GKE subnet CIDR blocks |
-| <a name="output_gke_subnet_ids"></a> [gke\_subnet\_ids](#output\_gke\_subnet\_ids) | Map of GKE subnet IDs |
-| <a name="output_gke_subnet_pod_ranges"></a> [gke\_subnet\_pod\_ranges](#output\_gke\_subnet\_pod\_ranges) | Map of range names and IP CIDR ranges of GKE Pod |
-| <a name="output_gke_subnet_self_links"></a> [gke\_subnet\_self\_links](#output\_gke\_subnet\_self\_links) | Map of GKE subnet self links |
-| <a name="output_gke_subnet_svc_ranges"></a> [gke\_subnet\_svc\_ranges](#output\_gke\_subnet\_svc\_ranges) | Map of range names and IP CIDR ranges of GKE services |
+| <a name="output_gke_subnet_cidr_block"></a> [gke\_subnet\_cidr\_block](#output\_gke\_subnet\_cidr\_block) | GKE subnet CIDR block |
+| <a name="output_gke_subnet_id"></a> [gke\_subnet\_id](#output\_gke\_subnet\_id) | GKE subnet ID |
+| <a name="output_gke_subnet_name"></a> [gke\_subnet\_name](#output\_gke\_subnet\_name) | GKE subnet name |
+| <a name="output_gke_subnet_pods_cidr_block"></a> [gke\_subnet\_pods\_cidr\_block](#output\_gke\_subnet\_pods\_cidr\_block) | IP CIDR block of GKE Pods |
+| <a name="output_gke_subnet_pods_range_name"></a> [gke\_subnet\_pods\_range\_name](#output\_gke\_subnet\_pods\_range\_name) | IP CIDR range name of GKE Pods |
+| <a name="output_gke_subnet_region"></a> [gke\_subnet\_region](#output\_gke\_subnet\_region) | GKE subnet region |
+| <a name="output_gke_subnet_self_link"></a> [gke\_subnet\_self\_link](#output\_gke\_subnet\_self\_link) | GKE subnet self link |
+| <a name="output_gke_subnet_svc_cidr_block"></a> [gke\_subnet\_svc\_cidr\_block](#output\_gke\_subnet\_svc\_cidr\_block) | IP CIDR block of GKE services |
+| <a name="output_gke_subnet_svc_range_name"></a> [gke\_subnet\_svc\_range\_name](#output\_gke\_subnet\_svc\_range\_name) | IP CIDR range name of GKE services |
 | <a name="output_id"></a> [id](#output\_id) | The ID of the VPC |
 | <a name="output_name"></a> [name](#output\_name) | The name of the VPC |
 | <a name="output_private_subnet_cidr_blocks"></a> [private\_subnet\_cidr\_blocks](#output\_private\_subnet\_cidr\_blocks) | List of private subnet CIDR blocks |

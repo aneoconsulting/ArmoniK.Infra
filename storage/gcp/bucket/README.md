@@ -36,7 +36,6 @@ No modules.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_alternative_location"></a> [alternative\_location](#input\_alternative\_location) | Alternative location for the bucket, by default it will use the project region. | `string` | `null` | no |
 | <a name="input_autoclass"></a> [autoclass](#input\_autoclass) | The bucket's Autoclass configuration. | <pre>object({<br>    enabled = bool<br>  })</pre> | `null` | no |
 | <a name="input_bucket_name"></a> [bucket\_name](#input\_bucket\_name) | The name of the bucket. | `string` | n/a | yes |
 | <a name="input_cors"></a> [cors](#input\_cors) | The bucket's Cross-Origin Resource Sharing (CORS) configuration. | <pre>object({<br>    origin          = optional(list(string))<br>    method          = optional(list(string))<br>    response_header = optional(list(string))<br>    max_age_seconds = optional(number)<br>  })</pre> | `null` | no |
@@ -46,6 +45,7 @@ No modules.
 | <a name="input_force_destroy"></a> [force\_destroy](#input\_force\_destroy) | When deleting a bucket, this boolean option will delete all contained objects. | `bool` | `false` | no |
 | <a name="input_labels"></a> [labels](#input\_labels) | A map of key/value label pairs to assign to the bucket. | `map(string)` | `{}` | no |
 | <a name="input_lifecycle_rule"></a> [lifecycle\_rule](#input\_lifecycle\_rule) | The bucket's Lifecycle Rules configuration. | <pre>object({<br>    action        = object({<br>      type          = string<br>      storage_class = string<br>    })<br>    condition = object ({<br>      age                        = optional(number)<br>      created_before             = optional(string)<br>      with_state                 = optional(string)<br>      matches_storage_class      = optional(list(string))<br>      matches_prefix             = optional(list(string))<br>      matches_suffix             = optional(list(string))<br>      num_newer_versions         = optional(number)<br>      custom_time_before         = optional(string)<br>      days_since_custom_time     = optional(string)<br>      days_since_noncurrent_time = optional(string)<br>      noncurrent_time_before     = optional(string)<br>    })<br>  })</pre> | `null` | no |
+| <a name="input_location"></a> [location](#input\_location) | Location for the bucket, by default it will use the project region. | `string` | `null` | no |
 | <a name="input_logging"></a> [logging](#input\_logging) | The bucket's Access & Storage Logs configuration. | <pre>object({<br>    log_bucket        = string<br>    log_object_prefix = optional(string)<br>  })</pre> | `null` | no |
 | <a name="input_public_access_prevention"></a> [public\_access\_prevention](#input\_public\_access\_prevention) | Prevents public access to a bucket. Acceptable values are 'inherited' or 'enforced' | `string` | `"inherited"` | no |
 | <a name="input_requester_pays"></a> [requester\_pays](#input\_requester\_pays) | Enables Requester Pays on a storage bucket. | `bool` | `false` | no |

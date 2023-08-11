@@ -64,9 +64,9 @@ variable "memcache_parameters" {
 
 variable "maintenance_policy" {
   description = "Maintenance policy for an instance. For more information see [maintenance_policy](https://registry.terraform.io/providers/hashicorp/google/4.77.0/docs/resources/memcache_instance)."
-  type        = object({
-    day        = string
-    duration   = string
+  type = object({
+    day      = string
+    duration = string
     start_time = object({
       hours   = number
       minutes = number

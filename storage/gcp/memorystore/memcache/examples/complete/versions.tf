@@ -1,15 +1,15 @@
 provider "google" {
-  project = var.project
-  region  = var.region
+  project               = var.project
+  region                = var.region
   user_project_override = true
-   billing_project = var.project
+  billing_project       = var.project
 }
 
 provider "google-beta" {
-  project = var.project
-  region  = var.region
+  project               = var.project
+  region                = var.region
   user_project_override = true
-  billing_project = var.project
+  billing_project       = var.project
 }
 
 terraform {

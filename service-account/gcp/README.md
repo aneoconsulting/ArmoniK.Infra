@@ -2,15 +2,14 @@ This module facilitates the creation of a GCP service account assigned with the 
 
 ## List of inputs
 
-- Kubernetes namespace
 - Name of GCP service account
 - Name of kubernetes service account
 - Project ID
+- Kubernetes namespace
 - List of roles
 
 ## List of outputs
 
-- Kubernetes namespace
 - GCP and Kubernetes service accounts names
 
 

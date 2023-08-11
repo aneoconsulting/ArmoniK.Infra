@@ -47,7 +47,7 @@ No modules.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_K8s_namespace"></a> [K8s\_namespace](#input\_K8s\_namespace) | Namespace within which name of the service account must be unique | `string` | `null` | no |
+| <a name="input_K8s_namespace"></a> [K8s\_namespace](#input\_K8s\_namespace) | Namespace within which name of the service account must be unique | `string` | `"default"` | no |
 | <a name="input_automount_service_account_token"></a> [automount\_service\_account\_token](#input\_automount\_service\_account\_token) | To enable automatic mounting of the service account token | `bool` | `true` | no |
 | <a name="input_gcp_sa_name"></a> [gcp\_sa\_name](#input\_gcp\_sa\_name) | GCP service account name | `string` | `null` | no |
 | <a name="input_k8s_sa_name"></a> [k8s\_sa\_name](#input\_k8s\_sa\_name) | Name of Kubernetes service account | `string` | `null` | no |

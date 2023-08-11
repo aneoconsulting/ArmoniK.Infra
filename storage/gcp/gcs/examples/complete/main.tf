@@ -48,7 +48,7 @@ locals {
     not_found_page   = "/error-page.fr"
   }
   role_entity_acl = ["OWNER:user-hbitoun@aneo.fr", "READER:group-gcp.armonik.devops@aneo.fr"]
-  roles           = {
+  roles = {
     "roles/storage.objectCreator" = ["user:hbitoun@aneo.fr", "user:lzianekhodja@aneo.fr"],
     "roles/storage.admin"         = ["user:hbitoun@aneo.fr"]
   }
@@ -107,4 +107,3 @@ module "complete_gcs_bucket" {
   role_entity_acl              = local.role_entity_acl
   roles                        = local.roles
 }
-

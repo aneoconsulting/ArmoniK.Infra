@@ -38,13 +38,12 @@ module "complete_vpc" {
       }
     }
   )
-  gke_subnets = {
-    "gke-alpha" = {
-      nodes_cidr_block    = "10.51.0.0/16",
-      pods_cidr_block     = "192.168.64.0/22"
-      services_cidr_block = "192.168.1.0/24"
-      region              = "europe-west9"
-    }
+  gke_subnet = {
+    name                = "gke-alpha"
+    nodes_cidr_block    = "10.51.0.0/16",
+    pods_cidr_block     = "192.168.64.0/22"
+    services_cidr_block = "192.168.1.0/24"
+    region              = "europe-west9"
   }
   enable_google_access              = true
   flow_log_max_aggregation_interval = "INTERVAL_30_SEC"

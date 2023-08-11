@@ -23,9 +23,9 @@ locals {
   }
   maintenance_policy = {
     day      = "MONDAY"
-    duration = "3.5s"
+    duration = "10800s"
     start_time = {
-      hours   = 12
+      hours   = 8
       minutes = 0
       seconds = 0
       nanos   = 0
@@ -34,7 +34,7 @@ locals {
   labels = {
     env             = "test"
     app             = "complete"
-    module          = "GCP Memorystore for Memcached Instance"
+    module          = "memcache"
     "create_by"     = "me"
     "creation_date" = null_resource.timestamp.triggers["date"]
   }
@@ -67,7 +67,23 @@ resource "null_resource" "timestamp" {
 }
 
 data "google_compute_network" "vpc" {
-  name = "default-${var.region}"
+  name = "default"
+}
+
+resource "google_compute_global_address" "service_range" {
+  provider      = google-beta
+  name          = "complete-address"
+  purpose       = "VPC_PEERING"
+  address_type  = "INTERNAL"
+  prefix_length = 16
+  network       = data.google_compute_network.vpc.id
+}
+
+resource "google_service_networking_connection" "private_service_connection" {
+  provider      = google-beta
+  network                 = data.google_compute_network.vpc.id
+  service                 = "servicenetworking.googleapis.com"
+  reserved_peering_ranges = [google_compute_global_address.service_range.name]
 }
 
 data "google_compute_zones" "available" {}
@@ -76,9 +92,9 @@ module "complete_memorystore_for_memcached_instance" {
   source              = "../../../memcache"
   name                = "complete-memcache-test"
   cpu_count           = 2
-  memory_size_mb      = 512
+  memory_size_mb      = 1024
   node_count          = 5
-  authorized_network  = data.google_compute_network.vpc.name
+  authorized_network  = google_service_networking_connection.private_service_connection.network
   display_name        = "complete-memcache-test"
   labels              = local.labels
   maintenance_policy  = local.maintenance_policy

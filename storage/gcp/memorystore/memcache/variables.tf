@@ -11,6 +11,14 @@ variable "node_count" {
 variable "cpu_count" {
   description = "Number of CPUs per node."
   type        = number
+  validation {
+    condition     = 2 <= var.cpu_count && var.cpu_count <= 32
+    error_message = "Number of CPUs per node must be within range [2, 32]."
+  }
+  validation {
+    condition     = var.cpu_count % 2 == 0
+    error_message = "Number of CPUs per node must be an even number."
+  }
 }
 
 variable "memory_size_mb" {
@@ -56,9 +64,9 @@ variable "memcache_parameters" {
 
 variable "maintenance_policy" {
   description = "Maintenance policy for an instance. For more information see [maintenance_policy](https://registry.terraform.io/providers/hashicorp/google/4.77.0/docs/resources/memcache_instance)."
-  type = object({
-    day      = string
-    duration = string
+  type        = object({
+    day        = string
+    duration   = string
     start_time = object({
       hours   = number
       minutes = number

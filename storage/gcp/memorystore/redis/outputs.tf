@@ -36,7 +36,7 @@ output "server_ca_certs" {
 }
 
 output "nodes" {
-  description = "Info per node"
+  description = "Info per node. The parameters are: \"id\" and \"zone\"."
   value       = google_redis_instance.cache.nodes
 }
 

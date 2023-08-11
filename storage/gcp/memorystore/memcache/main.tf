@@ -17,7 +17,7 @@ resource "google_memcache_instance" "cache" {
   dynamic "memcache_parameters" {
     for_each = can(coalesce(var.memcache_parameters)) ? [var.memcache_parameters] : []
     content {
-      params = memcache_parameters.key
+      params = memcache_parameters.value
     }
   }
   dynamic "maintenance_policy" {
@@ -33,6 +33,12 @@ resource "google_memcache_instance" "cache" {
           nanos   = maintenance_policy.value["start_time"]["nanos"]
         }
       }
+    }
+  }
+  lifecycle {
+    precondition {
+      condition     = (var.cpu_count / 2) * 1024 <= var.memory_size_mb && var.memory_size_mb <= (var.cpu_count / 2) * 16384
+      error_message = "For ${var.cpu_count} vCPU(s) memory per node must be within range [${(var.cpu_count / 2) * 1024}, ${(var.cpu_count / 2) * 16384}] MB."
     }
   }
 }

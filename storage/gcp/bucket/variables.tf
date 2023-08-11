@@ -3,8 +3,8 @@ variable "bucket_name" {
   type        = string
 }
 
-variable "alternative_location" {
-  description = "Alternative location for the bucket, by default it will use the project region."
+variable "location" {
+  description = "Location for the bucket, by default it will use the project region."
   type        = string
   default     = null
 }
@@ -19,6 +19,10 @@ variable "storage_class" {
   description = "The Storage Class of the new bucket. Supported values include: STANDARD (default), MULTI_REGIONAL, REGIONAL, NEARLINE, COLDLINE, ARCHIVE."
   type        = string
   default     = "STANDARD"
+  validation {
+    condition     = can(regex("(?i:STANDARD|MULTI_REGIONAL|REGIONAL|NEARLINE|COLDLINE|ARCHIVE)", var.storage_class)) 
+    error_message = "The storage class can only be one of these values: STANDARD, MULTI_REGIONAL, REGIONAL, NEARLINE, COLDLINE, ARCHIVE."
+  }
 }
 
 variable "autoclass" {

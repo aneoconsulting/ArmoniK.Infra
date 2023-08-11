@@ -8,7 +8,7 @@ resource "kubernetes_service_account" "pods" {
   automount_service_account_token = var.automount_service_account_token
   metadata {
     name      = var.k8s_sa_name
-    namespace = kubernetes_namespace.pods.metadata[0].name
+    namespace = var.K8s_namespace
     annotations = {
       "iam.gke.io/gcp-service-account" = google_service_account.pods.email
     }
@@ -31,5 +31,5 @@ resource "google_project_iam_member" "workload_identity_sa_bindings" {
   for_each = var.roles
   project  = google_service_account.pods.project
   role     = each.value
-  member   = "serviceAccount:${google_service_account.pods.email}"
+  member   = google_service_account.pods.member
 }

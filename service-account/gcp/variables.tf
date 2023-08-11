@@ -25,7 +25,7 @@ variable "k8s_sa_name" {
 variable "K8s_namespace" {
   type        = string
   description = "Namespace within which name of the service account must be unique"
-  default     = null
+  default     = "default"
 }
 
 variable "roles" {

@@ -36,6 +36,7 @@ No modules.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
+| <a name="input_alternative_location"></a> [alternative\_location](#input\_alternative\_location) | Alternative location for the bucket, by default it will use the project region. | `string` | `null` | no |
 | <a name="input_autoclass"></a> [autoclass](#input\_autoclass) | The bucket's Autoclass configuration. | <pre>object({<br>    enabled = bool<br>  })</pre> | `null` | no |
 | <a name="input_bucket_name"></a> [bucket\_name](#input\_bucket\_name) | The name of the bucket. | `string` | n/a | yes |
 | <a name="input_cors"></a> [cors](#input\_cors) | The bucket's Cross-Origin Resource Sharing (CORS) configuration. | <pre>object({<br>    origin          = optional(list(string))<br>    method          = optional(list(string))<br>    response_header = optional(list(string))<br>    max_age_seconds = optional(number)<br>  })</pre> | `null` | no |

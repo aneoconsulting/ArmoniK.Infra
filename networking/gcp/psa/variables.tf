@@ -1,34 +1,40 @@
+######## SECTION - VPC to get
+
 variable "vpc_network" {
   description = "The vpc_network to create."
   type        = string
 }
+
+######## SECTION - PSA 
 
 variable "service_name" {
   description = "The private service access to create"
   type        = string
 }
 
-variable "global_adress_name" {
+######## SECTION - GLOBAL ADDRESS
+
+variable "global_address_name" {
   description = "Name of the resource."
   type        = string
   validation {
-    condition     = can(regex("[a-z]([-a-z0-9]*[a-z0-9])?.", var.global_adress_name))
+    condition     = can(regex("[a-z]([-a-z0-9]*[a-z0-9])?.", var.global_address_name))
     error_message = "The name of the global adress must match the following regular expression : [a-z]([-a-z0-9]*[a-z0-9])?."
   }
 }
 
-variable "global_adress_description" {
+variable "global_address_description" {
   description = "An optional description for the global_address resource"
   type        = string
   default     = null
 }
 
-variable "global_adress_adress" {
+variable "global_address_ip" {
   description = "The static IP represented by this resources."
   type        = string
 }
 
-variable "global_adress_prefix_length" {
+variable "global_address_prefix_length" {
   description = "The prefix length if the resource represents an IP range."
   type        = number
   default     = 0

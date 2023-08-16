@@ -48,7 +48,6 @@ No resources.
 | Name | Description |
 |------|-------------|
 | <a name="output_crypto_key"></a> [crypto\_key](#output\_crypto\_key) | The generated crytpo key. |
-| <a name="output_kms_ciphertext"></a> [kms\_ciphertext](#output\_kms\_ciphertext) | The ciphertext used to encrypt secret data. |
 | <a name="output_kms_crypto_roles"></a> [kms\_crypto\_roles](#output\_kms\_crypto\_roles) | The associated roles on the crytpo key. |
 | <a name="output_kms_key_ring"></a> [kms\_key\_ring](#output\_kms\_key\_ring) | The generated key ring. |
 | <a name="output_kms_key_ring_import_job"></a> [kms\_key\_ring\_import\_job](#output\_kms\_key\_ring\_import\_job) | The import generated import job. |

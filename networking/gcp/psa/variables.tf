@@ -1,7 +1,7 @@
 ######## SECTION - VPC to get
 
 variable "vpc_network" {
-  description = "The vpc_network to create."
+  description = "The vpc_network on which the psa will be created"
   type        = string
 }
 

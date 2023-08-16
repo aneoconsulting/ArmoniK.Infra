@@ -39,14 +39,14 @@ resource "google_compute_subnetwork" "subnets" {
 }
 
 # GKE private subnets
-resource "google_compute_subnetwork" "gke_subnets" {
-  for_each                 = var.gke_subnets
-  ip_cidr_range            = each.value.nodes_cidr_block
-  name                     = each.key
+resource "google_compute_subnetwork" "gke_subnet" {
+  count                    = var.gke_subnet != null ? 1 : 0
+  ip_cidr_range            = var.gke_subnet.nodes_cidr_block
+  name                     = var.gke_subnet.name
   network                  = google_compute_network.vpc.name
-  description              = "GKE private subnet of IP address range ${each.value.nodes_cidr_block} in VPC ${google_compute_network.vpc.name}"
+  description              = "GKE private subnet of IP address range ${var.gke_subnet.nodes_cidr_block} in VPC ${google_compute_network.vpc.name}"
   private_ip_google_access = var.enable_google_access
-  region                   = each.value.region
+  region                   = var.gke_subnet.region
   project                  = data.google_client_config.current.project
   log_config {
     aggregation_interval = var.flow_log_max_aggregation_interval
@@ -56,8 +56,8 @@ resource "google_compute_subnetwork" "gke_subnets" {
   dynamic "secondary_ip_range" {
     for_each = ["pods_cidr_block", "services_cidr_block"]
     content {
-      ip_cidr_range = each.value[secondary_ip_range.value]
-      range_name    = secondary_ip_range.value == "pods_cidr_block" ? "${each.key}-pod-ranges" : "${each.key}-svc-ranges"
+      ip_cidr_range = var.gke_subnet[secondary_ip_range.value]
+      range_name    = secondary_ip_range.value == "pods_cidr_block" ? "${var.gke_subnet.name}-pod-ranges" : "${var.gke_subnet.name}-svc-ranges"
     }
   }
 }

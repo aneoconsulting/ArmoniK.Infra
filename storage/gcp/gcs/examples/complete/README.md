@@ -1,6 +1,6 @@
-# Google Artifact Registry
+# GCS
 
-To create a Google Artifact Registry:
+To create a complete GCS:
 
 ```bash
 terraform init
@@ -38,7 +38,7 @@ terraform destroy
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_complete_artifact_registry"></a> [complete\_artifact\_registry](#module\_complete\_artifact\_registry) | ../../../artifact-registry | n/a |
+| <a name="module_complete_gcs_bucket"></a> [complete\_gcs\_bucket](#module\_complete\_gcs\_bucket) | ../../../gcs | n/a |
 
 ## Resources
 
@@ -54,12 +54,18 @@ terraform destroy
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_project"></a> [project](#input\_project) | Project name | `string` | `"armonik-gcp-13469"` | no |
-| <a name="input_region"></a> [region](#input\_region) | The GCP region to deploy the Artifact registry | `string` | `"europe-west9"` | no |
+| <a name="input_region"></a> [region](#input\_region) | The GCP region to deploy the GCS. | `string` | `"europe-west9"` | no |
 
 ## Outputs
 
 | Name | Description |
 |------|-------------|
-| <a name="output_docker_repositories"></a> [docker\_repositories](#output\_docker\_repositories) | Docker repositories in Artifactory Registry created on GCP |
-| <a name="output_kms_key_name"></a> [kms\_key\_name](#output\_kms\_key\_name) | KMS key name used to encrypt the registry |
+| <a name="output_access_control_domain"></a> [access\_control\_domain](#output\_access\_control\_domain) | The domain associated with the bucket access control. |
+| <a name="output_access_control_email"></a> [access\_control\_email](#output\_access\_control\_email) | The email address associated with the bucket access control. |
+| <a name="output_access_control_id"></a> [access\_control\_id](#output\_access\_control\_id) | An identifier for the bucket access control |
+| <a name="output_acls"></a> [acls](#output\_acls) | The associated ACLs |
+| <a name="output_iam_members"></a> [iam\_members](#output\_iam\_members) | The associated IAM policy |
+| <a name="output_name"></a> [name](#output\_name) | Name of the bucket |
+| <a name="output_self_link"></a> [self\_link](#output\_self\_link) | The URI of the created bucket |
+| <a name="output_url"></a> [url](#output\_url) | The base URL of the bucket, in the format gs://<bucket-name> |
 <!-- END_TF_DOCS -->

@@ -40,7 +40,7 @@ No modules.
 | <a name="input_global_address_prefix_length"></a> [global\_address\_prefix\_length](#input\_global\_address\_prefix\_length) | The prefix length if the resource represents an IP range. | `number` | `0` | no |
 | <a name="input_global_address_purpose"></a> [global\_address\_purpose](#input\_global\_address\_purpose) | The purpose of this resource | `string` | n/a | yes |
 | <a name="input_service_name"></a> [service\_name](#input\_service\_name) | The private service access to create | `string` | n/a | yes |
-| <a name="input_vpc_network"></a> [vpc\_network](#input\_vpc\_network) | The vpc\_network to create. | `string` | n/a | yes |
+| <a name="input_vpc_network"></a> [vpc\_network](#input\_vpc\_network) | The vpc\_network on which the psa will be created | `string` | n/a | yes |
 
 ## Outputs
 

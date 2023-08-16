@@ -52,7 +52,7 @@ terraform destroy
 
 | Name | Description |
 |------|-------------|
-| <a name="output_gke_subnets"></a> [gke\_subnets](#output\_gke\_subnets) | Map of GKE subnets |
+| <a name="output_gke_subnet"></a> [gke\_subnet](#output\_gke\_subnet) | GKE subnet |
 | <a name="output_id"></a> [id](#output\_id) | The VPC |
 | <a name="output_name"></a> [name](#output\_name) | The name of the VPC |
 | <a name="output_private_subnets"></a> [private\_subnets](#output\_private\_subnets) | Map of private subnets |

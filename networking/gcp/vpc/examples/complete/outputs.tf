@@ -35,12 +35,13 @@ output "public_subnets" {
 output "gke_subnet" {
   description = "GKE subnet"
   value = {
-    name                = module.vpc.gke_subnet_name,
-    nodes_cidr_block    = module.vpc.gke_subnet_cidr_block
-    pods_range_name     = module.vpc.gke_subnet_pods_range_name
-    pods_cidr_block     = module.vpc.gke_subnet_pods_cidr_block
-    services_range_name = module.vpc.gke_subnet_svc_range_name
-    services_cidr_block = module.vpc.gke_subnet_svc_cidr_block
-    region              = module.vpc.gke_subnet_region
+    name                = module.complete_vpc.gke_subnet_name
+    self_link           = module.complete_vpc.gke_subnet_self_link
+    nodes_cidr_block    = module.complete_vpc.gke_subnet_cidr_block
+    pods_range_name     = module.complete_vpc.gke_subnet_pods_range_name
+    pods_cidr_block     = module.complete_vpc.gke_subnet_pods_cidr_block
+    services_range_name = module.complete_vpc.gke_subnet_svc_range_name
+    services_cidr_block = module.complete_vpc.gke_subnet_svc_cidr_block
+    region              = module.complete_vpc.gke_subnet_region
   }
 }

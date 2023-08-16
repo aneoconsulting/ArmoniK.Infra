@@ -1,9 +1,11 @@
-variable "vpc_network" {
-    description = 
-    type        = string
+variable "region" {
+  description = "The GCP region to deploy the Artifact registry"
+  type        = string
+  default     = "europe-west9"
 }
 
-variable "global_adress_name" {
-    description =
-    type        = 
+variable "project" {
+  description = "Project name"
+  type        = string
+  default     = "armonik-gcp-13469"
 }

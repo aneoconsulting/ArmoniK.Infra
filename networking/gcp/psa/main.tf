@@ -8,13 +8,12 @@ data "google_compute_network" "peering_network" {
 resource "google_compute_global_address" "private_ip_alloc" {
   project       = data.google_client_config.current.project
   name          = var.global_adress_name
-  description   = var.description
-  purpose       = var.purpose
-  address       = var.address
-  prefix_length = var.prefix_length
-  ip_version    = var.ip_version
-  labels        = var.labels
-  address_type  = var.address_type
+  description   = var.global_adress_description
+  purpose       = var.global_address_purpose
+  address       = var.global_adress_adress
+  prefix_length = var.global_adress_prefix_length
+  ip_version    = var.global_address_ip_version
+  address_type  = var.global_address_adress_type
   network       = data.google_compute_network.peering_network.id
 }
 

@@ -133,7 +133,3 @@ module "node_pool" {
   base_tags   = ["complete"]
   base_labels = { "example" : "complete" }
 }
-
-
-
-

@@ -12,13 +12,13 @@ variable "region" {
 variable "cluster_name" {
   description = "The name for the GKE cluster"
   type        = string
-  default     = "node-pool-complete-cluster"
+  default     = "node-pool-simple-cluster"
 }
 
 variable "network" {
   description = "The VPC network name to host the cluster in"
   type        = string
-  default     = "node-pool-complete-network"
+  default     = "node-pool-simple-network"
 }
 
 variable "gke_subnet" {
@@ -31,7 +31,7 @@ variable "gke_subnet" {
     region              = string
   })
   default = {
-    name                = "node-pool-complete-subnet"
+    name                = "node-pool-simple-subnet"
     nodes_cidr_block    = "10.51.0.0/16",
     pods_cidr_block     = "192.168.64.0/22"
     services_cidr_block = "192.168.1.0/24"

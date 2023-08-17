@@ -12,8 +12,8 @@ terraform {
       version = ">= 4.75.0, < 5.0"
     }
     local = {
-      source  = "hashicorp/terraform-provider-local"
-      version = "2.4.0  "
+      source  = "hashicorp/local"
+      version = "2.4.0"
     }
   }
 }

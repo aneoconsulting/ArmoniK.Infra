@@ -33,5 +33,9 @@
 
 ## Outputs
 
-No outputs.
+| Name | Description |
+|------|-------------|
+| <a name="output_peering_network"></a> [peering\_network](#output\_peering\_network) | The VPC that the PSA will use |
+| <a name="output_private_ip_alloc"></a> [private\_ip\_alloc](#output\_private\_ip\_alloc) | The IP address reserved for the VPC |
+| <a name="output_private_service_access"></a> [private\_service\_access](#output\_private\_service\_access) | The PSA |
 <!-- END_TF_DOCS -->

@@ -80,7 +80,3 @@ module "node_pool" {
     }
   }
 }
-
-
-
-

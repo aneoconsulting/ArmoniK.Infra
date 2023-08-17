@@ -86,7 +86,7 @@ limitations under the License.
 
 | Name | Type |
 |------|------|
-| [local_file.kubeconfig](https://registry.terraform.io/providers/hashicorp/terraform-provider-local/2.4.0/docs/resources/file) | resource |
+| [local_file.kubeconfig](https://registry.terraform.io/providers/hashicorp/local/2.4.0/docs/resources/file) | resource |
 | [google_client_config.current](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/client_config) | data source |
 
 ## Inputs

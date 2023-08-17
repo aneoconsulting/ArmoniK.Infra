@@ -18,22 +18,21 @@
 data "google_client_config" "current" {}
 
 locals {
-  location             = coalesce(var.cluster_location, data.google_client_config.current.region)
-  regional             = length(split("-", local.location)) == 2
+  location = coalesce(var.cluster_location, data.google_client_config.current.region)
+  regional = length(split("-", local.location)) == 2
 
-  // When a release channel is used, node auto-upgrade is enabled and cannot be disabled.
+  # When a release channel is used, node auto-upgrade is enabled and cannot be disabled.
   default_auto_upgrade = local.regional || var.release_channel != "UNSPECIFIED" ? true : false
-  cluster_network_tag  = "gke-${var.cluster_name}"
 }
 
 resource "google_container_node_pool" "pools" {
-  for_each           = var.node_pools
-  name               = each.key
-  project            = data.google_client_config.current.project
-  location           = local.location
-  cluster            = var.cluster_name
+  for_each = var.node_pools
+  name     = each.key
+  project  = data.google_client_config.current.project
+  location = local.location
+  cluster  = var.cluster_name
 
-  // use node_locations if provided, defaults to cluster level node_locations if not specified
+  # use node_locations if provided, defaults to cluster level node_locations if not specified
   node_locations     = lookup(each.value, "node_locations", "") != "" ? split(",", each.value["node_locations"]) : null
   version            = lookup(each.value, "auto_upgrade", local.default_auto_upgrade) ? "" : lookup(each.value, "version", var.min_master_version)
   initial_node_count = lookup(each.value, "autoscaling", true) ? lookup(each.value, "initial_node_count", lookup(each.value, "min_count", 1)) : null
@@ -150,7 +149,7 @@ resource "google_container_node_pool" "windows_pools" {
   location = local.location
   cluster  = var.cluster_name
 
-  // use node_locations if provided, defaults to cluster level node_locations if not specified
+  # use node_locations if provided, defaults to cluster level node_locations if not specified
   node_locations     = lookup(each.value, "node_locations", "") != "" ? split(",", each.value["node_locations"]) : null
   version            = lookup(each.value, "auto_upgrade", local.default_auto_upgrade) ? "" : lookup(each.value, "version", var.min_master_version)
   initial_node_count = lookup(each.value, "autoscaling", true) ? lookup(each.value, "initial_node_count", lookup(each.value, "min_count", 1)) : null

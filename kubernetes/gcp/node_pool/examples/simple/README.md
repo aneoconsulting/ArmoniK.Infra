@@ -65,14 +65,14 @@ limitations under the License.
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0 |
 | <a name="requirement_google"></a> [google](#requirement\_google) | >= 4.75.0, < 5.0 |
-| <a name="requirement_local"></a> [local](#requirement\_local) | 2.4.0   |
+| <a name="requirement_local"></a> [local](#requirement\_local) | 2.4.0 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
 | <a name="provider_google"></a> [google](#provider\_google) | >= 4.75.0, < 5.0 |
-| <a name="provider_local"></a> [local](#provider\_local) | 2.4.0   |
+| <a name="provider_local"></a> [local](#provider\_local) | 2.4.0 |
 
 ## Modules
 
@@ -86,7 +86,7 @@ limitations under the License.
 
 | Name | Type |
 |------|------|
-| [local_file.kubeconfig](https://registry.terraform.io/providers/hashicorp/terraform-provider-local/latest/docs/resources/file) | resource |
+| [local_file.kubeconfig](https://registry.terraform.io/providers/hashicorp/local/2.4.0/docs/resources/file) | resource |
 | [google_client_config.current](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/client_config) | data source |
 
 ## Inputs

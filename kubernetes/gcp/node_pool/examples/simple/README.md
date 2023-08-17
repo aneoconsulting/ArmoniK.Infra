@@ -1,6 +1,6 @@
-# Simple Regional Cluster
+# Complete node pools
 
-This example illustrates how to create a simple cluster and output a `kubeconfig`
+This example illustrates how to create a simple GKE node pools and outputs a `kubeconfig`
 
 <!-- BEGINNING OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
 ## Inputs

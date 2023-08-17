@@ -65,19 +65,20 @@ limitations under the License.
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0 |
 | <a name="requirement_google"></a> [google](#requirement\_google) | >= 4.75.0, < 5.0 |
+| <a name="requirement_local"></a> [local](#requirement\_local) | 2.4.0 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
 | <a name="provider_google"></a> [google](#provider\_google) | >= 4.75.0, < 5.0 |
-| <a name="provider_local"></a> [local](#provider\_local) | n/a |
+| <a name="provider_local"></a> [local](#provider\_local) | 2.4.0 |
 
 ## Modules
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_gke"></a> [gke](#module\_gke) | terraform-google-modules/kubernetes-engine/google | n/a |
+| <a name="module_gke"></a> [gke](#module\_gke) | terraform-google-modules/kubernetes-engine/google | 27.0.0 |
 | <a name="module_node_pool"></a> [node\_pool](#module\_node\_pool) | ../../../node_pool | n/a |
 | <a name="module_vpc"></a> [vpc](#module\_vpc) | ../../../../../networking/gcp/vpc | n/a |
 
@@ -85,7 +86,7 @@ limitations under the License.
 
 | Name | Type |
 |------|------|
-| [local_file.kubeconfig](https://registry.terraform.io/providers/hashicorp/local/latest/docs/resources/file) | resource |
+| [local_file.kubeconfig](https://registry.terraform.io/providers/hashicorp/terraform-provider-local/2.4.0/docs/resources/file) | resource |
 | [google_client_config.current](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/client_config) | data source |
 
 ## Inputs
@@ -94,7 +95,6 @@ limitations under the License.
 |------|-------------|------|---------|:--------:|
 | <a name="input_cluster_name"></a> [cluster\_name](#input\_cluster\_name) | The name for the GKE cluster | `string` | `"node-pool-complete-cluster"` | no |
 | <a name="input_gke_subnet"></a> [gke\_subnet](#input\_gke\_subnet) | The GKE subnet to use | <pre>object({<br>    name                = string<br>    nodes_cidr_block    = string<br>    pods_cidr_block     = string<br>    services_cidr_block = string<br>    region              = string<br>  })</pre> | <pre>{<br>  "name": "node-pool-complete-subnet",<br>  "nodes_cidr_block": "10.51.0.0/16",<br>  "pods_cidr_block": "192.168.64.0/22",<br>  "region": "europe-west9",<br>  "services_cidr_block": "192.168.1.0/24"<br>}</pre> | no |
-| <a name="input_location"></a> [location](#input\_location) | value | `string` | `"europe-west9"` | no |
 | <a name="input_network"></a> [network](#input\_network) | The VPC network name to host the cluster in | `string` | `"node-pool-complete-network"` | no |
 | <a name="input_project"></a> [project](#input\_project) | Project name | `string` | `"armonik-gcp-13469"` | no |
 | <a name="input_region"></a> [region](#input\_region) | The region to host the cluster in | `string` | `"europe-west9"` | no |

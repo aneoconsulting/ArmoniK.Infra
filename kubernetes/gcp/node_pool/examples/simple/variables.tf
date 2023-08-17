@@ -6,6 +6,7 @@ variable "project" {
 
 variable "region" {
   description = "The region to host the cluster in"
+  type        = string
   default     = "europe-west9"
 }
 
@@ -43,10 +44,4 @@ variable "service_account" {
   description = "value"
   type        = string
   default     = "tf-gke-gke-test-1-k4hk@armonik-gcp-13469.iam.gserviceaccount.com"
-}
-
-variable "location" {
-  description = "value"
-  type        = string
-  default     = "europe-west9"
 }

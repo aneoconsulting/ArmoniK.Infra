@@ -26,7 +26,7 @@ output "node_pool_names" {
 
 output "node_pool_versions" {
   description = "Node pool versions by node pool name"
-  value       = merge(
+  value = merge(
     { for np in google_container_node_pool.pools : np.name => np.version },
     { for np in google_container_node_pool.windows_pools : np.name => np.version },
   )

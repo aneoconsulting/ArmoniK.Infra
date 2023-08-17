@@ -63,32 +63,32 @@ variable "base_oauth_scopes" {
 
 variable "base_tags" {
   description = "List of tags used for all node pools, you can add specific tags to specific node pools in node_pools variable with the 'tags' key"
-  type = list(string)
-  default = []
+  type        = list(string)
+  default     = []
 }
 
 variable "base_labels" {
   description = "Map of labels used for all node pools, you can add specific labels to specific node pools in node_pools variable with the 'labels' key"
-  type = map(string)
-  default = {}
+  type        = map(string)
+  default     = {}
 }
 
 variable "base_resource_labels" {
   description = "Map of resource labels used for all node pools, you can add specific resource labels to specific node pools in node_pools variable with the 'resource_labels' key"
-  type = map(string)
-  default = {}
+  type        = map(string)
+  default     = {}
 }
 
 variable "base_metadata" {
   description = "Map of metadata used for all node pools, you can add specific metadata to specific node pools in node_pools variable with the 'metadata' key"
-  type = map(any)
-  default = {}
+  type        = map(any)
+  default     = {}
 }
 
 variable "node_pools" {
   type        = any
   description = "Map of maps containing the node pools configurations. Multiple keys can be used within a node pool configuration, see : https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/container_node_pool"
-  default = {}
+  default     = {}
 }
 
 variable "windows_node_pools" {

@@ -31,24 +31,40 @@ locals {
     app_port = local.admin_gui_load_balancer.app_port
   }) : null
 
-  admin_old_gui_load_balancer = length(kubernetes_service.admin_old_gui) > 0 ? (kubernetes_service.admin_old_gui[0].spec.0.type == "LoadBalancer" ? {
-    ip       = (kubernetes_service.admin_old_gui[0].status.0.load_balancer.0.ingress.0.ip == "" ? kubernetes_service.admin_old_gui[0].status.0.load_balancer.0.ingress.0.hostname : kubernetes_service.admin_old_gui[0].status.0.load_balancer.0.ingress.0.ip)
-    api_port = kubernetes_service.admin_old_gui[0].spec.0.port.0.port
-    app_port = kubernetes_service.admin_old_gui[0].spec.0.port.1.port
+  admin_0_9_gui_load_balancer = length(kubernetes_service.admin_0_9_gui) > 0 ? (kubernetes_service.admin_0_9_gui[0].spec.0.type == "LoadBalancer" ? {
+    ip       = (kubernetes_service.admin_0_9_gui[0].status.0.load_balancer.0.ingress.0.ip == "" ? kubernetes_service.admin_0_9_gui[0].status.0.load_balancer.0.ingress.0.hostname : kubernetes_service.admin_0_9_gui[0].status.0.load_balancer.0.ingress.0.ip)
+    app_port = kubernetes_service.admin_0_9_gui[0].spec.0.port.0.port
+    } : {
+    ip       = ""
+    app_port = ""
+  }) : null
+
+  admin_0_9_gui_endpoints = length(kubernetes_service.admin_0_9_gui) > 0 ? (local.admin_0_9_gui_load_balancer.ip == "" && kubernetes_service.admin_0_9_gui[0].spec.0.type == "ClusterIP" ? {
+    ip       = kubernetes_service.admin_0_9_gui[0].spec.0.cluster_ip
+    app_port = kubernetes_service.admin_0_9_gui[0].spec.0.port.0.port
+    } : {
+    ip       = local.admin_0_9_gui_load_balancer.ip
+    app_port = local.admin_0_9_gui_load_balancer.app_port
+  }) : null
+
+  admin_0_8_gui_load_balancer = length(kubernetes_service.admin_0_8_gui) > 0 ? (kubernetes_service.admin_0_8_gui[0].spec.0.type == "LoadBalancer" ? {
+    ip       = (kubernetes_service.admin_0_8_gui[0].status.0.load_balancer.0.ingress.0.ip == "" ? kubernetes_service.admin_0_8_gui[0].status.0.load_balancer.0.ingress.0.hostname : kubernetes_service.admin_0_8_gui[0].status.0.load_balancer.0.ingress.0.ip)
+    api_port = kubernetes_service.admin_0_8_gui[0].spec.0.port.0.port
+    app_port = kubernetes_service.admin_0_8_gui[0].spec.0.port.1.port
     } : {
     ip       = ""
     api_port = ""
     app_port = ""
   }) : null
 
-  admin_old_gui_endpoints = length(kubernetes_service.admin_old_gui) > 0 ? (local.admin_old_gui_load_balancer.ip == "" && kubernetes_service.admin_old_gui[0].spec.0.type == "ClusterIP" ? {
-    ip       = kubernetes_service.admin_old_gui[0].spec.0.cluster_ip
-    api_port = kubernetes_service.admin_old_gui[0].spec.0.port.0.port
-    app_port = kubernetes_service.admin_old_gui[0].spec.0.port.1.port
+  admin_0_8_gui_endpoints = length(kubernetes_service.admin_0_8_gui) > 0 ? (local.admin_0_8_gui_load_balancer.ip == "" && kubernetes_service.admin_0_8_gui[0].spec.0.type == "ClusterIP" ? {
+    ip       = kubernetes_service.admin_0_8_gui[0].spec.0.cluster_ip
+    api_port = kubernetes_service.admin_0_8_gui[0].spec.0.port.0.port
+    app_port = kubernetes_service.admin_0_8_gui[0].spec.0.port.1.port
     } : {
-    ip       = local.admin_old_gui_load_balancer.ip
-    api_port = local.admin_old_gui_load_balancer.api_port
-    app_port = local.admin_old_gui_load_balancer.app_port
+    ip       = local.admin_0_8_gui_load_balancer.ip
+    api_port = local.admin_0_8_gui_load_balancer.api_port
+    app_port = local.admin_0_8_gui_load_balancer.app_port
   }) : null
 
   ingress_load_balancer = (var.ingress != null ? kubernetes_service.ingress.0.spec.0.type == "LoadBalancer" : false) ? {
@@ -73,8 +89,12 @@ locals {
 
   control_plane_url = "http://${local.control_plane_endpoints.ip}:${local.control_plane_endpoints.port}"
   admin_app_url     = length(kubernetes_service.admin_gui) > 0 ? "http://${local.admin_gui_endpoints.ip}:${local.admin_gui_endpoints.app_port}" : null
-  admin_api_url     = length(kubernetes_service.admin_old_gui) > 0 ? "http://${local.admin_old_gui_endpoints.ip}:${local.admin_old_gui_endpoints.api_port}/api" : null
-  admin_old_url     = length(kubernetes_service.admin_old_gui) > 0 ? "http://${local.admin_old_gui_endpoints.ip}:${local.admin_old_gui_endpoints.app_port}/" : null
-  ingress_http_url  = var.ingress != null ? "${var.ingress.tls ? "https" : "http"}://${local.ingress_endpoint.ip}:${local.ingress_endpoint.http_port}" : ""
-  ingress_grpc_url  = var.ingress != null ? "${var.ingress.tls ? "https" : "http"}://${local.ingress_endpoint.ip}:${local.ingress_endpoint.grpc_port}" : ""
+  # Deprecated, must be removed in a future version
+  admin_api_url = length(kubernetes_service.admin_0_8_gui) > 0 ? "http://${local.admin_0_8_gui_endpoints.ip}:${local.admin_0_8_gui_endpoints.api_port}/api" : null
+  # Deprecated, must be removed in a future version
+  admin_0_8_url = length(kubernetes_service.admin_0_8_gui) > 0 ? "http://${local.admin_0_8_gui_endpoints.ip}:${local.admin_0_8_gui_endpoints.app_port}/" : null
+  # Deprecated, must be removed in a future version
+  admin_0_9_url    = length(kubernetes_service.admin_0_9_gui) > 0 ? "http://${local.admin_0_9_gui_endpoints.ip}:${local.admin_0_9_gui_endpoints.app_port}/" : null
+  ingress_http_url = var.ingress != null ? "${var.ingress.tls ? "https" : "http"}://${local.ingress_endpoint.ip}:${local.ingress_endpoint.http_port}" : ""
+  ingress_grpc_url = var.ingress != null ? "${var.ingress.tls ? "https" : "http"}://${local.ingress_endpoint.ip}:${local.ingress_endpoint.grpc_port}" : ""
 }

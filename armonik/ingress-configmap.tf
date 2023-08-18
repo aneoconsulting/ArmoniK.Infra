@@ -64,16 +64,43 @@ server {
     location = /admin/fr {
         rewrite ^ $scheme://$http_host/admin/fr/;
     }
+    # Deprecated, must be removed in a new version. Keeped for retrocompatibility
     location = /old-admin {
-        rewrite ^ $scheme://$http_host/old-admin/ permanent;
+        rewrite ^ $scheme://$http_host/admin-0.8/ permanent;
+    }
+    # Deprecated, must be removed in a new version
+    location = /admin-0.8 {
+        rewrite ^ $scheme://$http_host/admin-0.8/ permanent;
+    }
+    # Deprecated, must be removed in a new version
+    location = /admin-0.9 {
+        rewrite ^ $scheme://$http_host/admin-0.9/$accept_language/;
+    }
+    # Deprecated, must be removed in a new version
+    location = /admin-0.9/ {
+        rewrite ^ $scheme://$http_host/admin-0.9/$accept_language/;
+    }
+    # Deprecated, must be removed in a new version
+    location = /admin-0.9/en {
+        rewrite ^ $scheme://$http_host/admin-0.9/en/;
+    }
+    # Deprecated, must be removed in a new version
+    location = /admin-0.9/fr {
+        rewrite ^ $scheme://$http_host/admin-0.9/fr/;
     }
 %{if var.admin_gui != null~}
     location /admin/ {
         proxy_pass ${local.admin_app_url};
     }
-    location /old-admin/ {
-        proxy_pass ${local.admin_old_url};
+    # Deprecated, must be removed in a new version
+    location /admin-0.8/ {
+        proxy_pass ${local.admin_0_8_url};
     }
+    # Deprecated, must be removed in a new version
+    location /admin-0.9/ {
+      proxy_pass ${local.admin_0_9_url};
+    }
+    # Deprecated, must be removed in a new version
     location /api {
         proxy_pass ${local.admin_api_url};
     }

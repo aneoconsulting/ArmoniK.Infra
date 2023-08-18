@@ -20,11 +20,10 @@ output "key_ring_roles" {
 
 output "crypto_key_ids" {
   description = "The Map of the created crypto keys."
-  value       = {for key, value in google_kms_crypto_key.keys : key => value.id}
+  value       = { for key, value in google_kms_crypto_key.keys : key => value.id }
 }
 
 output "crypto_key_roles" {
   description = "The IAM roles for the crypto keys."
   value       = google_kms_crypto_key_iam_member.crypto_key_roles
 }
-

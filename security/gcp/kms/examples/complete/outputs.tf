@@ -27,4 +27,3 @@ output "crypto_key_roles" {
   description = "The IAM roles for the crypto keys."
   value       = module.complete_kms.crypto_key_roles
 }
-

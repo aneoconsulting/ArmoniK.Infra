@@ -21,7 +21,7 @@ resource "null_resource" "timestamp" {
 }
 
 locals {
-  date   = <<-EOT
+  date = <<-EOT
 #!/bin/bash
 set -e
 DATE=$(date +%F-%H-%M-%S)
@@ -44,12 +44,12 @@ jq -n --arg date "$DATE" '{"date":$date}'
       rotation_period               = "86400s"
       import_only                   = false
       skip_initial_version_creation = true
-      version_template              = {
+      version_template = {
         algorithm = "CRYPTO_KEY_VERSION_ALGORITHM_UNSPECIFIED"
       }
     }
     "key-4" = {
-      purpose          = "ASYMMETRIC_SIGN"
+      purpose = "ASYMMETRIC_SIGN"
       version_template = {
         algorithm        = "EC_SIGN_P384_SHA384"
         protection_level = "SOFTWARE"
@@ -58,7 +58,7 @@ jq -n --arg date "$DATE" '{"date":$date}'
     "key-3" = {
       purpose                    = "ENCRYPT_DECRYPT"
       destroy_scheduled_duration = "86400s"
-      crypto_key_roles           = {
+      crypto_key_roles = {
         "roles/cloudkms.cryptoKeyEncrypter" = ["user:hbitoun@aneo.fr"],
         "roles/cloudkms.admin"              = ["user:hbitoun@aneo.fr", "user:lzianekhodja@aneo.fr"]
       }

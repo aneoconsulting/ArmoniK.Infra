@@ -8,11 +8,11 @@ resource "google_kms_key_ring" "key_ring" {
 
 resource "google_kms_key_ring_iam_member" "key_ring_role" {
   for_each = var.key_ring_roles != null ? merge([
-  for role, members in var.key_ring_roles : {
-  for member in members : "${role}-${member}" => {
-    role   = role
-    member = member
-  }}]...) : {}
+    for role, members in var.key_ring_roles : {
+      for member in members : "${role}-${member}" => {
+        role   = role
+        member = member
+  } }]...) : {}
   key_ring_id = google_kms_key_ring.key_ring.id
   role        = each.value["role"]
   member      = each.value["member"]
@@ -39,26 +39,26 @@ resource "google_kms_crypto_key" "keys" {
 
 resource "google_kms_crypto_key_iam_member" "crypto_key_roles" {
   for_each = {
-  for element in flatten([
-  for data in [
-  for key, value in google_kms_crypto_key.keys : {
-    name   = value.name,
-    key_id = value.id,
-    roles  = try(var.crypto_keys["roles"], [])
-  }
-  ] : [
-  for role, members in data.roles : [
-  for member in members : {
-    name   = data.name,
-    key_id = data.key_id,
-    role   = role,
-    member = member
-  }
-  ]
-  ]
-  ]) : "${element.name}-${element.role}-${element.member}" => {
-    key_id = element.key_id, role = element.role, member = element.member
-  }
+    for element in flatten([
+      for data in [
+        for key, value in google_kms_crypto_key.keys : {
+          name   = value.name,
+          key_id = value.id,
+          roles  = try(var.crypto_keys["roles"], [])
+        }
+        ] : [
+        for role, members in data.roles : [
+          for member in members : {
+            name   = data.name,
+            key_id = data.key_id,
+            role   = role,
+            member = member
+          }
+        ]
+      ]
+      ]) : "${element.name}-${element.role}-${element.member}" => {
+      key_id = element.key_id, role = element.role, member = element.member
+    }
   }
   crypto_key_id = each.value["key_id"]
   member        = each.value["member"]

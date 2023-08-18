@@ -17,5 +17,3 @@ output "crypto_key_ids" {
   description = "The Map of the created crypto keys."
   value       = module.simple_kms.crypto_key_ids
 }
-
-

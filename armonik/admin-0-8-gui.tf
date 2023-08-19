@@ -108,8 +108,8 @@ resource "kubernetes_deployment" "admin_0_8_gui" {
         }
         # 0_8 GUI container
         container {
-          name              = var.admin_0_8_gui.0_8.name
-          image             = var.admin_0_8_gui.0_8.tag != "" ? "${var.admin_0_8_gui.0_8.image}:${var.admin_0_8_gui.0_8.tag}" : var.admin_0_8_gui.0_8.image
+          name              = var.admin_0_8_gui.app.name
+          image             = var.admin_0_8_gui.app.tag != "" ? "${var.admin_0_8_gui.app.image}:${var.admin_0_8_gui.app.tag}" : var.admin_0_8_gui.app.image
           image_pull_policy = var.admin_0_8_gui.image_pull_policy
           resources {
             limits   = var.admin_0_8_gui.0_8.limits

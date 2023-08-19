@@ -75,7 +75,19 @@ server {
     }
     # Deprecated, must be removed in a new version
     location = /admin-0.9 {
-        rewrite ^ $scheme://$http_host/admin-0.9/ permanent;
+        rewrite ^ $scheme://$http_host/admin-0.9/$accept_language/;
+    }
+    # Deprecated, must be removed in a new version
+    location = /admin-0.9/ {
+        rewrite ^ $scheme://$http_host/admin-0.9/$accept_language/;
+    }
+    # Deprecated, must be removed in a new version
+    location = /admin-0.9/en {
+        rewrite ^ $scheme://$http_host/admin-0.9/en/;
+    }
+    # Deprecated, must be removed in a new version
+    location = /admin-0.9/fr {
+        rewrite ^ $scheme://$http_host/admin-0.9/fr/;
     }
 %{if var.admin_gui != null~}
     set $admin_app_upstream ${local.admin_app_url};

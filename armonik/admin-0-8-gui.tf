@@ -6,7 +6,7 @@ resource "kubernetes_deployment" "admin_0_8_gui" {
     namespace = var.namespace
     labels = {
       app     = "armonik"
-      service = "admin-0_8-gui"
+      service = "admin-0-8-gui"
     }
   }
   spec {
@@ -14,16 +14,16 @@ resource "kubernetes_deployment" "admin_0_8_gui" {
     selector {
       match_labels = {
         app     = "armonik"
-        service = "admin-0_8-gui"
+        service = "admin-0-8-gui"
       }
     }
     template {
       metadata {
-        name      = "admin-0_8-gui"
+        name      = "admin-0-8-gui"
         namespace = var.namespace
         labels = {
           app     = "armonik"
-          service = "admin-0_8-gui"
+          service = "admin-0-8-gui"
         }
       }
       spec {

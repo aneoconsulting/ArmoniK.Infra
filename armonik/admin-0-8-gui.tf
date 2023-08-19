@@ -2,7 +2,7 @@
 resource "kubernetes_deployment" "admin_0_8_gui" {
   count = var.admin_0_8_gui != null ? 1 : 0
   metadata {
-    name      = "admin-0_8-gui"
+    name      = "admin-0-8-gui"
     namespace = var.namespace
     labels = {
       app     = "armonik"

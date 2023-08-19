@@ -112,8 +112,8 @@ resource "kubernetes_deployment" "admin_0_8_gui" {
           image             = var.admin_0_8_gui.app.tag != "" ? "${var.admin_0_8_gui.app.image}:${var.admin_0_8_gui.app.tag}" : var.admin_0_8_gui.app.image
           image_pull_policy = var.admin_0_8_gui.image_pull_policy
           resources {
-            limits   = var.admin_0_8_gui.0_8.limits
-            requests = var.admin_0_8_gui.0_8.requests
+            limits   = var.admin_0_8_gui.app.limits
+            requests = var.admin_0_8_gui.app.requests
           }
           port {
             name           = "0_8-port"

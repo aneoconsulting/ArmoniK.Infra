@@ -54,8 +54,7 @@ locals {
   # Deprecated, must be removed in a future version
   admin_0_9_gui_endpoints = {
     ip       = module.admin_0_9_gui_endpoint.host
-    api_port = try(module.admin_0_9_gui_endpoint.ports[0], null)
-    app_port = try(module.admin_0_9_gui_endpoint.ports[1], null)
+    port = try(module.admin_0_9_gui_endpoint.ports[0], null)
   }
   ingress_endpoint = {
     ip        = module.ingress_endpoint.host

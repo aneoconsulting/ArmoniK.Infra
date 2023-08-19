@@ -69,7 +69,7 @@ locals {
   # Deprecated, must be removed in a future version
   admin_0_8_url     = length(kubernetes_service.admin_0_8_gui) > 0 ? "http://${local.admin_0_8_gui_endpoints.ip}:${local.admin_0_8_gui_endpoints.app_port}/" : null
   # Deprecated, must be removed in a future version
-  admin_0_9_url     = length(kubernetes_service.admin_0_9_gui) > 0 ? "http://${local.admin_0_9_gui_endpoints.ip}:${local.admin_0_9_gui_endpoints.app_port}/" : null
+  admin_0_9_url     = length(kubernetes_service.admin_0_9_gui) > 0 ? "http://${local.admin_0_9_gui_endpoints.ip}:${local.admin_0_9_gui_endpoints.port}/" : null
   ingress_http_url  = var.ingress != null ? "${var.ingress.tls ? "https" : "http"}://${local.ingress_endpoint.ip}:${local.ingress_endpoint.http_port}" : ""
   ingress_grpc_url  = var.ingress != null ? "${var.ingress.tls ? "https" : "http"}://${local.ingress_endpoint.ip}:${local.ingress_endpoint.grpc_port}" : ""
 }

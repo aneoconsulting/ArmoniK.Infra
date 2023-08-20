@@ -33,6 +33,8 @@ resource "null_resource" "timestamp" {
   }
 }
 
+data "google_client_openid_userinfo" "current" {}
+
 module "simple_artifact_registry" {
   source        = "../../../artifact-registry"
   docker_images = local.docker_images
@@ -42,7 +44,7 @@ module "simple_artifact_registry" {
     env             = "test"
     app             = "simple"
     module          = "GCP Artifact Registry"
-    "create_by"     = "me"
+    "create_by"     = split("@", data.google_client_openid_userinfo.current.email)[0]
     "creation_date" = null_resource.timestamp.triggers["date"]
   }
 }

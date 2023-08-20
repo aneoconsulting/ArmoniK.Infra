@@ -1,3 +1,5 @@
+data "google_client_openid_userinfo" "current" {}
+
 locals {
   docker_images = {
     prometheus = {
@@ -74,7 +76,7 @@ module "complete_artifact_registry" {
     env             = "test"
     app             = "complete"
     module          = "GCP Artifact Registry"
-    "create_by"     = "me"
+    "create_by"     = split("@", data.google_client_openid_userinfo.current.email)[0]
     "creation_date" = null_resource.timestamp.triggers["date"]
   }
 }

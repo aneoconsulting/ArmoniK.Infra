@@ -41,13 +41,12 @@ resource "null_resource" "timestamp" {
 module "vpc" {
   source = "../../../../networking/gcp/vpc"
   name   = "vcp-test-sa"
-  gke_subnets = {
-    "gke-alpha" = {
-      nodes_cidr_block    = "10.51.0.0/16",
-      pods_cidr_block     = "192.168.64.0/22"
-      services_cidr_block = "192.168.1.0/24"
-      region              = "europe-west9"
-    }
+  gke_subnet = {
+    name                = "gke-alpha"
+    nodes_cidr_block    = "10.51.0.0/16",
+    pods_cidr_block     = "192.168.64.0/22"
+    services_cidr_block = "192.168.1.0/24"
+    region              = "europe-west9"
   }
   enable_google_access = true
 }
@@ -59,9 +58,9 @@ module "gke" {
   name                    = "gke-sa-test"
   region                  = data.google_client_config.current.region
   network                 = module.vpc.name
-  subnetwork              = "gke-alpha"
-  ip_range_pods           = module.vpc.gke_subnet_pod_ranges["gke-alpha"].range_name
-  ip_range_services       = module.vpc.gke_subnet_svc_ranges["gke-alpha"].range_name
+  subnetwork              = module.vpc.gke_subnet_name
+  ip_range_pods           = module.vpc.gke_subnet_pods_range_name
+  ip_range_services       = module.vpc.gke_subnet_svc_range_name
   cluster_resource_labels = local.labels
 }
 

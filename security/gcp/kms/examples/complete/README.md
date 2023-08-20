@@ -1,6 +1,6 @@
-# Google Artifact Registry
+# GCP Cloud KMS
 
-To create a Google Artifact Registry:
+To create a complete GCP Cloud KMS:
 
 ```bash
 terraform init
@@ -12,7 +12,7 @@ To delete all resource:
 
 ```bash
 terraform destroy
-```
+`
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
@@ -38,7 +38,7 @@ terraform destroy
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_complete_artifact_registry"></a> [complete\_artifact\_registry](#module\_complete\_artifact\_registry) | ../../../artifact-registry | n/a |
+| <a name="module_complete_kms"></a> [complete\_kms](#module\_complete\_kms) | ../../../kms | n/a |
 
 ## Resources
 
@@ -54,12 +54,16 @@ terraform destroy
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_project"></a> [project](#input\_project) | Project name | `string` | `"armonik-gcp-13469"` | no |
-| <a name="input_region"></a> [region](#input\_region) | The GCP region to deploy the Artifact registry | `string` | `"europe-west9"` | no |
+| <a name="input_region"></a> [region](#input\_region) | The GCP region used to deploy the KMS. | `string` | `"europe-west9"` | no |
 
 ## Outputs
 
 | Name | Description |
 |------|-------------|
-| <a name="output_docker_repositories"></a> [docker\_repositories](#output\_docker\_repositories) | Docker repositories in Artifactory Registry created on GCP |
-| <a name="output_kms_key_name"></a> [kms\_key\_name](#output\_kms\_key\_name) | KMS key name used to encrypt the registry |
+| <a name="output_crypto_key_ids"></a> [crypto\_key\_ids](#output\_crypto\_key\_ids) | The Map of the created crypto keys. |
+| <a name="output_crypto_key_roles"></a> [crypto\_key\_roles](#output\_crypto\_key\_roles) | The IAM roles for the crypto keys. |
+| <a name="output_key_ring_id"></a> [key\_ring\_id](#output\_key\_ring\_id) | The ID of the KeyRing. |
+| <a name="output_key_ring_location"></a> [key\_ring\_location](#output\_key\_ring\_location) | The location for the KeyRing. |
+| <a name="output_key_ring_name"></a> [key\_ring\_name](#output\_key\_ring\_name) | The resource name for the KeyRing. |
+| <a name="output_key_ring_roles"></a> [key\_ring\_roles](#output\_key\_ring\_roles) | The IAM roles for the KeyRing. |
 <!-- END_TF_DOCS -->

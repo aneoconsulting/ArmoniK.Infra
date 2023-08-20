@@ -1,4 +1,4 @@
-variable "service_account_name" {
+variable "name" {
   description = "Name of service account name."
   type        = string
 }

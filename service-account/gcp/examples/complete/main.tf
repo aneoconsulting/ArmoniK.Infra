@@ -66,7 +66,7 @@ module "gke" {
 
 module "service_account" {
   source               = "../../../../service-account/gcp"
-  service_account_name = "test-service-account-for-pods"
+  name                 = "test-service-account-for-pods"
   kubernetes_namespace = "default"
   roles                = ["roles/redis.editor", "roles/pubsub.editor"]
 }

@@ -1,15 +1,15 @@
 data "google_client_config" "current" {}
 
 resource "google_service_account" "pods" {
-  account_id  = var.service_account_name
-  description = "A GCP service account with the workloadIdentityUser role for ${var.service_account_name}."
+  account_id  = var.name
+  description = "A GCP service account with the workloadIdentityUser role for ${var.name}."
   project     = data.google_client_config.current.project
 }
 
 resource "kubernetes_service_account" "pods" {
   automount_service_account_token = var.automount_service_account_token
   metadata {
-    name      = var.service_account_name
+    name      = var.name
     namespace = var.kubernetes_namespace
     annotations = {
       "iam.gke.io/gcp-service-account" = google_service_account.pods.email

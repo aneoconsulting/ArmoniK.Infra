@@ -27,3 +27,7 @@ output "location" {
   description = "Cluster location (region if regional cluster, zone if zonal cluster)"
   value       =  module.gke.location
 }
+output "kubeconfig_path" {
+  description = "kubeconfig path"
+  value = local.kubeconfig_path
+}

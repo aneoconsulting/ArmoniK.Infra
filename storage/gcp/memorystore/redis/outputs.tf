@@ -24,6 +24,11 @@ output "port" {
   value       = google_redis_instance.cache.port
 }
 
+output "url" {
+  description = "The URL of the exposed Redis endpoint."
+  value       = "${google_redis_instance.cache.host}:${google_redis_instance.cache.port}"
+}
+
 output "persistence_iam_identity" {
   description = "Cloud IAM identity used by import/export operations. Format is 'serviceAccount:'. May change over time"
   value       = google_redis_instance.cache.persistence_iam_identity
@@ -46,8 +51,13 @@ output "read_endpoint" {
 }
 
 output "read_endpoint_port" {
-  description = "The port number of the exposed readonly redis endpoint. Standard tier only. Write requests should target 'port'."
+  description = "The port number of the exposed readonly Redis endpoint. Standard tier only. Write requests should target 'port'."
   value       = google_redis_instance.cache.read_endpoint_port
+}
+
+output "read_endpoint_url" {
+  description = "The URL of the exposed readonly Redis endpoint."
+  value       = "${google_redis_instance.cache.read_endpoint}:${google_redis_instance.cache.read_endpoint_port}"
 }
 
 output "region" {

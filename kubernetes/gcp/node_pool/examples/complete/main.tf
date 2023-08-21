@@ -132,5 +132,5 @@ module "node_pool" {
 
   base_tags   = ["complete"]
   base_labels = { "example" : "complete" }
-  base_taints       = [{ key = "complete", value = true, effect = "PREFER_NO_SCHEDULE" }]
+  base_taints = [{ key = "complete", value = true, effect = "PREFER_NO_SCHEDULE" }]
 }

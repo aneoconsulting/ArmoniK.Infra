@@ -87,7 +87,7 @@ variable "base_metadata" {
 
 variable "base_taints" {
   description = "List of taints used for all node pools, you can add specific taints to specific node pools in node_pools variable with the 'taint' key. Each taint has a key, a value and an effect"
-  type        = list(object({
+  type = list(object({
     key    = string
     value  = bool
     effect = string

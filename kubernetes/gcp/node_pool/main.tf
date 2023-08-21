@@ -97,7 +97,7 @@ resource "google_container_node_pool" "pools" {
       }
     }
     dynamic "taint" {
-      for_each = lookup(each.value, "taint", null) != null ? each.value.taint : []
+      for_each = concat(var.base_taints, lookup(each.value, "taint", null) != null ? each.value.taint : [])
       content {
         effect = taint.value.effect
         key    = taint.value.key

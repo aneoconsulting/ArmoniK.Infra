@@ -85,6 +85,15 @@ variable "base_metadata" {
   default     = {}
 }
 
+variable "base_taints" {
+  description = "List of taints used for all node pools, you can add specific taints to specific node pools in node_pools variable with the 'taint' key. Each taint has a key, a value and an effect"
+  type        = list(object({
+    key    = string
+    value  = bool
+    effect = string
+  }))
+}
+
 variable "node_pools" {
   type        = any
   description = "Map of maps containing the node pools configurations. Multiple keys can be used within a node pool configuration, see : https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/container_node_pool"

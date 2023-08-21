@@ -589,6 +589,6 @@ variable "enable_kubernetes_alpha" {
 }
 variable "kubeconfig_path" {
   description = "value"
-  type = string  
-  
+  type        = string
+
 }

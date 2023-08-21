@@ -15,13 +15,12 @@
  */
 
 resource "null_resource" "update_kubeconfig" {
-   provisioner "local-exec" {
-   command = "export KUBECONFIG=${var.kubeconfig_path} && gcloud container clusters get-credentials ${module.gke.name} --location=${module.gke.location}"
-   
-}
+  provisioner "local-exec" {
+    command = "export KUBECONFIG=${var.kubeconfig_path} && gcloud container clusters get-credentials ${module.gke.name} --location=${module.gke.location}"
+
+  }
 }
 
-data "google_client_config" "current" {}
 module "gke" {
   source                                = "terraform-google-modules/kubernetes-engine/google"
   project_id                            = var.project_id

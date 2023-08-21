@@ -22,7 +22,10 @@ output "region" {
   description = "Cluster region"
   value       =  module.gke.region
 }
-
+output "kubeconfig_path" {
+  description = "kubeconfig path"
+  value = var.kubeconfig_path
+}
 output "zones" {
   description = "List of zones in which the cluster resides"
   value       =  module.gke.zones

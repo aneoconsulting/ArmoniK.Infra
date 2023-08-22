@@ -34,7 +34,7 @@ output "node_pool_versions" {
 
 output "instance_group_urls" {
   description = "List of GKE generated instance groups"
-  value       = distinct(flatten(concat([for np in google_container_node_pool.pools : np.managed_instance_group_urls], [for np in google_container_node_pool.windows_pools : np.managed_instance_group_urls])))
+  value       = setunion([for np in google_container_node_pool.pools : np.managed_instance_group_urls]..., [for np in google_container_node_pool.windows_pools : np.managed_instance_group_urls]...)
 }
 
 output "linux_node_pool_names" {

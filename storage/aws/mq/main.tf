@@ -4,8 +4,8 @@ locals {
     var.vpc_subnet_ids[0],
     var.vpc_subnet_ids[1],
   ])
-  username = can(coalesce(var.username)) ? var.username : random_string.user.result
-  password = can(coalesce(var.password)) ? var.password : random_password.password.result
+  username = try(coalesce(var.username), random_string.user.result)
+  password = try(coalesce(var.password), random_password.password.result)
 }
 
 # Generate username

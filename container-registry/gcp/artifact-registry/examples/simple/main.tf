@@ -47,4 +47,5 @@ module "simple_artifact_registry" {
     "create_by"     = split("@", data.google_client_openid_userinfo.current.email)[0]
     "creation_date" = null_resource.timestamp.triggers["date"]
   }
+  create_service_account = false
 }

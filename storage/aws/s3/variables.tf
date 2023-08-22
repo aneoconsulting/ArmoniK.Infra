@@ -15,7 +15,7 @@ variable "name" {
 variable "policy" {
   description = "Text of the policy"
   type        = string
-  default     = ""
+  default     = null
 }
 
 variable "attach_policy" {

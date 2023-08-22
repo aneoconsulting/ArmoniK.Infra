@@ -46,18 +46,18 @@ variable "iam_bindings" {
 
 variable "create_service_account" {
   description = "Set to true if you need the service account for artifact registry to be created also. (Default: false)"
-  type        = bool 
+  type        = bool
   default     = false
 }
 
 variable "service_account_id" {
   description = "The account id that is used to generate the service account email address and a stable unique id. Only if var.create_service_account is set to true."
-  type        = string 
+  type        = string
   validation {
-    condition     =  var.service_account_id == null || can(regex("[a-z]([-a-z0-9]*[a-z0-9])", var.service_account_id))
+    condition     = var.service_account_id == null || can(regex("[a-z]([-a-z0-9]*[a-z0-9])", var.service_account_id))
     error_message = "The ID must be 6-30 characters long, and match the regular expression [a-z]([-a-z0-9]*[a-z0-9])"
   }
-  default     = null
+  default = null
 }
 
 variable "service_account_display_name" {

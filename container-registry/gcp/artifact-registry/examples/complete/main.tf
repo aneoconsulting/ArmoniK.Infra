@@ -65,23 +65,23 @@ resource "null_resource" "timestamp" {
 }
 
 module "complete_artifact_registry" {
-  source                        = "../../../artifact-registry"
-  docker_images                 = local.docker_images
-  name                          = "complete-test"
-  description                   = "A complete artifact registry"
-  immutable_tags                = true
-  kms_key_name                  = null
-  iam_bindings                  = local.registry_iam
-  labels                        = {
-                                    env             = "test"
-                                    app             = "complete"
-                                    module          = "GCP Artifact Registry"
-                                    "create_by"     = split("@", data.google_client_openid_userinfo.current.email)[0]
-                                    "creation_date" = null_resource.timestamp.triggers["date"]
-                                  }
-  create_service_account        = true
-  service_account_id            = "my-service-account-id-13469"
-  service_account_display_name  = "my-service-account-artifact-registry"
-  service_account_description   = "The description of the service-account"
+  source         = "../../../artifact-registry"
+  docker_images  = local.docker_images
+  name           = "complete-test"
+  description    = "A complete artifact registry"
+  immutable_tags = true
+  kms_key_name   = null
+  iam_bindings   = local.registry_iam
+  labels = {
+    env             = "test"
+    app             = "complete"
+    module          = "GCP Artifact Registry"
+    "create_by"     = split("@", data.google_client_openid_userinfo.current.email)[0]
+    "creation_date" = null_resource.timestamp.triggers["date"]
+  }
+  create_service_account       = true
+  service_account_id           = "my-service-account-id-13469"
+  service_account_display_name = "my-service-account-artifact-registry"
+  service_account_description  = "The description of the service-account"
 
 }

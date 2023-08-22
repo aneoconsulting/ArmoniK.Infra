@@ -6,7 +6,7 @@ resource "kubernetes_deployment" "admin_0_8_gui" {
     namespace = var.namespace
     labels = {
       app     = "armonik"
-      service = "admin-0-8-gui"
+      service = "app-gui"
     }
   }
   spec {
@@ -206,7 +206,7 @@ resource "kubernetes_service" "admin_0_8_gui" {
     }
     port {
       name        = kubernetes_deployment.admin_0_8_gui[0].spec[0].template[0].spec[0].container[1].port[0].name
-      port        = var.admin_0_8_gui.service_type == "HeadLess" ? kubernetes_deployment.admin_0_8_gui[0].spec[0].template[0].spec[0].container[0].port[0].container_port : var.admin_0_8_gui.0_8.port
+      port        = var.admin_0_8_gui.service_type == "HeadLess" ? kubernetes_deployment.admin_0_8_gui[0].spec[0].template[0].spec[0].container[0].port[0].container_port : var.admin_0_8_gui.app.port
       target_port = kubernetes_deployment.admin_0_8_gui[0].spec[0].template[0].spec[0].container[1].port[0].container_port
       protocol    = "TCP"
     }

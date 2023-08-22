@@ -123,27 +123,27 @@ resource "kubernetes_deployment" "admin_0_9_gui" {
 }
 
 # Admin GUI service
-resource "kubernetes_service" "admin_gui" {
-  count = length(kubernetes_deployment.admin_gui)
+resource "kubernetes_service" "admin_0_9_gui" {
+  count = length(kubernetes_deployment.admin_0_9_gui)
   metadata {
-    name      = kubernetes_deployment.admin_gui[0].metadata[0].name
-    namespace = kubernetes_deployment.admin_gui[0].metadata[0].namespace
+    name      = kubernetes_deployment.admin_0_9_gui[0].metadata[0].name
+    namespace = kubernetes_deployment.admin_0_9_gui[0].metadata[0].namespace
     labels = {
-      app     = kubernetes_deployment.admin_gui[0].metadata[0].labels.app
-      service = kubernetes_deployment.admin_gui[0].metadata[0].labels.service
+      app     = kubernetes_deployment.admin_0_9_gui[0].metadata[0].labels.app
+      service = kubernetes_deployment.admin_0_9_gui[0].metadata[0].labels.service
     }
   }
   spec {
     type       = var.admin_0_9_gui.service_type == "HeadLess" ? "ClusterIP" : var.admin_0_9_gui.service_type
     cluster_ip = var.admin_0_9_gui.service_type == "HeadLess" ? "None" : null
     selector = {
-      app     = kubernetes_deployment.admin_gui[0].metadata[0].labels.app
-      service = kubernetes_deployment.admin_gui[0].metadata[0].labels.service
+      app     = kubernetes_deployment.admin_0_9_gui[0].metadata[0].labels.app
+      service = kubernetes_deployment.admin_0_9_gui[0].metadata[0].labels.service
     }
     port {
-      name        = kubernetes_deployment.admin_gui[0].spec[0].template[0].spec[0].container[0].port[0].name
-      port        = var.admin_0_9_gui.service_type == "HeadLess" ? kubernetes_deployment.admin_gui[0].spec[0].template[0].spec[0].container[0].port[0].container_port : var.admin_0_9_gui.port
-      target_port = kubernetes_deployment.admin_gui[0].spec[0].template[0].spec[0].container[0].port[0].container_port
+      name        = kubernetes_deployment.admin_0_9_gui[0].spec[0].template[0].spec[0].container[0].port[0].name
+      port        = var.admin_0_9_gui.service_type == "HeadLess" ? kubernetes_deployment.admin_0_9_gui[0].spec[0].template[0].spec[0].container[0].port[0].container_port : var.admin_0_9_gui.port
+      target_port = kubernetes_deployment.admin_0_9_gui[0].spec[0].template[0].spec[0].container[0].port[0].container_port
       protocol    = "TCP"
     }
   }

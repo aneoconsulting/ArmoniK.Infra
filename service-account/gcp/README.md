@@ -45,8 +45,8 @@ No modules.
 |------|-------------|------|---------|:--------:|
 | <a name="input_automount_service_account_token"></a> [automount\_service\_account\_token](#input\_automount\_service\_account\_token) | To enable automatic mounting of the Kubernetes service account token. | `bool` | `true` | no |
 | <a name="input_kubernetes_namespace"></a> [kubernetes\_namespace](#input\_kubernetes\_namespace) | Namespace within which name of the service account must be unique. | `string` | `"default"` | no |
+| <a name="input_name"></a> [name](#input\_name) | Name of service account name. | `string` | n/a | yes |
 | <a name="input_roles"></a> [roles](#input\_roles) | A list of roles to be added to the created service account. | `set(string)` | `[]` | no |
-| <a name="input_service_account_name"></a> [service\_account\_name](#input\_service\_account\_name) | Name of service account name. | `string` | n/a | yes |
 
 ## Outputs
 

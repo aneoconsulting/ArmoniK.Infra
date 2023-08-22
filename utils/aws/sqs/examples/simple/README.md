@@ -1,7 +1,7 @@
 # Complete SQS Queue Example
 
 Configuration in this directory creates:
-- FIFO (first-in, first-out) queue encrypted with customer managed KMS key and with default SQS SSE (server-side encryption) w/ separate dead-letter queue
+- Queue using module default settings
 
 ## Usage
 

@@ -45,7 +45,7 @@ variable "cluster_location" {
 }
 
 variable "node_metadata" {
-  description = "Specifies how node metadata is exposed to the workload running on the node"
+  description = "Specifies how node metadata is exposed to the workload running on the node. Possible values are GKE_METADATA, GCE_METADATA, UNSPECIFIED, GKE_METADATA_SERVER or EXPOSE"
   default     = "GKE_METADATA"
   type        = string
 
@@ -56,14 +56,14 @@ variable "node_metadata" {
 }
 
 variable "base_oauth_scopes" {
-  description = "List of oauth scopes used for all node pools, you can add specific oauth scopes to specific node pools in node_pools variable with the 'oauth_scopes' key"
-  type        = list(string)
+  description = "Set of oauth scopes used for all node pools, you can add specific oauth scopes to specific node pools in node_pools variable with the 'oauth_scopes' key"
+  type        = set(string)
   default     = ["https://www.googleapis.com/auth/cloud-platform"]
 }
 
 variable "base_tags" {
-  description = "List of tags used for all node pools, you can add specific tags to specific node pools in node_pools variable with the 'tags' key"
-  type        = list(string)
+  description = "Set of tags used for all node pools, you can add specific tags to specific node pools in node_pools variable with the 'tags' key"
+  type        = set(string)
   default     = []
 }
 
@@ -86,12 +86,12 @@ variable "base_metadata" {
 }
 
 variable "base_taints" {
-  description = "List of taints used for all node pools, you can add specific taints to specific node pools in node_pools variable with the 'taint' key. Each taint has a key, a value and an effect"
-  type = list(object({
-    key    = string
+  description = "Map of taints used for all node pools, you can add specific taints to specific node pools in node_pools variable with the 'taint' key. Each taint has a value and an effect"
+  type = map(object({
     value  = bool
     effect = string
   }))
+  default = {}
 }
 
 variable "node_pools" {

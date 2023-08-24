@@ -16,7 +16,7 @@
 
 output "service_account" {
   description = "The service account to default running nodes as if not overridden in `node_pools`."
-  value       = "gke-gke-on-vpc-cluster-sa@armonik-gcp-13469.iam.gserviceaccount.com"
+  value       = var.service_account
 }
 
 output "node_pool_names" {
@@ -26,15 +26,12 @@ output "node_pool_names" {
 
 output "node_pool_versions" {
   description = "Node pool versions by node pool name"
-  value = merge(
-    { for np in google_container_node_pool.pools : np.name => np.version },
-    { for np in google_container_node_pool.windows_pools : np.name => np.version },
-  )
+  value = [{ for np in google_container_node_pool.pools : np.name => np.version }, { for np in google_container_node_pool.windows_pools : np.name => np.version }]
 }
 
 output "instance_group_urls" {
   description = "List of GKE generated instance groups"
-  value       = distinct(flatten(concat([for np in google_container_node_pool.pools : np.managed_instance_group_urls], [for np in google_container_node_pool.windows_pools : np.managed_instance_group_urls])))
+  value       = setunion(concat([for np in google_container_node_pool.pools : np.managed_instance_group_urls], [for np in google_container_node_pool.windows_pools : np.managed_instance_group_urls]))
 }
 
 output "linux_node_pool_names" {
@@ -64,5 +61,5 @@ output "windows_node_pool_versions" {
 
 output "windows_instance_group_urls" {
   description = "List of GKE generated instance groups for Windows node pools"
-  value       = distinct(flatten([for np in google_container_node_pool.windows_pools : np.managed_instance_group_urls]))
+  value       = setunion([for np in google_container_node_pool.windows_pools : np.managed_instance_group_urls])
 }

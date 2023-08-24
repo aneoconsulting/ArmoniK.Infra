@@ -122,15 +122,11 @@ module "node_pool" {
       strategy           = "BLUE_GREEN"
       max_pods_per_node  = 100
       batch_percentage   = 0.2
-      taint = [{
-        key    = "complete-node-pool-2"
-        value  = true
-        effect = "PREFER_NO_SCHEDULE"
-      }]
+      taint = { "complete-node-pool-2" : { value  = true, effect = "PREFER_NO_SCHEDULE" } }
     }
   }
 
   base_tags   = ["complete"]
   base_labels = { "example" : "complete" }
-  base_taints = [{ key = "complete", value = true, effect = "PREFER_NO_SCHEDULE" }]
+  base_taints = { "complete" : { value = true, effect = "PREFER_NO_SCHEDULE" } }
 }

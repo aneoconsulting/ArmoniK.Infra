@@ -28,10 +28,10 @@ resource "kubernetes_deployment" "admin_0_8_gui" {
       }
       spec {
         dynamic "toleration" {
-          for_each = (local.admin_gui_node_selector != {} ? [
-            for index in range(0, length(local.admin_gui_node_selector_keys)) : {
-              key   = local.admin_gui_node_selector_keys[index]
-              value = local.admin_gui_node_selector_values[index]
+          for_each = (local.admin_0_8_gui_node_selector != {} ? [
+            for index in range(0, length(local.admin_0_8_gui_node_selector_keys)) : {
+              key   = local.admin_0_8_gui_node_selector_keys[index]
+              value = local.admin_0_8_gui_node_selector_values[index]
             }
           ] : [])
           content {
@@ -116,7 +116,7 @@ resource "kubernetes_deployment" "admin_0_8_gui" {
             requests = var.admin_0_8_gui.app.requests
           }
           port {
-            name           = "0_8-port"
+            name           = "app-port"
             container_port = 1080
           }
           env_from {

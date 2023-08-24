@@ -1,6 +1,6 @@
 # Control plane deployment
 resource "kubernetes_deployment" "admin_0_9_gui" {
-  count = var.admin_gui != null ? 1 : 0
+  count = var.admin_0_9_gui != null ? 1 : 0
   metadata {
     name      = "admin-0-9-gui"
     namespace = var.namespace
@@ -28,10 +28,10 @@ resource "kubernetes_deployment" "admin_0_9_gui" {
       }
       spec {
         dynamic "toleration" {
-          for_each = (local.admin_gui_node_selector != {} ? [
-            for index in range(0, length(local.admin_gui_node_selector_keys)) : {
-              key   = local.admin_gui_node_selector_keys[index]
-              value = local.admin_gui_node_selector_values[index]
+          for_each = (local.admin_0_9_gui_node_selector != {} ? [
+            for index in range(0, length(local.admin_0_9_gui_node_selector_keys)) : {
+              key   = local.admin_0_9_gui_node_selector_keys[index]
+              value = local.admin_0_9_gui_node_selector_values[index]
             }
           ] : [])
           content {

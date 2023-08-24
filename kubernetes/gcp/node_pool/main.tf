@@ -33,87 +33,87 @@ resource "google_container_node_pool" "pools" {
   cluster  = var.cluster_name
 
   # use node_locations if provided, defaults to cluster level node_locations if not specified
-  node_locations     = lookup(each.value, "node_locations", "") != "" ? split(",", each.value["node_locations"]) : null
-  version            = lookup(each.value, "auto_upgrade", local.default_auto_upgrade) ? "" : lookup(each.value, "version", var.min_master_version)
-  initial_node_count = lookup(each.value, "autoscaling", true) ? lookup(each.value, "initial_node_count", lookup(each.value, "min_count", 1)) : null
-  max_pods_per_node  = lookup(each.value, "max_pods_per_node", null)
-  node_count         = lookup(each.value, "autoscaling", true) ? null : lookup(each.value, "node_count", 1)
+  node_locations     = can(coalesce(each.value.node_locations)) ? split(",", each.value.node_locations) : null
+  version            = try(each.value.auto_upgrade, local.default_auto_upgrade) ? "" : try(each.value.version, var.min_master_version)
+  initial_node_count = try(each.value.autoscaling, true) ? try(each.value.initial_node_count, try(each.value.min_count, 1)) : null
+  max_pods_per_node  = try(each.value.max_pods_per_node, null)
+  node_count         = try(each.value.autoscaling, true) ? null : try(each.value.node_count, 1)
 
   management {
-    auto_repair  = lookup(each.value, "auto_repair", true)
-    auto_upgrade = lookup(each.value, "auto_upgrade", local.default_auto_upgrade)
+    auto_repair  = try(each.value.auto_repair, true)
+    auto_upgrade = try(each.value.auto_upgrade, local.default_auto_upgrade)
   }
 
   upgrade_settings {
-    strategy        = lookup(each.value, "strategy", "SURGE")
-    max_surge       = lookup(each.value, "strategy", "SURGE") == "SURGE" ? lookup(each.value, "max_surge", 1) : null
-    max_unavailable = lookup(each.value, "strategy", "SURGE") == "SURGE" ? lookup(each.value, "max_unavailable", 0) : null
+    strategy        = try(each.value.strategy, "SURGE")
+    max_surge       = try(each.value.strategy, "SURGE") == "SURGE" ? try(each.value.max_surge, 1) : null
+    max_unavailable = try(each.value.strategy, "SURGE") == "SURGE" ? try(each.value.max_unavailable, 0) : null
     dynamic "blue_green_settings" {
-      for_each = lookup(each.value, "strategy", "SURGE") == "BLUE_GREEN" ? [1] : []
+      for_each = try(each.value.strategy, "SURGE") == "BLUE_GREEN" ? [1] : []
       content {
-        node_pool_soak_duration = lookup(each.value, "node_pool_soak_duration", null)
+        node_pool_soak_duration = try(each.value.node_pool_soak_duration, null)
         standard_rollout_policy {
-          batch_soak_duration = lookup(each.value, "batch_soak_duration", null)
-          batch_percentage    = lookup(each.value, "batch_percentage", null)
-          batch_node_count    = lookup(each.value, "batch_node_count", null)
+          batch_soak_duration = try(each.value.batch_soak_duration, null)
+          batch_percentage    = try(each.value.batch_percentage, null)
+          batch_node_count    = try(each.value.batch_node_count, null)
         }
       }
     }
   }
 
   node_config {
-    boot_disk_kms_key = lookup(each.value, "boot_disk_kms_key", "")
-    image_type        = lookup(each.value, "image_type", "COS_CONTAINERD")
-    machine_type      = lookup(each.value, "machine_type", "e2-medium")
-    min_cpu_platform  = lookup(each.value, "min_cpu_platform", "")
-    local_ssd_count   = lookup(each.value, "local_ssd_count", 0)
-    disk_size_gb      = lookup(each.value, "disk_size_gb", 100)
-    disk_type         = lookup(each.value, "disk_type", "pd-standard")
-    preemptible       = lookup(each.value, "preemptible", false)
-    spot              = lookup(each.value, "spot", false)
-    service_account   = lookup(each.value, "service_account", var.service_account)
-    oauth_scopes      = concat(var.base_oauth_scopes, lookup(each.value, "oauth_scopes", []))
-    tags              = concat(var.base_tags, lookup(each.value, "tags", []))
-    labels            = merge(var.base_labels, lookup(each.value, "labels", {}))
-    resource_labels   = merge(var.base_resource_labels, lookup(each.value, "resource_labels", {}))
-    metadata          = merge(var.base_metadata, lookup(each.value, "metadata", {}), { "disable-legacy-endpoints" = var.disable_legacy_metadata_endpoints })
+    boot_disk_kms_key = try(each.value.boot_disk_kms_key, "")
+    image_type        = try(each.value.image_type, "COS_CONTAINERD")
+    machine_type      = try(each.value.machine_type, "e2-medium")
+    min_cpu_platform  = try(each.value.min_cpu_platform, "")
+    local_ssd_count   = try(each.value.local_ssd_count, 0)
+    disk_size_gb      = try(each.value.disk_size_gb, 100)
+    disk_type         = try(each.value.disk_type, "pd-standard")
+    preemptible       = try(each.value.preemptible, false)
+    spot              = try(each.value.spot, false)
+    service_account   = try(each.value.service_account, var.service_account)
+    oauth_scopes      = setunion(var.base_oauth_scopes, try(each.value.oauth_scopes, []))
+    tags              = setunion(var.base_tags, try(each.value.tags, []))
+    labels            = merge(var.base_labels, try(each.value.labels, {}))
+    resource_labels   = merge(var.base_resource_labels, try(each.value.resource_labels, {}))
+    metadata          = merge(var.base_metadata, try(each.value.metadata, {}), { "disable-legacy-endpoints" = var.disable_legacy_metadata_endpoints })
     workload_metadata_config {
-      mode = lookup(each.value, "node_metadata", var.node_metadata)
+      mode = try(each.value.node_metadata, var.node_metadata)
     }
     shielded_instance_config {
-      enable_secure_boot          = lookup(each.value, "enable_secure_boot", false)
-      enable_integrity_monitoring = lookup(each.value, "enable_integrity_monitoring", true)
+      enable_secure_boot          = try(each.value.enable_secure_boot, false)
+      enable_integrity_monitoring = try(each.value.enable_integrity_monitoring, true)
     }
     dynamic "gcfs_config" {
-      for_each = lookup(each.value, "enable_gcfs", false) ? [true] : []
+      for_each = try(each.value.enable_gcfs, false) ? [true] : []
       content {
         enabled = gcfs_config.value
       }
     }
     dynamic "gvnic" {
-      for_each = lookup(each.value, "enable_gvnic", false) ? [true] : []
+      for_each = try(each.value.enable_gvnic, false) ? [true] : []
       content {
         enabled = gvnic.value
       }
     }
     dynamic "taint" {
-      for_each = concat(var.base_taints, lookup(each.value, "taint", null) != null ? each.value.taint : [])
+      for_each = merge(var.base_taints, try(each.value.taint, {}))
       content {
+        key    = taint.key
         effect = taint.value.effect
-        key    = taint.value.key
         value  = taint.value.value
       }
     }
     dynamic "guest_accelerator" {
-      for_each = lookup(each.value, "accelerator_count", 0) > 0 ? [1] : []
+      for_each = try(each.value.accelerator_count, 0) > 0 ? [1] : []
       content {
-        type               = lookup(each.value, "accelerator_type", "")
-        count              = lookup(each.value, "accelerator_count", 0)
-        gpu_partition_size = lookup(each.value, "gpu_partition_size", null)
+        type               = try(each.value.accelerator_type, "")
+        count              = try(each.value.accelerator_count, 0)
+        gpu_partition_size = try(each.value.gpu_partition_size, null)
       }
     }
     dynamic "linux_node_config" {
-      for_each = lookup(each.value, "linux_node_config", null) != null ? each.value.linux_node_config : []
+      for_each = try(each.value.linux_node_config, [])
       content {
         sysctls = linux_node_config.value
       }
@@ -125,16 +125,16 @@ resource "google_container_node_pool" "pools" {
   }
 
   timeouts {
-    create = lookup(var.timeouts, "create", "45m")
-    update = lookup(var.timeouts, "update", "45m")
-    delete = lookup(var.timeouts, "delete", "45m")
+    create = try(var.timeouts.create, "45m")
+    update = try(var.timeouts.update, "45m")
+    delete = try(var.timeouts.delete, "45m")
   }
 
   dynamic "autoscaling" {
-    for_each = lookup(each.value, "autoscaling", true) ? [each.value] : []
+    for_each = try(each.value.autoscaling, true) ? [each.value] : []
     content {
-      min_node_count       = contains(keys(autoscaling.value), "total_min_count") ? null : lookup(autoscaling.value, "min_count", 1)
-      max_node_count       = contains(keys(autoscaling.value), "total_max_count") ? null : lookup(autoscaling.value, "max_count", 100)
+      min_node_count       = contains(keys(autoscaling.value), "total_min_count") ? null : try(autoscaling.value.min_count, 1)
+      max_node_count       = contains(keys(autoscaling.value), "total_max_count") ? null : try(autoscaling.value.max_count, 100)
       location_policy      = lookup(autoscaling.value, "location_policy", null)
       total_min_node_count = lookup(autoscaling.value, "total_min_count", null)
       total_max_node_count = lookup(autoscaling.value, "total_max_count", null)
@@ -150,73 +150,73 @@ resource "google_container_node_pool" "windows_pools" {
   cluster  = var.cluster_name
 
   # use node_locations if provided, defaults to cluster level node_locations if not specified
-  node_locations     = lookup(each.value, "node_locations", "") != "" ? split(",", each.value["node_locations"]) : null
-  version            = lookup(each.value, "auto_upgrade", local.default_auto_upgrade) ? "" : lookup(each.value, "version", var.min_master_version)
-  initial_node_count = lookup(each.value, "autoscaling", true) ? lookup(each.value, "initial_node_count", lookup(each.value, "min_count", 1)) : null
-  max_pods_per_node  = lookup(each.value, "max_pods_per_node", null)
-  node_count         = lookup(each.value, "autoscaling", true) ? null : lookup(each.value, "node_count", 1)
+  node_locations     = can(each.value.node_locations) ? split(",", each.value.node_locations) : null
+  version            = try(each.value.auto_upgrade, local.default_auto_upgrade) ? "" : try(each.value.version, var.min_master_version)
+  initial_node_count = try(each.value.autoscaling, true) ? try(each.value.initial_node_count, try(each.value.min_count, 1)) : null
+  max_pods_per_node  = try(each.value.max_pods_per_node, null)
+  node_count         = try(each.value.autoscaling, true) ? null : try(each.value.node_count, 1)
 
   management {
-    auto_repair  = lookup(each.value, "auto_repair", true)
-    auto_upgrade = lookup(each.value, "auto_upgrade", local.default_auto_upgrade)
+    auto_repair  = try(each.value.auto_repair, true)
+    auto_upgrade = try(each.value.auto_upgrade, local.default_auto_upgrade)
   }
 
   upgrade_settings {
-    strategy        = lookup(each.value, "strategy", "SURGE")
-    max_surge       = lookup(each.value, "strategy", "SURGE") == "SURGE" ? lookup(each.value, "max_surge", 1) : null
-    max_unavailable = lookup(each.value, "strategy", "SURGE") == "SURGE" ? lookup(each.value, "max_unavailable", 0) : null
+    strategy        = try(each.value.strategy, "SURGE")
+    max_surge       = try(each.value.strategy, "SURGE") == "SURGE" ? try(each.value.max_surge, 1) : null
+    max_unavailable = try(each.value.strategy, "SURGE") == "SURGE" ? try(each.value.max_unavailable, 0) : null
 
     dynamic "blue_green_settings" {
-      for_each = lookup(each.value, "strategy", "SURGE") == "BLUE_GREEN" ? [1] : []
+      for_each = try(each.value.strategy, "SURGE") == "BLUE_GREEN" ? [1] : []
       content {
-        node_pool_soak_duration = lookup(each.value, "node_pool_soak_duration", null)
+        node_pool_soak_duration = try(each.value.node_pool_soak_duration, null)
 
         standard_rollout_policy {
-          batch_soak_duration = lookup(each.value, "batch_soak_duration", null)
-          batch_percentage    = lookup(each.value, "batch_percentage", null)
-          batch_node_count    = lookup(each.value, "batch_node_count", null)
+          batch_soak_duration = try(each.value.batch_soak_duration, null)
+          batch_percentage    = try(each.value.batch_percentage, null)
+          batch_node_count    = try(each.value.batch_node_count, null)
         }
       }
     }
   }
 
   node_config {
-    boot_disk_kms_key = lookup(each.value, "boot_disk_kms_key", "")
-    image_type        = lookup(each.value, "image_type", "COS_CONTAINERD")
-    machine_type      = lookup(each.value, "machine_type", "e2-medium")
-    min_cpu_platform  = lookup(each.value, "min_cpu_platform", "")
-    local_ssd_count   = lookup(each.value, "local_ssd_count", 0)
-    disk_size_gb      = lookup(each.value, "disk_size_gb", 100)
-    disk_type         = lookup(each.value, "disk_type", "pd-standard")
-    preemptible       = lookup(each.value, "preemptible", false)
-    spot              = lookup(each.value, "spot", false)
-    service_account   = lookup(each.value, "service_account", var.service_account)
-    oauth_scopes      = concat(var.base_oauth_scopes, lookup(each.value, "oauth_scopes", []))
-    tags              = concat(var.base_tags, lookup(each.value, "tags", []))
-    labels            = merge(var.base_labels, lookup(each.value, "labels", {}))
-    resource_labels   = merge(var.base_resource_labels, lookup(each.value, "resource_labels", {}))
-    metadata          = merge(var.base_metadata, lookup(each.value, "metadata", {}), { "disable-legacy-endpoints" = var.disable_legacy_metadata_endpoints })
+    boot_disk_kms_key = try(each.value.boot_disk_kms_key, "")
+    image_type        = try(each.value.image_type, "COS_CONTAINERD")
+    machine_type      = try(each.value.machine_type, "e2-medium")
+    min_cpu_platform  = try(each.value.min_cpu_platform, "")
+    local_ssd_count   = try(each.value.local_ssd_count, 0)
+    disk_size_gb      = try(each.value.disk_size_gb, 100)
+    disk_type         = try(each.value.disk_type, "pd-standard")
+    preemptible       = try(each.value.preemptible, false)
+    spot              = try(each.value.spot, false)
+    service_account   = try(each.value.service_account, var.service_account)
+    oauth_scopes      = concat(var.base_oauth_scopes, try(each.value.oauth_scopes, []))
+    tags              = concat(var.base_tags, try(each.value.tags, []))
+    labels            = merge(var.base_labels, try(each.value.labels, {}))
+    resource_labels   = merge(var.base_resource_labels, try(each.value.resource_labels, {}))
+    metadata          = merge(var.base_metadata, try(each.value.metadata, {}), { "disable-legacy-endpoints" = var.disable_legacy_metadata_endpoints })
     workload_metadata_config {
-      mode = lookup(each.value, "node_metadata", var.node_metadata)
+      mode = try(each.value.node_metadata, var.node_metadata)
     }
     shielded_instance_config {
-      enable_secure_boot          = lookup(each.value, "enable_secure_boot", false)
-      enable_integrity_monitoring = lookup(each.value, "enable_integrity_monitoring", true)
+      enable_secure_boot          = try(each.value.enable_secure_boot, false)
+      enable_integrity_monitoring = try(each.value.enable_integrity_monitoring, true)
     }
     dynamic "gcfs_config" {
-      for_each = lookup(each.value, "enable_gcfs", false) ? [true] : []
+      for_each = try(each.value.enable_gcfs, false) ? [true] : []
       content {
         enabled = gcfs_config.value
       }
     }
     dynamic "gvnic" {
-      for_each = lookup(each.value, "enable_gvnic", false) ? [true] : []
+      for_each = try(each.value.enable_gvnic, false) ? [true] : []
       content {
         enabled = gvnic.value
       }
     }
     dynamic "taint" {
-      for_each = lookup(each.value, "taint", null) != null ? each.value.taint : []
+      for_each = try(each.value.taint, [])
       content {
         effect = taint.value.effect
         key    = taint.value.key
@@ -224,11 +224,11 @@ resource "google_container_node_pool" "windows_pools" {
       }
     }
     dynamic "guest_accelerator" {
-      for_each = lookup(each.value, "accelerator_count", 0) > 0 ? [1] : []
+      for_each = try(each.value.accelerator_count, 0) > 0 ? [1] : []
       content {
-        type               = lookup(each.value, "accelerator_type", "")
-        count              = lookup(each.value, "accelerator_count", 0)
-        gpu_partition_size = lookup(each.value, "gpu_partition_size", null)
+        type               = try(each.value.accelerator_type, "")
+        count              = try(each.value.accelerator_count, 0)
+        gpu_partition_size = try(each.value.gpu_partition_size, null)
       }
     }
   }
@@ -238,21 +238,19 @@ resource "google_container_node_pool" "windows_pools" {
   }
 
   timeouts {
-    create = lookup(var.timeouts, "create", "45m")
-    update = lookup(var.timeouts, "update", "45m")
-    delete = lookup(var.timeouts, "delete", "45m")
+    create = try(var.timeouts.create, "45m")
+    update = try(var.timeouts.update, "45m")
+    delete = try(var.timeouts.delete, "45m")
   }
 
   dynamic "autoscaling" {
-    for_each = lookup(each.value, "autoscaling", true) ? [each.value] : []
+    for_each = try(each.value.autoscaling, true) ? [each.value] : []
     content {
-      min_node_count       = contains(keys(autoscaling.value), "total_min_count") ? null : lookup(autoscaling.value, "min_count", 1)
-      max_node_count       = contains(keys(autoscaling.value), "total_max_count") ? null : lookup(autoscaling.value, "max_count", 100)
-      location_policy      = lookup(autoscaling.value, "location_policy", null)
-      total_min_node_count = lookup(autoscaling.value, "total_min_count", null)
-      total_max_node_count = lookup(autoscaling.value, "total_max_count", null)
+      min_node_count       = contains(keys(autoscaling.value), "total_min_count") ? null : try(autoscaling.value.min_count, 1)
+      max_node_count       = contains(keys(autoscaling.value), "total_max_count") ? null : try(autoscaling.value.max_count, 100)
+      location_policy      = try(autoscaling.value.location_policy, null)
+      total_min_node_count = try(autoscaling.value.total_min_count, null)
+      total_max_node_count = try(autoscaling.value.total_max_count, null)
     }
   }
-
-  depends_on = [google_container_node_pool.pools[0]]
 }

@@ -10,6 +10,7 @@ variable "vpc_network" {
 variable "service_name" {
   description = "The private service access to create"
   type        = string
+  default     = "servicenetworking.googleapis.com"
 }
 
 ######## SECTION - GLOBAL ADDRESS

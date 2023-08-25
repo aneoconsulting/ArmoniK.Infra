@@ -6,7 +6,7 @@ resource "kubernetes_deployment" "admin_0_8_gui" {
     namespace = var.namespace
     labels = {
       app     = "armonik"
-      service = "app-gui"
+      service = "admin-0-8-gui"
     }
   }
   spec {

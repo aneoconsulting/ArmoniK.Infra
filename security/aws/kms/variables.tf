@@ -19,7 +19,11 @@ variable "bypass_policy_lockout_safety_check" {
 variable "customer_master_key_spec" {
   description = "Specifies whether the key contains a symmetric key or an asymmetric key pair and the encryption algorithms or signing algorithms that the key supports. Valid values: `SYMMETRIC_DEFAULT`, `RSA_2048`, `RSA_3072`, `RSA_4096`, `HMAC_256`, `ECC_NIST_P256`, `ECC_NIST_P384`, `ECC_NIST_P521`, or `ECC_SECG_P256K1`. Defaults to `SYMMETRIC_DEFAULT`"
   type        = string
-  default     = null
+  default     = "SYMMETRIC_DEFAULT"
+  validation {
+    condition     = contains(["SYMMETRIC_DEFAULT", "RSA_2048", "RSA_3072", "HMAC_256", "ECC_NIST_P256", "ECC_NIST_P256", "ECC_NIST_P384", "ECC_NIST_P521", "ECC_SECG_P256K1"], var.customer_master_key_spec)
+    error_message = "This argument must contains one of these values =\"SYMMETRIC_DEFAULT\", \"RSA_2048\",\"RSA_3072\",\"HMAC_256\",\"ECC_NIST_P256\",\"ECC_NIST_P384\",\"ECC_NIST_P521\",\"ECC_SECG_P256K1\"."
+  }
 }
 
 variable "deletion_window_in_days" {

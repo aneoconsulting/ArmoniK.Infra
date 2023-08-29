@@ -1,6 +1,6 @@
 ######## SECTION - VPC to get
 
-variable "vpc_self_link" {
+variable "vpc_link" {
   description = "The vpc on which the psa will be created"
   type        = string
 }
@@ -33,6 +33,7 @@ variable "global_address_description" {
 variable "global_address_ip" {
   description = "The static IP represented by this resources."
   type        = string
+  default     = null
 }
 
 variable "global_address_prefix_length" {

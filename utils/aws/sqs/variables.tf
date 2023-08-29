@@ -68,12 +68,6 @@ variable "name" {
   default     = null
 }
 
-variable "use_name_prefix" {
-  description = "Determines whether `name` is used as a prefix"
-  type        = bool
-  default     = false
-}
-
 variable "receive_wait_time_seconds" {
   description = "The time for which a ReceiveMessage call will wait for a message to arrive (long polling) before returning. An integer from 0 to 20 (seconds)"
   type        = number

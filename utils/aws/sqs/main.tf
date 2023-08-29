@@ -18,8 +18,7 @@ resource "aws_sqs_queue" "this" {
   kms_master_key_id                 = var.kms_master_key_id
   max_message_size                  = var.max_message_size
   message_retention_seconds         = var.message_retention_seconds
-  name                              = var.use_name_prefix ? null : (var.fifo_queue ? "${local.name}.fifo" : local.name)
-  name_prefix                       = var.use_name_prefix ? "${local.name}-" : null
+  name                              = var.fifo_queue ? "${local.name}.fifo" : local.name
   receive_wait_time_seconds         = var.receive_wait_time_seconds
   sqs_managed_sse_enabled           = var.kms_master_key_id != null ? null : var.sqs_managed_sse_enabled
   visibility_timeout_seconds        = var.visibility_timeout_seconds
@@ -119,7 +118,7 @@ resource "aws_sqs_queue_redrive_policy" "dlq" {
 locals {
   stripped_dlq_name = try(trimsuffix(var.dlq_name, ".fifo"), "")
   inter_dlq_name    = try(coalesce(local.stripped_dlq_name, "${local.name}-dlq"), "")
-  dlq_name          = var.fifo_queue && !var.use_name_prefix ? "${local.inter_dlq_name}.fifo" : local.inter_dlq_name
+  dlq_name          = var.fifo_queue ? "${local.inter_dlq_name}.fifo" : local.inter_dlq_name
 
   dlq_kms_master_key_id       = try(coalesce(var.dlq_kms_master_key_id, var.kms_master_key_id), null)
   dlq_sqs_managed_sse_enabled = coalesce(var.dlq_sqs_managed_sse_enabled, var.sqs_managed_sse_enabled)
@@ -138,8 +137,8 @@ resource "aws_sqs_queue" "dlq" {
   kms_master_key_id                 = local.dlq_kms_master_key_id
   max_message_size                  = var.max_message_size
   message_retention_seconds         = try(coalesce(var.dlq_message_retention_seconds, var.message_retention_seconds), null)
-  name                              = var.use_name_prefix ? null : local.dlq_name
-  name_prefix                       = var.use_name_prefix ? "${local.dlq_name}-" : null
+  name                              = local.dlq_name
+  name_prefix                       = "${local.dlq_name}-"
   receive_wait_time_seconds         = try(coalesce(var.dlq_receive_wait_time_seconds, var.receive_wait_time_seconds), null)
   sqs_managed_sse_enabled           = local.dlq_kms_master_key_id != null ? null : local.dlq_sqs_managed_sse_enabled
   visibility_timeout_seconds        = try(coalesce(var.dlq_visibility_timeout_seconds, var.visibility_timeout_seconds), null)

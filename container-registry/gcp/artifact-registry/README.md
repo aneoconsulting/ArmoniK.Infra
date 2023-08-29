@@ -41,7 +41,7 @@ No modules.
 | Name | Type |
 |------|------|
 | [google_artifact_registry_repository.docker](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/artifact_registry_repository) | resource |
-| [google_artifact_registry_repository_iam_binding.binding](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/artifact_registry_repository_iam_binding) | resource |
+| [google_artifact_registry_repository_iam_member.artifact_registry_roles](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/artifact_registry_repository_iam_member) | resource |
 | [null_resource.copy_images](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
 | [google_client_config.current](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/client_config) | data source |
 | [google_project.project](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/project) | data source |
@@ -52,7 +52,7 @@ No modules.
 |------|-------------|------|---------|:--------:|
 | <a name="input_description"></a> [description](#input\_description) | Description of the registry | `string` | `""` | no |
 | <a name="input_docker_images"></a> [docker\_images](#input\_docker\_images) | Docker container images to push inside the registry | <pre>map(object({<br>    image = string<br>    tag   = string<br>  }))</pre> | n/a | yes |
-| <a name="input_iam_bindings"></a> [iam\_bindings](#input\_iam\_bindings) | Assign role on the repository for a list of users | `map(list(string))` | `{}` | no |
+| <a name="input_iam_roles"></a> [iam\_roles](#input\_iam\_roles) | Assign role on the repository for a list of users | `map(list(string))` | `{}` | no |
 | <a name="input_immutable_tags"></a> [immutable\_tags](#input\_immutable\_tags) | If the registry is a docker format then tags can be immutable (true or false) | `bool` | `true` | no |
 | <a name="input_kms_key_name"></a> [kms\_key\_name](#input\_kms\_key\_name) | KMS key name to encrypt GCP repositories. Has the form: projects/{{my-project}}/locations/{{my-region}}/keyRings/{{my-kr}}/cryptoKeys/{{my-key}} | `string` | `null` | no |
 | <a name="input_labels"></a> [labels](#input\_labels) | Labels for the registry | `map(string)` | `{}` | no |

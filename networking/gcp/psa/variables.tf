@@ -1,7 +1,7 @@
 ######## SECTION - VPC to get
 
-variable "vpc_network" {
-  description = "The vpc_network on which the psa will be created"
+variable "vpc_self_link" {
+  description = "The vpc on which the psa will be created"
   type        = string
 }
 
@@ -58,13 +58,4 @@ variable "global_address_adress_type" {
     error_message = "The value can only be INTERNAL or EXTERNAL"
   }
   default = "EXTERNAL"
-}
-
-variable "global_address_purpose" {
-  description = "The purpose of this resource"
-  type        = string
-  validation {
-    condition     = can(regex("GCE_ENDPOINT|DNS_RESOLVER|VPC_PEERING|NAT_AUTO|IPSEC_INTERCONNECT|SHARED_LOADBALANCER_VIP|SHARED_LOADBALANCER_VIP", var.global_address_purpose))
-    error_message = "The value can only be one theses: GCE_ENDPOINT, DNS_RESOLVER, VPC_PEERING, NAT_AUTO, IPSEC_INTERCONNECT, SHARED_LOADBALANCER_VIP, SHARED_LOADBALANCER_VIP"
-  }
 }

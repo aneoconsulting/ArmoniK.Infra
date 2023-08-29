@@ -1,4 +1,5 @@
 data "google_client_config" "current" {}
+data "google_project" "project" {}
 
 locals {
   labels = merge(var.labels, { module = "docker-artifact-registry" })
@@ -55,12 +56,4 @@ resource "google_artifact_registry_repository_iam_binding" "binding" {
   repository = google_artifact_registry_repository.docker.name
   role       = each.key
   members    = each.value
-}
-
-resource "google_service_account" "service_account" {
-  count        = var.create_service_account != false ? 1 : 0
-  account_id   = var.service_account_id
-  display_name = var.service_account_display_name
-  description  = var.service_account_description
-  project      = data.google_client_config.current.project
 }

@@ -10,5 +10,5 @@ output "kms_key_name" {
 
 output "service_account" {
   description = "The associated service account created for artifact-registry."
-  value       = google_service_account.service_account
+  value       = "service-${data.google_project.project.number}@gcp-sa-artifactregistry.iam.gserviceaccount.com"
 }

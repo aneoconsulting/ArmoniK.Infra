@@ -35,7 +35,7 @@ variable "immutable_tags" {
   default     = true
 }
 
-variable "iam_bindings" {
+variable "iam_roles" {
   description = "Assign role on the repository for a list of users"
   type        = map(list(string))
   default     = {}

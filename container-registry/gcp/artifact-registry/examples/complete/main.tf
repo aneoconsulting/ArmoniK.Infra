@@ -32,9 +32,9 @@ locals {
     }
   }
   registry_iam = {
-    "roles/artifactregistry.repoAdmin" = [],
-    "roles/artifactregistry.reader"    = [],
-    "roles/artifactregistry.writer"    = []
+    "roles/artifactregistry.repoAdmin" = [ "user:user1@test.com", "user:user2@test.com","user:user3@test.com"],
+    "roles/artifactregistry.reader"    = [ "user:user1@test.com"],
+    "roles/artifactregistry.writer"    = [ "user:user1@test.com","user:user2@test.com"]
   }
   date = <<-EOT
 #!/bin/bash
@@ -71,7 +71,7 @@ module "complete_artifact_registry" {
   description    = "A complete artifact registry"
   immutable_tags = true
   kms_key_name   = null
-  iam_bindings   = local.registry_iam
+  iam_roles      = local.registry_iam
   labels = {
     env             = "test"
     app             = "complete"
@@ -79,9 +79,4 @@ module "complete_artifact_registry" {
     "create_by"     = split("@", data.google_client_openid_userinfo.current.email)[0]
     "creation_date" = null_resource.timestamp.triggers["date"]
   }
-  create_service_account       = true
-  service_account_id           = "my-service-account-id-13469"
-  service_account_display_name = "my-service-account-artifact-registry"
-  service_account_description  = "The description of the service-account"
-
 }

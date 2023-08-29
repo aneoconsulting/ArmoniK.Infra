@@ -83,6 +83,6 @@ variable "transition_to_ia" {
 
 variable "access_point" {
   description = " A map of access point definitions to create"
-  type        = list(string)
+  type        = set(string)
   default     = []
 }

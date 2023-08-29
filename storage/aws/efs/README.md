@@ -32,7 +32,7 @@ No modules.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_access_point"></a> [access\_point](#input\_access\_point) | A map of access point definitions to create | `list(string)` | `[]` | no |
+| <a name="input_access_point"></a> [access\_point](#input\_access\_point) | A map of access point definitions to create | `set(string)` | `[]` | no |
 | <a name="input_kms_key_id"></a> [kms\_key\_id](#input\_kms\_key\_id) | Id of the KMS key | `string` | `null` | no |
 | <a name="input_name"></a> [name](#input\_name) | AWS EFS name | `string` | `"armonik-efs"` | no |
 | <a name="input_performance_mode"></a> [performance\_mode](#input\_performance\_mode) | The file system performance mode. Can be either generalPurpose or maxIO | `string` | `"generalPurpose"` | no |

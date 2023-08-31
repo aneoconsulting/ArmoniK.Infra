@@ -63,7 +63,18 @@ No modules.
 | <a name="input_min_ready_seconds"></a> [min\_ready\_seconds](#input\_min\_ready\_seconds) | Field that specifies the minimum number of seconds for which a newly created Pod should be ready without any of its containers crashing, for it to be considered available | `number` | `null` | no |
 | <a name="input_name"></a> [name](#input\_name) | value | `string` | `"activemq"` | no |
 | <a name="input_namespace"></a> [namespace](#input\_namespace) | Namespace of ArmoniK storage resources | `string` | n/a | yes |
-
+| <a name="input_node_name"></a> [node\_name](#input\_node\_name) | (Optional) NodeName is a request to schedule this pod onto a specific node. If it is non-empty, the scheduler simply schedules this pod onto that node, assuming that it fits resource requirements | `string` | `null` | no |
+| <a name="input_node_selector"></a> [node\_selector](#input\_node\_selector) | Specify node selector for pod | `map(string)` | `{}` | no |
+| <a name="input_priority_class_name"></a> [priority\_class\_name](#input\_priority\_class\_name) | Indicates the pod's priority. Requires an existing priority class name resource if not 'system-node-critical' and 'system-cluster-critical' | `string` | `""` | no |
+| <a name="input_progress_deadline_seconds"></a> [progress\_deadline\_seconds](#input\_progress\_deadline\_seconds) | The maximum time in seconds for a deployment to make progress before it is considered to be failed | `number` | `600` | no |
+| <a name="input_restart_policy"></a> [restart\_policy](#input\_restart\_policy) | Restart policy for all containers within the pod. One of Always, OnFailure, Never | `string` | `"Always"` | no |
+| <a name="input_revision_history_limit"></a> [revision\_history\_limit](#input\_revision\_history\_limit) | The number of revision hitory to keep. | `number` | `10` | no |
+| <a name="input_rolling_update"></a> [rolling\_update](#input\_rolling\_update) | Rolling update config params. Present only if strategy\_update = RollingUpdate | `object({ max_surge = optional(string), max_unavailable = optional(string) })` | `{}` | no |
+| <a name="input_security_context"></a> [security\_context](#input\_security\_context) | (Optional) SecurityContext holds pod-level security attributes and common container settings | `list(any)` | `[]` | no |
+| <a name="input_strategy_update"></a> [strategy\_update](#input\_strategy\_update) | (Optional) Type of deployment. Can be 'Recreate' or 'RollingUpdate' | `string` | `null` | no |
+| <a name="input_tag"></a> [tag](#input\_tag) | tag of images | `string` | `"5.17.0"` | no |
+| <a name="input_termination_grace_period_seconds"></a> [termination\_grace\_period\_seconds](#input\_termination\_grace\_period\_seconds) | Duration in seconds the pod needs to terminate gracefully | `number` | `20` | no |
+| <a name="input_toleration"></a> [toleration](#input\_toleration) | (Optional) Pod node tolerations | <pre>list(object({<br>    effect             = optional(string)<br>    key                = optional(string)<br>    operator           = optional(string)<br>    toleration_seconds = optional(string)<br>    value              = optional(string)<br>  }))</pre> | `[]` | no |
 
 ## Outputs
 

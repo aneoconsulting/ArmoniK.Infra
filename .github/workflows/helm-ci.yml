@@ -24,6 +24,8 @@ jobs:
         uses: helm/chart-testing-action@v2.4.0
       - name: Run linter
         run: |
+          pwd 
+          ls 
           ct lint --validate-chart-schema --validate-maintainers --validate-yaml --config ct.yaml --chart-yaml-schema chart-schema.yaml --lint-conf lintconf.yaml --check-version-increment=false
           #yamllint -c lintconf.yaml charts/
           #yamale --schema chart-schema.yaml charts/

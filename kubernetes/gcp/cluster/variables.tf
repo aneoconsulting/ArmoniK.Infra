@@ -316,7 +316,7 @@ variable "create_service_account" {
 variable "grant_registry_access" {
   type        = bool
   description = "Grants created cluster-specific service account storage.objectViewer and artifactregistry.reader roles."
-  default     = true
+  default     = false
 }
 
 variable "registry_project_ids" {
@@ -470,7 +470,7 @@ variable "initial_node_count" {
 variable "remove_default_node_pool" {
   type        = bool
   description = "Remove default node pool while setting up the cluster"
-  default     = true
+  default     = false
 }
 
 variable "filestore_csi_driver" {
@@ -589,6 +589,6 @@ variable "enable_kubernetes_alpha" {
 }
 variable "kubeconfig_path" {
   description = "value"
-  type        = string
-
+  type = string  
+  
 }

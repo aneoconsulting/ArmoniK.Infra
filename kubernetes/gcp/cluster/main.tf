@@ -1,8 +1,8 @@
 resource "null_resource" "update_kubeconfig" {
-   provisioner "local-exec" {
-   command = "export KUBECONFIG=${var.kubeconfig_path} && gcloud container clusters get-credentials ${module.gke.name} --location=${module.gke.location}"
-   
-}
+  provisioner "local-exec" {
+    command = "export KUBECONFIG=${var.kubeconfig_path} && gcloud container clusters get-credentials ${module.gke.name} --location=${module.gke.location}"
+
+  }
 }
 
 module "gke" {

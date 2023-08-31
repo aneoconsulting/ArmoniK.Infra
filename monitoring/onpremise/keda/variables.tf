@@ -3,12 +3,6 @@ variable "namespace" {
   description = "Namespace of Keda"
   type        = string
 }
-# Namespace
-variable "imad2" {
-  description = "Namespace of Keda"
-  type        = string
-}
-
 # Docker image
 variable "docker_image" {
   description = "Docker image for Keda"

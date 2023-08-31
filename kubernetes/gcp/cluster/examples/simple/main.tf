@@ -17,7 +17,7 @@ module "gke" {
   ip_range_pods            = module.vpc.gke_subnet_pods_range_name
   ip_range_services        = module.vpc.gke_subnet_svc_range_name
   create_service_account   = false
-  service_account          = "tf-gke-gke-test-1-k4hk@armonik-gcp-13469.iam.gserviceaccount.com"
+  service_account          = var.service_account
   remove_default_node_pool = true
   kubeconfig_path          = local.kubeconfig_path
 }

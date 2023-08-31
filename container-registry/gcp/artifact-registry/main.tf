@@ -50,7 +50,7 @@ resource "google_artifact_registry_repository" "docker" {
 }
 
 resource "google_artifact_registry_repository_iam_member" "artifact_registry_roles" {
-  for_each   = { for role in flatten([ for role_key, role in var.iam_roles : [ for member in role : { role = role_key, member = member} ]]) : "${role.role}.${role.member}" => role }
+  for_each   = { for role in flatten([for role_key, role in var.iam_roles : [for member in role : { role = role_key, member = member }]]) : "${role.role}.${role.member}" => role }
   project    = data.google_client_config.current.project
   location   = data.google_client_config.current.region
   repository = google_artifact_registry_repository.docker.name

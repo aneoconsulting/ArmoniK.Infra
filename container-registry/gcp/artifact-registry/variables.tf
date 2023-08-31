@@ -40,6 +40,3 @@ variable "iam_roles" {
   type        = map(set(string))
   default     = {}
 }
-
-
-

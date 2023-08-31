@@ -4,7 +4,7 @@ variable "namespace" {
   type        = string
 }
 # Namespace
-variable "imad" {
+variable "imad2" {
   description = "Namespace of Keda"
   type        = string
 }

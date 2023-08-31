@@ -6,6 +6,7 @@ variable "project" {
 
 variable "region" {
   description = "The region to host the cluster in"
+  type        = string
   default     = "europe-west9"
 }
 
@@ -17,6 +18,7 @@ variable "cluster_name" {
 
 variable "network" {
   description = "The VPC network created to host the cluster in"
+  type        = string
   default     = "gke-complet-network"
 }
 

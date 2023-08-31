@@ -7,6 +7,7 @@ resource "null_resource" "update_kubeconfig" {
 
 module "gke" {
   source                                = "terraform-google-modules/kubernetes-engine/google"
+  version                               = "27.0.0"
   project_id                            = var.project_id
   name                                  = var.name
   description                           = var.description

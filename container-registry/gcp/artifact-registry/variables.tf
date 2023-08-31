@@ -37,7 +37,7 @@ variable "immutable_tags" {
 
 variable "iam_roles" {
   description = "Assign role on the repository for a list of users"
-  type        = map(list(string))
+  type        = map(set(string))
   default     = {}
 }
 

@@ -24,7 +24,13 @@
 
 ## Modules
 
-No modules.
+| Name | Source | Version |
+|------|--------|---------|
+| <a name="module_admin_0_8_gui_endpoint"></a> [admin\_0\_8\_gui\_endpoint](#module\_admin\_0\_8\_gui\_endpoint) | ../utils/service-ip | n/a |
+| <a name="module_admin_0_9_gui_endpoint"></a> [admin\_0\_9\_gui\_endpoint](#module\_admin\_0\_9\_gui\_endpoint) | ../utils/service-ip | n/a |
+| <a name="module_admin_gui_endpoint"></a> [admin\_gui\_endpoint](#module\_admin\_gui\_endpoint) | ../utils/service-ip | n/a |
+| <a name="module_control_plane_endpoint"></a> [control\_plane\_endpoint](#module\_control\_plane\_endpoint) | ../utils/service-ip | n/a |
+| <a name="module_ingress_endpoint"></a> [ingress\_endpoint](#module\_ingress\_endpoint) | ../utils/service-ip | n/a |
 
 ## Resources
 
@@ -42,8 +48,9 @@ No modules.
 | [kubernetes_config_map.static](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/config_map) | resource |
 | [kubernetes_config_map.worker_config](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/config_map) | resource |
 | [kubernetes_cron_job_v1.partitions_in_database](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/cron_job_v1) | resource |
+| [kubernetes_deployment.admin_0_8_gui](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/deployment) | resource |
+| [kubernetes_deployment.admin_0_9_gui](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/deployment) | resource |
 | [kubernetes_deployment.admin_gui](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/deployment) | resource |
-| [kubernetes_deployment.admin_old_gui](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/deployment) | resource |
 | [kubernetes_deployment.compute_plane](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/deployment) | resource |
 | [kubernetes_deployment.control_plane](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/deployment) | resource |
 | [kubernetes_deployment.ingress](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/deployment) | resource |
@@ -52,8 +59,9 @@ No modules.
 | [kubernetes_secret.ingress_certificate](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
 | [kubernetes_secret.ingress_client_certificate](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
 | [kubernetes_secret.ingress_client_certificate_authority](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
+| [kubernetes_service.admin_0_8_gui](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/service) | resource |
+| [kubernetes_service.admin_0_9_gui](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/service) | resource |
 | [kubernetes_service.admin_gui](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/service) | resource |
-| [kubernetes_service.admin_old_gui](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/service) | resource |
 | [kubernetes_service.control_plane](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/service) | resource |
 | [kubernetes_service.ingress](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/service) | resource |
 | [local_file.ingress_conf_file](https://registry.terraform.io/providers/hashicorp/local/latest/docs/resources/file) | resource |
@@ -75,6 +83,7 @@ No modules.
 | [tls_private_key.root_ingress](https://registry.terraform.io/providers/hashicorp/tls/latest/docs/resources/private_key) | resource |
 | [tls_self_signed_cert.client_root_ingress](https://registry.terraform.io/providers/hashicorp/tls/latest/docs/resources/self_signed_cert) | resource |
 | [tls_self_signed_cert.root_ingress](https://registry.terraform.io/providers/hashicorp/tls/latest/docs/resources/self_signed_cert) | resource |
+| [kubernetes_config_map.dns](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/data-sources/config_map) | data source |
 | [kubernetes_secret.deployed_object_storage](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/data-sources/secret) | data source |
 | [kubernetes_secret.deployed_queue_storage](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/data-sources/secret) | data source |
 | [kubernetes_secret.deployed_table_storage](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/data-sources/secret) | data source |
@@ -90,9 +99,13 @@ No modules.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
+| <a name="input_admin_0_8_gui"></a> [admin\_0\_8\_gui](#input\_admin\_0\_8\_gui) | Parameters of the admin GUI v0.8 | <pre>object({<br>    api = object({<br>      name  = string<br>      image = string<br>      tag   = string<br>      port  = number<br>      limits = object({<br>        cpu    = string<br>        memory = string<br>      })<br>      requests = object({<br>        cpu    = string<br>        memory = string<br>      })<br>    })<br>    app = object({<br>      name  = string<br>      image = string<br>      tag   = string<br>      port  = number<br>      limits = object({<br>        cpu    = string<br>        memory = string<br>      })<br>      requests = object({<br>        cpu    = string<br>        memory = string<br>      })<br>    })<br>    service_type       = string<br>    replicas           = number<br>    image_pull_policy  = string<br>    image_pull_secrets = string<br>    node_selector      = any<br>  })</pre> | `null` | no |
+| <a name="input_admin_0_9_gui"></a> [admin\_0\_9\_gui](#input\_admin\_0\_9\_gui) | Parameters of the admin GUI v0.9 | <pre>object({<br>    name  = string<br>    image = string<br>    tag   = string<br>    port  = number<br>    limits = object({<br>      cpu    = string<br>      memory = string<br>    })<br>    requests = object({<br>      cpu    = string<br>      memory = string<br>    })<br>    service_type       = string<br>    replicas           = number<br>    image_pull_policy  = string<br>    image_pull_secrets = string<br>    node_selector      = any<br>  })</pre> | `null` | no |
 | <a name="input_admin_gui"></a> [admin\_gui](#input\_admin\_gui) | Parameters of the admin GUI | <pre>object({<br>    name  = string<br>    image = string<br>    tag   = string<br>    port  = number<br>    limits = object({<br>      cpu    = string<br>      memory = string<br>    })<br>    requests = object({<br>      cpu    = string<br>      memory = string<br>    })<br>    service_type       = string<br>    replicas           = number<br>    image_pull_policy  = string<br>    image_pull_secrets = string<br>    node_selector      = any<br>  })</pre> | `null` | no |
-| <a name="input_admin_old_gui"></a> [admin\_old\_gui](#input\_admin\_old\_gui) | Parameters of the old admin GUI | <pre>object({<br>    api = object({<br>      name  = string<br>      image = string<br>      tag   = string<br>      port  = number<br>      limits = object({<br>        cpu    = string<br>        memory = string<br>      })<br>      requests = object({<br>        cpu    = string<br>        memory = string<br>      })<br>    })<br>    old = object({<br>      name  = string<br>      image = string<br>      tag   = string<br>      port  = number<br>      limits = object({<br>        cpu    = string<br>        memory = string<br>      })<br>      requests = object({<br>        cpu    = string<br>        memory = string<br>      })<br>    })<br>    service_type       = string<br>    replicas           = number<br>    image_pull_policy  = string<br>    image_pull_secrets = string<br>    node_selector      = any<br>  })</pre> | `null` | no |
 | <a name="input_authentication"></a> [authentication](#input\_authentication) | Authentication behavior | <pre>object({<br>    name                    = string<br>    image                   = string<br>    tag                     = string<br>    image_pull_policy       = string<br>    image_pull_secrets      = string<br>    node_selector           = any<br>    authentication_datafile = string<br>    require_authentication  = bool<br>    require_authorization   = bool<br>  })</pre> | n/a | yes |
+| <a name="input_chart_name"></a> [chart\_name](#input\_chart\_name) | Name for chart | `string` | `"keda-hpa"` | no |
+| <a name="input_chart_version"></a> [chart\_version](#input\_chart\_version) | Version for chart | `string` | `"0.1.0"` | no |
+| <a name="input_charts_repository"></a> [charts\_repository](#input\_charts\_repository) | Path to the charts repository | `string` | `"../charts"` | no |
 | <a name="input_compute_plane"></a> [compute\_plane](#input\_compute\_plane) | Parameters of the compute plane | <pre>map(object({<br>    partition_data = object({<br>      priority              = number<br>      reserved_pods         = number<br>      max_pods              = number<br>      preemption_percentage = number<br>      parent_partition_ids  = list(string)<br>      pod_configuration     = any<br>    })<br>    replicas                         = number<br>    termination_grace_period_seconds = number<br>    image_pull_secrets               = string<br>    node_selector                    = any<br>    annotations                      = any<br>    polling_agent = object({<br>      image             = string<br>      tag               = string<br>      image_pull_policy = string<br>      limits = object({<br>        cpu    = string<br>        memory = string<br>      })<br>      requests = object({<br>        cpu    = string<br>        memory = string<br>      })<br>    })<br>    worker = list(object({<br>      name              = string<br>      image             = string<br>      tag               = string<br>      image_pull_policy = string<br>      limits = object({<br>        cpu    = string<br>        memory = string<br>      })<br>      requests = object({<br>        cpu    = string<br>        memory = string<br>      })<br>    }))<br>    hpa = any<br>  }))</pre> | n/a | yes |
 | <a name="input_control_plane"></a> [control\_plane](#input\_control\_plane) | Parameters of the control plane | <pre>object({<br>    name              = string<br>    service_type      = string<br>    replicas          = number<br>    image             = string<br>    tag               = string<br>    image_pull_policy = string<br>    port              = number<br>    limits = object({<br>      cpu    = string<br>      memory = string<br>    })<br>    requests = object({<br>      cpu    = string<br>      memory = string<br>    })<br>    image_pull_secrets = string<br>    node_selector      = any<br>    annotations        = any<br>    hpa                = any<br>    default_partition  = string<br>  })</pre> | n/a | yes |
 | <a name="input_deployed_object_storage_secret_name"></a> [deployed\_object\_storage\_secret\_name](#input\_deployed\_object\_storage\_secret\_name) | the name of the deployed-object-storage secret | `string` | `"deployed-object-storage"` | no |

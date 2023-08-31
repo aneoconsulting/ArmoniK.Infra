@@ -76,6 +76,7 @@ variable "image_pull_secrets" {
   type        = map(string)
   default     = {}
 }
+
 variable "strategy_update" {
   description = "(Optional) Type of deployment. Can be 'Recreate' or 'RollingUpdate'"
   type        = string

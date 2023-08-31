@@ -1,4 +1,4 @@
-name: Generate Terraform documentation
+name: Generate documentation
 on:
   pull_request:
     branches: [ main, master ]
@@ -19,7 +19,8 @@ jobs:
         run: |
           DIRS=$(echo '${{ steps.dirs.outputs.directories }}' | jq -r '. | join(",")')
           echo "directories=$DIRS" >> $GITHUB_OUTPUT
-  docs:
+  terraformDocs:
+    name: Generate Terraform documentation
     runs-on: ubuntu-latest
     needs: collectInputs
     steps:

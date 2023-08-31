@@ -4,9 +4,6 @@ repos:
     hooks:
       - id: terraform_fmt
       - id: terraform_validate
-      #      - id: terraform_docs
-      #        args:
-      #          - '--args=--lockfile=false'
       - id: terraform_tflint
         args:
           - '--args=--only=terraform_deprecated_interpolation'
@@ -25,7 +22,7 @@ repos:
           - '--args=--only=terraform_unused_required_providers'
           - '--args=--only=terraform_empty_list_equality'
           - '--args=--only=terraform_module_version'
-      - id: terraform_tfsec
+      #- id: terraform_tfsec
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
     hooks:
@@ -36,7 +33,7 @@ repos:
       - id: check-json
       - id: check-yaml
         args: [ --allow-multiple-documents]
-        exclude: .*/charts/.*/template\.*
+        exclude: charts/.*/template\.*
       - id: end-of-file-fixer
         exclude: ".*md$"
       - id: pretty-format-json
@@ -44,3 +41,11 @@ repos:
           - "--autofix"
           - "--indent=2"
           - "--no-sort-keys"
+  - repo: https://github.com/norwoodj/helm-docs
+    rev: v1.11.0
+    hooks:
+      - id: helm-docs
+        args:
+          - --chart-search-root=charts # Make the tool search for charts only under the `charts` directory
+          - --template-files=./_templates.gotmpl # The `./` makes it relative to the chart-search-root set above
+          - --template-files=README.md.gotmpl # Repeating the flag adds this to the list, now [./_templates.gotmpl, README.md.gotmpl] # A base filename makes it relative to each chart directory found

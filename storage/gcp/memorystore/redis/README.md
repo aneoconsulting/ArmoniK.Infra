@@ -72,7 +72,9 @@ No modules.
 | <a name="output_persistence_iam_identity"></a> [persistence\_iam\_identity](#output\_persistence\_iam\_identity) | Cloud IAM identity used by import/export operations. Format is 'serviceAccount:'. May change over time |
 | <a name="output_port"></a> [port](#output\_port) | The port number of the exposed Redis endpoint. |
 | <a name="output_read_endpoint"></a> [read\_endpoint](#output\_read\_endpoint) | The IP address of the exposed readonly Redis endpoint. |
-| <a name="output_read_endpoint_port"></a> [read\_endpoint\_port](#output\_read\_endpoint\_port) | The port number of the exposed readonly redis endpoint. Standard tier only. Write requests should target 'port'. |
+| <a name="output_read_endpoint_port"></a> [read\_endpoint\_port](#output\_read\_endpoint\_port) | The port number of the exposed readonly Redis endpoint. Standard tier only. Write requests should target 'port'. |
+| <a name="output_read_endpoint_url"></a> [read\_endpoint\_url](#output\_read\_endpoint\_url) | The URL of the exposed readonly Redis endpoint. |
 | <a name="output_region"></a> [region](#output\_region) | The region the instance lives in. |
 | <a name="output_server_ca_certs"></a> [server\_ca\_certs](#output\_server\_ca\_certs) | List of server CA certificates for the instance |
+| <a name="output_url"></a> [url](#output\_url) | The URL of the exposed Redis endpoint. |
 <!-- END_TF_DOCS -->

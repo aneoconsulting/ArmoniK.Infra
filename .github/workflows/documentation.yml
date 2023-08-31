@@ -1,7 +1,9 @@
 name: Generate documentation
 on:
-  pull_request:
-    branches: [ main, master ]
+  push:
+    branches:
+      - main
+  workflow_dispatch:
 jobs:
   collectInputs:
     name: Collect workflow inputs

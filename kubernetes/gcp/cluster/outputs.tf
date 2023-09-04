@@ -121,6 +121,6 @@ output "identity_namespace" {
   value       = module.gke.identity_namespace
 }
 output "kubeconfig_path" {
-  description = "value"
+  description = "kubeconfig file path"
   value       = abspath(var.kubeconfig_path)
 }

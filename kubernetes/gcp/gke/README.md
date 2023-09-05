@@ -1,6 +1,12 @@
 # GKE Module
-This module handles opinionated Google Cloud Platform Kubernetes Engine cluster creation and configuration with Node Pools, IP MASQ, Network Policy, etc. 
+
+Google Kubernetes Engine (GKE) is the most scalable and fully automated Kubernetes service. This module handles opinionated
+GKE cluster creation and configurations based on
+the [Terraform module](https://registry.terraform.io/modules/terraform-google-modules/kubernetes-engine/google/latest) of
+GKE developed by Google.
+
 <!-- BEGIN_TF_DOCS -->
+
 ## Requirements
 
 | Name | Version |
@@ -148,4 +154,5 @@ This module handles opinionated Google Cloud Platform Kubernetes Engine cluster 
 | <a name="output_type"></a> [type](#output\_type) | Cluster type (regional / zonal) |
 | <a name="output_vertical_pod_autoscaling_enabled"></a> [vertical\_pod\_autoscaling\_enabled](#output\_vertical\_pod\_autoscaling\_enabled) | Whether vertical pod autoscaling enabled |
 | <a name="output_zones"></a> [zones](#output\_zones) | List of zones in which the cluster resides |
+
 <!-- END_TF_DOCS -->

@@ -1,5 +1,19 @@
-# Simple Gke exemple
-This example illustrates how to create a simple GKE cluster.
+# GCP GKE
+
+To create a simple GCP GKE:
+
+```bash
+terraform init
+terraform plan
+terraform apply
+```
+
+To delete all resource:
+
+```bash
+terraform destroy
+```
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 

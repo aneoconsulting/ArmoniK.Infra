@@ -40,7 +40,7 @@ No resources.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_project"></a> [project](#input\_project) | Project name | `string` | `"armonik-gcp-13469"` | no |
+| <a name="input_project"></a> [project](#input\_project) | Project name | `string` | n/a | yes |
 | <a name="input_region"></a> [region](#input\_region) | The GCP region used to deploy the KMS. | `string` | `"europe-west9"` | no |
 
 ## Outputs

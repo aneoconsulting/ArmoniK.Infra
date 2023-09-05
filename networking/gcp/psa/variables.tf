@@ -39,7 +39,7 @@ variable "ip" {
 variable "prefix_length" {
   description = "The prefix length if the resource represents an IP range."
   type        = number
-  default     = 0
+  default     = null
 }
 
 variable "ip_version" {

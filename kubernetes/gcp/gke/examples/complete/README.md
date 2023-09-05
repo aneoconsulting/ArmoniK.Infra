@@ -1,3 +1,19 @@
+# GCP GKE
+
+To create a complete GCP GKE:
+
+```bash
+terraform init
+terraform plan
+terraform apply
+```
+
+To delete all resource:
+
+```bash
+terraform destroy
+```
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 

@@ -1,11 +1,11 @@
 resource "google_compute_global_address" "private_ip_alloc" {
-  name          = var.global_address_name
-  description   = var.global_address_description
+  name          = var.name
+  description   = var.description
   purpose       = "VPC_PEERING"
-  address       = var.global_address_ip != null ? var.global_address_ip : null
-  prefix_length = var.global_address_prefix_length
-  ip_version    = var.global_address_ip_version
-  address_type  = var.global_address_adress_type
+  address       = var.ip
+  prefix_length = var.prefix_length
+  ip_version    = var.ip_version
+  address_type  = var.adress_type
   network       = var.vpc_link
 }
 

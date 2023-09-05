@@ -25,6 +25,13 @@ variable "cloudwatch" {
   default     = {}
 }
 
+# stackdriver
+variable "stackdriver" {
+  description = "stackdriver info"
+  type        = any
+  default     = {}
+}
+
 # S3
 variable "s3" {
   description = "S3 for logs"

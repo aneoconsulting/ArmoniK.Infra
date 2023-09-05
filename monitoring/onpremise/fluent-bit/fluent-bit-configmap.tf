@@ -20,5 +20,6 @@ resource "kubernetes_config_map" "fluent_bit_config" {
     "output-s3.conf"         = (local.s3_enabled ? file("${path.module}/configs/output/output-s3.conf") : file("${path.module}/configs/output/output-empty.conf"))
     "output-stdout.conf"     = (!local.seq_enabled && !local.cloudwatch_enabled ? file("${path.module}/configs/output/output-stdout.conf") : file("${path.module}/configs/output/output-empty.conf"))
     "parsers.conf"           = file("${path.module}/configs/parser/parsers.conf")
+    "output-stackdriver.conf" = (local.stackdriver_enabled ? file("${path.module}/configs/output/output-stackdriver.conf") : file("${path.module}/configs/output/output-empty.conf"))
   }
 }

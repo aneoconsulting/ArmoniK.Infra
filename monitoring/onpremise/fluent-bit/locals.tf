@@ -28,4 +28,11 @@ locals {
   s3_region  = try(var.s3.region, "eu-west-3")
   s3_prefix  = try(var.s3.prefix, "main")
   s3_enabled = tobool(try(var.s3.enabled, false))
+
+  #stackdriver
+  credentials=try(var.stackdriver.credentials, "")
+  cluster_name=try(var.stackdriver.cluster_name, "")
+  cluster_location=try(var.stackdriver.cluster_location, "")
+  stackdriver_enabled=tobool(try(var.stackdriver.enabled, false))
+
 }

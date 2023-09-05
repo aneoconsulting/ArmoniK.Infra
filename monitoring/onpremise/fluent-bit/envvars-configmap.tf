@@ -19,5 +19,8 @@ resource "kubernetes_config_map" "fluent_bit_envvars_config" {
     AWS_REGION_S3                                = local.s3_region
     PREFIX                                       = local.s3_prefix
     PARSER                                       = local.fluent_bit_parser
+    CLUSTER_NAME=local.cluster_name
+    CLUSTER_LOCATION=local.cluster_location
+    GOOGLE_APPLICATION_CREDENTIALS= local.credentials
   }
 }

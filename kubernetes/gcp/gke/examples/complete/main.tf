@@ -7,7 +7,7 @@ locals {
   kubeconfig_path = coalesce(var.kubeconfig_path, "${path.module}/kubeconfig")
 }
 module "gke" {
-  source                      = "../../../../gcp/cluster"
+  source                      = "../.."
   project_id                  = var.project
   name                        = var.cluster_name
   regional                    = true

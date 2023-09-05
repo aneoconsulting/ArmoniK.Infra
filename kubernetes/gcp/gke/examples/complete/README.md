@@ -14,7 +14,7 @@ No providers.
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_gke"></a> [gke](#module\_gke) | ../../../../gcp/cluster | n/a |
+| <a name="module_gke"></a> [gke](#module\_gke) | ../.. | n/a |
 | <a name="module_vpc"></a> [vpc](#module\_vpc) | ../../../../../networking/gcp/vpc | n/a |
 
 ## Resources

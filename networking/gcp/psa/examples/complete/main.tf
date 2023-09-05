@@ -13,4 +13,3 @@ module "complete_example" {
 data "google_compute_network" "vpc" {
   name = "default"
 }
-

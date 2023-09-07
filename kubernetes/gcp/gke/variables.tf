@@ -443,7 +443,7 @@ variable "gateway_api_channel" {
   type        = string
   default     = null
   validation {
-    condition     = contains(["CHANNEL_STANDARD", "CHANNEL_DISABLED"], var.gateway_api_channel)
+    condition     = contains(["CHANNEL_STANDARD", "CHANNEL_DISABLED"], coalesce(var.gateway_api_channel, "CHANNEL_STANDARD"))
     error_message = "Valid values for `gateway_api_channel`: \"CHANNEL_STANDARD\" | \"CHANNEL_DISABLED\"."
   }
 }

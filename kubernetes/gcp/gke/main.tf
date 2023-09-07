@@ -15,10 +15,10 @@ data "google_compute_zones" "available" {
 locals {
   description                     = coalesce(var.description, "GKE of name ${var.name}")
   enable_vertical_pod_autoscaling = !var.horizontal_pod_autoscaling ? var.enable_vertical_pod_autoscaling : false
-  master_authorized_networks = var.private ? {
+  master_authorized_networks = var.private ? [{
     cidr_block   = data.google_compute_subnetwork.subnetwork.ip_cidr_range
     display_name = "VPC"
-  } : var.master_authorized_networks
+  }] : var.master_authorized_networks
   node_pools = [for node_pool in var.node_pools : merge(node_pool, { name = "${var.name}-${node_pool["name"]}" })]
   region     = var.regional && !can(coalesce(var.region)) ? data.google_client_config.current.region : var.region
   zones      = !var.regional && length(var.zones) == 0 ? data.google_compute_zones.available.names : var.zones

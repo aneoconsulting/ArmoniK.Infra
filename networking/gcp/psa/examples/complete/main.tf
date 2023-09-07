@@ -6,7 +6,7 @@ module "complete_example" {
   ip_version    = "IPV4"
   service_name  = "servicenetworking.googleapis.com"
   description   = "Description of global address for complete example"
-  prefix_length = 0
+  prefix_length = 24
   adress_type   = "INTERNAL"
 }
 

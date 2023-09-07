@@ -1,32 +1,56 @@
-output "service_account" {
-  description = "The service account to default running nodes as if not overridden in `node_pools`."
-  value       = module.gke.service_account
+output "ca_certificate" {
+  sensitive   = true
+  description = "Cluster ca certificate (base64 encoded)."
+  value       = module.gke.ca_certificate
 }
+
 output "cluster_id" {
-  description = "Cluster ID"
+  description = "GKE cluster ID."
   value       = module.gke.cluster_id
 }
 
-output "name" {
-  description = "Cluster name"
-  value       = module.gke.name
-}
 output "endpoint" {
-  sensitive   = true
   description = "Cluster endpoint"
   value       = module.gke.endpoint
-
-}
-output "ca_certificate" {
   sensitive   = true
-  description = "Cluster ca certificate (base64 encoded)"
-  value       = module.gke.ca_certificate
 }
+
+output "kubeconfig_path" {
+  description = "Path where the kubeconfig file is saved."
+  value       = module.gke.kubeconfig_path
+}
+
 output "location" {
   description = "Cluster location (region if regional cluster, zone if zonal cluster)"
   value       = module.gke.location
 }
-output "kubeconfig_path" {
-  description = "value"
-  value       = module.gke.kubeconfig_path
+
+output "name" {
+  description = "GKE cluster name."
+  value       = module.gke.name
+}
+
+output "node_pools_names" {
+  description = "List of node pools names."
+  value       = module.gke.node_pools_names
+}
+
+output "region" {
+  description = "Cluster region."
+  value       = module.gke.region
+}
+
+output "service_account" {
+  description = "The service account to default running nodes as if not overridden in `node_pools`."
+  value       = module.gke.service_account
+}
+
+output "type" {
+  description = "GKE cluster type (regional / zonal)."
+  value       = module.gke.type
+}
+
+output "zones" {
+  description = "List of zones in which the cluster resides"
+  value       = module.gke.zones
 }

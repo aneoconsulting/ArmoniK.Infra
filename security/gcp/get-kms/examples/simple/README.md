@@ -31,5 +31,8 @@ No resources.
 
 | Name | Description |
 |------|-------------|
-| <a name="output_my_crypto_key_output"></a> [my\_crypto\_key\_output](#output\_my\_crypto\_key\_output) | The crypto key on the GCP project. |
+| <a name="output_key_ring_id"></a> [key\_ring\_id](#output\_key\_ring\_id) | The ID of the KeyRing. |
+| <a name="output_key_ring_location"></a> [key\_ring\_location](#output\_key\_ring\_location) | The location for the KeyRing. |
+| <a name="output_key_ring_name"></a> [key\_ring\_name](#output\_key\_ring\_name) | The resource name for the KeyRing. |
+| <a name="output_my_crypto_key_output"></a> [my\_crypto\_key\_output](#output\_my\_crypto\_key\_output) | The crypto keys on the GCP project from the specified KeyRing. |
 <!-- END_TF_DOCS -->

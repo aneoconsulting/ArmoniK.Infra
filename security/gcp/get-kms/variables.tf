@@ -1,6 +1,6 @@
-variable "crypto_key_name" {
-  description = "The name of the crypto key to retrieve from the GCP project."
-  type        = string
+variable "crypto_key_names" {
+  description = "The names of the crypto keys to retrieve from the GCP project."
+  type        = list(string)
 }
 
 variable "key_ring_name" {

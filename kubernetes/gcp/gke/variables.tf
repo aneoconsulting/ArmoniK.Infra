@@ -24,6 +24,11 @@ variable "subnetwork" {
   type        = string
 }
 
+variable "subnetwork_cidr" {
+  description = "CIDR of the subnetwork of nodes in GKE cluster."
+  type        = string
+}
+
 # Optional
 variable "private" {
   description = "Create a private GKE cluster."
@@ -33,13 +38,14 @@ variable "private" {
 
 variable "cluster_autoscaling" {
   description = "Cluster autoscaling configuration. See [more details](https://cloud.google.com/kubernetes-engine/docs/reference/rest/v1beta1/projects.locations.clusters#clusterautoscaling). For `disk_tye` see [Persistent Disk types](https://cloud.google.com/compute/docs/disks#disk-types)."
-  type = object({
-    enabled      = bool
-    auto_repair  = bool
-    auto_upgrade = bool
-    disk_size    = number
-    disk_type    = string
-    gpu_resources = list(object({
+  type        = object({
+    enabled             = bool
+    autoscaling_profile = string
+    auto_repair         = bool
+    auto_upgrade        = bool
+    disk_size           = number
+    disk_type           = string
+    gpu_resources       = list(object({
       resource_type = string
       minimum       = number
       maximum       = number
@@ -50,20 +56,27 @@ variable "cluster_autoscaling" {
     max_memory_gb = number
   })
   default = {
-    enabled       = false
-    auto_repair   = true
-    auto_upgrade  = true
-    disk_size     = 100
-    disk_type     = "pd-standard"
-    gpu_resources = []
-    max_cpu_cores = 0
-    min_cpu_cores = 0
-    max_memory_gb = 0
-    min_memory_gb = 0
+    enabled             = false
+    autoscaling_profile = "BALANCED"
+    auto_repair         = true
+    auto_upgrade        = true
+    disk_size           = 100
+    disk_type           = "pd-standard"
+    gpu_resources       = []
+    max_cpu_cores       = 0
+    min_cpu_cores       = 0
+    max_memory_gb       = 0
+    min_memory_gb       = 0
   }
   validation {
     condition     = contains(["pd-standard", "pd-balanced", "pd-ssd", "pd-extreme"], var.cluster_autoscaling.disk_type)
     error_message = "Valid values for `cluster_autoscaling.disk_type` are: \"pd-standard\" | \"pd-balanced\" | \"pd-ssd\" | \"pd-extreme\"."
+  }
+  validation {
+    condition = contains([
+      "PROFILE_UNSPECIFIED", "OPTIMIZE_UTILIZATION", "BALANCED"
+    ], var.cluster_autoscaling.autoscaling_profile)
+    error_message = "Valid values for `cluster_autoscaling.autoscaling_profile` are: \"PROFILE_UNSPECIFIED\" | \"OPTIMIZE_UTILIZATION\" | \"BALANCED\"."
   }
 }
 
@@ -81,7 +94,7 @@ variable "create_service_account" {
 
 variable "database_encryption" {
   description = "Application-layer Secrets Encryption settings. Valid values of state are: \"ENCRYPTED\"; \"DECRYPTED\"."
-  type = list(object({
+  type        = list(object({
     state    = string
     key_name = string
   }))
@@ -94,9 +107,9 @@ variable "database_encryption" {
 }
 
 variable "default_max_pods_per_node" {
-  description = "The maximum number of pods to schedule per node. Note: For GKE versions earlier than 1.23.5-gke.1300, the limit is 110 Pods."
+  description = "The maximum number of pods to schedule per node. Note: For GKE versions earlier than 1.23.5-gke.1300, the limit is 110 Pods, otherwise the limit is 256 Pods."
   type        = number
-  default     = 256
+  default     = 110
 }
 
 variable "description" {
@@ -179,7 +192,7 @@ variable "logging_enabled_components" {
 
 variable "master_authorized_networks" {
   description = "List of master authorized networks. If none are provided, disallow external access (except the cluster node IPs, which GKE automatically whitelists)."
-  type = list(object({
+  type        = list(object({
     cidr_block   = string
     display_name = string
   }))
@@ -219,9 +232,9 @@ variable "node_metadata" {
 variable "node_pools" {
   description = "List of maps containing node pools."
   type        = list(map(any))
-  default = [
+  default     = [
     {
-      name = "default-node-pool"
+      name = "default"
     },
   ]
 }
@@ -230,7 +243,7 @@ variable "node_pools_labels" {
   description = "Map of maps containing node labels by node-pool name."
   type        = map(map(string))
   # Default is being set in variables_defaults.tf
-  default = {
+  default     = {
     all               = {}
     default-node-pool = {}
   }
@@ -239,7 +252,7 @@ variable "node_pools_labels" {
 variable "node_pools_resource_labels" {
   description = "Map of maps containing resource labels by node-pool name."
   type        = map(map(string))
-  default = {
+  default     = {
     all               = {}
     default-node-pool = {}
   }
@@ -249,7 +262,7 @@ variable "node_pools_tags" {
   description = "Map of lists containing node network tags by node-pool name."
   type        = map(list(string))
   # Default is being set in variables_defaults.tf
-  default = {
+  default     = {
     all               = []
     default-node-pool = []
   }
@@ -257,7 +270,7 @@ variable "node_pools_tags" {
 
 variable "node_pools_taints" {
   description = "Map of lists containing node taints by node-pool name."
-  type = map(list(object({
+  type        = map(list(object({
     key    = string
     value  = string
     effect = string
@@ -443,7 +456,9 @@ variable "gateway_api_channel" {
   type        = string
   default     = null
   validation {
-    condition     = contains(["CHANNEL_STANDARD", "CHANNEL_DISABLED"], coalesce(var.gateway_api_channel, "CHANNEL_STANDARD"))
+    condition = contains([
+      "CHANNEL_STANDARD", "CHANNEL_DISABLED"
+    ], coalesce(var.gateway_api_channel, "CHANNEL_STANDARD"))
     error_message = "Valid values for `gateway_api_channel`: \"CHANNEL_STANDARD\" | \"CHANNEL_DISABLED\"."
   }
 }
@@ -496,7 +511,7 @@ variable "maintenance_end_time" {
 
 variable "maintenance_exclusions" {
   description = "List of maintenance exclusions. A cluster can have up to three"
-  type = list(object({
+  type        = list(object({
     name            = string
     start_time      = string
     end_time        = string
@@ -545,7 +560,7 @@ variable "node_pools_linux_node_configs_sysctls" {
   description = "Map of maps containing linux node config sysctls by node-pool name."
   type        = map(map(string))
   # Default is being set in variables_defaults.tf
-  default = {
+  default     = {
     all               = {}
     default-node-pool = {}
   }
@@ -555,7 +570,7 @@ variable "node_pools_metadata" {
   type        = map(map(string))
   description = "Map of maps containing node metadata by node-pool name"
   # Default is being set in variables_defaults.tf
-  default = {
+  default     = {
     all               = {}
     default-node-pool = {}
   }
@@ -565,7 +580,7 @@ variable "node_pools_oauth_scopes" {
   description = "Map of lists containing node oauth scopes by node-pool name."
   type        = map(list(string))
   # Default is being set in variables_defaults.tf
-  default = {
+  default     = {
     all               = ["https://www.googleapis.com/auth/cloud-platform"]
     default-node-pool = []
   }
@@ -613,7 +628,7 @@ variable "service_external_ips" {
 
 variable "shadow_firewall_rules_log_config" {
   description = "The log_config for shadow firewall rules. You can set this variable to `null` to disable logging."
-  type = object({
+  type        = object({
     metadata = string
   })
   default = {

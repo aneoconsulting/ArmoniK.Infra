@@ -1,4 +1,4 @@
-module "vpc" {
+/*module "vpc" {
   source     = "../../../../../networking/gcp/vpc"
   name       = var.network
   gke_subnet = var.gke_subnet
@@ -56,3 +56,4 @@ module "gke" {
     },
   ]
 }
+*/

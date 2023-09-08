@@ -30,22 +30,16 @@ variable "subnetwork_cidr" {
 }
 
 # Optional
-variable "private" {
-  description = "Create a private GKE cluster."
-  type        = bool
-  default     = true
-}
-
 variable "cluster_autoscaling" {
   description = "Cluster autoscaling configuration. See [more details](https://cloud.google.com/kubernetes-engine/docs/reference/rest/v1beta1/projects.locations.clusters#clusterautoscaling). For `disk_tye` see [Persistent Disk types](https://cloud.google.com/compute/docs/disks#disk-types)."
-  type        = object({
+  type = object({
     enabled             = bool
     autoscaling_profile = string
     auto_repair         = bool
     auto_upgrade        = bool
     disk_size           = number
     disk_type           = string
-    gpu_resources       = list(object({
+    gpu_resources = list(object({
       resource_type = string
       minimum       = number
       maximum       = number
@@ -94,7 +88,7 @@ variable "create_service_account" {
 
 variable "database_encryption" {
   description = "Application-layer Secrets Encryption settings. Valid values of state are: \"ENCRYPTED\"; \"DECRYPTED\"."
-  type        = list(object({
+  type = list(object({
     state    = string
     key_name = string
   }))
@@ -192,7 +186,7 @@ variable "logging_enabled_components" {
 
 variable "master_authorized_networks" {
   description = "List of master authorized networks. If none are provided, disallow external access (except the cluster node IPs, which GKE automatically whitelists)."
-  type        = list(object({
+  type = list(object({
     cidr_block   = string
     display_name = string
   }))
@@ -232,7 +226,7 @@ variable "node_metadata" {
 variable "node_pools" {
   description = "List of maps containing node pools."
   type        = list(map(any))
-  default     = [
+  default = [
     {
       name = "default"
     },
@@ -243,7 +237,7 @@ variable "node_pools_labels" {
   description = "Map of maps containing node labels by node-pool name."
   type        = map(map(string))
   # Default is being set in variables_defaults.tf
-  default     = {
+  default = {
     all               = {}
     default-node-pool = {}
   }
@@ -252,7 +246,7 @@ variable "node_pools_labels" {
 variable "node_pools_resource_labels" {
   description = "Map of maps containing resource labels by node-pool name."
   type        = map(map(string))
-  default     = {
+  default = {
     all               = {}
     default-node-pool = {}
   }
@@ -262,7 +256,7 @@ variable "node_pools_tags" {
   description = "Map of lists containing node network tags by node-pool name."
   type        = map(list(string))
   # Default is being set in variables_defaults.tf
-  default     = {
+  default = {
     all               = []
     default-node-pool = []
   }
@@ -270,7 +264,7 @@ variable "node_pools_tags" {
 
 variable "node_pools_taints" {
   description = "Map of lists containing node taints by node-pool name."
-  type        = map(list(object({
+  type = map(list(object({
     key    = string
     value  = string
     effect = string
@@ -511,7 +505,7 @@ variable "maintenance_end_time" {
 
 variable "maintenance_exclusions" {
   description = "List of maintenance exclusions. A cluster can have up to three"
-  type        = list(object({
+  type = list(object({
     name            = string
     start_time      = string
     end_time        = string
@@ -560,7 +554,7 @@ variable "node_pools_linux_node_configs_sysctls" {
   description = "Map of maps containing linux node config sysctls by node-pool name."
   type        = map(map(string))
   # Default is being set in variables_defaults.tf
-  default     = {
+  default = {
     all               = {}
     default-node-pool = {}
   }
@@ -570,7 +564,7 @@ variable "node_pools_metadata" {
   type        = map(map(string))
   description = "Map of maps containing node metadata by node-pool name"
   # Default is being set in variables_defaults.tf
-  default     = {
+  default = {
     all               = {}
     default-node-pool = {}
   }
@@ -580,7 +574,7 @@ variable "node_pools_oauth_scopes" {
   description = "Map of lists containing node oauth scopes by node-pool name."
   type        = map(list(string))
   # Default is being set in variables_defaults.tf
-  default     = {
+  default = {
     all               = ["https://www.googleapis.com/auth/cloud-platform"]
     default-node-pool = []
   }
@@ -628,7 +622,7 @@ variable "service_external_ips" {
 
 variable "shadow_firewall_rules_log_config" {
   description = "The log_config for shadow firewall rules. You can set this variable to `null` to disable logging."
-  type        = object({
+  type = object({
     metadata = string
   })
   default = {
@@ -666,4 +660,29 @@ variable "upstream_nameservers" {
   description = "If specified, the values replace the nameservers taken by default from the node’s /etc/resolv.conf"
   type        = list(string)
   default     = []
+}
+
+# Optional for private GKE
+variable "deploy_using_private_endpoint" {
+  description = "(Beta) A toggle for Terraform and kubectl to connect to the master's internal IP address during deployment. Used when private set to `true`."
+  type        = bool
+  default     = false
+}
+
+variable "master_ipv4_cidr_block" {
+  description = "(Beta) The IP range in CIDR notation to use for the hosted master network. Used when private set to `true`."
+  type        = string
+  default     = "10.0.0.0/28"
+}
+
+variable "master_global_access_enabled" {
+  description = "Whether the cluster master is accessible globally (from any region) or only within the same region as the private endpoint. Used when private set to `true`."
+  type        = bool
+  default     = true
+}
+
+variable "private" {
+  description = "Create a private GKE cluster."
+  type        = bool
+  default     = true
 }

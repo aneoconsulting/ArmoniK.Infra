@@ -3,9 +3,9 @@ module "vpc" {
   name   = "gke-simple-test"
   gke_subnet = {
     name                = "gke-simple-test"
-    nodes_cidr_block    = "10.51.0.0/16",
-    pods_cidr_block     = "192.168.64.0/22"
-    services_cidr_block = "192.168.1.0/24"
+    nodes_cidr_block    = "10.43.0.0/16",
+    pods_cidr_block     = "172.16.0.0/16"
+    services_cidr_block = "172.17.17.0/24"
     region              = var.region
   }
 }

@@ -1,7 +1,6 @@
 variable "project" {
   description = "Project name"
   type        = string
-  default     = "armonik-gcp-13469"
 }
 
 variable "region" {
@@ -9,7 +8,7 @@ variable "region" {
   type        = string
   default     = "europe-west9"
 }
-
+/*
 variable "cluster_name" {
   description = "The name for the GKE cluster"
   type        = string
@@ -40,15 +39,9 @@ variable "gke_subnet" {
   }
 }
 
-
-
-variable "service_account" {
-  description = "value"
-  type        = string
-  default     = "tf-gke-gke-test-1-k4hk@armonik-gcp-13469.iam.gserviceaccount.com"
-}
 variable "kubeconfig_path" {
   description = "value"
   type        = string
   default     = null
 }
+*/

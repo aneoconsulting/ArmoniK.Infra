@@ -7,9 +7,12 @@ data "google_compute_zones" "available" {
 }
 
 locals {
+  create_service_account          = !can(coalesce(var.service_account))
   description                     = coalesce(var.description, var.autopilot ? "Autopilot of name ${var.name}" : "GKE of name ${var.name}")
   dns_cache                       = var.dns_cache == null ? var.autopilot : var.dns_cache
   enable_vertical_pod_autoscaling = !var.horizontal_pod_autoscaling ? var.enable_vertical_pod_autoscaling : false
+  # If removing the default node pool, initial_node_count should be at least 1.
+  initial_node_count = var.remove_default_node_pool && var.initial_node_count == 0 ? 1 : var.initial_node_count
   master_authorized_networks = distinct(concat(var.master_authorized_networks, var.private ? [
     {
       cidr_block   = var.subnetwork_cidr
@@ -21,6 +24,10 @@ locals {
       name = "${var.name}-${node_pool["name"]}"
     })
   ]
+  # NOTE: Dataplane-V2 conflicts with the Calico network policy add-on because
+  # it provides redundant NetworkPolicy capabilities. If V2 is enabled, the
+  # Calico add-on should be disabled.
+  network_policy    = var.datapath_provider == "ADVANCED_DATAPATH" ? false : var.network_policy
   region            = var.regional ? try(coalesce(var.region), data.google_client_config.current.region) : var.region
   zones             = !var.regional && length(var.zones) == 0 ? data.google_compute_zones.available.names : var.zones
   public_gke        = !var.private && !var.autopilot
@@ -60,7 +67,7 @@ module "gke" {
   cluster_autoscaling                = var.cluster_autoscaling
   cluster_resource_labels            = var.cluster_resource_labels
   cluster_telemetry_type             = var.cluster_telemetry_type
-  create_service_account             = var.create_service_account
+  create_service_account             = local.create_service_account
   config_connector                   = var.config_connector
   database_encryption                = var.database_encryption
   default_max_pods_per_node          = var.default_max_pods_per_node
@@ -79,14 +86,14 @@ module "gke" {
   gke_backup_agent_config            = var.gke_backup_agent_config
   grant_registry_access              = var.grant_registry_access
   horizontal_pod_autoscaling         = var.horizontal_pod_autoscaling
-  initial_node_count                 = var.initial_node_count
+  initial_node_count                 = local.initial_node_count
   istio                              = var.istio
   istio_auth                         = var.istio_auth
   kalm_config                        = var.kalm_config
   kubernetes_version                 = var.kubernetes_version
   logging_enabled_components         = var.logging_enabled_components
   monitoring_enabled_components      = var.monitoring_enabled_components
-  network_policy                     = var.network_policy
+  network_policy                     = local.network_policy
   network_policy_provider            = var.network_policy_provider
   node_metadata                      = var.node_metadata
   node_pools                         = local.node_pools
@@ -173,7 +180,7 @@ module "private_gke" {
   cluster_autoscaling           = var.cluster_autoscaling
   cluster_resource_labels       = var.cluster_resource_labels
   cluster_telemetry_type        = var.cluster_telemetry_type
-  create_service_account        = var.create_service_account
+  create_service_account        = local.create_service_account
   config_connector              = var.config_connector
   database_encryption           = var.database_encryption
   default_max_pods_per_node     = var.default_max_pods_per_node
@@ -197,7 +204,7 @@ module "private_gke" {
   gke_backup_agent_config            = var.gke_backup_agent_config
   grant_registry_access              = var.grant_registry_access
   horizontal_pod_autoscaling         = var.horizontal_pod_autoscaling
-  initial_node_count                 = var.initial_node_count
+  initial_node_count                 = local.initial_node_count
   istio                              = var.istio
   istio_auth                         = var.istio_auth
   kalm_config                        = var.kalm_config
@@ -205,7 +212,7 @@ module "private_gke" {
   master_ipv4_cidr_block             = var.master_ipv4_cidr_block
   master_global_access_enabled       = var.master_global_access_enabled
   monitoring_enabled_components      = var.monitoring_enabled_components
-  network_policy                     = var.network_policy
+  network_policy                     = local.network_policy
   network_policy_provider            = var.network_policy_provider
   node_metadata                      = var.node_metadata
   node_pools                         = local.node_pools
@@ -288,7 +295,7 @@ module "autopilot" {
   subnetwork        = var.subnetwork
   # Optional
   cluster_resource_labels            = var.cluster_resource_labels
-  create_service_account             = var.create_service_account
+  create_service_account             = local.create_service_account
   database_encryption                = var.database_encryption
   enable_cost_allocation             = var.enable_cost_allocation
   enable_resource_consumption_export = var.enable_resource_consumption_export
@@ -355,7 +362,7 @@ module "private_autopilot" {
   subnetwork        = var.subnetwork
   # Optional
   cluster_resource_labels       = var.cluster_resource_labels
-  create_service_account        = var.create_service_account
+  create_service_account        = local.create_service_account
   database_encryption           = var.database_encryption
   deploy_using_private_endpoint = var.deploy_using_private_endpoint
   enable_cost_allocation        = var.enable_cost_allocation

@@ -81,7 +81,6 @@ module "gke" {
   }
   cluster_resource_labels = merge(local.labels, { resources = "cluster" })
   config_connector        = true
-  create_service_account  = true # default value
   database_encryption = [
     # default value
     {

@@ -39,14 +39,14 @@ variable "subnetwork_cidr" {
 # Optional
 variable "cluster_autoscaling" {
   description = "Cluster autoscaling configuration. See [more details](https://cloud.google.com/kubernetes-engine/docs/reference/rest/v1beta1/projects.locations.clusters#clusterautoscaling). For `disk_tye` see [Persistent Disk types](https://cloud.google.com/compute/docs/disks#disk-types)."
-  type = object({
+  type        = object({
     enabled             = bool
     autoscaling_profile = string
     auto_repair         = bool
     auto_upgrade        = bool
     disk_size           = number
     disk_type           = string
-    gpu_resources = list(object({
+    gpu_resources       = list(object({
       resource_type = string
       minimum       = number
       maximum       = number
@@ -95,7 +95,7 @@ variable "create_service_account" {
 
 variable "database_encryption" {
   description = "Application-layer Secrets Encryption settings. Valid values of state are: \"ENCRYPTED\"; \"DECRYPTED\"."
-  type = list(object({
+  type        = list(object({
     state    = string
     key_name = string
   }))
@@ -189,11 +189,15 @@ variable "logging_enabled_components" {
   description = "List of services to monitor: SYSTEM_COMPONENTS, WORKLOADS. Empty list is default GKE configuration."
   type        = list(string)
   default     = []
+  validation {
+    condition     = length(setsubtract(var.logging_enabled_components, ["SYSTEM_COMPONENTS", "WORKLOADS"])) == 0
+    error_message = "Valid values for `logging_enabled_components` are : \"SYSTEM_COMPONENTS\" | \"WORKLOADS\". Empty list is default GKE configuration."
+  }
 }
 
 variable "master_authorized_networks" {
   description = "List of master authorized networks. If none are provided, disallow external access (except the cluster node IPs, which GKE automatically whitelists)."
-  type = list(object({
+  type        = list(object({
     cidr_block   = string
     display_name = string
   }))
@@ -204,6 +208,10 @@ variable "monitoring_enabled_components" {
   description = "List of services to monitor: SYSTEM_COMPONENTS, WORKLOADS (provider version >= 3.89.0). Empty list is default GKE configuration."
   type        = list(string)
   default     = []
+  validation {
+    condition     = length(setsubtract(var.monitoring_enabled_components, ["SYSTEM_COMPONENTS", "WORKLOADS"])) == 0
+    error_message = "Valid values for `monitoring_enabled_components` are : \"SYSTEM_COMPONENTS\" | \"WORKLOADS\". Empty list is default GKE configuration."
+  }
 }
 
 variable "network_policy" {
@@ -233,7 +241,7 @@ variable "node_metadata" {
 variable "node_pools" {
   description = "List of maps containing node pools."
   type        = list(map(any))
-  default = [
+  default     = [
     {
       name = "default"
     },
@@ -244,7 +252,7 @@ variable "node_pools_labels" {
   description = "Map of maps containing node labels by node-pool name."
   type        = map(map(string))
   # Default is being set in variables_defaults.tf
-  default = {
+  default     = {
     all               = {}
     default-node-pool = {}
   }
@@ -253,7 +261,7 @@ variable "node_pools_labels" {
 variable "node_pools_resource_labels" {
   description = "Map of maps containing resource labels by node-pool name."
   type        = map(map(string))
-  default = {
+  default     = {
     all               = {}
     default-node-pool = {}
   }
@@ -263,7 +271,7 @@ variable "node_pools_tags" {
   description = "Map of lists containing node network tags by node-pool name."
   type        = map(list(string))
   # Default is being set in variables_defaults.tf
-  default = {
+  default     = {
     all               = []
     default-node-pool = []
   }
@@ -271,7 +279,7 @@ variable "node_pools_tags" {
 
 variable "node_pools_taints" {
   description = "Map of lists containing node taints by node-pool name."
-  type = map(list(object({
+  type        = map(list(object({
     key    = string
     value  = string
     effect = string
@@ -512,7 +520,7 @@ variable "maintenance_end_time" {
 
 variable "maintenance_exclusions" {
   description = "List of maintenance exclusions. A cluster can have up to three"
-  type = list(object({
+  type        = list(object({
     name            = string
     start_time      = string
     end_time        = string
@@ -561,7 +569,7 @@ variable "node_pools_linux_node_configs_sysctls" {
   description = "Map of maps containing linux node config sysctls by node-pool name."
   type        = map(map(string))
   # Default is being set in variables_defaults.tf
-  default = {
+  default     = {
     all               = {}
     default-node-pool = {}
   }
@@ -571,7 +579,7 @@ variable "node_pools_metadata" {
   type        = map(map(string))
   description = "Map of maps containing node metadata by node-pool name"
   # Default is being set in variables_defaults.tf
-  default = {
+  default     = {
     all               = {}
     default-node-pool = {}
   }
@@ -581,7 +589,7 @@ variable "node_pools_oauth_scopes" {
   description = "Map of lists containing node oauth scopes by node-pool name."
   type        = map(list(string))
   # Default is being set in variables_defaults.tf
-  default = {
+  default     = {
     all               = ["https://www.googleapis.com/auth/cloud-platform"]
     default-node-pool = []
   }
@@ -629,7 +637,7 @@ variable "service_external_ips" {
 
 variable "shadow_firewall_rules_log_config" {
   description = "The log_config for shadow firewall rules. You can set this variable to `null` to disable logging."
-  type = object({
+  type        = object({
     metadata = string
   })
   default = {
@@ -671,13 +679,13 @@ variable "upstream_nameservers" {
 
 # Optional for beta GKE
 variable "cloudrun" {
-  description = "(Beta) Enable CloudRun addon. Used when `beta` set to `true`."
+  description = "(Beta) Enable CloudRun addon."
   type        = bool
   default     = false
 }
 
 variable "cloudrun_load_balancer_type" {
-  description = "(Beta) Configure the Cloud Run load balancer type. External by default. Set to `LOAD_BALANCER_TYPE_INTERNAL` to configure as an internal load balancer. Used when `beta` set to `true`."
+  description = "(Beta) Configure the Cloud Run load balancer type. External by default. Set to `LOAD_BALANCER_TYPE_INTERNAL` to configure as an internal load balancer."
   type        = string
   default     = ""
   validation {
@@ -689,7 +697,7 @@ variable "cloudrun_load_balancer_type" {
 }
 
 variable "cluster_telemetry_type" {
-  description = "Available options include ENABLED, DISABLED, and SYSTEM_ONLY. Used when `beta` set to `true`."
+  description = "Available options include ENABLED, DISABLED, and SYSTEM_ONLY."
   type        = string
   default     = null
   validation {
@@ -699,25 +707,25 @@ variable "cluster_telemetry_type" {
 }
 
 variable "config_connector" {
-  description = "(Beta) Whether ConfigConnector is enabled for this cluster. Used when `beta` set to `true`."
+  description = "(Beta) Whether ConfigConnector is enabled for this cluster."
   type        = bool
   default     = false
 }
 
 variable "enable_confidential_nodes" {
-  description = "An optional flag to enable confidential node config. Used when `beta` set to `true`."
+  description = "An optional flag to enable confidential node config."
   type        = bool
   default     = false
 }
 
 variable "enable_identity_service" {
-  description = "Enable the Identity Service component, which allows customers to use external identity providers with the K8S API. Used when `beta` set to `true`."
+  description = "Enable the Identity Service component, which allows customers to use external identity providers with the K8S API."
   type        = bool
   default     = false
 }
 
 variable "enable_intranode_visibility" {
-  description = "Whether Intra-node visibility is enabled for this cluster. This makes same node pod to pod traffic visible for VPC network. Used when `beta` set to `true`."
+  description = "Whether Intra-node visibility is enabled for this cluster. This makes same node pod to pod traffic visible for VPC network."
   type        = bool
   default     = false
 }
@@ -741,14 +749,14 @@ variable "enable_tpu" {
 }
 
 variable "istio" {
-  description = "(Beta) Enable Istio addon. Used when `beta` set to `true`."
+  description = "(Beta) Enable Istio addon."
   type        = bool
   default     = false
 }
 
 variable "istio_auth" {
   type        = string
-  description = "(Beta) The authentication type between services in Istio. Used when `beta` set to `true`."
+  description = "(Beta) The authentication type between services in Istio."
   default     = "AUTH_MUTUAL_TLS"
   validation {
     condition     = contains(["AUTH_MUTUAL_TLS"], coalesce(var.istio_auth, "AUTH_MUTUAL_TLS"))
@@ -757,19 +765,19 @@ variable "istio_auth" {
 }
 
 variable "kalm_config" {
-  description = "(Beta) Whether KALM is enabled for this cluster. Used when `beta` set to `true`."
+  description = "(Beta) Whether KALM is enabled for this cluster."
   type        = bool
   default     = false
 }
 
 variable "sandbox_enabled" {
-  description = "(Beta) Enable GKE Sandbox (Do not forget to set `image_type` = `COS_CONTAINERD` to use it). Used when `beta` set to `true`."
+  description = "(Beta) Enable GKE Sandbox (Do not forget to set `image_type` = `COS_CONTAINERD` to use it)."
   type        = bool
   default     = false
 }
 
 variable "workload_config_audit_mode" {
-  description = "(beta) Worload config audit mode. Used when `beta` set to `true`."
+  description = "(beta) Worload config audit mode."
   type        = string
   default     = "DISABLED"
   validation {
@@ -779,7 +787,7 @@ variable "workload_config_audit_mode" {
 }
 
 variable "workload_vulnerability_mode" {
-  description = "(beta) Vulnerability mode. Used when `beta` set to `true`."
+  description = "(beta) Vulnerability mode."
   type        = string
   default     = ""
   validation {

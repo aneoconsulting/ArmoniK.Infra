@@ -1,3 +1,10 @@
+# Mode
+variable "private" {
+  description = "Create a private GKE cluster."
+  type        = bool
+  default     = true
+}
+
 # Required
 variable "ip_range_pods" {
   description = "The name of the secondary subnet ip range to use for Kubernetes pods."
@@ -657,32 +664,145 @@ variable "timeouts" {
 }
 
 variable "upstream_nameservers" {
-  description = "If specified, the values replace the nameservers taken by default from the node’s /etc/resolv.conf"
+  description = "If specified, the values replace the nameservers taken by default from the node’s /etc/resolv.conf."
   type        = list(string)
   default     = []
 }
 
+# Optional for beta GKE
+variable "cloudrun" {
+  description = "(Beta) Enable CloudRun addon. Used when `beta` set to `true`."
+  type        = bool
+  default     = false
+}
+
+variable "cloudrun_load_balancer_type" {
+  description = "(Beta) Configure the Cloud Run load balancer type. External by default. Set to `LOAD_BALANCER_TYPE_INTERNAL` to configure as an internal load balancer. Used when `beta` set to `true`."
+  type        = string
+  default     = ""
+  validation {
+    condition = contains([
+      "LOAD_BALANCER_TYPE_INTERNAL"
+    ], coalesce(var.cloudrun_load_balancer_type, "LOAD_BALANCER_TYPE_INTERNAL"))
+    error_message = "Valid values for `cloudrun_load_balancer_type` are: \"LOAD_BALANCER_TYPE_INTERNAL\" if internal, otherwise is External by default."
+  }
+}
+
+variable "cluster_telemetry_type" {
+  description = "Available options include ENABLED, DISABLED, and SYSTEM_ONLY. Used when `beta` set to `true`."
+  type        = string
+  default     = null
+  validation {
+    condition     = contains(["ENABLED", "DISABLED", "SYSTEM_ONLY"], coalesce(var.cluster_telemetry_type, "ENABLED"))
+    error_message = "Valid values for `cluster_telemetry_type` are: \"ENABLED\" | \"DISABLED\" | \"SYSTEM_ONLY\"."
+  }
+}
+
+variable "config_connector" {
+  description = "(Beta) Whether ConfigConnector is enabled for this cluster. Used when `beta` set to `true`."
+  type        = bool
+  default     = false
+}
+
+variable "enable_confidential_nodes" {
+  description = "An optional flag to enable confidential node config. Used when `beta` set to `true`."
+  type        = bool
+  default     = false
+}
+
+variable "enable_identity_service" {
+  description = "Enable the Identity Service component, which allows customers to use external identity providers with the K8S API. Used when `beta` set to `true`."
+  type        = bool
+  default     = false
+}
+
+variable "enable_intranode_visibility" {
+  description = "Whether Intra-node visibility is enabled for this cluster. This makes same node pod to pod traffic visible for VPC network. Used when `beta` set to `true`."
+  type        = bool
+  default     = false
+}
+
+variable "enable_l4_ilb_subsetting" {
+  description = "Enable L4 ILB Subsetting on the cluster.  Used when `beta` set to `true`."
+  type        = bool
+  default     = false
+}
+
+variable "enable_pod_security_policy" {
+  description = "enabled - Enable the PodSecurityPolicy controller for this cluster. If enabled, pods must be valid under a PodSecurityPolicy to be created. Pod Security Policy was removed from GKE clusters with version >= 1.25.0.Used when `beta` set to `true`."
+  type        = bool
+  default     = false
+}
+
+variable "enable_tpu" {
+  description = "Enable Cloud TPU resources in the cluster. WARNING: changing this after cluster creation is destructive! Used when `beta` set to `true`."
+  type        = bool
+  default     = false
+}
+
+variable "istio" {
+  description = "(Beta) Enable Istio addon. Used when `beta` set to `true`."
+  type        = bool
+  default     = false
+}
+
+variable "istio_auth" {
+  type        = string
+  description = "(Beta) The authentication type between services in Istio. Used when `beta` set to `true`."
+  default     = "AUTH_MUTUAL_TLS"
+  validation {
+    condition     = contains(["AUTH_MUTUAL_TLS"], coalesce(var.istio_auth, "AUTH_MUTUAL_TLS"))
+    error_message = "Valid values for `istio_auth` are: \"AUTH_MUTUAL_TLS\"."
+  }
+}
+
+variable "kalm_config" {
+  description = "(Beta) Whether KALM is enabled for this cluster. Used when `beta` set to `true`."
+  type        = bool
+  default     = false
+}
+
+variable "sandbox_enabled" {
+  description = "(Beta) Enable GKE Sandbox (Do not forget to set `image_type` = `COS_CONTAINERD` to use it). Used when `beta` set to `true`."
+  type        = bool
+  default     = false
+}
+
+variable "workload_config_audit_mode" {
+  description = "(beta) Worload config audit mode. Used when `beta` set to `true`."
+  type        = string
+  default     = "DISABLED"
+  validation {
+    condition     = contains(["DISABLED", "BASIC"], var.workload_config_audit_mode)
+    error_message = "Valid values for `workload_config_audit_mode` are: \"DISABLED\" | \"BASIC\"."
+  }
+}
+
+variable "workload_vulnerability_mode" {
+  description = "(beta) Vulnerability mode. Used when `beta` set to `true`."
+  type        = string
+  default     = ""
+  validation {
+    condition     = contains(["DISABLED", "BASIC"], coalesce(var.workload_vulnerability_mode, "DISABLED"))
+    error_message = "Valid values for `workload_vulnerability_mode` are: \"DISABLED\" | \"BASIC\"."
+  }
+}
+
 # Optional for private GKE
 variable "deploy_using_private_endpoint" {
-  description = "(Beta) A toggle for Terraform and kubectl to connect to the master's internal IP address during deployment. Used when private set to `true`."
+  description = "(Beta) A toggle for Terraform and kubectl to connect to the master's internal IP address during deployment. Used when `private` set to `true`."
   type        = bool
   default     = false
 }
 
 variable "master_ipv4_cidr_block" {
-  description = "(Beta) The IP range in CIDR notation to use for the hosted master network. Used when private set to `true`."
+  description = "(Beta) The IP range in CIDR notation to use for the hosted master network. Used when `private` set to `true`."
   type        = string
   default     = "10.0.0.0/28"
 }
 
 variable "master_global_access_enabled" {
-  description = "Whether the cluster master is accessible globally (from any region) or only within the same region as the private endpoint. Used when private set to `true`."
-  type        = bool
-  default     = true
-}
-
-variable "private" {
-  description = "Create a private GKE cluster."
+  description = "Whether the cluster master is accessible globally (from any region) or only within the same region as the private endpoint. Used when `private` set to `true`."
   type        = bool
   default     = true
 }

@@ -2,7 +2,7 @@ data "google_client_config" "current" {}
 
 data "google_compute_zones" "available" {
   project = data.google_client_config.current.project
-  region  = can(coalesce(var.region)) ? var.region : data.google_client_config.current.region
+  region  = try(coalesce(var.region), data.google_client_config.current.region)
   status  = "UP"
 }
 
@@ -20,16 +20,24 @@ locals {
       name = "${var.name}-${node_pool["name"]}"
     })
   ]
-  region       = var.regional && !can(coalesce(var.region)) ? data.google_client_config.current.region : var.region
-  zones        = !var.regional && length(var.zones) == 0 ? data.google_compute_zones.available.names : var.zones
-  gke_name     = var.private ? module.private_gke[0].name : module.gke[0].name
-  gke_location = var.private ? module.private_gke[0].location : module.gke[0].location
+  region      = var.regional ? try(coalesce(var.region), data.google_client_config.current.region) : var.region
+  zones       = !var.regional && length(var.zones) == 0 ? data.google_compute_zones.available.names : var.zones
+  public_gke  = !var.private
+  private_gke = var.private
+  gke_name = coalesce(
+    (local.public_gke ? module.gke[0].name : null),
+    (local.private_gke ? module.private_gke[0].name : null),
+  )
+  gke_location = coalesce(
+    (local.public_gke ? module.gke[0].location : null),
+    (local.private_gke ? module.private_gke[0].location : null),
+  )
 }
 
-# Public GKE
+# Public GKE with beta functionalities
 module "gke" {
-  count       = !var.private ? 1 : 0
-  source      = "terraform-google-modules/kubernetes-engine/google"
+  count       = local.public_gke ? 1 : 0
+  source      = "terraform-google-modules/kubernetes-engine/google//modules/beta-public-cluster"
   version     = "27.0.0"
   description = local.description
   # Required
@@ -40,14 +48,24 @@ module "gke" {
   project_id        = data.google_client_config.current.project
   subnetwork        = var.subnetwork
   # Optional
+  cloudrun                           = var.cloudrun
+  cloudrun_load_balancer_type        = var.cloudrun_load_balancer_type
   cluster_autoscaling                = var.cluster_autoscaling
   cluster_resource_labels            = var.cluster_resource_labels
+  cluster_telemetry_type             = var.cluster_telemetry_type
   create_service_account             = var.create_service_account
+  config_connector                   = var.config_connector
   database_encryption                = var.database_encryption
   default_max_pods_per_node          = var.default_max_pods_per_node
+  enable_confidential_nodes          = var.enable_confidential_nodes
   enable_cost_allocation             = var.enable_cost_allocation
+  enable_identity_service            = var.enable_identity_service
+  enable_intranode_visibility        = var.enable_intranode_visibility
+  enable_l4_ilb_subsetting           = var.enable_l4_ilb_subsetting
+  enable_pod_security_policy         = var.enable_pod_security_policy
   enable_resource_consumption_export = var.enable_resource_consumption_export
   enable_shielded_nodes              = var.enable_shielded_nodes
+  enable_tpu                         = var.enable_tpu
   enable_vertical_pod_autoscaling    = local.enable_vertical_pod_autoscaling
   filestore_csi_driver               = var.filestore_csi_driver
   gce_pd_csi_driver                  = var.gce_pd_csi_driver
@@ -55,6 +73,9 @@ module "gke" {
   grant_registry_access              = var.grant_registry_access
   horizontal_pod_autoscaling         = var.horizontal_pod_autoscaling
   initial_node_count                 = var.initial_node_count
+  istio                              = var.istio
+  istio_auth                         = var.istio_auth
+  kalm_config                        = var.kalm_config
   kubernetes_version                 = var.kubernetes_version
   logging_enabled_components         = var.logging_enabled_components
   monitoring_enabled_components      = var.monitoring_enabled_components
@@ -69,9 +90,12 @@ module "gke" {
   region                             = local.region
   regional                           = var.regional
   remove_default_node_pool           = var.remove_default_node_pool
+  sandbox_enabled                    = var.sandbox_enabled
   service_account                    = var.service_account
   service_account_name               = var.service_account_name
   windows_node_pools                 = var.windows_node_pools
+  workload_config_audit_mode         = var.workload_config_audit_mode
+  workload_vulnerability_mode        = var.workload_vulnerability_mode
   zones                              = local.zones
   # Optional and not used yet
   add_cluster_firewall_rules            = var.add_cluster_firewall_rules
@@ -123,10 +147,10 @@ module "gke" {
   upstream_nameservers                  = var.upstream_nameservers
 }
 
-# Private GKE
+# Private GKE with beta functionalities
 module "private_gke" {
-  count       = var.private ? 1 : 0
-  source      = "terraform-google-modules/kubernetes-engine/google//modules/private-cluster"
+  count       = local.private_gke ? 1 : 0
+  source      = "terraform-google-modules/kubernetes-engine/google//modules/beta-private-cluster"
   version     = "27.0.0"
   description = local.description
   # Required
@@ -137,19 +161,29 @@ module "private_gke" {
   project_id        = data.google_client_config.current.project
   subnetwork        = var.subnetwork
   # Optional
+  cloudrun                      = var.cloudrun
+  cloudrun_load_balancer_type   = var.cloudrun_load_balancer_type
   cluster_autoscaling           = var.cluster_autoscaling
   cluster_resource_labels       = var.cluster_resource_labels
+  cluster_telemetry_type        = var.cluster_telemetry_type
   create_service_account        = var.create_service_account
+  config_connector              = var.config_connector
   database_encryption           = var.database_encryption
   default_max_pods_per_node     = var.default_max_pods_per_node
+  enable_confidential_nodes     = var.enable_confidential_nodes
   deploy_using_private_endpoint = var.deploy_using_private_endpoint
   enable_cost_allocation        = var.enable_cost_allocation
+  enable_identity_service       = var.enable_identity_service
+  enable_intranode_visibility   = var.enable_intranode_visibility
+  enable_l4_ilb_subsetting      = var.enable_l4_ilb_subsetting
+  enable_pod_security_policy    = var.enable_pod_security_policy
   # Whether the master's internal IP address is used as the cluster endpoint
   enable_private_endpoint = var.private
   # Whether nodes have internal IP addresses only
   enable_private_nodes               = var.private
   enable_resource_consumption_export = var.enable_resource_consumption_export
   enable_shielded_nodes              = var.enable_shielded_nodes
+  enable_tpu                         = var.enable_tpu
   enable_vertical_pod_autoscaling    = local.enable_vertical_pod_autoscaling
   filestore_csi_driver               = var.filestore_csi_driver
   gce_pd_csi_driver                  = var.gce_pd_csi_driver
@@ -157,6 +191,9 @@ module "private_gke" {
   grant_registry_access              = var.grant_registry_access
   horizontal_pod_autoscaling         = var.horizontal_pod_autoscaling
   initial_node_count                 = var.initial_node_count
+  istio                              = var.istio
+  istio_auth                         = var.istio_auth
+  kalm_config                        = var.kalm_config
   logging_enabled_components         = var.logging_enabled_components
   master_ipv4_cidr_block             = var.master_ipv4_cidr_block
   master_global_access_enabled       = var.master_global_access_enabled
@@ -172,9 +209,12 @@ module "private_gke" {
   region                             = local.region
   regional                           = var.regional
   remove_default_node_pool           = var.remove_default_node_pool
+  sandbox_enabled                    = var.sandbox_enabled
   service_account                    = var.service_account
   service_account_name               = var.service_account_name
   windows_node_pools                 = var.windows_node_pools
+  workload_config_audit_mode         = var.workload_config_audit_mode
+  workload_vulnerability_mode        = var.workload_vulnerability_mode
   zones                              = local.zones
   # Optional and not used yet
   add_cluster_firewall_rules            = var.add_cluster_firewall_rules

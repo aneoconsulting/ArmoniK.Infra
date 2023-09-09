@@ -43,8 +43,8 @@ resource "null_resource" "timestamp" {
 }
 
 module "vpc" {
-  source     = "../../../../../networking/gcp/vpc"
-  name       = "gke-complete"
+  source = "../../../../../networking/gcp/vpc"
+  name   = "gke-complete"
   gke_subnet = {
     name                = "gke-complete"
     nodes_cidr_block    = "10.43.0.0/16",
@@ -56,14 +56,14 @@ module "vpc" {
 
 # For more parameters see [Documentation](kubernetes/gcp/gke/README.md)
 module "gke" {
-  source              = "../../../gke"
-  name                = "complete"
-  network             = module.vpc.name
-  ip_range_pods       = module.vpc.gke_subnet_pods_range_name
-  ip_range_services   = module.vpc.gke_subnet_svc_range_name
-  subnetwork          = module.vpc.gke_subnet_name
-  subnetwork_cidr     = module.vpc.gke_subnet_cidr_block
-  kubeconfig_path     = abspath("${path.root}/generated/kubeconfig")
+  source            = "../../../gke"
+  name              = "complete"
+  network           = module.vpc.name
+  ip_range_pods     = module.vpc.gke_subnet_pods_range_name
+  ip_range_services = module.vpc.gke_subnet_svc_range_name
+  subnetwork        = module.vpc.gke_subnet_name
+  subnetwork_cidr   = module.vpc.gke_subnet_cidr_block
+  kubeconfig_path   = abspath("${path.root}/generated/kubeconfig")
   cluster_autoscaling = {
     # default value
     enabled             = false
@@ -81,7 +81,7 @@ module "gke" {
   cluster_resource_labels = merge(local.labels, { resources = "cluster" })
   config_connector        = true
   create_service_account  = true # default value
-  database_encryption     = [
+  database_encryption = [
     # default value
     {
       state    = "DECRYPTED"
@@ -100,17 +100,17 @@ module "gke" {
   grant_registry_access       = true # default value
   horizontal_pod_autoscaling  = true
   http_load_balancing         = true # default value
-  initial_node_count          = 0 # default value
+  initial_node_count          = 0    # default value
   istio                       = true
   logging_enabled_components  = ["SYSTEM_COMPONENTS"]
-  master_authorized_networks  = [
+  master_authorized_networks = [
     {
       cidr_block   = "0.0.0.0/0"
       display_name = "External"
     }
   ]
   monitoring_enabled_components = ["SYSTEM_COMPONENTS"]
-  node_pools                    = [
+  node_pools = [
     {
       name               = "example"
       machine_type       = "n2d-standard-2"
@@ -130,7 +130,7 @@ module "gke" {
       initial_node_count = 0
     },
   ]
-  node_pools_labels          = { all = merge(local.labels, { resources = "node-pools" }) }
+  node_pools_labels = { all = merge(local.labels, { resources = "node-pools" }) }
   node_pools_resource_labels = {
     all               = merge(local.labels, { resources = "node-pool-resources" })
     default-node-pool = merge(local.labels, { resources = "node-pool-resources" })
@@ -145,9 +145,8 @@ module "gke" {
     ]
   }
   private                    = false # public Standard GKE
-  remove_default_node_pool   = true # default value
+  remove_default_node_pool   = true  # default value
   sandbox_enabled            = true
   windows_node_pools         = [] # default value
   workload_config_audit_mode = "BASIC"
 }
-

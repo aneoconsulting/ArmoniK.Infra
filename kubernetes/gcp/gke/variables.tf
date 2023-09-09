@@ -5,6 +5,12 @@ variable "private" {
   default     = true
 }
 
+variable "autopilot" {
+  description = "Create autopilot GKE cluster."
+  type        = bool
+  default     = true
+}
+
 # Required
 variable "ip_range_pods" {
   description = "The name of the secondary subnet ip range to use for Kubernetes pods."
@@ -407,8 +413,10 @@ variable "datapath_provider" {
   type        = string
   default     = "DATAPATH_PROVIDER_UNSPECIFIED"
   validation {
-    condition     = contains(["DATAPATH_PROVIDER_UNSPECIFIED", "ADVANCED_DATAPATH"], var.datapath_provider)
-    error_message = "Valid values for `datapath_provider`: \"DATAPATH_PROVIDER_UNSPECIFIED\" | \"ADVANCED_DATAPATH\"."
+    condition = contains([
+      "DATAPATH_PROVIDER_UNSPECIFIED", "LEGACY_DATAPATH", "ADVANCED_DATAPATH"
+    ], var.datapath_provider)
+    error_message = "Valid values for `datapath_provider`: \"DATAPATH_PROVIDER_UNSPECIFIED\" | \"LEGACY_DATAPATH\" | \"ADVANCED_DATAPATH\"."
   }
 }
 
@@ -427,7 +435,7 @@ variable "disable_legacy_metadata_endpoints" {
 variable "dns_cache" {
   description = "The status of the NodeLocal DNSCache addon."
   type        = bool
-  default     = false
+  default     = null
 }
 
 variable "enable_binary_authorization" {
@@ -813,4 +821,11 @@ variable "master_global_access_enabled" {
   description = "Whether the cluster master is accessible globally (from any region) or only within the same region as the private endpoint. Used when `private` set to `true`."
   type        = bool
   default     = true
+}
+
+# Optional Autopilot
+variable "network_tags" {
+  description = "(Optional, Beta) - List of network tags applied to auto-provisioned node pools."
+  type        = list(string)
+  default     = []
 }

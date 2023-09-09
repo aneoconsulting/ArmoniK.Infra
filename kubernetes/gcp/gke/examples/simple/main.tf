@@ -20,5 +20,5 @@ module "gke" {
   subnetwork_cidr   = module.vpc.gke_subnet_cidr_block
   kubeconfig_path   = abspath("${path.root}/generated/kubeconfig")
   autopilot         = true  # default value
-  private           = false # public Standard GKE
+  private           = false # public GKE
 }

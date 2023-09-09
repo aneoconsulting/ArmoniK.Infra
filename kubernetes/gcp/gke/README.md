@@ -5,7 +5,12 @@ GKE cluster creation and configurations based on
 the [Terraform module](https://registry.terraform.io/modules/terraform-google-modules/kubernetes-engine/google/latest) of
 GKE developed by Google.
 
+This module deploy:
+
+* Public/Private GKE standard with beta functionalities.
+
 <!-- BEGIN_TF_DOCS -->
+
 ## Requirements
 
 | Name | Version |
@@ -187,4 +192,5 @@ GKE developed by Google.
 | <a name="output_type"></a> [type](#output\_type) | GKE cluster type (regional / zonal). |
 | <a name="output_vertical_pod_autoscaling_enabled"></a> [vertical\_pod\_autoscaling\_enabled](#output\_vertical\_pod\_autoscaling\_enabled) | Whether vertical pod autoscaling enabled. |
 | <a name="output_zones"></a> [zones](#output\_zones) | List of zones in which the cluster resides |
+
 <!-- END_TF_DOCS -->

@@ -13,7 +13,6 @@ This module deploy:
   and/or `var.autopilot = false`.
 
 <!-- BEGIN_TF_DOCS -->
-
 ## Requirements
 
 | Name | Version |
@@ -33,7 +32,9 @@ This module deploy:
 
 | Name | Source | Version |
 |------|--------|---------|
+| <a name="module_autopilot"></a> [autopilot](#module\_autopilot) | terraform-google-modules/kubernetes-engine/google//modules/beta-autopilot-public-cluster | 27.0.0 |
 | <a name="module_gke"></a> [gke](#module\_gke) | terraform-google-modules/kubernetes-engine/google//modules/beta-public-cluster | 27.0.0 |
+| <a name="module_private_autopilot"></a> [private\_autopilot](#module\_private\_autopilot) | terraform-google-modules/kubernetes-engine/google//modules/beta-autopilot-private-cluster | 27.0.0 |
 | <a name="module_private_gke"></a> [private\_gke](#module\_private\_gke) | terraform-google-modules/kubernetes-engine/google//modules/beta-private-cluster | 27.0.0 |
 
 ## Resources
@@ -52,6 +53,7 @@ This module deploy:
 | <a name="input_add_master_webhook_firewall_rules"></a> [add\_master\_webhook\_firewall\_rules](#input\_add\_master\_webhook\_firewall\_rules) | Create master\_webhook firewall rules for ports defined in `firewall_inbound_ports`. | `bool` | `false` | no |
 | <a name="input_add_shadow_firewall_rules"></a> [add\_shadow\_firewall\_rules](#input\_add\_shadow\_firewall\_rules) | Create GKE shadow firewall (the same as default firewall rules with firewall logs enabled). | `bool` | `false` | no |
 | <a name="input_authenticator_security_group"></a> [authenticator\_security\_group](#input\_authenticator\_security\_group) | The name of the RBAC security group for use with Google security groups in Kubernetes RBAC. Group name must be in format `gke-security-groups@yourdomain.com`. | `string` | `null` | no |
+| <a name="input_autopilot"></a> [autopilot](#input\_autopilot) | Create autopilot GKE cluster. | `bool` | `true` | no |
 | <a name="input_cloudrun"></a> [cloudrun](#input\_cloudrun) | (Beta) Enable CloudRun addon. | `bool` | `false` | no |
 | <a name="input_cloudrun_load_balancer_type"></a> [cloudrun\_load\_balancer\_type](#input\_cloudrun\_load\_balancer\_type) | (Beta) Configure the Cloud Run load balancer type. External by default. Set to `LOAD_BALANCER_TYPE_INTERNAL` to configure as an internal load balancer. | `string` | `""` | no |
 | <a name="input_cluster_autoscaling"></a> [cluster\_autoscaling](#input\_cluster\_autoscaling) | Cluster autoscaling configuration. See [more details](https://cloud.google.com/kubernetes-engine/docs/reference/rest/v1beta1/projects.locations.clusters#clusterautoscaling). For `disk_tye` see [Persistent Disk types](https://cloud.google.com/compute/docs/disks#disk-types). | <pre>object({<br>    enabled             = bool<br>    autoscaling_profile = string<br>    auto_repair         = bool<br>    auto_upgrade        = bool<br>    disk_size           = number<br>    disk_type           = string<br>    gpu_resources = list(object({<br>      resource_type = string<br>      minimum       = number<br>      maximum       = number<br>    }))<br>    min_cpu_cores = number<br>    max_cpu_cores = number<br>    min_memory_gb = number<br>    max_memory_gb = number<br>  })</pre> | <pre>{<br>  "auto_repair": true,<br>  "auto_upgrade": true,<br>  "autoscaling_profile": "BALANCED",<br>  "disk_size": 100,<br>  "disk_type": "pd-standard",<br>  "enabled": false,<br>  "gpu_resources": [],<br>  "max_cpu_cores": 0,<br>  "max_memory_gb": 0,<br>  "min_cpu_cores": 0,<br>  "min_memory_gb": 0<br>}</pre> | no |
@@ -71,7 +73,7 @@ This module deploy:
 | <a name="input_description"></a> [description](#input\_description) | The description of the GKE cluster. | `string` | `""` | no |
 | <a name="input_disable_default_snat"></a> [disable\_default\_snat](#input\_disable\_default\_snat) | Whether to disable the default SNAT to support the private use of public IP addresses | `bool` | `false` | no |
 | <a name="input_disable_legacy_metadata_endpoints"></a> [disable\_legacy\_metadata\_endpoints](#input\_disable\_legacy\_metadata\_endpoints) | Disable the /0.1/ and /v1beta1/ metadata server endpoints on the node. Changing this value will cause all node pools to be recreated. | `bool` | `true` | no |
-| <a name="input_dns_cache"></a> [dns\_cache](#input\_dns\_cache) | The status of the NodeLocal DNSCache addon. | `bool` | `false` | no |
+| <a name="input_dns_cache"></a> [dns\_cache](#input\_dns\_cache) | The status of the NodeLocal DNSCache addon. | `bool` | `null` | no |
 | <a name="input_enable_binary_authorization"></a> [enable\_binary\_authorization](#input\_enable\_binary\_authorization) | Enable BinAuthZ Admission controller. | `bool` | `false` | no |
 | <a name="input_enable_confidential_nodes"></a> [enable\_confidential\_nodes](#input\_enable\_confidential\_nodes) | An optional flag to enable confidential node config. | `bool` | `false` | no |
 | <a name="input_enable_cost_allocation"></a> [enable\_cost\_allocation](#input\_enable\_cost\_allocation) | Enables Cost Allocation Feature and the cluster name and namespace of your GKE workloads appear in the labels field of the billing export to BigQuery. | `bool` | `true` | no |
@@ -123,6 +125,7 @@ This module deploy:
 | <a name="input_network_policy"></a> [network\_policy](#input\_network\_policy) | Enable network policy addon. | `bool` | `false` | no |
 | <a name="input_network_policy_provider"></a> [network\_policy\_provider](#input\_network\_policy\_provider) | The network policy provider. See [more about network policy](https://cloud.google.com/kubernetes-engine/docs/how-to/network-policy). | `string` | `"CALICO"` | no |
 | <a name="input_network_project_id"></a> [network\_project\_id](#input\_network\_project\_id) | The project ID of the shared VPC's host (for shared vpc support). | `string` | `""` | no |
+| <a name="input_network_tags"></a> [network\_tags](#input\_network\_tags) | (Optional, Beta) - List of network tags applied to auto-provisioned node pools. | `list(string)` | `[]` | no |
 | <a name="input_node_metadata"></a> [node\_metadata](#input\_node\_metadata) | Specifies how node metadata is exposed to the workload running on the node | `string` | `"GKE_METADATA"` | no |
 | <a name="input_node_pools"></a> [node\_pools](#input\_node\_pools) | List of maps containing node pools. | `list(map(any))` | <pre>[<br>  {<br>    "name": "default"<br>  }<br>]</pre> | no |
 | <a name="input_node_pools_labels"></a> [node\_pools\_labels](#input\_node\_pools\_labels) | Map of maps containing node labels by node-pool name. | `map(map(string))` | <pre>{<br>  "all": {},<br>  "default-node-pool": {}<br>}</pre> | no |
@@ -161,6 +164,7 @@ This module deploy:
 
 | Name | Description |
 |------|-------------|
+| <a name="output_autopilot_enabled"></a> [autopilot\_enabled](#output\_autopilot\_enabled) | Autopilot GKE cluster. |
 | <a name="output_ca_certificate"></a> [ca\_certificate](#output\_ca\_certificate) | Cluster ca certificate (base64 encoded). |
 | <a name="output_cloudrun_enabled"></a> [cloudrun\_enabled](#output\_cloudrun\_enabled) | Whether CloudRun enabled. |
 | <a name="output_cluster_id"></a> [cluster\_id](#output\_cluster\_id) | GKE cluster ID. |
@@ -188,6 +192,7 @@ This module deploy:
 | <a name="output_node_pools_versions"></a> [node\_pools\_versions](#output\_node\_pools\_versions) | Node pool versions by node pool name. |
 | <a name="output_peering_name"></a> [peering\_name](#output\_peering\_name) | The name of the peering between this cluster and the Google owned VPC. |
 | <a name="output_pod_security_policy_enabled"></a> [pod\_security\_policy\_enabled](#output\_pod\_security\_policy\_enabled) | Whether pod security policy is enabled. |
+| <a name="output_private_enabled"></a> [private\_enabled](#output\_private\_enabled) | Private GKE cluster. |
 | <a name="output_region"></a> [region](#output\_region) | Cluster region. |
 | <a name="output_release_channel"></a> [release\_channel](#output\_release\_channel) | The release channel of this cluster. |
 | <a name="output_service_account"></a> [service\_account](#output\_service\_account) | The service account to default running nodes as if not overridden in `node_pools`. |
@@ -195,5 +200,4 @@ This module deploy:
 | <a name="output_type"></a> [type](#output\_type) | GKE cluster type (regional / zonal). |
 | <a name="output_vertical_pod_autoscaling_enabled"></a> [vertical\_pod\_autoscaling\_enabled](#output\_vertical\_pod\_autoscaling\_enabled) | Whether vertical pod autoscaling enabled. |
 | <a name="output_zones"></a> [zones](#output\_zones) | List of zones in which the cluster resides |
-
 <!-- END_TF_DOCS -->

@@ -93,12 +93,6 @@ variable "cluster_resource_labels" {
   default     = {}
 }
 
-variable "create_service_account" {
-  description = "Defines if service account specified to run nodes should be created."
-  type        = bool
-  default     = true
-}
-
 variable "database_encryption" {
   description = "Application-layer Secrets Encryption settings. Valid values of state are: \"ENCRYPTED\"; \"DECRYPTED\"."
   type = list(object({
@@ -808,7 +802,7 @@ variable "workload_vulnerability_mode" {
 variable "deploy_using_private_endpoint" {
   description = "(Beta) A toggle for Terraform and kubectl to connect to the master's internal IP address during deployment. Used when `private` set to `true`."
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "master_ipv4_cidr_block" {

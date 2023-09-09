@@ -8,8 +8,12 @@ GKE developed by Google.
 This module deploy:
 
 * Public/Private GKE standard with beta functionalities.
+* Public/Private GCP Autopilot with beta functionalities.
+* By default, the GCP Kubernetes cluster is autopilot and private. Otherwise, you set: `private = false`
+  and/or `var.autopilot = false`.
 
 <!-- BEGIN_TF_DOCS -->
+
 ## Requirements
 
 | Name | Version |
@@ -191,4 +195,5 @@ This module deploy:
 | <a name="output_type"></a> [type](#output\_type) | GKE cluster type (regional / zonal). |
 | <a name="output_vertical_pod_autoscaling_enabled"></a> [vertical\_pod\_autoscaling\_enabled](#output\_vertical\_pod\_autoscaling\_enabled) | Whether vertical pod autoscaling enabled. |
 | <a name="output_zones"></a> [zones](#output\_zones) | List of zones in which the cluster resides |
+
 <!-- END_TF_DOCS -->

@@ -1,9 +1,16 @@
+output "autopilot_enabled" {
+  description = "Autopilot GKE cluster."
+  value       = var.autopilot
+}
+
 output "ca_certificate" {
   sensitive   = true
   description = "Cluster ca certificate (base64 encoded)."
   value = try(coalesce(
     (local.public_gke ? module.gke[0].ca_certificate : null),
     (local.private_gke ? module.private_gke[0].ca_certificate : null),
+    (local.public_autopilot ? module.autopilot[0].ca_certificate : null),
+    (local.private_autopilot ? module.private_autopilot[0].ca_certificate : null),
   ), null)
 }
 
@@ -12,6 +19,8 @@ output "cloudrun_enabled" {
   value = try(coalesce(
     (local.public_gke ? module.gke[0].cloudrun_enabled : null),
     (local.private_gke ? module.private_gke[0].cloudrun_enabled : null),
+    (local.public_autopilot ? module.autopilot[0].cloudrun_enabled : null),
+    (local.private_autopilot ? module.private_autopilot[0].cloudrun_enabled : null),
   ), null)
 }
 
@@ -20,6 +29,8 @@ output "cluster_id" {
   value = try(coalesce(
     (local.public_gke ? module.gke[0].cluster_id : null),
     (local.private_gke ? module.private_gke[0].cluster_id : null),
+    (local.public_autopilot ? module.autopilot[0].cluster_id : null),
+    (local.private_autopilot ? module.private_autopilot[0].cluster_id : null),
   ), null)
 }
 
@@ -28,6 +39,8 @@ output "dns_cache_enabled" {
   value = try(coalesce(
     (local.public_gke ? module.gke[0].dns_cache_enabled : null),
     (local.private_gke ? module.private_gke[0].dns_cache_enabled : null),
+    (local.public_autopilot ? module.autopilot[0].dns_cache_enabled : null),
+    (local.private_autopilot ? module.private_autopilot[0].dns_cache_enabled : null),
   ), null)
 }
 
@@ -36,6 +49,8 @@ output "endpoint" {
   value = try(coalesce(
     (local.public_gke ? module.gke[0].endpoint : null),
     (local.private_gke ? module.private_gke[0].endpoint : null),
+    (local.public_autopilot ? module.autopilot[0].endpoint : null),
+    (local.private_autopilot ? module.private_autopilot[0].endpoint : null),
   ), null)
   sensitive = true
 }
@@ -45,6 +60,8 @@ output "identity_namespace" {
   value = try(coalesce(
     (local.public_gke ? module.gke[0].identity_namespace : null),
     (local.private_gke ? module.private_gke[0].identity_namespace : null),
+    (local.public_autopilot ? module.autopilot[0].identity_namespace : null),
+    (local.private_autopilot ? module.private_autopilot[0].identity_namespace : null),
   ), null)
 }
 
@@ -53,6 +70,8 @@ output "identity_service_enabled" {
   value = try(coalesce(
     (local.public_gke ? module.gke[0].identity_service_enabled : null),
     (local.private_gke ? module.private_gke[0].identity_service_enabled : null),
+    (local.public_autopilot ? module.autopilot[0].identity_service_enabled : null),
+    (local.private_autopilot ? module.private_autopilot[0].identity_service_enabled : null),
   ), null)
 }
 
@@ -69,6 +88,8 @@ output "intranode_visibility_enabled" {
   value = try(coalesce(
     (local.public_gke ? module.gke[0].intranode_visibility_enabled : null),
     (local.private_gke ? module.private_gke[0].intranode_visibility_enabled : null),
+    (local.public_autopilot ? module.autopilot[0].intranode_visibility_enabled : null),
+    (local.private_autopilot ? module.private_autopilot[0].intranode_visibility_enabled : null),
   ), null)
 }
 
@@ -77,6 +98,8 @@ output "istio_enabled" {
   value = try(coalesce(
     (local.public_gke ? module.gke[0].istio_enabled : null),
     (local.private_gke ? module.private_gke[0].istio_enabled : null),
+    (local.public_autopilot ? module.autopilot[0].istio_enabled : null),
+    (local.private_autopilot ? module.private_autopilot[0].istio_enabled : null),
   ), null)
 }
 
@@ -90,6 +113,8 @@ output "location" {
   value = try(coalesce(
     (local.public_gke ? module.gke[0].location : null),
     (local.private_gke ? module.private_gke[0].location : null),
+    (local.public_autopilot ? module.autopilot[0].location : null),
+    (local.private_autopilot ? module.private_autopilot[0].location : null),
   ), null)
 }
 
@@ -98,12 +123,17 @@ output "master_version" {
   value = try(coalesce(
     (local.public_gke ? module.gke[0].master_version : null),
     (local.private_gke ? module.private_gke[0].master_version : null),
+    (local.public_autopilot ? module.autopilot[0].master_version : null),
+    (local.private_autopilot ? module.private_autopilot[0].master_version : null),
   ), null)
 }
 
 output "master_ipv4_cidr_block" {
   description = "The IP range in CIDR notation used for the hosted master network."
-  value       = local.private_gke ? module.private_gke[0].master_ipv4_cidr_block : ""
+  value = try(coalesce(
+    (local.private_gke ? module.private_gke[0].master_ipv4_cidr_block : null),
+    (local.private_autopilot ? module.private_autopilot[0].master_ipv4_cidr_block : null),
+  ), null)
 }
 
 output "min_master_version" {
@@ -111,6 +141,8 @@ output "min_master_version" {
   value = try(coalesce(
     (local.public_gke ? module.gke[0].master_version : null),
     (local.private_gke ? module.private_gke[0].master_version : null),
+    (local.public_autopilot ? module.autopilot[0].min_master_version : null),
+    (local.private_autopilot ? module.private_autopilot[0].min_master_version : null),
   ), null)
 }
 
@@ -119,6 +151,8 @@ output "name" {
   value = try(coalesce(
     (local.public_gke ? module.gke[0].name : null),
     (local.private_gke ? module.private_gke[0].name : null),
+    (local.public_autopilot ? module.autopilot[0].name : null),
+    (local.private_autopilot ? module.private_autopilot[0].name : null),
   ), null)
 }
 
@@ -135,6 +169,8 @@ output "region" {
   value = try(coalesce(
     (local.public_gke ? module.gke[0].region : null),
     (local.private_gke ? module.private_gke[0].region : null),
+    (local.public_autopilot ? module.autopilot[0].region : null),
+    (local.private_autopilot ? module.private_autopilot[0].region : null),
   ), null)
 }
 
@@ -143,6 +179,8 @@ output "service_account" {
   value = try(coalesce(
     (local.public_gke ? module.gke[0].service_account : null),
     (local.private_gke ? module.private_gke[0].service_account : null),
+    (local.public_autopilot ? module.autopilot[0].service_account : null),
+    (local.private_autopilot ? module.private_autopilot[0].service_account : null),
   ), null)
 }
 
@@ -151,12 +189,17 @@ output "type" {
   value = try(coalesce(
     (local.public_gke ? module.gke[0].type : null),
     (local.private_gke ? module.private_gke[0].type : null),
+    (local.public_autopilot ? module.autopilot[0].type : null),
+    (local.private_autopilot ? module.private_autopilot[0].type : null),
   ), null)
 }
 
 output "peering_name" {
   description = "The name of the peering between this cluster and the Google owned VPC."
-  value       = local.private_gke ? module.private_gke[0].peering_name : ""
+  value = try(coalesce(
+    (local.private_gke ? module.private_gke[0].peering_name : null),
+    (local.private_autopilot ? module.private_autopilot[0].peering_name : null),
+  ), null)
 }
 
 output "pod_security_policy_enabled" {
@@ -164,6 +207,8 @@ output "pod_security_policy_enabled" {
   value = try(coalesce(
     (local.public_gke ? module.gke[0].pod_security_policy_enabled : null),
     (local.private_gke ? module.private_gke[0].pod_security_policy_enabled : null),
+    (local.public_autopilot ? module.autopilot[0].pod_security_policy_enabled : null),
+    (local.private_autopilot ? module.private_autopilot[0].pod_security_policy_enabled : null),
   ), null)
 }
 
@@ -172,6 +217,8 @@ output "tpu_ipv4_cidr_block" {
   value = try(coalesce(
     (local.public_gke ? module.gke[0].tpu_ipv4_cidr_block : null),
     (local.private_gke ? module.private_gke[0].tpu_ipv4_cidr_block : null),
+    (local.public_autopilot ? module.autopilot[0].tpu_ipv4_cidr_block : null),
+    (local.private_autopilot ? module.private_autopilot[0].tpu_ipv4_cidr_block : null),
   ), null)
 }
 
@@ -180,6 +227,8 @@ output "zones" {
   value = try(coalesce(
     (local.public_gke ? module.gke[0].zones : null),
     (local.private_gke ? module.private_gke[0].zones : null),
+    (local.public_autopilot ? module.autopilot[0].zones : null),
+    (local.private_autopilot ? module.private_autopilot[0].zones : null),
   ), null)
 }
 
@@ -189,6 +238,8 @@ output "gateway_api_channel" {
   value = try(coalesce(
     (local.public_gke ? module.gke[0].gateway_api_channel : null),
     (local.private_gke ? module.private_gke[0].gateway_api_channel : null),
+    (local.public_autopilot ? module.autopilot[0].gateway_api_channel : null),
+    (local.private_autopilot ? module.private_autopilot[0].gateway_api_channel : null),
   ), null)
 }
 
@@ -197,6 +248,8 @@ output "horizontal_pod_autoscaling_enabled" {
   value = try(coalesce(
     (local.public_gke ? module.gke[0].horizontal_pod_autoscaling_enabled : null),
     (local.private_gke ? module.private_gke[0].horizontal_pod_autoscaling_enabled : null),
+    (local.public_autopilot ? module.autopilot[0].horizontal_pod_autoscaling_enabled : null),
+    (local.private_autopilot ? module.private_autopilot[0].horizontal_pod_autoscaling_enabled : null),
   ), null)
 }
 
@@ -205,6 +258,8 @@ output "http_load_balancing_enabled" {
   value = try(coalesce(
     (local.public_gke ? module.gke[0].http_load_balancing_enabled : null),
     (local.private_gke ? module.private_gke[0].http_load_balancing_enabled : null),
+    (local.public_autopilot ? module.autopilot[0].http_load_balancing_enabled : null),
+    (local.private_autopilot ? module.private_autopilot[0].http_load_balancing_enabled : null),
   ), null)
 }
 
@@ -213,6 +268,8 @@ output "logging_service" {
   value = try(coalesce(
     (local.public_gke ? module.gke[0].logging_service : null),
     (local.private_gke ? module.private_gke[0].logging_service : null),
+    (local.public_autopilot ? module.autopilot[0].logging_service : null),
+    (local.private_autopilot ? module.private_autopilot[0].logging_service : null),
   ), null)
 }
 
@@ -221,6 +278,8 @@ output "master_authorized_networks_config" {
   value = try(coalesce(
     (local.public_gke ? module.gke[0].master_authorized_networks_config : null),
     (local.private_gke ? module.private_gke[0].master_authorized_networks_config : null),
+    (local.public_autopilot ? module.autopilot[0].master_authorized_networks_config : null),
+    (local.private_autopilot ? module.private_autopilot[0].master_authorized_networks_config : null),
   ), null)
 }
 
@@ -229,6 +288,8 @@ output "monitoring_service" {
   value = try(coalesce(
     (local.public_gke ? module.gke[0].monitoring_service : null),
     (local.private_gke ? module.private_gke[0].monitoring_service : null),
+    (local.public_autopilot ? module.autopilot[0].monitoring_service : null),
+    (local.private_autopilot ? module.private_autopilot[0].monitoring_service : null),
   ), null)
 }
 
@@ -248,11 +309,18 @@ output "node_pools_versions" {
   ), null)
 }
 
+output "private_enabled" {
+  description = "Private GKE cluster."
+  value       = var.private
+}
+
 output "release_channel" {
   description = "The release channel of this cluster."
   value = try(coalesce(
     (local.public_gke ? module.gke[0].release_channel : null),
     (local.private_gke ? module.private_gke[0].release_channel : null),
+    (local.public_autopilot ? module.autopilot[0].release_channel : null),
+    (local.private_autopilot ? module.private_autopilot[0].release_channel : null),
   ), null)
 }
 
@@ -261,5 +329,7 @@ output "vertical_pod_autoscaling_enabled" {
   value = try(coalesce(
     (local.public_gke ? module.gke[0].vertical_pod_autoscaling_enabled : null),
     (local.private_gke ? module.private_gke[0].vertical_pod_autoscaling_enabled : null),
+    (local.public_autopilot ? module.autopilot[0].vertical_pod_autoscaling_enabled : null),
+    (local.private_autopilot ? module.private_autopilot[0].vertical_pod_autoscaling_enabled : null),
   ), null)
 }

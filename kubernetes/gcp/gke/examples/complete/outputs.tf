@@ -17,12 +17,12 @@ output "endpoint" {
 
 output "intranode_visibility_enabled" {
   description = "Whether intra-node visibility is enabled."
-  value = module.gke.intranode_visibility_enabled
+  value       = module.gke.intranode_visibility_enabled
 }
 
 output "istio_enabled" {
   description = "Whether Istio is enabled."
-  value = module.gke.istio_enabled
+  value       = module.gke.istio_enabled
 }
 
 output "kubeconfig_path" {

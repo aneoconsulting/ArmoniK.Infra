@@ -1,11 +1,5 @@
 data "google_client_openid_userinfo" "current" {}
 
-data "google_compute_zones" "available" {
-  project = var.project
-  region  = var.region
-  status  = "UP"
-}
-
 locals {
   labels = {
     env             = "test"
@@ -56,14 +50,14 @@ module "vpc" {
 
 # For more parameters see [Documentation](kubernetes/gcp/gke/README.md)
 module "gke" {
-  source            = "../../.."
-  name              = "autopilot"
-  network           = module.vpc.name
-  ip_range_pods     = module.vpc.gke_subnet_pods_range_name
-  ip_range_services = module.vpc.gke_subnet_svc_range_name
-  subnetwork        = module.vpc.gke_subnet_name
-  subnetwork_cidr   = module.vpc.gke_subnet_cidr_block
-  kubeconfig_path   = abspath("${path.root}/generated/kubeconfig")
+  source                  = "../../.."
+  name                    = "autopilot"
+  network                 = module.vpc.name
+  ip_range_pods           = module.vpc.gke_subnet_pods_range_name
+  ip_range_services       = module.vpc.gke_subnet_svc_range_name
+  subnetwork              = module.vpc.gke_subnet_name
+  subnetwork_cidr         = module.vpc.gke_subnet_cidr_block
+  kubeconfig_path         = abspath("${path.root}/generated/kubeconfig")
   cluster_resource_labels = merge(local.labels, { resources = "cluster" })
   database_encryption = [
     # default value
@@ -72,11 +66,11 @@ module "gke" {
       key_name = ""
     }
   ]
-  description                 = "Test GKE Autopilot with beta functionalities."
-  enable_confidential_nodes   = true
-  grant_registry_access       = true # default value
-  horizontal_pod_autoscaling  = true
-  http_load_balancing         = true # default value
+  description                = "Test GKE Autopilot with beta functionalities."
+  enable_confidential_nodes  = true
+  grant_registry_access      = true # default value
+  horizontal_pod_autoscaling = true
+  http_load_balancing        = true # default value
   master_authorized_networks = [
     {
       cidr_block   = "0.0.0.0/0"

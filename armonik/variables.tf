@@ -131,11 +131,12 @@ variable "control_plane" {
       cpu    = string
       memory = string
     })
-    image_pull_secrets = string
-    node_selector      = any
-    annotations        = any
-    hpa                = any
-    default_partition  = string
+    image_pull_secrets   = string
+    node_selector        = any
+    annotations          = any
+    hpa                  = any
+    default_partition    = string
+    service_account_name = string
   })
 }
 
@@ -249,6 +250,7 @@ variable "compute_plane" {
     image_pull_secrets               = string
     node_selector                    = any
     annotations                      = any
+    service_account_name             = string
     polling_agent = object({
       image             = string
       tag               = string

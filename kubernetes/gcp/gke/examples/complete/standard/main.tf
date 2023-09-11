@@ -9,8 +9,8 @@ data "google_compute_zones" "available" {
 locals {
   labels = {
     env             = "test"
-    app             = "complete"
-    module          = "gcp-gke-standard"
+    app             = "standard-complete"
+    module          = "gke-standard"
     "create_by"     = split("@", data.google_client_openid_userinfo.current.email)[0]
     "creation_date" = null_resource.timestamp.triggers["date"]
   }
@@ -43,8 +43,8 @@ resource "null_resource" "timestamp" {
 }
 
 module "vpc" {
-  source = "../../../../../networking/gcp/vpc"
-  name   = "gke-complete"
+  source = "../../../../../../networking/gcp/vpc"
+  name   = "gke-standard-complete"
   gke_subnet = {
     name                = "gke-complete"
     nodes_cidr_block    = "10.43.0.0/16",
@@ -56,15 +56,15 @@ module "vpc" {
 
 # For more parameters see [Documentation](kubernetes/gcp/gke/README.md)
 module "gke" {
-  source            = "../../../gke"
-  name              = "complete"
+  source            = "../../.."
+  name              = "gke-standard-complete"
   network           = module.vpc.name
   ip_range_pods     = module.vpc.gke_subnet_pods_range_name
   ip_range_services = module.vpc.gke_subnet_svc_range_name
   subnetwork        = module.vpc.gke_subnet_name
   subnetwork_cidr   = module.vpc.gke_subnet_cidr_block
   kubeconfig_path   = abspath("${path.root}/generated/kubeconfig")
-  autopilot         = true # default value
+  autopilot         = false
   cluster_autoscaling = {
     # default value
     enabled             = false

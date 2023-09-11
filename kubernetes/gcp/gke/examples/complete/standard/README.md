@@ -1,6 +1,6 @@
 # GCP GKE
 
-To create a complete GCP GKE:
+To create a complete GCP Standard GKE:
 
 ```bash
 terraform init

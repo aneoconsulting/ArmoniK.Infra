@@ -19,7 +19,7 @@ variable "docker_images" {
   description = "Docker container images to push inside the registry"
   type = map(object({
     image = string
-    tag   = string
+    tags  = set(string)
   }))
 }
 

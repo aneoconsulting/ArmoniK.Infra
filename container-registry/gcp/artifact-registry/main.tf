@@ -2,9 +2,11 @@ data "google_client_config" "current" {}
 
 locals {
   labels = merge(var.labels, { module = "docker-artifact-registry" })
+  docker_images = [for key, value in var.docker_images : [for tag in value.tags : { name = key, registry = value.image, tag = tag }]
+  ]
 }
 
-resource "null_resource" "copy_images" {
+/*resource "null_resource" "copy_images" {
   for_each = var.docker_images
   triggers = {
     state = join("-", [each.key, each.value.image, each.value.tag])
@@ -28,6 +30,36 @@ fi
 if ! docker push ${data.google_client_config.current.region}-docker.pkg.dev/${data.google_client_config.current.project}/${google_artifact_registry_repository.docker.name}/${each.key}:${each.value.tag}
 then
   echo "cannot push image ${data.google_client_config.current.region}-docker.pkg.dev/${data.google_client_config.current.project}/${google_artifact_registry_repository.docker.name}/${each.key}:${each.value.tag}"
+  exit 1
+fi
+EOT
+  }
+}*/
+
+resource "null_resource" "copy_images" {
+  for_each = toset(local.docker_images)
+  triggers = {
+    state = join("-", [each.value.name, each.value.registry, each.value.tag])
+  }
+  provisioner "local-exec" {
+    command = <<-EOT
+gcloud auth configure-docker ${data.google_client_config.current.region}-docker.pkg.dev
+if [ -z "$(docker images -q '${each.value.image}:${each.value.tag}')" ]
+then
+  if ! docker pull ${each.value.image}:${each.value.tag}
+  then
+    echo "cannot download image ${each.value.image}:${each.value.tag}"
+    exit 1
+  fi
+fi
+if ! docker tag ${each.value.image}:${each.value.tag} ${data.google_client_config.current.region}-docker.pkg.dev/${data.google_client_config.current.project}/${google_artifact_registry_repository.docker.name}/${each.value.name}:${each.value.tag}
+then
+  echo "cannot tag image ${each.value.image}:${each.value.tag} to ${data.google_client_config.current.region}-docker.pkg.dev/${data.google_client_config.current.project}/${google_artifact_registry_repository.docker.name}/${each.value.name}:${each.value.tag}"
+  exit 1
+fi
+if ! docker push ${data.google_client_config.current.region}-docker.pkg.dev/${data.google_client_config.current.project}/${google_artifact_registry_repository.docker.name}/${each.value.name}:${each.value.tag}
+then
+  echo "cannot push image ${data.google_client_config.current.region}-docker.pkg.dev/${data.google_client_config.current.project}/${google_artifact_registry_repository.docker.name}/${each.value.name}:${each.value.tag}"
   exit 1
 fi
 EOT

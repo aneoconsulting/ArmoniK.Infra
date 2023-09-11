@@ -4,31 +4,31 @@ locals {
   docker_images = {
     prometheus = {
       image = "prom/prometheus"
-      tag   = "latest"
+      tags  = ["latest"]
     },
     node-exporter = {
       image = "prom/node-exporter"
-      tag   = "latest"
+      tags  = ["latest"]
     },
     redis = {
       image = "redis"
-      tag   = "latest"
+      tags  = ["latest"]
     },
     grafana = {
       image = "grafana/grafana"
-      tag   = "latest"
+      tags  = ["latest"]
     },
     nginx = {
       image = "nginx"
-      tag   = "latest"
+      tags  = ["latest"]
     },
     rabbitmq = {
       image = "rabbitmq"
-      tag   = "latest"
+      tags  = ["latest"]
     },
     busybox = {
       image = "busybox"
-      tag   = "latest"
+      tags  = ["latest"]
     }
   }
   registry_iam = {

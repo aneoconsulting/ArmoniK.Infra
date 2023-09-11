@@ -2,7 +2,7 @@ locals {
   docker_images = {
     prometheus = {
       image = "prom/prometheus"
-      tag   = "v2.46.0"
+      tags  = ["v2.46.0"]
     }
   }
   date = <<-EOT

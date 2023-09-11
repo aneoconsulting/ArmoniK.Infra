@@ -1,9 +1,9 @@
 locals {
   docker_images = {
-    prometheus = {
+    prometheus = [{
       image = "prom/prometheus"
-      tags  = ["v2.46.0"]
-    }
+      tag   = "v2.46.0"
+    }]
   }
   date = <<-EOT
 #!/bin/bash

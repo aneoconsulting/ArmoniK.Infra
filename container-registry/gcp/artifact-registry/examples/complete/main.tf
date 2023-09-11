@@ -2,34 +2,34 @@ data "google_client_openid_userinfo" "current" {}
 
 locals {
   docker_images = {
-    prometheus = {
+    prometheus = [{
       image = "prom/prometheus"
-      tags  = ["latest"]
-    },
-    node-exporter = {
+      tag   = "latest"
+    }],
+    node-exporter = [{
       image = "prom/node-exporter"
-      tags  = ["latest"]
-    },
-    redis = {
+      tag   = "latest"
+    }],
+    redis = [{
       image = "redis"
-      tags  = ["latest"]
-    },
-    grafana = {
+      tag   = "latest"
+    }],
+    grafana = [{
       image = "grafana/grafana"
-      tags  = ["latest"]
-    },
-    nginx = {
+      tag   = "latest"
+    }],
+    nginx = [{
       image = "nginx"
-      tags  = ["latest"]
-    },
-    rabbitmq = {
+      tag   = "latest"
+    }],
+    rabbitmq = [{
       image = "rabbitmq"
-      tags  = ["latest"]
-    },
-    busybox = {
+      tag   = "latest"
+    }],
+    busybox = [{
       image = "busybox"
-      tags  = ["latest"]
-    }
+      tag   = "latest"
+    }]
   }
   registry_iam = {
     "roles/artifactregistry.repoAdmin" = [],

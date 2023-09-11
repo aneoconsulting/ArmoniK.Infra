@@ -17,7 +17,7 @@ variable "labels" {
 
 variable "docker_images" {
   description = "Docker container images to push inside the registry"
-  type = map(list(object({
+  type = map(set(object({
     image = string
     tag   = string
   })))

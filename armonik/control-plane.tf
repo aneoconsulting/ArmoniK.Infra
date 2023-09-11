@@ -48,7 +48,8 @@ resource "kubernetes_deployment" "control_plane" {
             name = var.control_plane.image_pull_secrets
           }
         }
-        restart_policy = "Always" # Always, OnFailure, Never
+        restart_policy       = "Always" # Always, OnFailure, Never
+        service_account_name = var.control_plane.service_account_name
         # Control plane container
         container {
           name              = var.control_plane.name

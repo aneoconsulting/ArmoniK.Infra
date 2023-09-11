@@ -54,7 +54,8 @@ resource "kubernetes_deployment" "compute_plane" {
             name = each.value.image_pull_secrets
           }
         }
-        restart_policy = "Always" # Always, OnFailure, Never
+        restart_policy       = "Always" # Always, OnFailure, Never
+        service_account_name = each.value.service_account_name
         # Polling agent container
         container {
           name              = "polling-agent"
@@ -104,9 +105,12 @@ resource "kubernetes_deployment" "compute_plane" {
               }
             }
           }
-          env {
-            name  = "Amqp__PartitionId"
-            value = each.key
+          dynamic "env" {
+            for_each = local.supported_queues
+            content {
+              name  = env.value
+              value = each.key
+            }
           }
           dynamic "env" {
             for_each = local.credentials

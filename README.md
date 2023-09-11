@@ -6,7 +6,7 @@
 
 # Introduction
 
-In this project contains Terraform modules for the different resources and components of ArmoniK.
+In this project contains Terraform modules for the different cloud resources and components of ArmoniK.
 
 # Contributing
 

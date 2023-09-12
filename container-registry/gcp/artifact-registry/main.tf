@@ -3,7 +3,7 @@ data "google_client_config" "current" {}
 locals {
   labels = merge(var.labels, { module = "docker-artifact-registry" })
   #docker_images = [for key, value in var.docker_images : {for element in value : "${key}-${element.image}-${element.tag}" => { name = key, registry = element.image, tag = element.tag }}]
-  docker_images = merge(values({ for key, value in var.docker_images : key => { for element in value : "${key}-${element.image}-${element.tag}" => { name = key, registry = element.image, tag = element.tag } } })...)
+  docker_images = merge(values({ for key, value in var.docker_images : key => { for element in value : "${key}-${element.image}-${element.tag}" => { name = key, image = element.image, tag = element.tag } } })...)
 }
 
 /*resource "null_resource" "copy_images" {

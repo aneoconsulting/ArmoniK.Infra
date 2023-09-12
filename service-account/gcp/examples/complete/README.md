@@ -59,7 +59,7 @@ terraform destroy
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_project"></a> [project](#input\_project) | Project name | `string` | `"armonik-gcp-13469"` | no |
+| <a name="input_project"></a> [project](#input\_project) | Project name | `string` | n/a | yes |
 | <a name="input_region"></a> [region](#input\_region) | The GCP region to deploy the Memorystore for Memcached Instance. | `string` | `"europe-west9"` | no |
 
 ## Outputs

@@ -115,7 +115,7 @@ resource "kubernetes_daemonset" "fluent_bit" {
         volume {
           name = "runlogjournal"
           host_path {
-            path = "/run/log/journal"
+            path = "/var/log/run/log/journal"
           }
         }
         volume {

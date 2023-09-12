@@ -5,7 +5,8 @@ operations in a single centralized cloud service. You can use these keys and per
 directly, by using Cloud HSM or Cloud External Key Manager, or by using Customer-Managed Encryption Keys (CMEK) integrations
 within other Google Cloud services.
 
-This module retrieve a key from the GCP project. 
+This module retrieve a key from the GCP project. The retrieved keys are used by the service accounts for 
+encrypt and decrypt the data (by adding decrypt/encrypt rights on the kms key for the service accounts).
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements

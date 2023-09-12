@@ -70,7 +70,7 @@ module "complete_artifact_registry" {
   name           = "complete-test"
   description    = "A complete artifact registry"
   immutable_tags = true
-  kms_key_name   = null
+  kms_key_id     = null
   iam_roles      = local.registry_iam
   labels = {
     env             = "test"

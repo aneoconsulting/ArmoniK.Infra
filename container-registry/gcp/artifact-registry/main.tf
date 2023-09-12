@@ -41,7 +41,7 @@ resource "google_artifact_registry_repository" "docker" {
   repository_id = var.name
   description   = var.description
   format        = "docker"
-  kms_key_name  = var.kms_key_name
+  kms_key_name  = var.kms_key_id
   labels        = local.labels
   mode          = "STANDARD_REPOSITORY"
   docker_config {

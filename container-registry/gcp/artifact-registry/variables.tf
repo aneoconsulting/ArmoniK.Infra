@@ -1,4 +1,4 @@
-variable "kms_key_name" {
+variable "kms_key_id" {
   description = "KMS key name to encrypt GCP repositories. Has the form: projects/{{my-project}}/locations/{{my-region}}/keyRings/{{my-kr}}/cryptoKeys/{{my-key}}"
   type        = string
   default     = null

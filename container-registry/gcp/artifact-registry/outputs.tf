@@ -5,7 +5,7 @@ output "docker_repositories" {
 
 output "kms_key_name" {
   description = "KMS key name used to encrypt the registry"
-  value       = var.kms_key_name
+  value       = var.kms_key_id
 }
 
 output "service_account" {

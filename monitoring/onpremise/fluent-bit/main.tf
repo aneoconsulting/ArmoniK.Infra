@@ -125,7 +125,7 @@ resource "kubernetes_daemonset" "fluent_bit" {
           }
         }
         volume {
-          name = "/var/log/fluent-bit-config"
+          name = "fluent-bit-config"
           config_map {
             name = kubernetes_config_map.fluent_bit_config.metadata[0].name
           }

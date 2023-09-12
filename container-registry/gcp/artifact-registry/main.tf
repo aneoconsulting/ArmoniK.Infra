@@ -2,8 +2,8 @@ data "google_client_config" "current" {}
 
 locals {
   labels = merge(var.labels, { module = "docker-artifact-registry" })
-  docker_images = [for key, value in var.docker_images : [for element in value : { name = key, registry = element.image, tag = element.tag }]
-  ]
+  #docker_images = [for key, value in var.docker_images : {for element in value : "${key}-${element.image}-${element.tag}" => { name = key, registry = element.image, tag = element.tag }}]
+  docker_images = merge(values({ for key, value in var.docker_images : key => { for element in value : "${key}-${element.image}-${element.tag}" => { name = key, registry = element.image, tag = element.tag } } })...)
 }
 
 /*resource "null_resource" "copy_images" {
@@ -37,9 +37,9 @@ EOT
 }*/
 
 resource "null_resource" "copy_images" {
-  for_each = toset(local.docker_images)
+  for_each = local.docker_images
   triggers = {
-    state = join("-", [each.value.name, each.value.registry, each.value.tag])
+    state = each.key
   }
   provisioner "local-exec" {
     command = <<-EOT
@@ -65,6 +65,7 @@ fi
 EOT
   }
 }
+
 
 resource "google_artifact_registry_repository" "docker" {
   location      = data.google_client_config.current.region

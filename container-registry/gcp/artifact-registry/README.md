@@ -54,7 +54,7 @@ No modules.
 | <a name="input_docker_images"></a> [docker\_images](#input\_docker\_images) | Docker container images to push inside the registry | <pre>map(object({<br>    image = string<br>    tag   = string<br>  }))</pre> | n/a | yes |
 | <a name="input_iam_roles"></a> [iam\_roles](#input\_iam\_roles) | Assign role on the repository for a list of users | `map(set(string))` | `{}` | no |
 | <a name="input_immutable_tags"></a> [immutable\_tags](#input\_immutable\_tags) | If the registry is a docker format then tags can be immutable (true or false) | `bool` | `true` | no |
-| <a name="input_kms_key_name"></a> [kms\_key\_name](#input\_kms\_key\_name) | KMS key name to encrypt GCP repositories. Has the form: projects/{{my-project}}/locations/{{my-region}}/keyRings/{{my-kr}}/cryptoKeys/{{my-key}} | `string` | `null` | no |
+| <a name="input_kms_key_id"></a> [kms\_key\_id](#input\_kms\_key\_id) | KMS key name to encrypt GCP repositories. Has the form: projects/{{my-project}}/locations/{{my-region}}/keyRings/{{my-kr}}/cryptoKeys/{{my-key}} | `string` | `null` | no |
 | <a name="input_labels"></a> [labels](#input\_labels) | Labels for the registry | `map(string)` | `{}` | no |
 | <a name="input_name"></a> [name](#input\_name) | Name of the registry to create | `string` | n/a | yes |
 

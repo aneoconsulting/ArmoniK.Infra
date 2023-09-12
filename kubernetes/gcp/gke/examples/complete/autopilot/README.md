@@ -1,6 +1,6 @@
-# Google Artifact Registry
+# GCP GKE
 
-To create a Google Artifact Registry:
+To create a complete GCP Autopilot GKE:
 
 ```bash
 terraform init
@@ -38,7 +38,8 @@ terraform destroy
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_complete_artifact_registry"></a> [complete\_artifact\_registry](#module\_complete\_artifact\_registry) | ../../../artifact-registry | n/a |
+| <a name="module_gke"></a> [gke](#module\_gke) | ../../.. | n/a |
+| <a name="module_vpc"></a> [vpc](#module\_vpc) | ../../../../../../networking/gcp/vpc | n/a |
 
 ## Resources
 
@@ -54,13 +55,23 @@ terraform destroy
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_project"></a> [project](#input\_project) | Project name | `string` | n/a | yes |
-| <a name="input_region"></a> [region](#input\_region) | The GCP region to deploy the Artifact registry | `string` | `"europe-west9"` | no |
+| <a name="input_region"></a> [region](#input\_region) | The region to host the cluster in | `string` | `"europe-west9"` | no |
 
 ## Outputs
 
 | Name | Description |
 |------|-------------|
-| <a name="output_docker_repositories"></a> [docker\_repositories](#output\_docker\_repositories) | Docker repositories in Artifactory Registry created on GCP |
-| <a name="output_kms_key_name"></a> [kms\_key\_name](#output\_kms\_key\_name) | KMS key name used to encrypt the registry |
-| <a name="output_service_account"></a> [service\_account](#output\_service\_account) | The associated service account created for artifact-registry. |
+| <a name="output_ca_certificate"></a> [ca\_certificate](#output\_ca\_certificate) | Cluster ca certificate (base64 encoded). |
+| <a name="output_cluster_id"></a> [cluster\_id](#output\_cluster\_id) | GKE cluster ID. |
+| <a name="output_endpoint"></a> [endpoint](#output\_endpoint) | Cluster endpoint |
+| <a name="output_intranode_visibility_enabled"></a> [intranode\_visibility\_enabled](#output\_intranode\_visibility\_enabled) | Whether intra-node visibility is enabled. |
+| <a name="output_istio_enabled"></a> [istio\_enabled](#output\_istio\_enabled) | Whether Istio is enabled. |
+| <a name="output_kubeconfig_path"></a> [kubeconfig\_path](#output\_kubeconfig\_path) | Path where the kubeconfig file is saved. |
+| <a name="output_location"></a> [location](#output\_location) | Cluster location (region if regional cluster, zone if zonal cluster) |
+| <a name="output_name"></a> [name](#output\_name) | GKE cluster name. |
+| <a name="output_node_pools_names"></a> [node\_pools\_names](#output\_node\_pools\_names) | List of node pools names. |
+| <a name="output_region"></a> [region](#output\_region) | Cluster region. |
+| <a name="output_service_account"></a> [service\_account](#output\_service\_account) | The service account to default running nodes as if not overridden in `node_pools`. |
+| <a name="output_type"></a> [type](#output\_type) | GKE cluster type (regional / zonal). |
+| <a name="output_zones"></a> [zones](#output\_zones) | List of zones in which the cluster resides |
 <!-- END_TF_DOCS -->

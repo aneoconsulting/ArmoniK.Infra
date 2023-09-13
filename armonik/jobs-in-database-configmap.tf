@@ -4,5 +4,5 @@ resource "kubernetes_config_map" "jobs_in_database_config" {
     name      = "jobs-in-database-configmap"
     namespace = var.namespace
   }
-  data = merge({}, var.jobs_in_database_extra_conf)
+  data = var.jobs_in_database_extra_conf
 }

@@ -23,7 +23,7 @@ locals {
 data "google_client_config" "current" {}
 
 resource "local_file" "kubeconfig" {
-  filename          = "kubeconfig_node_pool_complete.yaml"
+  filename          = "kubeconfig_node_pool_simple.yaml"
   sensitive_content = <<EOF
 apiVersion: v1
 clusters:
@@ -69,64 +69,14 @@ module "gke" {
 }
 
 module "node_pool" {
-  source             = "../../../node_pool"
+  source             = "../.."
   cluster_name       = module.gke.name
   service_account    = var.service_account
   min_master_version = null
 
   node_pools = {
-    complete-1 = {
-      machine_type                = "e2-medium"
-      node_locations              = "europe-west9-a,europe-west9-b"
-      local_ssd_count             = 0
-      spot                        = false
-      disk_size_gb                = 100
-      disk_type                   = "pd-standard"
-      image_type                  = "COS_CONTAINERD"
-      enable_gcfs                 = false
-      enable_gvnic                = false
-      auto_repair                 = true
-      auto_upgrade                = true
-      service_account             = var.service_account
-      preemptible                 = false
-      initial_node_count          = 0
-      enable_secure_boot          = false
-      enable_integrity_monitoring = false
-      autoscaling                 = true
-      min_count                   = 0
-      max_count                   = 100
-      location_policy             = "BALANCED"
-      tags                        = ["first"]
-      strategy                    = "SURGE"
-      max_pods_per_node           = 100
-    }
-    complete-2 = {
-      machine_type       = "e2-medium"
-      node_locations     = "europe-west9-a,europe-west9-b"
-      local_ssd_count    = 0
-      spot               = false
-      disk_size_gb       = 100
-      disk_type          = "pd-standard"
-      image_type         = "COS_CONTAINERD"
-      enable_gcfs        = false
-      enable_gvnic       = false
-      auto_repair        = true
-      auto_upgrade       = true
-      service_account    = var.service_account
-      preemptible        = false
+    simple = {
       initial_node_count = 0
-      enable_secure_boot = false
-      autoscaling        = false
-      node_count         = 0
-      tags               = ["second"]
-      strategy           = "BLUE_GREEN"
-      max_pods_per_node  = 100
-      batch_percentage   = 0.2
-      taint = { "complete-node-pool-2" : { value  = true, effect = "PREFER_NO_SCHEDULE" } }
     }
   }
-
-  base_tags   = ["complete"]
-  base_labels = { "example" : "complete" }
-  base_taints = { "complete" : { value = true, effect = "PREFER_NO_SCHEDULE" } }
 }

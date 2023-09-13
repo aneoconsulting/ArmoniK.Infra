@@ -235,8 +235,8 @@ locals {
   # Please don't change below read-only permissions
   fluent_bit_volumes = {
     fluentbitstate = {
-      mount_path = "/var/log/fluent-bit/state"
-      read_only  = true
+      mount_path = "/var/fluent-bit/state"
+      read_only  = false
       type       = "host_path"
     }
     varlog = {
@@ -245,12 +245,12 @@ locals {
       type       = "host_path"
     }
     varlibdockercontainers = {
-      mount_path = "/var/log/lib/docker/containers"
+      mount_path = "/var/lib/docker/containers"
       read_only  = true
       type       = "host_path"
     }
     runlogjournal = {
-      mount_path = "/var/log/run/log/journal"
+      mount_path = "/run/log/journal"
       read_only  = true
       type       = "host_path"
     }
@@ -260,8 +260,8 @@ locals {
       type       = "host_path"
     }
     fluentbitconfig = {
-      mount_path = "/var/log/fluent-bit/etc/"
-      read_only  = true
+      mount_path = "/fluent-bit/etc/"
+      read_only  = false
       type       = "config_map"
     }
   }

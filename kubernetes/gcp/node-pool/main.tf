@@ -1,28 +1,14 @@
-/**
- * Copyright 2022 Google LLC
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-# Configuration in the current provider
 data "google_client_config" "current" {}
 
-locals {
-  location = coalesce(var.cluster_location, data.google_client_config.current.region)
-  regional = length(split("-", local.location)) == 2
+data "google_container_cluster" "cluster" {
+  name = var.cluster_name
+}
 
+locals {
+  location = data.google_container_cluster.cluster.location
+  regional = length(split("-", local.location)) == 2
   # When a release channel is used, node auto-upgrade is enabled and cannot be disabled.
-  default_auto_upgrade = local.regional || var.release_channel != "UNSPECIFIED" ? true : false
+  default_auto_upgrade = local.regional || var.release_channel != "UNSPECIFIED"
 }
 
 resource "google_container_node_pool" "pools" {
@@ -31,19 +17,16 @@ resource "google_container_node_pool" "pools" {
   project  = data.google_client_config.current.project
   location = local.location
   cluster  = var.cluster_name
-
   # use node_locations if provided, defaults to cluster level node_locations if not specified
   node_locations     = can(coalesce(each.value.node_locations)) ? split(",", each.value.node_locations) : null
   version            = try(each.value.auto_upgrade, local.default_auto_upgrade) ? "" : try(each.value.version, var.min_master_version)
-  initial_node_count = try(each.value.autoscaling, true) ? try(each.value.initial_node_count, try(each.value.min_count, 1)) : null
+  initial_node_count = can(coalesce(each.value.autoscaling)) ? coalesce(each.value.initial_node_count, each.value.min_count, 0) : null
   max_pods_per_node  = try(each.value.max_pods_per_node, null)
-  node_count         = try(each.value.autoscaling, true) ? null : try(each.value.node_count, 1)
-
+  node_count         = can(coalesce(each.value.autoscaling)) ? null : try(each.value.node_count, 0)
   management {
     auto_repair  = try(each.value.auto_repair, true)
     auto_upgrade = try(each.value.auto_upgrade, local.default_auto_upgrade)
   }
-
   upgrade_settings {
     strategy        = try(each.value.strategy, "SURGE")
     max_surge       = try(each.value.strategy, "SURGE") == "SURGE" ? try(each.value.max_surge, 1) : null
@@ -60,7 +43,6 @@ resource "google_container_node_pool" "pools" {
       }
     }
   }
-
   node_config {
     boot_disk_kms_key = try(each.value.boot_disk_kms_key, "")
     image_type        = try(each.value.image_type, "COS_CONTAINERD")
@@ -76,7 +58,9 @@ resource "google_container_node_pool" "pools" {
     tags              = setunion(var.base_tags, try(each.value.tags, []))
     labels            = merge(var.base_labels, try(each.value.labels, {}))
     resource_labels   = merge(var.base_resource_labels, try(each.value.resource_labels, {}))
-    metadata          = merge(var.base_metadata, try(each.value.metadata, {}), { "disable-legacy-endpoints" = var.disable_legacy_metadata_endpoints })
+    metadata = merge(var.base_metadata, try(each.value.metadata, {}), {
+      "disable-legacy-endpoints" = var.disable_legacy_metadata_endpoints
+    })
     workload_metadata_config {
       mode = try(each.value.node_metadata, var.node_metadata)
     }
@@ -119,25 +103,22 @@ resource "google_container_node_pool" "pools" {
       }
     }
   }
-
   lifecycle {
     ignore_changes = [initial_node_count]
   }
-
   timeouts {
     create = try(var.timeouts.create, "45m")
     update = try(var.timeouts.update, "45m")
     delete = try(var.timeouts.delete, "45m")
   }
-
   dynamic "autoscaling" {
-    for_each = try(each.value.autoscaling, true) ? [each.value] : []
+    for_each = can(coalesce(each.value.autoscaling)) ? [each.value] : []
     content {
-      min_node_count       = contains(keys(autoscaling.value), "total_min_count") ? null : try(autoscaling.value.min_count, 1)
-      max_node_count       = contains(keys(autoscaling.value), "total_max_count") ? null : try(autoscaling.value.max_count, 100)
-      location_policy      = lookup(autoscaling.value, "location_policy", null)
-      total_min_node_count = lookup(autoscaling.value, "total_min_count", null)
-      total_max_node_count = lookup(autoscaling.value, "total_max_count", null)
+      min_node_count       = try(autoscaling["min_node_count"], 0)
+      max_node_count       = try(autoscaling["max_node_count"], autoscaling["min_node_count"], 0)
+      location_policy      = try(autoscaling["location_policy"], null)
+      total_min_node_count = try(autoscaling["total_min_node_count"], null)
+      total_max_node_count = try(autoscaling["total_max_node_count"], null)
     }
   }
 }
@@ -148,29 +129,24 @@ resource "google_container_node_pool" "windows_pools" {
   project  = data.google_client_config.current.project
   location = local.location
   cluster  = var.cluster_name
-
   # use node_locations if provided, defaults to cluster level node_locations if not specified
   node_locations     = can(each.value.node_locations) ? split(",", each.value.node_locations) : null
   version            = try(each.value.auto_upgrade, local.default_auto_upgrade) ? "" : try(each.value.version, var.min_master_version)
-  initial_node_count = try(each.value.autoscaling, true) ? try(each.value.initial_node_count, try(each.value.min_count, 1)) : null
+  initial_node_count = can(coalesce(each.value.autoscaling)) ? coalesce(each.value.initial_node_count, each.value.min_count, 0) : null
   max_pods_per_node  = try(each.value.max_pods_per_node, null)
-  node_count         = try(each.value.autoscaling, true) ? null : try(each.value.node_count, 1)
-
+  node_count         = can(coalesce(each.value.autoscaling)) ? null : try(each.value.node_count, 0)
   management {
     auto_repair  = try(each.value.auto_repair, true)
     auto_upgrade = try(each.value.auto_upgrade, local.default_auto_upgrade)
   }
-
   upgrade_settings {
     strategy        = try(each.value.strategy, "SURGE")
     max_surge       = try(each.value.strategy, "SURGE") == "SURGE" ? try(each.value.max_surge, 1) : null
     max_unavailable = try(each.value.strategy, "SURGE") == "SURGE" ? try(each.value.max_unavailable, 0) : null
-
     dynamic "blue_green_settings" {
       for_each = try(each.value.strategy, "SURGE") == "BLUE_GREEN" ? [1] : []
       content {
         node_pool_soak_duration = try(each.value.node_pool_soak_duration, null)
-
         standard_rollout_policy {
           batch_soak_duration = try(each.value.batch_soak_duration, null)
           batch_percentage    = try(each.value.batch_percentage, null)
@@ -179,7 +155,6 @@ resource "google_container_node_pool" "windows_pools" {
       }
     }
   }
-
   node_config {
     boot_disk_kms_key = try(each.value.boot_disk_kms_key, "")
     image_type        = try(each.value.image_type, "COS_CONTAINERD")
@@ -195,7 +170,9 @@ resource "google_container_node_pool" "windows_pools" {
     tags              = concat(var.base_tags, try(each.value.tags, []))
     labels            = merge(var.base_labels, try(each.value.labels, {}))
     resource_labels   = merge(var.base_resource_labels, try(each.value.resource_labels, {}))
-    metadata          = merge(var.base_metadata, try(each.value.metadata, {}), { "disable-legacy-endpoints" = var.disable_legacy_metadata_endpoints })
+    metadata = merge(var.base_metadata, try(each.value.metadata, {}), {
+      "disable-legacy-endpoints" = var.disable_legacy_metadata_endpoints
+    })
     workload_metadata_config {
       mode = try(each.value.node_metadata, var.node_metadata)
     }
@@ -216,7 +193,7 @@ resource "google_container_node_pool" "windows_pools" {
       }
     }
     dynamic "taint" {
-      for_each = try(each.value.taint, [])
+      for_each = merge(var.base_taints, try(each.value.taint, {}))
       content {
         effect = taint.value.effect
         key    = taint.value.key
@@ -232,25 +209,22 @@ resource "google_container_node_pool" "windows_pools" {
       }
     }
   }
-
   lifecycle {
     ignore_changes = [initial_node_count]
   }
-
   timeouts {
     create = try(var.timeouts.create, "45m")
     update = try(var.timeouts.update, "45m")
     delete = try(var.timeouts.delete, "45m")
   }
-
   dynamic "autoscaling" {
-    for_each = try(each.value.autoscaling, true) ? [each.value] : []
+    for_each = can(coalesce(each.value.autoscaling)) ? [each.value] : []
     content {
-      min_node_count       = contains(keys(autoscaling.value), "total_min_count") ? null : try(autoscaling.value.min_count, 1)
-      max_node_count       = contains(keys(autoscaling.value), "total_max_count") ? null : try(autoscaling.value.max_count, 100)
-      location_policy      = try(autoscaling.value.location_policy, null)
-      total_min_node_count = try(autoscaling.value.total_min_count, null)
-      total_max_node_count = try(autoscaling.value.total_max_count, null)
+      min_node_count       = try(autoscaling["min_node_count"], 0)
+      max_node_count       = try(autoscaling["max_node_count"], autoscaling["min_node_count"], 0)
+      location_policy      = try(autoscaling["location_policy"], null)
+      total_min_node_count = try(autoscaling["total_min_node_count"], null)
+      total_max_node_count = try(autoscaling["total_max_node_count"], null)
     }
   }
 }

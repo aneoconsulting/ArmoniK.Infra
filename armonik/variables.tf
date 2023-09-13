@@ -98,6 +98,13 @@ variable "extra_conf" {
   }
 }
 
+# Extra configuration
+variable "jobs_in_database_extra_conf" {
+  description = "Add extra configuration in the configmaps for jobs connecting to database"
+  type        = map(string)
+  default     = {}
+}
+
 # Job to insert partitions in the database
 variable "job_partitions_in_database" {
   description = "Job to insert partitions IDs in the database"

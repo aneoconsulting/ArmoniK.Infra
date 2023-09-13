@@ -1,7 +1,6 @@
 data "kubernetes_config_map" "dns" {
   metadata {
     name = "coredns"
-
     # This dummy regex replace is used to ensure this data source is read *after* Kubernetes is up and running
     namespace = replace(data.kubernetes_secret.deployed_object_storage.id, "/.*/", "kube-system")
   }
@@ -12,23 +11,27 @@ module "control_plane_endpoint" {
   service        = kubernetes_service.control_plane
   cluster_domain = local.cluster_domain
 }
+
 module "admin_gui_endpoint" {
   source         = "../utils/service-ip"
   service        = one(kubernetes_service.admin_gui)
   cluster_domain = local.cluster_domain
 }
+
 # Deprecated, must be removed in a future version
 module "admin_0_8_gui_endpoint" {
   source         = "../utils/service-ip"
   service        = one(kubernetes_service.admin_0_8_gui)
   cluster_domain = local.cluster_domain
 }
+
 # Deprecated, must be removed in a future version
 module "admin_0_9_gui_endpoint" {
   source         = "../utils/service-ip"
   service        = one(kubernetes_service.admin_0_9_gui)
   cluster_domain = local.cluster_domain
 }
+
 module "ingress_endpoint" {
   source         = "../utils/service-ip"
   service        = one(kubernetes_service.ingress)
@@ -61,7 +64,6 @@ locals {
     http_port = var.ingress.http_port
     grpc_port = var.ingress.grpc_port
   }
-
   control_plane_url = "http://${local.control_plane_endpoints.ip}:${local.control_plane_endpoints.port}"
   admin_app_url     = length(kubernetes_service.admin_gui) > 0 ? "http://${local.admin_gui_endpoints.ip}:${local.admin_gui_endpoints.app_port}" : null
   # Deprecated, must be removed in a future version

@@ -50,7 +50,7 @@ No modules.
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_description"></a> [description](#input\_description) | Description of the registry | `string` | `""` | no |
-| <a name="input_docker_images"></a> [docker\_images](#input\_docker\_images) | Docker container images to push inside the registry | <pre>map(object({<br>    image = string<br>    tag   = string<br>  }))</pre> | n/a | yes |
+| <a name="input_docker_images"></a> [docker\_images](#input\_docker\_images) | Docker container images to push inside the registry | <pre>map(list(object({<br>    image = string<br>    tag   = string<br>  })))</pre> | n/a | yes |
 | <a name="input_iam_bindings"></a> [iam\_bindings](#input\_iam\_bindings) | Assign role on the repository for a list of users | `map(list(string))` | `{}` | no |
 | <a name="input_immutable_tags"></a> [immutable\_tags](#input\_immutable\_tags) | If the registry is a docker format then tags can be immutable (true or false) | `bool` | `true` | no |
 | <a name="input_kms_key_name"></a> [kms\_key\_name](#input\_kms\_key\_name) | KMS key name to encrypt GCP repositories | `string` | `null` | no |

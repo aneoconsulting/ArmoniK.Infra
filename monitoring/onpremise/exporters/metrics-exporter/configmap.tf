@@ -4,12 +4,11 @@ resource "kubernetes_config_map" "metrics_exporter_config" {
     name      = "metrics-exporter-configmap"
     namespace = var.namespace
   }
-  data = merge(var.extra_conf, {
+  data = merge({
     MongoDB__CAFile           = local.secrets.mongodb.ca_filename
     MongoDB__ReplicaSet       = "rs0"
     MongoDB__DatabaseName     = "database"
-    MongoDB__DataRetention    = "10.00:00:00"
     MongoDB__DirectConnection = "false"
     MongoDB__Tls              = "true"
-  })
+  }, var.extra_conf)
 }

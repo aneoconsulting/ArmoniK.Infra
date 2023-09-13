@@ -98,6 +98,13 @@ variable "extra_conf" {
   }
 }
 
+# Extra configuration
+variable "jobs_in_database_extra_conf" {
+  description = "Add extra configuration in the configmaps for jobs connecting to database"
+  type        = map(string)
+  default     = {}
+}
+
 # Job to insert partitions in the database
 variable "job_partitions_in_database" {
   description = "Job to insert partitions IDs in the database"
@@ -131,11 +138,12 @@ variable "control_plane" {
       cpu    = string
       memory = string
     })
-    image_pull_secrets = string
-    node_selector      = any
-    annotations        = any
-    hpa                = any
-    default_partition  = string
+    image_pull_secrets   = string
+    node_selector        = any
+    annotations          = any
+    hpa                  = any
+    default_partition    = string
+    service_account_name = string
   })
 }
 
@@ -249,6 +257,7 @@ variable "compute_plane" {
     image_pull_secrets               = string
     node_selector                    = any
     annotations                      = any
+    service_account_name             = string
     polling_agent = object({
       image             = string
       tag               = string

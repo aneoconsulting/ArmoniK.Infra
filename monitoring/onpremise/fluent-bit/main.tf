@@ -66,6 +66,7 @@ resource "kubernetes_daemonset" "fluent_bit" {
           volume_mount {
             name       = "fluentbitstate"
             mount_path = "/var/fluent-bit/state"
+            read_only  = true
           }
           volume_mount {
             name       = "varlog"
@@ -90,12 +91,13 @@ resource "kubernetes_daemonset" "fluent_bit" {
           volume_mount {
             name       = "fluent-bit-config"
             mount_path = "/fluent-bit/etc/"
+            read_only  = true
           }
         }
         volume {
           name = "fluentbitstate"
           host_path {
-            path = "/var/fluent-bit/state"
+            path = "/var/log/fluent-bit/state"
           }
         }
         volume {
@@ -107,13 +109,13 @@ resource "kubernetes_daemonset" "fluent_bit" {
         volume {
           name = "varlibdockercontainers"
           host_path {
-            path = "/var/lib/docker/containers"
+            path = "/var/log/lib/docker/containers"
           }
         }
         volume {
           name = "runlogjournal"
           host_path {
-            path = "/run/log/journal"
+            path = "/var/log/run/log/journal"
           }
         }
         volume {
@@ -128,7 +130,7 @@ resource "kubernetes_daemonset" "fluent_bit" {
             name = kubernetes_config_map.fluent_bit_config.metadata[0].name
           }
         }
-        host_network                     = true
+        host_network                     = false
         dns_policy                       = "ClusterFirstWithHostNet"
         termination_grace_period_seconds = 10
         service_account_name             = kubernetes_service_account.fluent_bit[0].metadata[0].name

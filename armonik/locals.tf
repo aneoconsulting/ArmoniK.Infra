@@ -250,7 +250,7 @@ locals {
       type       = "host_path"
     }
     runlogjournal = {
-      mount_path = "var/log/run/log/journal"
+      mount_path = "/var/log/run/log/journal"
       read_only  = true
       type       = "host_path"
     }

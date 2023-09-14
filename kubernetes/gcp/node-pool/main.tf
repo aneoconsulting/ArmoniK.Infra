@@ -1,26 +1,21 @@
 data "google_client_config" "current" {}
 
-data "google_container_cluster" "cluster" {
-  name = var.cluster_name
-}
-
 locals {
-  location = data.google_container_cluster.cluster.location
-  regional = length(split("-", local.location)) == 2
+  regional             = can(coalesce(var.cluster_location)) ? length(split("-", var.cluster_location)) == 2 : null
   # When a release channel is used, node auto-upgrade is enabled and cannot be disabled.
-  default_auto_upgrade = local.regional || var.release_channel != "UNSPECIFIED"
+  default_auto_upgrade = coalesce(local.regional, false) || var.release_channel != "UNSPECIFIED"
 }
 
 resource "google_container_node_pool" "pools" {
-  for_each = var.node_pools
-  name     = each.key
-  project  = data.google_client_config.current.project
-  location = local.location
-  cluster  = var.cluster_name
+  for_each           = var.node_pools
+  name               = each.key
+  project            = data.google_client_config.current.project
+  location           = var.cluster_location
+  cluster            = var.cluster_name
   # use node_locations if provided, defaults to cluster level node_locations if not specified
   node_locations     = can(coalesce(each.value.node_locations)) ? split(",", each.value.node_locations) : null
   version            = try(each.value.auto_upgrade, local.default_auto_upgrade) ? "" : try(each.value.version, var.min_master_version)
-  initial_node_count = can(coalesce(each.value.autoscaling)) ? coalesce(each.value.initial_node_count, each.value.min_count, 0) : null
+  initial_node_count = can(coalesce(each.value.autoscaling)) ? try(each.value.initial_node_count, each.value.min_count, 0) : null
   max_pods_per_node  = try(each.value.max_pods_per_node, null)
   node_count         = can(coalesce(each.value.autoscaling)) ? null : try(each.value.node_count, 0)
   management {
@@ -58,7 +53,7 @@ resource "google_container_node_pool" "pools" {
     tags              = setunion(var.base_tags, try(each.value.tags, []))
     labels            = merge(var.base_labels, try(each.value.labels, {}))
     resource_labels   = merge(var.base_resource_labels, try(each.value.resource_labels, {}))
-    metadata = merge(var.base_metadata, try(each.value.metadata, {}), {
+    metadata          = merge(var.base_metadata, try(each.value.metadata, {}), {
       "disable-legacy-endpoints" = var.disable_legacy_metadata_endpoints
     })
     workload_metadata_config {
@@ -124,15 +119,15 @@ resource "google_container_node_pool" "pools" {
 }
 
 resource "google_container_node_pool" "windows_pools" {
-  for_each = var.windows_node_pools
-  name     = each.key
-  project  = data.google_client_config.current.project
-  location = local.location
-  cluster  = var.cluster_name
+  for_each           = var.windows_node_pools
+  name               = each.key
+  project            = data.google_client_config.current.project
+  location           = var.cluster_location
+  cluster            = var.cluster_name
   # use node_locations if provided, defaults to cluster level node_locations if not specified
   node_locations     = can(each.value.node_locations) ? split(",", each.value.node_locations) : null
   version            = try(each.value.auto_upgrade, local.default_auto_upgrade) ? "" : try(each.value.version, var.min_master_version)
-  initial_node_count = can(coalesce(each.value.autoscaling)) ? coalesce(each.value.initial_node_count, each.value.min_count, 0) : null
+  initial_node_count = can(coalesce(each.value.autoscaling)) ? try(each.value.initial_node_count, each.value.min_count, 0) : null
   max_pods_per_node  = try(each.value.max_pods_per_node, null)
   node_count         = can(coalesce(each.value.autoscaling)) ? null : try(each.value.node_count, 0)
   management {
@@ -170,7 +165,7 @@ resource "google_container_node_pool" "windows_pools" {
     tags              = concat(var.base_tags, try(each.value.tags, []))
     labels            = merge(var.base_labels, try(each.value.labels, {}))
     resource_labels   = merge(var.base_resource_labels, try(each.value.resource_labels, {}))
-    metadata = merge(var.base_metadata, try(each.value.metadata, {}), {
+    metadata          = merge(var.base_metadata, try(each.value.metadata, {}), {
       "disable-legacy-endpoints" = var.disable_legacy_metadata_endpoints
     })
     workload_metadata_config {

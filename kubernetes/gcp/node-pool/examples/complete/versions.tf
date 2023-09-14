@@ -1,4 +1,3 @@
-# GCP provider
 provider "google" {
   project = var.project
   region  = var.region
@@ -9,11 +8,19 @@ terraform {
   required_providers {
     google = {
       source  = "hashicorp/google"
-      version = ">= 4.75.0, < 5.0"
+      version = "~> 4.75.0"
     }
     local = {
       source  = "hashicorp/local"
-      version = "2.4.0"
+      version = "~> 2.4.0"
+    }
+    external = {
+      source  = "hashicorp/external"
+      version = "~> 2.3.1"
+    }
+    null = {
+      source  = "hashicorp/null"
+      version = "~> 3.2.1"
     }
   }
 }

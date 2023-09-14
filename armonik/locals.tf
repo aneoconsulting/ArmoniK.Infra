@@ -1,4 +1,7 @@
 locals {
+  # Supported message queues by ArmoniK
+  supported_queues = toset(["Amqp__PartitionId", "PubSub__PartitionId", "SQS__PartitionId"])
+
   # list of partitions
   partition_names   = keys(try(var.compute_plane, {}))
   default_partition = try(var.control_plane.default_partition, "")
@@ -88,6 +91,8 @@ locals {
     S3Storage__SecretAccessKey    = data.kubernetes_secret.shared_storage.data.secret_access_key
     S3Storage__BucketName         = data.kubernetes_secret.shared_storage.data.name
     S3Storage__MustForcePathStyle = data.kubernetes_secret.shared_storage.data.must_force_path_style
+    S3Storage__UseChunkEncoding   = data.kubernetes_secret.shared_storage.data.use_chunk_encoding
+    S3Storage__UseChecksum        = data.kubernetes_secret.shared_storage.data.use_check_sum
   } : {}
 
   # Object storage
@@ -170,6 +175,14 @@ locals {
       } : { key = "", name = "" }
       S3__BucketName = local.object_storage_adapter_from_secret == "s3" ? {
         key  = "bucket_name"
+        name = local.secrets.s3
+      } : { key = "", name = "" }
+      S3__UseChunkEncoding = local.object_storage_adapter_from_secret == "s3" ? {
+        key  = "use_chunk_encoding"
+        name = local.secrets.s3
+      } : { key = "", name = "" }
+      S3__UseChecksum = local.object_storage_adapter_from_secret == "s3" ? {
+        key  = "use_check_sum"
         name = local.secrets.s3
       } : { key = "", name = "" }
     } : key => value if !contains(values(value), "")

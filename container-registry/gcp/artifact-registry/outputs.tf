@@ -5,5 +5,10 @@ output "docker_repositories" {
 
 output "kms_key_name" {
   description = "KMS key name used to encrypt the registry"
-  value       = var.kms_key_name
+  value       = var.kms_key_id
+}
+
+output "service_account" {
+  description = "The associated service account created for artifact-registry."
+  value       = "service-${data.google_project.project.number}@gcp-sa-artifactregistry.iam.gserviceaccount.com"
 }

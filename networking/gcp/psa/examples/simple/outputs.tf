@@ -1,9 +1,9 @@
 output "private_ip_alloc" {
   description = "The IP address reserved for the VPC"
-  value       = module.simple_example.private_ip_alloc
+  value       = module.simple.reserved_service_range_self_link
 }
 
 output "private_service_access" {
   description = "The PSA"
-  value       = module.simple_example.private_service_access
+  value       = module.simple.private_service_access_peering
 }

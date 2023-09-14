@@ -32,9 +32,9 @@ locals {
     }
   }
   registry_iam = {
-    "roles/artifactregistry.repoAdmin" = ["user:user1@test.com", "user:user2@test.com", "user:user3@test.com"],
-    "roles/artifactregistry.reader"    = ["user:user1@test.com"],
-    "roles/artifactregistry.writer"    = ["user:user1@test.com", "user:user2@test.com"]
+    "roles/artifactregistry.repoAdmin" = [],
+    "roles/artifactregistry.reader"    = [],
+    "roles/artifactregistry.writer"    = []
   }
   date = <<-EOT
 #!/bin/bash

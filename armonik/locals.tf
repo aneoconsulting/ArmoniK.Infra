@@ -1,4 +1,7 @@
 locals {
+  # Supported message queues by ArmoniK
+  supported_queues = toset(["Amqp__PartitionId", "PubSub__PartitionId", "SQS__PartitionId"])
+
   # list of partitions
   partition_names   = keys(try(var.compute_plane, {}))
   default_partition = try(var.control_plane.default_partition, "")
@@ -17,6 +20,16 @@ locals {
   admin_gui_node_selector        = try(var.admin_gui.node_selector, {})
   admin_gui_node_selector_keys   = keys(local.admin_gui_node_selector)
   admin_gui_node_selector_values = values(local.admin_gui_node_selector)
+
+  # Node selector for admin GUI 0.9
+  admin_0_9_gui_node_selector        = try(var.admin_0_9_gui.node_selector, {})
+  admin_0_9_gui_node_selector_keys   = keys(local.admin_0_9_gui_node_selector)
+  admin_0_9_gui_node_selector_values = values(local.admin_0_9_gui_node_selector)
+
+  # Node selector for admin GUI 0.8
+  admin_0_8_gui_node_selector        = try(var.admin_0_8_gui.node_selector, {})
+  admin_0_8_gui_node_selector_keys   = keys(local.admin_0_8_gui_node_selector)
+  admin_0_8_gui_node_selector_values = values(local.admin_0_8_gui_node_selector)
 
   # Node selector for compute plane
   compute_plane_node_selector        = { for partition, compute_plane in var.compute_plane : partition => try(compute_plane.node_selector, {}) }
@@ -78,6 +91,8 @@ locals {
     S3Storage__SecretAccessKey    = data.kubernetes_secret.shared_storage.data.secret_access_key
     S3Storage__BucketName         = data.kubernetes_secret.shared_storage.data.name
     S3Storage__MustForcePathStyle = data.kubernetes_secret.shared_storage.data.must_force_path_style
+    S3Storage__UseChunkEncoding   = data.kubernetes_secret.shared_storage.data.use_chunk_encoding
+    S3Storage__UseChecksum        = data.kubernetes_secret.shared_storage.data.use_check_sum
   } : {}
 
   # Object storage
@@ -160,6 +175,14 @@ locals {
       } : { key = "", name = "" }
       S3__BucketName = local.object_storage_adapter_from_secret == "s3" ? {
         key  = "bucket_name"
+        name = local.secrets.s3
+      } : { key = "", name = "" }
+      S3__UseChunkEncoding = local.object_storage_adapter_from_secret == "s3" ? {
+        key  = "use_chunk_encoding"
+        name = local.secrets.s3
+      } : { key = "", name = "" }
+      S3__UseChecksum = local.object_storage_adapter_from_secret == "s3" ? {
+        key  = "use_check_sum"
         name = local.secrets.s3
       } : { key = "", name = "" }
     } : key => value if !contains(values(value), "")

@@ -4,7 +4,7 @@ resource "kubernetes_config_map" "core_config" {
     name      = "core-configmap"
     namespace = var.namespace
   }
-  data = merge(var.extra_conf.core, {
+  data = merge({
     Components__TableStorage                              = local.table_storage_adapter
     Components__ObjectStorage                             = local.object_storage_adapter
     Components__QueueStorage                              = local.queue_storage_adapter
@@ -23,5 +23,5 @@ resource "kubernetes_config_map" "core_config" {
     Amqp__Scheme                                          = "AMQPS"
     Authenticator__RequireAuthentication                  = local.authentication_require_authentication
     Authenticator__RequireAuthorization                   = local.authentication_require_authorization
-  })
+  }, var.extra_conf.core)
 }

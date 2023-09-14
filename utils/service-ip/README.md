@@ -1,6 +1,6 @@
 # Service IP
 
-This module helps retrieving the domain, IP, and ports of a Kubernetes service.
+This module helps to retrieve the domain, IP, and ports of a Kubernetes service.
 
 If `service` ends up being `null`, all the outputs of the module will be null as well.
 

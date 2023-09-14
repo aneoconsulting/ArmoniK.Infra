@@ -98,6 +98,13 @@ variable "extra_conf" {
   }
 }
 
+# Extra configuration
+variable "jobs_in_database_extra_conf" {
+  description = "Add extra configuration in the configmaps for jobs connecting to database"
+  type        = map(string)
+  default     = {}
+}
+
 # Job to insert partitions in the database
 variable "job_partitions_in_database" {
   description = "Job to insert partitions IDs in the database"
@@ -131,11 +138,12 @@ variable "control_plane" {
       cpu    = string
       memory = string
     })
-    image_pull_secrets = string
-    node_selector      = any
-    annotations        = any
-    hpa                = any
-    default_partition  = string
+    image_pull_secrets   = string
+    node_selector        = any
+    annotations          = any
+    hpa                  = any
+    default_partition    = string
+    service_account_name = string
   })
 }
 
@@ -164,9 +172,10 @@ variable "admin_gui" {
   default = null
 }
 
-# Parameters of old admin gui
-variable "admin_old_gui" {
-  description = "Parameters of the old admin GUI"
+# Deprecated, must be removed in a future version
+# Parameters of admin gui v0.8 (previously called old admin gui)
+variable "admin_0_8_gui" {
+  description = "Parameters of the admin GUI v0.8"
   type = object({
     api = object({
       name  = string
@@ -182,7 +191,7 @@ variable "admin_old_gui" {
         memory = string
       })
     })
-    old = object({
+    app = object({
       name  = string
       image = string
       tag   = string
@@ -195,6 +204,32 @@ variable "admin_old_gui" {
         cpu    = string
         memory = string
       })
+    })
+    service_type       = string
+    replicas           = number
+    image_pull_policy  = string
+    image_pull_secrets = string
+    node_selector      = any
+  })
+  default = null
+}
+
+# Deprecated, must be removed in a future version
+# Parameters of admin gui v0.9
+variable "admin_0_9_gui" {
+  description = "Parameters of the admin GUI v0.9"
+  type = object({
+    name  = string
+    image = string
+    tag   = string
+    port  = number
+    limits = object({
+      cpu    = string
+      memory = string
+    })
+    requests = object({
+      cpu    = string
+      memory = string
     })
     service_type       = string
     replicas           = number
@@ -222,6 +257,7 @@ variable "compute_plane" {
     image_pull_secrets               = string
     node_selector                    = any
     annotations                      = any
+    service_account_name             = string
     polling_agent = object({
       image             = string
       tag               = string

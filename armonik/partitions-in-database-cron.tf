@@ -75,6 +75,11 @@ resource "kubernetes_cron_job_v1" "partitions_in_database" {
                   }
                 }
               }
+              env_from {
+                config_map_ref {
+                  name = kubernetes_config_map.jobs_in_database_config.metadata[0].name
+                }
+              }
               volume_mount {
                 name       = "mongodb-secret-volume"
                 mount_path = "/mongodb"

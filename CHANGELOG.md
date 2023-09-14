@@ -20,10 +20,12 @@ Added
 
 * Module of Google Memorystore for Redis.
 * Module of Google Memorystore for Memcached Instance.
-* Module of Google Cloud Storage.
-* Module of Google Cloud KMS.
-* Module of Google Kubernetes Engine.
-* Module to create Kubernetes service account with GCP permissions.
+* Module of Google Cloud Storage (GCS).
+* Module of Google Cloud Key Management Service (KMS).
+* Module of Google Kubernetes Engine (GKE).
+* Module to create Kubernetes service account with GCP IAM permissions (Workload Identity).
+* Module of node pools for GKE in Standard mode.
+* Module of Google Private Service Access (PSA).
 * Add `jobs_in_database_extra_conf` variable in ArmoniK module to manage environment variables for jobs which need access to
   state database.
 

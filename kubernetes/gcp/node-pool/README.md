@@ -31,7 +31,6 @@ No modules.
 | [google_container_node_pool.pools](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/container_node_pool) | resource |
 | [google_container_node_pool.windows_pools](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/container_node_pool) | resource |
 | [google_client_config.current](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/client_config) | data source |
-| [google_container_cluster.cluster](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/container_cluster) | data source |
 
 ## Inputs
 
@@ -43,6 +42,7 @@ No modules.
 | <a name="input_base_resource_labels"></a> [base\_resource\_labels](#input\_base\_resource\_labels) | Map of resource labels used for all node pools, you can add specific resource labels to specific node pools in node\_pools variable with the 'resource\_labels' key | `map(string)` | `{}` | no |
 | <a name="input_base_tags"></a> [base\_tags](#input\_base\_tags) | Set of tags used for all node pools, you can add specific tags to specific node pools in node\_pools variable with the 'tags' key. | `set(string)` | `[]` | no |
 | <a name="input_base_taints"></a> [base\_taints](#input\_base\_taints) | Map of taints used for all node pools, you can add specific taints to specific node pools in node\_pools variable with the 'taint' key. Each taint has a value and an effect | <pre>map(object({<br>    value  = bool<br>    effect = string<br>  }))</pre> | `{}` | no |
+| <a name="input_cluster_location"></a> [cluster\_location](#input\_cluster\_location) | Location of the GKE cluster to create the node pools for. | `string` | n/a | yes |
 | <a name="input_cluster_name"></a> [cluster\_name](#input\_cluster\_name) | Name of the GKE cluster to create the node pools for. | `string` | n/a | yes |
 | <a name="input_disable_legacy_metadata_endpoints"></a> [disable\_legacy\_metadata\_endpoints](#input\_disable\_legacy\_metadata\_endpoints) | Disable the /0.1/ and /v1beta1/ metadata server endpoints on the node. Changing this value will cause all node pools to be recreated | `bool` | `true` | no |
 | <a name="input_min_master_version"></a> [min\_master\_version](#input\_min\_master\_version) | The minimum version of the cluster master | `string` | `null` | no |

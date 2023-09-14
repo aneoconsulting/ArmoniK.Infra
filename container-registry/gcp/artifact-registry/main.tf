@@ -1,4 +1,5 @@
 data "google_client_config" "current" {}
+data "google_project" "project" {}
 
 locals {
   labels        = merge(var.labels, { module = "docker-artifact-registry" })
@@ -41,7 +42,7 @@ resource "google_artifact_registry_repository" "docker" {
   repository_id = var.name
   description   = var.description
   format        = "docker"
-  kms_key_name  = var.kms_key_name
+  kms_key_name  = var.kms_key_id
   labels        = local.labels
   mode          = "STANDARD_REPOSITORY"
   docker_config {
@@ -49,11 +50,11 @@ resource "google_artifact_registry_repository" "docker" {
   }
 }
 
-resource "google_artifact_registry_repository_iam_binding" "binding" {
-  for_each   = var.iam_bindings
+resource "google_artifact_registry_repository_iam_member" "artifact_registry_roles" {
+  for_each   = { for role in flatten([for role_key, role in var.iam_roles : [for member in role : { role = role_key, member = member }]]) : "${role.role}.${role.member}" => role }
   project    = data.google_client_config.current.project
   location   = data.google_client_config.current.region
   repository = google_artifact_registry_repository.docker.name
-  role       = each.key
-  members    = each.value
+  role       = each.value.role
+  member     = each.value.member
 }

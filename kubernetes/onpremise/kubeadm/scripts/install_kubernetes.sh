@@ -1,6 +1,6 @@
 # The goal of this script is to install kubernetes on centos/Red Hat through kubeadm on master and slaves nodes
 # On master  it will install : kubectl + kubeadm + CNI + LB
-# On workers it will install : kubeadm +  
+# On workers it will install : kubeadm +
 
 # install Kubectl
 VERSION="$(curl -fsSL https://dl.k8s.io/release/stable.txt)"
@@ -68,7 +68,7 @@ sudo systemctl restart containerd
 
 
 %{ if node == "master" ~}
-#sudo kubeadm init --token "${token}" --token-ttl 15m --apiserver-cert-extra-sans="${master_public_ip}" --pod-network-cidr=192.168.0.0/16 
+#sudo kubeadm init --token "${token}" --token-ttl 15m --apiserver-cert-extra-sans="${master_public_ip}" --pod-network-cidr=192.168.0.0/16
 
 echo "token: ${token}"
 echo "master_public_ip: ${master_public_ip}"

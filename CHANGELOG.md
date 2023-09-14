@@ -4,18 +4,28 @@ All notable changes to this project will be documented in this file.
 
 ## [main](https://github.com/aneoconsulting/ArmoniK.Infra/tree/main) (2023-08-11)
 
+## [0.2.0](https://github.com/aneoconsulting/ArmoniK.Infra/releases/tag/0.2.0) (2023-09-13)
+
 Changed
 -
 
-* Fix GCP VPC to use one GCP subnetwork for GKE.
+* Fix Google VPC to use one GCP subnetwork for GKE.
+* Fix Google Artifact Registry module to use map(list(object{image=string, tag=string})) type.
+* Fix ArmoniK module to use Kubernetes service accounts for control-plane and compute-plane.
+* Fix Fluent-bit to use `HostPath` volumes with read-only access to `/var/log` for debugging.
+* Set `useHostNetwork` in Fluent-bit to `false`.
 
 Added
 -
 
-* Module of GCP Memorystore for Redis.
-* Module of GCP Memorystore for Memcached Instance.
-* Module of GCP Cloud Storage.
-* Module for GCP Cloud KMS.
+* Module of Google Memorystore for Redis.
+* Module of Google Memorystore for Memcached Instance.
+* Module of Google Cloud Storage.
+* Module of Google Cloud KMS.
+* Module of Google Kubernetes Engine.
+* Module to create Kubernetes service account with GCP permissions.
+* Add `jobs_in_database_extra_conf` variable in ArmoniK module to manage environment variables for jobs which need access to
+  state database.
 
 ## [0.1.0](https://github.com/aneoconsulting/ArmoniK.Infra/releases/tag/0.1.0) (2023-08-11)
 

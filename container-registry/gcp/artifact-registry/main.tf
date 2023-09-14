@@ -1,13 +1,14 @@
 data "google_client_config" "current" {}
 
 locals {
-  labels = merge(var.labels, { module = "docker-artifact-registry" })
+  labels        = merge(var.labels, { module = "docker-artifact-registry" })
+  docker_images = merge(values({ for key, value in var.docker_images : key => { for element in value : "${key}-${element.image}-${element.tag}" => { name = key, image = element.image, tag = element.tag } } })...)
 }
 
 resource "null_resource" "copy_images" {
-  for_each = var.docker_images
+  for_each = local.docker_images
   triggers = {
-    state = join("-", [each.key, each.value.image, each.value.tag])
+    state = each.key
   }
   provisioner "local-exec" {
     command = <<-EOT
@@ -20,14 +21,14 @@ then
     exit 1
   fi
 fi
-if ! docker tag ${each.value.image}:${each.value.tag} ${data.google_client_config.current.region}-docker.pkg.dev/${data.google_client_config.current.project}/${google_artifact_registry_repository.docker.name}/${each.key}:${each.value.tag}
+if ! docker tag ${each.value.image}:${each.value.tag} ${data.google_client_config.current.region}-docker.pkg.dev/${data.google_client_config.current.project}/${google_artifact_registry_repository.docker.name}/${each.value.name}:${each.value.tag}
 then
-  echo "cannot tag image ${each.value.image}:${each.value.tag} to ${data.google_client_config.current.region}-docker.pkg.dev/${data.google_client_config.current.project}/${google_artifact_registry_repository.docker.name}/${each.key}:${each.value.tag}"
+  echo "cannot tag image ${each.value.image}:${each.value.tag} to ${data.google_client_config.current.region}-docker.pkg.dev/${data.google_client_config.current.project}/${google_artifact_registry_repository.docker.name}/${each.value.name}:${each.value.tag}"
   exit 1
 fi
-if ! docker push ${data.google_client_config.current.region}-docker.pkg.dev/${data.google_client_config.current.project}/${google_artifact_registry_repository.docker.name}/${each.key}:${each.value.tag}
+if ! docker push ${data.google_client_config.current.region}-docker.pkg.dev/${data.google_client_config.current.project}/${google_artifact_registry_repository.docker.name}/${each.value.name}:${each.value.tag}
 then
-  echo "cannot push image ${data.google_client_config.current.region}-docker.pkg.dev/${data.google_client_config.current.project}/${google_artifact_registry_repository.docker.name}/${each.key}:${each.value.tag}"
+  echo "cannot push image ${data.google_client_config.current.region}-docker.pkg.dev/${data.google_client_config.current.project}/${google_artifact_registry_repository.docker.name}/${each.value.name}:${each.value.tag}"
   exit 1
 fi
 EOT

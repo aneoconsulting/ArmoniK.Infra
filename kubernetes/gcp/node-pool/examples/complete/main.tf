@@ -40,8 +40,8 @@ resource "null_resource" "timestamp" {
 }
 
 module "vpc" {
-  source     = "../../../../../networking/gcp/vpc"
-  name       = "simple-gke-node-pool"
+  source = "../../../../../networking/gcp/vpc"
+  name   = "simple-gke-node-pool"
   gke_subnet = {
     name                = "simple-gke-node-pool"
     nodes_cidr_block    = "10.51.0.0/16",
@@ -70,7 +70,7 @@ module "node_pool" {
   cluster_location   = module.gke.location
   service_account    = module.gke.service_account
   min_master_version = null
-  node_pools         = {
+  node_pools = {
     complete-1 = {
       machine_type                = "e2-medium"
       node_locations              = "europe-west9-a,europe-west9-b"

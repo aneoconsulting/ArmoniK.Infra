@@ -3,6 +3,11 @@ variable "cluster_name" {
   type        = string
 }
 
+variable "cluster_location" {
+  description = "Location of the GKE cluster to create the node pools for."
+  type        = string
+}
+
 variable "release_channel" {
   description = "The release channel of this cluster. Accepted values are `UNSPECIFIED`, `RAPID`, `REGULAR` and `STABLE`. Defaults to `REGULAR`"
   type        = string
@@ -65,7 +70,7 @@ variable "node_metadata" {
 
 variable "base_taints" {
   description = "Map of taints used for all node pools, you can add specific taints to specific node pools in node_pools variable with the 'taint' key. Each taint has a value and an effect"
-  type = map(object({
+  type        = map(object({
     value  = bool
     effect = string
   }))

@@ -1,80 +1,76 @@
-/**
- * Copyright 2020 Google LLC
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-locals {
-  cluster_ca_certificate = module.gke.ca_certificate
-  endpoint               = module.gke.endpoint
-  context                = module.gke.name
-}
-
 data "google_client_config" "current" {}
 
-resource "local_file" "kubeconfig" {
-  filename          = "kubeconfig_node_pool_complete.yaml"
-  sensitive_content = <<EOF
-apiVersion: v1
-clusters:
-- cluster:
-    certificate-authority-data: ${local.cluster_ca_certificate}
-    server: https://${local.endpoint}
-  name: ${local.context}
-contexts:
-- context:
-    cluster: ${local.context}
-    user: ${local.context}
-  name: ${local.context}
-current-context: ${local.context}
-kind: Config
-preferences: {}
-users:
-- name: ${local.context}
-  user:
-    token: ${data.google_client_config.current.access_token}
-EOF
+data "google_client_openid_userinfo" "current" {}
+
+locals {
+  base_labels = {
+    env             = "test"
+    app             = "complete"
+    module          = "gke-node-pool"
+    "create_by"     = split("@", data.google_client_openid_userinfo.current.email)[0]
+    "creation_date" = "date-${null_resource.timestamp.triggers["date"]}"
+  }
+  base_tags = values(local.base_labels)
+  date      = <<-EOT
+#!/bin/bash
+set -e
+DATE=$(date +%F-%H-%M-%S)
+jq -n --arg date "$DATE" '{"date":$date}'
+  EOT
+}
+
+resource "local_file" "date_sh" {
+  filename = "${path.module}/generated/date.sh"
+  content  = local.date
+}
+
+data "external" "static_timestamp" {
+  program     = ["bash", "date.sh"]
+  working_dir = "${path.module}/generated"
+  depends_on  = [local_file.date_sh]
+}
+
+resource "null_resource" "timestamp" {
+  triggers = {
+    date = data.external.static_timestamp.result.date
+  }
+  lifecycle {
+    ignore_changes = [triggers]
+  }
 }
 
 module "vpc" {
   source     = "../../../../../networking/gcp/vpc"
-  name       = var.network
-  gke_subnet = var.gke_subnet
+  name       = "simple-gke-node-pool"
+  gke_subnet = {
+    name                = "simple-gke-node-pool"
+    nodes_cidr_block    = "10.51.0.0/16",
+    pods_cidr_block     = "192.168.64.0/22"
+    services_cidr_block = "192.168.1.0/24"
+    region              = data.google_client_config.current.region
+  }
 }
 
 module "gke" {
-  source                   = "terraform-google-modules/kubernetes-engine/google"
-  version                  = "27.0.0"
-  project_id               = var.project
-  name                     = var.cluster_name
-  regional                 = true
-  region                   = var.region
-  network                  = module.vpc.name
-  subnetwork               = module.vpc.gke_subnet_name
-  ip_range_pods            = module.vpc.gke_subnet_pods_range_name
-  ip_range_services        = module.vpc.gke_subnet_svc_range_name
-  create_service_account   = false
-  service_account          = var.service_account
-  remove_default_node_pool = true
+  source            = "../../../gke"
+  name              = "simple-gke-node-pool"
+  network           = module.vpc.name
+  ip_range_pods     = module.vpc.gke_subnet_pods_range_name
+  ip_range_services = module.vpc.gke_subnet_svc_range_name
+  subnetwork        = module.vpc.gke_subnet_name
+  subnetwork_cidr   = module.vpc.gke_subnet_cidr_block
+  kubeconfig_path   = abspath("${path.root}/generated/kubeconfig")
+  autopilot         = false # Standard GKE
+  private           = false # public GKE
 }
 
 module "node_pool" {
   source             = "../.."
   cluster_name       = module.gke.name
-  service_account    = var.service_account
+  cluster_location   = module.gke.location
+  service_account    = module.gke.service_account
   min_master_version = null
-
-  node_pools = {
+  node_pools         = {
     complete-1 = {
       machine_type                = "e2-medium"
       node_locations              = "europe-west9-a,europe-west9-b"
@@ -87,7 +83,7 @@ module "node_pool" {
       enable_gvnic                = false
       auto_repair                 = true
       auto_upgrade                = true
-      service_account             = var.service_account
+      service_account             = module.gke.service_account
       preemptible                 = false
       initial_node_count          = 0
       enable_secure_boot          = false
@@ -112,7 +108,7 @@ module "node_pool" {
       enable_gvnic       = false
       auto_repair        = true
       auto_upgrade       = true
-      service_account    = var.service_account
+      service_account    = module.gke.service_account
       preemptible        = false
       initial_node_count = 0
       enable_secure_boot = false
@@ -125,8 +121,7 @@ module "node_pool" {
       taint              = { "complete-node-pool-2" : { value = true, effect = "PREFER_NO_SCHEDULE" } }
     }
   }
-
-  base_tags   = ["complete"]
-  base_labels = { "example" : "complete" }
+  base_tags   = local.base_tags
+  base_labels = local.base_labels
   base_taints = { "complete" : { value = true, effect = "PREFER_NO_SCHEDULE" } }
 }

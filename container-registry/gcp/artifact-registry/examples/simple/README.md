@@ -62,4 +62,5 @@ terraform destroy
 |------|-------------|
 | <a name="output_docker_repositories"></a> [docker\_repositories](#output\_docker\_repositories) | Docker repositories in Artifactory Registry created on GCP |
 | <a name="output_kms_key_name"></a> [kms\_key\_name](#output\_kms\_key\_name) | KMS key name used to encrypt the registry |
+| <a name="output_service_account"></a> [service\_account](#output\_service\_account) | The associated service account created for artifact-registry. |
 <!-- END_TF_DOCS -->

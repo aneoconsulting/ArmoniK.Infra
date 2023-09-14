@@ -1,8 +1,8 @@
 data "google_client_config" "current" {}
 
 module "vpc" {
-  source     = "../../../../../networking/gcp/vpc"
-  name       = "simple-gke-node-pool"
+  source = "../../../../../networking/gcp/vpc"
+  name   = "simple-gke-node-pool"
   gke_subnet = {
     name                = "simple-gke-node-pool"
     nodes_cidr_block    = "10.51.0.0/16",
@@ -31,7 +31,7 @@ module "node_pool" {
   cluster_location   = module.gke.location
   service_account    = module.gke.service_account
   min_master_version = null
-  node_pools         = {
+  node_pools = {
     simple = {
       initial_node_count = 0
     }

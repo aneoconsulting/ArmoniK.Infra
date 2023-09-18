@@ -82,10 +82,18 @@ variable "ownership" {
   description = "Object ownership"
   type        = string
   default     = "BucketOwnerPreferred"
+  validation {
+    condition     = contains(["BucketOwnerPreferred", "ObjectWriter"], var.ownership)
+    error_message = "Valid values for \"ownership\": \"BucketOwnerPreferred\" | \"ObjectWriter\"."
+  }
 }
 
 variable "versioning" {
   description = "Enable or disable versioning"
   type        = string
   default     = "Disabled"
+  validation {
+    condition     = contains(["Enabled", "Suspended", "Disabled"], var.versioning)
+    error_message = "Valid values for \"versioning\": \"Enabled\" | \"Suspended\" | \"Disabled\"."
+  }
 }

@@ -60,78 +60,201 @@ variable "node_selector" {
 }
 
 # VPC infos
-variable "vpc" {
-  description = "AWS VPC info"
-  type = object({
-    id                 = string
-    private_subnet_ids = list(string)
-    pods_subnet_ids    = list(string)
-  })
+variable "vpc_id" {
+  description = "VPC id"
+  type        = string
+}
+
+variable "vpc_private_subnet_ids" {
+  description = "Id of the VPC private subnet"
+  type        = list(string)
+}
+
+variable "vpc_pods_subnet_ids" {
+  description = "Ids of the VPC pods subnet"
+  type        = list(string)
 }
 
 # EKS
-variable "eks" {
-  description = "Parameters of AWS EKS"
-  type = object({
-    cluster_version                       = string
-    cluster_endpoint_private_access       = bool
-    cluster_endpoint_private_access_cidrs = list(string)
-    cluster_endpoint_private_access_sg    = list(string)
-    cluster_endpoint_public_access        = bool
-    cluster_endpoint_public_access_cidrs  = list(string)
-    cluster_log_retention_in_days         = number
-    docker_images = object({
-      cluster_autoscaler = object({
-        image = string
-        tag   = string
-      })
-      instance_refresh = object({
-        image = string
-        tag   = string
-      })
-    })
-    cluster_autoscaler = object({
-      expander                              = string
-      scale_down_enabled                    = bool
-      min_replica_count                     = number
-      scale_down_utilization_threshold      = number
-      scale_down_non_empty_candidates_count = number
-      max_node_provision_time               = string
-      scan_interval                         = string
-      scale_down_delay_after_add            = string
-      scale_down_delay_after_delete         = string
-      scale_down_delay_after_failure        = string
-      scale_down_unneeded_time              = string
-      skip_nodes_with_system_pods           = bool
-      version                               = string
-      repository                            = string
-      namespace                             = string
-    })
-    instance_refresh = object({
-      namespace  = string
-      repository = string
-      version    = string
-    })
-    encryption_keys = object({
-      cluster_log_kms_key_id    = string
-      cluster_encryption_config = string
-      ebs_kms_key_id            = string
-    })
-    map_roles = list(object({
-      rolearn  = string
-      username = string
-      groups   = list(string)
-    }))
-    map_users = list(object({
-      userarn  = string
-      username = string
-      groups   = list(string)
-    }))
-  })
+variable "cluster_version" {
+  description = "The version of the cluster"
+  type        = string
+}
+
+variable "cluster_endpoint_private_access" {
+  description = "Indicates whether or not the Amazon EKS private API server endpoint is enabled"
+  type        = bool
+}
+
+variable "cluster_endpoint_public_access" {
+  description = "Indicates whether or not the Amazon EKS public API server endpoint is enabled"
+  type        = bool
+}
+
+variable "cluster_endpoint_public_access_cidrs" {
+  description = "List of CIDR blocks which can access the Amazon EKS public API server endpoint"
+  type        = list(string)
+}
+
+variable "cluster_log_retention_in_days" {
+  description = "Number of days to retain log events. Default retention - 90 days"
+  type        = number
+  default     = 90
+}
+
+# Cluster autoscaler
+variable "cluster_autoscaler_image" {
+  description = "Docker image of cluster autoscaler"
+  type        = string
+}
+
+variable "cluster_autoscaler_tag" {
+  description = "Tag of the cluster autoscaler docker image"
+  type        = string
+}
+
+variable "cluster_autoscaler_expander" {
+  description = "Type of node group expander to be used in scale up."
+  type        = string
+  default     = "random"
   validation {
-    condition     = contains(["random", "most-pods", "least-waste", "price", "priority"], var.eks.cluster_autoscaler.expander)
+    condition     = contains(["random", "most-pods", "least-waste", "price", "priority"], var.cluster_autoscaler_expander)
     error_message = "Valid values for \"expander\" of the cluster-autoscaler: \"random\" | \"most-pods\" | \"least-waste\" | \"price\" | \"priority\"."
   }
+}
+
+variable "cluster_autoscaler_scale_down_enabled" {
+  description = "Should CA scale down the cluster"
+  type        = bool
+  default     = true
+}
+
+variable "cluster_autoscaler_min_replica_count" {
+  description = "Minimum number or replicas that a replica set or replication controller should have to allow their pods deletion in scale down"
+  type        = number
+  default     = 0
+}
+
+variable "cluster_autoscaler_scale_down_utilization_threshold" {
+  description = "Node utilization level, defined as sum of requested resources divided by capacity, below which a node can be considered for scale down"
+  type        = number
+  default     = 0.5
+}
+
+variable "cluster_autoscaler_scale_down_non_empty_candidates_count" {
+  description = "Maximum number of non empty nodes considered in one iteration as candidates for scale down with drain"
+  type        = number
+  default     = 30
+}
+
+variable "cluster_autoscaler_max_node_provision_time" {
+  description = "Maximum time CA waits for node to be provisioned"
+  type        = string
+  default     = "15m0s"
+}
+
+variable "cluster_autoscaler_scan_interval" {
+  description = "How often cluster is reevaluated for scale up or down"
+  type        = string
+  default     = "10s"
+}
+
+variable "cluster_autoscaler_scale_down_delay_after_add" {
+  description = "How long after scale up that scale down evaluation resumes"
+  type        = string
+  default     = "2m"
+}
+
+variable "cluster_autoscaler_scale_down_delay_after_delete" {
+  description = "How long after node deletion that scale down evaluation resumes, defaults to scan-interval"
+  type        = string
+}
+
+variable "cluster_autoscaler_scale_down_delay_after_failure" {
+  description = "How long after scale down failure that scale down evaluation resumes"
+  type        = string
+  default     = "3m"
+}
+
+variable "cluster_autoscaler_scale_down_unneeded_time" {
+  description = "How long a node should be unneeded before it is eligible for scale down"
+  type        = string
+  default     = "10m"
+}
+
+variable "cluster_autoscaler_skip_nodes_with_system_pods" {
+  description = "If true cluster autoscaler will never delete nodes with pods from kube-system (except for DaemonSet or mirror pods)"
+  type        = bool
+  default     = true
+}
+
+variable "cluster_autoscaler_version" {
+  description = "Cluster autoscaler helm chart version"
+  type        = string
+}
+
+variable "cluster_autoscaler_repository" {
+  description = "Cluster autoscaler helm chart repository"
+  type        = string
+}
+
+variable "cluster_autoscaler_namespace" {
+  description = "Namespace of cluster autoscaler"
+  type        = string
+}
+
+# Instance refresh
+variable "instance_refresh_image" {
+  description = "Instance refresh docker image"
+  type        = string
+}
+
+variable "instance_refresh_tag" {
+  description = "Instance refresh image docker tag"
+  type        = string
+}
+
+variable "instance_refresh_version" {
+  description = "Instance refresh helm chart version"
+  type        = string
+}
+
+variable "instance_refresh_repository" {
+  description = "Instance refresh helm chart repository"
+  type        = string
+}
+
+variable "instance_refresh_namespace" {
+  description = "Namespace of instance refresh"
+  type        = string
+}
+
+# KMS Key
+variable "cluster_log_kms_key_id" {
+  description = "KMS key id"
+  type        = string
+}
+
+variable "cluster_encryption_config" {
+  description = "Configuration block with encryption configuration for the cluster. To disable secret encryption, set this value to {}"
+  type        = string
+}
+
+variable "ebs_kms_key_id" {
+  description = "KMS key id to encrypt/decrypt EBS"
+  type        = string
+}
+
+#MAP roles
+variable "map_roles_groups" {
+  description = "Map roles groups"
+  type        = list(string)
+}
+
+# MAP users
+variable "map_users_groups" {
+  description = "List of users groups"
+  type        = list(string)
 }
 
 # List of EKS managed node groups

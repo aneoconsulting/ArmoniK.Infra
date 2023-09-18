@@ -63,6 +63,11 @@ resource "kubernetes_job" "authentication_in_database" {
               }
             }
           }
+          env_from {
+            config_map_ref {
+              name = kubernetes_config_map.jobs_in_database_config.metadata[0].name
+            }
+          }
           dynamic "volume_mount" {
             for_each = {
               mongodb-script        = "/mongodb/script"

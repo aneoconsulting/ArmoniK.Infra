@@ -54,7 +54,7 @@ No modules.
 | <a name="input_kms_key_id"></a> [kms\_key\_id](#input\_kms\_key\_id) | Id of the KMS key | `string` | `null` | no |
 | <a name="input_name"></a> [name](#input\_name) | Name of S3 service | `string` | `"armonik-s3"` | no |
 | <a name="input_ownership"></a> [ownership](#input\_ownership) | Object ownership | `string` | `"BucketOwnerPreferred"` | no |
-| <a name="input_policy"></a> [policy](#input\_policy) | Text of the policy | `string` | `""` | no |
+| <a name="input_policy"></a> [policy](#input\_policy) | Text of the policy | `string` | `null` | no |
 | <a name="input_restrict_public_buckets"></a> [restrict\_public\_buckets](#input\_restrict\_public\_buckets) | Whether Amazon S3 should restrict public bucket policies for this bucket | `bool` | `true` | no |
 | <a name="input_sse_algorithm"></a> [sse\_algorithm](#input\_sse\_algorithm) | SSE algorithm to encrypt S3 object data | `string` | `"aws:kms"` | no |
 | <a name="input_tags"></a> [tags](#input\_tags) | Tags for resource | `any` | `{}` | no |

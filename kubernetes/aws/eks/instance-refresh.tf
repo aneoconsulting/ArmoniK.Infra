@@ -8,10 +8,10 @@ locals {
 # Based on the official aws-node-termination-handler setup guide at https://github.com/aws/aws-node-termination-handler#infrastructure-setup
 resource "helm_release" "aws_node_termination_handler" {
   name             = "aws-node-termination-handler"
-  namespace        = var.eks.instance_refresh.namespace
+  namespace        = var.instance_refresh_namespace
   chart            = "aws-node-termination-handler"
-  repository       = var.eks.instance_refresh.repository
-  version          = var.eks.instance_refresh.version
+  repository       = var.instance_refresh_repository
+  version          = var.instance_refresh_version
   create_namespace = true
 
   set {
@@ -37,11 +37,11 @@ resource "helm_release" "aws_node_termination_handler" {
   }
   set {
     name  = "image.repository"
-    value = var.eks.docker_images.instance_refresh.image
+    value = var.instance_refresh_image
   }
   set {
     name  = "image.tag"
-    value = var.eks.docker_images.instance_refresh.tag
+    value = var.instance_refresh_tag
   }
   /*set {
     name  = "enableSqsTerminationDraining"

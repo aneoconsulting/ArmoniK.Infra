@@ -1,5 +1,5 @@
-variable "kms_key_name" {
-  description = "KMS key name to encrypt GCP repositories"
+variable "kms_key_id" {
+  description = "KMS key name to encrypt GCP repositories. Has the form: projects/{{my-project}}/locations/{{my-region}}/keyRings/{{my-kr}}/cryptoKeys/{{my-key}}"
   type        = string
   default     = null
 }
@@ -17,10 +17,10 @@ variable "labels" {
 
 variable "docker_images" {
   description = "Docker container images to push inside the registry"
-  type = map(object({
+  type = map(list(object({
     image = string
     tag   = string
-  }))
+  })))
 }
 
 variable "description" {
@@ -35,8 +35,8 @@ variable "immutable_tags" {
   default     = true
 }
 
-variable "iam_bindings" {
+variable "iam_roles" {
   description = "Assign role on the repository for a list of users"
-  type        = map(list(string))
+  type        = map(set(string))
   default     = {}
 }

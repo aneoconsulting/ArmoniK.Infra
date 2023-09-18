@@ -1,13 +1,15 @@
 data "google_client_config" "current" {}
+data "google_project" "project" {}
 
 locals {
-  labels = merge(var.labels, { module = "docker-artifact-registry" })
+  labels        = merge(var.labels, { module = "docker-artifact-registry" })
+  docker_images = merge(values({ for key, value in var.docker_images : key => { for element in value : "${key}-${element.image}-${element.tag}" => { name = key, image = element.image, tag = element.tag } } })...)
 }
 
 resource "null_resource" "copy_images" {
-  for_each = var.docker_images
+  for_each = local.docker_images
   triggers = {
-    state = join("-", [each.key, each.value.image, each.value.tag])
+    state = each.key
   }
   provisioner "local-exec" {
     command = <<-EOT
@@ -20,14 +22,14 @@ then
     exit 1
   fi
 fi
-if ! docker tag ${each.value.image}:${each.value.tag} ${data.google_client_config.current.region}-docker.pkg.dev/${data.google_client_config.current.project}/${google_artifact_registry_repository.docker.name}/${each.key}:${each.value.tag}
+if ! docker tag ${each.value.image}:${each.value.tag} ${data.google_client_config.current.region}-docker.pkg.dev/${data.google_client_config.current.project}/${google_artifact_registry_repository.docker.name}/${each.value.name}:${each.value.tag}
 then
-  echo "cannot tag image ${each.value.image}:${each.value.tag} to ${data.google_client_config.current.region}-docker.pkg.dev/${data.google_client_config.current.project}/${google_artifact_registry_repository.docker.name}/${each.key}:${each.value.tag}"
+  echo "cannot tag image ${each.value.image}:${each.value.tag} to ${data.google_client_config.current.region}-docker.pkg.dev/${data.google_client_config.current.project}/${google_artifact_registry_repository.docker.name}/${each.value.name}:${each.value.tag}"
   exit 1
 fi
-if ! docker push ${data.google_client_config.current.region}-docker.pkg.dev/${data.google_client_config.current.project}/${google_artifact_registry_repository.docker.name}/${each.key}:${each.value.tag}
+if ! docker push ${data.google_client_config.current.region}-docker.pkg.dev/${data.google_client_config.current.project}/${google_artifact_registry_repository.docker.name}/${each.value.name}:${each.value.tag}
 then
-  echo "cannot push image ${data.google_client_config.current.region}-docker.pkg.dev/${data.google_client_config.current.project}/${google_artifact_registry_repository.docker.name}/${each.key}:${each.value.tag}"
+  echo "cannot push image ${data.google_client_config.current.region}-docker.pkg.dev/${data.google_client_config.current.project}/${google_artifact_registry_repository.docker.name}/${each.value.name}:${each.value.tag}"
   exit 1
 fi
 EOT
@@ -40,7 +42,7 @@ resource "google_artifact_registry_repository" "docker" {
   repository_id = var.name
   description   = var.description
   format        = "docker"
-  kms_key_name  = var.kms_key_name
+  kms_key_name  = var.kms_key_id
   labels        = local.labels
   mode          = "STANDARD_REPOSITORY"
   docker_config {
@@ -48,11 +50,11 @@ resource "google_artifact_registry_repository" "docker" {
   }
 }
 
-resource "google_artifact_registry_repository_iam_binding" "binding" {
-  for_each   = var.iam_bindings
+resource "google_artifact_registry_repository_iam_member" "artifact_registry_roles" {
+  for_each   = { for role in flatten([for role_key, role in var.iam_roles : [for member in role : { role = role_key, member = member }]]) : "${role.role}.${role.member}" => role }
   project    = data.google_client_config.current.project
   location   = data.google_client_config.current.region
   repository = google_artifact_registry_repository.docker.name
-  role       = each.key
-  members    = each.value
+  role       = each.value.role
+  member     = each.value.member
 }

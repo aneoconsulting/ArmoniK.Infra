@@ -20,3 +20,13 @@ variable "validity_period_hours" {
   type        = string
   default     = "8760" # 1 year
 }
+
+variable "adapter_class_name" {
+  description = "Name of the adapter's class"
+  type        = string
+}
+
+variable "adapter_absolute_path" {
+  description = "The adapter's absolut path"
+  type        = string
+}

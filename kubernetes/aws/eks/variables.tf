@@ -62,69 +62,69 @@ variable "node_selector" {
 # EKS
 variable "cluster_version" {
   description = ""
-  type = string
+  type        = string
 }
 
 variable "cluster_endpoint_private_access" {
   description = ""
-  type = bool
+  type        = bool
 }
 
 variable "cluster_endpoint_private_access_cidrs" {
   description = ""
-  type = list(string)
+  type        = list(string)
 }
 
 variable "cluster_endpoint_private_access_sg" {
   description = ""
-  type = list(string)
+  type        = list(string)
 }
 
 variable "cluster_endpoint_public_access" {
   description = ""
-  type = bool
+  type        = bool
 }
 
 variable "cluster_endpoint_public_access_cidrs" {
   description = ""
-  type = list(string)
+  type        = list(string)
 }
 
 variable "cluster_log_retention_in_days" {
   description = ""
-  type = number
+  type        = number
 }
 
 # VPC infos
 variable "vpc_id" {
   description = ""
-  type = string
+  type        = string
 }
 
 variable "vpc_private_subnet_ids" {
   description = ""
-  type = list(string)
+  type        = list(string)
 }
 
 variable "vpc_pods_subnet_ids" {
   description = ""
-  type = list(string)
+  type        = list(string)
 }
 
 # Cluster autoscaler
 variable "cluster_autoscaler_image" {
   description = ""
-  type = string
+  type        = string
 }
 
 variable "cluster_autoscaler_tag" {
   description = ""
-  type = string
+  type        = string
 }
 
 variable "cluster_autoscaler_expander" {
   description = ""
-  type = string
+  type        = string
   validation {
     condition     = contains(["random", "most-pods", "least-waste", "price", "priority"], var.cluster_autoscaler_expander)
     error_message = "Valid values for \"expander\" of the cluster-autoscaler: \"random\" | \"most-pods\" | \"least-waste\" | \"price\" | \"priority\"."
@@ -133,99 +133,99 @@ variable "cluster_autoscaler_expander" {
 
 variable "cluster_autoscaler_scale_down_enabled" {
   description = ""
-  type = bool
+  type        = bool
 }
 
 variable "cluster_autoscaler_min_replica_count" {
   description = ""
-  type = number
+  type        = number
 }
 
 variable "cluster_autoscaler_scale_down_utilization_threshold" {
   description = ""
-  type = number
+  type        = number
 }
 
 variable "cluster_autoscaler_scale_down_non_empty_candidates_count" {
   description = ""
-  type = number
+  type        = number
 }
 
 variable "cluster_autoscaler_max_node_provision_time" {
   description = ""
-  type = string
+  type        = string
 }
 
 variable "cluster_autoscaler_scan_interval" {
   description = ""
-  type = string
+  type        = string
 }
 
 variable "cluster_autoscaler_scale_down_delay_after_add" {
   description = ""
-  type = string
+  type        = string
 }
 
 variable "cluster_autoscaler_scale_down_delay_after_delete" {
   description = ""
-  type = string
+  type        = string
 }
 
 variable "cluster_autoscaler_scale_down_delay_after_failure" {
   description = ""
-  type = string
+  type        = string
 }
 
 variable "cluster_autoscaler_scale_down_unneeded_time" {
   description = ""
-  type = string
+  type        = string
 }
 
 variable "cluster_autoscaler_skip_nodes_with_system_pods" {
   description = ""
-  type = bool
+  type        = bool
 }
 
 variable "cluster_autoscaler_version" {
   description = ""
-  type = string
+  type        = string
 }
 
 variable "cluster_autoscaler_repository" {
   description = ""
-  type = string
+  type        = string
 }
 
 variable "cluster_autoscaler_namespace" {
   description = ""
-  type = string
+  type        = string
 }
 
 # Instance refresh
 
 variable "instance_refresh_image" {
   description = ""
-  type = string
+  type        = string
 }
 
 variable "instance_refresh_tag" {
   description = ""
-  type = string
+  type        = string
 }
 
 variable "instance_refresh_version" {
   description = ""
-  type = string
+  type        = string
 }
 
 variable "instance_refresh_repository" {
   description = ""
-  type = string
+  type        = string
 }
 
 variable "instance_refresh_namespace" {
   description = ""
-  type = string
+  type        = string
 }
 # List of EKS managed node groups
 variable "eks_managed_node_groups" {
@@ -237,49 +237,49 @@ variable "eks_managed_node_groups" {
 # Encryption keys
 variable "cluster_log_kms_key_id" {
   description = ""
-  type = string
+  type        = string
 }
 
 variable "cluster_encryption_config" {
   description = ""
-  type = string
+  type        = string
 }
 
 variable "ebs_kms_key_id" {
   description = ""
-  type = string
+  type        = string
 }
 
 # Map roles
 variable "map_roles_rolearn" {
   description = ""
-  type = string
+  type        = string
 }
 
 variable "map_roles_username" {
   description = ""
-  type = string
+  type        = string
 }
 
 variable "map_roles_groups" {
   description = ""
-  type = list(string)
+  type        = list(string)
 }
 
 # Map users
 variable "map_users_userarn" {
   description = ""
-  type = string
+  type        = string
 }
 
 variable "map_users_username" {
   description = ""
-  type = string
+  type        = string
 }
 
 variable "map_users_groups" {
   description = ""
-  type = list(string)
+  type        = list(string)
 }
 # List of self managed node groups
 variable "self_managed_node_groups" {

@@ -23,10 +23,10 @@ variable "validity_period_hours" {
 
 variable "adapter_class_name" {
   description = "Name of the adapter's class"
-  type = string
+  type        = string
 }
 
 variable "adapter_absolute_path" {
   description = "The adapter's absolut path"
-  type = string
+  type        = string
 }

@@ -58,7 +58,7 @@ module "eks" {
 }
 
 module "efs_csi" {
-  source                        = "../.."
+  source                        = "../../../efs-csi"
   csi_driver_image_pull_secrets = ""
   csi_driver_name               = "test"
   csi_driver_namespace          = "kube-system"

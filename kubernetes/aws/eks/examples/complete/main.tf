@@ -76,7 +76,7 @@ module "eks" {
       instance_types              = ["c5.large"]
       capacity_type               = "SPOT"
       min_size                    = 0
-      desired_size                = 0
+      desired_size                = 1
       max_size                    = 1000
       labels = {
         service                        = "workers"
@@ -102,7 +102,7 @@ module "eks" {
       launch_template_description = "Node group for others"
       instance_type               = "c5.large"
       min_size                    = 0
-      desired_size                = 0
+      desired_size                = 1
       max_size                    = 5
       force_delete                = true
       force_delete_warm_pool      = true

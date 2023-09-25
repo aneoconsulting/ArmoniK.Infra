@@ -82,13 +82,13 @@ module "eks" {
         service                        = "workers"
         "node.kubernetes.io/lifecycle" = "spot"
       }
-      taints = {
+      /*taints = {
         dedicated = {
           key    = "service"
           value  = "workers"
           effect = "NO_SCHEDULE"
         }
-      }
+      }*/
       iam_role_use_name_prefix = false
       iam_role_additional_policies = {
         AmazonSSMManagedInstanceCore = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
@@ -119,7 +119,7 @@ module "eks" {
       name                        = "others-mixed"
       launch_template_description = "Mixed On demand and SPOT instances for other pods"
       min_size                    = 0
-      desired_size                = 0
+      desired_size                = 1
       max_size                    = 5
       use_mixed_instances_policy  = true
       mixed_instances_policy = {

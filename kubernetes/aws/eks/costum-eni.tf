@@ -1,4 +1,4 @@
-resource "null_resource" "trigger_custom_cni" {
+/*resource "null_resource" "trigger_custom_cni" {
   provisioner "local-exec" {
     command = "kubectl set env ds aws-node -n kube-system AWS_VPC_K8S_CNI_CUSTOM_NETWORK_CFG=true"
     environment = {
@@ -32,4 +32,4 @@ resource "null_resource" "change_cni_label" {
   depends_on = [
     null_resource.update_kubeconfig
   ]
-}
+}*/

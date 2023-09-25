@@ -38,7 +38,7 @@ terraform destroy
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_efs_csi"></a> [efs\_csi](#module\_efs\_csi) | ../.. | n/a |
+| <a name="module_efs_csi"></a> [efs\_csi](#module\_efs\_csi) | ../../../efs-csi | n/a |
 | <a name="module_eks"></a> [eks](#module\_eks) | terraform-aws-modules/eks/aws | ~> 19.0 |
 
 ## Resources

@@ -1,7 +1,6 @@
 # Current account
 data "aws_caller_identity" "current" {}
 
-# Current AWS region
 data "aws_region" "current" {}
 
 # Available zones
@@ -27,7 +26,7 @@ locals {
   # Custom ENI
   subnets = {
     subnets = [
-      for index, id in var.vpc.pods_subnet_ids : {
+      for index, id in var.vpc_pods_subnet_ids : {
         subnet_id          = id
         az_name            = element(data.aws_availability_zones.available.names, index)
         security_group_ids = [module.eks.node_security_group_id]
@@ -122,8 +121,8 @@ module "eks" {
   cluster_version = var.cluster_version
 
   # VPC
-  subnet_ids = var.vpc.private_subnet_ids
-  vpc_id     = var.vpc.id
+  subnet_ids = var.vpc_private_subnet_ids
+  vpc_id     = var.vpc_id
 
   create_aws_auth_configmap = !(can(coalesce(var.eks_managed_node_groups)) && can(coalesce(var.fargate_profiles)))
   # Needed to add self managed node group configuration.

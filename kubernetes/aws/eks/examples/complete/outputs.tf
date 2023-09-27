@@ -14,42 +14,42 @@ output "eks" {
 }
 
 output "cluster_name" {
-  description = "description"
+  description = "EKS cluster name"
   value       = module.eks.cluster_name
 }
 
 output "cluster_id" {
-  description = "description"
+  description = "EKS cluster ID"
   value       = module.eks.cluster_id
 }
 
 output "eks_managed_worker_iam_role_names" {
-  description = "description"
+  description = "list of the EKS managed workers IAM role names"
   value       = module.eks.eks_managed_worker_iam_role_names
 }
 
 output "self_managed_worker_iam_role_names" {
-  description = "description"
+  description = "list of the self managed workers IAM role names"
   value       = module.eks.self_managed_worker_iam_role_names
 }
 
 output "fargate_profiles_worker_iam_role_names" {
-  description = "description"
+  description = "list of the fargate profile workers IAM role names"
   value       = module.eks.fargate_profiles_worker_iam_role_names
 }
 
 output "worker_iam_role_names" {
-  description = "description"
+  description = "list of the workers IAM role names"
   value       = module.eks.worker_iam_role_names
 }
 
 output "issuer" {
-  description = "description"
+  description = "EKS Identity issuer"
   value       = module.eks.issuer
 }
 
 output "kubeconfig_file" {
-  description = "description"
+  description = "Path of kubeconfig file"
   value       = module.eks.kubeconfig_file
 }
 

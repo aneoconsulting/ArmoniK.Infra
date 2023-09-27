@@ -61,7 +61,7 @@ variable "node_selector" {
 
 # EKS
 variable "cluster_version" {
-  description = "description"
+  description = "Kubernetes version to use for the EKS cluster "
   type        = string
 }
 
@@ -71,50 +71,51 @@ variable "cluster_endpoint_private_access" {
 }
 
 variable "cluster_endpoint_public_access" {
-  description = "description"
+  description = "Indicates whether or not the Amazon EKS private API server endpoint is enabled"
   type        = bool
 }
 
 variable "cluster_endpoint_public_access_cidrs" {
-  description = "description"
+  description = "List of CIDR blocks which can access the Amazon EKS public API server endpoint"
   type        = list(string)
 }
 
 variable "cluster_log_retention_in_days" {
-  description = "description"
+  description = "Number of retention days of the logs "
   type        = number
 }
 
 # VPC infos
 variable "vpc_id" {
-  description = "description"
+  description = "Id of VPC"
   type        = string
 }
 
 variable "vpc_private_subnet_ids" {
-  description = "description"
+  description = "List of VPC subnets ids"
   type        = list(string)
 }
 
 variable "vpc_pods_subnet_ids" {
-  description = "description"
+  description = "List of VPC pods subnet ids"
   type        = list(string)
 }
 
 # Cluster autoscaler
 variable "cluster_autoscaler_image" {
-  description = "description"
+  description = "Image name of the cluster autoscaler"
   type        = string
 }
 
 variable "cluster_autoscaler_tag" {
-  description = "description"
+  description = "Tag of the cluster autoscaler image"
   type        = string
 }
 
 variable "cluster_autoscaler_expander" {
-  description = "description"
+  description = "Type of node group expander to be used in scale up."
   type        = string
+  default     = "random"
   validation {
     condition     = contains(["random", "most-pods", "least-waste", "price", "priority"], var.cluster_autoscaler_expander)
     error_message = "Valid values for \"expander\" of the cluster-autoscaler: \"random\" | \"most-pods\" | \"least-waste\" | \"price\" | \"priority\"."
@@ -122,99 +123,109 @@ variable "cluster_autoscaler_expander" {
 }
 
 variable "cluster_autoscaler_scale_down_enabled" {
-  description = "description"
+  description = "Should CA scale down the cluster"
   type        = bool
+  default     = true
 }
 
 variable "cluster_autoscaler_min_replica_count" {
-  description = "description"
+  description = "Minimum number or replicas that a replica set or replication controller should have to allow their pods deletion in scale down"
   type        = number
+  default     = 0
 }
 
 variable "cluster_autoscaler_scale_down_utilization_threshold" {
-  description = "description"
+  description = "Node utilization level, defined as sum of requested resources divided by capacity, below which a node can be considered for scale down"
   type        = number
+  default     = 0.5
 }
 
 variable "cluster_autoscaler_scale_down_non_empty_candidates_count" {
-  description = "description"
+  description = "Maximum number of non empty nodes considered in one iteration as candidates for scale down with drain"
   type        = number
+  default     = 30
 }
 
 variable "cluster_autoscaler_max_node_provision_time" {
-  description = "description"
+  description = "Maximum time CA waits for node to be provisioned"
   type        = string
+  default     = "15m"
 }
 
 variable "cluster_autoscaler_scan_interval" {
-  description = "description"
+  description = "How often cluster is reevaluated for scale up or down"
   type        = string
+  default     = "10s"
 }
 
 variable "cluster_autoscaler_scale_down_delay_after_add" {
-  description = "description"
+  description = "How long after scale up that scale down evaluation resumes"
   type        = string
+  default     = "10m"
 }
 
 variable "cluster_autoscaler_scale_down_delay_after_delete" {
-  description = "description"
+  description = "How long after node deletion that scale down evaluation resumes, defaults to scan-interval"
   type        = string
 }
 
 variable "cluster_autoscaler_scale_down_delay_after_failure" {
-  description = "description"
+  description = "How long after scale down failure that scale down evaluation resumes"
   type        = string
+  default     = "3m"
 }
 
 variable "cluster_autoscaler_scale_down_unneeded_time" {
-  description = "description"
+  description = "How long a node should be unneeded before it is eligible for scale down"
   type        = string
+  default     = "10m"
 }
 
 variable "cluster_autoscaler_skip_nodes_with_system_pods" {
-  description = "description"
+  description = "If true cluster autoscaler will never delete nodes with pods from kube-system (except for DaemonSet or mirror pods)"
   type        = bool
+  default     = true
 }
 
 variable "cluster_autoscaler_version" {
-  description = "description"
+  description = "Cluster autoscaler helm chart version"
   type        = string
 }
 
 variable "cluster_autoscaler_repository" {
-  description = "description"
+  description = "Path to cluster autoscaler helm chart repository"
   type        = string
 }
 
 variable "cluster_autoscaler_namespace" {
-  description = "description"
+  description = "Cluster autoscaler namespace"
   type        = string
 }
 
 # Instance refresh
 
 variable "instance_refresh_image" {
-  description = "description"
+  description = "Instance refresh image name"
   type        = string
 }
 
 variable "instance_refresh_tag" {
-  description = "description"
+  description = "Instance refresh tag"
   type        = string
 }
 
 variable "instance_refresh_version" {
-  description = "descriptiong"
+  description = "Instance refresh helm chart version"
   type        = string
 }
 
 variable "instance_refresh_repository" {
-  description = "description"
+  description = "Path to instance refresh helm chart repository"
   type        = string
 }
 
 variable "instance_refresh_namespace" {
-  description = "description"
+  description = "Instance refresh namespace"
   type        = string
 }
 # List of EKS managed node groups
@@ -226,29 +237,29 @@ variable "eks_managed_node_groups" {
 
 # Encryption keys
 variable "cluster_log_kms_key_id" {
-  description = "description"
+  description = "KMS id to encrypt/decrypt the cluster's logs"
   type        = string
 }
 
 variable "cluster_encryption_config" {
-  description = "description"
+  description = "Configuration block with encryption configuration for the cluster. To disable secret encryption, set this value to {}"
   type        = string
 }
 
 variable "ebs_kms_key_id" {
-  description = "description"
+  description = "KMS key id to encrypt/decrypt EBS"
   type        = string
 }
 
 # Map roles
 variable "map_roles_groups" {
-  description = "description"
+  description = "List of map roles group"
   type        = list(string)
 }
 
 # Map users
 variable "map_users_groups" {
-  description = "description"
+  description = "List of map users group"
   type        = list(string)
 }
 # List of self managed node groups

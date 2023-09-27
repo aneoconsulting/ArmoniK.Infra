@@ -47,8 +47,8 @@ module "eks" {
   cluster_autoscaler_scale_down_utilization_threshold      = 0.5
   cluster_autoscaler_scan_interval                         = "10s"
   cluster_autoscaler_skip_nodes_with_system_pods           = true
-  cluster_autoscaler_tag                                   = "v1.23.0"
-  cluster_autoscaler_version                               = "9.24.0"
+  cluster_autoscaler_tag                                   = "v1.28.0"
+  cluster_autoscaler_version                               = "9.29.3"
   cluster_encryption_config                                = ""
   cluster_endpoint_private_access                          = false
   cluster_endpoint_public_access                           = true

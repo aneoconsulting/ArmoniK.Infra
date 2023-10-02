@@ -32,21 +32,21 @@ module "eks" {
   source                                                   = "../.."
   name                                                     = "eks-simple-test"
   profile                                                  = "default"
-  #cluster_autoscaler_expander                              = "least-waste"
+  cluster_autoscaler_expander                              = "least-waste"
   cluster_autoscaler_image                                 = "registry.k8s.io/autoscaling/cluster-autoscaler"
-  #cluster_autoscaler_max_node_provision_time               = "15m0s"
-  #cluster_autoscaler_min_replica_count                     = 0
+  cluster_autoscaler_max_node_provision_time               = "15m0s"
+  cluster_autoscaler_min_replica_count                     = 0
   cluster_autoscaler_namespace                             = "kube-system"
   cluster_autoscaler_repository                            = "https://kubernetes.github.io/autoscaler"
-  #cluster_autoscaler_scale_down_delay_after_add            = "2m"
+  cluster_autoscaler_scale_down_delay_after_add            = "2m"
   cluster_autoscaler_scale_down_delay_after_delete         = "0s"
-  #cluster_autoscaler_scale_down_delay_after_failure        = "3m"
-  #cluster_autoscaler_scale_down_enabled                    = true
-  #cluster_autoscaler_scale_down_non_empty_candidates_count = 30
-  #cluster_autoscaler_scale_down_unneeded_time              = "2m"
-  #cluster_autoscaler_scale_down_utilization_threshold      = 0.5
-  #cluster_autoscaler_scan_interval                         = "10s"
-  #cluster_autoscaler_skip_nodes_with_system_pods           = true
+  cluster_autoscaler_scale_down_delay_after_failure        = "3m"
+  cluster_autoscaler_scale_down_enabled                    = true
+  cluster_autoscaler_scale_down_non_empty_candidates_count = 30
+  cluster_autoscaler_scale_down_unneeded_time              = "2m"
+  cluster_autoscaler_scale_down_utilization_threshold      = 0.5
+  cluster_autoscaler_scan_interval                         = "10s"
+  cluster_autoscaler_skip_nodes_with_system_pods           = true
   cluster_autoscaler_tag                                   = "v1.28.0"
   cluster_autoscaler_version                               = "9.29.3"
   cluster_encryption_config                                = ""
@@ -69,26 +69,28 @@ module "eks" {
   vpc_pods_subnet_ids                                      = data.aws_subnets.subnets.ids
   vpc_private_subnet_ids                                   = data.aws_subnets.subnets.ids
 
-  self_managed_node_groups = {
-    workers = {
+  eks_managed_node_groups = {
+    test = {
       name                        = "workers"
-      launch_template_description = "Node group for workers"
-      instance_type               = "c5.large"
+      launch_template_description = "Node group for test"
+      ami_type                    = "AL2_x86_64"
+      instance_types              = ["c5.large"]
+      capacity_type               = "SPOT"
       min_size                    = 0
       desired_size                = 1
-      max_size                    = 5
-      force_delete                = true
-      force_delete_warm_pool      = true
-      instance_market_options = {
-        market_type = "spot"
+      max_size                    = 1000
+      labels = {
+        service                        = "workers"
+        "node.kubernetes.io/lifecycle" = "spot"
       }
-      bootstrap_extra_args     = "--kubelet-extra-args '--node-labels=node.kubernetes.io/lifecycle=spot'"
       iam_role_use_name_prefix = false
       iam_role_additional_policies = {
         AmazonSSMManagedInstanceCore = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
       }
     }
   }
+
+  self_managed_node_groups = {}
 
   # List of fargate profiles
   fargate_profiles = {}

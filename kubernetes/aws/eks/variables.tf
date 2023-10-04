@@ -59,35 +59,19 @@ variable "node_selector" {
   default     = {}
 }
 
-# VPC infos
-variable "vpc_id" {
-  description = "VPC id"
-  type        = string
-}
-
-variable "vpc_private_subnet_ids" {
-  description = "Id of the VPC private subnet"
-  type        = list(string)
-}
-
-variable "vpc_pods_subnet_ids" {
-  description = "Ids of the VPC pods subnet"
-  type        = list(string)
-}
-
 # EKS
 variable "cluster_version" {
-  description = "The version of the cluster"
+  description = "Kubernetes version to use for the EKS cluster "
   type        = string
 }
 
 variable "cluster_endpoint_private_access" {
-  description = "Indicates whether or not the Amazon EKS private API server endpoint is enabled"
+  description = "description"
   type        = bool
 }
 
 variable "cluster_endpoint_public_access" {
-  description = "Indicates whether or not the Amazon EKS public API server endpoint is enabled"
+  description = "Indicates whether or not the Amazon EKS private API server endpoint is enabled"
   type        = bool
 }
 
@@ -97,19 +81,34 @@ variable "cluster_endpoint_public_access_cidrs" {
 }
 
 variable "cluster_log_retention_in_days" {
-  description = "Number of days to retain log events. Default retention - 90 days"
+  description = "Number of retention days of the logs "
   type        = number
-  default     = 90
+}
+
+# VPC infos
+variable "vpc_id" {
+  description = "Id of VPC"
+  type        = string
+}
+
+variable "vpc_private_subnet_ids" {
+  description = "List of VPC subnets ids"
+  type        = list(string)
+}
+
+variable "vpc_pods_subnet_ids" {
+  description = "List of VPC pods subnet ids"
+  type        = list(string)
 }
 
 # Cluster autoscaler
 variable "cluster_autoscaler_image" {
-  description = "Docker image of cluster autoscaler"
+  description = "Image name of the cluster autoscaler"
   type        = string
 }
 
 variable "cluster_autoscaler_tag" {
-  description = "Tag of the cluster autoscaler docker image"
+  description = "Tag of the cluster autoscaler image"
   type        = string
 }
 
@@ -150,7 +149,7 @@ variable "cluster_autoscaler_scale_down_non_empty_candidates_count" {
 variable "cluster_autoscaler_max_node_provision_time" {
   description = "Maximum time CA waits for node to be provisioned"
   type        = string
-  default     = "15m0s"
+  default     = "15m"
 }
 
 variable "cluster_autoscaler_scan_interval" {
@@ -162,7 +161,7 @@ variable "cluster_autoscaler_scan_interval" {
 variable "cluster_autoscaler_scale_down_delay_after_add" {
   description = "How long after scale up that scale down evaluation resumes"
   type        = string
-  default     = "2m"
+  default     = "10m"
 }
 
 variable "cluster_autoscaler_scale_down_delay_after_delete" {
@@ -194,23 +193,24 @@ variable "cluster_autoscaler_version" {
 }
 
 variable "cluster_autoscaler_repository" {
-  description = "Cluster autoscaler helm chart repository"
+  description = "Path to cluster autoscaler helm chart repository"
   type        = string
 }
 
 variable "cluster_autoscaler_namespace" {
-  description = "Namespace of cluster autoscaler"
+  description = "Cluster autoscaler namespace"
   type        = string
 }
 
 # Instance refresh
+
 variable "instance_refresh_image" {
-  description = "Instance refresh docker image"
+  description = "Instance refresh image name"
   type        = string
 }
 
 variable "instance_refresh_tag" {
-  description = "Instance refresh image docker tag"
+  description = "Instance refresh tag"
   type        = string
 }
 
@@ -220,18 +220,24 @@ variable "instance_refresh_version" {
 }
 
 variable "instance_refresh_repository" {
-  description = "Instance refresh helm chart repository"
+  description = "Path to instance refresh helm chart repository"
   type        = string
 }
 
 variable "instance_refresh_namespace" {
-  description = "Namespace of instance refresh"
+  description = "Instance refresh namespace"
   type        = string
 }
+# List of EKS managed node groups
+variable "eks_managed_node_groups" {
+  description = "List of EKS managed node groups"
+  type        = any
+  default     = null
+}
 
-# KMS Key
+# Encryption keys
 variable "cluster_log_kms_key_id" {
-  description = "KMS key id"
+  description = "KMS id to encrypt/decrypt the cluster's logs"
   type        = string
 }
 
@@ -245,25 +251,17 @@ variable "ebs_kms_key_id" {
   type        = string
 }
 
-#MAP roles
+# Map roles
 variable "map_roles_groups" {
-  description = "Map roles groups"
+  description = "List of map roles group"
   type        = list(string)
 }
 
-# MAP users
+# Map users
 variable "map_users_groups" {
-  description = "List of users groups"
+  description = "List of map users group"
   type        = list(string)
 }
-
-# List of EKS managed node groups
-variable "eks_managed_node_groups" {
-  description = "List of EKS managed node groups"
-  type        = any
-  default     = null
-}
-
 # List of self managed node groups
 variable "self_managed_node_groups" {
   description = "List of self managed node groups"

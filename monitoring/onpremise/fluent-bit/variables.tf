@@ -36,16 +36,21 @@ variable "s3" {
 variable "fluent_bit" {
   description = "Parameters of Fluent bit"
   type = object({
-    container_name     = string
-    image              = string
-    tag                = string
-    is_daemonset       = bool
-    http_server        = string
-    http_port          = string
-    read_from_head     = string
-    read_from_tail     = string
-    image_pull_secrets = string
-    parser             = string
+    container_name                  = string
+    image                           = string
+    tag                             = string
+    is_daemonset                    = bool
+    http_server                     = string
+    http_port                       = string
+    read_from_head                  = string
+    read_from_tail                  = string
+    image_pull_secrets              = string
+    parser                          = string
+    fluentbitstate_hostpath         = string
+    varlibdockercontainers_hostpath = string
+    runlogjournal_hostpath          = string
+
+
   })
   validation {
     condition     = contains(["apache", "apache2", "apache_error", "nginx", "json", "docker", "cri", "syslog"], var.fluent_bit.parser)

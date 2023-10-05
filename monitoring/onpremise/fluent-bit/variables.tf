@@ -46,9 +46,9 @@ variable "fluent_bit" {
     read_from_tail                  = string
     image_pull_secrets              = string
     parser                          = string
-    fluentbitstate_hostpath         = string
-    varlibdockercontainers_hostpath = string
-    runlogjournal_hostpath          = string
+    fluentbitstate_hostpath         = string #path = "/var/log/fluent-bit/state" --> for GCP | path = "/var/fluent-bit/state" --> for localhost and AWS
+    varlibdockercontainers_hostpath = string #path = "/var/log/lib/docker/containers" --> for GCP | path = "/var/lib/docker/containers" --> for localhost and AWS
+    runlogjournal_hostpath          = string #path = "/var/log/run/log/journal" --> for GCP | path = "/run/log/journal" --> for localhost and AWS
 
 
   })

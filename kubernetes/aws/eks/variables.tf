@@ -66,7 +66,7 @@ variable "cluster_version" {
 }
 
 variable "cluster_endpoint_private_access" {
-  description = "description"
+  description = "Indicates whether or not the Amazon EKS private API server endpoint is enabled"
   type        = bool
 }
 
@@ -81,7 +81,7 @@ variable "cluster_endpoint_public_access_cidrs" {
 }
 
 variable "cluster_log_retention_in_days" {
-  description = "Number of retention days of the logs "
+  description = "Logs retention in days"
   type        = number
 }
 

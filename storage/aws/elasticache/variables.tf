@@ -36,6 +36,7 @@ variable "elasticache" {
     preferred_cache_cluster_azs = list(string)
     data_tiering_enabled        = bool
     log_retention_in_days       = number
+    max_memory_samples          = string
     cloudwatch_log_groups = object({
       slow_log   = string
       engine_log = string

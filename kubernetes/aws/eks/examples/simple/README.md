@@ -1,6 +1,6 @@
 # AWS EKS
 
-To create a complete AWS EKS:
+To create a simple AWS EKS:
 
 ```bash
 terraform init

@@ -45,7 +45,7 @@ No modules.
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_namespace"></a> [namespace](#input\_namespace) | Namespace of ArmoniK storage resources | `string` | n/a | yes |
-| <a name="input_redis"></a> [redis](#input\_redis) | Parameters of Redis | <pre>object({<br>    image              = string<br>    tag                = string<br>    node_selector      = any<br>    image_pull_secrets = string<br>    max_memory         = string<br>  })</pre> | n/a | yes |
+| <a name="input_redis"></a> [redis](#input\_redis) | Parameters of Redis | <pre>object({<br>    image              = string<br>    tag                = string<br>    node_selector      = any<br>    image_pull_secrets = string<br>    max_memory         = string<br>    max_memory_samples = optional(string, "")<br>  })</pre> | n/a | yes |
 | <a name="input_validity_period_hours"></a> [validity\_period\_hours](#input\_validity\_period\_hours) | Validity period of the certificate in hours | `string` | `"8760"` | no |
 
 ## Outputs

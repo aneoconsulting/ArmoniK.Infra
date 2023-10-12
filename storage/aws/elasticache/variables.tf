@@ -93,6 +93,12 @@ variable "log_retention_in_days" {
   default     = 0
 }
 
+variable "max_memory_samples" {
+  description = "Number of samples to check for every eviction"
+  type        = string
+  default     = ""
+}
+
 variable "slow_log" {
   description = "Slow log"
   type        = string

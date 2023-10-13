@@ -45,7 +45,7 @@ Amazon ElastiCache is a fully managed, Redis- and Memcached-compatible service d
 | <a name="input_kms_key_id"></a> [kms\_key\_id](#input\_kms\_key\_id) | AWS KMS key id | `string` | `null` | no |
 | <a name="input_log_kms_key_id"></a> [log\_kms\_key\_id](#input\_log\_kms\_key\_id) | AWS KMS key id for logs | `string` | `null` | no |
 | <a name="input_log_retention_in_days"></a> [log\_retention\_in\_days](#input\_log\_retention\_in\_days) | Number of days of the retention of the logs | `number` | `0` | no |
-| <a name="input_max_memory_samples"></a> [max\_memory\_samples](#input\_max\_memory\_samples) | Number of samples to check for every eviction | `string` | `""` | no |
+| <a name="input_max_memory_samples"></a> [max\_memory\_samples](#input\_max\_memory\_samples) | Number of samples to check for every eviction | `number` | `null` | no |
 | <a name="input_multi_az_enabled"></a> [multi\_az\_enabled](#input\_multi\_az\_enabled) | Specifies whether to enable Multi-AZ Support for the replication group | `bool` | `false` | no |
 | <a name="input_name"></a> [name](#input\_name) | AWS Elasticache service name | `string` | `"armonik-elasticache"` | no |
 | <a name="input_node_type"></a> [node\_type](#input\_node\_type) | Instance class to be used | `string` | `"cache.r4.large"` | no |

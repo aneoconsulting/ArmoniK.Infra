@@ -71,7 +71,7 @@ resource "aws_elasticache_parameter_group" "elasticache" {
     value = "allkeys-lru"
   }
   dynamic "parameter" {
-    for_each = var.max_memory_samples == "" ? [] : [1]
+    for_each = var.max_memory_samples != null ? [1] : []
     content {
       name  = "maxmemory-samples"
       value = var.max_memory_samples

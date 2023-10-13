@@ -62,7 +62,7 @@ resource "kubernetes_deployment" "redis" {
             "--tls-auth-clients no",
             "--requirepass ${random_password.redis_password.result}",
             "--maxmemory ${var.redis.max_memory}",
-            var.redis.max_memory_samples != "" ? "--maxmemory-samples ${var.redis.max_memory_samples}" : null,
+            var.redis.max_memory_samples != null ? "--maxmemory-samples ${var.redis.max_memory_samples}" : null,
             "--maxmemory-policy allkeys-lru"
           ])
           port {

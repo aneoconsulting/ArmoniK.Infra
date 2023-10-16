@@ -11,5 +11,7 @@ resource "kubernetes_secret" "minio" {
     port                  = local.port
     bucket_name           = var.minio.bucket_name
     must_force_path_style = true
+    use_chunk_encoding    = true
+    use_check_sum         = true
   }
 }

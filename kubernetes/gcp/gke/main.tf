@@ -51,7 +51,7 @@ locals {
 }
 
 resource "google_project_iam_member" "kms" {
-  count = can(coalesce(var.database_encryption.key_name)) ? 1 : 0
+  count   = can(coalesce(var.database_encryption.key_name)) ? 1 : 0
   project = data.google_client_config.current.project
   role    = "roles/cloudkms.cryptoKeyEncrypterDecrypter"
   member  = "serviceAccount:service-${data.google_project.project.number}@container-engine-robot.iam.gserviceaccount.com"
@@ -168,7 +168,7 @@ module "gke" {
   stub_domains                          = var.stub_domains
   timeouts                              = var.timeouts
   upstream_nameservers                  = var.upstream_nameservers
-  depends_on = [google_project_iam_member.kms]
+  depends_on                            = [google_project_iam_member.kms]
 }
 
 # Private GKE with beta functionalities
@@ -288,7 +288,7 @@ module "private_gke" {
   stub_domains                          = var.stub_domains
   timeouts                              = var.timeouts
   upstream_nameservers                  = var.upstream_nameservers
-  depends_on = [google_project_iam_member.kms]
+  depends_on                            = [google_project_iam_member.kms]
 }
 
 # Public autopilot with beta functionalities
@@ -356,7 +356,7 @@ module "autopilot" {
   stub_domains                      = var.stub_domains
   timeouts                          = var.timeouts
   upstream_nameservers              = var.upstream_nameservers
-  depends_on = [google_project_iam_member.kms]
+  depends_on                        = [google_project_iam_member.kms]
 }
 
 # Private autopilot with beta functionalities
@@ -431,7 +431,7 @@ module "private_autopilot" {
   stub_domains                      = var.stub_domains
   timeouts                          = var.timeouts
   upstream_nameservers              = var.upstream_nameservers
-  depends_on = [google_project_iam_member.kms]
+  depends_on                        = [google_project_iam_member.kms]
 }
 
 resource "null_resource" "update_kubeconfig" {

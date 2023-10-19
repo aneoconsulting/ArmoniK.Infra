@@ -11,7 +11,7 @@ locals {
 }
 
 resource "google_project_iam_member" "kms" {
-  count = can(coalesce(var.customer_managed_key)) ? 1 : 0
+  count   = can(coalesce(var.customer_managed_key)) ? 1 : 0
   project = data.google_client_config.current.project
   role    = "roles/cloudkms.cryptoKeyEncrypterDecrypter"
   member  = "serviceAccount:service-${data.google_project.project.number}@cloud-redis.iam.gserviceaccount.com"

@@ -3,7 +3,7 @@ data "google_client_config" "current" {}
 data "google_project" "project" {}
 
 resource "google_project_iam_member" "kms" {
-  count = can(coalesce(var.default_kms_key_name)) ? 1 : 0
+  count   = can(coalesce(var.default_kms_key_name)) ? 1 : 0
   project = data.google_client_config.current.project
   role    = "roles/cloudkms.cryptoKeyEncrypterDecrypter"
   member  = "serviceAccount:service-${data.google_project.project.number}@gs-project-accounts.iam.gserviceaccount.com"

@@ -8,14 +8,14 @@ locals {
 }
 
 resource "google_project_service_identity" "kms" {
-  count = can(coalesce(var.kms_key_id)) ? 1 : 0
+  count    = can(coalesce(var.kms_key_id)) ? 1 : 0
   provider = google-beta
-  project = data.google_client_config.current.project
-  service = "artifactregistry.googleapis.com"
+  project  = data.google_client_config.current.project
+  service  = "artifactregistry.googleapis.com"
 }
 
 resource "google_project_iam_member" "kms" {
-  count = can(coalesce(var.kms_key_id)) ? 1 : 0
+  count   = can(coalesce(var.kms_key_id)) ? 1 : 0
   project = data.google_client_config.current.project
   role    = "roles/cloudkms.cryptoKeyEncrypterDecrypter"
   member  = "serviceAccount:${google_project_service_identity.kms[0].email}"

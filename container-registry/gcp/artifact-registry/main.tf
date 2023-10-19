@@ -1,9 +1,24 @@
 data "google_client_config" "current" {}
+
 data "google_project" "project" {}
 
 locals {
   labels        = merge(var.labels, { module = "docker-artifact-registry" })
   docker_images = merge(values({ for key, value in var.docker_images : key => { for element in value : "${key}-${element.image}-${element.tag}" => { name = key, image = element.image, tag = element.tag } } })...)
+}
+
+resource "google_project_service_identity" "kms" {
+  count = can(coalesce(var.kms_key_id)) ? 1 : 0
+  provider = google-beta
+  project = data.google_client_config.current.project
+  service = "artifactregistry.googleapis.com"
+}
+
+resource "google_project_iam_member" "kms" {
+  count = can(coalesce(var.kms_key_id)) ? 1 : 0
+  project = data.google_client_config.current.project
+  role    = "roles/cloudkms.cryptoKeyEncrypterDecrypter"
+  member  = "serviceAccount:${google_project_service_identity.kms[0].email}"
 }
 
 resource "null_resource" "copy_images" {
@@ -48,6 +63,7 @@ resource "google_artifact_registry_repository" "docker" {
   docker_config {
     immutable_tags = var.immutable_tags
   }
+  depends_on = [google_project_iam_member.kms]
 }
 
 resource "google_artifact_registry_repository_iam_member" "artifact_registry_roles" {

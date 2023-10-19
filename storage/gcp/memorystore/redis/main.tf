@@ -1,11 +1,20 @@
 data "google_client_config" "current" {}
 
+data "google_project" "project" {}
+
 locals {
   alternative_location_id = var.tier == "STANDARD_HA" && length(var.locations) == 2 ? tolist(var.locations)[1] : null
   location_id             = length(var.locations) >= 1 ? tolist(var.locations)[0] : null
   labels                  = merge(var.labels, { module = "memorystore" })
   replica_count           = var.tier == "STANDARD_HA" ? (var.read_replicas_mode == "READ_REPLICAS_ENABLED" ? coalesce(var.replica_count, 2) : 1) : 0
   read_replicas_mode      = var.tier == "STANDARD_HA" ? var.read_replicas_mode : null
+}
+
+resource "google_project_iam_member" "kms" {
+  count = can(coalesce(var.customer_managed_key)) ? 1 : 0
+  project = data.google_client_config.current.project
+  role    = "roles/cloudkms.cryptoKeyEncrypterDecrypter"
+  member  = "serviceAccount:service-${data.google_project.project.number}@cloud-redis.iam.gserviceaccount.com"
 }
 
 resource "google_redis_instance" "cache" {
@@ -51,4 +60,5 @@ resource "google_redis_instance" "cache" {
       }
     }
   }
+  depends_on = [google_project_iam_member.kms]
 }

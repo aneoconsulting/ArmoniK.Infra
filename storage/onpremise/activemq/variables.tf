@@ -24,9 +24,11 @@ variable "validity_period_hours" {
 variable "adapter_class_name" {
   description = "Name of the adapter's class"
   type        = string
+  default     = "ArmoniK.Core.Adapters.Amqp.QueueBuilder"
 }
 
 variable "adapter_absolute_path" {
   description = "The adapter's absolut path"
   type        = string
+  default     = "/adapters/queue/amqp/ArmoniK.Core.Adapters.Amqp.dll"
 }

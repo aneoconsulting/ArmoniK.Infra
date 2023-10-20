@@ -36,21 +36,19 @@ variable "s3" {
 variable "fluent_bit" {
   description = "Parameters of Fluent bit"
   type = object({
-    container_name                  = string
-    image                           = string
-    tag                             = string
-    is_daemonset                    = bool
-    http_server                     = string
-    http_port                       = string
-    read_from_head                  = string
-    read_from_tail                  = string
-    image_pull_secrets              = string
-    parser                          = string
-    fluentbitstate_hostpath         = string #path = "/var/log/fluent-bit/state" --> for GCP | path = "/var/fluent-bit/state" --> for localhost and AWS
-    varlibdockercontainers_hostpath = string #path = "/var/log/lib/docker/containers" --> for GCP | path = "/var/lib/docker/containers" --> for localhost and AWS
-    runlogjournal_hostpath          = string #path = "/var/log/run/log/journal" --> for GCP | path = "/run/log/journal" --> for localhost and AWS
-
-
+    container_name                     = string
+    image                              = string
+    tag                                = string
+    is_daemonset                       = bool
+    http_server                        = string
+    http_port                          = string
+    read_from_head                     = string
+    read_from_tail                     = string
+    image_pull_secrets                 = string
+    parser                             = string
+    fluent_bit_state_hostpath          = string # path = "/var/log/fluent-bit/state" for GCP Autopilot | path = "/var/fluent-bit/state" for localhost, AWS EKS, GCP GKE
+    var_lib_docker_containers_hostpath = string # path = "/var/log/lib/docker/containers" for GCP Autopilot | path = "/var/lib/docker/containers" for localhost, AWS EKS, GCP GKE
+    run_log_journal_hostpath           = string # path = "/var/log/run/log/journal" -for GCP Autopilot | path = "/run/log/journal" for localhost, AWS EKS, GCP GKE
   })
   validation {
     condition     = contains(["apache", "apache2", "apache_error", "nginx", "json", "docker", "cri", "syslog"], var.fluent_bit.parser)

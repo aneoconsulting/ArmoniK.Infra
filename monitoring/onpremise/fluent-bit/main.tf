@@ -97,7 +97,7 @@ resource "kubernetes_daemonset" "fluent_bit" {
         volume {
           name = "fluentbitstate"
           host_path {
-            path = var.fluent_bit.fluentbitstate_hostpath
+            path = local.fluent_bit_state_hostpath
           }
         }
         volume {
@@ -109,13 +109,13 @@ resource "kubernetes_daemonset" "fluent_bit" {
         volume {
           name = "varlibdockercontainers"
           host_path {
-            path = var.fluent_bit.varlibdockercontainers_hostpath
+            path = local.fluent_bit_var_lib_docker_containers_hostpath
           }
         }
         volume {
           name = "runlogjournal"
           host_path {
-            path = var.fluent_bit.runlogjournal_hostpath
+            path = local.fluent_bit_run_log_journal_hostpath
           }
         }
         volume {

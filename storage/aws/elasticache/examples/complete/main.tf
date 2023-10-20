@@ -40,6 +40,7 @@ module "elasticache" {
   preferred_cache_cluster_azs = []
   data_tiering_enabled        = false
   log_retention_in_days       = 30
+  max_memory_samples          = 7
   slow_log                    = ""
   engine_log                  = ""
   kms_key_id                  = null

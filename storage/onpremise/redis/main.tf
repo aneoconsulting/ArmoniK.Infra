@@ -54,7 +54,7 @@ resource "kubernetes_deployment" "redis" {
           image             = "${var.redis.image}:${var.redis.tag}"
           image_pull_policy = "IfNotPresent"
           command           = ["redis-server"]
-          args = [
+          args = compact([
             "--tls-port 6379",
             "--port 0",
             "--tls-cert-file /certificates/cert.pem",
@@ -62,8 +62,9 @@ resource "kubernetes_deployment" "redis" {
             "--tls-auth-clients no",
             "--requirepass ${random_password.redis_password.result}",
             "--maxmemory ${var.redis.max_memory}",
+            var.redis.max_memory_samples != null ? "--maxmemory-samples ${var.redis.max_memory_samples}" : null,
             "--maxmemory-policy allkeys-lru"
-          ]
+          ])
           port {
             container_port = 6379
           }

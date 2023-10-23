@@ -66,8 +66,8 @@ module "gke" {
       key_name = ""
     }
   ]
-  description                = "Test GKE Autopilot with beta functionalities."
-  enable_confidential_nodes  = true
+  description = "Test GKE Autopilot with beta functionalities."
+  #  enable_confidential_nodes  = true
   grant_registry_access      = true # default value
   horizontal_pod_autoscaling = true
   http_load_balancing        = true # default value
@@ -77,6 +77,7 @@ module "gke" {
       display_name = "External"
     }
   ]
-  private                    = false # public autopilot GKE
+  private                    = false # public
+  autopilot                  = true  # autopilot GKE
   workload_config_audit_mode = "BASIC"
 }

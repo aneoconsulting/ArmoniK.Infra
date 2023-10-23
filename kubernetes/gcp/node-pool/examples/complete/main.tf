@@ -41,7 +41,7 @@ resource "null_resource" "timestamp" {
 
 module "vpc" {
   source = "../../../../../networking/gcp/vpc"
-  name   = "simple-gke-node-pool"
+  name   = "complete-gke-node-pool"
   gke_subnet = {
     name                = "simple-gke-node-pool"
     nodes_cidr_block    = "10.51.0.0/16",
@@ -53,14 +53,13 @@ module "vpc" {
 
 module "gke" {
   source            = "../../../gke"
-  name              = "simple-gke-node-pool"
+  name              = "complete-gke-node-pool"
   network           = module.vpc.name
   ip_range_pods     = module.vpc.gke_subnet_pods_range_name
   ip_range_services = module.vpc.gke_subnet_svc_range_name
   subnetwork        = module.vpc.gke_subnet_name
   subnetwork_cidr   = module.vpc.gke_subnet_cidr_block
   kubeconfig_path   = abspath("${path.root}/generated/kubeconfig")
-  autopilot         = false # Standard GKE
   private           = false # public GKE
 }
 

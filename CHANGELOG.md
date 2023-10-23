@@ -10,6 +10,8 @@ Added
 * Configure and authorize Artifact Registry service account, Kubernetes service account, Cloud Storage service account and
   Memorystore for Redis service account to use Cloud KMS key.
 * Add parameters `adapter_class_name` and `adapter_absolute_path` in ActiveMQ module.
+* Add variable in modules of Redis and AWS Elasticache for Redis `max_memory_samples` which the number of samples to check
+  for every eviction.
 
 ## [0.2.1](https://github.com/aneoconsulting/ArmoniK.Infra/releases/tag/0.2.1) (2023-10-09)
 

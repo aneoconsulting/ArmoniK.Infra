@@ -8,7 +8,7 @@ variable "private" {
 variable "autopilot" {
   description = "Create autopilot GKE cluster."
   type        = bool
-  default     = true
+  default     = false
 }
 
 # Required
@@ -680,7 +680,7 @@ variable "upstream_nameservers" {
 }
 
 # Optional for beta GKE
-variable "cloudrun" {
+/*variable "cloudrun" {
   description = "(Beta) Enable CloudRun addon."
   type        = bool
   default     = false
@@ -707,13 +707,13 @@ variable "cluster_telemetry_type" {
     error_message = "Valid values for `cluster_telemetry_type` are: \"ENABLED\" | \"DISABLED\" | \"SYSTEM_ONLY\"."
   }
 }
-
+*/
 variable "config_connector" {
   description = "(Beta) Whether ConfigConnector is enabled for this cluster."
   type        = bool
   default     = false
 }
-
+/*
 variable "enable_confidential_nodes" {
   description = "An optional flag to enable confidential node config."
   type        = bool
@@ -743,13 +743,13 @@ variable "enable_pod_security_policy" {
   type        = bool
   default     = false
 }
-
+*/
 variable "enable_tpu" {
   description = "Enable Cloud TPU resources in the cluster. WARNING: changing this after cluster creation is destructive! Used when `beta` set to `true`."
   type        = bool
   default     = false
 }
-
+/*
 variable "istio" {
   description = "(Beta) Enable Istio addon."
   type        = bool
@@ -777,7 +777,7 @@ variable "sandbox_enabled" {
   type        = bool
   default     = false
 }
-
+*/
 variable "workload_config_audit_mode" {
   description = "(beta) Worload config audit mode."
   type        = string

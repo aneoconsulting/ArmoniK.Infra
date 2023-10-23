@@ -64,7 +64,6 @@ module "gke" {
   subnetwork        = module.vpc.gke_subnet_name
   subnetwork_cidr   = module.vpc.gke_subnet_cidr_block
   kubeconfig_path   = abspath("${path.root}/generated/kubeconfig")
-  autopilot         = false
   cluster_autoscaling = {
     # default value
     enabled             = false
@@ -88,21 +87,21 @@ module "gke" {
       key_name = ""
     }
   ]
-  default_max_pods_per_node   = 256
-  description                 = "Test GKE Standard with beta functionalities."
-  enable_confidential_nodes   = true
-  enable_identity_service     = true
-  enable_intranode_visibility = true
-  enable_shielded_nodes       = true # default value
-  filestore_csi_driver        = true
-  gce_pd_csi_driver           = true
-  gke_backup_agent_config     = true
-  grant_registry_access       = true # default value
-  horizontal_pod_autoscaling  = true
-  http_load_balancing         = true # default value
-  initial_node_count          = 0    # default value
-  istio                       = true
-  logging_enabled_components  = ["SYSTEM_COMPONENTS"]
+  default_max_pods_per_node = 256
+  description               = "Test GKE Standard with beta functionalities."
+  #  enable_confidential_nodes   = true
+  #  enable_identity_service     = true
+  #  enable_intranode_visibility = true
+  enable_shielded_nodes      = true # default value
+  filestore_csi_driver       = true
+  gce_pd_csi_driver          = true
+  gke_backup_agent_config    = true
+  grant_registry_access      = true # default value
+  horizontal_pod_autoscaling = true
+  http_load_balancing        = true # default value
+  initial_node_count         = 0    # default value
+  #  istio                       = true
+  logging_enabled_components = ["SYSTEM_COMPONENTS"]
   master_authorized_networks = [
     {
       cidr_block   = "0.0.0.0/0"
@@ -144,9 +143,9 @@ module "gke" {
       "tag-${null_resource.timestamp.triggers["date"]}"
     ]
   }
-  private                    = false # public Standard GKE
-  remove_default_node_pool   = true  # default value
-  sandbox_enabled            = true
+  private                  = false # public Standard GKE
+  remove_default_node_pool = true  # default value
+  #  sandbox_enabled            = true
   windows_node_pools         = [] # default value
   workload_config_audit_mode = "BASIC"
 }

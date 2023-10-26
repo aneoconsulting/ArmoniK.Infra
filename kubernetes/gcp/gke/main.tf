@@ -21,11 +21,11 @@ locals {
       display_name = "CLUSTER-VPC"
     }
   ] : []))
-  node_pools = var.autopilot ? null : [
+  node_pools = var.autopilot ? null : (var.node_pools == null ? null : [
     for node_pool in var.node_pools : merge(node_pool, {
       name = "${var.name}-${node_pool["name"]}"
     })
-  ]
+  ])
   # NOTE: Dataplane-V2 conflicts with the Calico network policy add-on because
   # it provides redundant NetworkPolicy capabilities. If V2 is enabled, the
   # Calico add-on should be disabled.

@@ -21,7 +21,7 @@ locals {
       display_name = "CLUSTER-VPC"
     }
   ] : []))
-  node_pools = var.autopilot ? null : (var.node_pools == null ? [{ name = "default-node-pool" }] : [
+  node_pools = var.autopilot ? null : (length(coalesce(var.node_pools, [])) == 0 ? [{ name = "default-node-pool" }] : [
   for node_pool in var.node_pools : merge(node_pool, {
     name = "${var.name}-${node_pool["name"]}"
   })

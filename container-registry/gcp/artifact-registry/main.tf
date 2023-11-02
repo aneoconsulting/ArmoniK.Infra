@@ -13,14 +13,14 @@ locals {
   })...)
 }
 
-/*resource "google_project_service_identity" "kms" {
+resource "google_project_service_identity" "kms" {
   count    = can(coalesce(var.kms_key_id)) ? 1 : 0
   provider = google-beta
   project  = data.google_client_config.current.project
   service  = "artifactregistry.googleapis.com"
 }
 
-resource "google_project_iam_member" "kms" {
+/*resource "google_project_iam_member" "kms" {
   count   = can(coalesce(var.kms_key_id)) ? 1 : 0
   project = data.google_client_config.current.project
   role    = "roles/cloudkms.cryptoKeyEncrypterDecrypter"
@@ -30,7 +30,7 @@ resource "google_project_iam_member" "kms" {
 resource "google_kms_crypto_key_iam_member" "kms" {
   count         = can(coalesce(var.kms_key_id)) ? 1 : 0
   crypto_key_id = var.kms_key_id
-  member        = "serviceAccount:service-${data.google_project.project.number}@cloud-redis.iam.gserviceaccount.com"
+  member        = "serviceAccount:${google_project_service_identity.kms[0].email}"#"serviceAccount:service-${data.google_project.project.number}@cloud-redis.iam.gserviceaccount.com"
   role          = "roles/cloudkms.cryptoKeyEncrypterDecrypter"
 }
 

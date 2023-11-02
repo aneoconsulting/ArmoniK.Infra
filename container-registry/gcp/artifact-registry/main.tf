@@ -20,17 +20,10 @@ resource "google_project_service_identity" "kms" {
   service  = "artifactregistry.googleapis.com"
 }
 
-/*resource "google_project_iam_member" "kms" {
-  count   = can(coalesce(var.kms_key_id)) ? 1 : 0
-  project = data.google_client_config.current.project
-  role    = "roles/cloudkms.cryptoKeyEncrypterDecrypter"
-  member  = "serviceAccount:${google_project_service_identity.kms[0].email}"
-}*/
-
 resource "google_kms_crypto_key_iam_member" "kms" {
   count         = can(coalesce(var.kms_key_id)) ? 1 : 0
   crypto_key_id = var.kms_key_id
-  member        = "serviceAccount:${google_project_service_identity.kms[0].email}"#"serviceAccount:service-${data.google_project.project.number}@cloud-redis.iam.gserviceaccount.com"
+  member        = "serviceAccount:${google_project_service_identity.kms[0].email}"
   role          = "roles/cloudkms.cryptoKeyEncrypterDecrypter"
 }
 
@@ -76,7 +69,7 @@ resource "google_artifact_registry_repository" "docker" {
   docker_config {
     immutable_tags = var.immutable_tags
   }
-  #depends_on = [google_project_iam_member.kms]
+  depends_on = [google_kms_crypto_key_iam_member.kms]
 }
 
 resource "google_artifact_registry_repository_iam_member" "artifact_registry_roles" {

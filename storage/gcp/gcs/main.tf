@@ -2,11 +2,11 @@ data "google_client_config" "current" {}
 
 data "google_project" "project" {}
 
-resource "google_project_iam_member" "kms" {
-  count   = can(coalesce(var.default_kms_key_name)) ? 1 : 0
-  project = data.google_client_config.current.project
-  role    = "roles/cloudkms.cryptoKeyEncrypterDecrypter"
-  member  = "serviceAccount:service-${data.google_project.project.number}@gs-project-accounts.iam.gserviceaccount.com"
+resource "google_kms_crypto_key_iam_member" "kms" {
+  count         = can(coalesce(var.default_kms_key_name)) ? 1 : 0
+  crypto_key_id = var.default_kms_key_name
+  member        = "serviceAccount:service-${data.google_project.project.number}@gs-project-accounts.iam.gserviceaccount.com"
+  role          = "roles/cloudkms.cryptoKeyEncrypterDecrypter"
 }
 
 resource "google_storage_bucket" "gcs" {
@@ -96,7 +96,7 @@ resource "google_storage_bucket" "gcs" {
       data_locations = var.data_locations
     }
   }
-  depends_on = [google_project_iam_member.kms]
+  depends_on = [google_kms_crypto_key_iam_member.kms]
 }
 
 resource "google_storage_bucket_access_control" "access_control" {

@@ -10,11 +10,11 @@ locals {
   read_replicas_mode      = var.tier == "STANDARD_HA" ? var.read_replicas_mode : null
 }
 
-resource "google_project_iam_member" "kms" {
-  count   = can(coalesce(var.customer_managed_key)) ? 1 : 0
-  project = data.google_client_config.current.project
-  role    = "roles/cloudkms.cryptoKeyEncrypterDecrypter"
-  member  = "serviceAccount:service-${data.google_project.project.number}@cloud-redis.iam.gserviceaccount.com"
+resource "google_kms_crypto_key_iam_member" "kms" {
+  count         = can(coalesce(var.customer_managed_key)) ? 1 : 0
+  crypto_key_id = var.customer_managed_key
+  member        = "serviceAccount:service-${data.google_project.project.number}@cloud-redis.iam.gserviceaccount.com"
+  role          = "roles/cloudkms.cryptoKeyEncrypterDecrypter"
 }
 
 resource "google_redis_instance" "cache" {
@@ -60,5 +60,5 @@ resource "google_redis_instance" "cache" {
       }
     }
   }
-  depends_on = [google_project_iam_member.kms]
+  depends_on = [google_kms_crypto_key_iam_member.kms]
 }

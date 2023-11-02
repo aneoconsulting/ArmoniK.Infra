@@ -76,7 +76,7 @@ resource "google_artifact_registry_repository" "docker" {
   docker_config {
     immutable_tags = var.immutable_tags
   }
-  depends_on = [google_project_iam_member.kms]
+  #depends_on = [google_project_iam_member.kms]
 }
 
 resource "google_artifact_registry_repository_iam_member" "artifact_registry_roles" {

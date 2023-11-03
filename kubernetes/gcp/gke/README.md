@@ -41,7 +41,7 @@ This module deploy:
 
 | Name | Type |
 |------|------|
-| [google_project_iam_member.kms](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/project_iam_member) | resource |
+| [google_kms_crypto_key_iam_member.kms](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/kms_crypto_key_iam_member) | resource |
 | [null_resource.update_kubeconfig](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
 | [google_client_config.current](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/client_config) | data source |
 | [google_compute_zones.available](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/compute_zones) | data source |

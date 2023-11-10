@@ -5,12 +5,6 @@ variable "private" {
   default     = true
 }
 
-variable "deletion_protection" {
-  type        = bool
-  description = "Whether or not to allow Terraform to destroy the cluster."
-  default     = false
-}
-
 variable "autopilot" {
   description = "Create autopilot GKE cluster."
   type        = bool

@@ -60,6 +60,7 @@ resource "google_kms_crypto_key_iam_member" "kms" {
 
 # Public GKE
 module "gke" {
+  deletion_protection = var.deletion_protection
   count       = local.public_gke ? 1 : 0
   source      = "terraform-google-modules/kubernetes-engine/google"
   version     = "29.0.0"

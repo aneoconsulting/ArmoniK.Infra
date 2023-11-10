@@ -32,10 +32,10 @@ This module deploy:
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_autopilot"></a> [autopilot](#module\_autopilot) | terraform-google-modules/kubernetes-engine/google//modules/beta-autopilot-public-cluster | 29.0.0 |
-| <a name="module_gke"></a> [gke](#module\_gke) | terraform-google-modules/kubernetes-engine/google | 29.0.0 |
-| <a name="module_private_autopilot"></a> [private\_autopilot](#module\_private\_autopilot) | terraform-google-modules/kubernetes-engine/google//modules/beta-autopilot-private-cluster | 29.0.0 |
-| <a name="module_private_gke"></a> [private\_gke](#module\_private\_gke) | terraform-google-modules/kubernetes-engine/google//modules/private-cluster | 29.0.0 |
+| <a name="module_autopilot"></a> [autopilot](#module\_autopilot) | terraform-google-modules/kubernetes-engine/google//modules/beta-autopilot-public-cluster | 28.0.0 |
+| <a name="module_gke"></a> [gke](#module\_gke) | terraform-google-modules/kubernetes-engine/google | 28.0.0 |
+| <a name="module_private_autopilot"></a> [private\_autopilot](#module\_private\_autopilot) | terraform-google-modules/kubernetes-engine/google//modules/beta-autopilot-private-cluster | 28.0.0 |
+| <a name="module_private_gke"></a> [private\_gke](#module\_private\_gke) | terraform-google-modules/kubernetes-engine/google//modules/private-cluster | 28.0.0 |
 
 ## Resources
 
@@ -67,7 +67,6 @@ This module deploy:
 | <a name="input_database_encryption"></a> [database\_encryption](#input\_database\_encryption) | Application-layer Secrets Encryption settings. Valid values of state are: "ENCRYPTED"; "DECRYPTED". | <pre>list(object({<br>    state    = string<br>    key_name = string<br>  }))</pre> | <pre>[<br>  {<br>    "key_name": "",<br>    "state": "DECRYPTED"<br>  }<br>]</pre> | no |
 | <a name="input_datapath_provider"></a> [datapath\_provider](#input\_datapath\_provider) | The desired datapath provider for this cluster. By default, `DATAPATH_PROVIDER_UNSPECIFIED` enables the IPTables-based kube-proxy implementation. `ADVANCED_DATAPATH` enables Dataplane-V2 feature. | `string` | `"DATAPATH_PROVIDER_UNSPECIFIED"` | no |
 | <a name="input_default_max_pods_per_node"></a> [default\_max\_pods\_per\_node](#input\_default\_max\_pods\_per\_node) | The maximum number of pods to schedule per node. Note: For GKE versions earlier than 1.23.5-gke.1300, the limit is 110 Pods, otherwise the limit is 256 Pods. | `number` | `110` | no |
-| <a name="input_deletion_protection"></a> [deletion\_protection](#input\_deletion\_protection) | Whether or not to allow Terraform to destroy the cluster. | `bool` | `false` | no |
 | <a name="input_deploy_using_private_endpoint"></a> [deploy\_using\_private\_endpoint](#input\_deploy\_using\_private\_endpoint) | (Beta) A toggle for Terraform and kubectl to connect to the master's internal IP address during deployment. Used when `private` set to `true`. | `bool` | `true` | no |
 | <a name="input_description"></a> [description](#input\_description) | The description of the GKE cluster. | `string` | `""` | no |
 | <a name="input_disable_default_snat"></a> [disable\_default\_snat](#input\_disable\_default\_snat) | Whether to disable the default SNAT to support the private use of public IP addresses | `bool` | `false` | no |

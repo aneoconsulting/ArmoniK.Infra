@@ -3,9 +3,11 @@ on:
   push:
     branches:
       - main
+      - 0.2.x
   pull_request:
     branches:
       - main
+      - 0.2.x
 jobs:
   HelmChartlint:
     name: Lint Helm charts
@@ -28,7 +30,7 @@ jobs:
           check-latest: true
       
       - name: Set up chart-testing
-        uses: helm/chart-testing-action@v2.4.0
+        uses: helm/chart-testing-action@v2.6.0
       
       - name: Run chart-testing (list-changed)
         id: list-changed

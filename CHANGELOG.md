@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 ## [main](https://github.com/aneoconsulting/ArmoniK.Infra/tree/main) (2023-08-11)
 
+## [0.2.2](https://github.com/aneoconsulting/ArmoniK.Infra/releases/tag/0.2.2) (2023-11-17)
+
+Changed
+-
+
+* fix: Optional old GUIs
+
+## [0.2.1](https://github.com/aneoconsulting/ArmoniK.Infra/releases/tag/0.2.1) (2023-09-13)
+
+Changed
+-
+
+* fix: Variabilize fluentbit hostpath
+
+
 ## [0.2.0](https://github.com/aneoconsulting/ArmoniK.Infra/releases/tag/0.2.0) (2023-09-13)
 
 Changed

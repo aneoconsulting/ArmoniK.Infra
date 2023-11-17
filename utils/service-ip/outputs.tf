@@ -15,7 +15,7 @@ output "fqdn" {
 
 output "host" {
   description = "Either the IP or the FQDN of the service"
-  value       = coalesce(local.ip, local.fqdn)
+  value       = try(coalesce(local.ip, local.fqdn), null)
 }
 
 output "ports" {

@@ -65,14 +65,13 @@ server {
     location = /admin/fr {
         rewrite ^ $scheme://$http_host/admin/fr/;
     }
-    # Deprecated, must be removed in a new version. Keeped for retrocompatibility
-    location = /old-admin {
-        rewrite ^ $scheme://$http_host/admin-0.8/ permanent;
+%{if local.admin_app_url != null~}
+    set $admin_app_upstream ${local.admin_app_url};
+    location /admin/ {
+        proxy_pass $admin_app_upstream$uri$is_args$args;
     }
-    # Deprecated, must be removed in a new version
-    location = /admin-0.8 {
-        rewrite ^ $scheme://$http_host/admin-0.8/ permanent;
-    }
+%{endif~}
+%{if local.admin_0_9_url != null~}
     # Deprecated, must be removed in a new version
     location = /admin-0.9 {
         rewrite ^ $scheme://$http_host/admin-0.9/$accept_language/;
@@ -89,21 +88,26 @@ server {
     location = /admin-0.9/fr {
         rewrite ^ $scheme://$http_host/admin-0.9/fr/;
     }
-%{if var.admin_gui != null~}
-    set $admin_app_upstream ${local.admin_app_url};
-    set $admin_0_8_upstream ${local.admin_0_8_url};
     set $admin_0_9_upstream ${local.admin_0_9_url};
-    set $admin_api_upstream ${local.admin_api_url};
-    location /admin/ {
-        proxy_pass $admin_app_upstream$uri$is_args$args;
-    }
-    # Deprecated, must be removed in a new version
-    location /admin-0.8/ {
-        proxy_pass $admin_0_8_upstream$uri$is_args$args;
-    }
     # Deprecated, must be removed in a new version
     location /admin-0.9/ {
         proxy_pass $admin_0_9_upstream$uri$is_args$args;
+    }
+%{endif~}
+%{if local.admin_0_8_url != null~}
+    # Deprecated, must be removed in a new version. Keeped for retrocompatibility
+    location = /old-admin {
+        rewrite ^ $scheme://$http_host/admin-0.8/ permanent;
+    }
+    # Deprecated, must be removed in a new version
+    location = /admin-0.8 {
+        rewrite ^ $scheme://$http_host/admin-0.8/ permanent;
+    }
+    set $admin_0_8_upstream ${local.admin_0_8_url};
+    set $admin_api_upstream ${local.admin_api_url};
+    # Deprecated, must be removed in a new version
+    location /admin-0.8/ {
+        proxy_pass $admin_0_8_upstream$uri$is_args$args;
     }
     # Deprecated, must be removed in a new version
     location /api {

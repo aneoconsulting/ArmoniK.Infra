@@ -46,10 +46,8 @@ resource "aws_iam_policy" "efs_csi_driver" {
   tags        = local.tags
 }
 
-resource "aws_iam_openid_connect_provider" "eks_oidc" {
-  client_id_list  = ["sts.amazonaws.com"]
-  thumbprint_list = concat([data.tls_certificate.eks.certificates[0].sha1_fingerprint], local.oidc_thumbprint_list)
-  url             = var.eks_issuer
+data "aws_iam_openid_connect_provider" "eks_oidc" {
+  url = var.eks_issuer
 }
 
 resource "aws_iam_role" "efs_csi_driver" {
@@ -72,8 +70,7 @@ resource "aws_iam_role" "efs_csi_driver" {
       }
     ]
   })
-  tags       = local.tags
-  depends_on = [aws_iam_openid_connect_provider.eks_oidc]
+  tags = local.tags
 }
 
 resource "aws_iam_role_policy_attachment" "efs_csi_driver" {

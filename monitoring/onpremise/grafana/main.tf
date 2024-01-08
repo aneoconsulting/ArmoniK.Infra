@@ -50,6 +50,10 @@ resource "kubernetes_deployment" "grafana" {
             name = var.docker_image.image_pull_secrets
           }
         }
+        security_context {
+          run_as_user = 999
+          fs_group    = 999
+        }
         container {
           name              = "grafana"
           image             = "${var.docker_image.image}:${var.docker_image.tag}"
@@ -82,6 +86,13 @@ resource "kubernetes_deployment" "grafana" {
             name       = "dashboards-json-configmap"
             mount_path = "/var/lib/grafana/dashboards/"
           }
+          dynamic "volume_mount" {
+            for_each = (var.persistent_volume != null && var.persistent_volume != "" ? [1] : [])
+            content {
+              name       = "database"
+              mount_path = "/data/db"
+            }
+          }
         }
         volume {
           name = "datasources-configmap"
@@ -109,6 +120,15 @@ resource "kubernetes_deployment" "grafana" {
           config_map {
             name     = kubernetes_config_map.grafana_ini.metadata[0].name
             optional = false
+          }
+        }
+        dynamic "volume" {
+          for_each = (var.persistent_volume != null && var.persistent_volume != "" ? [1] : [])
+          content {
+            name = "database"
+            persistent_volume_claim {
+              claim_name = kubernetes_persistent_volume_claim.grafana[0].metadata[0].name
+            }
           }
         }
       }

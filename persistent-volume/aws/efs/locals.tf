@@ -1,15 +1,9 @@
-# EKS certificate
-data "tls_certificate" "eks" {
-  url = var.eks_issuer
-}
-
 locals {
   tags                 = merge(var.tags, { module = "pv-efs" })
   efs_csi_name         = try(var.csi_driver.name, "efs-csi-driver")
   efs_csi_namespace    = try(var.csi_driver.namespace, "kube-system")
-  oidc_arn             = aws_iam_openid_connect_provider.eks_oidc.arn
-  oidc_url             = trimprefix(aws_iam_openid_connect_provider.eks_oidc.url, "https://")
-  oidc_thumbprint_list = []
+  oidc_arn             = data.aws_iam_openid_connect_provider.eks_oidc.arn
+  oidc_url             = trimprefix(var.eks_issuer, "https://")
   node_selector_keys   = keys(var.csi_driver.node_selector)
   node_selector_values = values(var.csi_driver.node_selector)
   tolerations = [

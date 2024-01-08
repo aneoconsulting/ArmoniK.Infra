@@ -32,3 +32,21 @@ variable "metrics_exporter_url" {
   description = "URL of metrics exporter"
   type        = string
 }
+
+# Persistent volume
+variable "persistent_volume" {
+  description = "Persistent volume info"
+  type = object({
+    storage_provisioner = string
+    parameters          = map(string)
+    # Resources for PVC
+    resources = object({
+      limits = object({
+        storage = string
+      })
+      requests = object({
+        storage = string
+      })
+    })
+  })
+}

@@ -26,7 +26,8 @@ locals {
 
   # EFS CSI
   efs_csi_name         = try(var.eks.efs_csi.name, "efs-csi-driver")
-  oidc_arn             = data.aws_iam_openid_connect_provider.eks_oidc.arn
+  #oidc_arn             = data.aws_iam_openid_connect_provider.eks_oidc.arn
+  oidc_arn = module.eks.oidc_provider_arn
   oidc_url             = trimprefix(module.eks.cluster_oidc_issuer_url, "https://")
   efs_csi_namespace    = try(var.eks.efs_csi.namespace, "kube-system")
 

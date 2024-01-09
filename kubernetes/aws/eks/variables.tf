@@ -116,7 +116,6 @@ variable "eks" {
       name               = string
       namespace          = string
       image_pull_secrets = string
-      node_selector      = any
       repository         = string
       version            = string
       docker_images = object({

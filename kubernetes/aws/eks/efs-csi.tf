@@ -46,9 +46,9 @@ resource "aws_iam_policy" "efs_csi_driver" {
   tags        = local.tags
 }
 
-data "aws_iam_openid_connect_provider" "eks_oidc" {
+/*data "aws_iam_openid_connect_provider" "eks_oidc" {
   url = module.eks.cluster_oidc_issuer_url
-}
+}*/
 
 resource "aws_iam_role" "efs_csi_driver" {
   name = local.efs_csi_name

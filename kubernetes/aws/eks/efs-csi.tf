@@ -46,10 +46,6 @@ resource "aws_iam_policy" "efs_csi_driver" {
   tags        = local.tags
 }
 
-/*data "aws_iam_openid_connect_provider" "eks_oidc" {
-  url = module.eks.cluster_oidc_issuer_url
-}*/
-
 resource "aws_iam_role" "efs_csi_driver" {
   name = local.efs_csi_name
   assume_role_policy = jsonencode({
@@ -133,28 +129,8 @@ resource "helm_release" "efs_csi" {
   }
 
   values = [
-    yamlencode({
-    controller = {
-      create                   = true
-      logLevel                 = 2
-      extraCreateMetadata      = true
-      tags                     = {}
-      deleteAccessPointRootDir = false
-      volMetricsOptIn          = false
-      podAnnotations           = {}
-      resources                = {}
-      nodeSelector             = var.eks.efs_csi.node_selector
-      tolerations              = local.tolerations
-      affinity                 = {}
-      serviceAccount = {
-        create      = false
-        name        = kubernetes_service_account.efs_csi_driver.metadata[0].name
-        annotations = {}
-      }
-      healthPort           = 9909
-      regionalStsEndpoints = false
-    }
-  })
+    yamlencode(local.controller)
   ]
+  depends_on = [kubernetes_service_account.efs_csi_driver]
 }
 

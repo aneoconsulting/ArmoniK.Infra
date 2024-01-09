@@ -82,15 +82,20 @@ resource "kubernetes_deployment" "grafana" {
             mount_path = "/etc/grafana/grafana.ini"
             sub_path   = "grafana.ini"
           }
-          volume_mount {
+          /*volume_mount {
             name       = "dashboards-json-configmap"
             mount_path = "/var/lib/grafana/dashboards/"
+          }*/
+          volume_mount {
+            name       = "dashboards-json-configmap"
+            mount_path = "/var/lib/grafana/dashboards/dashboard-armonik.json"
+            sub_path   = "dashboard-armonik.json"
           }
           dynamic "volume_mount" {
             for_each = (var.persistent_volume != null && var.persistent_volume != "" ? [1] : [])
             content {
               name       = "database"
-              mount_path = "/data/db"
+              mount_path = "/var/lib/grafana"
             }
           }
         }

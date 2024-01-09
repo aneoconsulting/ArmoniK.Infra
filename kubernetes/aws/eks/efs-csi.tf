@@ -93,35 +93,35 @@ resource "helm_release" "efs_csi" {
 
   set {
     name  = "image.repository"
-    value = var.eks.efs_csi.docker_images.efs_csi.image
+    value = var.eks.docker_images.efs_csi.image
   }
   set {
     name  = "image.tag"
-    value = var.eks.efs_csi.docker_images.efs_csi.tag
+    value = var.eks.docker_images.efs_csi.tag
   }
   set {
     name  = "sidecars.livenessProbe.image.repository"
-    value = var.eks.efs_csi.docker_images.livenessprobe.image
+    value = var.eks.docker_images.livenessprobe.image
   }
   set {
     name  = "sidecars.livenessProbe.image.tag"
-    value = var.eks.efs_csi.docker_images.livenessprobe.tag
+    value = var.eks.docker_images.livenessprobe.tag
   }
   set {
     name  = "sidecars.nodeDriverRegistrar.image.repository"
-    value = var.eks.efs_csi.docker_images.node_driver_registrar.image
+    value = var.eks.docker_images.node_driver_registrar.image
   }
   set {
     name  = "sidecars.nodeDriverRegistrar.image.tag"
-    value = var.eks.efs_csi.docker_images.node_driver_registrar.tag
+    value = var.eks.docker_images.node_driver_registrar.tag
   }
   set {
     name  = "sidecars.csiProvisioner.image.repository"
-    value = var.eks.efs_csi.docker_images.external_provisioner.image
+    value = var.eks.docker_images.external_provisioner.image
   }
   set {
     name  = "sidecars.csiProvisioner.image.tag"
-    value = var.eks.efs_csi.docker_images.external_provisioner.tag
+    value = var.eks.docker_images.external_provisioner.tag
   }
   set {
     name  = "imagePullSecrets"

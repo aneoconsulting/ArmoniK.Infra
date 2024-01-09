@@ -8,6 +8,7 @@ data "aws_subnet" "private_subnet" {
 }
 
 locals {
-  tags    = merge(var.tags, { module = "efs" })
-  encrypt = (var.efs.kms_key_id != "" && var.efs.kms_key_id != null)
+  tags       = merge(var.tags, { module = "efs" })
+  encrypt    = (var.efs.kms_key_id != "" && var.efs.kms_key_id != null)
+  subnet_ids = flatten([for key, value in { for subnet in data.aws_subnet.private_subnet : subnet.availability_zone_id => subnet.id... } : value[0]])
 }

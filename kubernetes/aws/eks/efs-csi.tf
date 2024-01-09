@@ -133,4 +133,3 @@ resource "helm_release" "efs_csi" {
   ]
   depends_on = [kubernetes_service_account.efs_csi_driver]
 }
-

@@ -5,4 +5,3 @@ module "efs" {
   vpc    = var.vpc
   efs    = var.efs
 }
-

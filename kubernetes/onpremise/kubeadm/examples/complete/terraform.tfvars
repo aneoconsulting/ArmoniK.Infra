@@ -2,7 +2,7 @@ master = {
   name                     = "master-1"
   public_dns               = "PUBLIC_DNS_HERE" # it can be private if you are in the destination network
   private_dns              = "PRIVATE_DNS_HERE"
-  tls_private_key_pem_file = "TLS_PRIVATE_KEY_FILE_HERE"
+  tls_private_key_pem_file = "./id_rsa" # replace the content of this file with the private ssh key 
 }
 
 workers = {

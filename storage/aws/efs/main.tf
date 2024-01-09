@@ -26,9 +26,9 @@ resource "aws_security_group" "efs" {
 }
 
 resource "aws_efs_mount_target" "efs" {
-  for_each        = data.aws_subnet.private_subnet
+  for_each        = toset(local.subnet_ids)
   file_system_id  = aws_efs_file_system.efs.id
-  subnet_id       = each.value.id
+  subnet_id       = each.key
   security_groups = [aws_security_group.efs.id]
 }
 

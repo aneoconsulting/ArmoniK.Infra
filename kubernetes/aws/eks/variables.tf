@@ -89,6 +89,22 @@ variable "eks" {
         image = string
         tag   = string
       })
+      efs_csi = object({
+        image = string
+        tag   = string
+      })
+      livenessprobe = object({
+        image = string
+        tag   = string
+      })
+      node_driver_registrar = object({
+        image = string
+        tag   = string
+      })
+      external_provisioner = object({
+        image = string
+        tag   = string
+      })
     })
     cluster_autoscaler = object({
       expander                              = string
@@ -118,24 +134,6 @@ variable "eks" {
       image_pull_secrets = string
       repository         = string
       version            = string
-      docker_images = object({
-        efs_csi = object({
-          image = string
-          tag   = string
-        })
-        livenessprobe = object({
-          image = string
-          tag   = string
-        })
-        node_driver_registrar = object({
-          image = string
-          tag   = string
-        })
-        external_provisioner = object({
-          image = string
-          tag   = string
-        })
-      })
     })
     encryption_keys = object({
       cluster_log_kms_key_id    = string

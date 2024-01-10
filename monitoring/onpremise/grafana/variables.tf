@@ -51,6 +51,7 @@ variable "persistent_volume" {
   description = "Persistent volume info"
   type = object({
     storage_provisioner = string
+    volume_binding_mode = string
     parameters          = map(string)
     # Resources for PVC
     resources = object({

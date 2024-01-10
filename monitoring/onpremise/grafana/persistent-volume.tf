@@ -10,6 +10,7 @@ resource "kubernetes_storage_class" "grafana" {
   }
   mount_options       = ["tls"]
   storage_provisioner = var.persistent_volume.storage_provisioner
+  volume_binding_mode = var.persistent_volume.volume_binding_mode
   parameters          = var.persistent_volume.parameters
 }
 

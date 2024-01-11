@@ -1,0 +1,32 @@
+apiVersion: v2
+name: armonik-control-plane
+description: A Helm chart for ArmoniK Control Plane
+
+# Specify the Kubernetes version range that we support.
+kubeVersion: ">=v1.23.0-0"
+keywords:
+  - armonik
+  - helm
+  - control-plane
+
+type: application
+version: 0.1.0
+appVersion: "0.2.2"
+
+# Add chart dependecies 
+# dependencies:
+  # Example
+  # - name: message-queue
+  #   condition: message-queue.enabled
+  # - name: database
+  #   condition: database.enabled
+
+home: https://github.com/aneoconsulting/ArmoniK.Infra/tree/main/charts/control-plane
+sources:
+  - https://github.com/aneoconsulting/ArmoniK.Infra/tree/main/charts/control-plane
+
+# Maintainers
+maintainers:
+  - name: Aneo
+    email: armonik-support@aneo.fr
+    url: armonik.fr

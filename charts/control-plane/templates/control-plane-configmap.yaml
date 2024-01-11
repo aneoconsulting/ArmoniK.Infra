@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ first .Values.controlPlanConfigmap }}-helm
+  namespace: {{ .Values.namespace }}
+data:
+{{ if or (not .Values.controlPlane.defaultPartition) (eq .Values.controlPlane.defaultPartition "") (not (has .Values.controlPlane.defaultPartition .Values.partitionNames ))}}
+  {{ if gt (len .Values.partitionNames) 0 }}
+  Submitter__DefaultPartition: {{ first .Values.partitionNames }}
+  {{ else }}
+  Submitter__DefaultPartition: ""
+  {{ end }} 
+{{ else }}  
+  Submitter__DefaultPartition: {{ .Values.controlPlane.defaultPartition }}
+{{ end}}
+{{ toYaml .Values.extraConf.control | indent 2 }}

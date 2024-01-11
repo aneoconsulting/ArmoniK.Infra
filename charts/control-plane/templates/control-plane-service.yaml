@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.controlPlane.metadata.name }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ .Values.controlPlane.metadata.labels.app }}
+    service: {{ .Values.controlPlane.metadata.labels.service }}
+  annotations:
+    {{ .Values.controlPlane.annotations }}
+spec:
+{{ if eq .Values.controlPlane.serviceType "HeadLess" }}
+  type: "ClusterIP"
+{{ else }}
+  type: .Values.controlPlane.serviceType
+{{ end }}
+  selector:
+    app: {{ .Values.controlPlane.metadata.labels.app }}
+    service: {{ .Values.controlPlane.metadata.labels.service }}
+  ports:
+    - name: {{ .Values.controlPlane.spec.template.spec.containers.ports.name }}
+      targetPort: {{ .Values.controlPlane.spec.template.spec.containers.ports.containerPort }}
+      protocol: "TCP"
+    {{ if eq .Values.controlPlane.serviceType "HeadLess" }}
+      port: {{ .Values.controlPlane.spec.template.spec.containers.ports.containerPort }}
+    {{ else }}
+      port: {{ .Values.controlPlane.ports.containerPort }}
+    {{ end }}

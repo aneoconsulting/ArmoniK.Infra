@@ -53,7 +53,7 @@ locals {
       value    = local.node_selector_values[index]
       effect   = "NoSchedule"
     }
-  ]*/
+  ]
   controller = {
     controller = {
       create                   = true
@@ -69,13 +69,13 @@ locals {
       affinity = {}
       serviceAccount = {
         create      = false
-        name        = kubernetes_service_account.efs_csi_driver.metadata[0].name
+        name        = kubernetes_service_account.efs_csi_driver_controller.metadata[0].name
         annotations = {}
       }
       healthPort           = 9909
       regionalStsEndpoints = false
     }
-  }
+  }*/
 
   # Custom ENI
   subnets = {

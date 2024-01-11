@@ -169,6 +169,21 @@ resource "helm_release" "efs_csi" {
     value = kubernetes_service_account.efs_csi_driver_controller.metadata[0].name
   }
   set {
+    name  = "controller.nodeSelector"
+    value = var.node_selector
+  }
+  set {
+    name  = "controller.nodeSelector"
+    value = [
+    for index in range(0, length(local.node_selector_keys)) : {
+      key      = local.node_selector_keys[index]
+      operator = "Equal"
+      value    = local.node_selector_values[index]
+      effect   = "NoSchedule"
+    }
+  ]
+  }
+  set {
     name  = "node.serviceAccount.create"
     value = false
   }

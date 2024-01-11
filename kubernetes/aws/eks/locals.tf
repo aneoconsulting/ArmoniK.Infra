@@ -46,14 +46,14 @@ locals {
   oidc_arn          = module.eks.oidc_provider_arn
   oidc_url          = trimprefix(module.eks.cluster_oidc_issuer_url, "https://")
   efs_csi_namespace = try(var.eks.efs_csi.namespace, "kube-system")
-  efs_csi_tolerations = [
+  /*efs_csi_tolerations = [
     for index in range(0, length(local.node_selector_keys)) : {
       key      = local.node_selector_keys[index]
       operator = "Equal"
       value    = local.node_selector_values[index]
       effect   = "NoSchedule"
     }
-  ]
+  ]*/
   controller = {
     controller = {
       create                   = true
@@ -64,9 +64,9 @@ locals {
       volMetricsOptIn          = false
       podAnnotations           = {}
       resources                = {}
-#      nodeSelector             = var.node_selector
-#      tolerations              = local.efs_csi_tolerations
-      affinity                 = {}
+      #      nodeSelector             = var.node_selector
+      #      tolerations              = local.efs_csi_tolerations
+      affinity = {}
       serviceAccount = {
         create      = false
         name        = kubernetes_service_account.efs_csi_driver.metadata[0].name

@@ -50,6 +50,16 @@ data "aws_iam_policy_document" "efs_csi_driver" {
       variable = "aws:ResourceTag/efs.csi.aws.com/cluster"
     }
   }
+  statement {
+    sid = "Mount"
+    actions = [
+      "elasticfilesystem:ClientRootAccess",
+      "elasticfilesystem:ClientWrite",
+      "elasticfilesystem:ClientMount"
+    ]
+    effect    = "Allow"
+    resources = ["*"]
+  }
 }
 
 resource "aws_iam_policy" "efs_csi_driver" {

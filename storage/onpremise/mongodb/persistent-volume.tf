@@ -1,5 +1,5 @@
 resource "kubernetes_storage_class" "mongodb" {
-  count = can(coalesce(var.persistent_volume)) ? 1 : 0
+  count = var.persistent_volume != null ? 1 : 0
   metadata {
     name = "mongodb"
     labels = {

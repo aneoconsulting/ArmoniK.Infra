@@ -1,0 +1,106 @@
+apiVersion: {{ .Values.apiVersion }}
+kind: {{ .Values.kind }}
+metadata:
+  name: {{ .Values.controlPlane.metadata.name }}
+  namespace: {{ .Values.namespace }}
+  labels:
+{{/* Add common labels to the deployment */}}
+{{ include "armonik-control-plane.labels" . | indent 4 }}
+    app: {{ .Values.controlPlane.metadata.labels.app }}
+    service: {{ .Values.controlPlane.metadata.labels.service }}
+spec:
+  replicas: {{ .Values.replicaCount }} 
+  selector:
+    matchLabels:
+      app: {{ .Values.controlPlane.spec.selector.matchLabels.app }}
+      service: {{ .Values.controlPlane.spec.selector.matchLabels.service }}
+  template:
+    metadata:
+      name: {{ .Values.controlPlane.metadata.name }}
+      namespace: {{ .Values.namespace }}
+      labels:
+        app: {{ .Values.controlPlane.metadata.labels.app }}
+        service: {{ .Values.controlPlane.metadata.labels.service }}
+      annotations: 
+        {{ .Values.controlPlane.annotations }}
+    spec:
+      nodeSelector: 
+      {{- range $i, $value := .Values.controlPlaneSelector }}
+        {{ $value.key }}: {{ $value.value }}
+      {{- end }}
+      tolerations:
+        {{- range $i, $value := .Values.controlPlaneSelector }}
+        - key: {{ $value.key | quote }}
+          value: {{ $value.value | quote }}
+          operator: "Equal"
+          effect: "NoSchedule"
+        {{- end }}
+      imagePullSecrets:
+        {{- range .Values.imagePullSecrets }}
+          {{ . }}
+        {{- end }}
+      containers:
+        - name: {{ .Values.controlPlane.name }}
+          image: {{ .Values.image }}
+          imagePullPolicy: {{ .Values.controlPlane.imagePullPolicy }}
+          resources:
+            limits: 
+              cpu: {{ .Values.controlPlane.limits.cpu }}
+              memory: {{ .Values.controlPlane.limits.memory }}
+            requests: 
+              cpu: {{ .Values.controlPlane.requests.cpu }}
+              memory: {{ .Values.controlPlane.requests.memory }}
+          ports:
+            - name: {{ .Values.controlPlane.ports.name }}
+              containerPort: {{ .Values.controlPlane.ports.containerPort }}
+          livenessProbe:
+            {{- /* it would be better to use toYaml but it unquote strings 
+              {{ toYaml .Values.livenessProbe | nindent 12 }}
+            */}}
+            httpGet:
+              path: {{ .Values.livenessProbe.httpGet.path | quote }}
+              port: {{ .Values.livenessProbe.httpGet.port }}
+            initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.livenessProbe.timeoutSeconds }}
+            successThreshold: {{ .Values.livenessProbe.successThreshold }}
+            failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
+          startupProbe:
+            {{- /* it would be better to use toYaml but it unquote strings 
+              {{- toYaml .Values.startupProbe | nindent 12 }}
+            */}}
+            httpGet:
+              path: {{ .Values.startupProbe.httpGet.path | quote }}
+              port: {{ .Values.startupProbe.httpGet.port }}
+            initialDelaySeconds: {{ .Values.startupProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.startupProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.startupProbe.timeoutSeconds }}
+            successThreshold: {{ .Values.startupProbe.successThreshold }}
+            failureThreshold: {{ .Values.startupProbe.failureThreshold }}
+          envFrom:
+            {{ range $i, $value := .Values.controlPlanConfigmap }}
+            - configMapRef:  
+                name: {{ $value }}
+              {{ end }}
+          env:
+            {{- range $i, $value := .Values.credentials }}
+            - name: {{ $i | quote }}
+              valueFrom:
+                secretKeyRef:
+                  key: {{ $value.key | quote }}
+                  name: {{ $value.name | quote }}
+                  optional: false
+            {{- end }}
+          volumeMounts:
+          {{- range $i, $value := .Values.certificates }}
+          - mountPath: {{ $value.mountPath | quote }}
+            name: {{ $value.name | quote }}
+            readOnly: true
+          {{- end }}
+      volumes:
+      {{- range $i, $value := .Values.certificates }}
+        - name: {{ $value.name | quote }}
+          secret:
+            secretName: {{ $value.secretName | quote }}
+            optional: false
+      {{- end }}

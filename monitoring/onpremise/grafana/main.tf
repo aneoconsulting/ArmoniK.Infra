@@ -92,7 +92,7 @@ resource "kubernetes_deployment" "grafana" {
             sub_path   = "dashboard-armonik.json"
           }
           dynamic "volume_mount" {
-            for_each = (var.persistent_volume != null && var.persistent_volume != "" ? [1] : [])
+            for_each = length(kubernetes_persistent_volume_claim.grafana) > 0 ? [1] : []
             content {
               name       = "database"
               mount_path = "/var/lib/grafana"
@@ -128,7 +128,7 @@ resource "kubernetes_deployment" "grafana" {
           }
         }
         dynamic "volume" {
-          for_each = (var.persistent_volume != null && var.persistent_volume != "" ? [1] : [])
+          for_each = length(kubernetes_persistent_volume_claim.grafana) > 0 ? [1] : []
           content {
             name = "database"
             persistent_volume_claim {

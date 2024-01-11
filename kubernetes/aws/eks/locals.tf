@@ -46,7 +46,7 @@ locals {
   oidc_arn          = module.eks.oidc_provider_arn
   oidc_url          = trimprefix(module.eks.cluster_oidc_issuer_url, "https://")
   efs_csi_namespace = try(var.eks.efs_csi.namespace, "kube-system")
-  /*efs_csi_tolerations = [
+  efs_csi_tolerations = [
     for index in range(0, length(local.node_selector_keys)) : {
       key      = local.node_selector_keys[index]
       operator = "Equal"
@@ -64,8 +64,8 @@ locals {
       volMetricsOptIn          = false
       podAnnotations           = {}
       resources                = {}
-      #      nodeSelector             = var.node_selector
-      #      tolerations              = local.efs_csi_tolerations
+      nodeSelector             = var.node_selector
+      tolerations              = local.efs_csi_tolerations
       affinity = {}
       serviceAccount = {
         create      = false
@@ -75,7 +75,7 @@ locals {
       healthPort           = 9909
       regionalStsEndpoints = false
     }
-  }*/
+  }
 
   # Custom ENI
   subnets = {

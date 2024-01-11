@@ -91,7 +91,7 @@ resource "kubernetes_deployment" "mongodb" {
             mount_path = "/start/"
           }
           dynamic "volume_mount" {
-            for_each = (var.persistent_volume != null && var.persistent_volume != "" ? [1] : [])
+            for_each = length(kubernetes_persistent_volume_claim.mongodb) > 0 ? [1] : []
             content {
               name       = "database"
               mount_path = "/data/db"
@@ -127,7 +127,7 @@ resource "kubernetes_deployment" "mongodb" {
           }
         }
         dynamic "volume" {
-          for_each = (var.persistent_volume != null && var.persistent_volume != "" ? [1] : [])
+          for_each = length(kubernetes_persistent_volume_claim.mongodb) > 0 ? [1] : []
           content {
             name = "database"
             persistent_volume_claim {

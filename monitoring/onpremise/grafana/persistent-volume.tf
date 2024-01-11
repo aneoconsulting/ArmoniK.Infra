@@ -1,5 +1,5 @@
 resource "kubernetes_storage_class" "grafana" {
-  count = (var.persistent_volume != null && var.persistent_volume != "" ? 1 : 0)
+  count = can(coalesce(var.persistent_volume)) ? 1 : 0
   metadata {
     name = "grafana"
     labels = {
@@ -15,7 +15,7 @@ resource "kubernetes_storage_class" "grafana" {
 }
 
 resource "kubernetes_persistent_volume_claim" "grafana" {
-  count = length(kubernetes_storage_class.grafana)
+  count = length(kubernetes_storage_class.grafana) > 0 ? 1 : 0
   metadata {
     name      = "grafana"
     namespace = var.namespace

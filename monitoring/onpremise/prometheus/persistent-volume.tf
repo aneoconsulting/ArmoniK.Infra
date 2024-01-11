@@ -1,5 +1,5 @@
 resource "kubernetes_storage_class" "prometheus" {
-  count = (var.persistent_volume != null && var.persistent_volume != "" ? 1 : 0)
+  count = can(coalesce(var.persistent_volume)) ? 1 : 0
   metadata {
     name = "prometheus"
     labels = {
@@ -15,7 +15,7 @@ resource "kubernetes_storage_class" "prometheus" {
 }
 
 resource "kubernetes_persistent_volume_claim" "prometheus" {
-  count = length(kubernetes_storage_class.prometheus)
+  count = length(kubernetes_storage_class.prometheus) > 0 ? 1 : 0
   metadata {
     name      = "prometheus"
     namespace = var.namespace

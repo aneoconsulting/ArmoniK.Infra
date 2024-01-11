@@ -13,6 +13,10 @@ variable "mongodb" {
     node_selector      = any
     image_pull_secrets = string
     replicas_number    = number
+    security_context = object({
+      run_as_user = number
+      fs_group    = number
+    })
   })
 }
 

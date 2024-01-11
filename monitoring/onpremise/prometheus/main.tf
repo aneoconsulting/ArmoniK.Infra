@@ -51,10 +51,10 @@ resource "kubernetes_deployment" "prometheus" {
           }
         }
         security_context {
-          run_as_user = 65534
+          run_as_user     = var.security_context.run_as_user
           run_as_non_root = true
-          run_as_group = 65534
-          fs_group    = 65534
+          run_as_group    = var.security_context.fs_group
+          fs_group        = var.security_context.fs_group
         }
         container {
           name              = "prometheus"

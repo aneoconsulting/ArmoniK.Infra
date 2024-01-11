@@ -46,6 +46,14 @@ variable "authentication" {
   default     = false
 }
 
+variable "security_context" {
+  description = "security context for MongoDB pods"
+  type = object({
+    run_as_user = number
+    fs_group    = number
+  })
+}
+
 # Persistent volume
 variable "persistent_volume" {
   description = "Persistent volume info"

@@ -161,29 +161,6 @@ resource "helm_release" "efs_csi" {
     value = var.eks.efs_csi.image_pull_secrets
   }
   set {
-    name  = "controller.serviceAccount.create"
-    value = false
-  }
-  set {
-    name  = "controller.serviceAccount.name"
-    value = kubernetes_service_account.efs_csi_driver_controller.metadata[0].name
-  }
-  set {
-    name  = "controller.nodeSelector"
-    value = var.node_selector
-  }
-  set {
-    name  = "controller.nodeSelector"
-    value = [
-    for index in range(0, length(local.node_selector_keys)) : {
-      key      = local.node_selector_keys[index]
-      operator = "Equal"
-      value    = local.node_selector_values[index]
-      effect   = "NoSchedule"
-    }
-  ]
-  }
-  set {
     name  = "node.serviceAccount.create"
     value = false
   }
@@ -191,13 +168,11 @@ resource "helm_release" "efs_csi" {
     name  = "node.serviceAccount.name"
     value = kubernetes_service_account.efs_csi_driver_node.metadata[0].name
   }
-
-
-  /*values = [
+  values = [
     yamlencode(local.controller)
   ]
   depends_on = [
-  kubernetes_service_account.efs_csi_driver_controller,
-  kubernetes_service_account.efs_csi_driver_node
-  ]*/
+    kubernetes_service_account.efs_csi_driver_controller,
+    kubernetes_service_account.efs_csi_driver_node
+  ]
 }

@@ -66,7 +66,7 @@ locals {
       resources                = {}
       nodeSelector             = var.node_selector
       tolerations              = local.efs_csi_tolerations
-      affinity = {}
+      affinity                 = {}
       serviceAccount = {
         create      = false
         name        = kubernetes_service_account.efs_csi_driver_controller.metadata[0].name

@@ -30,6 +30,22 @@ locals {
   node_selector = {
     nodeSelector = var.node_selector
   }
+  tolerations = {
+    tolerations = [
+      for index in range(0, length(local.node_selector_keys)) : {
+        key      = local.node_selector_keys[index]
+        operator = "Equal"
+        value    = local.node_selector_values[index]
+        effect   = "NoSchedule"
+      }
+    ]
+  }
+
+  # EFS CSI
+  efs_csi_name      = try(var.eks.efs_csi.name, "efs-csi-driver")
+  oidc_arn          = module.eks.oidc_provider_arn
+  oidc_url          = trimprefix(module.eks.cluster_oidc_issuer_url, "https://")
+  efs_csi_namespace = try(var.eks.efs_csi.namespace, "kube-system")
   efs_csi_tolerations = [
     for index in range(0, length(local.node_selector_keys)) : {
       key      = local.node_selector_keys[index]
@@ -38,15 +54,6 @@ locals {
       effect   = "NoSchedule"
     }
   ]
-  tolerations = {
-    tolerations = local.efs_csi_tolerations
-  }
-
-  # EFS CSI
-  efs_csi_name      = try(var.eks.efs_csi.name, "efs-csi-driver")
-  oidc_arn          = module.eks.oidc_provider_arn
-  oidc_url          = trimprefix(module.eks.cluster_oidc_issuer_url, "https://")
-  efs_csi_namespace = try(var.eks.efs_csi.namespace, "kube-system")
   controller = {
     controller = {
       create                   = true

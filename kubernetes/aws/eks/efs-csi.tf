@@ -82,7 +82,7 @@ resource "aws_iam_role" "efs_csi_driver" {
         Action = "sts:AssumeRoleWithWebIdentity"
         Condition = {
           StringEquals = {
-            #"${local.oidc_url}:aud" = "sts.amazonaws.com"
+            "${local.oidc_url}:aud" = "sts.amazonaws.com"
             "${local.oidc_url}:sub" = "system:serviceaccount:${local.efs_csi_namespace}:efs-csi-controller-sa"
           }
         }
@@ -97,7 +97,7 @@ resource "aws_iam_role_policy_attachment" "efs_csi_driver" {
   role       = aws_iam_role.efs_csi_driver.name
 }
 
-resource "kubernetes_service_account" "efs_csi_driver" {
+resource "kubernetes_service_account" "efs_csi_driver_controller" {
   metadata {
     name = "efs-csi-controller-sa"
     annotations = {
@@ -107,9 +107,19 @@ resource "kubernetes_service_account" "efs_csi_driver" {
   }
 }
 
+resource "kubernetes_service_account" "efs_csi_driver_node" {
+  metadata {
+    name = "efs-csi-node-sa"
+    annotations = {
+      "eks.amazonaws.com/role-arn" = aws_iam_role.efs_csi_driver.arn
+    }
+    namespace = local.efs_csi_namespace
+  }
+}
+
 resource "helm_release" "efs_csi" {
   name       = "efs-csi"
-  namespace  = kubernetes_service_account.efs_csi_driver.metadata[0].namespace
+  namespace  = kubernetes_service_account.efs_csi_driver_controller.metadata[0].namespace
   chart      = "aws-efs-csi-driver"
   repository = var.eks.efs_csi.repository
   version    = var.eks.efs_csi.version
@@ -150,9 +160,29 @@ resource "helm_release" "efs_csi" {
     name  = "imagePullSecrets"
     value = var.eks.efs_csi.image_pull_secrets
   }
+  set {
+    name  = "controller.serviceAccount.create"
+    value = false
+  }
+  set {
+    name  = "controller.serviceAccount.name"
+    value = kubernetes_service_account.efs_csi_driver_controller.metadata[0].name
+  }
+  set {
+    name  = "node.serviceAccount.create"
+    value = false
+  }
+  set {
+    name  = "node.serviceAccount.name"
+    value = kubernetes_service_account.efs_csi_driver_node.metadata[0].name
+  }
 
-  values = [
+
+  /*values = [
     yamlencode(local.controller)
   ]
-  depends_on = [kubernetes_service_account.efs_csi_driver]
+  depends_on = [
+  kubernetes_service_account.efs_csi_driver_controller,
+  kubernetes_service_account.efs_csi_driver_node
+  ]*/
 }

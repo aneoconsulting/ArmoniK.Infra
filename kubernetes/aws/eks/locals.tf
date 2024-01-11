@@ -64,8 +64,8 @@ locals {
       volMetricsOptIn          = false
       podAnnotations           = {}
       resources                = {}
-      nodeSelector             = var.node_selector
-      tolerations              = local.efs_csi_tolerations
+#      nodeSelector             = var.node_selector
+#      tolerations              = local.efs_csi_tolerations
       affinity                 = {}
       serviceAccount = {
         create      = false

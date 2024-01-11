@@ -51,8 +51,8 @@ resource "kubernetes_deployment" "prometheus" {
           }
         }
         security_context {
-          run_as_user = 999
-          fs_group    = 999
+          run_as_user = 1000
+          fs_group    = 2000
         }
         container {
           name              = "prometheus"

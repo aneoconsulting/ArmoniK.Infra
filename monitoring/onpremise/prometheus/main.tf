@@ -52,6 +52,8 @@ resource "kubernetes_deployment" "prometheus" {
         }
         security_context {
           run_as_user = 1000
+          run_as_non_root = true
+          run_as_group = 65534
           fs_group    = 2000
         }
         container {

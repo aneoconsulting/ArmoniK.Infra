@@ -50,10 +50,6 @@ resource "kubernetes_deployment" "prometheus" {
             name = var.docker_image.image_pull_secrets
           }
         }
-        security_context {
-          run_as_user = 999
-          fs_group    = 999
-        }
         container {
           name              = "prometheus"
           image             = "${var.docker_image.image}:${var.docker_image.tag}"
@@ -72,28 +68,12 @@ resource "kubernetes_deployment" "prometheus" {
             mount_path = "/etc/prometheus/prometheus.yml"
             sub_path   = "prometheus.yml"
           }
-          dynamic "volume_mount" {
-            for_each = length(kubernetes_persistent_volume_claim.prometheus) > 0 ? [1] : []
-            content {
-              name       = "database"
-              mount_path = "/prometheus/data"
-            }
-          }
         }
         volume {
           name = "prometheus-configmap"
           config_map {
             name     = kubernetes_config_map.prometheus_config.metadata[0].name
             optional = false
-          }
-        }
-        dynamic "volume" {
-          for_each = length(kubernetes_persistent_volume_claim.prometheus) > 0 ? [1] : []
-          content {
-            name = "database"
-            persistent_volume_claim {
-              claim_name = kubernetes_persistent_volume_claim.prometheus[0].metadata[0].name
-            }
           }
         }
       }

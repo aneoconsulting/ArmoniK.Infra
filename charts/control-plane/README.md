@@ -1,8 +1,10 @@
 # armonik-control-plane
 
-![Version: 0.1.0](https://img.shields.io/badge/Version-0.1.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.16.0](https://img.shields.io/badge/AppVersion-1.16.0-informational?style=flat-square)
+![Version: 0.1.0](https://img.shields.io/badge/Version-0.1.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.2.2](https://img.shields.io/badge/AppVersion-0.2.2-informational?style=flat-square)
 
 A Helm chart for ArmoniK Control Plane
+
+**Homepage:** <https://github.com/aneoconsulting/ArmoniK.Infra/tree/main/charts/control-plane>
 
 ## Maintainers
 
@@ -10,13 +12,19 @@ A Helm chart for ArmoniK Control Plane
 | ---- | ------ | --- |
 | Aneo | <armonik-support@aneo.fr> | <armonik.fr> |
 
+## Source Code
+
+* <https://github.com/aneoconsulting/ArmoniK.Infra/tree/main/charts/control-plane>
+
+## Requirements
+
+Kubernetes: `>=v1.23.0-0`
+
 ## Values
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| apiVersion | string | `"apps/v1"` |  |
-| armonikControlImage | string | `"dockerhubaneo/armonik_control"` |  |
-| armonikControlTag | string | `"0.19.3"` |  |
+| apiVersion | string | `"apps/v1"` | Kubernetes API version to be used |
 | certificates.activemq.mountPath | string | `"/amqp"` |  |
 | certificates.activemq.name | string | `"activemq-secret-volume"` |  |
 | certificates.activemq.secretName | string | `"activemq"` |  |
@@ -29,24 +37,7 @@ A Helm chart for ArmoniK Control Plane
 | controlPlanConfigmap[0] | string | `"control-plane-configmap"` |  |
 | controlPlanConfigmap[1] | string | `"log-configmap"` |  |
 | controlPlanConfigmap[2] | string | `"core-configmap"` |  |
-| controlPlane.annotations | string | `""` |  |
-| controlPlane.defaultPartition | string | `"default"` |  |
-| controlPlane.imagePullPolicy | string | `"IfNotPresent"` |  |
-| controlPlane.limits.cpu | string | `"1000m"` |  |
-| controlPlane.limits.memory | string | `"2048Mi"` |  |
-| controlPlane.metadata.labels.app | string | `"armonik"` |  |
-| controlPlane.metadata.labels.service | string | `"control-plane-helm"` |  |
-| controlPlane.metadata.name | string | `"control-plane-helm"` |  |
-| controlPlane.name | string | `"control-plane-helm"` |  |
-| controlPlane.ports.containerPort | int | `1080` |  |
-| controlPlane.ports.name | string | `"http"` |  |
-| controlPlane.requests.cpu | string | `"50m"` |  |
-| controlPlane.requests.memory | string | `"50Mi"` |  |
-| controlPlane.serviceType | string | `"HeadLess"` |  |
-| controlPlane.spec.selector.matchLabels.app | string | `"armonik"` |  |
-| controlPlane.spec.selector.matchLabels.service | string | `"control-plane-helm"` |  |
-| controlPlane.spec.template.spec.containers.ports.containerPort | int | `1080` |  |
-| controlPlane.spec.template.spec.containers.ports.name | string | `"http"` |  |
+| controlPlane | object | `{"annotations":"","defaultPartition":"default","imagePullPolicy":"IfNotPresent","limits":{"cpu":"1000m","memory":"2048Mi"},"metadata":{"labels":{"app":"armonik","service":"control-plane-helm"},"name":"control-plane-helm"},"name":"control-plane-helm","ports":{"containerPort":1080,"name":"http"},"requests":{"cpu":"50m","memory":"50Mi"},"serviceType":"HeadLess","spec":{"selector":{"matchLabels":{"app":"armonik","service":"control-plane-helm"}},"template":{"spec":{"containers":{"ports":{"containerPort":1080,"name":"http"}}}}}}` | controlPlane contains all the values of the control plane deployment |
 | controlPlaneSelector | list | `[]` |  |
 | coreConfigmap.data.Amqp__CaPath | string | `"/amqp/chain.pem"` |  |
 | coreConfigmap.data.Amqp__Scheme | string | `"AMQPS"` |  |
@@ -104,6 +95,7 @@ A Helm chart for ArmoniK Control Plane
 | extraConf.core.Redis__SslHost | string | `"127.0.0.1"` |  |
 | extraConf.core.Redis__Timeout | int | `30000` |  |
 | extraConf.core.Redis__TtlTimeSpan | string | `"1.00:00:00"` |  |
+| image | string | `"dockerhubaneo/armonik_control:0.19.3"` | image is the armonik image and the tag image:tag |
 | imagePullSecrets | list | `[]` |  |
 | kind | string | `"Deployment"` | Kid of the Kubernetes resource to be scaled |
 | livenessProbe.failureThreshold | int | `1` |  |
@@ -116,12 +108,11 @@ A Helm chart for ArmoniK Control Plane
 | logConfigmap.data.loggingLevel | string | `"Information"` |  |
 | logConfigmap.metadata.name | string | `"log-configmap-helm"` |  |
 | logConfigmap.metadata.namespace | string | `"armonik"` |  |
-| name | string | `""` | Name of the Kubernetes resource to be scaled |
 | nameOverride | string | `"armonik-control-plane"` |  |
-| namespace | string | `"armonik"` |  |
+| namespace | string | `"armonik"` | namespace is the namespace used for all resources |
 | partitionNames[0] | string | `"default"` |  |
 | partitionNames[1] | string | `"monitoring"` |  |
-| replicaCount | int | `1` |  |
+| replicaCount | int | `1` | replicaCount is the number of replicas |
 | secrets.activemq.caFileName | string | `"/amqp/chain.pem"` |  |
 | secrets.activemq.name | string | `"activemq"` |  |
 | secrets.deployedObjectStorageSecret | string | `"deployed-object-storage-helm"` |  |

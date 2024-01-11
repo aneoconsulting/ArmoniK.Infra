@@ -16,7 +16,7 @@ image: "dockerhubaneo/armonik_control:0.19.3"
 replicaCount: 1
 imagePullSecrets: []
 controlPlaneSelector: []
-
+# -- controlPlane contains all the values of the control plane deployment
 controlPlane:
   metadata:
     name: "control-plane-helm"
@@ -232,4 +232,3 @@ certificates:
     name: "mongodb-secret-volume"
     mountPath: "/mongodb"
     secretName: "mongodb"
-

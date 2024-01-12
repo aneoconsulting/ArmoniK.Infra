@@ -40,9 +40,11 @@ resource "kubernetes_persistent_volume" "mongodb" {
   count = var.persistent_volume != null ? 1 : 0
   metadata {
     name = "mongodb"
-    app     = "mongodb"
-      type    = "persistent-volume"
+    labels = {
+      app     = "mongodb"
+      type    = "storage-class"
       service = "persistent-volume"
+    }
   }
   spec {
     access_modes = ["ReadWriteMany"]

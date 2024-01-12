@@ -83,7 +83,7 @@ resource "aws_iam_role" "efs_csi_driver" {
         Condition = {
           StringEquals = {
             "${local.oidc_url}:aud" = "sts.amazonaws.com"
-            "${local.oidc_url}:sub" = "system:serviceaccount:${local.efs_csi_namespace}:efs-csi-*"
+            "${local.oidc_url}:sub" = "system:serviceaccount:${local.efs_csi_namespace}:efs-csi-controller-sa"
           }
         }
       }
@@ -172,7 +172,7 @@ resource "helm_release" "efs_csi" {
     yamlencode(local.controller)
   ]
   depends_on = [
-    kubernetes_service_account.efs_csi_driver_controller,
-    kubernetes_service_account.efs_csi_driver_node
+  kubernetes_service_account.efs_csi_driver_controller,
+  kubernetes_service_account.efs_csi_driver_node
   ]
 }

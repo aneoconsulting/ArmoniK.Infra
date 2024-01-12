@@ -83,7 +83,7 @@ resource "aws_iam_role" "efs_csi_driver" {
         Condition = {
           StringEquals = {
             "${local.oidc_url}:aud" = "sts.amazonaws.com"
-            "${local.oidc_url}:sub" = "system:serviceaccount:${local.efs_csi_namespace}:efs-csi-controller-sa"
+            "${local.oidc_url}:sub" = "system:serviceaccount:${local.efs_csi_namespace}:efs-csi-*"
           }
         }
       }

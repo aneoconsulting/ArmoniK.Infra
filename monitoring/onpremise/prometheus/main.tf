@@ -78,7 +78,7 @@ resource "kubernetes_deployment" "prometheus" {
             for_each = length(kubernetes_persistent_volume_claim.prometheus) > 0 ? [1] : []
             content {
               name       = "database"
-              mount_path = "/prometheus/data"
+              mount_path = "/prometheus"
             }
           }
         }

@@ -172,7 +172,7 @@ resource "helm_release" "efs_csi" {
     yamlencode(local.controller)
   ]
   depends_on = [
-  kubernetes_service_account.efs_csi_driver_controller,
-  kubernetes_service_account.efs_csi_driver_node
+    kubernetes_service_account.efs_csi_driver_controller,
+    kubernetes_service_account.efs_csi_driver_node
   ]
 }

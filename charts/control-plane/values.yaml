@@ -90,6 +90,7 @@ extraConf:
   control:
     Submitter__MaxErrorAllowed: "50"
 
+controlPlanConfigmapEnabled: true
 controlPlanConfigmap:
   - "control-plane-configmap"
   - "log-configmap"
@@ -137,6 +138,7 @@ secrets:
     fileServerIp: ""
 
 logConfigmap:
+  enabled: false
   metadata:
     name: "log-configmap-helm"
     namespace: "armonik"
@@ -144,6 +146,7 @@ logConfigmap:
     loggingLevel: "Information"
   
 coreConfigmap:
+  enabled: true
   metadata:
     name: "core-configmap-helm"
   data:

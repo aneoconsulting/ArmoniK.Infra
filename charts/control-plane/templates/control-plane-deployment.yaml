@@ -5,12 +5,9 @@ metadata:
   namespace: {{ .Values.namespace }}
   labels:
 {{/* Add common labels to the deployment */}}
-{{ include "armonik-control-plane.labels" . | indent 4 }}
+{{ include "control-plane.labels" . | indent 4 }}
     app: {{ .Values.controlPlane.metadata.labels.app }}
     service: {{ .Values.controlPlane.metadata.labels.service }}
-    # {{ if .Values.computePlane.default.enabled }}
-    #   label: "default"
-    # {{ else if .Values.computePlane.default.enabled }}
 spec:
   replicas: {{ .Values.replicaCount }} 
   selector:

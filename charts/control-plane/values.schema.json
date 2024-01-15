@@ -1,2458 +1,2551 @@
 {
-    "$schema": "https://json-schema.org/draft/2019-09/schema",
-    "$id": "http://example.com/example.json",
-    "type": "object",
-    "default": {},
-    "title": "Root Schema",
-    "required": [
-        "nameOverride",
-        "namespace",
-        "armonikControlImage",
-        "armonikControlTag",
-        "replicaCount",
-        "imagePullSecrets",
-        "controlPlaneSelector",
-        "controlPlane",
-        "livenessProbe",
-        "startupProbe",
-        "extraConf",
-        "controlPlanConfigmap",
-        "partitionNames",
-        "secrets",
-        "logConfigmap",
-        "coreConfigmap",
-        "credentials",
-        "certificates"
-    ],
-    "properties": {
-        "nameOverride": {
-            "type": "string",
-            "default": "",
-            "title": "The nameOverride Schema",
-            "examples": [
-                "armonik-control-plane"
-            ]
-        },
-        "namespace": {
-            "type": "string",
-            "default": "",
-            "title": "The namespace Schema",
-            "examples": [
-                "armonik"
-            ]
-        },
-        "armonikControlImage": {
-            "type": "string",
-            "default": "",
-            "title": "The armonikControlImage Schema",
-            "examples": [
-                "dockerhubaneo/armonik_control"
-            ]
-        },
-        "armonikControlTag": {
-            "type": "string",
-            "default": "",
-            "title": "The armonikControlTag Schema",
-            "examples": [
-                "0.19.3"
-            ]
-        },
-        "replicaCount": {
-            "type": "integer",
-            "default": 0,
-            "title": "The replicaCount Schema",
-            "examples": [
-                1
-            ]
-        },
-        "imagePullSecrets": {
-            "type": "array",
-            "default": [],
-            "title": "The imagePullSecrets Schema",
-            "items": {},
-            "examples": [
-                []
-            ]
-        },
-        "controlPlaneSelector": {
-            "type": "array",
-            "default": [],
-            "title": "The controlPlaneSelector Schema",
-            "items": {},
-            "examples": [
-                []
-            ]
-        },
-        "controlPlane": {
-            "type": "object",
-            "default": {},
-            "title": "The controlPlane Schema",
-            "required": [
-                "metadata",
-                "spec",
-                "annotations",
-                "serviceType",
-                "ports",
-                "limits",
-                "requests",
-                "defaultPartition",
-                "name",
-                "imagePullPolicy"
-            ],
-            "properties": {
-                "metadata": {
-                    "type": "object",
-                    "default": {},
-                    "title": "The metadata Schema",
-                    "required": [
-                        "name",
-                        "labels"
-                    ],
-                    "properties": {
-                        "name": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The name Schema",
-                            "examples": [
-                                "control-plane-helm"
-                            ]
-                        },
-                        "labels": {
-                            "type": "object",
-                            "default": {},
-                            "title": "The labels Schema",
-                            "required": [
-                                "app",
-                                "service"
-                            ],
-                            "properties": {
-                                "app": {
-                                    "type": "string",
-                                    "default": "",
-                                    "title": "The app Schema",
-                                    "examples": [
-                                        "armonik"
-                                    ]
-                                },
-                                "service": {
-                                    "type": "string",
-                                    "default": "",
-                                    "title": "The service Schema",
-                                    "examples": [
-                                        "control-plane-helm"
-                                    ]
-                                }
-                            },
-                            "examples": [{
-                                "app": "armonik",
-                                "service": "control-plane-helm"
-                            }]
-                        }
-                    },
-                    "examples": [{
-                        "name": "control-plane-helm",
-                        "labels": {
-                            "app": "armonik",
-                            "service": "control-plane-helm"
-                        }
-                    }]
-                },
-                "spec": {
-                    "type": "object",
-                    "default": {},
-                    "title": "The spec Schema",
-                    "required": [
-                        "selector",
-                        "template"
-                    ],
-                    "properties": {
-                        "selector": {
-                            "type": "object",
-                            "default": {},
-                            "title": "The selector Schema",
-                            "required": [
-                                "matchLabels"
-                            ],
-                            "properties": {
-                                "matchLabels": {
-                                    "type": "object",
-                                    "default": {},
-                                    "title": "The matchLabels Schema",
-                                    "required": [
-                                        "app",
-                                        "service"
-                                    ],
-                                    "properties": {
-                                        "app": {
-                                            "type": "string",
-                                            "default": "",
-                                            "title": "The app Schema",
-                                            "examples": [
-                                                "armonik"
-                                            ]
-                                        },
-                                        "service": {
-                                            "type": "string",
-                                            "default": "",
-                                            "title": "The service Schema",
-                                            "examples": [
-                                                "control-plane-helm"
-                                            ]
-                                        }
-                                    },
-                                    "examples": [{
-                                        "app": "armonik",
-                                        "service": "control-plane-helm"
-                                    }]
-                                }
-                            },
-                            "examples": [{
-                                "matchLabels": {
-                                    "app": "armonik",
-                                    "service": "control-plane-helm"
-                                }
-                            }]
-                        },
-                        "template": {
-                            "type": "object",
-                            "default": {},
-                            "title": "The template Schema",
-                            "required": [
-                                "spec"
-                            ],
-                            "properties": {
-                                "spec": {
-                                    "type": "object",
-                                    "default": {},
-                                    "title": "The spec Schema",
-                                    "required": [
-                                        "containers"
-                                    ],
-                                    "properties": {
-                                        "containers": {
-                                            "type": "object",
-                                            "default": {},
-                                            "title": "The containers Schema",
-                                            "required": [
-                                                "ports"
-                                            ],
-                                            "properties": {
-                                                "ports": {
-                                                    "type": "object",
-                                                    "default": {},
-                                                    "title": "The ports Schema",
-                                                    "required": [
-                                                        "name",
-                                                        "containerPort"
-                                                    ],
-                                                    "properties": {
-                                                        "name": {
-                                                            "type": "string",
-                                                            "default": "",
-                                                            "title": "The name Schema",
-                                                            "examples": [
-                                                                "http"
-                                                            ]
-                                                        },
-                                                        "containerPort": {
-                                                            "type": "integer",
-                                                            "default": 0,
-                                                            "title": "The containerPort Schema",
-                                                            "examples": [
-                                                                1080
-                                                            ]
-                                                        }
-                                                    },
-                                                    "examples": [{
-                                                        "name": "http",
-                                                        "containerPort": 1080
-                                                    }]
-                                                }
-                                            },
-                                            "examples": [{
-                                                "ports": {
-                                                    "name": "http",
-                                                    "containerPort": 1080
-                                                }
-                                            }]
-                                        }
-                                    },
-                                    "examples": [{
-                                        "containers": {
-                                            "ports": {
-                                                "name": "http",
-                                                "containerPort": 1080
-                                            }
-                                        }
-                                    }]
-                                }
-                            },
-                            "examples": [{
-                                "spec": {
-                                    "containers": {
-                                        "ports": {
-                                            "name": "http",
-                                            "containerPort": 1080
-                                        }
-                                    }
-                                }
-                            }]
-                        }
-                    },
-                    "examples": [{
-                        "selector": {
-                            "matchLabels": {
-                                "app": "armonik",
-                                "service": "control-plane-helm"
-                            }
-                        },
-                        "template": {
-                            "spec": {
-                                "containers": {
-                                    "ports": {
-                                        "name": "http",
-                                        "containerPort": 1080
-                                    }
-                                }
-                            }
-                        }
-                    }]
-                },
-                "annotations": {
-                    "type": "string",
-                    "default": "",
-                    "title": "The annotations Schema",
-                    "examples": [
-                        ""
-                    ]
-                },
-                "serviceType": {
-                    "type": "string",
-                    "default": "",
-                    "title": "The serviceType Schema",
-                    "examples": [
-                        "HeadLess"
-                    ]
-                },
-                "ports": {
-                    "type": "object",
-                    "default": {},
-                    "title": "The ports Schema",
-                    "required": [
-                        "containerPort",
-                        "name"
-                    ],
-                    "properties": {
-                        "containerPort": {
-                            "type": "integer",
-                            "default": 0,
-                            "title": "The containerPort Schema",
-                            "examples": [
-                                1080
-                            ]
-                        },
-                        "name": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The name Schema",
-                            "examples": [
-                                "http"
-                            ]
-                        }
-                    },
-                    "examples": [{
-                        "containerPort": 1080,
-                        "name": "http"
-                    }]
-                },
-                "limits": {
-                    "type": "object",
-                    "default": {},
-                    "title": "The limits Schema",
-                    "required": [
-                        "cpu",
-                        "memory"
-                    ],
-                    "properties": {
-                        "cpu": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The cpu Schema",
-                            "examples": [
-                                "1000m"
-                            ]
-                        },
-                        "memory": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The memory Schema",
-                            "examples": [
-                                "2048Mi"
-                            ]
-                        }
-                    },
-                    "examples": [{
-                        "cpu": "1000m",
-                        "memory": "2048Mi"
-                    }]
-                },
-                "requests": {
-                    "type": "object",
-                    "default": {},
-                    "title": "The requests Schema",
-                    "required": [
-                        "cpu",
-                        "memory"
-                    ],
-                    "properties": {
-                        "cpu": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The cpu Schema",
-                            "examples": [
-                                "50m"
-                            ]
-                        },
-                        "memory": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The memory Schema",
-                            "examples": [
-                                "50Mi"
-                            ]
-                        }
-                    },
-                    "examples": [{
-                        "cpu": "50m",
-                        "memory": "50Mi"
-                    }]
-                },
-                "defaultPartition": {
-                    "type": "string",
-                    "default": "",
-                    "title": "The defaultPartition Schema",
-                    "examples": [
-                        "default"
-                    ]
-                },
-                "name": {
-                    "type": "string",
-                    "default": "",
-                    "title": "The name Schema",
-                    "examples": [
-                        "control-plane-helm"
-                    ]
-                },
-                "imagePullPolicy": {
-                    "type": "string",
-                    "default": "",
-                    "title": "The imagePullPolicy Schema",
-                    "examples": [
-                        "IfNotPresent"
-                    ]
-                }
-            },
-            "examples": [{
-                "metadata": {
-                    "name": "control-plane-helm",
-                    "labels": {
-                        "app": "armonik",
-                        "service": "control-plane-helm"
-                    }
-                },
-                "spec": {
-                    "selector": {
-                        "matchLabels": {
-                            "app": "armonik",
-                            "service": "control-plane-helm"
-                        }
-                    },
-                    "template": {
-                        "spec": {
-                            "containers": {
-                                "ports": {
-                                    "name": "http",
-                                    "containerPort": 1080
-                                }
-                            }
-                        }
-                    }
-                },
-                "annotations": "",
-                "serviceType": "HeadLess",
-                "ports": {
-                    "containerPort": 1080,
-                    "name": "http"
-                },
-                "limits": {
-                    "cpu": "1000m",
-                    "memory": "2048Mi"
-                },
-                "requests": {
-                    "cpu": "50m",
-                    "memory": "50Mi"
-                },
-                "defaultPartition": "default",
-                "name": "control-plane-helm",
-                "imagePullPolicy": "IfNotPresent"
-            }]
-        },
-        "livenessProbe": {
-            "type": "object",
-            "default": {},
-            "title": "The livenessProbe Schema",
-            "required": [
-                "httpGet",
-                "initialDelaySeconds",
-                "periodSeconds",
-                "timeoutSeconds",
-                "successThreshold",
-                "failureThreshold"
-            ],
-            "properties": {
-                "httpGet": {
-                    "type": "object",
-                    "default": {},
-                    "title": "The httpGet Schema",
-                    "required": [
-                        "path",
-                        "port"
-                    ],
-                    "properties": {
-                        "path": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The path Schema",
-                            "examples": [
-                                "/liveness"
-                            ]
-                        },
-                        "port": {
-                            "type": "integer",
-                            "default": 0,
-                            "title": "The port Schema",
-                            "examples": [
-                                1081
-                            ]
-                        }
-                    },
-                    "examples": [{
-                        "path": "/liveness",
-                        "port": 1081
-                    }]
-                },
-                "initialDelaySeconds": {
-                    "type": "integer",
-                    "default": 0,
-                    "title": "The initialDelaySeconds Schema",
-                    "examples": [
-                        15
-                    ]
-                },
-                "periodSeconds": {
-                    "type": "integer",
-                    "default": 0,
-                    "title": "The periodSeconds Schema",
-                    "examples": [
-                        5
-                    ]
-                },
-                "timeoutSeconds": {
-                    "type": "integer",
-                    "default": 0,
-                    "title": "The timeoutSeconds Schema",
-                    "examples": [
-                        1
-                    ]
-                },
-                "successThreshold": {
-                    "type": "integer",
-                    "default": 0,
-                    "title": "The successThreshold Schema",
-                    "examples": [
-                        1
-                    ]
-                },
-                "failureThreshold": {
-                    "type": "integer",
-                    "default": 0,
-                    "title": "The failureThreshold Schema",
-                    "examples": [
-                        1
-                    ]
-                }
-            },
-            "examples": [{
-                "httpGet": {
-                    "path": "/liveness",
-                    "port": 1081
-                },
-                "initialDelaySeconds": 15,
-                "periodSeconds": 5,
-                "timeoutSeconds": 1,
-                "successThreshold": 1,
-                "failureThreshold": 1
-            }]
-        },
-        "startupProbe": {
-            "type": "object",
-            "default": {},
-            "title": "The startupProbe Schema",
-            "required": [
-                "httpGet",
-                "initialDelaySeconds",
-                "periodSeconds",
-                "timeoutSeconds",
-                "successThreshold",
-                "failureThreshold"
-            ],
-            "properties": {
-                "httpGet": {
-                    "type": "object",
-                    "default": {},
-                    "title": "The httpGet Schema",
-                    "required": [
-                        "path",
-                        "port"
-                    ],
-                    "properties": {
-                        "path": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The path Schema",
-                            "examples": [
-                                "/startup"
-                            ]
-                        },
-                        "port": {
-                            "type": "integer",
-                            "default": 0,
-                            "title": "The port Schema",
-                            "examples": [
-                                1081
-                            ]
-                        }
-                    },
-                    "examples": [{
-                        "path": "/startup",
-                        "port": 1081
-                    }]
-                },
-                "initialDelaySeconds": {
-                    "type": "integer",
-                    "default": 0,
-                    "title": "The initialDelaySeconds Schema",
-                    "examples": [
-                        1
-                    ]
-                },
-                "periodSeconds": {
-                    "type": "integer",
-                    "default": 0,
-                    "title": "The periodSeconds Schema",
-                    "examples": [
-                        3
-                    ]
-                },
-                "timeoutSeconds": {
-                    "type": "integer",
-                    "default": 0,
-                    "title": "The timeoutSeconds Schema",
-                    "examples": [
-                        1
-                    ]
-                },
-                "successThreshold": {
-                    "type": "integer",
-                    "default": 0,
-                    "title": "The successThreshold Schema",
-                    "examples": [
-                        1
-                    ]
-                },
-                "failureThreshold": {
-                    "type": "integer",
-                    "default": 0,
-                    "title": "The failureThreshold Schema",
-                    "examples": [
-                        20
-                    ]
-                }
-            },
-            "examples": [{
-                "httpGet": {
-                    "path": "/startup",
-                    "port": 1081
-                },
-                "initialDelaySeconds": 1,
-                "periodSeconds": 3,
-                "timeoutSeconds": 1,
-                "successThreshold": 1,
-                "failureThreshold": 20
-            }]
-        },
-        "extraConf": {
-            "type": "object",
-            "default": {},
-            "title": "The extraConf Schema",
-            "required": [
-                "core",
-                "control"
-            ],
-            "properties": {
-                "core": {
-                    "type": "object",
-                    "default": {},
-                    "title": "The core Schema",
-                    "required": [
-                        "Amqp__AllowHostMismatch",
-                        "Amqp__MaxPriority",
-                        "Amqp__MaxRetries",
-                        "Amqp__QueueStorage__LockRefreshPeriodicity",
-                        "Amqp__QueueStorage__PollPeriodicity",
-                        "Amqp__QueueStorage__LockRefreshExtension",
-                        "MongoDB__TableStorage__PollingDelayMin",
-                        "MongoDB__TableStorage__PollingDelayMax",
-                        "MongoDB__AllowInsecureTls",
-                        "MongoDB__TableStorage__PollingDelay",
-                        "MongoDB__DataRetention",
-                        "Redis__Timeout",
-                        "Redis__SslHost",
-                        "Redis__TtlTimeSpan"
-                    ],
-                    "properties": {
-                        "Amqp__AllowHostMismatch": {
-                            "type": "boolean",
-                            "default": false,
-                            "title": "The Amqp__AllowHostMismatch Schema",
-                            "examples": [
-                                true
-                            ]
-                        },
-                        "Amqp__MaxPriority": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The Amqp__MaxPriority Schema",
-                            "examples": [
-                                "10"
-                            ]
-                        },
-                        "Amqp__MaxRetries": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The Amqp__MaxRetries Schema",
-                            "examples": [
-                                "5"
-                            ]
-                        },
-                        "Amqp__QueueStorage__LockRefreshPeriodicity": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The Amqp__QueueStorage__LockRefreshPeriodicity Schema",
-                            "examples": [
-                                "00:00:45"
-                            ]
-                        },
-                        "Amqp__QueueStorage__PollPeriodicity": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The Amqp__QueueStorage__PollPeriodicity Schema",
-                            "examples": [
-                                "00:00:10"
-                            ]
-                        },
-                        "Amqp__QueueStorage__LockRefreshExtension": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The Amqp__QueueStorage__LockRefreshExtension Schema",
-                            "examples": [
-                                "00:02:00"
-                            ]
-                        },
-                        "MongoDB__TableStorage__PollingDelayMin": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The MongoDB__TableStorage__PollingDelayMin Schema",
-                            "examples": [
-                                "00:00:01"
-                            ]
-                        },
-                        "MongoDB__TableStorage__PollingDelayMax": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The MongoDB__TableStorage__PollingDelayMax Schema",
-                            "examples": [
-                                "00:00:10"
-                            ]
-                        },
-                        "MongoDB__AllowInsecureTls": {
-                            "type": "boolean",
-                            "default": false,
-                            "title": "The MongoDB__AllowInsecureTls Schema",
-                            "examples": [
-                                true
-                            ]
-                        },
-                        "MongoDB__TableStorage__PollingDelay": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The MongoDB__TableStorage__PollingDelay Schema",
-                            "examples": [
-                                "00:00:01"
-                            ]
-                        },
-                        "MongoDB__DataRetention": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The MongoDB__DataRetention Schema",
-                            "examples": [
-                                "1.00:00:00"
-                            ]
-                        },
-                        "Redis__Timeout": {
-                            "type": "integer",
-                            "default": 0,
-                            "title": "The Redis__Timeout Schema",
-                            "examples": [
-                                30000
-                            ]
-                        },
-                        "Redis__SslHost": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The Redis__SslHost Schema",
-                            "examples": [
-                                "127.0.0.1"
-                            ]
-                        },
-                        "Redis__TtlTimeSpan": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The Redis__TtlTimeSpan Schema",
-                            "examples": [
-                                "1.00:00:00"
-                            ]
-                        }
-                    },
-                    "examples": [{
-                        "Amqp__AllowHostMismatch": true,
-                        "Amqp__MaxPriority": "10",
-                        "Amqp__MaxRetries": "5",
-                        "Amqp__QueueStorage__LockRefreshPeriodicity": "00:00:45",
-                        "Amqp__QueueStorage__PollPeriodicity": "00:00:10",
-                        "Amqp__QueueStorage__LockRefreshExtension": "00:02:00",
-                        "MongoDB__TableStorage__PollingDelayMin": "00:00:01",
-                        "MongoDB__TableStorage__PollingDelayMax": "00:00:10",
-                        "MongoDB__AllowInsecureTls": true,
-                        "MongoDB__TableStorage__PollingDelay": "00:00:01",
-                        "MongoDB__DataRetention": "1.00:00:00",
-                        "Redis__Timeout": 30000,
-                        "Redis__SslHost": "127.0.0.1",
-                        "Redis__TtlTimeSpan": "1.00:00:00"
-                    }]
-                },
-                "control": {
-                    "type": "object",
-                    "default": {},
-                    "title": "The control Schema",
-                    "required": [
-                        "Submitter__MaxErrorAllowed"
-                    ],
-                    "properties": {
-                        "Submitter__MaxErrorAllowed": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The Submitter__MaxErrorAllowed Schema",
-                            "examples": [
-                                "50"
-                            ]
-                        }
-                    },
-                    "examples": [{
-                        "Submitter__MaxErrorAllowed": "50"
-                    }]
-                }
-            },
-            "examples": [{
-                "core": {
-                    "Amqp__AllowHostMismatch": true,
-                    "Amqp__MaxPriority": "10",
-                    "Amqp__MaxRetries": "5",
-                    "Amqp__QueueStorage__LockRefreshPeriodicity": "00:00:45",
-                    "Amqp__QueueStorage__PollPeriodicity": "00:00:10",
-                    "Amqp__QueueStorage__LockRefreshExtension": "00:02:00",
-                    "MongoDB__TableStorage__PollingDelayMin": "00:00:01",
-                    "MongoDB__TableStorage__PollingDelayMax": "00:00:10",
-                    "MongoDB__AllowInsecureTls": true,
-                    "MongoDB__TableStorage__PollingDelay": "00:00:01",
-                    "MongoDB__DataRetention": "1.00:00:00",
-                    "Redis__Timeout": 30000,
-                    "Redis__SslHost": "127.0.0.1",
-                    "Redis__TtlTimeSpan": "1.00:00:00"
-                },
-                "control": {
-                    "Submitter__MaxErrorAllowed": "50"
-                }
-            }]
-        },
-        "controlPlanConfigmap": {
-            "type": "array",
-            "default": [],
-            "title": "The controlPlanConfigmap Schema",
-            "items": {
-                "type": "string",
-                "title": "A Schema",
-                "examples": [
-                    "control-plane-configmap",
-                    "log-configmap",
-                    "core-configmap"
-                ]
-            },
-            "examples": [
-                ["control-plane-configmap",
-                    "log-configmap",
-                    "core-configmap"
-                ]
-            ]
-        },
-        "partitionNames": {
-            "type": "array",
-            "default": [],
-            "title": "The partitionNames Schema",
-            "items": {
-                "type": "string",
-                "title": "A Schema",
-                "examples": [
-                    "default",
-                    "monitoring"
-                ]
-            },
-            "examples": [
-                ["default",
-                    "monitoring"
-                ]
-            ]
-        },
-        "secrets": {
-            "type": "object",
-            "default": {},
-            "title": "The secrets Schema",
-            "required": [
-                "activemq",
-                "mongodb",
-                "redis",
-                "s3",
-                "metricsExporter",
-                "partitionMetrics_exporter",
-                "fluentBit",
-                "seq",
-                "grafana",
-                "prometheus",
-                "deployedObjectStorageSecret",
-                "deployedTableStorageSecret",
-                "deployedQueueStorageSecret",
-                "storageEndpointUrl",
-                "sharedStorage"
-            ],
-            "properties": {
-                "activemq": {
-                    "type": "object",
-                    "default": {},
-                    "title": "The activemq Schema",
-                    "required": [
-                        "name",
-                        "caFileName"
-                    ],
-                    "properties": {
-                        "name": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The name Schema",
-                            "examples": [
-                                "activemq"
-                            ]
-                        },
-                        "caFileName": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The caFileName Schema",
-                            "examples": [
-                                "/amqp/chain.pem"
-                            ]
-                        }
-                    },
-                    "examples": [{
-                        "name": "activemq",
-                        "caFileName": "/amqp/chain.pem"
-                    }]
-                },
-                "mongodb": {
-                    "type": "object",
-                    "default": {},
-                    "title": "The mongodb Schema",
-                    "required": [
-                        "name",
-                        "caFileName"
-                    ],
-                    "properties": {
-                        "name": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The name Schema",
-                            "examples": [
-                                "mongodb"
-                            ]
-                        },
-                        "caFileName": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The caFileName Schema",
-                            "examples": [
-                                "/mongodb/chain.pem"
-                            ]
-                        }
-                    },
-                    "examples": [{
-                        "name": "mongodb",
-                        "caFileName": "/mongodb/chain.pem"
-                    }]
-                },
-                "redis": {
-                    "type": "object",
-                    "default": {},
-                    "title": "The redis Schema",
-                    "required": [
-                        "name",
-                        "caFileName"
-                    ],
-                    "properties": {
-                        "name": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The name Schema",
-                            "examples": [
-                                "redis"
-                            ]
-                        },
-                        "caFileName": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The caFileName Schema",
-                            "examples": [
-                                "/redis/chain.pem"
-                            ]
-                        }
-                    },
-                    "examples": [{
-                        "name": "redis",
-                        "caFileName": "/redis/chain.pem"
-                    }]
-                },
-                "s3": {
-                    "type": "string",
-                    "default": "",
-                    "title": "The s3 Schema",
-                    "examples": [
-                        "s3"
-                    ]
-                },
-                "metricsExporter": {
-                    "type": "string",
-                    "default": "",
-                    "title": "The metricsExporter Schema",
-                    "examples": [
-                        "metrics-exporter"
-                    ]
-                },
-                "partitionMetrics_exporter": {
-                    "type": "string",
-                    "default": "",
-                    "title": "The partitionMetrics_exporter Schema",
-                    "examples": [
-                        "partition-metrics-exporter"
-                    ]
-                },
-                "fluentBit": {
-                    "type": "string",
-                    "default": "",
-                    "title": "The fluentBit Schema",
-                    "examples": [
-                        "fluent-bit"
-                    ]
-                },
-                "seq": {
-                    "type": "string",
-                    "default": "",
-                    "title": "The seq Schema",
-                    "examples": [
-                        "seq"
-                    ]
-                },
-                "grafana": {
-                    "type": "string",
-                    "default": "",
-                    "title": "The grafana Schema",
-                    "examples": [
-                        "grafana"
-                    ]
-                },
-                "prometheus": {
-                    "type": "string",
-                    "default": "",
-                    "title": "The prometheus Schema",
-                    "examples": [
-                        "prometheus"
-                    ]
-                },
-                "deployedObjectStorageSecret": {
-                    "type": "string",
-                    "default": "",
-                    "title": "The deployedObjectStorageSecret Schema",
-                    "examples": [
-                        "deployed-object-storage-helm"
-                    ]
-                },
-                "deployedTableStorageSecret": {
-                    "type": "string",
-                    "default": "",
-                    "title": "The deployedTableStorageSecret Schema",
-                    "examples": [
-                        "deployed-table-storage-helm"
-                    ]
-                },
-                "deployedQueueStorageSecret": {
-                    "type": "string",
-                    "default": "",
-                    "title": "The deployedQueueStorageSecret Schema",
-                    "examples": [
-                        "deployed-queue-storage-helm"
-                    ]
-                },
-                "storageEndpointUrl": {
-                    "type": "object",
-                    "default": {},
-                    "title": "The storageEndpointUrl Schema",
-                    "required": [
-                        "objectStorageAdapter",
-                        "tableStorageAdapter",
-                        "queueStorageAdapter",
-                        "deployedObjectStorages",
-                        "deployedTableStorages",
-                        "deployedQueueStorages"
-                    ],
-                    "properties": {
-                        "objectStorageAdapter": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The objectStorageAdapter Schema",
-                            "examples": [
-                                "Redis"
-                            ]
-                        },
-                        "tableStorageAdapter": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The tableStorageAdapter Schema",
-                            "examples": [
-                                "MongoDB"
-                            ]
-                        },
-                        "queueStorageAdapter": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The queueStorageAdapter Schema",
-                            "examples": [
-                                "Amqp"
-                            ]
-                        },
-                        "deployedObjectStorages": {
-                            "type": "array",
-                            "default": [],
-                            "title": "The deployedObjectStorages Schema",
-                            "items": {
-                                "type": "string",
-                                "default": "",
-                                "title": "A Schema",
-                                "examples": [
-                                    "Redis"
-                                ]
-                            },
-                            "examples": [
-                                [
-                                    "Redis"]
-                            ]
-                        },
-                        "deployedTableStorages": {
-                            "type": "array",
-                            "default": [],
-                            "title": "The deployedTableStorages Schema",
-                            "items": {
-                                "type": "string",
-                                "default": "",
-                                "title": "A Schema",
-                                "examples": [
-                                    "MongoDB"
-                                ]
-                            },
-                            "examples": [
-                                [
-                                    "MongoDB"]
-                            ]
-                        },
-                        "deployedQueueStorages": {
-                            "type": "array",
-                            "default": [],
-                            "title": "The deployedQueueStorages Schema",
-                            "items": {
-                                "type": "string",
-                                "default": "",
-                                "title": "A Schema",
-                                "examples": [
-                                    "Amqp"
-                                ]
-                            },
-                            "examples": [
-                                [
-                                    "Amqp"]
-                            ]
-                        }
-                    },
-                    "examples": [{
-                        "objectStorageAdapter": "Redis",
-                        "tableStorageAdapter": "MongoDB",
-                        "queueStorageAdapter": "Amqp",
-                        "deployedObjectStorages": [
-                            "Redis"
-                        ],
-                        "deployedTableStorages": [
-                            "MongoDB"
-                        ],
-                        "deployedQueueStorages": [
-                            "Amqp"
-                        ]
-                    }]
-                },
-                "sharedStorage": {
-                    "type": "object",
-                    "default": {},
-                    "title": "The sharedStorage Schema",
-                    "required": [
-                        "name",
-                        "hostPath",
-                        "fileStorageType",
-                        "fileServerIp"
-                    ],
-                    "properties": {
-                        "name": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The name Schema",
-                            "examples": [
-                                "shared-storage-helm"
-                            ]
-                        },
-                        "hostPath": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The hostPath Schema",
-                            "examples": [
-                                "data"
-                            ]
-                        },
-                        "fileStorageType": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The fileStorageType Schema",
-                            "examples": [
-                                "HostPath"
-                            ]
-                        },
-                        "fileServerIp": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The fileServerIp Schema",
-                            "examples": [
-                                ""
-                            ]
-                        }
-                    },
-                    "examples": [{
-                        "name": "shared-storage-helm",
-                        "hostPath": "data",
-                        "fileStorageType": "HostPath",
-                        "fileServerIp": ""
-                    }]
-                }
-            },
-            "examples": [{
-                "activemq": {
-                    "name": "activemq",
-                    "caFileName": "/amqp/chain.pem"
-                },
-                "mongodb": {
-                    "name": "mongodb",
-                    "caFileName": "/mongodb/chain.pem"
-                },
-                "redis": {
-                    "name": "redis",
-                    "caFileName": "/redis/chain.pem"
-                },
-                "s3": "s3",
-                "metricsExporter": "metrics-exporter",
-                "partitionMetrics_exporter": "partition-metrics-exporter",
-                "fluentBit": "fluent-bit",
-                "seq": "seq",
-                "grafana": "grafana",
-                "prometheus": "prometheus",
-                "deployedObjectStorageSecret": "deployed-object-storage-helm",
-                "deployedTableStorageSecret": "deployed-table-storage-helm",
-                "deployedQueueStorageSecret": "deployed-queue-storage-helm",
-                "storageEndpointUrl": {
-                    "objectStorageAdapter": "Redis",
-                    "tableStorageAdapter": "MongoDB",
-                    "queueStorageAdapter": "Amqp",
-                    "deployedObjectStorages": [
-                        "Redis"
-                    ],
-                    "deployedTableStorages": [
-                        "MongoDB"
-                    ],
-                    "deployedQueueStorages": [
-                        "Amqp"
-                    ]
-                },
-                "sharedStorage": {
-                    "name": "shared-storage-helm",
-                    "hostPath": "data",
-                    "fileStorageType": "HostPath",
-                    "fileServerIp": ""
-                }
-            }]
-        },
-        "logConfigmap": {
-            "type": "object",
-            "default": {},
-            "title": "The logConfigmap Schema",
-            "required": [
-                "metadata",
-                "data"
-            ],
-            "properties": {
-                "metadata": {
-                    "type": "object",
-                    "default": {},
-                    "title": "The metadata Schema",
-                    "required": [
-                        "name",
-                        "namespace"
-                    ],
-                    "properties": {
-                        "name": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The name Schema",
-                            "examples": [
-                                "log-configmap-helm"
-                            ]
-                        },
-                        "namespace": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The namespace Schema",
-                            "examples": [
-                                "armonik"
-                            ]
-                        }
-                    },
-                    "examples": [{
-                        "name": "log-configmap-helm",
-                        "namespace": "armonik"
-                    }]
-                },
-                "data": {
-                    "type": "object",
-                    "default": {},
-                    "title": "The data Schema",
-                    "required": [
-                        "loggingLevel"
-                    ],
-                    "properties": {
-                        "loggingLevel": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The loggingLevel Schema",
-                            "examples": [
-                                "Information"
-                            ]
-                        }
-                    },
-                    "examples": [{
-                        "loggingLevel": "Information"
-                    }]
-                }
-            },
-            "examples": [{
-                "metadata": {
-                    "name": "log-configmap-helm",
-                    "namespace": "armonik"
-                },
-                "data": {
-                    "loggingLevel": "Information"
-                }
-            }]
-        },
-        "coreConfigmap": {
-            "type": "object",
-            "default": {},
-            "title": "The coreConfigmap Schema",
-            "required": [
-                "metadata",
-                "data"
-            ],
-            "properties": {
-                "metadata": {
-                    "type": "object",
-                    "default": {},
-                    "title": "The metadata Schema",
-                    "required": [
-                        "name"
-                    ],
-                    "properties": {
-                        "name": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The name Schema",
-                            "examples": [
-                                "core-configmap-helm"
-                            ]
-                        }
-                    },
-                    "examples": [{
-                        "name": "core-configmap-helm"
-                    }]
-                },
-                "data": {
-                    "type": "object",
-                    "default": {},
-                    "title": "The data Schema",
-                    "required": [
-                        "Components__TableStorage",
-                        "Components__ObjectStorage",
-                        "Components__QueueStorage",
-                        "Components__QueueAdaptorSettings__ClassName",
-                        "Components__QueueAdaptorSettings__AdapterAbsolutePath",
-                        "MongoDB__CAFile",
-                        "MongoDB__ReplicaSet",
-                        "MongoDB__DatabaseName",
-                        "MongoDB__DirectConnection",
-                        "MongoDB__Tls",
-                        "Redis__CaPath",
-                        "Redis__InstanceName",
-                        "Redis__ClientName",
-                        "Redis__Ssl",
-                        "Amqp__CaPath",
-                        "Amqp__Scheme",
-                        "Authenticator__RequireAuthentication",
-                        "Authenticator__RequireAuthorization"
-                    ],
-                    "properties": {
-                        "Components__TableStorage": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The Components__TableStorage Schema",
-                            "examples": [
-                                "MongoDB"
-                            ]
-                        },
-                        "Components__ObjectStorage": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The Components__ObjectStorage Schema",
-                            "examples": [
-                                "Redis"
-                            ]
-                        },
-                        "Components__QueueStorage": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The Components__QueueStorage Schema",
-                            "examples": [
-                                "Amqp"
-                            ]
-                        },
-                        "Components__QueueAdaptorSettings__ClassName": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The Components__QueueAdaptorSettings__ClassName Schema",
-                            "examples": [
-                                "ArmoniK.Core.Adapters.Amqp.QueueBuilder"
-                            ]
-                        },
-                        "Components__QueueAdaptorSettings__AdapterAbsolutePath": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The Components__QueueAdaptorSettings__AdapterAbsolutePath Schema",
-                            "examples": [
-                                "/adapters/queue/amqp/ArmoniK.Core.Adapters.Amqp.dll"
-                            ]
-                        },
-                        "MongoDB__CAFile": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The MongoDB__CAFile Schema",
-                            "examples": [
-                                "/mongodb/chain.pem"
-                            ]
-                        },
-                        "MongoDB__ReplicaSet": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The MongoDB__ReplicaSet Schema",
-                            "examples": [
-                                "rs0"
-                            ]
-                        },
-                        "MongoDB__DatabaseName": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The MongoDB__DatabaseName Schema",
-                            "examples": [
-                                "database"
-                            ]
-                        },
-                        "MongoDB__DirectConnection": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The MongoDB__DirectConnection Schema",
-                            "examples": [
-                                "false"
-                            ]
-                        },
-                        "MongoDB__Tls": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The MongoDB__Tls Schema",
-                            "examples": [
-                                "true"
-                            ]
-                        },
-                        "Redis__CaPath": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The Redis__CaPath Schema",
-                            "examples": [
-                                "/redis/chain.pem"
-                            ]
-                        },
-                        "Redis__InstanceName": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The Redis__InstanceName Schema",
-                            "examples": [
-                                "ArmoniKRedis"
-                            ]
-                        },
-                        "Redis__ClientName": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The Redis__ClientName Schema",
-                            "examples": [
-                                "ArmoniK.Core"
-                            ]
-                        },
-                        "Redis__Ssl": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The Redis__Ssl Schema",
-                            "examples": [
-                                "true"
-                            ]
-                        },
-                        "Amqp__CaPath": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The Amqp__CaPath Schema",
-                            "examples": [
-                                "/amqp/chain.pem"
-                            ]
-                        },
-                        "Amqp__Scheme": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The Amqp__Scheme Schema",
-                            "examples": [
-                                "AMQPS"
-                            ]
-                        },
-                        "Authenticator__RequireAuthentication": {
-                            "type": "boolean",
-                            "default": false,
-                            "title": "The Authenticator__RequireAuthentication Schema",
-                            "examples": [
-                                false
-                            ]
-                        },
-                        "Authenticator__RequireAuthorization": {
-                            "type": "boolean",
-                            "default": false,
-                            "title": "The Authenticator__RequireAuthorization Schema",
-                            "examples": [
-                                false
-                            ]
-                        }
-                    },
-                    "examples": [{
-                        "Components__TableStorage": "MongoDB",
-                        "Components__ObjectStorage": "Redis",
-                        "Components__QueueStorage": "Amqp",
-                        "Components__QueueAdaptorSettings__ClassName": "ArmoniK.Core.Adapters.Amqp.QueueBuilder",
-                        "Components__QueueAdaptorSettings__AdapterAbsolutePath": "/adapters/queue/amqp/ArmoniK.Core.Adapters.Amqp.dll",
-                        "MongoDB__CAFile": "/mongodb/chain.pem",
-                        "MongoDB__ReplicaSet": "rs0",
-                        "MongoDB__DatabaseName": "database",
-                        "MongoDB__DirectConnection": "false",
-                        "MongoDB__Tls": "true",
-                        "Redis__CaPath": "/redis/chain.pem",
-                        "Redis__InstanceName": "ArmoniKRedis",
-                        "Redis__ClientName": "ArmoniK.Core",
-                        "Redis__Ssl": "true",
-                        "Amqp__CaPath": "/amqp/chain.pem",
-                        "Amqp__Scheme": "AMQPS",
-                        "Authenticator__RequireAuthentication": false,
-                        "Authenticator__RequireAuthorization": false
-                    }]
-                }
-            },
-            "examples": [{
-                "metadata": {
-                    "name": "core-configmap-helm"
-                },
-                "data": {
-                    "Components__TableStorage": "MongoDB",
-                    "Components__ObjectStorage": "Redis",
-                    "Components__QueueStorage": "Amqp",
-                    "Components__QueueAdaptorSettings__ClassName": "ArmoniK.Core.Adapters.Amqp.QueueBuilder",
-                    "Components__QueueAdaptorSettings__AdapterAbsolutePath": "/adapters/queue/amqp/ArmoniK.Core.Adapters.Amqp.dll",
-                    "MongoDB__CAFile": "/mongodb/chain.pem",
-                    "MongoDB__ReplicaSet": "rs0",
-                    "MongoDB__DatabaseName": "database",
-                    "MongoDB__DirectConnection": "false",
-                    "MongoDB__Tls": "true",
-                    "Redis__CaPath": "/redis/chain.pem",
-                    "Redis__InstanceName": "ArmoniKRedis",
-                    "Redis__ClientName": "ArmoniK.Core",
-                    "Redis__Ssl": "true",
-                    "Amqp__CaPath": "/amqp/chain.pem",
-                    "Amqp__Scheme": "AMQPS",
-                    "Authenticator__RequireAuthentication": false,
-                    "Authenticator__RequireAuthorization": false
-                }
-            }]
-        },
-        "credentials": {
-            "type": "object",
-            "default": {},
-            "title": "The credentials Schema",
-            "required": [
-                "Amqp__User",
-                "Amqp__Password",
-                "Amqp__Host",
-                "Amqp__Port",
-                "Redis__User",
-                "Redis__Password",
-                "Redis__EndpointUrl",
-                "MongoDB__User",
-                "MongoDB__Password",
-                "MongoDB__Host",
-                "MongoDB__Port"
-            ],
-            "properties": {
-                "Amqp__User": {
-                    "type": "object",
-                    "default": {},
-                    "title": "The Amqp__User Schema",
-                    "required": [
-                        "key",
-                        "name"
-                    ],
-                    "properties": {
-                        "key": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The key Schema",
-                            "examples": [
-                                "username"
-                            ]
-                        },
-                        "name": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The name Schema",
-                            "examples": [
-                                "activemq"
-                            ]
-                        }
-                    },
-                    "examples": [{
-                        "key": "username",
-                        "name": "activemq"
-                    }]
-                },
-                "Amqp__Password": {
-                    "type": "object",
-                    "default": {},
-                    "title": "The Amqp__Password Schema",
-                    "required": [
-                        "key",
-                        "name"
-                    ],
-                    "properties": {
-                        "key": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The key Schema",
-                            "examples": [
-                                "password"
-                            ]
-                        },
-                        "name": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The name Schema",
-                            "examples": [
-                                "activemq"
-                            ]
-                        }
-                    },
-                    "examples": [{
-                        "key": "password",
-                        "name": "activemq"
-                    }]
-                },
-                "Amqp__Host": {
-                    "type": "object",
-                    "default": {},
-                    "title": "The Amqp__Host Schema",
-                    "required": [
-                        "key",
-                        "name"
-                    ],
-                    "properties": {
-                        "key": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The key Schema",
-                            "examples": [
-                                "host"
-                            ]
-                        },
-                        "name": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The name Schema",
-                            "examples": [
-                                "activemq"
-                            ]
-                        }
-                    },
-                    "examples": [{
-                        "key": "host",
-                        "name": "activemq"
-                    }]
-                },
-                "Amqp__Port": {
-                    "type": "object",
-                    "default": {},
-                    "title": "The Amqp__Port Schema",
-                    "required": [
-                        "key",
-                        "name"
-                    ],
-                    "properties": {
-                        "key": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The key Schema",
-                            "examples": [
-                                "port"
-                            ]
-                        },
-                        "name": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The name Schema",
-                            "examples": [
-                                "activemq"
-                            ]
-                        }
-                    },
-                    "examples": [{
-                        "key": "port",
-                        "name": "activemq"
-                    }]
-                },
-                "Redis__User": {
-                    "type": "object",
-                    "default": {},
-                    "title": "The Redis__User Schema",
-                    "required": [
-                        "key",
-                        "name"
-                    ],
-                    "properties": {
-                        "key": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The key Schema",
-                            "examples": [
-                                "username"
-                            ]
-                        },
-                        "name": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The name Schema",
-                            "examples": [
-                                "redis"
-                            ]
-                        }
-                    },
-                    "examples": [{
-                        "key": "username",
-                        "name": "redis"
-                    }]
-                },
-                "Redis__Password": {
-                    "type": "object",
-                    "default": {},
-                    "title": "The Redis__Password Schema",
-                    "required": [
-                        "key",
-                        "name"
-                    ],
-                    "properties": {
-                        "key": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The key Schema",
-                            "examples": [
-                                "password"
-                            ]
-                        },
-                        "name": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The name Schema",
-                            "examples": [
-                                "redis"
-                            ]
-                        }
-                    },
-                    "examples": [{
-                        "key": "password",
-                        "name": "redis"
-                    }]
-                },
-                "Redis__EndpointUrl": {
-                    "type": "object",
-                    "default": {},
-                    "title": "The Redis__EndpointUrl Schema",
-                    "required": [
-                        "key",
-                        "name"
-                    ],
-                    "properties": {
-                        "key": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The key Schema",
-                            "examples": [
-                                "url"
-                            ]
-                        },
-                        "name": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The name Schema",
-                            "examples": [
-                                "redis"
-                            ]
-                        }
-                    },
-                    "examples": [{
-                        "key": "url",
-                        "name": "redis"
-                    }]
-                },
-                "MongoDB__User": {
-                    "type": "object",
-                    "default": {},
-                    "title": "The MongoDB__User Schema",
-                    "required": [
-                        "key",
-                        "name"
-                    ],
-                    "properties": {
-                        "key": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The key Schema",
-                            "examples": [
-                                "username"
-                            ]
-                        },
-                        "name": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The name Schema",
-                            "examples": [
-                                "mongodb"
-                            ]
-                        }
-                    },
-                    "examples": [{
-                        "key": "username",
-                        "name": "mongodb"
-                    }]
-                },
-                "MongoDB__Password": {
-                    "type": "object",
-                    "default": {},
-                    "title": "The MongoDB__Password Schema",
-                    "required": [
-                        "key",
-                        "name"
-                    ],
-                    "properties": {
-                        "key": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The key Schema",
-                            "examples": [
-                                "password"
-                            ]
-                        },
-                        "name": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The name Schema",
-                            "examples": [
-                                "mongodb"
-                            ]
-                        }
-                    },
-                    "examples": [{
-                        "key": "password",
-                        "name": "mongodb"
-                    }]
-                },
-                "MongoDB__Host": {
-                    "type": "object",
-                    "default": {},
-                    "title": "The MongoDB__Host Schema",
-                    "required": [
-                        "key",
-                        "name"
-                    ],
-                    "properties": {
-                        "key": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The key Schema",
-                            "examples": [
-                                "host"
-                            ]
-                        },
-                        "name": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The name Schema",
-                            "examples": [
-                                "mongodb"
-                            ]
-                        }
-                    },
-                    "examples": [{
-                        "key": "host",
-                        "name": "mongodb"
-                    }]
-                },
-                "MongoDB__Port": {
-                    "type": "object",
-                    "default": {},
-                    "title": "The MongoDB__Port Schema",
-                    "required": [
-                        "key",
-                        "name"
-                    ],
-                    "properties": {
-                        "key": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The key Schema",
-                            "examples": [
-                                "port"
-                            ]
-                        },
-                        "name": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The name Schema",
-                            "examples": [
-                                "mongodb"
-                            ]
-                        }
-                    },
-                    "examples": [{
-                        "key": "port",
-                        "name": "mongodb"
-                    }]
-                }
-            },
-            "examples": [{
-                "Amqp__User": {
-                    "key": "username",
-                    "name": "activemq"
-                },
-                "Amqp__Password": {
-                    "key": "password",
-                    "name": "activemq"
-                },
-                "Amqp__Host": {
-                    "key": "host",
-                    "name": "activemq"
-                },
-                "Amqp__Port": {
-                    "key": "port",
-                    "name": "activemq"
-                },
-                "Redis__User": {
-                    "key": "username",
-                    "name": "redis"
-                },
-                "Redis__Password": {
-                    "key": "password",
-                    "name": "redis"
-                },
-                "Redis__EndpointUrl": {
-                    "key": "url",
-                    "name": "redis"
-                },
-                "MongoDB__User": {
-                    "key": "username",
-                    "name": "mongodb"
-                },
-                "MongoDB__Password": {
-                    "key": "password",
-                    "name": "mongodb"
-                },
-                "MongoDB__Host": {
-                    "key": "host",
-                    "name": "mongodb"
-                },
-                "MongoDB__Port": {
-                    "key": "port",
-                    "name": "mongodb"
-                }
-            }]
-        },
-        "certificates": {
-            "type": "object",
-            "default": {},
-            "title": "The certificates Schema",
-            "required": [
-                "activemq",
-                "redis",
-                "mongodb"
-            ],
-            "properties": {
-                "activemq": {
-                    "type": "object",
-                    "default": {},
-                    "title": "The activemq Schema",
-                    "required": [
-                        "name",
-                        "mountPath",
-                        "secretName"
-                    ],
-                    "properties": {
-                        "name": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The name Schema",
-                            "examples": [
-                                "activemq-secret-volume"
-                            ]
-                        },
-                        "mountPath": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The mountPath Schema",
-                            "examples": [
-                                "/amqp"
-                            ]
-                        },
-                        "secretName": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The secretName Schema",
-                            "examples": [
-                                "activemq"
-                            ]
-                        }
-                    },
-                    "examples": [{
-                        "name": "activemq-secret-volume",
-                        "mountPath": "/amqp",
-                        "secretName": "activemq"
-                    }]
-                },
-                "redis": {
-                    "type": "object",
-                    "default": {},
-                    "title": "The redis Schema",
-                    "required": [
-                        "name",
-                        "mountPath",
-                        "secretName"
-                    ],
-                    "properties": {
-                        "name": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The name Schema",
-                            "examples": [
-                                "redis-secret-volume"
-                            ]
-                        },
-                        "mountPath": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The mountPath Schema",
-                            "examples": [
-                                "/redis"
-                            ]
-                        },
-                        "secretName": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The secretName Schema",
-                            "examples": [
-                                "redis"
-                            ]
-                        }
-                    },
-                    "examples": [{
-                        "name": "redis-secret-volume",
-                        "mountPath": "/redis",
-                        "secretName": "redis"
-                    }]
-                },
-                "mongodb": {
-                    "type": "object",
-                    "default": {},
-                    "title": "The mongodb Schema",
-                    "required": [
-                        "name",
-                        "mountPath",
-                        "secretName"
-                    ],
-                    "properties": {
-                        "name": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The name Schema",
-                            "examples": [
-                                "mongodb-secret-volume"
-                            ]
-                        },
-                        "mountPath": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The mountPath Schema",
-                            "examples": [
-                                "/mongodb"
-                            ]
-                        },
-                        "secretName": {
-                            "type": "string",
-                            "default": "",
-                            "title": "The secretName Schema",
-                            "examples": [
-                                "mongodb"
-                            ]
-                        }
-                    },
-                    "examples": [{
-                        "name": "mongodb-secret-volume",
-                        "mountPath": "/mongodb",
-                        "secretName": "mongodb"
-                    }]
-                }
-            },
-            "examples": [{
-                "activemq": {
-                    "name": "activemq-secret-volume",
-                    "mountPath": "/amqp",
-                    "secretName": "activemq"
-                },
-                "redis": {
-                    "name": "redis-secret-volume",
-                    "mountPath": "/redis",
-                    "secretName": "redis"
-                },
-                "mongodb": {
-                    "name": "mongodb-secret-volume",
-                    "mountPath": "/mongodb",
-                    "secretName": "mongodb"
-                }
-            }]
-        }
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "$id": "http://example.com/example.json",
+  "type": "object",
+  "default": {},
+  "title": "Root Schema",
+  "required": [
+    "nameOverride",
+    "namespace",
+    "image",
+    "replicaCount",
+    "imagePullSecrets",
+    "controlPlaneSelector",
+    "controlPlane",
+    "livenessProbe",
+    "startupProbe",
+    "extraConf",
+    "controlPlanConfigmap",
+    "partitionNames",
+    "secrets",
+    "logConfigmap",
+    "coreConfigmap",
+    "credentials",
+    "certificates"
+  ],
+  "properties": {
+    "nameOverride": {
+      "type": "string",
+      "default": "",
+      "title": "The nameOverride Schema",
+      "examples": [
+        "armonik-control-plane"
+      ]
     },
-    "examples": [{
-        "nameOverride": "armonik-control-plane",
-        "namespace": "armonik",
-        "armonikControlImage": "dockerhubaneo/armonik_control",
-        "armonikControlTag": "0.19.3",
-        "replicaCount": 1,
-        "imagePullSecrets": [],
-        "controlPlaneSelector": [],
-        "controlPlane": {
-            "metadata": {
-                "name": "control-plane-helm",
-                "labels": {
+    "namespace": {
+      "type": "string",
+      "default": "",
+      "title": "The namespace Schema",
+      "examples": [
+        "armonik"
+      ]
+    },
+    "image": {
+      "type": "string",
+      "default": "",
+      "title": "The image Schema",
+      "examples": [
+        "dockerhubaneo/armonik_control:0.19.3"
+      ]
+    },
+    "replicaCount": {
+      "type": "integer",
+      "default": 0,
+      "title": "The replicaCount Schema",
+      "examples": [
+        1
+      ]
+    },
+    "imagePullSecrets": {
+      "type": "array",
+      "default": [],
+      "title": "The imagePullSecrets Schema",
+      "items": {},
+      "examples": [
+        []
+      ]
+    },
+    "controlPlaneSelector": {
+      "type": "array",
+      "default": [],
+      "title": "The controlPlaneSelector Schema",
+      "items": {},
+      "examples": [
+        []
+      ]
+    },
+    "controlPlane": {
+      "type": "object",
+      "default": {},
+      "title": "The controlPlane Schema",
+      "required": [
+        "metadata",
+        "spec",
+        "annotations",
+        "serviceType",
+        "ports",
+        "limits",
+        "requests",
+        "defaultPartition",
+        "name",
+        "imagePullPolicy"
+      ],
+      "properties": {
+        "metadata": {
+          "type": "object",
+          "default": {},
+          "title": "The metadata Schema",
+          "required": [
+            "name",
+            "labels"
+          ],
+          "properties": {
+            "name": {
+              "type": "string",
+              "default": "",
+              "title": "The name Schema",
+              "examples": [
+                "control-plane-helm"
+              ]
+            },
+            "labels": {
+              "type": "object",
+              "default": {},
+              "title": "The labels Schema",
+              "required": [
+                "app",
+                "service"
+              ],
+              "properties": {
+                "app": {
+                  "type": "string",
+                  "default": "",
+                  "title": "The app Schema",
+                  "examples": [
+                    "armonik"
+                  ]
+                },
+                "service": {
+                  "type": "string",
+                  "default": "",
+                  "title": "The service Schema",
+                  "examples": [
+                    "control-plane-helm"
+                  ]
+                }
+              },
+              "examples": [
+                {
+                  "app": "armonik",
+                  "service": "control-plane-helm"
+                }
+              ]
+            }
+          },
+          "examples": [
+            {
+              "name": "control-plane-helm",
+              "labels": {
+                "app": "armonik",
+                "service": "control-plane-helm"
+              }
+            }
+          ]
+        },
+        "spec": {
+          "type": "object",
+          "default": {},
+          "title": "The spec Schema",
+          "required": [
+            "selector",
+            "template"
+          ],
+          "properties": {
+            "selector": {
+              "type": "object",
+              "default": {},
+              "title": "The selector Schema",
+              "required": [
+                "matchLabels"
+              ],
+              "properties": {
+                "matchLabels": {
+                  "type": "object",
+                  "default": {},
+                  "title": "The matchLabels Schema",
+                  "required": [
+                    "app",
+                    "service"
+                  ],
+                  "properties": {
+                    "app": {
+                      "type": "string",
+                      "default": "",
+                      "title": "The app Schema",
+                      "examples": [
+                        "armonik"
+                      ]
+                    },
+                    "service": {
+                      "type": "string",
+                      "default": "",
+                      "title": "The service Schema",
+                      "examples": [
+                        "control-plane-helm"
+                      ]
+                    }
+                  },
+                  "examples": [
+                    {
+                      "app": "armonik",
+                      "service": "control-plane-helm"
+                    }
+                  ]
+                }
+              },
+              "examples": [
+                {
+                  "matchLabels": {
                     "app": "armonik",
                     "service": "control-plane-helm"
+                  }
                 }
+              ]
             },
-            "spec": {
-                "selector": {
-                    "matchLabels": {
-                        "app": "armonik",
-                        "service": "control-plane-helm"
-                    }
-                },
-                "template": {
-                    "spec": {
-                        "containers": {
-                            "ports": {
-                                "name": "http",
-                                "containerPort": 1080
+            "template": {
+              "type": "object",
+              "default": {},
+              "title": "The template Schema",
+              "required": [
+                "spec"
+              ],
+              "properties": {
+                "spec": {
+                  "type": "object",
+                  "default": {},
+                  "title": "The spec Schema",
+                  "required": [
+                    "containers"
+                  ],
+                  "properties": {
+                    "containers": {
+                      "type": "object",
+                      "default": {},
+                      "title": "The containers Schema",
+                      "required": [
+                        "ports"
+                      ],
+                      "properties": {
+                        "ports": {
+                          "type": "object",
+                          "default": {},
+                          "title": "The ports Schema",
+                          "required": [
+                            "name",
+                            "containerPort"
+                          ],
+                          "properties": {
+                            "name": {
+                              "type": "string",
+                              "default": "",
+                              "title": "The name Schema",
+                              "examples": [
+                                "http"
+                              ]
+                            },
+                            "containerPort": {
+                              "type": "integer",
+                              "default": 0,
+                              "title": "The containerPort Schema",
+                              "examples": [
+                                1080
+                              ]
                             }
+                          },
+                          "examples": [
+                            {
+                              "name": "http",
+                              "containerPort": 1080
+                            }
+                          ]
                         }
+                      },
+                      "examples": [
+                        {
+                          "ports": {
+                            "name": "http",
+                            "containerPort": 1080
+                          }
+                        }
+                      ]
                     }
+                  },
+                  "examples": [
+                    {
+                      "containers": {
+                        "ports": {
+                          "name": "http",
+                          "containerPort": 1080
+                        }
+                      }
+                    }
+                  ]
                 }
-            },
-            "annotations": "",
-            "serviceType": "HeadLess",
-            "ports": {
-                "containerPort": 1080,
-                "name": "http"
-            },
-            "limits": {
-                "cpu": "1000m",
-                "memory": "2048Mi"
-            },
-            "requests": {
-                "cpu": "50m",
-                "memory": "50Mi"
-            },
-            "defaultPartition": "default",
-            "name": "control-plane-helm",
-            "imagePullPolicy": "IfNotPresent"
-        },
-        "livenessProbe": {
-            "httpGet": {
-                "path": "/liveness",
-                "port": 1081
-            },
-            "initialDelaySeconds": 15,
-            "periodSeconds": 5,
-            "timeoutSeconds": 1,
-            "successThreshold": 1,
-            "failureThreshold": 1
-        },
-        "startupProbe": {
-            "httpGet": {
-                "path": "/startup",
-                "port": 1081
-            },
-            "initialDelaySeconds": 1,
-            "periodSeconds": 3,
-            "timeoutSeconds": 1,
-            "successThreshold": 1,
-            "failureThreshold": 20
-        },
-        "extraConf": {
-            "core": {
-                "Amqp__AllowHostMismatch": true,
-                "Amqp__MaxPriority": "10",
-                "Amqp__MaxRetries": "5",
-                "Amqp__QueueStorage__LockRefreshPeriodicity": "00:00:45",
-                "Amqp__QueueStorage__PollPeriodicity": "00:00:10",
-                "Amqp__QueueStorage__LockRefreshExtension": "00:02:00",
-                "MongoDB__TableStorage__PollingDelayMin": "00:00:01",
-                "MongoDB__TableStorage__PollingDelayMax": "00:00:10",
-                "MongoDB__AllowInsecureTls": true,
-                "MongoDB__TableStorage__PollingDelay": "00:00:01",
-                "MongoDB__DataRetention": "1.00:00:00",
-                "Redis__Timeout": 30000,
-                "Redis__SslHost": "127.0.0.1",
-                "Redis__TtlTimeSpan": "1.00:00:00"
-            },
-            "control": {
-                "Submitter__MaxErrorAllowed": "50"
+              },
+              "examples": [
+                {
+                  "spec": {
+                    "containers": {
+                      "ports": {
+                        "name": "http",
+                        "containerPort": 1080
+                      }
+                    }
+                  }
+                }
+              ]
             }
-        },
-        "controlPlanConfigmap": [
-            "control-plane-configmap",
-            "log-configmap",
-            "core-configmap"
-        ],
-        "partitionNames": [
-            "default",
-            "monitoring"
-        ],
-        "secrets": {
-            "activemq": {
-                "name": "activemq",
-                "caFileName": "/amqp/chain.pem"
-            },
-            "mongodb": {
-                "name": "mongodb",
-                "caFileName": "/mongodb/chain.pem"
-            },
-            "redis": {
-                "name": "redis",
-                "caFileName": "/redis/chain.pem"
-            },
-            "s3": "s3",
-            "metricsExporter": "metrics-exporter",
-            "partitionMetrics_exporter": "partition-metrics-exporter",
-            "fluentBit": "fluent-bit",
-            "seq": "seq",
-            "grafana": "grafana",
-            "prometheus": "prometheus",
-            "deployedObjectStorageSecret": "deployed-object-storage-helm",
-            "deployedTableStorageSecret": "deployed-table-storage-helm",
-            "deployedQueueStorageSecret": "deployed-queue-storage-helm",
-            "storageEndpointUrl": {
-                "objectStorageAdapter": "Redis",
-                "tableStorageAdapter": "MongoDB",
-                "queueStorageAdapter": "Amqp",
-                "deployedObjectStorages": [
-                    "Redis"
-                ],
-                "deployedTableStorages": [
-                    "MongoDB"
-                ],
-                "deployedQueueStorages": [
-                    "Amqp"
-                ]
-            },
-            "sharedStorage": {
-                "name": "shared-storage-helm",
-                "hostPath": "data",
-                "fileStorageType": "HostPath",
-                "fileServerIp": ""
+          },
+          "examples": [
+            {
+              "selector": {
+                "matchLabels": {
+                  "app": "armonik",
+                  "service": "control-plane-helm"
+                }
+              },
+              "template": {
+                "spec": {
+                  "containers": {
+                    "ports": {
+                      "name": "http",
+                      "containerPort": 1080
+                    }
+                  }
+                }
+              }
             }
+          ]
         },
-        "logConfigmap": {
-            "metadata": {
-                "name": "log-configmap-helm",
-                "namespace": "armonik"
-            },
-            "data": {
-                "loggingLevel": "Information"
-            }
+        "annotations": {
+          "type": "string",
+          "default": "",
+          "title": "The annotations Schema",
+          "examples": [
+            ""
+          ]
         },
-        "coreConfigmap": {
-            "metadata": {
-                "name": "core-configmap-helm"
-            },
-            "data": {
-                "Components__TableStorage": "MongoDB",
-                "Components__ObjectStorage": "Redis",
-                "Components__QueueStorage": "Amqp",
-                "Components__QueueAdaptorSettings__ClassName": "ArmoniK.Core.Adapters.Amqp.QueueBuilder",
-                "Components__QueueAdaptorSettings__AdapterAbsolutePath": "/adapters/queue/amqp/ArmoniK.Core.Adapters.Amqp.dll",
-                "MongoDB__CAFile": "/mongodb/chain.pem",
-                "MongoDB__ReplicaSet": "rs0",
-                "MongoDB__DatabaseName": "database",
-                "MongoDB__DirectConnection": "false",
-                "MongoDB__Tls": "true",
-                "Redis__CaPath": "/redis/chain.pem",
-                "Redis__InstanceName": "ArmoniKRedis",
-                "Redis__ClientName": "ArmoniK.Core",
-                "Redis__Ssl": "true",
-                "Amqp__CaPath": "/amqp/chain.pem",
-                "Amqp__Scheme": "AMQPS",
-                "Authenticator__RequireAuthentication": false,
-                "Authenticator__RequireAuthorization": false
-            }
+        "serviceType": {
+          "type": "string",
+          "default": "",
+          "title": "The serviceType Schema",
+          "examples": [
+            "HeadLess"
+          ]
         },
-        "credentials": {
-            "Amqp__User": {
-                "key": "username",
-                "name": "activemq"
+        "ports": {
+          "type": "object",
+          "default": {},
+          "title": "The ports Schema",
+          "required": [
+            "containerPort",
+            "name"
+          ],
+          "properties": {
+            "containerPort": {
+              "type": "integer",
+              "default": 0,
+              "title": "The containerPort Schema",
+              "examples": [
+                1080
+              ]
             },
-            "Amqp__Password": {
-                "key": "password",
-                "name": "activemq"
-            },
-            "Amqp__Host": {
-                "key": "host",
-                "name": "activemq"
-            },
-            "Amqp__Port": {
-                "key": "port",
-                "name": "activemq"
-            },
-            "Redis__User": {
-                "key": "username",
-                "name": "redis"
-            },
-            "Redis__Password": {
-                "key": "password",
-                "name": "redis"
-            },
-            "Redis__EndpointUrl": {
-                "key": "url",
-                "name": "redis"
-            },
-            "MongoDB__User": {
-                "key": "username",
-                "name": "mongodb"
-            },
-            "MongoDB__Password": {
-                "key": "password",
-                "name": "mongodb"
-            },
-            "MongoDB__Host": {
-                "key": "host",
-                "name": "mongodb"
-            },
-            "MongoDB__Port": {
-                "key": "port",
-                "name": "mongodb"
+            "name": {
+              "type": "string",
+              "default": "",
+              "title": "The name Schema",
+              "examples": [
+                "http"
+              ]
             }
+          },
+          "examples": [
+            {
+              "containerPort": 1080,
+              "name": "http"
+            }
+          ]
         },
-        "certificates": {
-            "activemq": {
-                "name": "activemq-secret-volume",
-                "mountPath": "/amqp",
-                "secretName": "activemq"
+        "limits": {
+          "type": "object",
+          "default": {},
+          "title": "The limits Schema",
+          "required": [
+            "cpu",
+            "memory"
+          ],
+          "properties": {
+            "cpu": {
+              "type": "string",
+              "default": "",
+              "title": "The cpu Schema",
+              "examples": [
+                "1000m"
+              ]
             },
-            "redis": {
-                "name": "redis-secret-volume",
-                "mountPath": "/redis",
-                "secretName": "redis"
-            },
-            "mongodb": {
-                "name": "mongodb-secret-volume",
-                "mountPath": "/mongodb",
-                "secretName": "mongodb"
+            "memory": {
+              "type": "string",
+              "default": "",
+              "title": "The memory Schema",
+              "examples": [
+                "2048Mi"
+              ]
             }
+          },
+          "examples": [
+            {
+              "cpu": "1000m",
+              "memory": "2048Mi"
+            }
+          ]
+        },
+        "requests": {
+          "type": "object",
+          "default": {},
+          "title": "The requests Schema",
+          "required": [
+            "cpu",
+            "memory"
+          ],
+          "properties": {
+            "cpu": {
+              "type": "string",
+              "default": "",
+              "title": "The cpu Schema",
+              "examples": [
+                "50m"
+              ]
+            },
+            "memory": {
+              "type": "string",
+              "default": "",
+              "title": "The memory Schema",
+              "examples": [
+                "50Mi"
+              ]
+            }
+          },
+          "examples": [
+            {
+              "cpu": "50m",
+              "memory": "50Mi"
+            }
+          ]
+        },
+        "defaultPartition": {
+          "type": "string",
+          "default": "",
+          "title": "The defaultPartition Schema",
+          "examples": [
+            "default"
+          ]
+        },
+        "name": {
+          "type": "string",
+          "default": "",
+          "title": "The name Schema",
+          "examples": [
+            "control-plane-helm"
+          ]
+        },
+        "imagePullPolicy": {
+          "type": "string",
+          "default": "",
+          "title": "The imagePullPolicy Schema",
+          "examples": [
+            "IfNotPresent"
+          ]
         }
-    }]
+      },
+      "examples": [
+        {
+          "metadata": {
+            "name": "control-plane-helm",
+            "labels": {
+              "app": "armonik",
+              "service": "control-plane-helm"
+            }
+          },
+          "spec": {
+            "selector": {
+              "matchLabels": {
+                "app": "armonik",
+                "service": "control-plane-helm"
+              }
+            },
+            "template": {
+              "spec": {
+                "containers": {
+                  "ports": {
+                    "name": "http",
+                    "containerPort": 1080
+                  }
+                }
+              }
+            }
+          },
+          "annotations": "",
+          "serviceType": "HeadLess",
+          "ports": {
+            "containerPort": 1080,
+            "name": "http"
+          },
+          "limits": {
+            "cpu": "1000m",
+            "memory": "2048Mi"
+          },
+          "requests": {
+            "cpu": "50m",
+            "memory": "50Mi"
+          },
+          "defaultPartition": "default",
+          "name": "control-plane-helm",
+          "imagePullPolicy": "IfNotPresent"
+        }
+      ]
+    },
+    "livenessProbe": {
+      "type": "object",
+      "default": {},
+      "title": "The livenessProbe Schema",
+      "required": [
+        "httpGet",
+        "initialDelaySeconds",
+        "periodSeconds",
+        "timeoutSeconds",
+        "successThreshold",
+        "failureThreshold"
+      ],
+      "properties": {
+        "httpGet": {
+          "type": "object",
+          "default": {},
+          "title": "The httpGet Schema",
+          "required": [
+            "path",
+            "port"
+          ],
+          "properties": {
+            "path": {
+              "type": "string",
+              "default": "",
+              "title": "The path Schema",
+              "examples": [
+                "/liveness"
+              ]
+            },
+            "port": {
+              "type": "integer",
+              "default": 0,
+              "title": "The port Schema",
+              "examples": [
+                1081
+              ]
+            }
+          },
+          "examples": [
+            {
+              "path": "/liveness",
+              "port": 1081
+            }
+          ]
+        },
+        "initialDelaySeconds": {
+          "type": "integer",
+          "default": 0,
+          "title": "The initialDelaySeconds Schema",
+          "examples": [
+            15
+          ]
+        },
+        "periodSeconds": {
+          "type": "integer",
+          "default": 0,
+          "title": "The periodSeconds Schema",
+          "examples": [
+            5
+          ]
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "default": 0,
+          "title": "The timeoutSeconds Schema",
+          "examples": [
+            1
+          ]
+        },
+        "successThreshold": {
+          "type": "integer",
+          "default": 0,
+          "title": "The successThreshold Schema",
+          "examples": [
+            1
+          ]
+        },
+        "failureThreshold": {
+          "type": "integer",
+          "default": 0,
+          "title": "The failureThreshold Schema",
+          "examples": [
+            1
+          ]
+        }
+      },
+      "examples": [
+        {
+          "httpGet": {
+            "path": "/liveness",
+            "port": 1081
+          },
+          "initialDelaySeconds": 15,
+          "periodSeconds": 5,
+          "timeoutSeconds": 1,
+          "successThreshold": 1,
+          "failureThreshold": 1
+        }
+      ]
+    },
+    "startupProbe": {
+      "type": "object",
+      "default": {},
+      "title": "The startupProbe Schema",
+      "required": [
+        "httpGet",
+        "initialDelaySeconds",
+        "periodSeconds",
+        "timeoutSeconds",
+        "successThreshold",
+        "failureThreshold"
+      ],
+      "properties": {
+        "httpGet": {
+          "type": "object",
+          "default": {},
+          "title": "The httpGet Schema",
+          "required": [
+            "path",
+            "port"
+          ],
+          "properties": {
+            "path": {
+              "type": "string",
+              "default": "",
+              "title": "The path Schema",
+              "examples": [
+                "/startup"
+              ]
+            },
+            "port": {
+              "type": "integer",
+              "default": 0,
+              "title": "The port Schema",
+              "examples": [
+                1081
+              ]
+            }
+          },
+          "examples": [
+            {
+              "path": "/startup",
+              "port": 1081
+            }
+          ]
+        },
+        "initialDelaySeconds": {
+          "type": "integer",
+          "default": 0,
+          "title": "The initialDelaySeconds Schema",
+          "examples": [
+            1
+          ]
+        },
+        "periodSeconds": {
+          "type": "integer",
+          "default": 0,
+          "title": "The periodSeconds Schema",
+          "examples": [
+            3
+          ]
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "default": 0,
+          "title": "The timeoutSeconds Schema",
+          "examples": [
+            1
+          ]
+        },
+        "successThreshold": {
+          "type": "integer",
+          "default": 0,
+          "title": "The successThreshold Schema",
+          "examples": [
+            1
+          ]
+        },
+        "failureThreshold": {
+          "type": "integer",
+          "default": 0,
+          "title": "The failureThreshold Schema",
+          "examples": [
+            20
+          ]
+        }
+      },
+      "examples": [
+        {
+          "httpGet": {
+            "path": "/startup",
+            "port": 1081
+          },
+          "initialDelaySeconds": 1,
+          "periodSeconds": 3,
+          "timeoutSeconds": 1,
+          "successThreshold": 1,
+          "failureThreshold": 20
+        }
+      ]
+    },
+    "extraConf": {
+      "type": "object",
+      "default": {},
+      "title": "The extraConf Schema",
+      "required": [
+        "core",
+        "control"
+      ],
+      "properties": {
+        "core": {
+          "type": "object",
+          "default": {},
+          "title": "The core Schema",
+          "required": [
+            "Amqp__AllowHostMismatch",
+            "Amqp__MaxPriority",
+            "Amqp__MaxRetries",
+            "Amqp__QueueStorage__LockRefreshPeriodicity",
+            "Amqp__QueueStorage__PollPeriodicity",
+            "Amqp__QueueStorage__LockRefreshExtension",
+            "MongoDB__TableStorage__PollingDelayMin",
+            "MongoDB__TableStorage__PollingDelayMax",
+            "MongoDB__AllowInsecureTls",
+            "MongoDB__TableStorage__PollingDelay",
+            "MongoDB__DataRetention",
+            "Redis__Timeout",
+            "Redis__SslHost",
+            "Redis__TtlTimeSpan"
+          ],
+          "properties": {
+            "Amqp__AllowHostMismatch": {
+              "type": "boolean",
+              "default": false,
+              "title": "The Amqp__AllowHostMismatch Schema",
+              "examples": [
+                true
+              ]
+            },
+            "Amqp__MaxPriority": {
+              "type": "string",
+              "default": "",
+              "title": "The Amqp__MaxPriority Schema",
+              "examples": [
+                "10"
+              ]
+            },
+            "Amqp__MaxRetries": {
+              "type": "string",
+              "default": "",
+              "title": "The Amqp__MaxRetries Schema",
+              "examples": [
+                "5"
+              ]
+            },
+            "Amqp__QueueStorage__LockRefreshPeriodicity": {
+              "type": "string",
+              "default": "",
+              "title": "The Amqp__QueueStorage__LockRefreshPeriodicity Schema",
+              "examples": [
+                "00:00:45"
+              ]
+            },
+            "Amqp__QueueStorage__PollPeriodicity": {
+              "type": "string",
+              "default": "",
+              "title": "The Amqp__QueueStorage__PollPeriodicity Schema",
+              "examples": [
+                "00:00:10"
+              ]
+            },
+            "Amqp__QueueStorage__LockRefreshExtension": {
+              "type": "string",
+              "default": "",
+              "title": "The Amqp__QueueStorage__LockRefreshExtension Schema",
+              "examples": [
+                "00:02:00"
+              ]
+            },
+            "MongoDB__TableStorage__PollingDelayMin": {
+              "type": "string",
+              "default": "",
+              "title": "The MongoDB__TableStorage__PollingDelayMin Schema",
+              "examples": [
+                "00:00:01"
+              ]
+            },
+            "MongoDB__TableStorage__PollingDelayMax": {
+              "type": "string",
+              "default": "",
+              "title": "The MongoDB__TableStorage__PollingDelayMax Schema",
+              "examples": [
+                "00:00:10"
+              ]
+            },
+            "MongoDB__AllowInsecureTls": {
+              "type": "boolean",
+              "default": false,
+              "title": "The MongoDB__AllowInsecureTls Schema",
+              "examples": [
+                true
+              ]
+            },
+            "MongoDB__TableStorage__PollingDelay": {
+              "type": "string",
+              "default": "",
+              "title": "The MongoDB__TableStorage__PollingDelay Schema",
+              "examples": [
+                "00:00:01"
+              ]
+            },
+            "MongoDB__DataRetention": {
+              "type": "string",
+              "default": "",
+              "title": "The MongoDB__DataRetention Schema",
+              "examples": [
+                "1.00:00:00"
+              ]
+            },
+            "Redis__Timeout": {
+              "type": "integer",
+              "default": 0,
+              "title": "The Redis__Timeout Schema",
+              "examples": [
+                30000
+              ]
+            },
+            "Redis__SslHost": {
+              "type": "string",
+              "default": "",
+              "title": "The Redis__SslHost Schema",
+              "examples": [
+                "127.0.0.1"
+              ]
+            },
+            "Redis__TtlTimeSpan": {
+              "type": "string",
+              "default": "",
+              "title": "The Redis__TtlTimeSpan Schema",
+              "examples": [
+                "1.00:00:00"
+              ]
+            }
+          },
+          "examples": [
+            {
+              "Amqp__AllowHostMismatch": true,
+              "Amqp__MaxPriority": "10",
+              "Amqp__MaxRetries": "5",
+              "Amqp__QueueStorage__LockRefreshPeriodicity": "00:00:45",
+              "Amqp__QueueStorage__PollPeriodicity": "00:00:10",
+              "Amqp__QueueStorage__LockRefreshExtension": "00:02:00",
+              "MongoDB__TableStorage__PollingDelayMin": "00:00:01",
+              "MongoDB__TableStorage__PollingDelayMax": "00:00:10",
+              "MongoDB__AllowInsecureTls": true,
+              "MongoDB__TableStorage__PollingDelay": "00:00:01",
+              "MongoDB__DataRetention": "1.00:00:00",
+              "Redis__Timeout": 30000,
+              "Redis__SslHost": "127.0.0.1",
+              "Redis__TtlTimeSpan": "1.00:00:00"
+            }
+          ]
+        },
+        "control": {
+          "type": "object",
+          "default": {},
+          "title": "The control Schema",
+          "required": [
+            "Submitter__MaxErrorAllowed"
+          ],
+          "properties": {
+            "Submitter__MaxErrorAllowed": {
+              "type": "string",
+              "default": "",
+              "title": "The Submitter__MaxErrorAllowed Schema",
+              "examples": [
+                "50"
+              ]
+            }
+          },
+          "examples": [
+            {
+              "Submitter__MaxErrorAllowed": "50"
+            }
+          ]
+        }
+      },
+      "examples": [
+        {
+          "core": {
+            "Amqp__AllowHostMismatch": true,
+            "Amqp__MaxPriority": "10",
+            "Amqp__MaxRetries": "5",
+            "Amqp__QueueStorage__LockRefreshPeriodicity": "00:00:45",
+            "Amqp__QueueStorage__PollPeriodicity": "00:00:10",
+            "Amqp__QueueStorage__LockRefreshExtension": "00:02:00",
+            "MongoDB__TableStorage__PollingDelayMin": "00:00:01",
+            "MongoDB__TableStorage__PollingDelayMax": "00:00:10",
+            "MongoDB__AllowInsecureTls": true,
+            "MongoDB__TableStorage__PollingDelay": "00:00:01",
+            "MongoDB__DataRetention": "1.00:00:00",
+            "Redis__Timeout": 30000,
+            "Redis__SslHost": "127.0.0.1",
+            "Redis__TtlTimeSpan": "1.00:00:00"
+          },
+          "control": {
+            "Submitter__MaxErrorAllowed": "50"
+          }
+        }
+      ]
+    },
+    "controlPlanConfigmap": {
+      "type": "array",
+      "default": [],
+      "title": "The controlPlanConfigmap Schema",
+      "items": {
+        "type": "string",
+        "title": "A Schema",
+        "examples": [
+          "control-plane-configmap",
+          "log-configmap",
+          "core-configmap"
+        ]
+      },
+      "examples": [
+        [
+          "control-plane-configmap",
+          "log-configmap",
+          "core-configmap"
+        ]
+      ]
+    },
+    "partitionNames": {
+      "type": "array",
+      "default": [],
+      "title": "The partitionNames Schema",
+      "items": {
+        "type": "string",
+        "title": "A Schema",
+        "examples": [
+          "default",
+          "monitoring"
+        ]
+      },
+      "examples": [
+        [
+          "default",
+          "monitoring"
+        ]
+      ]
+    },
+    "secrets": {
+      "type": "object",
+      "default": {},
+      "title": "The secrets Schema",
+      "required": [
+        "activemq",
+        "mongodb",
+        "redis",
+        "s3",
+        "metricsExporter",
+        "partitionMetrics_exporter",
+        "fluentBit",
+        "seq",
+        "grafana",
+        "prometheus",
+        "deployedObjectStorageSecret",
+        "deployedTableStorageSecret",
+        "deployedQueueStorageSecret",
+        "storageEndpointUrl",
+        "sharedStorage"
+      ],
+      "properties": {
+        "activemq": {
+          "type": "object",
+          "default": {},
+          "title": "The activemq Schema",
+          "required": [
+            "name",
+            "caFileName"
+          ],
+          "properties": {
+            "name": {
+              "type": "string",
+              "default": "",
+              "title": "The name Schema",
+              "examples": [
+                "activemq"
+              ]
+            },
+            "caFileName": {
+              "type": "string",
+              "default": "",
+              "title": "The caFileName Schema",
+              "examples": [
+                "/amqp/chain.pem"
+              ]
+            }
+          },
+          "examples": [
+            {
+              "name": "activemq",
+              "caFileName": "/amqp/chain.pem"
+            }
+          ]
+        },
+        "mongodb": {
+          "type": "object",
+          "default": {},
+          "title": "The mongodb Schema",
+          "required": [
+            "name",
+            "caFileName"
+          ],
+          "properties": {
+            "name": {
+              "type": "string",
+              "default": "",
+              "title": "The name Schema",
+              "examples": [
+                "mongodb"
+              ]
+            },
+            "caFileName": {
+              "type": "string",
+              "default": "",
+              "title": "The caFileName Schema",
+              "examples": [
+                "/mongodb/chain.pem"
+              ]
+            }
+          },
+          "examples": [
+            {
+              "name": "mongodb",
+              "caFileName": "/mongodb/chain.pem"
+            }
+          ]
+        },
+        "redis": {
+          "type": "object",
+          "default": {},
+          "title": "The redis Schema",
+          "required": [
+            "name",
+            "caFileName"
+          ],
+          "properties": {
+            "name": {
+              "type": "string",
+              "default": "",
+              "title": "The name Schema",
+              "examples": [
+                "redis"
+              ]
+            },
+            "caFileName": {
+              "type": "string",
+              "default": "",
+              "title": "The caFileName Schema",
+              "examples": [
+                "/redis/chain.pem"
+              ]
+            }
+          },
+          "examples": [
+            {
+              "name": "redis",
+              "caFileName": "/redis/chain.pem"
+            }
+          ]
+        },
+        "s3": {
+          "type": "string",
+          "default": "",
+          "title": "The s3 Schema",
+          "examples": [
+            "s3"
+          ]
+        },
+        "metricsExporter": {
+          "type": "string",
+          "default": "",
+          "title": "The metricsExporter Schema",
+          "examples": [
+            "metrics-exporter"
+          ]
+        },
+        "partitionMetrics_exporter": {
+          "type": "string",
+          "default": "",
+          "title": "The partitionMetrics_exporter Schema",
+          "examples": [
+            "partition-metrics-exporter"
+          ]
+        },
+        "fluentBit": {
+          "type": "string",
+          "default": "",
+          "title": "The fluentBit Schema",
+          "examples": [
+            "fluent-bit"
+          ]
+        },
+        "seq": {
+          "type": "string",
+          "default": "",
+          "title": "The seq Schema",
+          "examples": [
+            "seq"
+          ]
+        },
+        "grafana": {
+          "type": "string",
+          "default": "",
+          "title": "The grafana Schema",
+          "examples": [
+            "grafana"
+          ]
+        },
+        "prometheus": {
+          "type": "string",
+          "default": "",
+          "title": "The prometheus Schema",
+          "examples": [
+            "prometheus"
+          ]
+        },
+        "deployedObjectStorageSecret": {
+          "type": "string",
+          "default": "",
+          "title": "The deployedObjectStorageSecret Schema",
+          "examples": [
+            "deployed-object-storage-helm"
+          ]
+        },
+        "deployedTableStorageSecret": {
+          "type": "string",
+          "default": "",
+          "title": "The deployedTableStorageSecret Schema",
+          "examples": [
+            "deployed-table-storage-helm"
+          ]
+        },
+        "deployedQueueStorageSecret": {
+          "type": "string",
+          "default": "",
+          "title": "The deployedQueueStorageSecret Schema",
+          "examples": [
+            "deployed-queue-storage-helm"
+          ]
+        },
+        "storageEndpointUrl": {
+          "type": "object",
+          "default": {},
+          "title": "The storageEndpointUrl Schema",
+          "required": [
+            "objectStorageAdapter",
+            "tableStorageAdapter",
+            "queueStorageAdapter",
+            "deployedObjectStorages",
+            "deployedTableStorages",
+            "deployedQueueStorages"
+          ],
+          "properties": {
+            "objectStorageAdapter": {
+              "type": "string",
+              "default": "",
+              "title": "The objectStorageAdapter Schema",
+              "examples": [
+                "Redis"
+              ]
+            },
+            "tableStorageAdapter": {
+              "type": "string",
+              "default": "",
+              "title": "The tableStorageAdapter Schema",
+              "examples": [
+                "MongoDB"
+              ]
+            },
+            "queueStorageAdapter": {
+              "type": "string",
+              "default": "",
+              "title": "The queueStorageAdapter Schema",
+              "examples": [
+                "Amqp"
+              ]
+            },
+            "deployedObjectStorages": {
+              "type": "array",
+              "default": [],
+              "title": "The deployedObjectStorages Schema",
+              "items": {
+                "type": "string",
+                "default": "",
+                "title": "A Schema",
+                "examples": [
+                  "Redis"
+                ]
+              },
+              "examples": [
+                [
+                  "Redis"
+                ]
+              ]
+            },
+            "deployedTableStorages": {
+              "type": "array",
+              "default": [],
+              "title": "The deployedTableStorages Schema",
+              "items": {
+                "type": "string",
+                "default": "",
+                "title": "A Schema",
+                "examples": [
+                  "MongoDB"
+                ]
+              },
+              "examples": [
+                [
+                  "MongoDB"
+                ]
+              ]
+            },
+            "deployedQueueStorages": {
+              "type": "array",
+              "default": [],
+              "title": "The deployedQueueStorages Schema",
+              "items": {
+                "type": "string",
+                "default": "",
+                "title": "A Schema",
+                "examples": [
+                  "Amqp"
+                ]
+              },
+              "examples": [
+                [
+                  "Amqp"
+                ]
+              ]
+            }
+          },
+          "examples": [
+            {
+              "objectStorageAdapter": "Redis",
+              "tableStorageAdapter": "MongoDB",
+              "queueStorageAdapter": "Amqp",
+              "deployedObjectStorages": [
+                "Redis"
+              ],
+              "deployedTableStorages": [
+                "MongoDB"
+              ],
+              "deployedQueueStorages": [
+                "Amqp"
+              ]
+            }
+          ]
+        },
+        "sharedStorage": {
+          "type": "object",
+          "default": {},
+          "title": "The sharedStorage Schema",
+          "required": [
+            "name",
+            "hostPath",
+            "fileStorageType",
+            "fileServerIp"
+          ],
+          "properties": {
+            "name": {
+              "type": "string",
+              "default": "",
+              "title": "The name Schema",
+              "examples": [
+                "shared-storage-helm"
+              ]
+            },
+            "hostPath": {
+              "type": "string",
+              "default": "",
+              "title": "The hostPath Schema",
+              "examples": [
+                "data"
+              ]
+            },
+            "fileStorageType": {
+              "type": "string",
+              "default": "",
+              "title": "The fileStorageType Schema",
+              "examples": [
+                "HostPath"
+              ]
+            },
+            "fileServerIp": {
+              "type": "string",
+              "default": "",
+              "title": "The fileServerIp Schema",
+              "examples": [
+                ""
+              ]
+            }
+          },
+          "examples": [
+            {
+              "name": "shared-storage-helm",
+              "hostPath": "data",
+              "fileStorageType": "HostPath",
+              "fileServerIp": ""
+            }
+          ]
+        }
+      },
+      "examples": [
+        {
+          "activemq": {
+            "name": "activemq",
+            "caFileName": "/amqp/chain.pem"
+          },
+          "mongodb": {
+            "name": "mongodb",
+            "caFileName": "/mongodb/chain.pem"
+          },
+          "redis": {
+            "name": "redis",
+            "caFileName": "/redis/chain.pem"
+          },
+          "s3": "s3",
+          "metricsExporter": "metrics-exporter",
+          "partitionMetrics_exporter": "partition-metrics-exporter",
+          "fluentBit": "fluent-bit",
+          "seq": "seq",
+          "grafana": "grafana",
+          "prometheus": "prometheus",
+          "deployedObjectStorageSecret": "deployed-object-storage-helm",
+          "deployedTableStorageSecret": "deployed-table-storage-helm",
+          "deployedQueueStorageSecret": "deployed-queue-storage-helm",
+          "storageEndpointUrl": {
+            "objectStorageAdapter": "Redis",
+            "tableStorageAdapter": "MongoDB",
+            "queueStorageAdapter": "Amqp",
+            "deployedObjectStorages": [
+              "Redis"
+            ],
+            "deployedTableStorages": [
+              "MongoDB"
+            ],
+            "deployedQueueStorages": [
+              "Amqp"
+            ]
+          },
+          "sharedStorage": {
+            "name": "shared-storage-helm",
+            "hostPath": "data",
+            "fileStorageType": "HostPath",
+            "fileServerIp": ""
+          }
+        }
+      ]
+    },
+    "logConfigmap": {
+      "type": "object",
+      "default": {},
+      "title": "The logConfigmap Schema",
+      "required": [
+        "metadata",
+        "data"
+      ],
+      "properties": {
+        "metadata": {
+          "type": "object",
+          "default": {},
+          "title": "The metadata Schema",
+          "required": [
+            "name",
+            "namespace"
+          ],
+          "properties": {
+            "name": {
+              "type": "string",
+              "default": "",
+              "title": "The name Schema",
+              "examples": [
+                "log-configmap-helm"
+              ]
+            },
+            "namespace": {
+              "type": "string",
+              "default": "",
+              "title": "The namespace Schema",
+              "examples": [
+                "armonik"
+              ]
+            }
+          },
+          "examples": [
+            {
+              "name": "log-configmap-helm",
+              "namespace": "armonik"
+            }
+          ]
+        },
+        "data": {
+          "type": "object",
+          "default": {},
+          "title": "The data Schema",
+          "required": [
+            "loggingLevel"
+          ],
+          "properties": {
+            "loggingLevel": {
+              "type": "string",
+              "default": "",
+              "title": "The loggingLevel Schema",
+              "examples": [
+                "Information"
+              ]
+            }
+          },
+          "examples": [
+            {
+              "loggingLevel": "Information"
+            }
+          ]
+        }
+      },
+      "examples": [
+        {
+          "metadata": {
+            "name": "log-configmap-helm",
+            "namespace": "armonik"
+          },
+          "data": {
+            "loggingLevel": "Information"
+          }
+        }
+      ]
+    },
+    "coreConfigmap": {
+      "type": "object",
+      "default": {},
+      "title": "The coreConfigmap Schema",
+      "required": [
+        "metadata",
+        "data"
+      ],
+      "properties": {
+        "metadata": {
+          "type": "object",
+          "default": {},
+          "title": "The metadata Schema",
+          "required": [
+            "name"
+          ],
+          "properties": {
+            "name": {
+              "type": "string",
+              "default": "",
+              "title": "The name Schema",
+              "examples": [
+                "core-configmap-helm"
+              ]
+            }
+          },
+          "examples": [
+            {
+              "name": "core-configmap-helm"
+            }
+          ]
+        },
+        "data": {
+          "type": "object",
+          "default": {},
+          "title": "The data Schema",
+          "required": [
+            "Components__TableStorage",
+            "Components__ObjectStorage",
+            "Components__QueueStorage",
+            "Components__QueueAdaptorSettings__ClassName",
+            "Components__QueueAdaptorSettings__AdapterAbsolutePath",
+            "MongoDB__CAFile",
+            "MongoDB__ReplicaSet",
+            "MongoDB__DatabaseName",
+            "MongoDB__DirectConnection",
+            "MongoDB__Tls",
+            "Redis__CaPath",
+            "Redis__InstanceName",
+            "Redis__ClientName",
+            "Redis__Ssl",
+            "Amqp__CaPath",
+            "Amqp__Scheme",
+            "Authenticator__RequireAuthentication",
+            "Authenticator__RequireAuthorization"
+          ],
+          "properties": {
+            "Components__TableStorage": {
+              "type": "string",
+              "default": "",
+              "title": "The Components__TableStorage Schema",
+              "examples": [
+                "MongoDB"
+              ]
+            },
+            "Components__ObjectStorage": {
+              "type": "string",
+              "default": "",
+              "title": "The Components__ObjectStorage Schema",
+              "examples": [
+                "Redis"
+              ]
+            },
+            "Components__QueueStorage": {
+              "type": "string",
+              "default": "",
+              "title": "The Components__QueueStorage Schema",
+              "examples": [
+                "Amqp"
+              ]
+            },
+            "Components__QueueAdaptorSettings__ClassName": {
+              "type": "string",
+              "default": "",
+              "title": "The Components__QueueAdaptorSettings__ClassName Schema",
+              "examples": [
+                "ArmoniK.Core.Adapters.Amqp.QueueBuilder"
+              ]
+            },
+            "Components__QueueAdaptorSettings__AdapterAbsolutePath": {
+              "type": "string",
+              "default": "",
+              "title": "The Components__QueueAdaptorSettings__AdapterAbsolutePath Schema",
+              "examples": [
+                "/adapters/queue/amqp/ArmoniK.Core.Adapters.Amqp.dll"
+              ]
+            },
+            "MongoDB__CAFile": {
+              "type": "string",
+              "default": "",
+              "title": "The MongoDB__CAFile Schema",
+              "examples": [
+                "/mongodb/chain.pem"
+              ]
+            },
+            "MongoDB__ReplicaSet": {
+              "type": "string",
+              "default": "",
+              "title": "The MongoDB__ReplicaSet Schema",
+              "examples": [
+                "rs0"
+              ]
+            },
+            "MongoDB__DatabaseName": {
+              "type": "string",
+              "default": "",
+              "title": "The MongoDB__DatabaseName Schema",
+              "examples": [
+                "database"
+              ]
+            },
+            "MongoDB__DirectConnection": {
+              "type": "string",
+              "default": "",
+              "title": "The MongoDB__DirectConnection Schema",
+              "examples": [
+                "false"
+              ]
+            },
+            "MongoDB__Tls": {
+              "type": "string",
+              "default": "",
+              "title": "The MongoDB__Tls Schema",
+              "examples": [
+                "true"
+              ]
+            },
+            "Redis__CaPath": {
+              "type": "string",
+              "default": "",
+              "title": "The Redis__CaPath Schema",
+              "examples": [
+                "/redis/chain.pem"
+              ]
+            },
+            "Redis__InstanceName": {
+              "type": "string",
+              "default": "",
+              "title": "The Redis__InstanceName Schema",
+              "examples": [
+                "ArmoniKRedis"
+              ]
+            },
+            "Redis__ClientName": {
+              "type": "string",
+              "default": "",
+              "title": "The Redis__ClientName Schema",
+              "examples": [
+                "ArmoniK.Core"
+              ]
+            },
+            "Redis__Ssl": {
+              "type": "string",
+              "default": "",
+              "title": "The Redis__Ssl Schema",
+              "examples": [
+                "true"
+              ]
+            },
+            "Amqp__CaPath": {
+              "type": "string",
+              "default": "",
+              "title": "The Amqp__CaPath Schema",
+              "examples": [
+                "/amqp/chain.pem"
+              ]
+            },
+            "Amqp__Scheme": {
+              "type": "string",
+              "default": "",
+              "title": "The Amqp__Scheme Schema",
+              "examples": [
+                "AMQPS"
+              ]
+            },
+            "Authenticator__RequireAuthentication": {
+              "type": "boolean",
+              "default": false,
+              "title": "The Authenticator__RequireAuthentication Schema",
+              "examples": [
+                false
+              ]
+            },
+            "Authenticator__RequireAuthorization": {
+              "type": "boolean",
+              "default": false,
+              "title": "The Authenticator__RequireAuthorization Schema",
+              "examples": [
+                false
+              ]
+            }
+          },
+          "examples": [
+            {
+              "Components__TableStorage": "MongoDB",
+              "Components__ObjectStorage": "Redis",
+              "Components__QueueStorage": "Amqp",
+              "Components__QueueAdaptorSettings__ClassName": "ArmoniK.Core.Adapters.Amqp.QueueBuilder",
+              "Components__QueueAdaptorSettings__AdapterAbsolutePath": "/adapters/queue/amqp/ArmoniK.Core.Adapters.Amqp.dll",
+              "MongoDB__CAFile": "/mongodb/chain.pem",
+              "MongoDB__ReplicaSet": "rs0",
+              "MongoDB__DatabaseName": "database",
+              "MongoDB__DirectConnection": "false",
+              "MongoDB__Tls": "true",
+              "Redis__CaPath": "/redis/chain.pem",
+              "Redis__InstanceName": "ArmoniKRedis",
+              "Redis__ClientName": "ArmoniK.Core",
+              "Redis__Ssl": "true",
+              "Amqp__CaPath": "/amqp/chain.pem",
+              "Amqp__Scheme": "AMQPS",
+              "Authenticator__RequireAuthentication": false,
+              "Authenticator__RequireAuthorization": false
+            }
+          ]
+        }
+      },
+      "examples": [
+        {
+          "metadata": {
+            "name": "core-configmap-helm"
+          },
+          "data": {
+            "Components__TableStorage": "MongoDB",
+            "Components__ObjectStorage": "Redis",
+            "Components__QueueStorage": "Amqp",
+            "Components__QueueAdaptorSettings__ClassName": "ArmoniK.Core.Adapters.Amqp.QueueBuilder",
+            "Components__QueueAdaptorSettings__AdapterAbsolutePath": "/adapters/queue/amqp/ArmoniK.Core.Adapters.Amqp.dll",
+            "MongoDB__CAFile": "/mongodb/chain.pem",
+            "MongoDB__ReplicaSet": "rs0",
+            "MongoDB__DatabaseName": "database",
+            "MongoDB__DirectConnection": "false",
+            "MongoDB__Tls": "true",
+            "Redis__CaPath": "/redis/chain.pem",
+            "Redis__InstanceName": "ArmoniKRedis",
+            "Redis__ClientName": "ArmoniK.Core",
+            "Redis__Ssl": "true",
+            "Amqp__CaPath": "/amqp/chain.pem",
+            "Amqp__Scheme": "AMQPS",
+            "Authenticator__RequireAuthentication": false,
+            "Authenticator__RequireAuthorization": false
+          }
+        }
+      ]
+    },
+    "credentials": {
+      "type": "object",
+      "default": {},
+      "title": "The credentials Schema",
+      "required": [
+        "Amqp__User",
+        "Amqp__Password",
+        "Amqp__Host",
+        "Amqp__Port",
+        "Redis__User",
+        "Redis__Password",
+        "Redis__EndpointUrl",
+        "MongoDB__User",
+        "MongoDB__Password",
+        "MongoDB__Host",
+        "MongoDB__Port"
+      ],
+      "properties": {
+        "Amqp__User": {
+          "type": "object",
+          "default": {},
+          "title": "The Amqp__User Schema",
+          "required": [
+            "key",
+            "name"
+          ],
+          "properties": {
+            "key": {
+              "type": "string",
+              "default": "",
+              "title": "The key Schema",
+              "examples": [
+                "username"
+              ]
+            },
+            "name": {
+              "type": "string",
+              "default": "",
+              "title": "The name Schema",
+              "examples": [
+                "activemq"
+              ]
+            }
+          },
+          "examples": [
+            {
+              "key": "username",
+              "name": "activemq"
+            }
+          ]
+        },
+        "Amqp__Password": {
+          "type": "object",
+          "default": {},
+          "title": "The Amqp__Password Schema",
+          "required": [
+            "key",
+            "name"
+          ],
+          "properties": {
+            "key": {
+              "type": "string",
+              "default": "",
+              "title": "The key Schema",
+              "examples": [
+                "password"
+              ]
+            },
+            "name": {
+              "type": "string",
+              "default": "",
+              "title": "The name Schema",
+              "examples": [
+                "activemq"
+              ]
+            }
+          },
+          "examples": [
+            {
+              "key": "password",
+              "name": "activemq"
+            }
+          ]
+        },
+        "Amqp__Host": {
+          "type": "object",
+          "default": {},
+          "title": "The Amqp__Host Schema",
+          "required": [
+            "key",
+            "name"
+          ],
+          "properties": {
+            "key": {
+              "type": "string",
+              "default": "",
+              "title": "The key Schema",
+              "examples": [
+                "host"
+              ]
+            },
+            "name": {
+              "type": "string",
+              "default": "",
+              "title": "The name Schema",
+              "examples": [
+                "activemq"
+              ]
+            }
+          },
+          "examples": [
+            {
+              "key": "host",
+              "name": "activemq"
+            }
+          ]
+        },
+        "Amqp__Port": {
+          "type": "object",
+          "default": {},
+          "title": "The Amqp__Port Schema",
+          "required": [
+            "key",
+            "name"
+          ],
+          "properties": {
+            "key": {
+              "type": "string",
+              "default": "",
+              "title": "The key Schema",
+              "examples": [
+                "port"
+              ]
+            },
+            "name": {
+              "type": "string",
+              "default": "",
+              "title": "The name Schema",
+              "examples": [
+                "activemq"
+              ]
+            }
+          },
+          "examples": [
+            {
+              "key": "port",
+              "name": "activemq"
+            }
+          ]
+        },
+        "Redis__User": {
+          "type": "object",
+          "default": {},
+          "title": "The Redis__User Schema",
+          "required": [
+            "key",
+            "name"
+          ],
+          "properties": {
+            "key": {
+              "type": "string",
+              "default": "",
+              "title": "The key Schema",
+              "examples": [
+                "username"
+              ]
+            },
+            "name": {
+              "type": "string",
+              "default": "",
+              "title": "The name Schema",
+              "examples": [
+                "redis"
+              ]
+            }
+          },
+          "examples": [
+            {
+              "key": "username",
+              "name": "redis"
+            }
+          ]
+        },
+        "Redis__Password": {
+          "type": "object",
+          "default": {},
+          "title": "The Redis__Password Schema",
+          "required": [
+            "key",
+            "name"
+          ],
+          "properties": {
+            "key": {
+              "type": "string",
+              "default": "",
+              "title": "The key Schema",
+              "examples": [
+                "password"
+              ]
+            },
+            "name": {
+              "type": "string",
+              "default": "",
+              "title": "The name Schema",
+              "examples": [
+                "redis"
+              ]
+            }
+          },
+          "examples": [
+            {
+              "key": "password",
+              "name": "redis"
+            }
+          ]
+        },
+        "Redis__EndpointUrl": {
+          "type": "object",
+          "default": {},
+          "title": "The Redis__EndpointUrl Schema",
+          "required": [
+            "key",
+            "name"
+          ],
+          "properties": {
+            "key": {
+              "type": "string",
+              "default": "",
+              "title": "The key Schema",
+              "examples": [
+                "url"
+              ]
+            },
+            "name": {
+              "type": "string",
+              "default": "",
+              "title": "The name Schema",
+              "examples": [
+                "redis"
+              ]
+            }
+          },
+          "examples": [
+            {
+              "key": "url",
+              "name": "redis"
+            }
+          ]
+        },
+        "MongoDB__User": {
+          "type": "object",
+          "default": {},
+          "title": "The MongoDB__User Schema",
+          "required": [
+            "key",
+            "name"
+          ],
+          "properties": {
+            "key": {
+              "type": "string",
+              "default": "",
+              "title": "The key Schema",
+              "examples": [
+                "username"
+              ]
+            },
+            "name": {
+              "type": "string",
+              "default": "",
+              "title": "The name Schema",
+              "examples": [
+                "mongodb"
+              ]
+            }
+          },
+          "examples": [
+            {
+              "key": "username",
+              "name": "mongodb"
+            }
+          ]
+        },
+        "MongoDB__Password": {
+          "type": "object",
+          "default": {},
+          "title": "The MongoDB__Password Schema",
+          "required": [
+            "key",
+            "name"
+          ],
+          "properties": {
+            "key": {
+              "type": "string",
+              "default": "",
+              "title": "The key Schema",
+              "examples": [
+                "password"
+              ]
+            },
+            "name": {
+              "type": "string",
+              "default": "",
+              "title": "The name Schema",
+              "examples": [
+                "mongodb"
+              ]
+            }
+          },
+          "examples": [
+            {
+              "key": "password",
+              "name": "mongodb"
+            }
+          ]
+        },
+        "MongoDB__Host": {
+          "type": "object",
+          "default": {},
+          "title": "The MongoDB__Host Schema",
+          "required": [
+            "key",
+            "name"
+          ],
+          "properties": {
+            "key": {
+              "type": "string",
+              "default": "",
+              "title": "The key Schema",
+              "examples": [
+                "host"
+              ]
+            },
+            "name": {
+              "type": "string",
+              "default": "",
+              "title": "The name Schema",
+              "examples": [
+                "mongodb"
+              ]
+            }
+          },
+          "examples": [
+            {
+              "key": "host",
+              "name": "mongodb"
+            }
+          ]
+        },
+        "MongoDB__Port": {
+          "type": "object",
+          "default": {},
+          "title": "The MongoDB__Port Schema",
+          "required": [
+            "key",
+            "name"
+          ],
+          "properties": {
+            "key": {
+              "type": "string",
+              "default": "",
+              "title": "The key Schema",
+              "examples": [
+                "port"
+              ]
+            },
+            "name": {
+              "type": "string",
+              "default": "",
+              "title": "The name Schema",
+              "examples": [
+                "mongodb"
+              ]
+            }
+          },
+          "examples": [
+            {
+              "key": "port",
+              "name": "mongodb"
+            }
+          ]
+        }
+      },
+      "examples": [
+        {
+          "Amqp__User": {
+            "key": "username",
+            "name": "activemq"
+          },
+          "Amqp__Password": {
+            "key": "password",
+            "name": "activemq"
+          },
+          "Amqp__Host": {
+            "key": "host",
+            "name": "activemq"
+          },
+          "Amqp__Port": {
+            "key": "port",
+            "name": "activemq"
+          },
+          "Redis__User": {
+            "key": "username",
+            "name": "redis"
+          },
+          "Redis__Password": {
+            "key": "password",
+            "name": "redis"
+          },
+          "Redis__EndpointUrl": {
+            "key": "url",
+            "name": "redis"
+          },
+          "MongoDB__User": {
+            "key": "username",
+            "name": "mongodb"
+          },
+          "MongoDB__Password": {
+            "key": "password",
+            "name": "mongodb"
+          },
+          "MongoDB__Host": {
+            "key": "host",
+            "name": "mongodb"
+          },
+          "MongoDB__Port": {
+            "key": "port",
+            "name": "mongodb"
+          }
+        }
+      ]
+    },
+    "certificates": {
+      "type": "object",
+      "default": {},
+      "title": "The certificates Schema",
+      "required": [
+        "activemq",
+        "redis",
+        "mongodb"
+      ],
+      "properties": {
+        "activemq": {
+          "type": "object",
+          "default": {},
+          "title": "The activemq Schema",
+          "required": [
+            "name",
+            "mountPath",
+            "secretName"
+          ],
+          "properties": {
+            "name": {
+              "type": "string",
+              "default": "",
+              "title": "The name Schema",
+              "examples": [
+                "activemq-secret-volume"
+              ]
+            },
+            "mountPath": {
+              "type": "string",
+              "default": "",
+              "title": "The mountPath Schema",
+              "examples": [
+                "/amqp"
+              ]
+            },
+            "secretName": {
+              "type": "string",
+              "default": "",
+              "title": "The secretName Schema",
+              "examples": [
+                "activemq"
+              ]
+            }
+          },
+          "examples": [
+            {
+              "name": "activemq-secret-volume",
+              "mountPath": "/amqp",
+              "secretName": "activemq"
+            }
+          ]
+        },
+        "redis": {
+          "type": "object",
+          "default": {},
+          "title": "The redis Schema",
+          "required": [
+            "name",
+            "mountPath",
+            "secretName"
+          ],
+          "properties": {
+            "name": {
+              "type": "string",
+              "default": "",
+              "title": "The name Schema",
+              "examples": [
+                "redis-secret-volume"
+              ]
+            },
+            "mountPath": {
+              "type": "string",
+              "default": "",
+              "title": "The mountPath Schema",
+              "examples": [
+                "/redis"
+              ]
+            },
+            "secretName": {
+              "type": "string",
+              "default": "",
+              "title": "The secretName Schema",
+              "examples": [
+                "redis"
+              ]
+            }
+          },
+          "examples": [
+            {
+              "name": "redis-secret-volume",
+              "mountPath": "/redis",
+              "secretName": "redis"
+            }
+          ]
+        },
+        "mongodb": {
+          "type": "object",
+          "default": {},
+          "title": "The mongodb Schema",
+          "required": [
+            "name",
+            "mountPath",
+            "secretName"
+          ],
+          "properties": {
+            "name": {
+              "type": "string",
+              "default": "",
+              "title": "The name Schema",
+              "examples": [
+                "mongodb-secret-volume"
+              ]
+            },
+            "mountPath": {
+              "type": "string",
+              "default": "",
+              "title": "The mountPath Schema",
+              "examples": [
+                "/mongodb"
+              ]
+            },
+            "secretName": {
+              "type": "string",
+              "default": "",
+              "title": "The secretName Schema",
+              "examples": [
+                "mongodb"
+              ]
+            }
+          },
+          "examples": [
+            {
+              "name": "mongodb-secret-volume",
+              "mountPath": "/mongodb",
+              "secretName": "mongodb"
+            }
+          ]
+        }
+      },
+      "examples": [
+        {
+          "activemq": {
+            "name": "activemq-secret-volume",
+            "mountPath": "/amqp",
+            "secretName": "activemq"
+          },
+          "redis": {
+            "name": "redis-secret-volume",
+            "mountPath": "/redis",
+            "secretName": "redis"
+          },
+          "mongodb": {
+            "name": "mongodb-secret-volume",
+            "mountPath": "/mongodb",
+            "secretName": "mongodb"
+          }
+        }
+      ]
+    }
+  },
+  "examples": [
+    {
+      "nameOverride": "armonik-control-plane",
+      "namespace": "armonik",
+      "image": "dockerhubaneo/armonik_control:0.19.3",
+      "replicaCount": 1,
+      "imagePullSecrets": [],
+      "controlPlaneSelector": [],
+      "controlPlane": {
+        "metadata": {
+          "name": "control-plane-helm",
+          "labels": {
+            "app": "armonik",
+            "service": "control-plane-helm"
+          }
+        },
+        "spec": {
+          "selector": {
+            "matchLabels": {
+              "app": "armonik",
+              "service": "control-plane-helm"
+            }
+          },
+          "template": {
+            "spec": {
+              "containers": {
+                "ports": {
+                  "name": "http",
+                  "containerPort": 1080
+                }
+              }
+            }
+          }
+        },
+        "annotations": "",
+        "serviceType": "HeadLess",
+        "ports": {
+          "containerPort": 1080,
+          "name": "http"
+        },
+        "limits": {
+          "cpu": "1000m",
+          "memory": "2048Mi"
+        },
+        "requests": {
+          "cpu": "50m",
+          "memory": "50Mi"
+        },
+        "defaultPartition": "default",
+        "name": "control-plane-helm",
+        "imagePullPolicy": "IfNotPresent"
+      },
+      "livenessProbe": {
+        "httpGet": {
+          "path": "/liveness",
+          "port": 1081
+        },
+        "initialDelaySeconds": 15,
+        "periodSeconds": 5,
+        "timeoutSeconds": 1,
+        "successThreshold": 1,
+        "failureThreshold": 1
+      },
+      "startupProbe": {
+        "httpGet": {
+          "path": "/startup",
+          "port": 1081
+        },
+        "initialDelaySeconds": 1,
+        "periodSeconds": 3,
+        "timeoutSeconds": 1,
+        "successThreshold": 1,
+        "failureThreshold": 20
+      },
+      "extraConf": {
+        "core": {
+          "Amqp__AllowHostMismatch": true,
+          "Amqp__MaxPriority": "10",
+          "Amqp__MaxRetries": "5",
+          "Amqp__QueueStorage__LockRefreshPeriodicity": "00:00:45",
+          "Amqp__QueueStorage__PollPeriodicity": "00:00:10",
+          "Amqp__QueueStorage__LockRefreshExtension": "00:02:00",
+          "MongoDB__TableStorage__PollingDelayMin": "00:00:01",
+          "MongoDB__TableStorage__PollingDelayMax": "00:00:10",
+          "MongoDB__AllowInsecureTls": true,
+          "MongoDB__TableStorage__PollingDelay": "00:00:01",
+          "MongoDB__DataRetention": "1.00:00:00",
+          "Redis__Timeout": 30000,
+          "Redis__SslHost": "127.0.0.1",
+          "Redis__TtlTimeSpan": "1.00:00:00"
+        },
+        "control": {
+          "Submitter__MaxErrorAllowed": "50"
+        }
+      },
+      "controlPlanConfigmap": [
+        "control-plane-configmap",
+        "log-configmap",
+        "core-configmap"
+      ],
+      "partitionNames": [
+        "default",
+        "monitoring"
+      ],
+      "secrets": {
+        "activemq": {
+          "name": "activemq",
+          "caFileName": "/amqp/chain.pem"
+        },
+        "mongodb": {
+          "name": "mongodb",
+          "caFileName": "/mongodb/chain.pem"
+        },
+        "redis": {
+          "name": "redis",
+          "caFileName": "/redis/chain.pem"
+        },
+        "s3": "s3",
+        "metricsExporter": "metrics-exporter",
+        "partitionMetrics_exporter": "partition-metrics-exporter",
+        "fluentBit": "fluent-bit",
+        "seq": "seq",
+        "grafana": "grafana",
+        "prometheus": "prometheus",
+        "deployedObjectStorageSecret": "deployed-object-storage-helm",
+        "deployedTableStorageSecret": "deployed-table-storage-helm",
+        "deployedQueueStorageSecret": "deployed-queue-storage-helm",
+        "storageEndpointUrl": {
+          "objectStorageAdapter": "Redis",
+          "tableStorageAdapter": "MongoDB",
+          "queueStorageAdapter": "Amqp",
+          "deployedObjectStorages": [
+            "Redis"
+          ],
+          "deployedTableStorages": [
+            "MongoDB"
+          ],
+          "deployedQueueStorages": [
+            "Amqp"
+          ]
+        },
+        "sharedStorage": {
+          "name": "shared-storage-helm",
+          "hostPath": "data",
+          "fileStorageType": "HostPath",
+          "fileServerIp": ""
+        }
+      },
+      "logConfigmap": {
+        "metadata": {
+          "name": "log-configmap-helm",
+          "namespace": "armonik"
+        },
+        "data": {
+          "loggingLevel": "Information"
+        }
+      },
+      "coreConfigmap": {
+        "metadata": {
+          "name": "core-configmap-helm"
+        },
+        "data": {
+          "Components__TableStorage": "MongoDB",
+          "Components__ObjectStorage": "Redis",
+          "Components__QueueStorage": "Amqp",
+          "Components__QueueAdaptorSettings__ClassName": "ArmoniK.Core.Adapters.Amqp.QueueBuilder",
+          "Components__QueueAdaptorSettings__AdapterAbsolutePath": "/adapters/queue/amqp/ArmoniK.Core.Adapters.Amqp.dll",
+          "MongoDB__CAFile": "/mongodb/chain.pem",
+          "MongoDB__ReplicaSet": "rs0",
+          "MongoDB__DatabaseName": "database",
+          "MongoDB__DirectConnection": "false",
+          "MongoDB__Tls": "true",
+          "Redis__CaPath": "/redis/chain.pem",
+          "Redis__InstanceName": "ArmoniKRedis",
+          "Redis__ClientName": "ArmoniK.Core",
+          "Redis__Ssl": "true",
+          "Amqp__CaPath": "/amqp/chain.pem",
+          "Amqp__Scheme": "AMQPS",
+          "Authenticator__RequireAuthentication": false,
+          "Authenticator__RequireAuthorization": false
+        }
+      },
+      "credentials": {
+        "Amqp__User": {
+          "key": "username",
+          "name": "activemq"
+        },
+        "Amqp__Password": {
+          "key": "password",
+          "name": "activemq"
+        },
+        "Amqp__Host": {
+          "key": "host",
+          "name": "activemq"
+        },
+        "Amqp__Port": {
+          "key": "port",
+          "name": "activemq"
+        },
+        "Redis__User": {
+          "key": "username",
+          "name": "redis"
+        },
+        "Redis__Password": {
+          "key": "password",
+          "name": "redis"
+        },
+        "Redis__EndpointUrl": {
+          "key": "url",
+          "name": "redis"
+        },
+        "MongoDB__User": {
+          "key": "username",
+          "name": "mongodb"
+        },
+        "MongoDB__Password": {
+          "key": "password",
+          "name": "mongodb"
+        },
+        "MongoDB__Host": {
+          "key": "host",
+          "name": "mongodb"
+        },
+        "MongoDB__Port": {
+          "key": "port",
+          "name": "mongodb"
+        }
+      },
+      "certificates": {
+        "activemq": {
+          "name": "activemq-secret-volume",
+          "mountPath": "/amqp",
+          "secretName": "activemq"
+        },
+        "redis": {
+          "name": "redis-secret-volume",
+          "mountPath": "/redis",
+          "secretName": "redis"
+        },
+        "mongodb": {
+          "name": "mongodb-secret-volume",
+          "mountPath": "/mongodb",
+          "secretName": "mongodb"
+        }
+      }
+    }
+  ]
 }

@@ -1,121 +1,25 @@
 # Best practices 
-from: https://boxunix.com/2022/02/05/developers-guide-to-writing-a-good-helm-chart/
 
-- Do not put multiple resources in one manifest file.
-- Avoid stutter when naming your resources.
-    (ex: kind: pod, name: armonik-pod)
--
-
-# Abbreviation
-
-| Abbreviation | Full name               |
-| ------------ | ----------------------- |
-| svc          | service                 |  
-| deploy       | deployment              |
-| cm           | configmap               |
-| secret       | secret                  |
-| ds           | daemonset               |
-| rc           | replicationcontroller   |
-| petset       | petset                  |
-| po           | pod                     |
-| hpa          | horizontalpodautoscaler |
-| ing          | ingress                 |
-| job          | job                     |
-| limit        | limitrange              |
-| ns           | namespace               |
-| pv           | persistentvolume        |
-| pvc          | persistentvolumeclaim   |
-| sa           | serviceaccount          |
-
-# Security 
-from: https://docs.bitnami.com/tutorials/production-ready-charts/
-
-## Use non-root containers
-
-spec:
-    {{- if .Values.securityContext.enabled }}
-        securityContext:
-        fsGroup: {{ .Values.securityContext.fsGroup }}
-    {{- end }}
-    {{- if .Values.securityContext.enabled }}
-        securityContext:
-        runAsUser: {{ .Values.securityContext.runAsUser }}
-    {{- end }}
-
-
- <!-- Pod Security Context -->
- <!-- ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/ -->
-<!--  -->
-securityContext:
-  enabled: true
-  fsGroup: 1001
-  runAsUser: 1001
-
-## Do not persist the configuration
-## Integrate charts with logging and monitoring tools
-
-# Versionning
-from: https://codefresh.io/docs/docs/ci-cd-guides/helm-best-practices/
-Each Helm chart has the ability to define two separate versions:
-- version in Chart.yaml: The version of the chart itself.
-- appVersion in Chart.yaml: The version of the application contained in the chart.
-These are unrelated and can be bumped up in any manner that you see fit. 
-You can sync them together or have them increase independently. 
-There is no right or wrong practice here as long as you stick into one. 
-<!-- TODO: Define a strategy for version -->
-1. Simple 1-1 versioning: keep the chart version in sync with your actual application (don't use appVersion)
-2. Chart versus application versioning: individually version charts and application 
-    - if changes are happening in the charts themselves all the time
-    - must define a chart versionning strategy !
-3. Umbrella charts: the same can applyed as the two above
-    - the chart and the sub-charts have the same version
-    - when exactly the parent chart version should be bumped. 
-        - Is it only when a child chart changes? 
-        - Only when an application changes? 
-        - or both?
-
-# Helm promotion strategies
-from: https://codefresh.io/docs/docs/ci-cd-guides/helm-best-practices/
-
-- promotion between environments (testing, staging, production).
-
-## Single repository with multiple environments
-A single Helm chart (the same across environments). 
-It is deployed to multiple targets using a different set of values.
-
-## Chart promotion between environments
-The recommended deployment workflow.
-
-
-
-# Conventions and constraints
-from: https://www.argonaut.dev/blog/helm-best-practices
+## Conventions and constraints [2]
 
 Here are some common conventions and constraints when it comes to naming Helm components.
+|Component | Convention / Constraint |
+|----------|-------------------------|
+|Chart names | Chart names must be lowercase alphanumeric with dashes (-) used to separate words. Uppercase letters, underscores, and dots are not allowed. |
+|Version numbers | Helm prefers SemVer 2 for version numbers, except for Docker image tags. When storing SemVer versions in Kubernetes labels, replace the "+" character with "_" since  labels do not allow "+". |
+|YAML indentation | YAML files should use two spaces for indentation, not tabs. |
+|Helm terminology | "Helm" refers to the project as a whole, while "helm" refers to the client-side command. |
+|Chart terminology | "chart" does not need to be capitalized, except for "Chart.yaml" file which is case sensitive. |
+|Variables | Variable names should start with a lowercase letter and use camel case to separate words. |
+|YAML structure | While YAML allows nested values, it is recommended to prefer a flat structure for simplicity and ease of use. |
+|Sharing templates | Parent charts and subcharts can share templates. Any defined block in any chart is available to other charts. |
+|Block vs. Include | In Helm charts, it is recommended to use "include" instead of "block" for overriding default implementations, as multiple implementations of the same block can result in unpredictable behavior. |
+| manifests | Do not put multiple resources in one manifest file. [0] |
+| Naming resources | Avoid stutter when naming your resources. (ex: kind: pod, name: armonik-pod) [0] |
 
-- Component:
-    - Convention / Constraint
-- Chart names:
-    - Chart names must be lowercase alphanumeric with dashes (-) used to separate words. Uppercase letters, underscores, and dots are not allowed.
-- Version numbers:
-    - Helm prefers SemVer 2 for version numbers, except for Docker image tags. When storing SemVer versions in Kubernetes labels, replace the "+" character with "_" since labels do not allow "+".
-- YAML indentation:
-    - YAML files should use two spaces for indentation, not tabs.
-- Helm terminology:
-    - "Helm" refers to the project as a whole, while "helm" refers to the client-side command.
-- Chart terminology:
-    - "chart" does not need to be capitalized, except for "Chart.yaml" file which is case sensitive.
-- Variables:
-    - Variable names should start with a lowercase letter and use camel case to separate words.
-- YAML structure:
-    - While YAML allows nested values, it is recommended to prefer a flat structure for simplicity and ease of use.
-- Sharing templates:
-    - Parent charts and subcharts can share templates. Any defined block in any chart is available to other charts.
-- Block vs. Include:
-    - In Helm charts, it is recommended to use "include" instead of "block" for overriding default implementations, as multiple implementations of the same block can result in unpredictable behavior.
-
-## Subcharts
+### Subcharts
 Each subchart in Helm has to be a standalone chart. And thus, a subchart cannot be dependent on its parent chart. However, a parent chart can override values of the subchart.
+~~~
 mychart/
   ├── Chart.yaml
   ├── values.yaml
@@ -138,24 +42,38 @@ mychart/
       ├── deployment.yaml
       ├── service.yaml
       └── ...
+~~~
 
 You can override the values of subcharts in the parent chart with the values.yaml file.
 
-## Using global values
+### Using global values
 Global values in Helm refer to the values that can be accessed by all charts in your chart directory. 
 These are defined in the values.yaml file as global: parameters.
-The Values data type has a reserved section called Values.global where global values can be set. Let's set one in our mychart/values.yaml file.
+The Values data type has a reserved section called Values.global 
+where global values can be set. 
 
-
-mysubchart:
-  dessert: ice cream
+Example:
+~~~ umbrella-chart/values.yaml 
 global:
-  salad: caesar
+  foo: bar
+~~~
 
-## Using labels
+By specifying the global variable, sub-charts can now 
+reference the global value in the parent’s values.yaml file as follows.
+
+~~~ umbrella-chart/charts/subchart/templates/deployment.yaml 
+{{- if .Values.global.foo }} # use the global value if it is set, ( if we want to deploy the sub-chart alone: {{- if .Values.global }} )
+  key1: {{ .Values.global.foo }} 
+{{- else }} # else use local value
+  key1: {{ .Values.foo }}
+{{- end }}
+~~~
+
+### Using labels
 Labels serve as a convenient way to quickly identify resources created by Helm releases.
-To define labels, a common approach is to use the helpers.tpl file:
+To define labels, a common approach is to use the _helpers.tpl file:
 
+~~~
 {{/*
 Common labels
 */}}
@@ -163,9 +81,11 @@ Common labels
 app.kubernetes.io/instance: {{ .Release.Name }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end -}}
+~~~
 
 Subsequently, labels can be included in resource templates using the "include" function:
 
+~~~
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -173,13 +93,17 @@ metadata:
   labels:
 {{ include "common.labels" . | indent 4 }}
 ...
+~~~
 
-## Documenting your charts
+use app.kubernetes.io/*
+
+
+### Documenting your charts
 - Comments
 - README
 - NOTES.txt
 
-## Securing your secrets
+### Securing your secrets
 
 the helm-secrets plugin can be utilized.
 This plugin leverages Mozilla SOPS, 
@@ -187,15 +111,141 @@ which supports encryption using various
 key management services like AWS KMS, 
 Google Cloud KMS, Azure Key Vault, and PGP.
 
-## Reusable charts using template functions
+### Reusable charts using template functions
 - default
 - required
 - ..
 
-## Resource policies to opt out of resource deletion
+### Resource policies to opt out of resource deletion
 By employing resource-policy annotations, 
 you can carefully manage the lifecycle of your resources 
 and ensure that important data is not inadvertently 
 lost during the uninstallation process. (Quotation marks are required)
 
+## Versionning [3]
 
+Each Helm chart has the ability to define two separate versions:
+- version in Chart.yaml: The version of the chart itself.
+- appVersion in Chart.yaml: The version of the application contained in the chart.
+These are unrelated and can be bumped up in any manner that you see fit. 
+You can sync them together or have them increase independently. 
+There is no right or wrong practice here as long as you stick into one. 
+<!-- TODO: Define a strategy for version -->
+1. Simple 1-1 versioning: keep the chart version in sync with your actual application (don't use appVersion)
+2. Chart versus application versioning: individually version charts and application 
+    - if changes are happening in the charts themselves all the time
+    - must define a chart versionning strategy !
+3. Umbrella charts: the same can applyed as the two above
+    - the chart and the sub-charts have the same version
+    - when exactly the parent chart version should be bumped. 
+        - Is it only when a child chart changes? 
+        - Only when an application changes? 
+        - or both?
+
+
+from: [5]
+
+When making use of umbrella charts to deploy a multi-component stack, 
+particularly where the sub-components of the stack will rarely, 
+if ever, be deployed standalone, it makes sense to migrate image 
+tag versions to the umbrella chart and maintain these here.
+
+=> use "global" in the umbrella chart to maintain sub-charts versions ! 
+
+## Helm promotion strategies [3]
+
+- promotion between environments (testing, staging, production).
+
+### Single repository with multiple environments
+A single Helm chart (the same across environments). 
+It is deployed to multiple targets using a different set of values.
+
+### Chart promotion between environments
+The recommended deployment workflow.
+
+## chart repository
+use ArtifactHub: https://artifacthub.io/packages/search?kind=0
+use our own repo:
+
+A chart repository is an HTTP server that houses an index.yaml file and optionally some packaged charts. A chart repository can be any HTTP server that can serve YAML and tar files and can answer GET requests.
+
+~~~
+charts/
+  |- index.yaml
+  |- alpine-0.1.2.tgz
+  |- alpine-0.1.2.tgz.prov
+~~~
+
+We can use GitHub Pages [4].
+
+## Abbreviation
+
+Use abbreviation in naming manifests:
+
+| Abbreviation | Full name               |
+| ------------ | ----------------------- |
+| svc          | service                 |  
+| deploy       | deployment              |
+| cm           | configmap               |
+| secret       | secret                  |
+| ds           | daemonset               |
+| rc           | replicationcontroller   |
+| petset       | petset                  |
+| po           | pod                     |
+| hpa          | horizontalpodautoscaler |
+| ing          | ingress                 |
+| job          | job                     |
+| limit        | limitrange              |
+| ns           | namespace               |
+| pv           | persistentvolume        |
+| pvc          | persistentvolumeclaim   |
+| sa           | serviceaccount          |
+
+
+## Security [1]
+
+### Use non-root containers
+
+~~~
+spec:
+    {{- if .Values.securityContext.enabled }}
+        securityContext:
+        fsGroup: {{ .Values.securityContext.fsGroup }}
+    {{- end }}
+    {{- if .Values.securityContext.enabled }}
+        securityContext:
+        runAsUser: {{ .Values.securityContext.runAsUser }}
+    {{- end }}
+~~~
+
+ <!-- Pod Security Context -->
+ <!-- ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/ -->
+<!--  -->
+In values:
+~~~
+securityContext:
+  enabled: true
+  fsGroup: 1001
+  runAsUser: 1001
+~~~
+
+### Do not persist the configuration
+### Integrate charts with logging and monitoring tools
+
+## Questions: 
+
+In terraform (control-plane.tf): The service uses the deployement labels (app, service) !
+is that means that the service created after the deployment is created ?
+is it more sense to make a values (for app and service) that will be used by both deployment and service ?
+
+## TODO:
+- Use control-plane.labels of _helpers.tpl
+    - add extraLabels
+
+## References
+[0]: https://boxunix.com/2022/02/05/developers-guide-to-writing-a-good-helm-chart/
+[1]: https://docs.bitnami.com/tutorials/production-ready-charts/
+[2]: https://www.argonaut.dev/blog/helm-best-practices
+[3]: https://codefresh.io/docs/docs/ci-cd-guides/helm-best-practices/
+[4]: https://helm.sh/docs/topics/chart_repository/
+[5]: https://itnext.io/helm-3-umbrella-charts-standalone-chart-image-tags-an-alternative-approach-78a218d74e2d

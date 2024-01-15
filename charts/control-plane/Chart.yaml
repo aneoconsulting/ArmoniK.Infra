@@ -1,5 +1,5 @@
 apiVersion: v2
-name: armonik-control-plane
+name: control-plane
 description: A Helm chart for ArmoniK Control Plane
 
 # Specify the Kubernetes version range that we support.

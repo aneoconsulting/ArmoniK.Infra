@@ -1,4 +1,4 @@
-# armonik-control-plane
+# control-plane
 
 ![Version: 0.1.0](https://img.shields.io/badge/Version-0.1.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.2.2](https://img.shields.io/badge/AppVersion-0.2.2-informational?style=flat-square)
 
@@ -34,6 +34,7 @@ Kubernetes: `>=v1.23.0-0`
 | certificates.redis.mountPath | string | `"/redis"` |  |
 | certificates.redis.name | string | `"redis-secret-volume"` |  |
 | certificates.redis.secretName | string | `"redis"` |  |
+| controlPlanConfigmapEnabled | bool | `true` |  |
 | controlPlanConfigmap[0] | string | `"control-plane-configmap"` |  |
 | controlPlanConfigmap[1] | string | `"log-configmap"` |  |
 | controlPlanConfigmap[2] | string | `"core-configmap"` |  |
@@ -57,6 +58,7 @@ Kubernetes: `>=v1.23.0-0`
 | coreConfigmap.data.Redis__ClientName | string | `"ArmoniK.Core"` |  |
 | coreConfigmap.data.Redis__InstanceName | string | `"ArmoniKRedis"` |  |
 | coreConfigmap.data.Redis__Ssl | string | `"true"` |  |
+| coreConfigmap.enabled | bool | `true` |  |
 | coreConfigmap.metadata.name | string | `"core-configmap-helm"` |  |
 | credentials.Amqp__Host.key | string | `"host"` |  |
 | credentials.Amqp__Host.name | string | `"activemq"` |  |
@@ -106,6 +108,7 @@ Kubernetes: `>=v1.23.0-0`
 | livenessProbe.successThreshold | int | `1` |  |
 | livenessProbe.timeoutSeconds | int | `1` |  |
 | logConfigmap.data.loggingLevel | string | `"Information"` |  |
+| logConfigmap.enabled | bool | `false` |  |
 | logConfigmap.metadata.name | string | `"log-configmap-helm"` |  |
 | logConfigmap.metadata.namespace | string | `"armonik"` |  |
 | nameOverride | string | `"armonik-control-plane"` |  |

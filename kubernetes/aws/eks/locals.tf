@@ -24,17 +24,6 @@ locals {
   aws_node_termination_handler_spot_name = "${var.name}-spot-termination"
   kubeconfig_output_path                 = coalesce(var.kubeconfig_file, "${path.root}/generated/kubeconfig")
 
-  # Custom ENI
-  subnets = {
-    subnets = [
-      for index, id in var.vpc.pods_subnet_ids : {
-        subnet_id          = id
-        az_name            = element(data.aws_availability_zones.available.names, index)
-        security_group_ids = [module.eks.node_security_group_id]
-      }
-    ]
-  }
-
   # Node selector
   node_selector_keys   = keys(var.node_selector)
   node_selector_values = values(var.node_selector)
@@ -48,6 +37,53 @@ locals {
         operator = "Equal"
         value    = local.node_selector_values[index]
         effect   = "NoSchedule"
+      }
+    ]
+  }
+
+  # EFS CSI
+  efs_csi_name      = try(var.eks.efs_csi.name, "efs-csi-driver")
+  oidc_arn          = module.eks.oidc_provider_arn
+  oidc_url          = trimprefix(module.eks.cluster_oidc_issuer_url, "https://")
+  efs_csi_namespace = try(var.eks.efs_csi.namespace, "kube-system")
+  efs_csi_tolerations = [
+    for index in range(0, length(local.node_selector_keys)) : {
+      key      = local.node_selector_keys[index]
+      operator = "Equal"
+      value    = local.node_selector_values[index]
+      effect   = "NoSchedule"
+    }
+  ]
+  controller = {
+    controller = {
+      create                   = true
+      logLevel                 = 2
+      extraCreateMetadata      = true
+      tags                     = {}
+      deleteAccessPointRootDir = false
+      volMetricsOptIn          = false
+      podAnnotations           = {}
+      resources                = {}
+      nodeSelector             = var.node_selector
+      tolerations              = local.efs_csi_tolerations
+      affinity                 = {}
+      serviceAccount = {
+        create      = false
+        name        = kubernetes_service_account.efs_csi_driver_controller.metadata[0].name
+        annotations = {}
+      }
+      healthPort           = 9909
+      regionalStsEndpoints = false
+    }
+  }
+
+  # Custom ENI
+  subnets = {
+    subnets = [
+      for index, id in var.vpc.pods_subnet_ids : {
+        subnet_id          = id
+        az_name            = element(data.aws_availability_zones.available.names, index)
+        security_group_ids = [module.eks.node_security_group_id]
       }
     ]
   }

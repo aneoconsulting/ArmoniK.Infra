@@ -13,6 +13,10 @@ variable "mongodb" {
     node_selector      = any
     image_pull_secrets = string
     replicas_number    = number
+    security_context = object({
+      run_as_user = number
+      fs_group    = number
+    })
   })
 }
 
@@ -21,6 +25,7 @@ variable "persistent_volume" {
   description = "Persistent volume info"
   type = object({
     storage_provisioner = string
+    volume_binding_mode = string
     parameters          = map(string)
     # Resources for PVC
     resources = object({

@@ -89,6 +89,22 @@ variable "eks" {
         image = string
         tag   = string
       })
+      efs_csi = object({
+        image = string
+        tag   = string
+      })
+      livenessprobe = object({
+        image = string
+        tag   = string
+      })
+      node_driver_registrar = object({
+        image = string
+        tag   = string
+      })
+      external_provisioner = object({
+        image = string
+        tag   = string
+      })
     })
     cluster_autoscaler = object({
       expander                              = string
@@ -111,6 +127,13 @@ variable "eks" {
       namespace  = string
       repository = string
       version    = string
+    })
+    efs_csi = object({
+      name               = string
+      namespace          = string
+      image_pull_secrets = string
+      repository         = string
+      version            = string
     })
     encryption_keys = object({
       cluster_log_kms_key_id    = string

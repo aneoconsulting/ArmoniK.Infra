@@ -20,27 +20,27 @@ Here are some common conventions and constraints when it comes to naming Helm co
 ### Subcharts
 Each subchart in Helm has to be a standalone chart. And thus, a subchart cannot be dependent on its parent chart. However, a parent chart can override values of the subchart.
 ~~~
-mychart/
+armonik/
   ├── Chart.yaml
   ├── values.yaml
   ├── charts/
-  │   ├── mongodb/
+  │   ├── control-plane/
   │   │   ├── Chart.yaml
   │   │   ├── values.yaml
   │   │   └── templates/
-  │   │       ├── deployment.yaml
-  │   │       ├── service.yaml
+  │   │       ├── control-plane-deployment.yaml
+  │   │       ├── control-plane-service.yaml
   │   │       └── ...
-  │   └── redis/
+  │   └── compute-plane/
   │       ├── Chart.yaml
   │       ├── values.yaml
   │       └── templates/
-  │           ├── deployment.yaml
-  │           ├── service.yaml
+  │           ├── compute-plane-deployment.yaml
+  │           ├── compute-plane-service.yaml
   │           └── ...
   └── templates/
-      ├── deployment.yaml
-      ├── service.yaml
+      ├── armonik-deployment.yaml
+      ├── armonik-service.yaml
       └── ...
 ~~~
 

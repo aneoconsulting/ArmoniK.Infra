@@ -13,17 +13,9 @@ type: application
 version: 0.1.0
 appVersion: "0.2.2"
 
-# Add chart dependecies 
-# dependencies:
-  # Example
-  # - name: message-queue
-  #   condition: message-queue.enabled
-  # - name: database
-  #   condition: database.enabled
-
-home: https://github.com/aneoconsulting/ArmoniK.Infra/tree/main/charts/control-plane
-sources:
-  - https://github.com/aneoconsulting/ArmoniK.Infra/tree/main/charts/control-plane
+# home: https://github.com/aneoconsulting/ArmoniK.Infra/tree/main/charts/armonik/charts/control-plane
+# sources:
+#   - https://github.com/aneoconsulting/ArmoniK.Infra/tree/main/charts/armonik/charts/control-plane
 
 # Maintainers
 maintainers:

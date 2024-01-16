@@ -1,0 +1,173 @@
+# Default values for armonik.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+global:
+  namespace: "armonik"
+
+replicaCount: 1
+
+image:
+  repository: nginx
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: ""
+
+controlPlane:
+  enabled: false
+
+computePlane:
+  enabled: false
+
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Automatically mount a ServiceAccount's API credentials?
+  automount: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: chart-example.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+# Additional volumes on the output Deployment definition.
+volumes: []
+# - name: foo
+#   secret:
+#     secretName: mysecret
+#     optional: false
+
+# Additional volumeMounts on the output Deployment definition.
+volumeMounts: []
+# - name: foo
+#   mountPath: "/etc/foo"
+#   readOnly: true
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+
+partitionNames:
+  - "default"
+  - "monitoring"
+  
+# Control plane configmap
+
+extraConf:
+  core:
+    Amqp__AllowHostMismatch: true
+    Amqp__MaxPriority: "10"
+    Amqp__MaxRetries: "5"
+    Amqp__QueueStorage__LockRefreshPeriodicity: "00:00:45"
+    Amqp__QueueStorage__PollPeriodicity: "00:00:10"
+    Amqp__QueueStorage__LockRefreshExtension: "00:02:00"
+    MongoDB__TableStorage__PollingDelayMin: "00:00:01"
+    MongoDB__TableStorage__PollingDelayMax: "00:00:10"
+    MongoDB__AllowInsecureTls: true
+    MongoDB__TableStorage__PollingDelay: "00:00:01"
+    MongoDB__DataRetention: "1.00:00:00"
+    Redis__Timeout: 30000
+    Redis__SslHost: "127.0.0.1"
+    Redis__TtlTimeSpan: "1.00:00:00"
+  control:
+    Submitter__MaxErrorAllowed: "50"
+
+controlPlanConfigmapEnabled: true
+controlPlanConfigmap:
+  - "control-plane-configmap"
+  - "log-configmap"
+  - "core-configmap"
+
+
+logConfigmap:
+  enabled: false
+  metadata:
+    name: "log-configmap-helm"
+    namespace: "armonik"
+  data:
+    loggingLevel: "Information"
+  
+coreConfigmap:
+  enabled: true
+  metadata:
+    name: "core-configmap-helm"
+  data:
+    Components__TableStorage: "MongoDB"
+    Components__ObjectStorage: "Redis"
+    Components__QueueStorage: "Amqp"
+    Components__QueueAdaptorSettings__ClassName: "ArmoniK.Core.Adapters.Amqp.QueueBuilder" # data.kubernetes_secret.deployed_queue_storage.data.adapter_class_name
+    Components__QueueAdaptorSettings__AdapterAbsolutePath: "/adapters/queue/amqp/ArmoniK.Core.Adapters.Amqp.dll" # data.kubernetes_secret.deployed_queue_storage.data.adapter_absolute_path
+    MongoDB__CAFile: "/mongodb/chain.pem" #local.table_storage_adapter_from_secret == "mongodb" ? local.secrets.mongodb.ca_filename : ""
+    MongoDB__ReplicaSet: "rs0"
+    MongoDB__DatabaseName: "database"
+    MongoDB__DirectConnection: "false"
+    MongoDB__Tls: "true"
+    Redis__CaPath: "/redis/chain.pem" # local.object_storage_adapter_from_secret == "redis" ? local.secrets.redis.ca_filename : ""
+    Redis__InstanceName: "ArmoniKRedis"
+    Redis__ClientName: "ArmoniK.Core"
+    Redis__Ssl: "true"
+    Amqp__CaPath: "/amqp/chain.pem" # local.queue_storage_adapter_from_secret == "amqp" ? local.secrets.activemq.ca_filename : ""
+    Amqp__Scheme: "AMQPS"
+    Authenticator__RequireAuthentication: false # 
+    Authenticator__RequireAuthorization: false # 

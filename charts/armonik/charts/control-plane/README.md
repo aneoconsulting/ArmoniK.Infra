@@ -4,17 +4,11 @@
 
 A Helm chart for ArmoniK Control Plane
 
-**Homepage:** <https://github.com/aneoconsulting/ArmoniK.Infra/tree/main/charts/control-plane>
-
 ## Maintainers
 
 | Name | Email | Url |
 | ---- | ------ | --- |
 | Aneo | <armonik-support@aneo.fr> | <armonik.fr> |
-
-## Source Code
-
-* <https://github.com/aneoconsulting/ArmoniK.Infra/tree/main/charts/control-plane>
 
 ## Requirements
 
@@ -34,7 +28,7 @@ Kubernetes: `>=v1.23.0-0`
 | certificates.redis.mountPath | string | `"/redis"` |  |
 | certificates.redis.name | string | `"redis-secret-volume"` |  |
 | certificates.redis.secretName | string | `"redis"` |  |
-| controlPlanConfigmapEnabled | bool | `true` |  |
+| controlPlanConfigmapEnabled | bool | `false` |  |
 | controlPlanConfigmap[0] | string | `"control-plane-configmap"` |  |
 | controlPlanConfigmap[1] | string | `"log-configmap"` |  |
 | controlPlanConfigmap[2] | string | `"core-configmap"` |  |
@@ -58,7 +52,7 @@ Kubernetes: `>=v1.23.0-0`
 | coreConfigmap.data.Redis__ClientName | string | `"ArmoniK.Core"` |  |
 | coreConfigmap.data.Redis__InstanceName | string | `"ArmoniKRedis"` |  |
 | coreConfigmap.data.Redis__Ssl | string | `"true"` |  |
-| coreConfigmap.enabled | bool | `true` |  |
+| coreConfigmap.enabled | bool | `false` |  |
 | coreConfigmap.metadata.name | string | `"core-configmap-helm"` |  |
 | credentials.Amqp__Host.key | string | `"host"` |  |
 | credentials.Amqp__Host.name | string | `"activemq"` |  |

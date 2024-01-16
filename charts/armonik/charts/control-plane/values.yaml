@@ -90,7 +90,7 @@ extraConf:
   control:
     Submitter__MaxErrorAllowed: "50"
 
-controlPlanConfigmapEnabled: true
+controlPlanConfigmapEnabled: false
 controlPlanConfigmap:
   - "control-plane-configmap"
   - "log-configmap"
@@ -146,7 +146,7 @@ logConfigmap:
     loggingLevel: "Information"
   
 coreConfigmap:
-  enabled: true
+  enabled: false
   metadata:
     name: "core-configmap-helm"
   data:

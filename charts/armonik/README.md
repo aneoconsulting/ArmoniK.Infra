@@ -30,11 +30,11 @@ Kubernetes: `>=v1.23.0-0`
 | autoscaling.minReplicas | int | `1` |  |
 | autoscaling.targetCPUUtilizationPercentage | int | `80` |  |
 | computePlane.enabled | bool | `false` |  |
-| controlPlanConfigmapEnabled | bool | `true` |  |
+| controlPlanConfigmapEnabled | bool | `false` |  |
 | controlPlanConfigmap[0] | string | `"control-plane-configmap"` |  |
 | controlPlanConfigmap[1] | string | `"log-configmap"` |  |
 | controlPlanConfigmap[2] | string | `"core-configmap"` |  |
-| controlPlane.enabled | bool | `false` |  |
+| controlPlane.enabled | bool | `true` |  |
 | coreConfigmap.data.Amqp__CaPath | string | `"/amqp/chain.pem"` |  |
 | coreConfigmap.data.Amqp__Scheme | string | `"AMQPS"` |  |
 | coreConfigmap.data.Authenticator__RequireAuthentication | bool | `false` |  |
@@ -53,7 +53,7 @@ Kubernetes: `>=v1.23.0-0`
 | coreConfigmap.data.Redis__ClientName | string | `"ArmoniK.Core"` |  |
 | coreConfigmap.data.Redis__InstanceName | string | `"ArmoniKRedis"` |  |
 | coreConfigmap.data.Redis__Ssl | string | `"true"` |  |
-| coreConfigmap.enabled | bool | `true` |  |
+| coreConfigmap.enabled | bool | `false` |  |
 | coreConfigmap.metadata.name | string | `"core-configmap-helm"` |  |
 | extraConf.control.Submitter__MaxErrorAllowed | string | `"50"` |  |
 | extraConf.core.Amqp__AllowHostMismatch | bool | `true` |  |

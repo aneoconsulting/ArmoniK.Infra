@@ -1,7 +1,7 @@
 # Best practices 
 
-These document presents some of the most known best practices in writing
-Helm charts. Most of the best practices are described in the [Helm docs]{https://helm.sh/docs/} page. Other resources are also used ([boxunix](https://boxunix.com/2022/02/05/developers-guide-to-writing-a-good-helm-chart/), [Bitnami docs](https://docs.bitnami.com/tutorials/production-ready-charts/), [Argonaut](https://www.argonaut.dev/blog/helm-best-practices)
+This document presents some of the most known best practices in writing
+Helm charts. Most of the best practices are described in the [Helm docs](https://helm.sh/docs/) page. Other resources are also used ([boxunix](https://boxunix.com/2022/02/05/developers-guide-to-writing-a-good-helm-chart/), [Bitnami docs](https://docs.bitnami.com/tutorials/production-ready-charts/), [Argonaut](https://www.argonaut.dev/blog/helm-best-practices)
 [Codefresh](https://codefresh.io/docs/docs/ci-cd-guides/helm-best-practices/)
 [Itnext](https://itnext.io/helm-3-umbrella-charts-standalone-chart-image-tags-an-alternative-approach-78a218d74e2d)).
 

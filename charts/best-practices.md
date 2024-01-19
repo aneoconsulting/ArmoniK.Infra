@@ -27,6 +27,25 @@ Here are some common conventions and constraints when it comes to naming Helm co
 | manifests | Do not put multiple resources in one manifest file. [0] |
 | Naming resources | Avoid stutter when naming your resources. (ex: kind: pod, name: armonik-pod) [0] |
 
+### Variables
+
+In Helm templates, a variable is a named reference to another object. It follows the form $name. Variables are assigned with a special assignment operator: :=. We can rewrite the above to use a variable for Release.Name.
+
+~~~
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-configmap
+data:
+  myvalue: "Hello World"
+  {{- $relname := .Release.Name -}}
+  {{- with .Values.favorite }}
+  drink: {{ .drink | default "tea" | quote }}
+  food: {{ .food | upper | quote }}
+  release: {{ $relname }}
+  {{- end }}
+~~~
+
 ### Using labels
 Labels serve as a convenient way to quickly identify resources created by Helm releases.
 To define labels, a common approach is to use the _helpers.tpl file:
@@ -140,7 +159,7 @@ reference the global value in the parent’s values.yaml file as follows.
 Each Helm chart has the ability to define two separate versions:
 - version in Chart.yaml: The version of the chart itself.
 - appVersion in Chart.yaml: The version of the application contained in the chart.
-These are unrelated and can be bumped up in any manner that you see fit. 
+These are unrelated and can be bumped up in any manner. 
 You can sync them together or have them increase independently. 
 There is no right or wrong practice here as long as you stick into one. 
 <!-- TODO: Define a strategy for version -->

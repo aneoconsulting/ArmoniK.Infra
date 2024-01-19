@@ -29,21 +29,12 @@ Here are some common conventions and constraints when it comes to naming Helm co
 
 ### Variables
 
-In Helm templates, a variable is a named reference to another object. It follows the form $name. Variables are assigned with a special assignment operator: :=. We can rewrite the above to use a variable for Release.Name.
+A variable is a named reference to another object. 
+It follows the form $name. Variables are assigned with a special assignment operator `:=`.
 
 ~~~
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: {{ .Release.Name }}-configmap
-data:
-  myvalue: "Hello World"
-  {{- $relname := .Release.Name -}}
-  {{- with .Values.favorite }}
-  drink: {{ .drink | default "tea" | quote }}
-  food: {{ .food | upper | quote }}
-  release: {{ $relname }}
-  {{- end }}
+{{- $relname := .Release.Name -}}
+release: {{ $relname }}
 ~~~
 
 ### Using labels

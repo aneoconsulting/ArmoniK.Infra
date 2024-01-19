@@ -5,10 +5,14 @@ Helm charts. Most of the best practices are described in the [Helm docs](https:/
 [Codefresh](https://codefresh.io/docs/docs/ci-cd-guides/helm-best-practices/)
 [Itnext](https://itnext.io/helm-3-umbrella-charts-standalone-chart-image-tags-an-alternative-approach-78a218d74e2d)).
 
+This guide will be used by [Aneo](https://www.aneo.eu/) to write Helm charts for the [Armonik plateform](https://www.armonik.fr/).
 
-## Conventions and constraints [2]
+## Coding standart
+
+### Conventions and constraints [2]
 
 Here are some common conventions and constraints when it comes to naming Helm components.
+
 |Component | Convention / Constraint |
 |----------|-------------------------|
 |Chart names | Chart names must be lowercase alphanumeric with dashes (-) used to separate words. Uppercase letters, underscores, and dots are not allowed. |
@@ -22,6 +26,61 @@ Here are some common conventions and constraints when it comes to naming Helm co
 |Block vs. Include | In Helm charts, it is recommended to use "include" instead of "block" for overriding default implementations, as multiple implementations of the same block can result in unpredictable behavior. |
 | manifests | Do not put multiple resources in one manifest file. [0] |
 | Naming resources | Avoid stutter when naming your resources. (ex: kind: pod, name: armonik-pod) [0] |
+
+### Using labels
+Labels serve as a convenient way to quickly identify resources created by Helm releases.
+To define labels, a common approach is to use the _helpers.tpl file:
+
+~~~
+{{/*
+Common labels
+*/}}
+{{- define "common.labels" -}}
+app.kubernetes.io/instance: {{ .Release.Name }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- end -}}
+~~~
+
+Subsequently, labels can be included in resource templates using the "include" function:
+
+~~~
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-queue
+  labels:
+{{ include "common.labels" . | indent 4 }}
+...
+~~~
+
+use app.kubernetes.io/*
+
+
+### Documenting charts
+- Comments
+- README
+- NOTES.txt
+
+### Securing secrets
+
+the helm-secrets plugin can be utilized.
+This plugin leverages Mozilla SOPS, 
+which supports encryption using various 
+key management services like AWS KMS, 
+Google Cloud KMS, Azure Key Vault, and PGP.
+
+### Reusable charts using template functions
+- default
+- required
+- ..
+
+### Resource policies to opt out of resource deletion
+By employing resource-policy annotations, 
+you can carefully manage the lifecycle of your resources 
+and ensure that important data is not inadvertently 
+lost during the uninstallation process. (Quotation marks are required)
+
+## Umbrella charts
 
 ### Subcharts
 Each subchart in Helm has to be a standalone chart. And thus, a subchart cannot be dependent on its parent chart. However, a parent chart can override values of the subchart.
@@ -75,58 +134,6 @@ reference the global value in the parent’s values.yaml file as follows.
 {{- end }}
 ~~~
 
-### Using labels
-Labels serve as a convenient way to quickly identify resources created by Helm releases.
-To define labels, a common approach is to use the _helpers.tpl file:
-
-~~~
-{{/*
-Common labels
-*/}}
-{{- define "common.labels" -}}
-app.kubernetes.io/instance: {{ .Release.Name }}
-app.kubernetes.io/managed-by: {{ .Release.Service }}
-{{- end -}}
-~~~
-
-Subsequently, labels can be included in resource templates using the "include" function:
-
-~~~
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: my-queue
-  labels:
-{{ include "common.labels" . | indent 4 }}
-...
-~~~
-
-use app.kubernetes.io/*
-
-
-### Documenting your charts
-- Comments
-- README
-- NOTES.txt
-
-### Securing your secrets
-
-the helm-secrets plugin can be utilized.
-This plugin leverages Mozilla SOPS, 
-which supports encryption using various 
-key management services like AWS KMS, 
-Google Cloud KMS, Azure Key Vault, and PGP.
-
-### Reusable charts using template functions
-- default
-- required
-- ..
-
-### Resource policies to opt out of resource deletion
-By employing resource-policy annotations, 
-you can carefully manage the lifecycle of your resources 
-and ensure that important data is not inadvertently 
-lost during the uninstallation process. (Quotation marks are required)
 
 ## Versionning [3]
 
@@ -237,6 +244,9 @@ securityContext:
 
 ### Do not persist the configuration
 ### Integrate charts with logging and monitoring tools
+
+## Tests:
+
 
 ## Questions: 
 

@@ -129,12 +129,25 @@ resource "aws_security_group" "mq" {
     protocol    = "tcp"
     cidr_blocks = var.vpc_cidr_blocks
   }
-  ingress {
-    description = "Web console for Amazon MQ"
-    from_port   = 8162
-    to_port     = 8162
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+  dynamic "ingress" {
+    for_each = var.publicly_accessible && var.engine_type == "ActiveMQ" ? [1] : []
+    content {
+      description = "Web console for Amazon MQ"
+      from_port   = 8162
+      to_port     = 8162
+      protocol    = "tcp"
+      cidr_blocks = ["0.0.0.0/0"]
+    }
+  }
+  dynamic "ingress" {
+    for_each = var.publicly_accessible && var.engine_type == "RabbitMQ" ? [1] : []
+    content {
+      description = "Web console for Amazon MQ"
+      from_port   = 15672
+      to_port     = 15672
+      protocol    = "tcp"
+      cidr_blocks = ["0.0.0.0/0"]
+    }
   }
   egress {
     from_port   = 0

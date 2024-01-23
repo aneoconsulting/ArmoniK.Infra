@@ -159,6 +159,12 @@ resource "aws_security_group" "mq" {
       cidr_blocks = ["0.0.0.0/0"]
     }
   }
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
   /*dynamic "ingress" {
     for_each = var.publicly_accessible ? [1] : []
     content {
@@ -169,13 +175,7 @@ resource "aws_security_group" "mq" {
       cidr_blocks = ["0.0.0.0/0"]
     }
   }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }*/
+  */
   tags = local.tags
 }
 

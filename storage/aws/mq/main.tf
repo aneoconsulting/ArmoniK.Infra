@@ -129,7 +129,7 @@ resource "aws_security_group" "mq" {
     protocol    = "tcp"
     cidr_blocks = var.vpc_cidr_blocks
   }
-    dynamic "ingress" {
+  dynamic "ingress" {
     for_each = var.publicly_accessible && var.engine_type == "ActiveMQ" ? [1] : []
     content {
       description = "Web console for Amazon MQ broker ActiveMQ"
@@ -139,7 +139,7 @@ resource "aws_security_group" "mq" {
       cidr_blocks = ["0.0.0.0/0"]
     }
   }
-   dynamic "ingress" {
+  dynamic "ingress" {
     for_each = var.publicly_accessible && var.engine_type == "RabbitMQ" ? [1] : []
     content {
       description = "Web console for Amazon MQ broker RabbitMQ"
@@ -149,7 +149,7 @@ resource "aws_security_group" "mq" {
       cidr_blocks = ["0.0.0.0/0"]
     }
   }
-   dynamic "ingress" {
+  dynamic "ingress" {
     for_each = var.publicly_accessible && var.engine_type == "RabbitMQ" ? [1] : []
     content {
       description = "Web console for Amazon MQ broker RabbitMQ"

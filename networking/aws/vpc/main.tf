@@ -15,7 +15,7 @@ locals {
 # VPC
 module "vpc" {
   source                = "terraform-aws-modules/vpc/aws"
-  version               = "5.0.0"
+  version               = "5.5.1"
   name                  = var.name
   azs                   = data.aws_availability_zones.available.names
   cidr                  = var.cidr
@@ -27,7 +27,9 @@ module "vpc" {
   enable_dns_support   = true
   # External access
   enable_nat_gateway = local.enable_external_access
-  single_nat_gateway = local.enable_external_access
+  #single_nat_gateway     = local.enable_external_access
+  #one_nat_gateway_per_az = local.enable_external_access
+  create_igw = local.enable_external_access
   # Cloudwatch log group and IAM role will be created
   enable_flow_log                                 = true
   flow_log_destination_type                       = "cloud-watch-logs"

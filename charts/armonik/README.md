@@ -84,7 +84,7 @@ Kubernetes: `>=v1.23.0-0`
 | ingress.hosts[0].paths[0].pathType | string | `"ImplementationSpecific"` |  |
 | ingress.tls | list | `[]` |  |
 | logConfigmap.data.loggingLevel | string | `"Information"` |  |
-| logConfigmap.enabled | bool | `false` |  |
+| logConfigmap.enabled | bool | `true` |  |
 | logConfigmap.metadata.name | string | `"log-configmap-helm"` |  |
 | logConfigmap.metadata.namespace | string | `"armonik"` |  |
 | nameOverride | string | `""` |  |

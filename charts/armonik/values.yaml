@@ -141,7 +141,7 @@ controlPlanConfigmap:
 
 
 logConfigmap:
-  enabled: false
+  enabled: true
   metadata:
     name: "log-configmap-helm"
     namespace: "armonik"

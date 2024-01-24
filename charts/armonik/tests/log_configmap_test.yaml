@@ -1,0 +1,11 @@
+suite: test log configmap
+templates:
+  - log-configmap.yaml
+tests:
+  - it: should work
+    asserts:
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: metadata.name
+          pattern: log-configmap-helm

@@ -27,6 +27,9 @@ Here are some common conventions and constraints when it comes to naming Helm co
 | manifests | Do not put multiple resources in one manifest file. [0] |
 | Naming resources | Avoid stutter when naming your resources. (ex: kind: pod, name: armonik-pod) [0] |
 
+Flat or Nested Values ?? 
+In most cases, flat should be favored over nested. The reason for this is that it is simpler for template developers and users. For every layer of nesting, an existence check must be done. But for flat configuration, such checks can be skipped, making the template easier to read and use.
+
 ### Variables
 
 A variable is a named reference to another object. 
@@ -143,6 +146,8 @@ reference the global value in the parent’s values.yaml file as follows.
   key1: {{ .Values.foo }}
 {{- end }}
 ~~~
+
+## Library charts
 
 
 ## Versionning [3]

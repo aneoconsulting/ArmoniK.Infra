@@ -6,7 +6,11 @@ nameOverride: ""
 
 # -- namespace is the namespace used for all resources
 namespace: "armonik"
-# -- image is the armonik image and the tag image:tag
+
+# -- replicaCount is the number of replicas
+replicaCount: 1
+
+# -- image is the armonik control plane image and the tag image:tag
 # image: "dockerhubaneo/armonik_control:0.19.3"
 # -- image 
 image:
@@ -18,10 +22,10 @@ image:
   ## Optionally specify an array of imagePullSecrets.
   pullSecrets: []
 
-# -- replicaCount is the number of replicas
-replicaCount: 1
 # imagePullSecrets: []
+
 controlPlaneSelector: []
+
 # -- controlPlane contains all the values of the control plane deployment
 controlPlane:
   metadata:

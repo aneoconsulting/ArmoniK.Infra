@@ -2,19 +2,25 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-# -- Kubernetes API version to be used
-apiVersion: "apps/v1"                                       # Optional. Default: apps/v1
-# -- Kid of the Kubernetes resource to be scaled
-kind: "Deployment"                                          # Optional. Default: Deployment
+nameOverride: ""
 
-nameOverride: "armonik-control-plane"
 # -- namespace is the namespace used for all resources
 namespace: "armonik"
 # -- image is the armonik image and the tag image:tag
-image: "dockerhubaneo/armonik_control:0.19.3"
+# image: "dockerhubaneo/armonik_control:0.19.3"
+# -- image 
+image:
+  registry: docker.io
+  repository: dockerhubaneo/armonik_control
+  tag: 0.19.3
+  ## Specify a imagePullPolicy
+  pullPolicy: IfNotPresent
+  ## Optionally specify an array of imagePullSecrets.
+  pullSecrets: []
+
 # -- replicaCount is the number of replicas
 replicaCount: 1
-imagePullSecrets: []
+# imagePullSecrets: []
 controlPlaneSelector: []
 # -- controlPlane contains all the values of the control plane deployment
 controlPlane:

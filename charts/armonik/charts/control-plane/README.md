@@ -18,7 +18,6 @@ Kubernetes: `>=v1.23.0-0`
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| apiVersion | string | `"apps/v1"` | Kubernetes API version to be used |
 | certificates.activemq.mountPath | string | `"/amqp"` |  |
 | certificates.activemq.name | string | `"activemq-secret-volume"` |  |
 | certificates.activemq.secretName | string | `"activemq"` |  |
@@ -91,9 +90,7 @@ Kubernetes: `>=v1.23.0-0`
 | extraConf.core.Redis__SslHost | string | `"127.0.0.1"` |  |
 | extraConf.core.Redis__Timeout | int | `30000` |  |
 | extraConf.core.Redis__TtlTimeSpan | string | `"1.00:00:00"` |  |
-| image | string | `"dockerhubaneo/armonik_control:0.19.3"` | image is the armonik image and the tag image:tag |
-| imagePullSecrets | list | `[]` |  |
-| kind | string | `"Deployment"` | Kid of the Kubernetes resource to be scaled |
+| image | object | `{"pullPolicy":"IfNotPresent","pullSecrets":[],"registry":"docker.io","repository":"dockerhubaneo/armonik_control","tag":"0.19.3"}` | image  |
 | livenessProbe.failureThreshold | int | `1` |  |
 | livenessProbe.httpGet.path | string | `"/liveness"` |  |
 | livenessProbe.httpGet.port | int | `1081` |  |
@@ -105,7 +102,7 @@ Kubernetes: `>=v1.23.0-0`
 | logConfigmap.enabled | bool | `false` |  |
 | logConfigmap.metadata.name | string | `"log-configmap-helm"` |  |
 | logConfigmap.metadata.namespace | string | `"armonik"` |  |
-| nameOverride | string | `"armonik-control-plane"` |  |
+| nameOverride | string | `""` |  |
 | namespace | string | `"armonik"` | namespace is the namespace used for all resources |
 | partitionNames[0] | string | `"default"` |  |
 | partitionNames[1] | string | `"monitoring"` |  |

@@ -164,7 +164,7 @@ Kubernetes: `>=v1.23.0-0`
 | pollingAgent.livenessProbe.httpGet.path | string | `"/liveness"` |  |
 | pollingAgent.livenessProbe.httpGet.port | int | `1080` |  |
 | pollingAgent.livenessProbe.initialDelaySeconds | int | `15` |  |
-| pollingAgent.livenessProbe.period_seconds | int | `10` |  |
+| pollingAgent.livenessProbe.periodSeconds | int | `10` |  |
 | pollingAgent.livenessProbe.successThreshold | int | `1` |  |
 | pollingAgent.livenessProbe.timeoutSeconds | int | `10` |  |
 | pollingAgent.name | string | `"polling-agent"` |  |

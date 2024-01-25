@@ -189,7 +189,7 @@ pollingAgent:
       path: "/liveness"
       port: 1080
     initialDelaySeconds: 15
-    period_seconds: 10
+    periodSeconds: 10
     timeoutSeconds: 10
     successThreshold: 1
     failureThreshold: 3

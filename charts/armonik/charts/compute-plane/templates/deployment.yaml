@@ -73,9 +73,9 @@ spec:
             port: {{$.Values.pollingAgent.livenessProbe.httpGet.port}}
           initialDelaySeconds: {{$.Values.pollingAgent.livenessProbe.initialDelaySeconds}}
           periodSeconds: {{$.Values.pollingAgent.livenessProbe.periodSeconds}}
-          timeoutSeconds: {{$.Values.pollingAgent.livenessProbe.timzoutSeconds}}
-          successThreshold: {{$.Values.pollingAgent.livenessProbe.timzoutSeconds}}
-          failureThreshold: {{$.Values.pollingAgent.livenessProbe.failurethreshold}}
+          timeoutSeconds: {{$.Values.pollingAgent.livenessProbe.timeoutSeconds}}
+          successThreshold: {{$.Values.pollingAgent.livenessProbe.successThreshold}}
+          failureThreshold: {{$.Values.pollingAgent.livenessProbe.failureThreshold}}
         startupProbe:
           httpGet:
             path: {{$.Values.pollingAgent.startupProbe.httpGet.path}}

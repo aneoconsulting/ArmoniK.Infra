@@ -1,8 +1,12 @@
-apiVersion: {{ .Values.apiVersion }}
-kind: {{ .Values.kind }}
+apiVersion: apps/v1
+kind: Deployment
 metadata:
   name: {{ .Values.controlPlane.metadata.name }}
-  namespace: {{ .Values.namespace }}
+  {{- if .Values.global.namespace }} # use the global value if it is set, ( if we want to deploy the sub-chart alone: {{- if .Values.global }} )
+    namespace: {{ .Values.global.namespace }} 
+  {{- else }} # else use local value
+    namespace: {{ .Values.namespace }}
+  {{- end }}
   labels:
 {{/* Add common labels to the deployment */}}
 {{ include "control-plane.labels" . | indent 4 }}
@@ -97,6 +101,7 @@ spec:
             name: {{ $value.name | quote }}
             readOnly: true
           {{- end }}
+        - 
       volumes:
       {{- range $i, $value := .Values.certificates }}
         - name: {{ $value.name | quote }}

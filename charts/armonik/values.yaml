@@ -1,6 +1,5 @@
-# Default values for armonik.
-# This is a YAML-formatted file.
-# Declare variables to be passed into your templates.
+# values.yaml for ArmoniK Helm Chart
+# Customize the configuration parameters below as needed.
 
 global:
   namespace: "armonik"

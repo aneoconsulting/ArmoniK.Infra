@@ -1,0 +1,23 @@
+apiVersion: v2
+name: compute-plane
+description: A Helm chart for Armonik Compute Plane
+
+# Specify the Kubernetes version range that we support.
+kubeVersion: ">=v1.23.0-0"
+keywords:
+  - armonik
+  - helm
+  - ccompute-plane
+
+
+type: application
+version: 0.1.0
+appVersion: "0.2.2"
+
+
+
+# Maintainers
+maintainers:
+  - name: Aneo
+    email: armonik-support@aneo.fr
+    url: armonik.fr

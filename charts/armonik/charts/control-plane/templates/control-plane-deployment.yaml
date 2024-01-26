@@ -1,64 +1,72 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Values.controlPlane.metadata.name }}
-  {{- if .Values.global.namespace }} # use the global value if it is set, ( if we want to deploy the sub-chart alone: {{- if .Values.global }} )
-    namespace: {{ .Values.global.namespace }} 
-  {{- else }} # else use local value
-    namespace: {{ .Values.namespace }}
-  {{- end }}
+  name: {{ .Values.name | default "control-plane" | quote }}
+{{- if .Values.global }} # use the global value if it is set
+  namespace: {{ .Values.global.namespace }} 
+{{- else }} # else use local value
+  namespace: {{ .Values.namespace }}
+{{- end }}
   labels:
 {{/* Add common labels to the deployment */}}
 {{ include "control-plane.labels" . | indent 4 }}
-    app: {{ .Values.controlPlane.metadata.labels.app }}
-    service: {{ .Values.controlPlane.metadata.labels.service }}
+    app: {{ .Values.labelsApp | default "armonik" | quote }}
+    service: {{ .Values.labelsService | default "control-plane" | quote }}
 spec:
-  replicas: {{ .Values.replicaCount }} 
+  replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      app: {{ .Values.controlPlane.spec.selector.matchLabels.app }}
-      service: {{ .Values.controlPlane.spec.selector.matchLabels.service }}
+      app: {{ .Values.labelsApp | default "armonik" | quote }}
+      service: {{ .Values.labelsService | default "control-plane" | quote }}
   template:
     metadata:
-      name: {{ .Values.controlPlane.metadata.name }}
+      name: {{ .Values.name }}
+    {{- if .Values.global }} # use the global value if it is set
+      namespace: {{ .Values.global.namespace }} 
+    {{- else }} # else use local value
       namespace: {{ .Values.namespace }}
+    {{- end }}
       labels:
-        app: {{ .Values.controlPlane.metadata.labels.app }}
-        service: {{ .Values.controlPlane.metadata.labels.service }}
+        app: {{ .Values.labelsApp | default "armonik" | quote }}
+        service: {{ .Values.labelsService | default "control-plane" | quote }}
       annotations: 
-        {{ .Values.controlPlane.annotations }}
+      {{- range $key, $value := .Values.annotations }}
+        {{ $key }}: {{ $value }}
+      {{- end }}
     spec:
       nodeSelector: 
-      {{- range $i, $value := .Values.controlPlaneSelector }}
+      {{- range $i, $value := .Values.nodeSelector }}
         {{ $value.key }}: {{ $value.value }}
       {{- end }}
       tolerations:
-        {{- range $i, $value := .Values.controlPlaneSelector }}
+        {{- range $i, $value := .Values.nodeSelector }}
         - key: {{ $value.key | quote }}
           value: {{ $value.value | quote }}
           operator: "Equal"
           effect: "NoSchedule"
         {{- end }}
+      {{- if (ne .Values.imageInfo.pullSecrets "") }}
       imagePullSecrets:
-        {{- range .Values.imagePullSecrets }}
-          {{ . }}
-        {{- end }}
+        name: {{ .Values.imageInfo.pullSecrets }}
+      {{- end }}
+      restartPolicy: {{ .Values.restartPolicy | default "Always" | quote }}
+      serviceAccountName: {{ .Values.serviceAccountName }}
       containers:
-        - name: {{ .Values.controlPlane.name }}
+        - name: {{ .Values.name }} 
           image: {{ .Values.image }}
-          imagePullPolicy: {{ .Values.controlPlane.imagePullPolicy }}
+          imagePullPolicy: {{ .Values.imageInfo.pullPolicy }}
           resources:
             limits: 
-              cpu: {{ .Values.controlPlane.limits.cpu }}
-              memory: {{ .Values.controlPlane.limits.memory }}
+              cpu: {{ .Values.resources.limits.cpu }}
+              memory: {{ .Values.resources.limits.memory }}
             requests: 
-              cpu: {{ .Values.controlPlane.requests.cpu }}
-              memory: {{ .Values.controlPlane.requests.memory }}
+              cpu: {{ .Values.resources.requests.cpu }}
+              memory: {{ .Values.resources.requests.memory }}
           ports:
-            - name: {{ .Values.controlPlane.ports.name }}
-              containerPort: {{ .Values.controlPlane.ports.containerPort }}
+            - name: {{ .Values.namePort }}
+              containerPort: {{ .Values.containerPort }}
           livenessProbe:
-            {{- /* it would be better to use toYaml but it unquote strings 
+            {{/* it would be better to use toYaml but it unquote strings 
               {{ toYaml .Values.livenessProbe | nindent 12 }}
             */}}
             httpGet:
@@ -70,7 +78,7 @@ spec:
             successThreshold: {{ .Values.livenessProbe.successThreshold }}
             failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
           startupProbe:
-            {{- /* it would be better to use toYaml but it unquote strings 
+            {{/* it would be better to use toYaml but it unquote strings 
               {{- toYaml .Values.startupProbe | nindent 12 }}
             */}}
             httpGet:
@@ -82,13 +90,13 @@ spec:
             successThreshold: {{ .Values.startupProbe.successThreshold }}
             failureThreshold: {{ .Values.startupProbe.failureThreshold }}
           envFrom:
-            {{ range $i, $value := .Values.controlPlanConfigmap }}
+          {{- range $i, $value := .Values.configmaps }}
             - configMapRef:  
                 name: {{ $value }}
-              {{ end }}
+          {{- end }}
           env:
-            {{- range $i, $value := .Values.credentials }}
-            - name: {{ $i | quote }}
+            {{- range $name, $value := .Values.credentials }}
+            - name: {{ $name | quote }}
               valueFrom:
                 secretKeyRef:
                   key: {{ $value.key | quote }}
@@ -101,7 +109,6 @@ spec:
             name: {{ $value.name | quote }}
             readOnly: true
           {{- end }}
-        - 
       volumes:
       {{- range $i, $value := .Values.certificates }}
         - name: {{ $value.name | quote }}

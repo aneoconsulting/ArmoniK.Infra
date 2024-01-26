@@ -1,28 +1,32 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Values.controlPlane.metadata.name }}
+  name: {{ .Values.name }}
   namespace: {{ .Values.namespace }}
   labels:
-    app: {{ .Values.controlPlane.metadata.labels.app }}
-    service: {{ .Values.controlPlane.metadata.labels.service }}
+    app: {{ .Values.labelsApp | default "armonik" | quote }}
+    service: {{ .Values.labelsService | default "control-plane" | quote }}
   annotations:
-    {{ .Values.controlPlane.annotations }}
-spec:
-{{ if eq .Values.controlPlane.serviceType "HeadLess" }}
+  {{- range $key, $value := .Values.annotations }}
+    {{ $key }}: {{ $value }}
+  {{- end }}spec:
+{{ if eq .Values.serviceType "HeadLess" }}
   type: "ClusterIP"
+  clusterIP: "None"
 {{ else }}
-  type: .Values.controlPlane.serviceType
+  type: .Values.serviceType
+  clusterIP: null
 {{ end }}
   selector:
-    app: {{ .Values.controlPlane.metadata.labels.app }}
-    service: {{ .Values.controlPlane.metadata.labels.service }}
+    app: {{ .Values.labelsApp | default "armonik" | quote }}
+    service: {{ .Values.labelsService | default "control-plane" | quote }}
   ports:
-    - name: {{ .Values.controlPlane.spec.template.spec.containers.ports.name }}
-      targetPort: {{ .Values.controlPlane.spec.template.spec.containers.ports.containerPort }}
-      protocol: "TCP"
-    {{ if eq .Values.controlPlane.serviceType "HeadLess" }}
-      port: {{ .Values.controlPlane.spec.template.spec.containers.ports.containerPort }}
+    - name: {{ .Values.namePort }}
+    {{ if (eq .Values.serviceType "HeadLess") }}
+      port: {{ .Values.containerPort }}
     {{ else }}
-      port: {{ .Values.controlPlane.ports.containerPort }}
+      port: {{ .Values.port }}
     {{ end }}
+      targetPort: {{ .Values.containerPort }}
+      protocol: "TCP"
+    

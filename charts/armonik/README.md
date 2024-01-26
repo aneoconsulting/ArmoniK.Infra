@@ -25,10 +25,6 @@ Kubernetes: `>=v1.23.0-0`
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | affinity | object | `{}` |  |
-| autoscaling.enabled | bool | `false` |  |
-| autoscaling.maxReplicas | int | `100` |  |
-| autoscaling.minReplicas | int | `1` |  |
-| autoscaling.targetCPUUtilizationPercentage | int | `80` |  |
 | computePlane.enabled | bool | `false` |  |
 | controlPlanConfigmapEnabled | bool | `false` |  |
 | controlPlanConfigmap[0] | string | `"control-plane-configmap"` |  |
@@ -84,7 +80,7 @@ Kubernetes: `>=v1.23.0-0`
 | ingress.hosts[0].paths[0].pathType | string | `"ImplementationSpecific"` |  |
 | ingress.tls | list | `[]` |  |
 | logConfigmap.data.loggingLevel | string | `"Information"` |  |
-| logConfigmap.enabled | bool | `true` |  |
+| logConfigmap.enabled | bool | `false` |  |
 | logConfigmap.metadata.name | string | `"log-configmap-helm"` |  |
 | logConfigmap.metadata.namespace | string | `"armonik"` |  |
 | nameOverride | string | `""` |  |
@@ -95,7 +91,6 @@ Kubernetes: `>=v1.23.0-0`
 | podLabels | object | `{}` |  |
 | podSecurityContext | object | `{}` |  |
 | replicaCount | int | `1` |  |
-| resources | object | `{}` |  |
 | securityContext | object | `{}` |  |
 | service.port | int | `80` |  |
 | service.type | string | `"ClusterIP"` |  |

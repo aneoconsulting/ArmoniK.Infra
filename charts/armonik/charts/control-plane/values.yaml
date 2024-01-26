@@ -6,55 +6,58 @@ nameOverride: ""
 
 # -- namespace is the namespace used for all resources
 namespace: "armonik"
-# -- image is the armonik image and the tag image:tag
-# image: "dockerhubaneo/armonik_control:0.19.3"
+
+# -- replicaCount is the number of replicas
+replicaCount: 1
+
+# -- image is the armonik control plane image and the tag image:tag
+image: "dockerhubaneo/armonik_control:0.19.3"
 # -- image 
-image:
+imageInfo:
   registry: docker.io
   repository: dockerhubaneo/armonik_control
   tag: 0.19.3
   ## Specify a imagePullPolicy
   pullPolicy: IfNotPresent
   ## Optionally specify an array of imagePullSecrets.
-  pullSecrets: []
+  pullSecrets: ""
 
-# -- replicaCount is the number of replicas
-replicaCount: 1
-# imagePullSecrets: []
+# -- restart policy
+restartPolicy: "Always" # Always, OnFailure, Never
+serviceAccountName: ""
+
+# control plane selector
 controlPlaneSelector: []
 # -- controlPlane contains all the values of the control plane deployment
-controlPlane:
-  metadata:
-    name: "control-plane-helm"
-    labels:
-      app: "armonik"
-      service: "control-plane-helm"
-  spec:
-    selector:
-      matchLabels:
-        app: "armonik"
-        service: "control-plane-helm"
-    template:
-      spec:
-        containers:
-          ports:
-            name: "http"
-            containerPort: 1080
-  annotations: ""
-  serviceType: "HeadLess"
-  ports:
-    containerPort: 1080
-    name: "http"
+name: "control-plane-helm"
+labelsApp: "armonik"
+labelsService: "control-plane-helm"
+
+# -- deployment port name and containerPort
+namePort: "http"
+containerPort: 1080
+
+# -- service type and port and protocol
+serviceType: "ClusterIP"
+port: 5001
+protocol: "TCP"
+
+# -- control plane annotations
+annotations: 
+  key1: "val1"
+
+# -- control plane node selector
+nodeSelector: []
+
+resources:
   limits:
     cpu: "1000m"
     memory: "2048Mi"
   requests:
     cpu: "50m"
     memory: "50Mi"
-  defaultPartition: "default"
-  name: "control-plane-helm"
-  imagePullPolicy: IfNotPresent
 
+defaultPartition: "default"
 
 livenessProbe:
   httpGet:
@@ -76,31 +79,114 @@ startupProbe:
   successThreshold: 1
   failureThreshold: 20
 
-
-extraConf:
-  core:
-    Amqp__AllowHostMismatch: true
-    Amqp__MaxPriority: "10"
-    Amqp__MaxRetries: "5"
-    Amqp__QueueStorage__LockRefreshPeriodicity: "00:00:45"
-    Amqp__QueueStorage__PollPeriodicity: "00:00:10"
-    Amqp__QueueStorage__LockRefreshExtension: "00:02:00"
-    MongoDB__TableStorage__PollingDelayMin: "00:00:01"
-    MongoDB__TableStorage__PollingDelayMax: "00:00:10"
-    MongoDB__AllowInsecureTls: true
-    MongoDB__TableStorage__PollingDelay: "00:00:01"
-    MongoDB__DataRetention: "1.00:00:00"
-    Redis__Timeout: 30000
-    Redis__SslHost: "127.0.0.1"
-    Redis__TtlTimeSpan: "1.00:00:00"
-  control:
-    Submitter__MaxErrorAllowed: "50"
-
-controlPlanConfigmapEnabled: false
-controlPlanConfigmap:
+configmaps:
   - "control-plane-configmap"
   - "log-configmap"
   - "core-configmap"
+
+controlPlanConfigmap:
+  enabled: true
+
+logConfigmap:
+  enabled: true
+  metadata:
+    name: "log-configmap-helm"
+    namespace: "armonik"
+  data:
+    loggingLevel: "Information"
+  
+coreConfigmap:
+  enabled: true
+  metadata:
+    name: "core-configmap-helm"
+  data:
+    Components__TableStorage: "MongoDB"
+    Components__ObjectStorage: "Redis"
+    Components__QueueStorage: "Amqp"
+    Components__QueueAdaptorSettings__ClassName: "ArmoniK.Core.Adapters.Amqp.QueueBuilder" # data.kubernetes_secret.deployed_queue_storage.data.adapter_class_name
+    Components__QueueAdaptorSettings__AdapterAbsolutePath: "/adapters/queue/amqp/ArmoniK.Core.Adapters.Amqp.dll" # data.kubernetes_secret.deployed_queue_storage.data.adapter_absolute_path
+    MongoDB__CAFile: "/mongodb/chain.pem" #local.table_storage_adapter_from_secret == "mongodb" ? local.secrets.mongodb.ca_filename : ""
+    MongoDB__ReplicaSet: "rs0"
+    MongoDB__DatabaseName: "database"
+    MongoDB__DirectConnection: "false"
+    MongoDB__Tls: "true"
+    Redis__CaPath: "/redis/chain.pem" # local.object_storage_adapter_from_secret == "redis" ? local.secrets.redis.ca_filename : ""
+    Redis__InstanceName: "ArmoniKRedis"
+    Redis__ClientName: "ArmoniK.Core"
+    Redis__Ssl: "true"
+    Amqp__CaPath: "/amqp/chain.pem" # local.queue_storage_adapter_from_secret == "amqp" ? local.secrets.activemq.ca_filename : ""
+    Amqp__Scheme: "AMQPS"
+    Authenticator__RequireAuthentication: false # 
+    Authenticator__RequireAuthorization: false # 
+
+credentials:
+  # -- activemq
+  Amqp__User:
+    key: username
+    name: activemq
+  Amqp__Password:
+    key: password
+    name: activemq
+  Amqp__Host:
+    key: host
+    name: activemq
+  Amqp__Port:
+    key: port
+    name: activemq
+  # -- redis  
+  Redis__User:
+    key: username
+    name: redis
+  Redis__Password:
+    key: password
+    name: redis
+  Redis__EndpointUrl:
+    key: url
+    name: redis
+  # -- mongodb
+  MongoDB__User:
+    key: username
+    name: mongodb
+  MongoDB__Password:
+    key: password
+    name: mongodb
+  MongoDB__Host:
+    key: host
+    name: mongodb
+  MongoDB__Port:
+    key: port
+    name: mongodb
+  # s3
+  # - key: username
+  #   name: s3
+  # - key: password
+  #   name: mongodb
+  # - key: url
+  #   name: s3
+  # - key: must_force_path_style
+  #   name: s3
+  # - key: bucket_name
+  #   name: s3
+  # - key: use_chunk_encoding
+  #   name: s3
+  # - key: use_check_sum
+  #   name: s3
+
+certificates:
+  activemq:
+    name: "activemq-secret-volume"
+    mountPath: "/amqp"
+    secretName: "activemq"
+  redis:
+    name: "redis-secret-volume"
+    mountPath: "/redis"
+    secretName: "redis"
+  mongodb:
+    name: "mongodb-secret-volume"
+    mountPath: "/mongodb"
+    secretName: "mongodb"
+
+### 
 
 partitionNames:
   - "default"
@@ -143,101 +229,21 @@ secrets:
     fileStorageType: "HostPath"
     fileServerIp: ""
 
-logConfigmap:
-  enabled: false
-  metadata:
-    name: "log-configmap-helm"
-    namespace: "armonik"
-  data:
-    loggingLevel: "Information"
-  
-coreConfigmap:
-  enabled: false
-  metadata:
-    name: "core-configmap-helm"
-  data:
-    Components__TableStorage: "MongoDB"
-    Components__ObjectStorage: "Redis"
-    Components__QueueStorage: "Amqp"
-    Components__QueueAdaptorSettings__ClassName: "ArmoniK.Core.Adapters.Amqp.QueueBuilder" # data.kubernetes_secret.deployed_queue_storage.data.adapter_class_name
-    Components__QueueAdaptorSettings__AdapterAbsolutePath: "/adapters/queue/amqp/ArmoniK.Core.Adapters.Amqp.dll" # data.kubernetes_secret.deployed_queue_storage.data.adapter_absolute_path
-    MongoDB__CAFile: "/mongodb/chain.pem" #local.table_storage_adapter_from_secret == "mongodb" ? local.secrets.mongodb.ca_filename : ""
-    MongoDB__ReplicaSet: "rs0"
-    MongoDB__DatabaseName: "database"
-    MongoDB__DirectConnection: "false"
-    MongoDB__Tls: "true"
-    Redis__CaPath: "/redis/chain.pem" # local.object_storage_adapter_from_secret == "redis" ? local.secrets.redis.ca_filename : ""
-    Redis__InstanceName: "ArmoniKRedis"
-    Redis__ClientName: "ArmoniK.Core"
-    Redis__Ssl: "true"
-    Amqp__CaPath: "/amqp/chain.pem" # local.queue_storage_adapter_from_secret == "amqp" ? local.secrets.activemq.ca_filename : ""
-    Amqp__Scheme: "AMQPS"
-    Authenticator__RequireAuthentication: false # 
-    Authenticator__RequireAuthorization: false # 
-
-credentials:
-  # activemq
-  Amqp__User:
-    key: username
-    name: activemq
-  Amqp__Password:
-    key: password
-    name: activemq
-  Amqp__Host:
-    key: host
-    name: activemq
-  Amqp__Port:
-    key: port
-    name: activemq
-  # redis  
-  Redis__User:
-    key: username
-    name: redis
-  Redis__Password:
-    key: password
-    name: redis
-  Redis__EndpointUrl:
-    key: url
-    name: redis
-  # mongodb
-  MongoDB__User:
-    key: username
-    name: mongodb
-  MongoDB__Password:
-    key: password
-    name: mongodb
-  MongoDB__Host:
-    key: host
-    name: mongodb
-  MongoDB__Port:
-    key: port
-    name: mongodb
-  # s3
-  # - key: username
-  #   name: s3
-  # - key: password
-  #   name: mongodb
-  # - key: url
-  #   name: s3
-  # - key: must_force_path_style
-  #   name: s3
-  # - key: bucket_name
-  #   name: s3
-  # - key: use_chunk_encoding
-  #   name: s3
-  # - key: use_check_sum
-  #   name: s3
-
-certificates:
-  activemq:
-    name: "activemq-secret-volume"
-    mountPath: "/amqp"
-    secretName: "activemq"
-  redis:
-    name: "redis-secret-volume"
-    mountPath: "/redis"
-    secretName: "redis"
-  mongodb:
-    name: "mongodb-secret-volume"
-    mountPath: "/mongodb"
-    secretName: "mongodb"
+extraConf:
+  core:
+    Amqp__AllowHostMismatch: true
+    Amqp__MaxPriority: "10"
+    Amqp__MaxRetries: "5"
+    Amqp__QueueStorage__LockRefreshPeriodicity: "00:00:45"
+    Amqp__QueueStorage__PollPeriodicity: "00:00:10"
+    Amqp__QueueStorage__LockRefreshExtension: "00:02:00"
+    MongoDB__TableStorage__PollingDelayMin: "00:00:01"
+    MongoDB__TableStorage__PollingDelayMax: "00:00:10"
+    MongoDB__AllowInsecureTls: true
+    MongoDB__TableStorage__PollingDelay: "00:00:01"
+    MongoDB__DataRetention: "1.00:00:00"
+    Redis__Timeout: 30000
+    Redis__SslHost: "127.0.0.1"
+    Redis__TtlTimeSpan: "1.00:00:00"
+  control:
+    Submitter__MaxErrorAllowed: "50"

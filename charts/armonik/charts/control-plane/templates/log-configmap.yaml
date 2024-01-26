@@ -1,3 +1,4 @@
+{{ if not .Values.global }}
 {{ if .Values.logConfigmap.enabled }}
 apiVersion: v1
 kind: ConfigMap
@@ -15,4 +16,5 @@ data:
   Serilog__MinimumLevel__Override__Microsoft.AspNetCore.Hosting.Diagnostics: {{ $loggingLevelRouting }}
   Serilog__MinimumLevel__Override__Microsoft.AspNetCore.Routing.EndpointMiddleware: {{ $loggingLevelRouting }}
   Serilog__MinimumLevel__Override__Serilog.AspNetCore.RequestLoggingMiddleware: {{ $loggingLevelRouting }}
+{{ end }}
 {{ end }}

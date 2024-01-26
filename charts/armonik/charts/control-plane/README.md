@@ -18,6 +18,7 @@ Kubernetes: `>=v1.23.0-0`
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
+| annotations | object | `{"key1":"val1"}` | control plane annotations |
 | certificates.activemq.mountPath | string | `"/amqp"` |  |
 | certificates.activemq.name | string | `"activemq-secret-volume"` |  |
 | certificates.activemq.secretName | string | `"activemq"` |  |
@@ -27,11 +28,11 @@ Kubernetes: `>=v1.23.0-0`
 | certificates.redis.mountPath | string | `"/redis"` |  |
 | certificates.redis.name | string | `"redis-secret-volume"` |  |
 | certificates.redis.secretName | string | `"redis"` |  |
-| controlPlanConfigmapEnabled | bool | `false` |  |
-| controlPlanConfigmap[0] | string | `"control-plane-configmap"` |  |
-| controlPlanConfigmap[1] | string | `"log-configmap"` |  |
-| controlPlanConfigmap[2] | string | `"core-configmap"` |  |
-| controlPlane | object | `{"annotations":"","defaultPartition":"default","imagePullPolicy":"IfNotPresent","limits":{"cpu":"1000m","memory":"2048Mi"},"metadata":{"labels":{"app":"armonik","service":"control-plane-helm"},"name":"control-plane-helm"},"name":"control-plane-helm","ports":{"containerPort":1080,"name":"http"},"requests":{"cpu":"50m","memory":"50Mi"},"serviceType":"HeadLess","spec":{"selector":{"matchLabels":{"app":"armonik","service":"control-plane-helm"}},"template":{"spec":{"containers":{"ports":{"containerPort":1080,"name":"http"}}}}}}` | controlPlane contains all the values of the control plane deployment |
+| configmaps[0] | string | `"control-plane-configmap"` |  |
+| configmaps[1] | string | `"log-configmap"` |  |
+| configmaps[2] | string | `"core-configmap"` |  |
+| containerPort | int | `1080` |  |
+| controlPlanConfigmap.enabled | bool | `true` |  |
 | controlPlaneSelector | list | `[]` |  |
 | coreConfigmap.data.Amqp__CaPath | string | `"/amqp/chain.pem"` |  |
 | coreConfigmap.data.Amqp__Scheme | string | `"AMQPS"` |  |
@@ -51,7 +52,7 @@ Kubernetes: `>=v1.23.0-0`
 | coreConfigmap.data.Redis__ClientName | string | `"ArmoniK.Core"` |  |
 | coreConfigmap.data.Redis__InstanceName | string | `"ArmoniKRedis"` |  |
 | coreConfigmap.data.Redis__Ssl | string | `"true"` |  |
-| coreConfigmap.enabled | bool | `false` |  |
+| coreConfigmap.enabled | bool | `true` |  |
 | coreConfigmap.metadata.name | string | `"core-configmap-helm"` |  |
 | credentials.Amqp__Host.key | string | `"host"` |  |
 | credentials.Amqp__Host.name | string | `"activemq"` |  |
@@ -59,22 +60,20 @@ Kubernetes: `>=v1.23.0-0`
 | credentials.Amqp__Password.name | string | `"activemq"` |  |
 | credentials.Amqp__Port.key | string | `"port"` |  |
 | credentials.Amqp__Port.name | string | `"activemq"` |  |
-| credentials.Amqp__User.key | string | `"username"` |  |
-| credentials.Amqp__User.name | string | `"activemq"` |  |
+| credentials.Amqp__User | object | `{"key":"username","name":"activemq"}` | activemq |
 | credentials.MongoDB__Host.key | string | `"host"` |  |
 | credentials.MongoDB__Host.name | string | `"mongodb"` |  |
 | credentials.MongoDB__Password.key | string | `"password"` |  |
 | credentials.MongoDB__Password.name | string | `"mongodb"` |  |
 | credentials.MongoDB__Port.key | string | `"port"` |  |
 | credentials.MongoDB__Port.name | string | `"mongodb"` |  |
-| credentials.MongoDB__User.key | string | `"username"` |  |
-| credentials.MongoDB__User.name | string | `"mongodb"` |  |
+| credentials.MongoDB__User | object | `{"key":"username","name":"mongodb"}` | mongodb |
 | credentials.Redis__EndpointUrl.key | string | `"url"` |  |
 | credentials.Redis__EndpointUrl.name | string | `"redis"` |  |
 | credentials.Redis__Password.key | string | `"password"` |  |
 | credentials.Redis__Password.name | string | `"redis"` |  |
-| credentials.Redis__User.key | string | `"username"` |  |
-| credentials.Redis__User.name | string | `"redis"` |  |
+| credentials.Redis__User | object | `{"key":"username","name":"redis"}` | redis   |
+| defaultPartition | string | `"default"` |  |
 | extraConf.control.Submitter__MaxErrorAllowed | string | `"50"` |  |
 | extraConf.core.Amqp__AllowHostMismatch | bool | `true` |  |
 | extraConf.core.Amqp__MaxPriority | string | `"10"` |  |
@@ -90,7 +89,10 @@ Kubernetes: `>=v1.23.0-0`
 | extraConf.core.Redis__SslHost | string | `"127.0.0.1"` |  |
 | extraConf.core.Redis__Timeout | int | `30000` |  |
 | extraConf.core.Redis__TtlTimeSpan | string | `"1.00:00:00"` |  |
-| image | object | `{"pullPolicy":"IfNotPresent","pullSecrets":[],"registry":"docker.io","repository":"dockerhubaneo/armonik_control","tag":"0.19.3"}` | image  |
+| image | string | `"dockerhubaneo/armonik_control:0.19.3"` | image is the armonik control plane image and the tag image:tag |
+| imageInfo | object | `{"pullPolicy":"IfNotPresent","pullSecrets":"","registry":"docker.io","repository":"dockerhubaneo/armonik_control","tag":"0.19.3"}` | image  |
+| labelsApp | string | `"armonik"` |  |
+| labelsService | string | `"control-plane-helm"` |  |
 | livenessProbe.failureThreshold | int | `1` |  |
 | livenessProbe.httpGet.path | string | `"/liveness"` |  |
 | livenessProbe.httpGet.port | int | `1081` |  |
@@ -99,14 +101,24 @@ Kubernetes: `>=v1.23.0-0`
 | livenessProbe.successThreshold | int | `1` |  |
 | livenessProbe.timeoutSeconds | int | `1` |  |
 | logConfigmap.data.loggingLevel | string | `"Information"` |  |
-| logConfigmap.enabled | bool | `false` |  |
+| logConfigmap.enabled | bool | `true` |  |
 | logConfigmap.metadata.name | string | `"log-configmap-helm"` |  |
 | logConfigmap.metadata.namespace | string | `"armonik"` |  |
+| name | string | `"control-plane-helm"` | controlPlane contains all the values of the control plane deployment |
 | nameOverride | string | `""` |  |
+| namePort | string | `"http"` | deployment port name and containerPort |
 | namespace | string | `"armonik"` | namespace is the namespace used for all resources |
+| nodeSelector | list | `[]` | control plane node selector |
 | partitionNames[0] | string | `"default"` |  |
 | partitionNames[1] | string | `"monitoring"` |  |
+| port | int | `5001` |  |
+| protocol | string | `"TCP"` |  |
 | replicaCount | int | `1` | replicaCount is the number of replicas |
+| resources.limits.cpu | string | `"1000m"` |  |
+| resources.limits.memory | string | `"2048Mi"` |  |
+| resources.requests.cpu | string | `"50m"` |  |
+| resources.requests.memory | string | `"50Mi"` |  |
+| restartPolicy | string | `"Always"` | restart policy |
 | secrets.activemq.caFileName | string | `"/amqp/chain.pem"` |  |
 | secrets.activemq.name | string | `"activemq"` |  |
 | secrets.deployedObjectStorageSecret | string | `"deployed-object-storage-helm"` |  |
@@ -133,6 +145,8 @@ Kubernetes: `>=v1.23.0-0`
 | secrets.storageEndpointUrl.objectStorageAdapter | string | `"Redis"` |  |
 | secrets.storageEndpointUrl.queueStorageAdapter | string | `"Amqp"` |  |
 | secrets.storageEndpointUrl.tableStorageAdapter | string | `"MongoDB"` |  |
+| serviceAccountName | string | `""` |  |
+| serviceType | string | `"ClusterIP"` | service type and port and protocol |
 | startupProbe.failureThreshold | int | `20` |  |
 | startupProbe.httpGet.path | string | `"/startup"` |  |
 | startupProbe.httpGet.port | int | `1081` |  |

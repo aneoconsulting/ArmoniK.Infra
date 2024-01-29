@@ -285,6 +285,10 @@ variable "compute_plane" {
         memory = string
       })
     }))
+    cache_config = object({
+      memory     = bool
+      size_limit = string # if larger than supported, the max value for the node will be used instead
+    })
     hpa = any
   }))
 }

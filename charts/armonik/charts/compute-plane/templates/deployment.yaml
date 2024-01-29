@@ -1,4 +1,5 @@
 {{- range $partitionName, $config := .Values.computePlane.partition }}
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -142,7 +143,7 @@ spec:
           
         volumeMounts:
         {{- if (eq $.Values.checkFileStorageType "FS") }}
-          - name: {{ $.Values.FS.name }}
+          - name: {{ $.Values.FS.name | quote }}
             mountPath: {{ $.Values.FS.mountPath }}
             readOnly: true             
         {{- end }}
@@ -152,25 +153,25 @@ spec:
         name: {{$.Values.volumeMount.name}}
         emptyDir: {}
       {{- if (eq $.Values.fileStorageType "nfs") }}
-      volume: 
-        name: {{ $.Values.nfs.name }}
-        nfs:
-          path: {{ $.Values.nfs.path }}
-          server: {{ $.Values.nfs.server}}
-          readOnly: true             
+      # volumes: 
+        - name: {{ $.Values.nfs.name | quote }}
+          nfs:
+            path: {{ $.Values.nfs.path }}
+            server: {{ $.Values.nfs.server}}
+            readOnly: true             
       {{- end }}
       {{- if (eq $.Values.fileStorageType "hostpath") }}
-      volume: 
-        name: {{ $.Values.hostPath.name }}
-        hostPath:
-          path: {{ $.Values.hostPath.path }}
-          type: "Directory"     
+      # volumes: 
+        - name: {{ $.Values.hostPath.name | quote  }}
+          hostPath:
+            path: {{ $.Values.hostPath.path }}
+            type: "Directory"     
       {{- end }}
-      volume:   
+      # volumes:   
       {{- range $i, $value := $.Values.certificates }}
         name: {{ $value.name | quote }}
         secret:
           secretName:  {{ $value.secretName }}
           optional: false
       {{- end }}       
-{{- end }}   
+{{- end }}

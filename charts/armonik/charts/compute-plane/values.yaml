@@ -203,12 +203,6 @@ pollingAgent:
     successThreshold: 1
     failureThreshold: 20
 
-pollingAgentConfigmaps:
-  - "log-configmap"
-  - "polling-agent-configmap" 
-  - "core-configmap"     
-  - "compute-plane-configmap" 
-
 supportedQueues:
   - Amqp__PartitionId
   - PubSub__PartitionId
@@ -285,6 +279,13 @@ certificates:
     mountPath: "/mongodb"
     secretName: "mongodb"
 
+
+pollingAgentConfigmaps:
+  - "log-configmap"
+  - "polling-agent-configmap" 
+  - "core-configmap"     
+  - "compute-plane-configmap" 
+
 workerConfigmaps:
   - "worker-configmap"
   - "compute-plane-configmap" 
@@ -292,6 +293,17 @@ workerConfigmaps:
 
 checkFileStorageType: "FS"
 fileStorageType: "nfs"
+
+fileStorageEndpoints: 
+  s3Storage:
+    ServiceURL: {}
+    AccessKeyId: {}
+    SecretAccessKey: {}
+    BucketName: {}
+    MustForcePathStyle: {}
+    UseChunkEncoding: {}
+    UseChecksum: {}
+
 preStopWaitScript: "<<EOF while test -e /cache/armonik_agent.sock ; do   sleep 1 done EOF"
 
 
@@ -307,3 +319,17 @@ nfs:
 hostPath: 
   name: "shared-volume"
   path: "/data"
+
+
+extraConf:
+  compute: {}
+  control: {}
+  core: {}
+  log: {}
+  polling: {}
+  worker: {}
+
+pollingAgent: 
+  workerCheckRetries: "10"  
+  workerCheckDelay: "00:00:10" 
+

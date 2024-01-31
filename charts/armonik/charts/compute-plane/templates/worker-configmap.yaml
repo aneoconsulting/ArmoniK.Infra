@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: worker-configmap
+  namespace: {{ .Values.namespace }}
+data:
+  target_data_path: "/data"
+  FileStorageType: {{ .Values.fileStorageType }}
+  {{- range $key, $value := .Values.extraConf.worker }}
+  {{ $key }}: {{ $value | quote }}
+  {{- end }}
+  {{- if (eq .Values.checkFileStorageType "S3") }}
+   {{- range $key, $value := .Values.fileStorageEndpoints.s3Storage }}
+   {{ $key }}: {{ $value | quote }}
+   {{- end }}
+  {{- end }}

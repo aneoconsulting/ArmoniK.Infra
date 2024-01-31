@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: polling-agent-configmap
+  namespace: {{ .Values.namespace }}
+data:
+  ComputePlane__MessageBatchSize: "1"
+  InitWorker__WorkerCheckRetries: {{ .Values.pollingAgent.workerCheckRetries | quote }} 
+  InitWorker__WorkerCheckDelay: {{ .Values.pollingAgent.workerCheckDelay | quote }}
+  Amqp__LinkCredit: "2"
+  {{- range $key, $value := .Values.extraConf.polling }}
+  {{ $key }}: {{ $value | quote }}
+  {- end }}

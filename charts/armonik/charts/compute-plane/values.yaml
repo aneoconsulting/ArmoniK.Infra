@@ -202,6 +202,8 @@ pollingAgent:
     timeoutSeconds: 1
     successThreshold: 1
     failureThreshold: 20
+  workerCheckRetries: "10"  
+  workerCheckDelay: "00:00:10"
 
 supportedQueues:
   - Amqp__PartitionId
@@ -329,7 +331,4 @@ extraConf:
   polling: {}
   worker: {}
 
-pollingAgent: 
-  workerCheckRetries: "10"  
-  workerCheckDelay: "00:00:10" 
 

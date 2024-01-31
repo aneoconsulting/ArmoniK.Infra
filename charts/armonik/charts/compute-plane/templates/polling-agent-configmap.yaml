@@ -10,4 +10,4 @@ data:
   Amqp__LinkCredit: "2"
   {{- range $key, $value := .Values.extraConf.polling }}
   {{ $key }}: {{ $value | quote }}
-  {- end }}
+  {{- end }}

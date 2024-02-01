@@ -38,7 +38,7 @@ resource "aws_mq_broker" "mq" {
   authentication_strategy = var.engine_type == "RabbitMQ" ? "simple" : var.authentication_strategy
   # ldap is not supported for RabbitMQ
   publicly_accessible = var.publicly_accessible
-  security_groups     = [aws_security_group.mq.id]
+  security_groups     = var.engine_type == "ActiveMQ" ? [aws_security_group.mq.id] : null
   subnet_ids          = local.subnet_ids
   configuration {
     id       = var.engine_type == "ActiveMQ" ? aws_mq_configuration.activemq_configuration[0].id : aws_mq_configuration.rabbitmq_configuration[0].id

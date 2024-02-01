@@ -124,7 +124,6 @@ resource "aws_mq_configuration" "rabbitmq_configuration" {
   engine_type    = var.engine_type
   engine_version = var.engine_version
   data           = <<DATA
-
 ## DEFAULT SETTINGS ARE NOT MEANT TO BE TAKEN STRAIGHT INTO PRODUCTION
 ## see https://www.rabbitmq.com/configure.html for further information
 ## on configuring RabbitMQ
@@ -149,6 +148,11 @@ vm_memory_high_watermark.relative = 0.75
 ## Defines the threshold of memory using at which publishers to the queue are throttled
 ## https://www.rabbitmq.com/disk-alarms.html
 disk_free_limit.relative = 0.75
+
+## TLS listeners are configured in the same fashion as TCP listeners,
+## including the option to control the choice of interface.
+##
+# listeners.ssl.default = 5671
 DATA
   tags           = local.tags
 }

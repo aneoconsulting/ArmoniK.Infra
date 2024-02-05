@@ -9,7 +9,7 @@ This guide will be used by [Aneo](https://www.aneo.eu/) to write Helm charts for
 
 ## Coding standart
 
-### Conventions and constraints [2]
+### Conventions and constraints [argonaut](https://www.argonaut.dev/blog/helm-best-practices)
 
 Here are some common conventions and constraints when it comes to naming Helm components.
 
@@ -24,8 +24,8 @@ Here are some common conventions and constraints when it comes to naming Helm co
 |YAML structure | While YAML allows nested values, it is recommended to prefer a flat structure for simplicity and ease of use. |
 |Sharing templates | Parent charts and subcharts can share templates. Any defined block in any chart is available to other charts. |
 |Block vs. Include | In Helm charts, it is recommended to use "include" instead of "block" for overriding default implementations, as multiple implementations of the same block can result in unpredictable behavior. |
-| manifests | Do not put multiple resources in one manifest file. [0] |
-| Naming resources | Avoid stutter when naming your resources. (ex: kind: pod, name: armonik-pod) [0] |
+| manifests | Do not put multiple resources in one manifest file. [boxunix](https://boxunix.com/2022/02/05/developers-guide-to-writing-a-good-helm-chart/) |
+| Naming resources | Avoid stutter when naming your resources. (ex: kind: pod, name: armonik-pod) [boxunix](https://boxunix.com/2022/02/05/developers-guide-to-writing-a-good-helm-chart/) |
 
 Flat or Nested Values ?? 
 In most cases, flat should be favored over nested. The reason for this is that it is simpler for template developers and users. For every layer of nesting, an existence check must be done. But for flat configuration, such checks can be skipped, making the template easier to read and use.
@@ -150,7 +150,7 @@ reference the global value in the parent’s values.yaml file as follows.
 ## Library charts
 
 
-## Versionning [3]
+## Versionning [codefresh](https://codefresh.io/docs/docs/ci-cd-guides/helm-best-practices/)
 
 Each Helm chart has the ability to define two separate versions:
 - version in Chart.yaml: The version of the chart itself.
@@ -171,7 +171,7 @@ There is no right or wrong practice here as long as you stick into one.
         - or both?
 
 
-from: [5]
+from: [itnext](https://itnext.io/helm-3-umbrella-charts-standalone-chart-image-tags-an-alternative-approach-78a218d74e2d)
 
 When making use of umbrella charts to deploy a multi-component stack, 
 particularly where the sub-components of the stack will rarely, 
@@ -180,7 +180,7 @@ tag versions to the umbrella chart and maintain these here.
 
 => use "global" in the umbrella chart to maintain sub-charts versions ! 
 
-## Helm promotion strategies [3]
+## Helm promotion strategies
 
 - promotion between environments (testing, staging, production).
 
@@ -204,7 +204,7 @@ charts/
   |- alpine-0.1.2.tgz.prov
 ~~~
 
-We can use GitHub Pages [4].
+We can use GitHub Pages [Helm docs](https://helm.sh/docs/topics/chart_repository/).
 
 ## Abbreviation
 
@@ -230,7 +230,7 @@ Use abbreviation in naming manifests:
 | sa           | serviceaccount          |
 
 
-## Security [1]
+## Security [bitnami](https://docs.bitnami.com/tutorials/production-ready-charts/)
 
 ### Use non-root containers
 
@@ -268,15 +268,10 @@ securityContext:
 In terraform (control-plane.tf): The service uses the deployement labels (app, service) !
 is that means that the service created after the deployment is created ?
 is it more sense to make a values (for app and service) that will be used by both deployment and service ?
+ 
+
 
 ## TODO:
 - Use control-plane.labels of _helpers.tpl
     - add extraLabels
 
-## References
-[0]: https://boxunix.com/2022/02/05/developers-guide-to-writing-a-good-helm-chart/
-[1]: https://docs.bitnami.com/tutorials/production-ready-charts/
-[2]: https://www.argonaut.dev/blog/helm-best-practices
-[3]: https://codefresh.io/docs/docs/ci-cd-guides/helm-best-practices/
-[4]: https://helm.sh/docs/topics/chart_repository/
-[5]: https://itnext.io/helm-3-umbrella-charts-standalone-chart-image-tags-an-alternative-approach-78a218d74e2d

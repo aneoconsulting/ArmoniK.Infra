@@ -139,7 +139,7 @@ spec:
         volumeMounts:
           - name: {{$.Values.volumeMount.name}}
             mountPath: {{$.Values.volumeMount.mountPath}}
-
+          
         volumeMounts:
         {{- if (eq $.Values.checkFileStorageType "FS") }}
           - name: {{ $.Values.FS.name }}
@@ -148,29 +148,29 @@ spec:
         {{- end }}
       {{- end }}
 
-      volumes: 
-        - name: {{$.Values.volumeMount.name}}
-          emptyDir: {}
+      volume: 
+        name: {{$.Values.volumeMount.name}}
+        emptyDir: {}
       {{- if (eq $.Values.fileStorageType "nfs") }}
-      volumes: 
-        - name: {{ $.Values.nfs.name }}
-          nfs:
-            path: {{ $.Values.nfs.path }}
-            server: {{ $.Values.nfs.server}}
-            readOnly: true             
+      volume: 
+        name: {{ $.Values.nfs.name }}
+        nfs:
+          path: {{ $.Values.nfs.path }}
+          server: {{ $.Values.nfs.server}}
+          readOnly: true             
       {{- end }}
       {{- if (eq $.Values.fileStorageType "hostpath") }}
-      volumes: 
-        - name: {{ $.Values.hostPath.name }}
-          hostPath:
-            path: {{ $.Values.hostPath.path }}
-            type: "Directory"     
+      volume: 
+        name: {{ $.Values.hostPath.name }}
+        hostPath:
+          path: {{ $.Values.hostPath.path }}
+          type: "Directory"     
       {{- end }}
-      volumes:   
+      volume:   
       {{- range $i, $value := $.Values.certificates }}
-        - name: {{ $value.name | quote }}
-          secret:
-            secretName:  {{ $value.secretName }}
-            optional: false
+        name: {{ $value.name | quote }}
+        secret:
+          secretName:  {{ $value.secretName }}
+          optional: false
       {{- end }}       
 {{- end }}   

@@ -25,7 +25,7 @@ computePlane:
       pollingAgent:
         image: "dockerhubaneo/armonik_pollingagent"
         #tag: ""
-        imagePullPolicy: "IfNotPresent"
+        # imagePullPolicy: "IfNotPresent"
         limits:
           cpu: "2000m"
           memory: "2048Mi"
@@ -64,7 +64,7 @@ computePlane:
     stream:
       replicas: 0
       pollingAgent:
-        image: "dockerhubaneo/armonik_core_stream_test_worker"
+        image: "dockerhubaneo/armonik_core_stream_test_client"
         #tag: ""
         #image_pull_policy: "IfNotPresent"
         limits:
@@ -104,7 +104,7 @@ computePlane:
     htcmock:
       replicas: 0
       pollingAgent:
-        #image: ""
+        image: "dockerhubaneo/armonik_core_htcmock_test_client"
         #tag: ""
         #image_pull_policy: "IfNotPresent"
         limits:
@@ -143,7 +143,7 @@ computePlane:
     bench:
       replicas: 0
       pollingAgent:
-        #image: ""
+        image: "dockerhubaneo/armonik_core_bench_test_client"
         #tag: ""
         #image_pull_policy: "IfNotPresent"
         limits:
@@ -202,12 +202,8 @@ pollingAgent:
     timeoutSeconds: 1
     successThreshold: 1
     failureThreshold: 20
-
-pollingAgentConfigmaps:
-  - "log-configmap"
-  - "polling-agent-configmap" 
-  - "core-configmap"     
-  - "compute-plane-configmap" 
+  workerCheckRetries: "10"  
+  workerCheckDelay: "00:00:10"
 
 supportedQueues:
   - Amqp__PartitionId
@@ -285,6 +281,13 @@ certificates:
     mountPath: "/mongodb"
     secretName: "mongodb"
 
+
+pollingAgentConfigmaps:
+  - "log-configmap"
+  - "polling-agent-configmap" 
+  - "core-configmap"     
+  - "compute-plane-configmap" 
+
 workerConfigmaps:
   - "worker-configmap"
   - "compute-plane-configmap" 
@@ -292,18 +295,38 @@ workerConfigmaps:
 
 checkFileStorageType: "FS"
 fileStorageType: "nfs"
+
+fileStorageEndpoints: 
+  s3Storage:
+    ServiceURL: {}
+    AccessKeyId: {}
+    SecretAccessKey: {}
+    BucketName: {}
+    MustForcePathStyle: {}
+    UseChunkEncoding: {}
+    UseChecksum: {}
+
 preStopWaitScript: "<<EOF while test -e /cache/armonik_agent.sock ; do   sleep 1 done EOF"
 
 
 FS: 
-  name: shared-volume
+  name: "shared-volume"
   mountPath: "/data"
 
 nfs:
-  name: shared-volume
-  path:
-  server:
+  name: "shared-volume"
+  path: "/data"
+  server: "test"
 
 hostPath: 
-  name: shared-volume
-  path:
+  name: "shared-volume"
+  path: "/data"
+
+
+extraConf:
+  compute: {}
+  control: {}
+  core: {}
+  log: {}
+  polling: {}
+  worker: {}

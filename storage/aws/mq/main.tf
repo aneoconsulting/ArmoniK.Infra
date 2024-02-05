@@ -160,7 +160,7 @@ DATA
 # MQ security group
 resource "aws_security_group" "mq" {
   name        = "${var.name}-sg"
-  description = "Allow Amazon MQ inbound traffic on port 5672"
+  description = "Allow Amazon MQ inbound traffic on port 5671"
   vpc_id      = var.vpc_id
   ingress {
     description = "tcp from Amazon MQ"

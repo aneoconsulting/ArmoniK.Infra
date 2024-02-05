@@ -6,6 +6,7 @@ resource "kubernetes_config_map" "worker_config" {
   }
   data = merge(var.extra_conf.worker, local.file_storage_endpoints, {
     target_data_path = "/data"
+    target_zip_path  = "/tmp"
     FileStorageType  = local.check_file_storage_type
   })
   depends_on = [kubernetes_service.control_plane]

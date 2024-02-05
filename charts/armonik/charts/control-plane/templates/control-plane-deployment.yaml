@@ -30,7 +30,7 @@ spec:
         app: {{ .Values.labelsApp | default "armonik" | quote }}
         service: {{ .Values.labelsService | default "control-plane" | quote }}
       annotations: 
-      {{- range $key, $value := .Values.annotations }}
+      {{- range $key, $value := .Values.annotations }} ## use it for labels
         {{ $key }}: {{ $value }}
       {{- end }}
     spec:

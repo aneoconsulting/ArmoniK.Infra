@@ -295,7 +295,6 @@ fileStorageType: "nfs"
 preStopWaitScript: "<<EOF while test -e /cache/armonik_agent.sock ; do   sleep 1 done EOF"
 
 
-
 FS: 
   name: shared-volume
   mountPath: "/data"

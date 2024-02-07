@@ -254,13 +254,21 @@ variable "ebs_kms_key_id" {
 # Map roles
 variable "map_roles_groups" {
   description = "List of map roles group"
-  type        = list(string)
+  type = list(object({
+    rolearn  = string
+    username = string
+    groups   = list(string)
+  }))
 }
 
 # Map users
 variable "map_users_groups" {
   description = "List of map users group"
-  type        = list(string)
+  type = list(object({
+    userarn  = string
+    username = string
+    groups   = list(string)
+  }))
 }
 # List of self managed node groups
 variable "self_managed_node_groups" {

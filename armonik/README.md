@@ -26,6 +26,8 @@
 
 | Name | Source | Version |
 |------|--------|---------|
+| <a name="module_admin_0_8_gui_endpoint"></a> [admin\_0\_8\_gui\_endpoint](#module\_admin\_0\_8\_gui\_endpoint) | ../utils/service-ip | n/a |
+| <a name="module_admin_0_9_gui_endpoint"></a> [admin\_0\_9\_gui\_endpoint](#module\_admin\_0\_9\_gui\_endpoint) | ../utils/service-ip | n/a |
 | <a name="module_admin_gui_endpoint"></a> [admin\_gui\_endpoint](#module\_admin\_gui\_endpoint) | ../utils/service-ip | n/a |
 | <a name="module_control_plane_endpoint"></a> [control\_plane\_endpoint](#module\_control\_plane\_endpoint) | ../utils/service-ip | n/a |
 | <a name="module_ingress_endpoint"></a> [ingress\_endpoint](#module\_ingress\_endpoint) | ../utils/service-ip | n/a |

@@ -91,8 +91,8 @@
 | <a name="input_instance_refresh_tag"></a> [instance\_refresh\_tag](#input\_instance\_refresh\_tag) | Instance refresh tag | `string` | n/a | yes |
 | <a name="input_instance_refresh_version"></a> [instance\_refresh\_version](#input\_instance\_refresh\_version) | Instance refresh helm chart version | `string` | n/a | yes |
 | <a name="input_kubeconfig_file"></a> [kubeconfig\_file](#input\_kubeconfig\_file) | Kubeconfig file path | `string` | n/a | yes |
-| <a name="input_map_roles_groups"></a> [map\_roles\_groups](#input\_map\_roles\_groups) | List of map roles group | `list(string)` | n/a | yes |
-| <a name="input_map_users_groups"></a> [map\_users\_groups](#input\_map\_users\_groups) | List of map users group | `list(string)` | n/a | yes |
+| <a name="input_map_roles_groups"></a> [map\_roles\_groups](#input\_map\_roles\_groups) | List of map roles group | <pre>list(object({<br>    rolearn  = string<br>    username = string<br>    groups   = list(string)<br>  }))</pre> | n/a | yes |
+| <a name="input_map_users_groups"></a> [map\_users\_groups](#input\_map\_users\_groups) | List of map users group | <pre>list(object({<br>    userarn  = string<br>    username = string<br>    groups   = list(string)<br>  }))</pre> | n/a | yes |
 | <a name="input_name"></a> [name](#input\_name) | AWS EKS service name | `string` | `"armonik-eks"` | no |
 | <a name="input_node_selector"></a> [node\_selector](#input\_node\_selector) | Node selector for pods of EKS system | `any` | `{}` | no |
 | <a name="input_profile"></a> [profile](#input\_profile) | Profile of AWS credentials to deploy Terraform sources | `string` | n/a | yes |

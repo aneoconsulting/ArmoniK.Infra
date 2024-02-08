@@ -81,7 +81,7 @@ locals {
     seq                            = var.seq_secret_name
     grafana                        = var.grafana_secret_name
     prometheus                     = var.prometheus_secret_name
-    deployed_cache_storage_secret = var.deployed_cache_storage_secret_name
+    deployed_cache_storage_secret  = var.deployed_cache_storage_secret_name
     deployed_object_storage_secret = var.deployed_object_storage_secret_name
     deployed_table_storage_secret  = var.deployed_table_storage_secret_name
     deployed_queue_storage_secret  = var.deployed_queue_storage_secret_name

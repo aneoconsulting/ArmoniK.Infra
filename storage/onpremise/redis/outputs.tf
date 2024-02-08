@@ -1,4 +1,14 @@
 # Redis
+output "username" {
+  description = "Username of Redis"
+  value       = ""
+}
+
+output "password" {
+  description = "Port of Redis"
+  value       = random_password.redis_password.result
+}
+
 output "host" {
   description = "Host of Redis"
   value       = local.redis_endpoints.ip

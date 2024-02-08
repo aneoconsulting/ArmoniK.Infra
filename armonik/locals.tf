@@ -238,7 +238,7 @@ locals {
       } : { key = "", name = "" }
       cache = local.cache_storage_adapter_from_secret == "redis" ? {
         name        = "external-cache-secret-volume"
-        mount_path  = "/cache"
+        mount_path  = "/redis"
         secret_name = local.secrets.cache.name
       } : { key = "", name = "" }
     } : key => value if !contains(values(value), "")

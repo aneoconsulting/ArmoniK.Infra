@@ -4,6 +4,11 @@ variable "namespace" {
   type        = string
 }
 
+variable "external_storage_namespace" {
+  description = "Namespace of external storage"
+  type        = string
+}
+
 # Version helm chart
 variable "chart_version" {
   type        = string
@@ -354,6 +359,12 @@ variable "shared_storage_secret_name" {
   description = "the name of the shared-storage secret"
   type        = string
   default     = "shared-storage"
+}
+
+variable "deployed_cache_storage_secret_name" {
+  description = "the name of the deployed-cache-storage secret"
+  type        = string
+  default     = "deployed-cache-storage"
 }
 
 variable "deployed_object_storage_secret_name" {

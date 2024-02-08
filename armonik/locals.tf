@@ -69,6 +69,10 @@ locals {
       name        = "redis"
       ca_filename = "/redis/chain.pem"
     }
+    cache = {
+      name        = "redis"
+      ca_filename = "/redis/chain.pem"
+    }
     s3                             = var.s3_secret_name
     shared_storage                 = var.shared_storage_secret_name
     metrics_exporter               = var.metrics_exporter_secret_name
@@ -77,6 +81,7 @@ locals {
     seq                            = var.seq_secret_name
     grafana                        = var.grafana_secret_name
     prometheus                     = var.prometheus_secret_name
+    deployed_cache_storage_secret = var.deployed_cache_storage_secret_name
     deployed_object_storage_secret = var.deployed_object_storage_secret_name
     deployed_table_storage_secret  = var.deployed_table_storage_secret_name
     deployed_queue_storage_secret  = var.deployed_queue_storage_secret_name
@@ -94,6 +99,9 @@ locals {
     S3Storage__UseChunkEncoding   = data.kubernetes_secret.shared_storage.data.use_chunk_encoding
     S3Storage__UseChecksum        = data.kubernetes_secret.shared_storage.data.use_check_sum
   } : {}
+
+  # external cache storage
+  cache_storage_adapter_from_secret = lower(data.kubernetes_secret.deployed_cache_storage.data.adapter)
 
   # Object storage
   object_storage_adapter_from_secret = lower(data.kubernetes_secret.deployed_object_storage.data.adapter)
@@ -227,6 +235,11 @@ locals {
         name        = "mongodb-secret-volume"
         mount_path  = "/mongodb"
         secret_name = local.secrets.mongodb.name
+      } : { key = "", name = "" }
+      cache = local.cache_storage_adapter_from_secret == "redis" ? {
+        name        = "external-cache-secret-volume"
+        mount_path  = "/cache"
+        secret_name = local.secrets.cache.name
       } : { key = "", name = "" }
     } : key => value if !contains(values(value), "")
   }

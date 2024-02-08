@@ -1,3 +1,10 @@
+data "kubernetes_secret" "deployed_cache_storage" {
+  metadata {
+    name      = local.secrets.deployed_cache_storage_secret
+    namespace = var.external_storage_namespace
+  }
+}
+
 data "kubernetes_secret" "deployed_object_storage" {
   metadata {
     name      = local.secrets.deployed_object_storage_secret

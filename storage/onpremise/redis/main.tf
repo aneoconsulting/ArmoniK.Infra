@@ -97,7 +97,7 @@ resource "kubernetes_service" "redis" {
     }
   }
   spec {
-    type = "ClusterIP"
+    type = var.redis.service_type
     selector = {
       app     = kubernetes_deployment.redis.metadata[0].labels.app
       type    = kubernetes_deployment.redis.metadata[0].labels.type

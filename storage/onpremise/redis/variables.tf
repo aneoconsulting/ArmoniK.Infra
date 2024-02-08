@@ -13,6 +13,7 @@ variable "redis" {
     node_selector      = any
     image_pull_secrets = string
     max_memory         = string
+    service_type       = string
   })
 }
 

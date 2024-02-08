@@ -24,16 +24,16 @@ output "cluster_name" {
 }
 
 output "cluster_id" {
-  description = "EKS cluster ID  used for backword compatibility : https://github.com/terraform-aws-modules/terraform-aws-eks/blob/master/docs/UPGRADE-19.0.md#list-of-backwards-incompatible-changes"
+  description = "EKS cluster ID"
   value       = module.eks.cluster_id
 }
 
 output "kms_key_id" {
   description = "ARN of KMS used for EKS"
   value = {
-    cluster_log_kms_key_id    = var.eks.encryption_keys.cluster_log_kms_key_id
-    cluster_encryption_config = var.eks.encryption_keys.cluster_encryption_config
-    ebs_kms_key_id            = var.eks.encryption_keys.ebs_kms_key_id
+    cluster_log_kms_key_id    = var.cluster_log_kms_key_id
+    cluster_encryption_config = var.cluster_encryption_config
+    ebs_kms_key_id            = var.ebs_kms_key_id
   }
 }
 

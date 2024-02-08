@@ -1,14 +1,21 @@
 # MQ
-output "activemq_endpoint_url" {
-  description = "AWS MQ (ActiveMQ) endpoint urls"
-  value = {
-    url  = aws_mq_broker.mq.instances[0].endpoints[1]
-    host = trim(split(":", aws_mq_broker.mq.instances[0].endpoints[1])[1], "//")
-    port = tonumber(split(":", aws_mq_broker.mq.instances[0].endpoints[1])[2])
-  }
+output "endpoint_url" {
+  description = "AWS MQ endpoint urls"
+  value       = aws_mq_broker.mq.engine_type == "ActiveMQ" ? aws_mq_broker.mq.instances[0].endpoints[1] : aws_mq_broker.mq.instances[0].endpoints[0]
 }
 
-output "mq_name" {
+output "endpoint_host" {
+  description = "AWS MQ endpoint host"
+  value       = aws_mq_broker.mq.engine_type == "ActiveMQ" ? trim(split(":", aws_mq_broker.mq.instances[0].endpoints[1])[1], "//") : trim(split(":", aws_mq_broker.mq.instances[0].endpoints[0])[1], "//")
+}
+
+output "endpoint_port" {
+  description = "AWS MQ endpoint port"
+  value       = aws_mq_broker.mq.engine_type == "ActiveMQ" ? tonumber(split(":", aws_mq_broker.mq.instances[0].endpoints[1])[2]) : tonumber(split(":", aws_mq_broker.mq.instances[0].endpoints[0])[2])
+}
+
+
+output "name" {
   description = "Name of MQ cluster"
   value       = aws_mq_broker.mq.broker_name
 }
@@ -19,20 +26,23 @@ output "kms_key_id" {
 }
 
 output "web_url" {
-  description = "The URL of the broker's ActiveMQ Web Console"
+  description = "The URL of the broker's Amazon MQ Web Console"
   value       = aws_mq_broker.mq.instances[0].console_url
 }
 
-output "user" {
-  description = "Credentials of MQ user"
-  value = {
-    username = local.username
-    password = local.password
-  }
-  sensitive = true
+output "username" {
+  description = "Username of Amazon MQ"
+  value       = local.username
+  sensitive   = true
+}
+
+output "password" {
+  description = "Password of Amazon MQ"
+  value       = local.password
+  sensitive   = true
 }
 
 output "engine_type" {
   description = "Engine type"
-  value       = var.mq.engine_type
+  value       = var.engine_type
 }

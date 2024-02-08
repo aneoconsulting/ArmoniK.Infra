@@ -1,10 +1,10 @@
 # A component that automatically adjusts the size of a Kubernetes Cluster so that all pods have a place to run and there are no unneeded nodes
 resource "helm_release" "cluster_autoscaler" {
   name       = "armonik"
-  namespace  = var.eks.cluster_autoscaler.namespace
+  namespace  = var.cluster_autoscaler_namespace
   chart      = "cluster-autoscaler"
-  repository = var.eks.cluster_autoscaler.repository
-  version    = var.eks.cluster_autoscaler.version
+  repository = var.cluster_autoscaler_repository
+  version    = var.cluster_autoscaler_version
 
   # Method 1 - Using Autodiscovery
   set {
@@ -21,11 +21,11 @@ resource "helm_release" "cluster_autoscaler" {
   }
   set {
     name  = "image.repository"
-    value = var.eks.docker_images.cluster_autoscaler.image
+    value = var.cluster_autoscaler_image
   }
   set {
     name  = "image.tag"
-    value = var.eks.docker_images.cluster_autoscaler.tag
+    value = var.cluster_autoscaler_tag
   }
   set {
     name  = "extraArgs.logtostderr"
@@ -45,51 +45,51 @@ resource "helm_release" "cluster_autoscaler" {
   }
   set {
     name  = "extraArgs.expander"
-    value = var.eks.cluster_autoscaler.expander
+    value = var.cluster_autoscaler_expander
   }
   set {
     name  = "extraArgs.scale-down-enabled"
-    value = var.eks.cluster_autoscaler.scale_down_enabled
+    value = var.cluster_autoscaler_scale_down_enabled
   }
   set {
     name  = "extraArgs.min-replica-count"
-    value = var.eks.cluster_autoscaler.min_replica_count
+    value = var.cluster_autoscaler_min_replica_count
   }
   set {
     name  = "extraArgs.scale-down-utilization-threshold"
-    value = var.eks.cluster_autoscaler.scale_down_utilization_threshold
+    value = var.cluster_autoscaler_scale_down_utilization_threshold
   }
   set {
     name  = "extraArgs.scale-down-non-empty-candidates-count"
-    value = var.eks.cluster_autoscaler.scale_down_non_empty_candidates_count
+    value = var.cluster_autoscaler_scale_down_non_empty_candidates_count
   }
   set {
     name  = "extraArgs.max-node-provision-time"
-    value = var.eks.cluster_autoscaler.max_node_provision_time
+    value = var.cluster_autoscaler_max_node_provision_time
   }
   set {
     name  = "extraArgs.scan-interval"
-    value = var.eks.cluster_autoscaler.scan_interval
+    value = var.cluster_autoscaler_scan_interval
   }
   set {
     name  = "extraArgs.scale-down-delay-after-add"
-    value = var.eks.cluster_autoscaler.scale_down_delay_after_add
+    value = var.cluster_autoscaler_scale_down_delay_after_add
   }
   set {
     name  = "extraArgs.scale-down-delay-after-delete"
-    value = var.eks.cluster_autoscaler.scale_down_delay_after_delete
+    value = var.cluster_autoscaler_scale_down_delay_after_delete
   }
   set {
     name  = "extraArgs.scale-down-delay-after-failure"
-    value = var.eks.cluster_autoscaler.scale_down_delay_after_failure
+    value = var.cluster_autoscaler_scale_down_delay_after_failure
   }
   set {
     name  = "extraArgs.scale-down-unneeded-time"
-    value = var.eks.cluster_autoscaler.scale_down_unneeded_time
+    value = var.cluster_autoscaler_scale_down_unneeded_time
   }
   set {
     name  = "extraArgs.skip-nodes-with-system-pods"
-    value = var.eks.cluster_autoscaler.skip_nodes_with_system_pods
+    value = var.cluster_autoscaler_skip_nodes_with_system_pods
   }
   set {
     name  = "resources.limits.cpu"

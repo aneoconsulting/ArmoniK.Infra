@@ -1,5 +1,7 @@
 data "google_client_config" "current" {}
 
+data "google_project" "project" {}
+
 data "google_compute_zones" "available" {
   project = data.google_client_config.current.project
   region  = try(coalesce(var.region), data.google_client_config.current.region)
@@ -19,11 +21,7 @@ locals {
       display_name = "CLUSTER-VPC"
     }
   ] : []))
-  node_pools = var.autopilot ? null : [
-    for node_pool in var.node_pools : merge(node_pool, {
-      name = "${var.name}-${node_pool["name"]}"
-    })
-  ]
+  node_pools = var.autopilot ? null : var.node_pools
   # NOTE: Dataplane-V2 conflicts with the Calico network policy add-on because
   # it provides redundant NetworkPolicy capabilities. If V2 is enabled, the
   # Calico add-on should be disabled.
@@ -46,6 +44,14 @@ locals {
     (local.public_autopilot ? module.autopilot[0].location : null),
     (local.private_autopilot ? module.private_autopilot[0].location : null),
   )
+  kms_key_ids = [for v in var.database_encryption : v.key_name if can(coalesce(v.key_name))]
+}
+
+resource "google_kms_crypto_key_iam_member" "kms" {
+  for_each      = toset(local.kms_key_ids)
+  crypto_key_id = each.key
+  member        = "serviceAccount:service-${data.google_project.project.number}@container-engine-robot.iam.gserviceaccount.com"
+  role          = "roles/cloudkms.cryptoKeyEncrypterDecrypter"
 }
 
 # Public GKE with beta functionalities
@@ -159,6 +165,7 @@ module "gke" {
   stub_domains                          = var.stub_domains
   timeouts                              = var.timeouts
   upstream_nameservers                  = var.upstream_nameservers
+  depends_on                            = [google_kms_crypto_key_iam_member.kms]
 }
 
 # Private GKE with beta functionalities
@@ -278,6 +285,7 @@ module "private_gke" {
   stub_domains                          = var.stub_domains
   timeouts                              = var.timeouts
   upstream_nameservers                  = var.upstream_nameservers
+  depends_on                            = [google_kms_crypto_key_iam_member.kms]
 }
 
 # Public autopilot with beta functionalities
@@ -345,6 +353,7 @@ module "autopilot" {
   stub_domains                      = var.stub_domains
   timeouts                          = var.timeouts
   upstream_nameservers              = var.upstream_nameservers
+  depends_on                        = [google_kms_crypto_key_iam_member.kms]
 }
 
 # Private autopilot with beta functionalities
@@ -419,6 +428,7 @@ module "private_autopilot" {
   stub_domains                      = var.stub_domains
   timeouts                          = var.timeouts
   upstream_nameservers              = var.upstream_nameservers
+  depends_on                        = [google_kms_crypto_key_iam_member.kms]
 }
 
 resource "null_resource" "update_kubeconfig" {

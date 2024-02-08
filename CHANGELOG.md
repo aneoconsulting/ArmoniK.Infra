@@ -2,7 +2,36 @@
 
 All notable changes to this project will be documented in this file.
 
-## [main](https://github.com/aneoconsulting/ArmoniK.Infra/tree/main) (2023-08-11)
+## [0.2.2](https://github.com/aneoconsulting/ArmoniK.Infra/releases/tag/0.2.2) (2023-10-19)
+
+Added
+-
+
+* Configure and authorize Artifact Registry service account, Kubernetes service account, Cloud Storage service account and
+  Memorystore for Redis service account to use Cloud KMS key.
+* Add parameters `adapter_class_name` and `adapter_absolute_path` in ActiveMQ module.
+
+## [0.2.1](https://github.com/aneoconsulting/ArmoniK.Infra/releases/tag/0.2.1) (2023-10-09)
+
+Fixed
+-
+
+* Variabilize hostpath in Fluent-bit
+
+## [0.2.2](https://github.com/aneoconsulting/ArmoniK.Infra/releases/tag/0.2.2) (2023-11-17)
+
+Changed
+-
+
+* fix: Optional old GUIs
+
+## [0.2.1](https://github.com/aneoconsulting/ArmoniK.Infra/releases/tag/0.2.1) (2023-09-13)
+
+Changed
+-
+
+* fix: Variabilize fluentbit hostpath
+
 
 ## [0.2.2](https://github.com/aneoconsulting/ArmoniK.Infra/releases/tag/0.2.2) (2023-11-17)
 

@@ -236,6 +236,12 @@ locals {
         mount_path  = "/mongodb"
         secret_name = local.secrets.mongodb.name
       } : { key = "", name = "" }
+    } : key => value if !contains(values(value), "")
+  }
+
+  # Certificates
+  external_storage_certificates = {
+    for key, value in {
       cache = local.cache_storage_adapter_from_secret == "redis" ? {
         name        = "external-cache-secret-volume"
         mount_path  = "/redis"

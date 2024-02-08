@@ -177,6 +177,14 @@ resource "kubernetes_deployment" "compute_plane" {
                 read_only  = true
               }
             }
+            dynamic "volume_mount" {
+              for_each = local.external_storage_certificates
+              content {
+                name       = volume_mount.value.name
+                mount_path = volume_mount.value.mount_path
+                read_only  = true
+              }
+            }
           }
         }
         volume {
@@ -206,6 +214,16 @@ resource "kubernetes_deployment" "compute_plane" {
         }
         dynamic "volume" {
           for_each = local.certificates
+          content {
+            name = volume.value.name
+            secret {
+              secret_name = volume.value.secret_name
+              optional    = false
+            }
+          }
+        }
+        dynamic "volume" {
+          for_each = local.external_storage_certificates
           content {
             name = volume.value.name
             secret {

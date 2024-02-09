@@ -165,6 +165,19 @@ resource "kubernetes_deployment" "compute_plane" {
                 }
               }
             }
+            dynamic "env" {
+              for_each = local.external_storage_credentials
+              content {
+                name = env.key
+                value_from {
+                  secret_key_ref {
+                    key      = env.value.key
+                    name     = env.value.name
+                    optional = false
+                  }
+                }
+              }
+            }
             volume_mount {
               name       = "cache-volume"
               mount_path = "/cache"

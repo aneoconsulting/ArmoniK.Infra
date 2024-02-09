@@ -197,6 +197,24 @@ locals {
   }
 
   # Credentials
+  external_storage_credentials = {
+    for key, value in {
+      Redis__User = local.cache_storage_adapter_from_secret == "redis" ? {
+        key  = "username"
+        name = local.secrets.cache.name
+      } : { key = "", name = "" }
+      Redis__Password = local.cache_storage_adapter_from_secret == "redis" ? {
+        key  = "password"
+        name = local.secrets.cache.name
+      } : { key = "", name = "" }
+      Redis__EndpointUrl = local.cache_storage_adapter_from_secret == "redis" ? {
+        key  = "url"
+        name = local.secrets.cache.name
+      } : { key = "", name = "" }
+    } : key => value if !contains(values(value), "")
+  }
+
+  # Credentials
   database_credentials = {
     for key, value in {
       MongoDB_User = local.table_storage_adapter_from_secret == "mongodb" ? {

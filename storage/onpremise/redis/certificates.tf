@@ -82,3 +82,21 @@ resource "local_sensitive_file" "redis_client_certificate" {
   filename        = "${path.root}/generated/certificates/${var.namespace}/redis/chain.pem"
   file_permission = "0600"
 }
+
+resource "local_sensitive_file" "redis_client_ca" {
+  content         = tls_self_signed_cert.root_redis.cert_pem
+  filename        = "${path.root}/generated/certificates/${var.namespace}/redis/ca.cert"
+  file_permission = "0600"
+}
+
+resource "local_sensitive_file" "redis_client_crt" {
+  content         = tls_locally_signed_cert.redis_certificate.cert_pem
+  filename        = "${path.root}/generated/certificates/${var.namespace}/redis/redis.cert"
+  file_permission = "0600"
+}
+
+resource "local_sensitive_file" "ingress_client_key" {
+  content         = tls_private_key.redis_private_key.private_key_pem
+  filename        = "${path.root}/generated/certificates/${var.namespace}/redis/redis.key"
+  file_permission = "0600"
+}

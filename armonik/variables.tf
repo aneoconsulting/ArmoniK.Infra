@@ -401,3 +401,17 @@ variable "environment_description" {
   type        = any
   default     = null
 }
+
+# nfs_parameters
+
+variable "nfs_mount_pod" {
+   description = "Path to which the NFS will be mounted in the pods"
+   type = string
+   default ="/local_storage"
+}
+
+variable "pvc_name" {
+   description = "Name for the pvc to be created and used"
+   type = string
+   default ="nfsvolume"
+}

@@ -117,10 +117,10 @@ resource "kubernetes_deployment" "control_plane" {
           }
 
         dynamic "volume_mount" {
-         for_each = (local.object_storage_adapter == "ArmoniK.Adapters.LocalStorage.ObjectStorage" ? [1] : [])
+         for_each = local.object_storage_adapter == "ArmoniK.Adapters.LocalStorage.ObjectStorage" ? [1] : []
           content {
          name = "nfs"
-         mount_path = "/local_storage"
+         mount_path = var.nfs_mount_pod
           }
        }
        }
@@ -136,11 +136,11 @@ resource "kubernetes_deployment" "control_plane" {
         }
 
        dynamic "volume" {
-        for_each = (local.object_storage_adapter == "ArmoniK.Adapters.LocalStorage.ObjectStorage" ? [1] : [])
+        for_each = local.object_storage_adapter == "ArmoniK.Adapters.LocalStorage.ObjectStorage" ? [1] : []
           content {
          name = "nfs"
          persistent_volume_claim{
-           claim_name = "nfsvolume"
+           claim_name = var.pvc_name
          }   
           }          
       }

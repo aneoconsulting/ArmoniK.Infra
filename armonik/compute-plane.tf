@@ -131,10 +131,10 @@ resource "kubernetes_deployment" "compute_plane" {
           }
           dynamic "volume_mount" {
             for_each = local.object_storage_adapter == "ArmoniK.Adapters.LocalStorage.ObjectStorage" ? [1] : []
-              content {
-                name = "nfs"
-                mount_path = var.nfs_mount_pod
-              }
+            content {
+              name       = "nfs"
+              mount_path = var.nfs_mount_pod
+            }
           }
           dynamic "volume_mount" {
             for_each = local.certificates
@@ -149,11 +149,11 @@ resource "kubernetes_deployment" "compute_plane" {
           for_each = local.object_storage_adapter == "ArmoniK.Adapters.LocalStorage.ObjectStorage" ? [1] : []
           content {
             name = "nfs"
-            persistent_volume_claim{
+            persistent_volume_claim {
               claim_name = var.pvc_name
             }
           }
-      }
+        }
         # Containers of worker
         dynamic "container" {
           iterator = worker

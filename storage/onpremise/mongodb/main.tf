@@ -51,8 +51,10 @@ resource "kubernetes_deployment" "mongodb" {
           }
         }
         security_context {
-          run_as_user = 999
-          fs_group    = 999
+          run_as_user     = var.mongodb.security_context.run_as_user
+          run_as_non_root = true
+          run_as_group    = var.mongodb.security_context.fs_group
+          fs_group        = var.mongodb.security_context.fs_group
         }
         container {
           name              = "mongodb"
@@ -91,7 +93,7 @@ resource "kubernetes_deployment" "mongodb" {
             mount_path = "/start/"
           }
           dynamic "volume_mount" {
-            for_each = (var.persistent_volume != null && var.persistent_volume != "" ? [1] : [])
+            for_each = length(kubernetes_persistent_volume_claim.mongodb) > 0 ? [1] : []
             content {
               name       = "database"
               mount_path = "/data/db"
@@ -127,7 +129,7 @@ resource "kubernetes_deployment" "mongodb" {
           }
         }
         dynamic "volume" {
-          for_each = (var.persistent_volume != null && var.persistent_volume != "" ? [1] : [])
+          for_each = length(kubernetes_persistent_volume_claim.mongodb) > 0 ? [1] : []
           content {
             name = "database"
             persistent_volume_claim {

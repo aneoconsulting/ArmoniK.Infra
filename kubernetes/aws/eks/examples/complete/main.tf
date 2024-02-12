@@ -68,6 +68,18 @@ module "eks" {
   vpc_id                                                   = data.aws_vpc.default.id
   vpc_pods_subnet_ids                                      = data.aws_subnets.subnets.ids
   vpc_private_subnet_ids                                   = data.aws_subnets.subnets.ids
+
+  efs_csi_image                       = "amazon/aws-efs-csi-driver"
+  efs_csi_tag                         = "v1.5.1"
+  efs_csi_liveness_probe_image        = "public.ecr.aws/eks-distro/kubernetes-csi/livenessprobe"
+  efs_csi_liveness_probe_tag          = "v2.9.0-eks-1-22-19"
+  efs_csi_node_driver_registrar_image = "public.ecr.aws/eks-distro/kubernetes-csi/node-driver-registrar"
+  efs_csi_node_driver_registrar_tag   = "v2.7.0-eks-1-22-19"
+  efs_csi_external_provisioner_image  = "public.ecr.aws/eks-distro/kubernetes-csi/external-provisioner"
+  efs_csi_external_provisioner_tag    = "v3.4.0-eks-1-22-19"
+  efs_csi_repository                  = "https://kubernetes-sigs.github.io/aws-efs-csi-driver/"
+  efs_csi_version                     = "2.3.0"
+
   eks_managed_node_groups = {
     test = {
       name                        = "workers"

@@ -44,6 +44,7 @@ Kubernetes: `>=v1.23.0-0`
 | computePlane.partition.bench.hpa.triggers[0].threshold | int | `2` |  |
 | computePlane.partition.bench.hpa.triggers[0].type | string | `"prometheus"` |  |
 | computePlane.partition.bench.hpa.type | string | `"prometheus"` |  |
+| computePlane.partition.bench.pollingAgent.image | string | `"dockerhubaneo/armonik_core_bench_test_client"` |  |
 | computePlane.partition.bench.pollingAgent.limits.cpu | string | `"2000m"` |  |
 | computePlane.partition.bench.pollingAgent.limits.memory | string | `"2048Mi"` |  |
 | computePlane.partition.bench.pollingAgent.requests.cpu | string | `"50m"` |  |
@@ -68,7 +69,6 @@ Kubernetes: `>=v1.23.0-0`
 | computePlane.partition.default.hpa.triggers[0].type | string | `"prometheus"` |  |
 | computePlane.partition.default.hpa.type | string | `"prometheus"` |  |
 | computePlane.partition.default.pollingAgent.image | string | `"dockerhubaneo/armonik_pollingagent"` |  |
-| computePlane.partition.default.pollingAgent.imagePullPolicy | string | `"IfNotPresent"` |  |
 | computePlane.partition.default.pollingAgent.limits.cpu | string | `"2000m"` |  |
 | computePlane.partition.default.pollingAgent.limits.memory | string | `"2048Mi"` |  |
 | computePlane.partition.default.pollingAgent.requests.cpu | string | `"50m"` |  |
@@ -93,6 +93,7 @@ Kubernetes: `>=v1.23.0-0`
 | computePlane.partition.htcmock.hpa.triggers[0].threshold | int | `2` |  |
 | computePlane.partition.htcmock.hpa.triggers[0].type | string | `"prometheus"` |  |
 | computePlane.partition.htcmock.hpa.type | string | `"prometheus"` |  |
+| computePlane.partition.htcmock.pollingAgent.image | string | `"dockerhubaneo/armonik_core_htcmock_test_client"` |  |
 | computePlane.partition.htcmock.pollingAgent.limits.cpu | string | `"2000m"` |  |
 | computePlane.partition.htcmock.pollingAgent.limits.memory | string | `"2048Mi"` |  |
 | computePlane.partition.htcmock.pollingAgent.requests.cpu | string | `"50m"` |  |
@@ -116,7 +117,7 @@ Kubernetes: `>=v1.23.0-0`
 | computePlane.partition.stream.hpa.triggers[0].threshold | int | `2` |  |
 | computePlane.partition.stream.hpa.triggers[0].type | string | `"prometheus"` |  |
 | computePlane.partition.stream.hpa.type | string | `"prometheus"` |  |
-| computePlane.partition.stream.pollingAgent.image | string | `"dockerhubaneo/armonik_core_stream_test_worker"` |  |
+| computePlane.partition.stream.pollingAgent.image | string | `"dockerhubaneo/armonik_core_stream_test_client"` |  |
 | computePlane.partition.stream.pollingAgent.limits.cpu | string | `"2000m"` |  |
 | computePlane.partition.stream.pollingAgent.limits.memory | string | `"2048Mi"` |  |
 | computePlane.partition.stream.pollingAgent.requests.cpu | string | `"50m"` |  |
@@ -150,14 +151,27 @@ Kubernetes: `>=v1.23.0-0`
 | credentials.Redis__Password.name | string | `"redis"` |  |
 | credentials.Redis__User.key | string | `"username"` |  |
 | credentials.Redis__User.name | string | `"redis"` |  |
+| extraConf.compute | object | `{}` |  |
+| extraConf.control | object | `{}` |  |
+| extraConf.core | object | `{}` |  |
+| extraConf.log | object | `{}` |  |
+| extraConf.polling | object | `{}` |  |
+| extraConf.worker | object | `{}` |  |
+| fileStorageEndpoints.s3Storage.AccessKeyId | object | `{}` |  |
+| fileStorageEndpoints.s3Storage.BucketName | object | `{}` |  |
+| fileStorageEndpoints.s3Storage.MustForcePathStyle | object | `{}` |  |
+| fileStorageEndpoints.s3Storage.SecretAccessKey | object | `{}` |  |
+| fileStorageEndpoints.s3Storage.ServiceURL | object | `{}` |  |
+| fileStorageEndpoints.s3Storage.UseChecksum | object | `{}` |  |
+| fileStorageEndpoints.s3Storage.UseChunkEncoding | object | `{}` |  |
 | fileStorageType | string | `"nfs"` |  |
 | hostPath.name | string | `"shared-volume"` |  |
-| hostPath.path | string | `nil` |  |
+| hostPath.path | string | `"/data"` |  |
 | nameOverride | string | `"armonik-compute-plane"` |  |
 | namespace | string | `"armonik"` | namespace is the namespace used for all resources |
 | nfs.name | string | `"shared-volume"` |  |
-| nfs.path | string | `nil` |  |
-| nfs.server | string | `nil` |  |
+| nfs.path | string | `"/data"` |  |
+| nfs.server | string | `"test"` |  |
 | pollingAgent.image | string | `nil` |  |
 | pollingAgent.imagePullPolicy | string | `nil` |  |
 | pollingAgent.livenessProbe.failureThreshold | int | `3` |  |
@@ -177,6 +191,8 @@ Kubernetes: `>=v1.23.0-0`
 | pollingAgent.startupProbe.periodSeconds | int | `3` |  |
 | pollingAgent.startupProbe.successThreshold | int | `1` |  |
 | pollingAgent.startupProbe.timeoutSeconds | int | `1` |  |
+| pollingAgent.workerCheckDelay | string | `"00:00:10"` |  |
+| pollingAgent.workerCheckRetries | string | `"10"` |  |
 | pollingAgentConfigmaps[0] | string | `"log-configmap"` |  |
 | pollingAgentConfigmaps[1] | string | `"polling-agent-configmap"` |  |
 | pollingAgentConfigmaps[2] | string | `"core-configmap"` |  |

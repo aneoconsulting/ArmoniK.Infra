@@ -181,7 +181,10 @@ resource "kubernetes_deployment" "compute_plane" {
         }
         volume {
           name = "cache-volume"
-          empty_dir {}
+          empty_dir {
+            medium     = try(each.value.cache_config.memory ? "Memory" : null, null)
+            size_limit = try(each.value.cache_config.size_limit, null)
+          }
         }
         dynamic "volume" {
           for_each = (local.file_storage_type == "nfs" ? [1] : [])

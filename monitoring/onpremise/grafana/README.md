@@ -41,10 +41,10 @@ No modules.
 | <a name="input_docker_image"></a> [docker\_image](#input\_docker\_image) | Docker image for Grafana | <pre>object({<br>    image              = string<br>    tag                = string<br>    image_pull_secrets = string<br>  })</pre> | n/a | yes |
 | <a name="input_namespace"></a> [namespace](#input\_namespace) | Namespace of ArmoniK monitoring | `string` | n/a | yes |
 | <a name="input_node_selector"></a> [node\_selector](#input\_node\_selector) | Node selector for Grafana | `any` | `{}` | no |
-| <a name="input_persistent_volume"></a> [persistent\_volume](#input\_persistent\_volume) | Persistent volume info | <pre>object({<br>    storage_provisioner = string<br>    volume_binding_mode = string<br>    parameters          = map(string)<br>    # Resources for PVC<br>    resources = object({<br>      limits = object({<br>        storage = string<br>      })<br>      requests = object({<br>        storage = string<br>      })<br>    })<br>  })</pre> | n/a | yes |
+| <a name="input_persistent_volume"></a> [persistent\_volume](#input\_persistent\_volume) | Persistent volume info | <pre>object({<br>    storage_provisioner = string<br>    volume_binding_mode = string<br>    parameters          = map(string)<br>    # Resources for PVC<br>    resources = object({<br>      limits = object({<br>        storage = string<br>      })<br>      requests = object({<br>        storage = string<br>      })<br>    })<br>  })</pre> | `null` | no |
 | <a name="input_port"></a> [port](#input\_port) | Port for Grafana service | `string` | n/a | yes |
 | <a name="input_prometheus_url"></a> [prometheus\_url](#input\_prometheus\_url) | Prometheus URL | `string` | n/a | yes |
-| <a name="input_security_context"></a> [security\_context](#input\_security\_context) | security context for MongoDB pods | <pre>object({<br>    run_as_user = number<br>    fs_group    = number<br>  })</pre> | n/a | yes |
+| <a name="input_security_context"></a> [security\_context](#input\_security\_context) | security context for Grafana pods | <pre>object({<br>    run_as_user = number<br>    fs_group    = number<br>  })</pre> | <pre>{<br>  "fs_group": 999,<br>  "run_as_user": 999<br>}</pre> | no |
 | <a name="input_service_type"></a> [service\_type](#input\_service\_type) | Service type which can be: ClusterIP, NodePort or LoadBalancer | `string` | n/a | yes |
 
 ## Outputs

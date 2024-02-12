@@ -51,10 +51,10 @@ resource "kubernetes_deployment" "mongodb" {
           }
         }
         security_context {
-          run_as_user     = var.mongodb.security_context.run_as_user
+          run_as_user     = var.security_context.run_as_user
           run_as_non_root = true
-          run_as_group    = var.mongodb.security_context.fs_group
-          fs_group        = var.mongodb.security_context.fs_group
+          run_as_group    = var.security_context.fs_group
+          fs_group        = var.security_context.fs_group
         }
         container {
           name              = "mongodb"

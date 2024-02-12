@@ -199,9 +199,12 @@ resource "helm_release" "efs_csi" {
     name  = "sidecars.csiProvisioner.image.tag"
     value = var.efs_csi_external_provisioner_tag
   }
-  set {
-    name  = "imagePullSecrets"
-    value = var.efs_csi_image_pull_secrets
+  dynamic "set" {
+    for_each = toset(compact([var.efs_csi_image_pull_secrets]))
+    content {
+      name  = "imagePullSecrets"
+      value = each.key
+    }
   }
   set {
     name  = "node.serviceAccount.create"

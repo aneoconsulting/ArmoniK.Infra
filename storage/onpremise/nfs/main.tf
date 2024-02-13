@@ -1,11 +1,11 @@
-resource "kubernetes_service_account" "nfs-client-provisioner" {
+resource "kubernetes_service_account" "nfs_client_provisioner" {
   metadata {
     name      = "nfs-client-provisioner"
     namespace = var.namespace
   }
 }
 
-resource "kubernetes_cluster_role" "nfs-client-provisioner-runner" {
+resource "kubernetes_cluster_role" "nfs_client_provisioner_runner" {
   metadata {
     name = "nfs-client-provisioner-runner"
   }
@@ -46,25 +46,25 @@ resource "kubernetes_cluster_role" "nfs-client-provisioner-runner" {
   }
 }
 
-resource "kubernetes_cluster_role_binding" "run-nfs-client-provisioner" {
+resource "kubernetes_cluster_role_binding" "run_nfs_client_provisioner" {
   metadata {
     name = "run-nfs-client-provisioner"
   }
 
   subject {
     kind      = "ServiceAccount"
-    name      = kubernetes_service_account.nfs-client-provisioner.metadata[0].name
-    namespace = kubernetes_service_account.nfs-client-provisioner.metadata[0].namespace
+    name      = kubernetes_service_account.nfs_client_provisioner.metadata[0].name
+    namespace = kubernetes_service_account.nfs_client_provisioner.metadata[0].namespace
   }
 
   role_ref {
     kind      = "ClusterRole"
-    name      = kubernetes_cluster_role.nfs-client-provisioner-runner.metadata[0].name
+    name      = kubernetes_cluster_role.nfs_client_provisioner_runner.metadata[0].name
     api_group = "rbac.authorization.k8s.io"
   }
 }
 
-resource "kubernetes_role" "leader-locking-nfs-client-provisioner" {
+resource "kubernetes_role" "leader_locking_nfs_client_provisioner" {
   metadata {
     name      = "leader-locking-nfs-client-provisioner"
     namespace = var.namespace
@@ -77,7 +77,7 @@ resource "kubernetes_role" "leader-locking-nfs-client-provisioner" {
   }
 }
 
-resource "kubernetes_role_binding" "leader-locking-nfs-client-provisioner" {
+resource "kubernetes_role_binding" "leader_locking_nfs_client_provisioner" {
   metadata {
     name      = "leader-locking-nfs-client-provisioner"
     namespace = var.namespace
@@ -85,17 +85,16 @@ resource "kubernetes_role_binding" "leader-locking-nfs-client-provisioner" {
 
   subject {
     kind      = "ServiceAccount"
-    name      = kubernetes_service_account.nfs-client-provisioner.metadata[0].name
-    namespace = kubernetes_service_account.nfs-client-provisioner.metadata[0].namespace
+    name      = kubernetes_service_account.nfs_client_provisioner.metadata[0].name
+    namespace = kubernetes_service_account.nfs_client_provisioner.metadata[0].namespace
   }
 
   role_ref {
     kind      = "Role"
-    name      = kubernetes_role.leader-locking-nfs-client-provisioner.metadata[0].name
+    name      = kubernetes_role.leader_locking_nfs_client_provisioner.metadata[0].name
     api_group = "rbac.authorization.k8s.io"
   }
 }
-
 
 # Kubernetes nfs deployment
 resource "kubernetes_storage_class" "nfs_client" {
@@ -116,7 +115,7 @@ resource "kubernetes_storage_class" "nfs_client" {
 
 }
 
-resource "kubernetes_deployment" "nfs-provisioner" {
+resource "kubernetes_deployment" "nfs_provisioner" {
   metadata {
     name      = "nfs-provisioner"
     namespace = var.namespace
@@ -149,41 +148,36 @@ resource "kubernetes_deployment" "nfs-provisioner" {
         }
       }
       spec {
-        node_selector = var.nfs_client.node_selector
+        node_selector = var.node_selector
         dynamic "toleration" {
-          for_each = (var.nfs_client.node_selector != {} ? [
-            for index in range(0, length(local.node_selector_keys)) : {
-              key   = local.node_selector_keys[index]
-              value = local.node_selector_values[index]
-            }
-          ] : [])
+          for_each = var.node_selector
           content {
-            key      = toleration.value.key
+            key      = toleration.value
             operator = "Equal"
-            value    = toleration.value.value
+            value    = toleration.value
             effect   = "NoSchedule"
           }
         }
         dynamic "image_pull_secrets" {
-          for_each = (var.nfs_client.image_pull_secrets != "" ? [1] : [])
+          for_each = (var.image_pull_secrets != "" ? [1] : [])
           content {
-            name = var.nfs_client.image_pull_secrets
+            name = var.image_pull_secrets
           }
         }
         service_account_name = "nfs-client-provisioner"
         container {
           name              = "nfs-provisioner"
-          image             = "${var.nfs_client.image}:${var.nfs_client.tag}"
-          image_pull_policy = "IfNotPresent"
+          image             = "${var.image}:${var.tag}"
+          image_pull_policy = var.image_policy
 
           # Mount NFS server details
           env {
             name  = "NFS_SERVER"
-            value = var.nfs_server
+            value = var.server
           }
           env {
             name  = "NFS_PATH"
-            value = var.nfs_path
+            value = var.path
           }
 
           volume_mount {
@@ -251,8 +245,8 @@ resource "kubernetes_deployment" "nfs-provisioner" {
         volume {
           name = "nfs-client-root"
           nfs {
-            server = var.nfs_server
-            path   = var.nfs_path
+            server = var.server
+            path   = var.path
           }
         }
       }
@@ -263,9 +257,8 @@ resource "kubernetes_deployment" "nfs-provisioner" {
 
 # Persistent volume claim
 resource "kubernetes_persistent_volume_claim" "nfs_claim" {
-  # count = var.nfs != null ? 1 : 0
   metadata {
-    name      = var.pvc_name #"nfsvolume"
+    name      = var.pvc_name
     namespace = var.namespace
   }
   spec {
@@ -275,7 +268,6 @@ resource "kubernetes_persistent_volume_claim" "nfs_claim" {
         storage = "5Gi"
       }
     }
-    #volume_name = "${kubernetes_persistent_volume.nfs_pv.metadata.0.name}"
     storage_class_name = "nfs-client"
   }
 }

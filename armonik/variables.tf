@@ -404,7 +404,7 @@ variable "environment_description" {
 
 # nfs_parameters
 
-variable "nfs_mount_pod" {
+variable "mount_pod" {
   description = "Path to which the NFS will be mounted in the pods"
   type        = string
   default     = "/local_storage"

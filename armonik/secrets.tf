@@ -67,3 +67,14 @@ data "kubernetes_secret" "prometheus" {
     namespace = var.namespace
   }
 }
+
+#NFS 
+resource "kubernetes_secret" "path_pvc_pod" {
+  metadata {
+    name      = "path_pod"
+    namespace = var.namespace
+  }
+  data = {
+    "path" = var.mount_pod
+  }
+}

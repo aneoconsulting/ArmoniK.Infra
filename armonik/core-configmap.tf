@@ -23,6 +23,6 @@ resource "kubernetes_config_map" "core_config" {
     Amqp__Scheme                                          = "AMQPS"
     Authenticator__RequireAuthentication                  = local.authentication_require_authentication
     Authenticator__RequireAuthorization                   = local.authentication_require_authorization
-    LocalStorage__Path                                    = var.nfs_mount_pod
+    LocalStorage__Path                                    = kubernetes_secret.path_pvc_pod.data.path
   }, var.extra_conf.core)
 }

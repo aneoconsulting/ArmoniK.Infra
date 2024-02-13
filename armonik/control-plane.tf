@@ -120,7 +120,7 @@ resource "kubernetes_deployment" "control_plane" {
             for_each = local.object_storage_adapter == "ArmoniK.Adapters.LocalStorage.ObjectStorage" ? [1] : []
             content {
               name       = "nfs"
-              mount_path = var.nfs_mount_pod
+              mount_path = kubernetes_secret.path_pvc_pod.data.path
             }
           }
         }

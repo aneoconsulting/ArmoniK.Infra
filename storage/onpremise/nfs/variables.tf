@@ -5,45 +5,42 @@ variable "namespace" {
 }
 
 # Parameters for nfs server
-
-variable "nfs_server" {
+variable "server" {
   type        = string
   description = "ip nfs server"
 }
 
-variable "nfs_path" {
+variable "path" {
   type        = string
   description = "path on server"
 }
 
-
-
 # Parameters for NFS
-variable "nfs_client" {
-  description = "Parameters of nfs_client"
-  type = object({
-    image              = string
-    tag                = string
-    node_selector      = any
-    image_pull_secrets = string
-    max_memory         = string
-  })
-  default = {
-    image              = "k8s.gcr.io/sig-storage/nfs-subdir-external-provisioner"
-    tag                = "v4.0.2"
-    node_selector      = {}
-    image_pull_secrets = ""
-    max_memory         = ""
-  }
+variable "image" {
+  description = "image for the external client provisioner"
+  type        = string
+  default     = "k8s.gcr.io/sig-storage/nfs-subdir-external-provisioner"
 }
-
-# #nfs parameter for pods
-
-# variable "nfs_mount_pod" {
-#    description = "Path to which the NFS will be mounted in the pods"
-#    type = string
-#    default ="/local_storage"
-# }
+variable "tag" {
+  description = "tag for the image"
+  type        = string
+  default     = "v4.0.2"
+}
+variable "node_selector" {
+  description = "selectors"
+  type        = any
+  default     = {}
+}
+variable "image_pull_secrets" {
+  description = "pull secrets if needed"
+  type        = string
+  default     = ""
+}
+variable "image_policy" {
+  description = "policy  for getting the image"
+  type        = string
+  default     = "IfNotPresent"
+}
 
 variable "pvc_name" {
   description = "Name for the pvc to be created and used"

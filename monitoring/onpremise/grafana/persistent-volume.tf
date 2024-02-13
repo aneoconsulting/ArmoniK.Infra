@@ -1,9 +1,9 @@
-resource "kubernetes_storage_class" "mongodb" {
+resource "kubernetes_storage_class" "grafana" {
   count = var.persistent_volume != null ? 1 : 0
   metadata {
-    name = "mongodb"
+    name = "grafana"
     labels = {
-      app     = "mongodb"
+      app     = "grafana"
       type    = "storage-class"
       service = "persistent-volume"
     }
@@ -14,20 +14,20 @@ resource "kubernetes_storage_class" "mongodb" {
   parameters          = var.persistent_volume.parameters
 }
 
-resource "kubernetes_persistent_volume_claim" "mongodb" {
-  count = length(kubernetes_storage_class.mongodb) > 0 ? 1 : 0
+resource "kubernetes_persistent_volume_claim" "grafana" {
+  count = length(kubernetes_storage_class.grafana) > 0 ? 1 : 0
   metadata {
-    name      = "mongodb"
+    name      = "grafana"
     namespace = var.namespace
     labels = {
-      app     = "mongodb"
+      app     = "grafana"
       type    = "persistent-volume-claim"
       service = "persistent-volume"
     }
   }
   spec {
     access_modes       = ["ReadWriteMany"]
-    storage_class_name = kubernetes_storage_class.mongodb[0].metadata[0].name
+    storage_class_name = kubernetes_storage_class.grafana[0].metadata[0].name
     resources {
       requests = var.persistent_volume.resources.requests
       limits   = var.persistent_volume.resources.limits

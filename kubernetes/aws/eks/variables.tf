@@ -235,6 +235,64 @@ variable "eks_managed_node_groups" {
   default     = null
 }
 
+# EFS
+variable "efs_csi_image" {
+  description = "EFS CSI image name"
+  type        = string
+}
+variable "efs_csi_tag" {
+  description = "EFS CSI image tag"
+  type        = string
+}
+variable "efs_csi_liveness_probe_image" {
+  description = "EFS CSI liveness probe image name"
+  type        = string
+}
+variable "efs_csi_liveness_probe_tag" {
+  description = "EFS CSI liveness probe image tag"
+  type        = string
+}
+variable "efs_csi_node_driver_registrar_image" {
+  description = "EFS CSI node driver registrar image name"
+  type        = string
+}
+variable "efs_csi_node_driver_registrar_tag" {
+  description = "EFS CSI node driver registrar image tag"
+  type        = string
+}
+variable "efs_csi_external_provisioner_image" {
+  description = "EFS CSI external provisioner image name"
+  type        = string
+}
+variable "efs_csi_external_provisioner_tag" {
+  description = "EFS CSI external provisioner image tag"
+  type        = string
+}
+
+variable "efs_csi_name" {
+  description = "EFS CSI name"
+  type        = string
+  default     = null
+}
+variable "efs_csi_namespace" {
+  description = "EFS CSI namespace"
+  type        = string
+  default     = null
+}
+variable "efs_csi_image_pull_secrets" {
+  description = "Image pull secret used to pull EFS CSI images"
+  type        = string
+  default     = null
+}
+variable "efs_csi_repository" {
+  description = "EFS CSI helm repository"
+  type        = string
+}
+variable "efs_csi_version" {
+  description = "EFS CSI helm version"
+  type        = string
+}
+
 # Encryption keys
 variable "cluster_log_kms_key_id" {
   description = "KMS id to encrypt/decrypt the cluster's logs"

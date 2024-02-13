@@ -45,3 +45,35 @@ variable "authentication" {
   type        = bool
   default     = false
 }
+
+variable "security_context" {
+  description = "security context for Grafana pods"
+  type = object({
+    run_as_user = number
+    fs_group    = number
+  })
+  default = {
+    run_as_user = 999
+    fs_group    = 999
+  }
+}
+
+# Persistent volume
+variable "persistent_volume" {
+  description = "Persistent volume info"
+  type = object({
+    storage_provisioner = string
+    volume_binding_mode = string
+    parameters          = map(string)
+    # Resources for PVC
+    resources = object({
+      limits = object({
+        storage = string
+      })
+      requests = object({
+        storage = string
+      })
+    })
+  })
+  default = null
+}

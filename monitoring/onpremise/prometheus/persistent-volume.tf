@@ -1,9 +1,9 @@
-resource "kubernetes_storage_class" "mongodb" {
+resource "kubernetes_storage_class" "prometheus" {
   count = var.persistent_volume != null ? 1 : 0
   metadata {
-    name = "mongodb"
+    name = "prometheus"
     labels = {
-      app     = "mongodb"
+      app     = "prometheus"
       type    = "storage-class"
       service = "persistent-volume"
     }
@@ -14,20 +14,20 @@ resource "kubernetes_storage_class" "mongodb" {
   parameters          = var.persistent_volume.parameters
 }
 
-resource "kubernetes_persistent_volume_claim" "mongodb" {
-  count = length(kubernetes_storage_class.mongodb) > 0 ? 1 : 0
+resource "kubernetes_persistent_volume_claim" "prometheus" {
+  count = length(kubernetes_storage_class.prometheus) > 0 ? 1 : 0
   metadata {
-    name      = "mongodb"
+    name      = "prometheus"
     namespace = var.namespace
     labels = {
-      app     = "mongodb"
+      app     = "prometheus"
       type    = "persistent-volume-claim"
       service = "persistent-volume"
     }
   }
   spec {
     access_modes       = ["ReadWriteMany"]
-    storage_class_name = kubernetes_storage_class.mongodb[0].metadata[0].name
+    storage_class_name = kubernetes_storage_class.prometheus[0].metadata[0].name
     resources {
       requests = var.persistent_volume.resources.requests
       limits   = var.persistent_volume.resources.limits

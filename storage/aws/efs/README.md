@@ -39,7 +39,7 @@ No modules.
 | <a name="input_provisioned_throughput_in_mibps"></a> [provisioned\_throughput\_in\_mibps](#input\_provisioned\_throughput\_in\_mibps) | The throughput, measured in MiB/s, that you want to provision for the file system. Only applicable with throughput\_mode set to provisioned | `number` | `null` | no |
 | <a name="input_tags"></a> [tags](#input\_tags) | Tags for resource | `any` | `{}` | no |
 | <a name="input_throughput_mode"></a> [throughput\_mode](#input\_throughput\_mode) | Throughput mode for the file system. Defaults to bursting. Valid values: bursting, elastic, and provisioned. When using provisioned, also set provisioned\_throughput\_in\_mibps | `string` | `"bursting"` | no |
-| <a name="input_transition_to_ia"></a> [transition\_to\_ia](#input\_transition\_to\_ia) | Describes the period of time that a file is not accessed, after which it transitions to IA storage | `string` | `"AFTER_7_DAYS"` | no |
+| <a name="input_transition_to_ia"></a> [transition\_to\_ia](#input\_transition\_to\_ia) | Describes the period of time that a file is not accessed, after which it transitions to IA storage | `string` | `null` | no |
 | <a name="input_vpc_cidr_block_private"></a> [vpc\_cidr\_block\_private](#input\_vpc\_cidr\_block\_private) | AWS VPC private cidr block | `set(string)` | n/a | yes |
 | <a name="input_vpc_cidr_blocks"></a> [vpc\_cidr\_blocks](#input\_vpc\_cidr\_blocks) | AWS VPC cidr block | `set(string)` | n/a | yes |
 | <a name="input_vpc_id"></a> [vpc\_id](#input\_vpc\_id) | AWS VPC id | `string` | n/a | yes |

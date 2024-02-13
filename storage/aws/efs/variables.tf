@@ -68,15 +68,15 @@ variable "provisioned_throughput_in_mibps" {
 variable "transition_to_ia" {
   description = "Describes the period of time that a file is not accessed, after which it transitions to IA storage"
   type        = string
-  default     = "AFTER_7_DAYS"
+  default     = null
   validation {
-    condition = contains([
+    condition = var.transition_to_ia != null ? contains([
       "AFTER_7_DAYS",
       "AFTER_14_DAYS",
       "AFTER_30_DAYS",
       "AFTER_60_DAYS",
       "AFTER_90_DAYS"
-    ], var.transition_to_ia)
+    ], var.transition_to_ia) : true
     error_message = "Possible values for the parameter transition_to_ia are \"AFTER_7_DAYS\" | \"AFTER_14_DAYS\" | \"AFTER_30_DAYS\", \"AFTER_60_DAYS\" | \"AFTER_90_DAYS\"."
   }
 }

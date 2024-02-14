@@ -102,7 +102,7 @@ resource "kubernetes_storage_class" "nfs_client" {
     name = "nfs-client"
   }
 
-  storage_provisioner    = "nfs-provisioner"
+  storage_provisioner    = kubernetes_deployment.nfs_provisioner.metadata[0].name
   reclaim_policy         = "Delete"
   volume_binding_mode    = "Immediate"
   allow_volume_expansion = true
@@ -164,7 +164,7 @@ resource "kubernetes_deployment" "nfs_provisioner" {
             name = var.image_pull_secrets
           }
         }
-        service_account_name = "nfs-client-provisioner"
+        service_account_name = kubernetes_service_account.nfs_client_provisioner.metadata[0].name
         container {
           name              = "nfs-provisioner"
           image             = "${var.image}:${var.tag}"
@@ -252,7 +252,7 @@ resource "kubernetes_deployment" "nfs_provisioner" {
       }
     }
   }
-
+  depends_on = [kubernetes_role_binding.leader_locking_nfs_client_provisioner, kubernetes_cluster_role_binding.run_nfs_client_provisioner]
 }
 
 # Persistent volume claim
@@ -265,9 +265,9 @@ resource "kubernetes_persistent_volume_claim" "nfs_claim" {
     access_modes = ["ReadWriteMany"]
     resources {
       requests = {
-        storage = "5Gi"
+        storage = var.size
       }
     }
-    storage_class_name = "nfs-client"
+    storage_class_name = kubernetes_storage_class.nfs_client.metadata[0].name
   }
 }

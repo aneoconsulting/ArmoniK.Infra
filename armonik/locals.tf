@@ -69,9 +69,6 @@ locals {
       name        = "redis"
       ca_filename = "/redis/chain.pem"
     }
-    nfs = {
-      path_pod = var.mount_pod
-    }
     s3                             = var.s3_secret_name
     shared_storage                 = var.shared_storage_secret_name
     metrics_exporter               = var.metrics_exporter_secret_name
@@ -268,6 +265,9 @@ locals {
       type       = "config_map"
     }
   }
+
+  #nfs 
+  local_storage_mount_path = "/local_storage"
 
   # Configmaps for polling agent
   polling_agent_configmaps = {

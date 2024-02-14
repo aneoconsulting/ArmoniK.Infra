@@ -15,6 +15,12 @@ variable "path" {
   description = "path on server"
 }
 
+variable "size" {
+  type        = string
+  description = "storage request size"
+  default     = "5Gi"
+}
+
 # Parameters for NFS
 variable "image" {
   description = "image for the external client provisioner"

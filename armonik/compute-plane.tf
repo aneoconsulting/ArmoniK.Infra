@@ -133,7 +133,7 @@ resource "kubernetes_deployment" "compute_plane" {
             for_each = local.object_storage_adapter == "ArmoniK.Adapters.LocalStorage.ObjectStorage" ? [1] : []
             content {
               name       = "nfs"
-              mount_path = kubernetes_secret.path_pvc_pod.data.path
+              mount_path = local.secrets.nfs.path_pod
             }
           }
           dynamic "volume_mount" {

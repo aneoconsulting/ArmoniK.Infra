@@ -46,5 +46,5 @@ No modules.
 
 | Name | Description |
 |------|-------------|
-| <a name="output_provisioner_name"></a> [provisioner\_name](#output\_provisioner\_name) | n/a |
-| <a name="output_pvc_name"></a> [pvc\_name](#output\_pvc\_name) | n/a |
+| <a name="output_provisioner_name"></a> [provisioner\_name](#output\_provisioner\_name) | name of the created provisionner |
+| <a name="output_pvc_name"></a> [pvc\_name](#output\_pvc\_name) | name of the created persistant volume claim |

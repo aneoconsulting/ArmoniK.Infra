@@ -266,6 +266,9 @@ locals {
     }
   }
 
+  #nfs 
+  local_storage_mount_path = "/local_storage"
+
   # Configmaps for polling agent
   polling_agent_configmaps = {
     log           = kubernetes_config_map.log_config.metadata[0].name

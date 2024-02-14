@@ -126,6 +126,7 @@
 | <a name="input_namespace"></a> [namespace](#input\_namespace) | Namespace of ArmoniK resources | `string` | n/a | yes |
 | <a name="input_partition_metrics_exporter_secret_name"></a> [partition\_metrics\_exporter\_secret\_name](#input\_partition\_metrics\_exporter\_secret\_name) | the name of the partition metrics exporter secret | `string` | `"partition-metrics-exporter"` | no |
 | <a name="input_prometheus_secret_name"></a> [prometheus\_secret\_name](#input\_prometheus\_secret\_name) | the name of the prometheus secret | `string` | `"prometheus"` | no |
+| <a name="input_pvc_name"></a> [pvc\_name](#input\_pvc\_name) | Name for the pvc to be used | `string` | `"nfsvolume"` | no |
 | <a name="input_s3_secret_name"></a> [s3\_secret\_name](#input\_s3\_secret\_name) | the name of the S3 secret | `string` | `"s3"` | no |
 | <a name="input_seq_secret_name"></a> [seq\_secret\_name](#input\_seq\_secret\_name) | the name of the seq secret | `string` | `"seq"` | no |
 | <a name="input_shared_storage_secret_name"></a> [shared\_storage\_secret\_name](#input\_shared\_storage\_secret\_name) | the name of the shared-storage secret | `string` | `"shared-storage"` | no |

@@ -401,3 +401,10 @@ variable "environment_description" {
   type        = any
   default     = null
 }
+
+# nfs_parameters
+variable "pvc_name" {
+  description = "Name for the pvc to be used"
+  type        = string
+  default     = "nfsvolume"
+}

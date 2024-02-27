@@ -110,6 +110,14 @@ locals {
       { for k, v in try(value.taints, {}) : "k8s.io/cluster-autoscaler/node-template/taint/${v.key}" => "${v.value}:${local.taint_effects[v.effect]}" }
     )
   }
+  # List of tags per sel managed group
+  self_managed_autoscaling_group_tags = {
+    for key, value in var.self_managed_node_groups : key => merge(
+      local.autoscaling_group_tags,
+      { for k, v in try(value.labels, {}) : "k8s.io/cluster-autoscaler/node-template/label/${k}" => v },
+      { for k, v in try(value.taints, {}) : "k8s.io/cluster-autoscaler/node-template/taint/${v.key}" => "${v.value}:${local.taint_effects[v.effect]}" }
+    )
+  }
 }
 
 

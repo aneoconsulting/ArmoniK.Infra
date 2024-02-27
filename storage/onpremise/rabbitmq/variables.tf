@@ -1,6 +1,6 @@
 # Namespace
 variable "namespace" {
-  description = "Namespace for Chaos Mesh"
+  description = "Namespace for rabbitmq"
   type        = string
 }
 
@@ -9,25 +9,43 @@ variable "service_type" {
   type        = string
 }
 
-# Docker image
-variable "docker_image" {
-  description = "Docker image for RabbitMQ"
-  type = object({
-    rabbitmq = object({
-      image = string
-      tag   = string
-    })
-  })
+variable "image" {
+  description = "image for the rabbirmq to be used"
+  type        = string
+  default     = "bitnami/rabbitmq"
+}
+variable "tag" {
+  description = "tag for the image"
+  type        = string
+  default     = "3.12.12-debian-11-r21"
 }
 
-# Repository of Chaos Mesh helm chart
+# Repository of RabbitMQ helm chart
 variable "helm_chart_repository" {
-  description = "Path to helm chart repository for Chaos Mesh"
+  description = "Path to helm chart repository for RabbitMQ"
   type        = string
 }
 
 # Version of helm chart
 variable "helm_chart_version" {
-  description = "Version of chart helm for Chaos Mesh"
+  description = "Version of chart helm for RabbitMQ"
   type        = string
+}
+
+variable "validity_period_hours" {
+  description = "Validity period of the certificate in hours"
+  type        = string
+  default     = "8760" # 1 year
+}
+
+variable "adapter_class_name" {
+  description = "Name of the adapter's class"
+  type        = string
+  default     = "ArmoniK.Core.Adapters.Amqp.QueueBuilder"
+}
+
+variable "adapter_absolute_path" {
+  description = "The adapter's absolut path"
+  type        = string
+  default     = "/adapters/queue/amqp/ArmoniK.Core.Adapters.Amqp.dll"
 }

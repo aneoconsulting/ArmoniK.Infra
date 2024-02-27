@@ -39,7 +39,7 @@ resource "aws_autoscaling_group_tag" "self_managed_autoscaling_group_tag" {
 }*/
 
 output "test" {
-  value = merge([
+  value = { for k,v in merge([
     for self_mng, tags in local.self_managed_autoscaling_group_tags : {
       for tag_key, tag_value in tags : "${self_mng}-${substr(tag_key, 25, -1)}" => {
         mng   = self_mng,
@@ -47,5 +47,5 @@ output "test" {
         value = tag_value
       }
     }
-  ]...)
+  ]...) : k => module.eks.self_managed_node_groups[v.mng].autoscaling_group_name}
 }

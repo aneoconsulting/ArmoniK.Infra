@@ -17,7 +17,7 @@ resource "aws_autoscaling_group_tag" "eks_managed_autoscaling_group_tag" {
     propagate_at_launch = true
   }
 }
-
+/*
 resource "aws_autoscaling_group_tag" "self_managed_autoscaling_group_tag" {
   # Create a tuple in a map for each ASG tag combo
   for_each = merge([
@@ -36,4 +36,16 @@ resource "aws_autoscaling_group_tag" "self_managed_autoscaling_group_tag" {
     value               = each.value.value
     propagate_at_launch = true
   }
+}*/
+
+output "test" {
+  value = merge([
+    for self_mng, tags in local.self_managed_autoscaling_group_tags : {
+      for tag_key, tag_value in tags : "${self_mng}-${substr(tag_key, 25, -1)}" => {
+        mng   = self_mng,
+        key   = tag_key,
+        value = tag_value
+      }
+    }
+  ]...)
 }

@@ -1,3 +1,7 @@
+locals{
+  kubernetes_service_account_cluster_autoscaler = "cluster-autoscaler-sa"
+}
+
 # A component that automatically adjusts the size of a Kubernetes Cluster so that all pods have a place to run and there are no unneeded nodes
 resource "helm_release" "cluster_autoscaler" {
   name       = "armonik"
@@ -107,6 +111,18 @@ resource "helm_release" "cluster_autoscaler" {
     name  = "resources.requests.memory"
     value = "1000Mi"
   }
+  set {
+    name  = "rbac.create"
+    value = false
+  }
+  set {
+    name  = "rbac.serviceAccount.create"
+    value = false
+  }
+  set {
+    name  = "rbac.serviceAccount.name"
+    value = kubernetes_service_account.worker_autoscaling.metadata[0].name
+  }
 
   # Method 2 - Specifying groups manually
   # Example for an ASG
@@ -170,7 +186,7 @@ resource "aws_iam_policy" "worker_autoscaling" {
   policy      = data.aws_iam_policy_document.worker_autoscaling.json
   tags        = local.tags
 }
-
+/*
 resource "aws_iam_policy_attachment" "workers_autoscaling" {
   name = "eks-worker-node-autoscaling-${module.eks.cluster_name}"
   roles = concat(
@@ -178,4 +194,45 @@ resource "aws_iam_policy_attachment" "workers_autoscaling" {
     values(module.eks.self_managed_node_groups)[*].iam_role_name,
   values(module.eks.fargate_profiles)[*].iam_role_name)
   policy_arn = aws_iam_policy.worker_autoscaling.arn
+}
+*/
+
+resource "aws_iam_role" "worker_autoscaling" {
+  name = local.iam_worker_autoscaling_policy_name
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          Federated = local.oidc_arn
+        }
+        Action = "sts:AssumeRoleWithWebIdentity"
+        Condition = {
+          StringEquals = {
+            "${local.oidc_url}:aud" = "sts.amazonaws.com"
+            "${local.oidc_url}:sub" = [
+              "system:serviceaccount:${var.cluster_autoscaler_namespace}:${local.kubernetes_service_account_cluster_autoscaler}"
+            ]
+          }
+        }
+      }
+    ]
+  })
+  tags = local.tags
+}
+
+resource "aws_iam_role_policy_attachment" "worker_autoscaling" {
+  policy_arn = aws_iam_policy.worker_autoscaling.arn
+  role       = aws_iam_role.worker_autoscaling.name
+}
+
+resource "kubernetes_service_account" "worker_autoscaling" {
+  metadata {
+    name = local.kubernetes_service_account_cluster_autoscaler
+    annotations = {
+      "eks.amazonaws.com/role-arn" = aws_iam_role.worker_autoscaling.arn
+    }
+    namespace = var.cluster_autoscaler_namespace
+  }
 }

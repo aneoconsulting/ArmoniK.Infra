@@ -1,5 +1,5 @@
-locals{
-  kubernetes_service_account_cluster_autoscaler = "cluster-autoscaler-sa"
+locals {
+  kubernetes_service_account_cluster_autoscaler = "cluster-autoscaler"
 }
 
 # A component that automatically adjusts the size of a Kubernetes Cluster so that all pods have a place to run and there are no unneeded nodes
@@ -152,8 +152,8 @@ resource "helm_release" "cluster_autoscaler" {
 # Workers Auto Scaling policy
 data "aws_iam_policy_document" "worker_autoscaling" {
   statement {
-    sid    = "eksWorkerAutoscalingAll"
-    effect = "Allow"
+    sid     = "eksWorkerAutoscalingAll"
+    effect  = "Allow"
     actions = [
       "autoscaling:DescribeAutoScalingGroups",
       "autoscaling:DescribeAutoScalingInstances",
@@ -166,8 +166,8 @@ data "aws_iam_policy_document" "worker_autoscaling" {
     resources = ["*"]
   }
   statement {
-    sid    = "eksWorkerAutoscalingOwn"
-    effect = "Allow"
+    sid     = "eksWorkerAutoscalingOwn"
+    effect  = "Allow"
     actions = [
       "autoscaling:SetDesiredCapacity",
       "autoscaling:TerminateInstanceInAutoScalingGroup",
@@ -198,16 +198,16 @@ resource "aws_iam_policy_attachment" "workers_autoscaling" {
 */
 
 resource "aws_iam_role" "worker_autoscaling" {
-  name = local.iam_worker_autoscaling_policy_name
+  name               = local.iam_worker_autoscaling_policy_name
   assume_role_policy = jsonencode({
-    Version = "2012-10-17"
+    Version   = "2012-10-17"
     Statement = [
       {
-        Effect = "Allow"
+        Effect    = "Allow"
         Principal = {
           Federated = local.oidc_arn
         }
-        Action = "sts:AssumeRoleWithWebIdentity"
+        Action    = "sts:AssumeRoleWithWebIdentity"
         Condition = {
           StringEquals = {
             "${local.oidc_url}:aud" = "sts.amazonaws.com"
@@ -229,10 +229,154 @@ resource "aws_iam_role_policy_attachment" "worker_autoscaling" {
 
 resource "kubernetes_service_account" "worker_autoscaling" {
   metadata {
-    name = local.kubernetes_service_account_cluster_autoscaler
+    name        = local.kubernetes_service_account_cluster_autoscaler
+    namespace   = var.cluster_autoscaler_namespace
     annotations = {
       "eks.amazonaws.com/role-arn" = aws_iam_role.worker_autoscaling.arn
     }
+    labels = {
+      "k8s-addon" = "cluster-autoscaler.addons.k8s.io"
+      "k8s-app"   = "cluster-autoscaler"
+    }
+  }
+}
+
+resource "kubernetes_cluster_role" "worker_autoscaling" {
+  metadata {
+    name   = local.kubernetes_service_account_cluster_autoscaler
+    labels = {
+      "k8s-addon" = "cluster-autoscaler.addons.k8s.io"
+      "k8s-app"   = "cluster-autoscaler"
+    }
+  }
+  rule {
+    verbs      = ["create", "patch"]
+    api_groups = [""]
+    resources  = ["events", "endpoints"]
+  }
+  rule {
+    verbs      = ["create"]
+    api_groups = [""]
+    resources  = ["pods/eviction"]
+  }
+  rule {
+    verbs      = ["update"]
+    api_groups = [""]
+    resources  = ["pods/status"]
+  }
+  rule {
+    verbs          = ["get", "update"]
+    api_groups     = [""]
+    resources      = ["endpoints"]
+    resource_names = [local.kubernetes_service_account_cluster_autoscaler]
+  }
+  rule {
+    verbs      = ["watch", "list", "get", "update"]
+    api_groups = [""]
+    resources  = ["nodes"]
+  }
+  rule {
+    verbs      = ["watch", "list", "get"]
+    api_groups = [""]
+    resources  = ["namespaces", "pods", "services", "replicationcontrollers", "persistentvolumeclaims", "persistentvolumes"]
+  }
+  rule {
+    verbs      = ["watch", "list", "get"]
+    api_groups = ["extensions"]
+    resources  = ["replicasets", "daemonsets"]
+  }
+  rule {
+    verbs      = ["watch", "list"]
+    api_groups = ["policy"]
+    resources  = ["poddisruptionbudgets"]
+  }
+  rule {
+    verbs      = ["watch", "list", "get"]
+    api_groups = ["apps"]
+    resources  = ["statefulsets", "replicasets", "daemonsets"]
+  }
+  rule {
+    verbs      = ["watch", "list", "get"]
+    api_groups = ["storage.k8s.io"]
+    resources  = ["storageclasses", "csinodes", "csidrivers", "csistoragecapacities"]
+  }
+  rule {
+    verbs      = ["get", "list", "watch", "patch"]
+    api_groups = ["batch", "extensions"]
+    resources  = ["jobs"]
+  }
+  rule {
+    verbs      = ["create"]
+    api_groups = ["batch", "extensions"]
+    resources  = ["leases"]
+  }
+  rule {
+    verbs          = ["get", "update"]
+    api_groups     = ["coordination.k8s.io"]
+    resources      = ["leases"]
+    resource_names = [local.kubernetes_service_account_cluster_autoscaler]
+  }
+}
+
+resource "kubernetes_role" "worker_autoscaling" {
+  metadata {
+    name      = local.kubernetes_service_account_cluster_autoscaler
     namespace = var.cluster_autoscaler_namespace
+    labels    = {
+      "k8s-addon" = "cluster-autoscaler.addons.k8s.io"
+      "k8s-app"   = "cluster-autoscaler"
+    }
+  }
+  rule {
+    api_groups = [""]
+    resources  = ["configmaps"]
+    verbs      = ["create", "list", "watch"]
+  }
+  rule {
+    api_groups     = [""]
+    resources      = ["configmaps"]
+    verbs          = ["delete", "get", "update", "watch"]
+    resource_names = ["cluster-autoscaler-status", "cluster-autoscaler-priority-expander"]
+  }
+}
+
+resource "kubernetes_cluster_role_binding" "worker_autoscaling" {
+  metadata {
+    name   = local.kubernetes_service_account_cluster_autoscaler
+    labels = {
+      "k8s-addon" = "cluster-autoscaler.addons.k8s.io"
+      "k8s-app"   = "cluster-autoscaler"
+    }
+  }
+  role_ref {
+    api_group = "rbac.authorization.k8s.io"
+    kind      = "ClusterRole"
+    name      = kubernetes_cluster_role.worker_autoscaling.metadata[0].name
+  }
+  subject {
+    kind      = "ServiceAccount"
+    name      = kubernetes_service_account.worker_autoscaling.metadata[0].name
+    namespace = kubernetes_service_account.worker_autoscaling.metadata[0].namespace
+  }
+}
+
+resource "kubernetes_role_binding" "worker_autoscaling" {
+  metadata {
+    name      = local.kubernetes_service_account_cluster_autoscaler
+    namespace = var.cluster_autoscaler_namespace
+    labels    = {
+      "k8s-addon" = "cluster-autoscaler.addons.k8s.io"
+      "k8s-app"   = "cluster-autoscaler"
+    }
+  }
+  role_ref {
+    api_group = "rbac.authorization.k8s.io"
+    kind      = "Role"
+    name      = kubernetes_role.worker_autoscaling.metadata[0].namespace
+  }
+  subject {
+    kind      = "ServiceAccount"
+    name      = kubernetes_service_account.worker_autoscaling.metadata[0].namespace
+    namespace = kubernetes_service_account.worker_autoscaling.metadata[0].namespace
   }
 }

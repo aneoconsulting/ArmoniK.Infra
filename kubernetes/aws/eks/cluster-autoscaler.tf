@@ -111,7 +111,7 @@ resource "helm_release" "cluster_autoscaler" {
     name  = "resources.requests.memory"
     value = "1000Mi"
   }
-  set {
+  /*set {
     name  = "rbac.create"
     value = false
   }
@@ -122,7 +122,7 @@ resource "helm_release" "cluster_autoscaler" {
   set {
     name  = "rbac.serviceAccount.name"
     value = kubernetes_service_account.worker_autoscaling.metadata[0].name
-  }
+  }*/
 
   # Method 2 - Specifying groups manually
   # Example for an ASG
@@ -186,7 +186,7 @@ resource "aws_iam_policy" "worker_autoscaling" {
   policy      = data.aws_iam_policy_document.worker_autoscaling.json
   tags        = local.tags
 }
-/*
+
 resource "aws_iam_policy_attachment" "workers_autoscaling" {
   name = "eks-worker-node-autoscaling-${module.eks.cluster_name}"
   roles = concat(
@@ -195,8 +195,8 @@ resource "aws_iam_policy_attachment" "workers_autoscaling" {
   values(module.eks.fargate_profiles)[*].iam_role_name)
   policy_arn = aws_iam_policy.worker_autoscaling.arn
 }
-*/
 
+/*
 resource "aws_iam_role" "worker_autoscaling" {
   name               = local.iam_worker_autoscaling_policy_name
   assume_role_policy = jsonencode({
@@ -380,3 +380,4 @@ resource "kubernetes_role_binding" "worker_autoscaling" {
     namespace = kubernetes_service_account.worker_autoscaling.metadata[0].namespace
   }
 }
+*/

@@ -311,7 +311,7 @@ resource "kubernetes_cluster_role" "worker_autoscaling" {
     resources  = ["leases"]
   }
   rule {
-    verbs          = ["get", "update"]
+    verbs          = ["get", "update", "watch", "list", "create", "patch"]
     api_groups     = ["coordination.k8s.io"]
     resources      = ["leases"]
     resource_names = [local.kubernetes_service_account_cluster_autoscaler]

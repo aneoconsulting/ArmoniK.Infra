@@ -5,17 +5,17 @@
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0 |
 | <a name="requirement_helm"></a> [helm](#requirement\_helm) | >= 2.12.1 |
+| <a name="requirement_kubernetes"></a> [kubernetes](#requirement\_kubernetes) | >= 2.7.1 |
 | <a name="requirement_local"></a> [local](#requirement\_local) | >= 2.4.0 |
 | <a name="requirement_pkcs12"></a> [pkcs12](#requirement\_pkcs12) | >= 0.0.7 |
 | <a name="requirement_random"></a> [random](#requirement\_random) | >= 3.5.1 |
-| <a name="requirement_tls"></a> [tls](#requirement\_tls) | >= 4.0.4 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
 | <a name="provider_helm"></a> [helm](#provider\_helm) | >= 2.12.1 |
-| <a name="provider_kubernetes"></a> [kubernetes](#provider\_kubernetes) | n/a |
+| <a name="provider_kubernetes"></a> [kubernetes](#provider\_kubernetes) | >= 2.7.1 |
 | <a name="provider_local"></a> [local](#provider\_local) | >= 2.4.0 |
 | <a name="provider_pkcs12"></a> [pkcs12](#provider\_pkcs12) | >= 0.0.7 |
 | <a name="provider_random"></a> [random](#provider\_random) | >= 3.5.1 |
@@ -51,9 +51,7 @@ No modules.
 | <a name="input_helm_chart_version"></a> [helm\_chart\_version](#input\_helm\_chart\_version) | Version of chart helm for RabbitMQ | `string` | n/a | yes |
 | <a name="input_image"></a> [image](#input\_image) | image for the rabbirmq to be used | `string` | `"bitnami/rabbitmq"` | no |
 | <a name="input_namespace"></a> [namespace](#input\_namespace) | Namespace for rabbitmq | `string` | n/a | yes |
-| <a name="input_service_type"></a> [service\_type](#input\_service\_type) | service type : ClusterIP,LoadBalancer,NodePort | `string` | n/a | yes |
 | <a name="input_tag"></a> [tag](#input\_tag) | tag for the image | `string` | `"3.12.12-debian-11-r21"` | no |
-| <a name="input_validity_period_hours"></a> [validity\_period\_hours](#input\_validity\_period\_hours) | Validity period of the certificate in hours | `string` | `"8760"` | no |
 
 ## Outputs
 

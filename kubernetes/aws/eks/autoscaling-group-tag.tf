@@ -47,7 +47,7 @@ output "test" {
         value = tag_value
       }
     }
-  ]...) : distinct(module.eks.self_managed_node_groups[v.mng].autoscaling_group_name)]
+  ]...) : module.eks.self_managed_node_groups[v.mng].autoscaling_group_name]
 }
 
 

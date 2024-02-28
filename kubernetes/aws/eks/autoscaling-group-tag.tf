@@ -37,17 +37,5 @@ resource "aws_autoscaling_group_tag" "self_managed_autoscaling_group_tag" {
     propagate_at_launch = true
   }
 }
-/*
-output "test" {
-  value = [ for k,v in merge([
-    for self_mng, tags in local.self_managed_autoscaling_group_tags : {
-      for tag_key, tag_value in tags : "${self_mng}-${substr(tag_key, 25, -1)}" => {
-        mng   = self_mng,
-        key   = tag_key,
-        value = tag_value
-      }
-    }
-  ]...) : v.mng]
-}*/
 
 

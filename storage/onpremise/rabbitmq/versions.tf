@@ -5,7 +5,10 @@ terraform {
       source  = "hashicorp/helm"
       version = ">= 2.12.1"
     }
-
+    kubernetes = {
+      source  = "hashicorp/kubernetes"
+      version = ">= 2.7.1"
+    }
     pkcs12 = {
       source  = "chilicat/pkcs12"
       version = ">= 0.0.7"
@@ -17,10 +20,6 @@ terraform {
     random = {
       source  = "hashicorp/random"
       version = ">= 3.5.1"
-    }
-    tls = {
-      source  = "hashicorp/tls"
-      version = ">= 4.0.4"
     }
   }
 }

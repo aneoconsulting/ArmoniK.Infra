@@ -4,11 +4,6 @@ variable "namespace" {
   type        = string
 }
 
-variable "service_type" {
-  description = "service type : ClusterIP,LoadBalancer,NodePort"
-  type        = string
-}
-
 variable "image" {
   description = "image for the rabbirmq to be used"
   type        = string
@@ -30,12 +25,6 @@ variable "helm_chart_repository" {
 variable "helm_chart_version" {
   description = "Version of chart helm for RabbitMQ"
   type        = string
-}
-
-variable "validity_period_hours" {
-  description = "Validity period of the certificate in hours"
-  type        = string
-  default     = "8760" # 1 year
 }
 
 variable "adapter_class_name" {

@@ -114,7 +114,7 @@ resource "helm_release" "cluster_autoscaler" {
   /*set {
     name  = "rbac.create"
     value = false
-  }
+  }*/
   set {
     name  = "rbac.serviceAccount.create"
     value = false
@@ -122,7 +122,7 @@ resource "helm_release" "cluster_autoscaler" {
   set {
     name  = "rbac.serviceAccount.name"
     value = kubernetes_service_account.worker_autoscaling.metadata[0].name
-  }*/
+  }
 
   # Method 2 - Specifying groups manually
   # Example for an ASG

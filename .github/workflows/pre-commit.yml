@@ -13,6 +13,11 @@ jobs:
     name: Pre-commit checks
     runs-on: ubuntu-latest
     steps:
+      - name: Configure Terraform cache dir
+        run: |
+          mkdir -p "$HOME/.terraform.d/plugin-cache"
+          echo 'plugin_cache_dir = "$HOME/.terraform.d/plugin-cache"' > "$HOME/.terraformrc"
+
       - name: Install tfsec for static analysis of Terraform code to spot potential misconfigurations
         run: |
           curl -s https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash

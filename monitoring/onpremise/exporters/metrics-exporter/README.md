@@ -26,9 +26,14 @@ No modules.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_metrics_exporter"></a> [metrics\_exporter](#input\_metrics\_exporter) | Metrics\_exporter service parameters | <pre>object({<br>    name          = optional(string, "metrics-exporter")<br>    label_app     = optional(string, "armonik")<br>    label_service = optional(string, "metrics-exporter")<br>    port_name     = optional(string, "metrics")<br>    port          = optional(number, 9419)<br>    target_port   = optional(number, 1080)<br>    protocol      = optional(string, "TCP")<br>  })</pre> | n/a | yes |
+| <a name="input_label_app"></a> [label\_app](#input\_label\_app) | Service label app | `string` | `"armonik"` | no |
+| <a name="input_label_service"></a> [label\_service](#input\_label\_service) | Service label service type | `string` | `"metrics-exporter"` | no |
+| <a name="input_name"></a> [name](#input\_name) | Service name | `string` | `"metrics-exporter"` | no |
 | <a name="input_namespace"></a> [namespace](#input\_namespace) | Namespace of ArmoniK resources | `string` | n/a | yes |
+| <a name="input_port"></a> [port](#input\_port) | Service port | `number` | `9419` | no |
+| <a name="input_port_name"></a> [port\_name](#input\_port\_name) | Service port name | `string` | `"metrics"` | no |
 | <a name="input_service_type"></a> [service\_type](#input\_service\_type) | Service type which can be: ClusterIP, NodePort or LoadBalancer | `string` | `"ClusterIP"` | no |
+| <a name="input_target_port"></a> [target\_port](#input\_target\_port) | Service target port | `number` | `1080` | no |
 
 ## Outputs
 

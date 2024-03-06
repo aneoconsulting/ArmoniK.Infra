@@ -85,6 +85,7 @@ variable "extra_conf" {
     control = map(string)
     core    = map(string)
     log     = map(string)
+    metrics = map(string)
     polling = map(string)
     worker  = map(string)
   })
@@ -93,6 +94,7 @@ variable "extra_conf" {
     control = {}
     core    = {}
     log     = {}
+    metrics = {}
     polling = {}
     worker  = {}
   }
@@ -407,4 +409,22 @@ variable "pvc_name" {
   description = "Name for the pvc to be used"
   type        = string
   default     = "nfsvolume"
+}
+
+# metrics information
+variable "metrics_exporter" {
+  description = "Parameters of Metrics exporter"
+  type = object({
+    image              = optional(string)
+    tag                = optional(string)
+    image_pull_secrets = optional(string)
+    node_selector      = optional(any)
+    name               = optional(string, "metrics-exporter")
+    label_app          = optional(string, "armonik")
+    label_service      = optional(string, "metrics-exporter")
+    port_name          = optional(string, "metrics")
+    port               = optional(number, 9419)
+    target_port        = optional(number, 1080)
+    protocol           = optional(string, "TCP")
+  })
 }

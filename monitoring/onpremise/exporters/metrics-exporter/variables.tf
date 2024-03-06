@@ -12,15 +12,35 @@ variable "service_type" {
 }
 
 #parameter
-variable "metrics_exporter" {
-  description = "Metrics_exporter service parameters"
-  type = object({
-    name          = optional(string, "metrics-exporter")
-    label_app     = optional(string, "armonik")
-    label_service = optional(string, "metrics-exporter")
-    port_name     = optional(string, "metrics")
-    port          = optional(number, 9419)
-    target_port   = optional(number, 1080)
-    protocol      = optional(string, "TCP")
-  })
+variable "name" {
+  description = "Service name"
+  type        = string
+  default     = "metrics-exporter"
+}
+variable "label_app" {
+  description = "Service label app"
+  type        = string
+  default     = "armonik"
+}
+variable "label_service" {
+  description = "Service label service type"
+  type        = string
+  default     = "metrics-exporter"
+}
+
+variable "port_name" {
+  description = "Service port name"
+  type        = string
+  default     = "metrics"
+}
+variable "port" {
+  description = "Service port"
+  type        = number
+  default     = 9419
+}
+
+variable "target_port" {
+  description = "Service target port"
+  type        = number
+  default     = 1080
 }

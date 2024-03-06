@@ -53,7 +53,7 @@ resource "kubernetes_deployment" "metrics_exporter" {
         container {
           name              = var.metrics_exporter.name
           image             = var.metrics_exporter.tag != "" ? "${var.metrics_exporter.image}:${var.metrics_exporter.tag}" : var.metrics_exporter.image
-          image_pull_policy = "IfNotPresent"
+          image_pull_policy = var.metrics_exporter.image_pull_policy
           port {
             name           = var.metrics_exporter.port_name
             container_port = var.metrics_exporter.target_port

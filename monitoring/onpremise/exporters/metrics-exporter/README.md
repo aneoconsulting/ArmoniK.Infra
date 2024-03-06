@@ -20,19 +20,15 @@ No modules.
 
 | Name | Type |
 |------|------|
-| [kubernetes_config_map.metrics_exporter_config](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/config_map) | resource |
-| [kubernetes_deployment.metrics_exporter](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/deployment) | resource |
 | [kubernetes_service.metrics_exporter](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/service) | resource |
 
 ## Inputs
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_docker_image"></a> [docker\_image](#input\_docker\_image) | Docker image for Metrics exporter | <pre>object({<br>    image              = string<br>    tag                = string<br>    image_pull_secrets = string<br>  })</pre> | n/a | yes |
-| <a name="input_extra_conf"></a> [extra\_conf](#input\_extra\_conf) | Add extra configuration in the configmaps | `map(string)` | `{}` | no |
+| <a name="input_metrics_exporter"></a> [metrics\_exporter](#input\_metrics\_exporter) | Metrics\_exporter service parameters | <pre>object({<br>    name          = optional(string, "metrics-exporter")<br>    label_app     = optional(string, "armonik")<br>    label_service = optional(string, "metrics-exporter")<br>    port_name     = optional(string, "metrics")<br>    port          = optional(number, 9419)<br>    target_port   = optional(number, 1080)<br>    protocol      = optional(string, "TCP")<br>  })</pre> | n/a | yes |
 | <a name="input_namespace"></a> [namespace](#input\_namespace) | Namespace of ArmoniK resources | `string` | n/a | yes |
-| <a name="input_node_selector"></a> [node\_selector](#input\_node\_selector) | Node selector for Metrics exporter | `any` | `{}` | no |
-| <a name="input_service_type"></a> [service\_type](#input\_service\_type) | Service type which can be: ClusterIP, NodePort or LoadBalancer | `string` | n/a | yes |
+| <a name="input_service_type"></a> [service\_type](#input\_service\_type) | Service type which can be: ClusterIP, NodePort or LoadBalancer | `string` | `"ClusterIP"` | no |
 
 ## Outputs
 

@@ -415,16 +415,16 @@ variable "pvc_name" {
 variable "metrics_exporter" {
   description = "Parameters of Metrics exporter"
   type = object({
-    image              = optional(string)
-    tag                = optional(string)
-    image_pull_secrets = optional(string)
-    node_selector      = optional(any)
+    image              = string
+    tag                = string
+    image_pull_policy  = optional(string, "IfNotPresent")
+    image_pull_secrets = optional(string, "")
+    node_selector      = optional(any, {})
     name               = optional(string, "metrics-exporter")
     label_app          = optional(string, "armonik")
     label_service      = optional(string, "metrics-exporter")
     port_name          = optional(string, "metrics")
     port               = optional(number, 9419)
     target_port        = optional(number, 1080)
-    protocol           = optional(string, "TCP")
   })
 }

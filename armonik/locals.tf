@@ -354,4 +354,10 @@ locals {
   control_plane_triggers = {
     triggers = [for trigger in local.hpa_control_plane_triggers.triggers : trigger if trigger != {}]
   }
+
+  #metrics
+  metrics_exporter = {
+    node_selector_keys   = keys(var.metrics_exporter.node_selector)
+    node_selector_values = values(var.metrics_exporter.node_selector)
+  }
 }

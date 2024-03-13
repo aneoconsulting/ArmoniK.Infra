@@ -101,7 +101,7 @@ resource "aws_iam_policy" "aws_node_termination_handler" {
 
 module "aws_node_termination_handler_role" {
   source                        = "terraform-aws-modules/iam/aws//modules/iam-assumable-role-with-oidc"
-  version                       = "4.1.0"
+  version                       = "4.24.1"
   create_role                   = true
   role_description              = "IRSA role for ANTH, cluster ${var.name}"
   role_name_prefix              = var.name

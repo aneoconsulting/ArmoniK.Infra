@@ -115,7 +115,7 @@ locals {
 
 module "eks" {
   source          = "terraform-aws-modules/eks/aws"
-  version         = "19.16.0"
+  version         = "19.21.0"
   create          = true
   cluster_name    = var.name
   cluster_version = var.cluster_version

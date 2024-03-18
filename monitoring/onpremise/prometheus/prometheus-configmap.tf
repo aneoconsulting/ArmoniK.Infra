@@ -105,6 +105,46 @@ scrape_configs:
     relabel_configs:
       - action: labelmap
         regex: __meta_kubernetes_node_label_(.+)
+  
+  - job_name: 'metrics-control-plane' 
+    kubernetes_sd_configs:
+      - role: pod 
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_container_port_number]
+        action: keep
+        regex: "1081" 
+      - source_labels: [__meta_kubernetes_pod_label_app]
+        action: keep
+        regex: "armonik"
+      - source_labels: [__meta_kubernetes_pod_label_service]
+        action: keep
+        regex: "control-plane"
+      - source_labels: [__meta_kubernetes_pod_node_name]
+        action: replace
+        target_label: kubernetes_pod_node_name
+      - source_labels: [__meta_kubernetes_pod_name]
+        action: replace
+        target_label: kubernetes_pod_name
+
+  - job_name: 'metrics-polling-agent' 
+    kubernetes_sd_configs:
+      - role: pod 
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_container_port_number]
+        action: keep
+        regex: "1080" 
+      - source_labels: [__meta_kubernetes_pod_label_app]
+        action: keep
+        regex: "armonik"
+      - source_labels: [__meta_kubernetes_pod_label_service]
+        action: keep
+        regex: "compute-plane"
+      - source_labels: [__meta_kubernetes_pod_node_name]
+        action: replace
+        target_label: kubernetes_pod_node_name
+      - source_labels: [__meta_kubernetes_pod_name]
+        action: replace
+        target_label: kubernetes_pod_name
 
 EOF
 }

@@ -113,9 +113,12 @@ scrape_configs:
       - source_labels: [__meta_kubernetes_pod_container_port_number]
         action: keep
         regex: "1081" 
-      - source_labels: [__meta_kubernetes_pod_name]
+      - source_labels: [__meta_kubernetes_pod_label_app]
         action: keep
-        regex: ".*control-plane.*"
+        regex: "armonik"
+      - source_labels: [__meta_kubernetes_pod_label_service]
+        action: keep
+        regex: "control-plane"
       - source_labels: [__meta_kubernetes_pod_node_name]
         action: replace
         target_label: kubernetes_pod_node_name
@@ -130,9 +133,12 @@ scrape_configs:
       - source_labels: [__meta_kubernetes_pod_container_port_number]
         action: keep
         regex: "1080" 
-      - source_labels: [__meta_kubernetes_pod_name]
+      - source_labels: [__meta_kubernetes_pod_label_app]
         action: keep
-        regex: ".*compute-plane.*"
+        regex: "armonik"
+      - source_labels: [__meta_kubernetes_pod_label_service]
+        action: keep
+        regex: "compute-plane"
       - source_labels: [__meta_kubernetes_pod_node_name]
         action: replace
         target_label: kubernetes_pod_node_name

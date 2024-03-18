@@ -63,6 +63,10 @@ resource "kubernetes_deployment" "control_plane" {
             name           = "control-port"
             container_port = 1080
           }
+          port {
+            name           = "metrics-port"
+            container_port = 1081
+          }
           liveness_probe {
             http_get {
               path = "/liveness"

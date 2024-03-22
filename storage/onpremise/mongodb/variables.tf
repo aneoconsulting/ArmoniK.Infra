@@ -10,7 +10,7 @@ variable "mongodb" {
   type = object({
     image              = string
     tag                = string
-    node_selector      = any
+    node_selector      = map(string)
     image_pull_secrets = string
     replicas_number    = number
   })

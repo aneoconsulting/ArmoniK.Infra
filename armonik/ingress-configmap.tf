@@ -243,6 +243,8 @@ server {
 %{endif~}
 }
 EOF
+
+  static = merge(var.static, var.environment_description != null ? { "environment.json" = var.environment_description } : {})
 }
 
 resource "kubernetes_config_map" "ingress" {
@@ -263,7 +265,8 @@ resource "kubernetes_config_map" "static" {
     namespace = var.namespace
   }
   data = {
-    "environment.json" = jsonencode(var.environment_description)
+    for k, v in local.static :
+    k => jsonencode(v)
   }
 }
 

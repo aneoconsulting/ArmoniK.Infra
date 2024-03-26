@@ -132,6 +132,7 @@
 | <a name="input_s3_secret_name"></a> [s3\_secret\_name](#input\_s3\_secret\_name) | the name of the S3 secret | `string` | `"s3"` | no |
 | <a name="input_seq_secret_name"></a> [seq\_secret\_name](#input\_seq\_secret\_name) | the name of the seq secret | `string` | `"seq"` | no |
 | <a name="input_shared_storage_secret_name"></a> [shared\_storage\_secret\_name](#input\_shared\_storage\_secret\_name) | the name of the shared-storage secret | `string` | `"shared-storage"` | no |
+| <a name="input_static"></a> [static](#input\_static) | json files to be served statically by the ingress | `any` | `{}` | no |
 
 ## Outputs
 

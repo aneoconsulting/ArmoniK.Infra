@@ -404,6 +404,12 @@ variable "environment_description" {
   default     = null
 }
 
+variable "static" {
+  description = "json files to be served statically by the ingress"
+  type        = any
+  default     = {}
+}
+
 # nfs_parameters
 variable "pvc_name" {
   description = "Name for the pvc to be used"

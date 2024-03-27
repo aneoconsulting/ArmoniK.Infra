@@ -51,13 +51,13 @@ server {
     }
 
     location = / {
-        rewrite ^ $scheme://$http_host/admin/$accept_language/;
+        rewrite ^ $scheme://$http_host/admin/en/;
     }
     location = /admin {
-        rewrite ^ $scheme://$http_host/admin/$accept_language/;
+        rewrite ^ $scheme://$http_host/admin/en/;
     }
     location = /admin/ {
-        rewrite ^ $scheme://$http_host/admin/$accept_language/;
+        rewrite ^ $scheme://$http_host/admin/en/;
     }
     location = /admin/en {
         rewrite ^ $scheme://$http_host/admin/en/;

@@ -49,6 +49,10 @@ server {
     location = / {
         rewrite ^ $scheme://$http_host/admin/;
     }
+
+    location = /admin {
+        rewrite ^ $scheme://$http_host/admin/;
+    }
 %{if local.admin_app_url != null~}
     set $admin_app_upstream ${local.admin_app_url};
     location /admin/ {

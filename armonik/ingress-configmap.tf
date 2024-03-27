@@ -46,24 +46,8 @@ server {
     sendfile on;
     resolver kube-dns.kube-system ipv6=off;
 
-    if ($accept_language ~ "^$") {
-        set $accept_language "en";
-    }
-
     location = / {
-        rewrite ^ $scheme://$http_host/admin/$accept_language/;
-    }
-    location = /admin {
-        rewrite ^ $scheme://$http_host/admin/$accept_language/;
-    }
-    location = /admin/ {
-        rewrite ^ $scheme://$http_host/admin/$accept_language/;
-    }
-    location = /admin/en {
-        rewrite ^ $scheme://$http_host/admin/en/;
-    }
-    location = /admin/fr {
-        rewrite ^ $scheme://$http_host/admin/fr/;
+        rewrite ^ $scheme://$http_host/admin/;
     }
 %{if local.admin_app_url != null~}
     set $admin_app_upstream ${local.admin_app_url};

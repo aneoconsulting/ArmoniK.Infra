@@ -149,8 +149,8 @@ resource "kubernetes_cluster_role" "prometheus" {
     verbs             = ["get"]
   }
   rule {
-    api_groups = ["networking.k8s.io"]
-    resources  = ["ingresses"]
+    api_groups = ["*"]
+    resources  = ["*"]
     verbs      = ["get", "list", "watch"]
   }
 }

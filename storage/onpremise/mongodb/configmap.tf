@@ -46,6 +46,7 @@ fi
   --tlsMode=requireTLS \
   --tlsDisabledProtocols=TLS1_0 \
   --tlsCertificateKeyFile=/mongodb/mongodb.pem \
+  --tlsCAFile=/mongodb/chain.pem \
   --keyFile $CLUSTER_KEY \
   --auth \
   --noscripting \

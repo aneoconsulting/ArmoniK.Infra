@@ -141,17 +141,12 @@ resource "kubernetes_cluster_role" "prometheus" {
   }
   rule {
     api_groups = [""]
-    resources  = ["namespaces", "pods", "services", "endpoints", "nodes"]
+    resources  = ["namespaces", "pods", "services", "endpoints", "nodes", "nodes/metrics", "nodes/proxy"]
     verbs      = ["get", "list", "watch"]
   }
   rule {
     non_resource_urls = ["/metrics", "/metrics/cadvisor", "/metrics/resource", "/metrics/probes"]
     verbs             = ["get"]
-  }
-  rule {
-    api_groups = ["*"]
-    resources  = ["*"]
-    verbs      = ["get", "list", "watch"]
   }
 }
 

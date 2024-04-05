@@ -53,10 +53,10 @@ server {
     location = / {
         rewrite ^ $scheme://$http_host/admin/$accept_language/;
     }
-    location /admin {
+    location = /admin {
         rewrite ^ $scheme://$http_host/admin/$accept_language/;
     }
-    location /admin/ {
+    location = /admin/ {
         rewrite ^ $scheme://$http_host/admin/$accept_language/;
     }
     location = /admin/en {
@@ -67,7 +67,11 @@ server {
     }
 %{if local.admin_app_url != null~}
     set $admin_app_upstream ${local.admin_app_url};
-    location /admin/$accept_language/ {
+    location ~* /admin/.\.(js|css)$ { # Enable serving js and css files
+        rewrite ^/admin/(.*) /$accept_language/$1 break;
+        proxy_pass $admin_app_upstream$uri$is_args$args;
+    }
+    location /admin/ {
         rewrite ^/admin/(.*) /$1 break;
         proxy_pass $admin_app_upstream$uri$is_args$args;
         sub_filter '<head>' '<head><base href="$${scheme}://$${http_host}/admin/">';

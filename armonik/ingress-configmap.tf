@@ -63,7 +63,7 @@ server {
     set $admin_app_upstream ${local.admin_app_url};
 
     location /admin/ {
-        rewrite ^ $scheme://$http_host/admin/$accept_language/;
+        rewrite ^ $scheme://$http_host/admin/$accept_language/$uri$is_args$args;
     }
 
     location /admin/fr/ {

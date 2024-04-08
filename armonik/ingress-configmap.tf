@@ -63,17 +63,6 @@ server {
     set $admin_app_upstream ${local.admin_app_url};
 
     location /admin/ {
-        rewrite ^/admin/(.*) /$1/$accept_language/$is_args$args;
-    }
-
-    location /admin/fr/ {
-        rewrite ^/admin/(.*) /$1 break;
-        proxy_pass $admin_app_upstream$uri$is_args$args;
-        sub_filter '<head>' '<head><base href="$${scheme}://$${http_host}/admin/">';
-        sub_filter_once on;
-    }
-
-    location /admin/en/ {
         rewrite ^/admin/(.*) /$1 break;
         proxy_pass $admin_app_upstream$uri$is_args$args;
         sub_filter '<head>' '<head><base href="$${scheme}://$${http_host}/admin/">';

@@ -42,7 +42,11 @@ fi
 /usr/local/bin/docker-entrypoint.sh mongod \
   --dbpath=/data/db \
   --port=27017 \
-  --bind_ip=localhost,$${HOSTNAME} \
+  --bind_ip=localhost,$${HOSTNAME}  \
+  --bind_ip_all \
+  --tlsCAFile /mongodb/chain.pem \
+  --tlsAllowConnectionsWithoutCertificates \
+  --tlsAllowInvalidCertificates \
   --tlsMode=requireTLS \
   --tlsDisabledProtocols=TLS1_0 \
   --tlsCertificateKeyFile=/mongodb/mongodb.pem \
@@ -59,7 +63,7 @@ if [ "$1" == "0" ] ; then
     --password ${random_password.mongodb_admin_password.result} \
     --tlsCAFile /mongodb/chain.pem \
     --tlsAllowInvalidHostnames \
-    --tlsAllowInvalidCertificates \
+    --tlsCertificateKeyFile /mongodb/mongodb.pem \
     --tls \
     localhost:27017/admin /start/initreplica.js
   do

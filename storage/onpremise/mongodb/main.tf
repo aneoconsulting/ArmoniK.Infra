@@ -1,5 +1,5 @@
 # Kubernetes MongoDB deployment
-resource "kubernetes_deployment" "mongodb" {
+resource "kubernetes_stateful_set" "mongodb" {
   count = var.mongodb.replicas_number
   metadata {
     name      = "mongodb-${count.index}"
@@ -19,6 +19,7 @@ resource "kubernetes_deployment" "mongodb" {
         service = "mongodb-${count.index}"
       }
     }
+    service_name = "mongodb"
     template {
       metadata {
         name = "mongodb"

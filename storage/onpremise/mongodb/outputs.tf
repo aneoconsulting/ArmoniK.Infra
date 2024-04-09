@@ -13,7 +13,7 @@ output "url" {
   description = "URL of MongoDB server"
   value       = local.mongodb_url
   depends_on = [
-    kubernetes_deployment.mongodb
+    kubernetes_stateful_set.mongodb
   ]
 }
 

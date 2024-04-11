@@ -1,20 +1,3 @@
-# MongoDB instance
-
-To create a simple MongoDB instance on your local machine:
-
-```bash
-terraform init
-terraform plan
-terraform apply
-```
-
-To delete all resource:
-
-```bash
-terraform destroy
-```
-
-
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -31,7 +14,7 @@ No providers.
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_simple_mongodb_instance"></a> [simple\_mongodb\_instance](#module\_simple\_mongodb\_instance) | ../../ | n/a |
+| <a name="module_complete_mongodb_instance"></a> [complete\_mongodb\_instance](#module\_complete\_mongodb\_instance) | ../../ | n/a |
 
 ## Resources
 

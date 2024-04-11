@@ -10,6 +10,7 @@ resource "kubernetes_storage_class" "mongodb" {
   }
   mount_options       = ["tls"]
   storage_provisioner = var.persistent_volume.storage_provisioner
+  reclaim_policy      = var.persistent_volume.reclaim_policy
   volume_binding_mode = var.persistent_volume.volume_binding_mode
   parameters          = var.persistent_volume.parameters
 }
@@ -26,11 +27,12 @@ resource "kubernetes_persistent_volume_claim" "mongodb" {
     }
   }
   spec {
-    access_modes       = ["ReadWriteMany"]
+    access_modes       = var.persistent_volume.access_mode
     storage_class_name = kubernetes_storage_class.mongodb[0].metadata[0].name
     resources {
       requests = var.persistent_volume.resources.requests
       limits   = var.persistent_volume.resources.limits
     }
   }
+  wait_until_bound = var.persistent_volume.wait_until_bound
 }

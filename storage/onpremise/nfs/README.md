@@ -83,6 +83,7 @@ No modules.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
+| <a name="input_config_path"></a> [config\_path](#input\_config\_path) | The kubernetes configuration file path you want to specify | `string` | `"~/.kube/config"` | no |
 | <a name="input_image"></a> [image](#input\_image) | image for the external client provisioner | `string` | `"k8s.gcr.io/sig-storage/nfs-subdir-external-provisioner"` | no |
 | <a name="input_image_policy"></a> [image\_policy](#input\_image\_policy) | policy  for getting the image | `string` | `"IfNotPresent"` | no |
 | <a name="input_image_pull_secrets"></a> [image\_pull\_secrets](#input\_image\_pull\_secrets) | pull secrets if needed | `string` | `""` | no |

@@ -32,9 +32,12 @@ variable "security_context" {
 variable "persistent_volume" {
   description = "Persistent volume info"
   type = object({
+    access_mode         = optional(list(string), ["ReadWriteMany"])
+    reclaim_policy      = optional(string, "Delete")
     storage_provisioner = string
     volume_binding_mode = string
-    parameters          = map(string)
+    parameters          = optional(map(string), {})
+    
     # Resources for PVC
     resources = object({
       limits = object({
@@ -44,6 +47,8 @@ variable "persistent_volume" {
         storage = string
       })
     })
+
+    wait_until_bound    = optional(bool, true)
   })
   default = null
 }

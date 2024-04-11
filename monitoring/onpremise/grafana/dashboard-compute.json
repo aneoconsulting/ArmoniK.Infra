@@ -109,6 +109,7 @@
           "editorMode": "code",
           "expr": "sum (delta(TaskHandler_RequestExecution_milliseconds_sum{job=\"metrics-polling-agent\"}[1m])/ delta(uptime_Milliseconds_total{job=\"metrics-polling-agent\"}[1m]))",
           "instant": false,
+          "legendFormat": "utilization",
           "range": true,
           "refId": "A"
         },
@@ -121,11 +122,108 @@
           "expr": "count(TaskHandler_RequestExecution_milliseconds_sum{job=\"metrics-polling-agent\"})",
           "hide": false,
           "instant": false,
+          "legendFormat": "limit",
           "range": true,
           "refId": "B"
         }
       ],
       "title": "Sum Request Execution",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "axisSoftMax": 1,
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "dashed"
+            }
+          },
+          "mappings": [],
+          "max": 1.5,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 8
+      },
+      "id": 4,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "editorMode": "code",
+          "expr": "delta(TaskHandler_RequestExecution_milliseconds_sum{job=\"metrics-polling-agent\", kubernetes_pod_name=~\"$podName\"}[1m]) / delta(uptime_Milliseconds_total{job=\"metrics-polling-agent\", kubernetes_pod_name=~\"$podName\"}[1m])",
+          "instant": false,
+          "legendFormat": "{{kubernetes_pod_name}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Execution",
       "type": "timeseries"
     },
     {
@@ -190,7 +288,7 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 8
+        "y": 16
       },
       "id": 3,
       "options": {
@@ -214,6 +312,7 @@
           "editorMode": "code",
           "expr": "sum by (pod)(irate(container_cpu_usage_seconds_total{job=\"kubernetes-cadvisor\",namespace=\"armonik\", pod=~\"$podName\"}[1m]))",
           "instant": false,
+          "legendFormat": "{{pod}}",
           "range": true,
           "refId": "A"
         },
@@ -223,109 +322,15 @@
             "uid": "PBFA97CFB590B2093"
           },
           "editorMode": "code",
-          "expr": "irate(container_cpu_usage_seconds_total{namespace=\"armonik\", job=\"kubernetes-resource\", pod=~\"$podName\"}[1m])",
+          "expr": "irate(container_cpu_usage_seconds_total{namespace=\"armonik\", job=\"kubernetes-resource\", pod=~\"$podName\", container=~\"$container\"}[1m])",
           "hide": false,
           "instant": false,
-          "legendFormat": "{{container}}",
+          "legendFormat": "{{pod}} {{container}}",
           "range": true,
           "refId": "B"
         }
       ],
       "title": "CPU Usage",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "percentunit"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 17
-      },
-      "id": 4,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
-          },
-          "editorMode": "code",
-          "expr": "delta(TaskHandler_RequestExecution_milliseconds_sum{job=\"metrics-polling-agent\", kubernetes_pod_name=~\"$podName\"}[1m]) / delta(uptime_Milliseconds_total{job=\"metrics-polling-agent\", kubernetes_pod_name=~\"$podName\"}[1m])",
-          "instant": false,
-          "legendFormat": "{{kubernetes_pod_name}}",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "Execution",
       "type": "timeseries"
     },
     {
@@ -414,6 +419,7 @@
           "editorMode": "code",
           "expr": "sum by (pod) (container_memory_working_set_bytes{job=\"kubernetes-cadvisor\",namespace=\"armonik\", pod=~\"$podName\"})",
           "instant": false,
+          "legendFormat": "{{pod}}",
           "range": true,
           "refId": "A"
         },
@@ -423,10 +429,10 @@
             "uid": "PBFA97CFB590B2093"
           },
           "editorMode": "code",
-          "expr": "container_memory_working_set_bytes{namespace=\"armonik\", job=\"kubernetes-resource\", pod=~\"$podName\"}",
+          "expr": "container_memory_working_set_bytes{namespace=\"armonik\", job=\"kubernetes-resource\", pod=~\"$podName\", container=~\"$container\"}",
           "hide": false,
           "instant": false,
-          "legendFormat": "{{container}}",
+          "legendFormat": "{{pod}} {{container}}",
           "range": true,
           "refId": "B"
         }
@@ -471,17 +477,53 @@
         "skipUrlSync": false,
         "sort": 0,
         "type": "query"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "hide": 0,
+        "includeAll": true,
+        "multi": true,
+        "name": "container",
+        "options": [
+          {
+            "selected": true,
+            "text": "All",
+            "value": "$__all"
+          },
+          {
+            "selected": false,
+            "text": "worker-0",
+            "value": "worker-0"
+          },
+          {
+            "selected": false,
+            "text": "polling-agent",
+            "value": "polling-agent"
+          }
+        ],
+        "query": "worker-0 : worker-0,polling-agent : polling-agent",
+        "queryValue": "",
+        "skipUrlSync": false,
+        "type": "custom"
       }
     ]
   },
   "time": {
-    "from": "now-15m",
+    "from": "now-1h",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "",
   "title": "Compute Plane Execution",
   "uid": "dd468b77-6d40-4150-89df-0fc00bb2d213",
-  "version": 2,
+  "version": 6,
   "weekStart": ""
 }

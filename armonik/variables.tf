@@ -291,7 +291,8 @@ variable "compute_plane" {
       memory     = bool
       size_limit = string # if larger than supported, the max value for the node will be used instead
     })
-    hpa = any
+    readiness_probe = optional(bool, false)
+    hpa             = any
   }))
 }
 

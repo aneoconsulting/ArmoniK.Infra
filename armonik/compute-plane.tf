@@ -74,6 +74,19 @@ resource "kubernetes_deployment" "compute_plane" {
             name           = "poll-agent-port"
             container_port = 1080
           }
+          dynamic "readiness_probe" {
+            for_each = each.value.readiness_probe ? [1] : []
+            content {
+              http_get {
+                path = "/readiness"
+                port = 1080
+              }
+              period_seconds    = 3
+              timeout_seconds   = 1
+              success_threshold = 1
+              failure_threshold = 1
+            }
+          }
           liveness_probe {
             http_get {
               path = "/liveness"

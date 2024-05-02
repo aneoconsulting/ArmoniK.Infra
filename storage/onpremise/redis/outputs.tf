@@ -37,3 +37,36 @@ output "endpoints" {
     data_keys = keys(kubernetes_secret.redis.data)
   }
 }
+
+#new Outputs 
+
+output "env" {
+  description = "Elements to be set as environment variables"
+  value = (merge({
+    "Components__ObjectStorage" = var.object_storage_adapter
+    "Redis__EndpointUrl"        = local.redis_url
+    "Redis__Ssl"                = var.ssl_option
+    "Redis__ClientName"         = var.client_name
+    "Redis__CaPath"             = "${var.path}/chain.pem"
+    "Redis__InstanceName"       = var.instance_name
+  }, var.extra_conf))
+}
+
+output "env_from_secret" {
+  description = "Secrets to be set as environment variables"
+  value = {
+    secret     = kubernetes_secret.redis_user_credentials.metadata[0].name
+    credential = kubernetes_secret.redis_user.metadata[0].name
+  }
+}
+
+output "mount_secret" {
+  description = "Secrets to be mounted as volumes"
+  value = {
+    "secret1" = {
+      secret = kubernetes_secret.redis
+      path   = var.path
+      mode   = "0600"
+    }
+  }
+}

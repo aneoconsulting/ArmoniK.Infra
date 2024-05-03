@@ -16,3 +16,9 @@ variable "minio" {
     node_selector      = any
   })
 }
+
+variable "object_storage_adapter" {
+  description = "Name of the adapter's"
+  type        = string
+  default     = "ArmoniK.Adapters.S3.ObjectStorage"
+}

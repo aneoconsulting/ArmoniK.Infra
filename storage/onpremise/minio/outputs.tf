@@ -40,3 +40,24 @@ output "must_force_path_style" {
   # needed for dns resolution on prem http://bucket.servicename:8001 vs http://servicename:8001/bucket
   value = true
 }
+
+#new outputs
+output "env" {
+  description = "Elements to be set as environment variables"
+  value = ({
+    "Components__ObjectStorage" = var.object_storage_adapter
+    "S3__BucketName"            = var.minio.bucket_name
+    "S3__UseChecksum"           = true
+    "S3__MustForcePathStyle"    = true
+    "S3__UseChunkEncoding"      = true
+    "S3__EndpointUrl"           = "http://${var.minio.host}:${local.port}"
+  })
+}
+
+output "env_from_secret" {
+  description = "Secrets to be set as environment variables"
+  value = {
+    secret     = kubernetes_secret.s3_user_credentials.metadata[0].name
+    credential = kubernetes_secret.s3_user.metadata[0].name
+  }
+}

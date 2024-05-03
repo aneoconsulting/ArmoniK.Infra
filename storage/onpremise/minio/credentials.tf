@@ -20,3 +20,15 @@ resource "kubernetes_secret" "s3_user" {
   }
   type = "kubernetes.io/basic-auth"
 }
+
+#secret for credential to variable
+resource "kubernetes_secret" "s3_user_credentials" {
+  metadata {
+    name      = "s3-user-credentials"
+    namespace = var.namespace
+  }
+  data = {
+    "S3__Login"    = random_string.minio_application_user.result
+    "S3__Password" = random_password.minio_application_password.result
+  }
+}

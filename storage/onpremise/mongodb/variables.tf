@@ -37,7 +37,7 @@ variable "persistent_volume" {
     storage_provisioner = string
     volume_binding_mode = string
     parameters          = optional(map(string), {})
-    
+
     # Resources for PVC
     resources = object({
       limits = object({
@@ -48,7 +48,7 @@ variable "persistent_volume" {
       })
     })
 
-    wait_until_bound    = optional(bool, true)
+    wait_until_bound = optional(bool, true)
   })
   default = null
 }

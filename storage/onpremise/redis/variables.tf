@@ -52,9 +52,3 @@ variable "ssl_option" {
   type        = string
   default     = "true"
 }
-
-variable "extra_conf" {
-  description = "Extra configuration to be set as environment variables"
-  type        = map(string)
-  default     = {}
-}

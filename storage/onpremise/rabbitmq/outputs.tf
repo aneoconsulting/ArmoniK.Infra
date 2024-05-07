@@ -59,39 +59,32 @@ output "adapter_absolute_path" {
 }
 
 #new Outputs 
-
 output "env" {
   description = "Elements to be set as environment variables"
-  value = (merge({
+  value = ({
     "Components__QueueAdaptorSettings__ClassName"           = local.adapter_class_name
     "Components__QueueAdaptorSettings__AdapterAbsolutePath" = local.adapter_absolute_path
     "Amqp__Host"                                            = local.rabbitmq_endpoints.ip
     "Amqp__Port"                                            = local.rabbitmq_endpoints.port
     "Amqp__Scheme"                                          = var.scheme
     "Amqp__CaPath"                                          = "${var.path}/chain.pem"
-  }, var.extra_conf))
+  })
 
 }
 
-output "env_from_secret" {
+output "env_secret" {
   description = "Secrets to be set as environment variables"
   value = {
-    secret     = kubernetes_secret.rabbitmq_user_credentials.metadata[0].name
-    credential = kubernetes_secret.rabbitmq_user.metadata[0].name
+    secret = kubernetes_secret.rabbitmq_user_credentials.metadata[0].name
   }
 }
 
 output "mount_secret" {
   description = "Secrets to be mounted as volumes"
   value = {
-    "secret1" = {
-      secret = kubernetes_secret.rabbitmq
+    "rabbitmq-secret1" = {
+      secret = kubernetes_secret.rabbitmq.metadata[0].name
       path   = var.path
-      mode   = "0600"
-    },
-    "secret2" = {
-      secret = kubernetes_secret.rabbitmq_user
-      path   = "/cred"
       mode   = "0600"
     }
   }

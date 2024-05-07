@@ -1,10 +1,8 @@
 # nfs
-
 output "provisioner_name" {
   description = "name of the created provisionner"
   value       = kubernetes_deployment.nfs_provisioner.metadata[0].name
 }
-
 
 output "pvc_name" {
   description = "name of the created persistant volume claim"
@@ -23,7 +21,7 @@ output "env" {
 output "mount_volume" {
   description = "Volume to be mounted"
   value = {
-    "volume1" = {
+    "nfs-${var.pvc_name}" = {
       path       = var.mount_path
       claim_name = var.pvc_name
     }

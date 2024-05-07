@@ -54,10 +54,9 @@ output "env" {
   })
 }
 
-output "env_from_secret" {
+output "env_secret" {
   description = "Secrets to be set as environment variables"
   value = {
-    secret     = kubernetes_secret.s3_user_credentials.metadata[0].name
-    credential = kubernetes_secret.s3_user.metadata[0].name
+    secret = kubernetes_secret.s3_user_credentials.metadata[0].name
   }
 }

@@ -1,3 +1,4 @@
+/*
 resource "kubernetes_storage_class" "mongodb" {
   count = var.persistent_volume != null ? 1 : 0
   metadata {
@@ -36,3 +37,4 @@ resource "kubernetes_persistent_volume_claim" "mongodb" {
   }
   wait_until_bound = var.persistent_volume.wait_until_bound
 }
+*/

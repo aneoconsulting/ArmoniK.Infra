@@ -1,4 +1,8 @@
-# MongoDB
+output "mongodb" {
+  description = "JSON representation of the Helm chart's MongoDB deployment metadata"
+  value       = helm_release.mongodb.metadata[0]
+}
+
 output "host" {
   description = "Hostname or IP address of MongoDB server"
   value       = local.mongodb_dns
@@ -6,15 +10,13 @@ output "host" {
 
 output "port" {
   description = "Port of MongoDB server"
-  value       = local.mongodb_port
+  value       = 27017
 }
 
 output "url" {
   description = "URL of MongoDB server"
   value       = local.mongodb_url
-  depends_on = [
-    kubernetes_deployment.mongodb
-  ]
+
 }
 
 output "number_of_replicas" {
@@ -25,18 +27,24 @@ output "number_of_replicas" {
 output "user_certificate" {
   description = "User certificates of MongoDB"
   value = {
-    secret    = kubernetes_secret.mongodb_client_certificate.metadata[0].name
-    data_keys = keys(kubernetes_secret.mongodb_client_certificate.data)
+    secret    = data.kubernetes_secret.mongodb_certificates.metadata[0].name
+    data_keys = keys(data.kubernetes_secret.mongodb_certificates.binary_data)
   }
+  depends_on = [helm_release.mongodb]
+  sensitive  = true
 }
 
 output "user_credentials" {
   description = "User credentials of MongoDB"
   value = {
-    secret    = kubernetes_secret.mongodb_user.metadata[0].name
-    data_keys = keys(kubernetes_secret.mongodb_user.data)
+    secret    = data.kubernetes_secret.mongodb_credentials.metadata[0]
+    data_keys = keys(data.kubernetes_secret.mongodb_credentials.binary_data)
   }
+  depends_on = [helm_release.mongodb]
+  sensitive  = true
 }
+
+/*
 
 output "endpoints" {
   description = "Endpoints of MongoDB"
@@ -45,3 +53,4 @@ output "endpoints" {
     data_keys = keys(kubernetes_secret.mongodb.data)
   }
 }
+*/

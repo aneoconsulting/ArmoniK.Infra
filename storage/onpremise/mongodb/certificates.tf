@@ -1,3 +1,4 @@
+/*
 #------------------------------------------------------------------------------
 # Certificate Authority
 #------------------------------------------------------------------------------
@@ -100,3 +101,4 @@ resource "local_sensitive_file" "mongodb_client_certificate" {
   filename        = "${path.root}/generated/certificates/mongodb/chain.pem"
   file_permission = "0600"
 }
+*/

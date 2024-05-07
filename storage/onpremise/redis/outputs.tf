@@ -53,9 +53,9 @@ output "env" {
 
 output "env_secret" {
   description = "Secrets to be set as environment variables"
-  value = {
-    secret = kubernetes_secret.redis_user_credentials.metadata[0].name
-  }
+  value = [
+    kubernetes_secret.redis_user_credentials.metadata[0].name
+  ]
 }
 
 output "mount_secret" {

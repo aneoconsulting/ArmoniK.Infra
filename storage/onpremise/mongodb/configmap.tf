@@ -1,3 +1,4 @@
+/*
 # Envvars
 locals {
   mongodb_js = <<EOF
@@ -101,3 +102,5 @@ resource "local_file" "init_replica_js" {
   content  = local.init_replica_js
   filename = "${path.root}/generated/configmaps/mongodb/initreplica.js"
 }
+
+*/

@@ -1,14 +1,41 @@
-# Global variables
 variable "namespace" {
   description = "Namespace of ArmoniK resources"
   type        = string
+  default     = "default"
 }
 
-# Parameters for MongoDB
+variable "labels" {
+  description = "Labels for the Kubernetes StatefulSet to be deployed"
+  type        = map(string)
+  default = {
+    "app"  = "storage"
+    "type" = "table"
+  }
+}
+
+variable "helm_release_name" {
+  description = "Name of the helm chart release, must be shorter than 54 characters"
+  type        = string
+  default     = "mongodb-armonik-helm-release"
+}
+
+variable "kube_config_path" {
+  description = "Local file path of the kubernetes configuration"
+  type        = string
+  default     = "~/.kube/config"
+}
+
 variable "mongodb" {
-  description = "Parameters of MongoDB"
+  description = "Parameters of the MongoDB deployment"
+
   type = object({
-    image              = string
+    architecture       = optional(string, "replicaset") # "replicaset" or "standalone"
+    databases_names    = optional(list(string), ["database"])
+    image              = optional(string, "bitnami/mongodb")
+    image_pull_secrets = optional(list(string), [""])
+    node_selector      = optional(map(string), {})
+    registry           = optional(string, "docker.io")
+    replicas_number    = optional(number, 2)
     tag                = string
     node_selector      = map(string)
     image_pull_secrets = string
@@ -16,19 +43,35 @@ variable "mongodb" {
   })
 }
 
-variable "security_context" {
-  description = "security context for MongoDB pods"
+/* Included in the mongodb variable for retrocompatibility reasons
+variable "mongodb_image" {
+  description = "Image for MongoDB"
   type = object({
-    run_as_user = number
-    fs_group    = number
+    image_name         = string
+    image_pull_secrets = list(string)
+    tag                = string
+    registry           = string
+
   })
-  default = {
-    run_as_user = 999
-    fs_group    = 999
+  default = { 
+    registry           = "docker.io"
+    image_name         = "bitnami/mongodb"
+    image_pull_secrets = [""]
+    tag                = "7.0.8-debian-12-r2"
   }
 }
+*/
 
-# Persistent volume
+variable "mongodb_helm_chart" {
+  description = "Parameters of the Helm chart"
+  type = object({
+    repository = optional(string, "oci://registry-1.docker.io/bitnamicharts")
+    name       = optional(string, "mongodb")
+    version    = string
+  })
+}
+
+# Not used yet (there for retrocompatibility reasons)
 variable "persistent_volume" {
   description = "Persistent volume info"
   type = object({
@@ -53,6 +96,25 @@ variable "persistent_volume" {
   default = null
 }
 
+variable "security_context" {
+  description = "Security context for MongoDB pods"
+  type = object({
+    run_as_user = number
+    fs_group    = number
+  })
+  default = {
+    run_as_user = 999
+    fs_group    = 999
+  }
+}
+
+variable "mTLSEnabled" {
+  description = "Whether to deploy mongo with mTLS"
+  type        = bool
+  default     = false
+}
+
+# Not used yet (there for retrocompatibility reasons)
 variable "validity_period_hours" {
   description = "Validity period of the certificate in hours"
   type        = string

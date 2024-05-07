@@ -1,3 +1,25 @@
+data "kubernetes_secret" "mongodb_certificates" {
+  metadata {
+    name = "${var.helm_release_name}-ca"
+  }
+  binary_data = {
+    "mongodb-ca-cert" = ""
+    "mongodb-ca-key"  = ""
+  }
+}
+
+data "kubernetes_secret" "mongodb_credentials" {
+  metadata {
+    name = var.helm_release_name
+  }
+  binary_data = {
+    "mongodb-passwords"       = ""
+    "mongodb-replica-set-key" = ""
+    "mongodb-root-password"   = ""
+  }
+}
+
+/*
 resource "kubernetes_secret" "mongodb" {
   metadata {
     name      = "mongodb"
@@ -13,3 +35,4 @@ resource "kubernetes_secret" "mongodb" {
     number_of_replicas = var.mongodb.replicas_number
   }
 }
+*/

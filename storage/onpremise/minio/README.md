@@ -45,7 +45,7 @@ No modules.
 | <a name="output_bucket_name"></a> [bucket\_name](#output\_bucket\_name) | Name of the MinIO bucket |
 | <a name="output_console_url"></a> [console\_url](#output\_console\_url) | Web YRL of MinIO |
 | <a name="output_env"></a> [env](#output\_env) | Elements to be set as environment variables |
-| <a name="output_env_from_secret"></a> [env\_from\_secret](#output\_env\_from\_secret) | Secrets to be set as environment variables |
+| <a name="output_env_secret"></a> [env\_secret](#output\_env\_secret) | Secrets to be set as environment variables |
 | <a name="output_host"></a> [host](#output\_host) | Host of MinIO |
 | <a name="output_login"></a> [login](#output\_login) | Username of MinIO |
 | <a name="output_must_force_path_style"></a> [must\_force\_path\_style](#output\_must\_force\_path\_style) | Boolean to force path style |

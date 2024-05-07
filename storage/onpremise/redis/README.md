@@ -46,7 +46,6 @@ No modules.
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_client_name"></a> [client\_name](#input\_client\_name) | Name of the redis client | `string` | `"ArmoniK.Core"` | no |
-| <a name="input_extra_conf"></a> [extra\_conf](#input\_extra\_conf) | Extra configuration to be set as environment variables | `map(string)` | `{}` | no |
 | <a name="input_instance_name"></a> [instance\_name](#input\_instance\_name) | Name of the instance | `string` | `"ArmoniKRedis"` | no |
 | <a name="input_namespace"></a> [namespace](#input\_namespace) | Namespace of ArmoniK storage resources | `string` | n/a | yes |
 | <a name="input_object_storage_adapter"></a> [object\_storage\_adapter](#input\_object\_storage\_adapter) | Name of the adapter's | `string` | `"ArmoniK.Adapters.Redis.ObjectStorage"` | no |
@@ -61,7 +60,7 @@ No modules.
 |------|-------------|
 | <a name="output_endpoints"></a> [endpoints](#output\_endpoints) | Endpoints of redis |
 | <a name="output_env"></a> [env](#output\_env) | Elements to be set as environment variables |
-| <a name="output_env_from_secret"></a> [env\_from\_secret](#output\_env\_from\_secret) | Secrets to be set as environment variables |
+| <a name="output_env_secret"></a> [env\_secret](#output\_env\_secret) | Secrets to be set as environment variables |
 | <a name="output_host"></a> [host](#output\_host) | Host of Redis |
 | <a name="output_mount_secret"></a> [mount\_secret](#output\_mount\_secret) | Secrets to be mounted as volumes |
 | <a name="output_port"></a> [port](#output\_port) | Port of Redis |

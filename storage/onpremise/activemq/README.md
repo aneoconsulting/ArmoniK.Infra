@@ -61,7 +61,6 @@ No modules.
 | <a name="input_activemq"></a> [activemq](#input\_activemq) | Parameters of ActiveMQ | <pre>object({<br>    image              = string<br>    tag                = string<br>    node_selector      = any<br>    image_pull_secrets = string<br>  })</pre> | n/a | yes |
 | <a name="input_adapter_absolute_path"></a> [adapter\_absolute\_path](#input\_adapter\_absolute\_path) | The adapter's absolut path | `string` | `"/adapters/queue/amqp/ArmoniK.Core.Adapters.Amqp.dll"` | no |
 | <a name="input_adapter_class_name"></a> [adapter\_class\_name](#input\_adapter\_class\_name) | Name of the adapter's class | `string` | `"ArmoniK.Core.Adapters.Amqp.QueueBuilder"` | no |
-| <a name="input_extra_conf"></a> [extra\_conf](#input\_extra\_conf) | Extra configuration to be set as environment variables | `map(string)` | `{}` | no |
 | <a name="input_namespace"></a> [namespace](#input\_namespace) | Namespace of ArmoniK storage resources | `string` | n/a | yes |
 | <a name="input_path"></a> [path](#input\_path) | Path for mounting secrets | `string` | `"/amqp"` | no |
 | <a name="input_scheme"></a> [scheme](#input\_scheme) | The scheme for the AMQP | `string` | `"AMQP"` | no |
@@ -76,7 +75,7 @@ No modules.
 | <a name="output_endpoints"></a> [endpoints](#output\_endpoints) | Endpoints of ActiveMQ |
 | <a name="output_engine_type"></a> [engine\_type](#output\_engine\_type) | Engine type |
 | <a name="output_env"></a> [env](#output\_env) | Elements to be set as environment variables |
-| <a name="output_env_from_secret"></a> [env\_from\_secret](#output\_env\_from\_secret) | Secrets to be set as environment variables |
+| <a name="output_env_secret"></a> [env\_secret](#output\_env\_secret) | Secrets to be set as environment variables |
 | <a name="output_host"></a> [host](#output\_host) | Host of ActiveMQ |
 | <a name="output_mount_secret"></a> [mount\_secret](#output\_mount\_secret) | Secrets to be mounted as volumes |
 | <a name="output_port"></a> [port](#output\_port) | Port of ActiveMQ |

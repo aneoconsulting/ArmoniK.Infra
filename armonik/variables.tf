@@ -435,3 +435,33 @@ variable "metrics_exporter" {
     target_port        = optional(number, 1080)
   })
 }
+
+variable "pod_deletion_cost" {
+  description = "value"
+  type = object({
+    image               = string
+    tag                 = string
+    image_pull_policy   = optional(string, "IfNotPresent")
+    image_pull_secrets  = optional(string, "")
+    node_selector       = optional(any, {})
+    annotations         = optional(any, {})
+    name                = optional(string, "pdc-update")
+    label_app           = optional(string, "armonik")
+    prometheus_url      = optional(string)
+    metrics_name        = optional(string)
+    frequency           = optional(number)
+    ignore_younger_than = optional(number)
+    concurrency         = optional(number)
+    extra_conf          = optional(map(string), {})
+
+    limits = optional(object({
+      cpu    = optional(string)
+      memory = optional(string)
+    }))
+    requests = optional(object({
+      cpu    = optional(string)
+      memory = optional(string)
+    }))
+  })
+  default = null
+}

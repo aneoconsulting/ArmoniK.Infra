@@ -37,9 +37,6 @@ variable "mongodb" {
     registry           = optional(string, "docker.io")
     replicas_number    = optional(number, 2)
     tag                = string
-    node_selector      = map(string)
-    image_pull_secrets = string
-    replicas_number    = number
   })
 }
 

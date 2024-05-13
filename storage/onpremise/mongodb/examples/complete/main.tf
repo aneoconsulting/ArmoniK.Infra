@@ -1,13 +1,28 @@
 module "complete_mongodb_instance" {
-  source    = "../../"
-  namespace = var.namespace
+  source            = "../../"
+  namespace         = var.namespace
+  helm_release_name = "mongodb-armonik-helm-release"
+  kube_config_path  = "~/.kube/config"
+  mTLSEnabled       = false
+  
+  labels = {
+    "app"  = "storage"
+    "type" = "table"
+  }
 
   mongodb = {
+    architecture       = "replicaset"
+    databases_names    = ["database"]
     image              = "mongo"
-    tag                = "6.0.7"
+    image_pull_secrets = [""]
     node_selector      = {}
-    image_pull_secrets = ""
-    replicas_number    = 1
+    registry           = "docker.io"
+    replicas_number    = 2
+    tag                = "6.0.7"
+  }
+
+  mongodb_helm_chart = {
+    version = "15.1.4"
   }
 
   persistent_volume = {

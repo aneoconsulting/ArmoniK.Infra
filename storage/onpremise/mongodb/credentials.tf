@@ -24,7 +24,6 @@ resource "random_password" "mongodb_application_password" {
   special = false
 }
 
-/*
 resource "kubernetes_secret" "mongodb_admin" {
   metadata {
     name      = "mongodb-admin"
@@ -48,4 +47,3 @@ resource "kubernetes_secret" "mongodb_user" {
   }
   type = "kubernetes.io/basic-auth"
 }
-*/

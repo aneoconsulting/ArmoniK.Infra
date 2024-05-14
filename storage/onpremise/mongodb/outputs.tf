@@ -1,8 +1,3 @@
-output "mongodb" {
-  description = "JSON representation of the Helm chart's MongoDB deployment metadata"
-  value       = helm_release.mongodb.metadata[0]
-}
-
 output "host" {
   description = "Hostname or IP address of MongoDB server"
   value       = local.mongodb_dns

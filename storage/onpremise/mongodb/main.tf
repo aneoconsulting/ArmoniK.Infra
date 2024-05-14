@@ -1,3 +1,7 @@
+locals {
+  image_pull_secrets = try(tolist(var.mongodb.image_pull_secrets), [tostring(var.mongodb.image_pull_secrets)])
+}
+
 resource "helm_release" "mongodb" {
   name       = var.helm_release_name
   namespace  = var.namespace
@@ -21,7 +25,7 @@ resource "helm_release" "mongodb" {
         "registry"    = var.mongodb.registry
         "repository"  = var.mongodb.image
         "tag"         = var.mongodb.tag
-        "pullSecrets" = var.mongodb.image_pull_secrets
+        "pullSecrets" = local.image_pull_secrets
       }
       "architecture" = "replicaset"
       "tls" = {

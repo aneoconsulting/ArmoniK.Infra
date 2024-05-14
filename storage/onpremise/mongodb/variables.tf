@@ -32,7 +32,7 @@ variable "mongodb" {
     architecture       = optional(string, "replicaset") # "replicaset" or "standalone"
     databases_names    = optional(list(string), ["database"])
     image              = optional(string, "bitnami/mongodb")
-    image_pull_secrets = optional(list(string), [""])
+    image_pull_secrets = optional(any, [""]) # can be a string or a list of strings
     node_selector      = optional(map(string), {})
     registry           = optional(string, "docker.io")
     replicas_number    = optional(number, 2)

@@ -5,9 +5,9 @@ locals {
 resource "helm_release" "mongodb" {
   name       = var.helm_release_name
   namespace  = var.namespace
-  chart      = var.mongodb_helm_chart.name
-  repository = var.mongodb_helm_chart.repository
-  version    = var.mongodb_helm_chart.version
+  chart      = var.mongodb.helm_chart_name
+  repository = var.mongodb.helm_chart_repository
+  version    = var.mongodb.helm_chart_version
 
   values = [
     yamlencode({

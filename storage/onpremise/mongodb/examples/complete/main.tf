@@ -13,16 +13,13 @@ module "complete_mongodb_instance" {
   mongodb = {
     architecture       = "replicaset"
     databases_names    = ["database"]
+    helm_chart_version = "15.1.4"
     image              = "mongo"
     image_pull_secrets = [""]
     node_selector      = {}
     registry           = "docker.io"
     replicas_number    = 2
     tag                = "6.0.7"
-  }
-
-  mongodb_helm_chart = {
-    version = "15.1.4"
   }
 
   persistent_volume = {

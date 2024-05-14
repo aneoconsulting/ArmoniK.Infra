@@ -29,14 +29,17 @@ variable "mongodb" {
   description = "Parameters of the MongoDB deployment"
 
   type = object({
-    architecture       = optional(string, "replicaset") # "replicaset" or "standalone"
-    databases_names    = optional(list(string), ["database"])
-    image              = optional(string, "bitnami/mongodb")
-    image_pull_secrets = optional(any, [""]) # can be a string or a list of strings
-    node_selector      = optional(map(string), {})
-    registry           = optional(string, "docker.io")
-    replicas_number    = optional(number, 2)
-    tag                = string
+    architecture          = optional(string, "replicaset") # "replicaset" or "standalone"
+    databases_names       = optional(list(string), ["database"])
+    helm_chart_repository = optional(string, "oci://registry-1.docker.io/bitnamicharts")
+    helm_chart_name       = optional(string, "mongodb")
+    helm_chart_version    = string
+    image                 = optional(string, "bitnami/mongodb")
+    image_pull_secrets    = optional(any, [""]) # can be a string or a list of strings
+    node_selector         = optional(map(string), {})
+    registry              = optional(string, "docker.io")
+    replicas_number       = optional(number, 2)
+    tag                   = string
   })
 }
 
@@ -58,15 +61,6 @@ variable "mongodb_image" {
   }
 }
 */
-
-variable "mongodb_helm_chart" {
-  description = "Parameters of the Helm chart"
-  type = object({
-    repository = optional(string, "oci://registry-1.docker.io/bitnamicharts")
-    name       = optional(string, "mongodb")
-    version    = string
-  })
-}
 
 # Not used yet (there for retrocompatibility reasons)
 variable "persistent_volume" {

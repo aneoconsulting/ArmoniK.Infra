@@ -1,6 +1,7 @@
 data "kubernetes_secret" "mongodb_certificates" {
   metadata {
-    name = "${helm_release.mongodb.name}-ca"
+    name      = "${helm_release.mongodb.name}-ca"
+    namespace = var.namespace
   }
   binary_data = {
     "mongodb-ca-cert" = ""

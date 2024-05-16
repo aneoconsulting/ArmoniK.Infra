@@ -3,12 +3,12 @@ data "kubernetes_secret" "mongodb_certificates" {
     name      = "${helm_release.mongodb.name}-ca"
     namespace = var.namespace
   }
+  # Kubernetes provider syntax for retrieving base64 secret data
   binary_data = {
     "mongodb-ca-cert" = ""
     "mongodb-ca-key"  = ""
   }
 }
-
 
 resource "kubernetes_secret" "mongodb" {
   metadata {

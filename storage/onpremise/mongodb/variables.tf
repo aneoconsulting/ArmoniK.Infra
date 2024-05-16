@@ -43,27 +43,8 @@ variable "mongodb" {
   })
 }
 
-/* Included in the mongodb variable for retrocompatibility reasons
-variable "mongodb_image" {
-  description = "Image for MongoDB"
-  type = object({
-    image_name         = string
-    image_pull_secrets = list(string)
-    tag                = string
-    registry           = string
-
-  })
-  default = { 
-    registry           = "docker.io"
-    image_name         = "bitnami/mongodb"
-    image_pull_secrets = [""]
-    tag                = "7.0.8-debian-12-r2"
-  }
-}
-*/
-
 variable "persistent_volume" {
-  description = "Persistent volume info"
+  description = "Persistent Volume parameters for MongoDB pods"
   type = object({
     access_mode         = optional(list(string), ["ReadWriteMany"])
     reclaim_policy      = optional(string, "Delete")
@@ -108,11 +89,11 @@ variable "security_context" {
 }
 
 variable "mTLSEnabled" {
-  description = "Whether to deploy mongo with mTLS"
+  description = "Whether to deploy MongoDB with mTLS"
   type        = bool
   default     = false
   validation {
-    condition = !var.mTLSEnabled
+    condition     = !var.mTLSEnabled
     error_message = "For now, 'mTLSEnabled' must be false as mTLS is not supported yet"
   }
 }

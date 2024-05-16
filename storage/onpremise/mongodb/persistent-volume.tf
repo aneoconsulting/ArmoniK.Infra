@@ -1,4 +1,4 @@
-/* Might be defined one day, for retrocompatibility concerns
+/* Might be defined one day, for retrocompatibility and modularity concerns
 resource "kubernetes_storage_class" "mongodb" {
   count = var.persistent_volume != null ? 1 : 0
   metadata {

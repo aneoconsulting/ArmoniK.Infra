@@ -11,7 +11,6 @@ output "port" {
 output "url" {
   description = "URL of MongoDB server"
   value       = local.mongodb_url
-
 }
 
 output "number_of_replicas" {

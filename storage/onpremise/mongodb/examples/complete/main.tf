@@ -4,7 +4,7 @@ module "complete_mongodb_instance" {
   helm_release_name = "mongodb-armonik-helm-release"
   kube_config_path  = "~/.kube/config"
   mTLSEnabled       = false
-  
+
   labels = {
     "app"  = "storage"
     "type" = "table"

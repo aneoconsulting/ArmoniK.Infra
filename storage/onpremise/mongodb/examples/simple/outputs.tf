@@ -24,11 +24,6 @@ output "user_certificate" {
   value       = module.simple_mongodb_instance.user_certificate
   sensitive   = true
 }
-output "user_credentials" {
-  description = "User credentials of MongoDB"
-  value       = module.simple_mongodb_instance.user_credentials
-  sensitive   = true
-}
 
 output "endpoints" {
   description = "Endpoints of MongoDB"

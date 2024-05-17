@@ -36,6 +36,5 @@ No resources.
 | <a name="output_number_of_replicas"></a> [number\_of\_replicas](#output\_number\_of\_replicas) | Number of replicas of MongoDB |
 | <a name="output_port"></a> [port](#output\_port) | Port of MongoDB server |
 | <a name="output_url"></a> [url](#output\_url) | URL of MongoDB server |
-| <a name="output_user_certificate"></a> [user\_certificate](#output\_user\_certificate) | User certificates of MongoDB |
 | <a name="output_user_credentials"></a> [user\_credentials](#output\_user\_credentials) | User credentials of MongoDB |
 <!-- END_TF_DOCS -->

@@ -76,6 +76,7 @@ variable "persistent_volume" {
   }
 }
 
+# Not used yet (there for retrocompatibility reasons)
 variable "security_context" {
   description = "Security context for MongoDB pods"
   type = object({

@@ -9,6 +9,7 @@ resource "helm_release" "mongodb" {
   chart      = var.mongodb.helm_chart_name
   repository = var.mongodb.helm_chart_repository
   version    = var.mongodb.helm_chart_version
+  timeout    = var.timeout * var.mongodb.replicas_number
 
   values = [
     yamlencode({

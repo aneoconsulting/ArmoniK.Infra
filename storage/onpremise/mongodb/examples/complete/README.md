@@ -24,7 +24,7 @@ No resources.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_config_path"></a> [config\_path](#input\_config\_path) | The kubernetes configuration file path you want to specify | `string` | `"~/.kube/config"` | no |
+| <a name="input_kube_config_path"></a> [kube\_config\_path](#input\_kube\_config\_path) | The kubernetes configuration file path you want to specify | `string` | `"~/.kube/config"` | no |
 | <a name="input_namespace"></a> [namespace](#input\_namespace) | Namespace of ArmoniK resources | `string` | `"default"` | no |
 
 ## Outputs

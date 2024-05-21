@@ -1,9 +1,8 @@
 module "complete_mongodb_instance" {
-  source            = "../../"
-  namespace         = var.namespace
-  helm_release_name = "mongodb-armonik-helm-release"
-  kube_config_path  = "~/.kube/config"
-  mTLSEnabled       = false
+  source    = "../../"
+  namespace = var.namespace
+  name      = "mongodb-armonik-helm-release"
+  mtls      = false
 
   labels = {
     "app"  = "storage"

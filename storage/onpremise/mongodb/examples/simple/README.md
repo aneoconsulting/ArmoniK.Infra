@@ -41,7 +41,7 @@ No resources.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_config_path"></a> [config\_path](#input\_config\_path) | The kubernetes configuration file path you want to specify | `string` | `"~/.kube/config"` | no |
+| <a name="input_kube_config_path"></a> [kube\_config\_path](#input\_kube\_config\_path) | The kubernetes configuration file path you want to specify | `string` | `"~/.kube/config"` | no |
 | <a name="input_namespace"></a> [namespace](#input\_namespace) | Namespace of ArmoniK resources | `string` | `"default"` | no |
 
 ## Outputs
@@ -53,5 +53,5 @@ No resources.
 | <a name="output_number_of_replicas"></a> [number\_of\_replicas](#output\_number\_of\_replicas) | Number of replicas of MongoDB |
 | <a name="output_port"></a> [port](#output\_port) | Port of MongoDB server |
 | <a name="output_url"></a> [url](#output\_url) | URL of MongoDB server |
-| <a name="output_user_certificate"></a> [user\_certificate](#output\_user\_certificate) | User certificates of MongoDB |
+| <a name="output_user_credentials"></a> [user\_credentials](#output\_user\_credentials) | User credentials of MongoDB |
 <!-- END_TF_DOCS -->

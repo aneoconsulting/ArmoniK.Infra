@@ -24,7 +24,6 @@ output "user_credentials" {
     secret    = kubernetes_secret.mongodb_user.metadata[0].name
     data_keys = keys(kubernetes_secret.mongodb_user.data)
   }
-  sensitive = true
 }
 
 output "endpoints" {
@@ -33,5 +32,4 @@ output "endpoints" {
     secret    = kubernetes_secret.mongodb.metadata[0].name
     data_keys = keys(kubernetes_secret.mongodb.data)
   }
-  sensitive = true
 }

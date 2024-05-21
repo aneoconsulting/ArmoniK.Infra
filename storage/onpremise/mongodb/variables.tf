@@ -13,16 +13,10 @@ variable "labels" {
   }
 }
 
-variable "helm_release_name" {
-  description = "Name of the helm chart release, must be shorter than 54 characters"
+variable "name" {
+  description = "Name used for the helm chart release and the associated resources, must be shorter than 54 characters"
   type        = string
-  default     = "mongodb-arm"
-}
-
-variable "kube_config_path" {
-  description = "Local file path of the kubernetes configuration"
-  type        = string
-  default     = "~/.kube/config"
+  default     = "mongodb-armonik"
 }
 
 variable "mongodb" {
@@ -89,12 +83,12 @@ variable "security_context" {
   }
 }
 
-variable "mTLSEnabled" {
+variable "mtls" {
   description = "Whether to deploy MongoDB with mTLS"
   type        = bool
   default     = false
   validation {
-    condition     = !var.mTLSEnabled
+    condition     = !var.mtls
     error_message = "For now, 'mTLSEnabled' must be false as mTLS is not supported yet"
   }
 }

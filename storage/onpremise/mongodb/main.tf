@@ -1,10 +1,10 @@
 locals {
-  # To ensure image pull secrets are passed as a array/list
+  # To ensure image pull secrets are passed as an array/list
   image_pull_secrets = try(tolist(var.mongodb.image_pull_secrets), [tostring(var.mongodb.image_pull_secrets)])
 }
 
 resource "helm_release" "mongodb" {
-  name       = var.helm_release_name
+  name       = var.name
   namespace  = var.namespace
   chart      = var.mongodb.helm_chart_name
   repository = var.mongodb.helm_chart_repository
@@ -39,7 +39,7 @@ resource "helm_release" "mongodb" {
 
       # As the parameter 'tls.mTLS.enabled' set to false doesn't seem to work (chart v15.1.4) this an
       # alternative to allow mTLS to not be mandatory
-      "extraFlags" = var.mTLSEnabled ? "" : "--tlsAllowConnectionsWithoutCertificates"
+      "extraFlags" = var.mtls ? "" : "--tlsAllowConnectionsWithoutCertificates"
 
       "persistentVolumeClaimRetentionPolicy" = {
         "enabled"     = "true"

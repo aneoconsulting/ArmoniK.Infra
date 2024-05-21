@@ -3,6 +3,7 @@ module "complete_mongodb_instance" {
   namespace = var.namespace
   name      = "mongodb-armonik-helm-release"
   mtls      = false
+  timeout   = 300
 
   labels = {
     "app"  = "storage"

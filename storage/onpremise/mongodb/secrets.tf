@@ -3,11 +3,6 @@ data "kubernetes_secret" "mongodb_certificates" {
     name      = "${helm_release.mongodb.name}-ca"
     namespace = var.namespace
   }
-  # Kubernetes provider syntax for retrieving base64 secret data
-  binary_data = {
-    "mongodb-ca-cert" = ""
-    "mongodb-ca-key"  = ""
-  }
 }
 
 resource "kubernetes_secret" "mongodb" {
@@ -16,7 +11,7 @@ resource "kubernetes_secret" "mongodb" {
     namespace = var.namespace
   }
   data = {
-    "chain.pem"        = base64decode(data.kubernetes_secret.mongodb_certificates.binary_data["mongodb-ca-cert"])
+    "chain.pem"        = data.kubernetes_secret.mongodb_certificates.data["mongodb-ca-cert"]
     username           = random_string.mongodb_application_user.result
     password           = random_password.mongodb_application_password.result
     host               = local.mongodb_dns

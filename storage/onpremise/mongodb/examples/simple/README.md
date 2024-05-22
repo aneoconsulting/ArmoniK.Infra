@@ -21,6 +21,7 @@ terraform destroy
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0 |
+| <a name="requirement_helm"></a> [helm](#requirement\_helm) | >= 2.10.1 |
 | <a name="requirement_kubernetes"></a> [kubernetes](#requirement\_kubernetes) | >= 2.21.1 |
 
 ## Providers
@@ -52,6 +53,7 @@ No resources.
 | <a name="output_host"></a> [host](#output\_host) | Hostname or IP address of MongoDB server |
 | <a name="output_number_of_replicas"></a> [number\_of\_replicas](#output\_number\_of\_replicas) | Number of replicas of MongoDB |
 | <a name="output_port"></a> [port](#output\_port) | Port of MongoDB server |
+| <a name="output_unused_variables"></a> [unused\_variables](#output\_unused\_variables) | Map of variables that are not used yet but might be in the future |
 | <a name="output_url"></a> [url](#output\_url) | URL of MongoDB server |
 | <a name="output_user_credentials"></a> [user\_credentials](#output\_user\_credentials) | User credentials of MongoDB |
 <!-- END_TF_DOCS -->

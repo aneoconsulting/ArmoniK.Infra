@@ -2,7 +2,7 @@ locals {
   pdc_env = var.pod_deletion_cost != null ? merge({
     PrometheusUrl       = coalesce(var.pod_deletion_cost.prometheus_url, "http://prometheus.${var.namespace}.svc:9090/")
     MetricsName         = var.pod_deletion_cost.metrics_name
-    Frequency           = var.pod_deletion_cost.frequency
+    Period              = var.pod_deletion_cost.period
     IgnoreYoungerThan   = var.pod_deletion_cost.ignore_younger_than
     KubernetesNamespace = var.namespace
     Concurrency         = var.pod_deletion_cost.concurrency

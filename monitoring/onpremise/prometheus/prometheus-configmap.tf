@@ -119,6 +119,9 @@ scrape_configs:
       - source_labels: [__meta_kubernetes_pod_label_service]
         action: keep
         regex: "control-plane"
+      - source_labels: [__meta_kubernetes_namespace]
+        action: replace
+        target_label: kubernetes_namespace
       - source_labels: [__meta_kubernetes_pod_node_name]
         action: replace
         target_label: kubernetes_pod_node_name
@@ -139,6 +142,9 @@ scrape_configs:
       - source_labels: [__meta_kubernetes_pod_label_service]
         action: keep
         regex: "compute-plane"
+      - source_labels: [__meta_kubernetes_namespace]
+        action: replace
+        target_label: kubernetes_namespace
       - source_labels: [__meta_kubernetes_pod_node_name]
         action: replace
         target_label: kubernetes_pod_node_name

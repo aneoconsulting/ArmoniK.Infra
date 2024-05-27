@@ -13,7 +13,6 @@ variable "activemq" {
     node_selector      = any
     image_pull_secrets = string
   })
-
 }
 
 variable "validity_period_hours" {

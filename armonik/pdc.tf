@@ -5,6 +5,7 @@ locals {
     Period            = var.pod_deletion_cost.period
     IgnoreYoungerThan = var.pod_deletion_cost.ignore_younger_than
     Concurrency       = var.pod_deletion_cost.concurrency
+    Granularity       = var.pod_deletion_cost.granularity
   }, var.pod_deletion_cost.extra_conf) : {}
 }
 

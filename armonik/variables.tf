@@ -449,7 +449,7 @@ variable "pod_deletion_cost" {
     label_app           = optional(string, "armonik")
     prometheus_url      = optional(string)
     metrics_name        = optional(string)
-    frequency           = optional(number)
+    period              = optional(number)
     ignore_younger_than = optional(number)
     concurrency         = optional(number)
     extra_conf          = optional(map(string), {})

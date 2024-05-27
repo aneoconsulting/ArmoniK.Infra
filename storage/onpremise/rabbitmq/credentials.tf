@@ -16,7 +16,7 @@ resource "random_password" "mq_keystore_password" {
 
 resource "kubernetes_secret" "rabbitmq_user" {
   metadata {
-    name      = "rabbitmq-user"
+    name      = "activemq-user"
     namespace = var.namespace
   }
   data = {

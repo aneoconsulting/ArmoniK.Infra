@@ -56,8 +56,11 @@
 | [kubernetes_deployment.control_plane](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/deployment) | resource |
 | [kubernetes_deployment.ingress](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/deployment) | resource |
 | [kubernetes_deployment.metrics_exporter](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/deployment) | resource |
+| [kubernetes_deployment.pod_deletion_cost](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/deployment) | resource |
 | [kubernetes_job.authentication_in_database](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/job) | resource |
 | [kubernetes_job.partitions_in_database](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/job) | resource |
+| [kubernetes_role.pod_deletion_cost](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/role) | resource |
+| [kubernetes_role_binding.pod_deletion_cost](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/role_binding) | resource |
 | [kubernetes_secret.ingress_certificate](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
 | [kubernetes_secret.ingress_client_certificate](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
 | [kubernetes_secret.ingress_client_certificate_authority](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
@@ -66,6 +69,7 @@
 | [kubernetes_service.admin_gui](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/service) | resource |
 | [kubernetes_service.control_plane](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/service) | resource |
 | [kubernetes_service.ingress](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/service) | resource |
+| [kubernetes_service_account.pod_deletion_cost](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/service_account) | resource |
 | [local_file.ingress_conf_file](https://registry.terraform.io/providers/hashicorp/local/latest/docs/resources/file) | resource |
 | [local_sensitive_file.ingress_ca](https://registry.terraform.io/providers/hashicorp/local/latest/docs/resources/sensitive_file) | resource |
 | [local_sensitive_file.ingress_client_ca](https://registry.terraform.io/providers/hashicorp/local/latest/docs/resources/sensitive_file) | resource |
@@ -127,6 +131,7 @@
 | <a name="input_metrics_server_chart_name"></a> [metrics\_server\_chart\_name](#input\_metrics\_server\_chart\_name) | Name of the metrics-server Helm chart | `string` | `"metrics-server"` | no |
 | <a name="input_namespace"></a> [namespace](#input\_namespace) | Namespace of ArmoniK resources | `string` | n/a | yes |
 | <a name="input_partition_metrics_exporter_secret_name"></a> [partition\_metrics\_exporter\_secret\_name](#input\_partition\_metrics\_exporter\_secret\_name) | the name of the partition metrics exporter secret | `string` | `"partition-metrics-exporter"` | no |
+| <a name="input_pod_deletion_cost"></a> [pod\_deletion\_cost](#input\_pod\_deletion\_cost) | value | <pre>object({<br>    image               = string<br>    tag                 = string<br>    image_pull_policy   = optional(string, "IfNotPresent")<br>    image_pull_secrets  = optional(string, "")<br>    node_selector       = optional(any, {})<br>    annotations         = optional(any, {})<br>    name                = optional(string, "pdc-update")<br>    label_app           = optional(string, "armonik")<br>    prometheus_url      = optional(string)<br>    metrics_name        = optional(string)<br>    period              = optional(number)<br>    ignore_younger_than = optional(number)<br>    concurrency         = optional(number)<br>    granularity         = optional(number)<br>    extra_conf          = optional(map(string), {})<br><br>    limits = optional(object({<br>      cpu    = optional(string)<br>      memory = optional(string)<br>    }))<br>    requests = optional(object({<br>      cpu    = optional(string)<br>      memory = optional(string)<br>    }))<br>  })</pre> | `null` | no |
 | <a name="input_prometheus_secret_name"></a> [prometheus\_secret\_name](#input\_prometheus\_secret\_name) | the name of the prometheus secret | `string` | `"prometheus"` | no |
 | <a name="input_pvc_name"></a> [pvc\_name](#input\_pvc\_name) | Name for the pvc to be used | `string` | `"nfsvolume"` | no |
 | <a name="input_s3_secret_name"></a> [s3\_secret\_name](#input\_s3\_secret\_name) | the name of the S3 secret | `string` | `"s3"` | no |

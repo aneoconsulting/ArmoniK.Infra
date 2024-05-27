@@ -452,6 +452,7 @@ variable "pod_deletion_cost" {
     period              = optional(number)
     ignore_younger_than = optional(number)
     concurrency         = optional(number)
+    granularity         = optional(number)
     extra_conf          = optional(map(string), {})
 
     limits = optional(object({

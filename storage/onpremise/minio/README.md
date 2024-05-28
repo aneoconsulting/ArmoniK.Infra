@@ -36,7 +36,7 @@ No modules.
 |------|-------------|------|---------|:--------:|
 | <a name="input_minio"></a> [minio](#input\_minio) | Parameters of S3 payload storage | <pre>object({<br>    image              = string<br>    tag                = string<br>    image_pull_secrets = string<br>    host               = string<br>    bucket_name        = string<br>    node_selector      = any<br>  })</pre> | n/a | yes |
 | <a name="input_namespace"></a> [namespace](#input\_namespace) | Namespace of ArmoniK storage resources | `string` | n/a | yes |
-| <a name="input_object_storage_adapter"></a> [object\_storage\_adapter](#input\_object\_storage\_adapter) | Name of the adapter's | `string` | `"ArmoniK.Adapters.S3.ObjectStorage"` | no |
+| <a name="input_object_storage_adapter"></a> [object\_storage\_adapter](#input\_object\_storage\_adapter) | Name of the ArmoniK adapter to use for the storage | `string` | `"ArmoniK.Adapters.S3.ObjectStorage"` | no |
 
 ## Outputs
 

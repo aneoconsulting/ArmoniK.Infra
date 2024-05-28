@@ -18,7 +18,7 @@ variable "minio" {
 }
 
 variable "object_storage_adapter" {
-  description = "Name of the adapter's"
+  description = "Name of the ArmoniK adapter to use for the storage"
   type        = string
   default     = "ArmoniK.Adapters.S3.ObjectStorage"
 }

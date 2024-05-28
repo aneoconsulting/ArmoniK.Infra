@@ -7,7 +7,7 @@ resource "pkcs12_from_pem" "rabbitmq_certificate" {
 
 resource "kubernetes_secret" "rabbitmq_certificate" {
   metadata {
-    name      = "rabbitmq-server-certificates"
+    name      = "activemq-server-certificates"
     namespace = var.namespace
   }
   data = {
@@ -22,7 +22,7 @@ resource "kubernetes_secret" "rabbitmq_certificate" {
 
 resource "kubernetes_secret" "rabbitmq_client_certificate" {
   metadata {
-    name      = "rabbitmq-user-certificates"
+    name      = "activemq-user-certificates"
     namespace = var.namespace
   }
   data = {
@@ -32,6 +32,6 @@ resource "kubernetes_secret" "rabbitmq_client_certificate" {
 
 resource "local_sensitive_file" "rabbitmq_client_certificate" {
   content         = format("%s\n%s", local.client_cert, local.ca_cert)
-  filename        = "${path.root}/generated/certificates/rabbitmq/chain.pem"
+  filename        = "${path.root}/generated/certificates/activemq/chain.pem"
   file_permission = "0600"
 }

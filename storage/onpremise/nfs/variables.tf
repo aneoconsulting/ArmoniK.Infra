@@ -27,21 +27,25 @@ variable "image" {
   type        = string
   default     = "k8s.gcr.io/sig-storage/nfs-subdir-external-provisioner"
 }
+
 variable "tag" {
   description = "tag for the image"
   type        = string
   default     = "v4.0.2"
 }
+
 variable "node_selector" {
   description = "selectors"
   type        = any
   default     = {}
 }
+
 variable "image_pull_secrets" {
   description = "pull secrets if needed"
   type        = string
   default     = ""
 }
+
 variable "image_policy" {
   description = "policy  for getting the image"
   type        = string
@@ -52,4 +56,16 @@ variable "pvc_name" {
   description = "Name for the pvc to be created and used"
   type        = string
   default     = "nfsvolume"
+}
+
+variable "object_storage_adapter" {
+  description = "Name of the adapter's"
+  type        = string
+  default     = "ArmoniK.Adapters.LocalStorage.ObjectStorage"
+}
+
+variable "mount_path" {
+  description = "Path to mount in pods"
+  type        = string
+  default     = "/local_storage"
 }

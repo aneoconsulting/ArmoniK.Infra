@@ -25,6 +25,7 @@ No modules.
 | [kubernetes_deployment.minio](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/deployment) | resource |
 | [kubernetes_secret.minio](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
 | [kubernetes_secret.s3_user](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
+| [kubernetes_secret.s3_user_credentials](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
 | [kubernetes_service.minio](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/service) | resource |
 | [random_password.minio_application_password](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/password) | resource |
 | [random_string.minio_application_user](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/string) | resource |
@@ -35,6 +36,7 @@ No modules.
 |------|-------------|------|---------|:--------:|
 | <a name="input_minio"></a> [minio](#input\_minio) | Parameters of S3 payload storage | <pre>object({<br>    image              = string<br>    tag                = string<br>    image_pull_secrets = string<br>    host               = string<br>    bucket_name        = string<br>    node_selector      = any<br>  })</pre> | n/a | yes |
 | <a name="input_namespace"></a> [namespace](#input\_namespace) | Namespace of ArmoniK storage resources | `string` | n/a | yes |
+| <a name="input_object_storage_adapter"></a> [object\_storage\_adapter](#input\_object\_storage\_adapter) | Name of the ArmoniK adapter to use for the storage | `string` | `"ArmoniK.Adapters.S3.ObjectStorage"` | no |
 
 ## Outputs
 
@@ -42,6 +44,8 @@ No modules.
 |------|-------------|
 | <a name="output_bucket_name"></a> [bucket\_name](#output\_bucket\_name) | Name of the MinIO bucket |
 | <a name="output_console_url"></a> [console\_url](#output\_console\_url) | Web YRL of MinIO |
+| <a name="output_env"></a> [env](#output\_env) | Elements to be set as environment variables |
+| <a name="output_env_secret"></a> [env\_secret](#output\_env\_secret) | Secrets to be set as environment variables |
 | <a name="output_host"></a> [host](#output\_host) | Host of MinIO |
 | <a name="output_login"></a> [login](#output\_login) | Username of MinIO |
 | <a name="output_must_force_path_style"></a> [must\_force\_path\_style](#output\_must\_force\_path\_style) | Boolean to force path style |

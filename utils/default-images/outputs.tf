@@ -9,6 +9,9 @@ output "image_tags" {
     for image in var.armonik_images.infra :
     image => var.armonik_versions.infra
     }, {
+    for image in var.armonik_images.infra_plugins :
+    image => var.armonik_versions.infra_plugins
+    }, {
     for image in var.armonik_images.core :
     image => var.armonik_versions.core
     }, {

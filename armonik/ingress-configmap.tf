@@ -47,11 +47,15 @@ server {
     resolver kube-dns.kube-system ipv6=off;
 
     location = / {
-        rewrite ^ $scheme://$http_host/admin/;
+        rewrite ^ $scheme://$http_host/admin/en/;
     }
 
     location = /admin {
-        rewrite ^ $scheme://$http_host/admin/;
+        rewrite ^ $scheme://$http_host/admin/en/;
+    }
+
+    location = /admin/en {
+        rewrite ^ $scheme://$http_host/admin/en/;
     }
 %{if local.admin_app_url != null~}
     set $admin_app_upstream ${local.admin_app_url};

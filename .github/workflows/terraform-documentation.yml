@@ -20,7 +20,7 @@ jobs:
         uses: actions/checkout@v3
       - name: Get root directories
         id: dirs
-        uses: clowdhaus/terraform-composite-actions/directories@v1.8.3
+        uses: clowdhaus/terraform-composite-actions/directories@v1.9.0
       - name: Get list of directories separated with comma
         id: search
         run: |
@@ -35,7 +35,7 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.ref }}
       - name: Render terraform docs and push changes back to PR
-        uses: terraform-docs/gh-actions@v1.0.0
+        uses: terraform-docs/gh-actions@v1.2.0
         with:
           working-dir: ${{ needs.collectInputs.outputs.directories }}
           output-file: README.md

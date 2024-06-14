@@ -58,7 +58,7 @@ resource "google_kms_crypto_key_iam_member" "kms" {
 module "gke" {
   count       = local.public_gke ? 1 : 0
   source      = "terraform-google-modules/kubernetes-engine/google//modules/beta-public-cluster"
-  version     = "27.0.0"
+  version     = "31.0.0"
   description = local.description
   # Required
   ip_range_pods     = var.ip_range_pods
@@ -172,7 +172,7 @@ module "gke" {
 module "private_gke" {
   count       = local.private_gke ? 1 : 0
   source      = "terraform-google-modules/kubernetes-engine/google//modules/beta-private-cluster"
-  version     = "27.0.0"
+  version     = "31.0.0"
   description = local.description
   # Required
   ip_range_pods     = var.ip_range_pods
@@ -292,7 +292,7 @@ module "private_gke" {
 module "autopilot" {
   count       = local.public_autopilot ? 1 : 0
   source      = "terraform-google-modules/kubernetes-engine/google//modules/beta-autopilot-public-cluster"
-  version     = "27.0.0"
+  version     = "31.0.0"
   description = local.description
   # Required
   ip_range_pods     = var.ip_range_pods
@@ -360,7 +360,7 @@ module "autopilot" {
 module "private_autopilot" {
   count       = local.private_autopilot ? 1 : 0
   source      = "terraform-google-modules/kubernetes-engine/google//modules/beta-autopilot-private-cluster"
-  version     = "27.0.0"
+  version     = "31.0.0"
   description = local.description
   # Required
   ip_range_pods     = var.ip_range_pods

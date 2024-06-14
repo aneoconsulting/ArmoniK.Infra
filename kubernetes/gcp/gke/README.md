@@ -32,10 +32,10 @@ This module deploy:
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_autopilot"></a> [autopilot](#module\_autopilot) | terraform-google-modules/kubernetes-engine/google//modules/beta-autopilot-public-cluster | 27.0.0 |
-| <a name="module_gke"></a> [gke](#module\_gke) | terraform-google-modules/kubernetes-engine/google//modules/beta-public-cluster | 27.0.0 |
-| <a name="module_private_autopilot"></a> [private\_autopilot](#module\_private\_autopilot) | terraform-google-modules/kubernetes-engine/google//modules/beta-autopilot-private-cluster | 27.0.0 |
-| <a name="module_private_gke"></a> [private\_gke](#module\_private\_gke) | terraform-google-modules/kubernetes-engine/google//modules/beta-private-cluster | 27.0.0 |
+| <a name="module_autopilot"></a> [autopilot](#module\_autopilot) | terraform-google-modules/kubernetes-engine/google//modules/beta-autopilot-public-cluster | 31.0.0 |
+| <a name="module_gke"></a> [gke](#module\_gke) | terraform-google-modules/kubernetes-engine/google//modules/beta-public-cluster | 31.0.0 |
+| <a name="module_private_autopilot"></a> [private\_autopilot](#module\_private\_autopilot) | terraform-google-modules/kubernetes-engine/google//modules/beta-autopilot-private-cluster | 31.0.0 |
+| <a name="module_private_gke"></a> [private\_gke](#module\_private\_gke) | terraform-google-modules/kubernetes-engine/google//modules/beta-private-cluster | 31.0.0 |
 
 ## Resources
 

@@ -58,6 +58,7 @@ variable "ingress" {
     mtls                  = bool
     generate_client_cert  = bool
     custom_client_ca_file = string
+    langs                 = optional(set(string), ["en"])
   })
   validation {
     error_message = "Ingress mTLS requires TLS to be enabled."
@@ -74,6 +75,10 @@ variable "ingress" {
   validation {
     error_message = "Cannot generate client certificates if the client CA is custom."
     condition     = var.ingress != null ? !var.ingress.mtls || var.ingress.custom_client_ca_file == "" || !var.ingress.generate_client_cert : true
+  }
+  validation {
+    error_message = "English must be supported."
+    condition     = contains(var.ingress.langs, "en")
   }
 }
 

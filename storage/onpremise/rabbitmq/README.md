@@ -33,6 +33,7 @@ No modules.
 | [kubernetes_secret.rabbitmq_certificate](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
 | [kubernetes_secret.rabbitmq_client_certificate](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
 | [kubernetes_secret.rabbitmq_user](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
+| [kubernetes_secret.rabbitmq_user_credentials](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
 | [local_sensitive_file.rabbitmq_client_certificate](https://registry.terraform.io/providers/hashicorp/local/latest/docs/resources/sensitive_file) | resource |
 | [pkcs12_from_pem.rabbitmq_certificate](https://registry.terraform.io/providers/chilicat/pkcs12/latest/docs/resources/from_pem) | resource |
 | [random_password.mq_application_password](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/password) | resource |
@@ -51,6 +52,8 @@ No modules.
 | <a name="input_helm_chart_version"></a> [helm\_chart\_version](#input\_helm\_chart\_version) | Version of chart helm for RabbitMQ | `string` | n/a | yes |
 | <a name="input_image"></a> [image](#input\_image) | image for the rabbirmq to be used | `string` | `"bitnami/rabbitmq"` | no |
 | <a name="input_namespace"></a> [namespace](#input\_namespace) | Namespace for rabbitmq | `string` | n/a | yes |
+| <a name="input_path"></a> [path](#input\_path) | Path for mounting secrets | `string` | `"/amqp"` | no |
+| <a name="input_scheme"></a> [scheme](#input\_scheme) | The scheme for the AMQP | `string` | `"AMQP"` | no |
 | <a name="input_tag"></a> [tag](#input\_tag) | tag for the image | `string` | `"3.12.12-debian-11-r21"` | no |
 
 ## Outputs
@@ -61,7 +64,10 @@ No modules.
 | <a name="output_adapter_class_name"></a> [adapter\_class\_name](#output\_adapter\_class\_name) | Class name for queue adapter |
 | <a name="output_endpoints"></a> [endpoints](#output\_endpoints) | Endpoints of RabbitMQ |
 | <a name="output_engine_type"></a> [engine\_type](#output\_engine\_type) | Engine type |
+| <a name="output_env"></a> [env](#output\_env) | Elements to be set as environment variables |
+| <a name="output_env_secret"></a> [env\_secret](#output\_env\_secret) | Secrets to be set as environment variables |
 | <a name="output_host"></a> [host](#output\_host) | Host of RabbitMQ |
+| <a name="output_mount_secret"></a> [mount\_secret](#output\_mount\_secret) | Secrets to be mounted as volumes |
 | <a name="output_port"></a> [port](#output\_port) | Port of RabbitMQ |
 | <a name="output_url"></a> [url](#output\_url) | URL of RabbitMQ |
 | <a name="output_user_certificate"></a> [user\_certificate](#output\_user\_certificate) | User certificates of RabbitMQ |

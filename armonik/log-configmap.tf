@@ -12,5 +12,12 @@ resource "kubernetes_config_map" "log_config" {
     "Serilog__MinimumLevel__Override__Microsoft.AspNetCore.Hosting.Diagnostics" : local.logging_level_routing,
     "Serilog__MinimumLevel__Override__Microsoft.AspNetCore.Routing.EndpointMiddleware" : local.logging_level_routing,
     "Serilog__MinimumLevel__Override__Serilog.AspNetCore.RequestLoggingMiddleware" : local.logging_level_routing,
+    "Serilog__MinimumLevel__Override__Microsoft.AspNetCore.Routing" : local.logging_level_routing,
+    "Serilog__MinimumLevel__Override__Microsoft.AspNetCore.Server.Kestrel" : local.logging_level_routing,
+    "Serilog__MinimumLevel__Override__Grpc.AspNetCore.Server.ServerCallHandler" : local.logging_level_routing,
+    "Serilog__MinimumLevel__Override__Microsoft.Extensions.Diagnostics.HealthChecks" : local.logging_level_routing,
+    "Serilog__MinimumLevel__Override__Microsoft.AspNetCore.Authorization" : local.logging_level_routing,
+    "Serilog__MinimumLevel__Override__Microsoft.Extensions.Http.DefaultHttpClientFactory" : local.logging_level_routing,
+    "Serilog__MinimumLevel__Override__ArmoniK.Core.Common.Auth.Authentication.Authenticator" : local.logging_level_routing,
   })
 }

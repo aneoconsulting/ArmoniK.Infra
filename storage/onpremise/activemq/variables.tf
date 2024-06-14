@@ -32,3 +32,15 @@ variable "adapter_absolute_path" {
   type        = string
   default     = "/adapters/queue/amqp/ArmoniK.Core.Adapters.Amqp.dll"
 }
+
+variable "scheme" {
+  description = "The scheme for the AMQP"
+  type        = string
+  default     = "AMQP"
+}
+
+variable "path" {
+  description = "Path for mounting secrets"
+  type        = string
+  default     = "/amqp"
+}

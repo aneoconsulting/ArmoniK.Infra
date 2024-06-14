@@ -86,8 +86,10 @@ No modules.
 | <a name="input_image"></a> [image](#input\_image) | image for the external client provisioner | `string` | `"k8s.gcr.io/sig-storage/nfs-subdir-external-provisioner"` | no |
 | <a name="input_image_policy"></a> [image\_policy](#input\_image\_policy) | policy  for getting the image | `string` | `"IfNotPresent"` | no |
 | <a name="input_image_pull_secrets"></a> [image\_pull\_secrets](#input\_image\_pull\_secrets) | pull secrets if needed | `string` | `""` | no |
+| <a name="input_mount_path"></a> [mount\_path](#input\_mount\_path) | Path to mount in pods | `string` | `"/local_storage"` | no |
 | <a name="input_namespace"></a> [namespace](#input\_namespace) | Namespace of ArmoniK storage resources | `string` | n/a | yes |
 | <a name="input_node_selector"></a> [node\_selector](#input\_node\_selector) | selectors | `any` | `{}` | no |
+| <a name="input_object_storage_adapter"></a> [object\_storage\_adapter](#input\_object\_storage\_adapter) | Name of the adapter's | `string` | `"ArmoniK.Adapters.LocalStorage.ObjectStorage"` | no |
 | <a name="input_path"></a> [path](#input\_path) | path on server | `string` | n/a | yes |
 | <a name="input_pvc_name"></a> [pvc\_name](#input\_pvc\_name) | Name for the pvc to be created and used | `string` | `"nfsvolume"` | no |
 | <a name="input_server"></a> [server](#input\_server) | ip nfs server | `string` | n/a | yes |
@@ -98,6 +100,8 @@ No modules.
 
 | Name | Description |
 |------|-------------|
+| <a name="output_env"></a> [env](#output\_env) | Elements to be set as environment variables |
+| <a name="output_mount_volume"></a> [mount\_volume](#output\_mount\_volume) | Volume to be mounted |
 | <a name="output_provisioner_name"></a> [provisioner\_name](#output\_provisioner\_name) | name of the created provisionner |
 | <a name="output_pvc_name"></a> [pvc\_name](#output\_pvc\_name) | name of the created persistant volume claim |
 <!-- END_TF_DOCS -->

@@ -86,8 +86,7 @@ resource "kubernetes_deployment" "grafana" {
           }
           volume_mount {
             name       = "dashboards-json-configmap"
-            mount_path = "/var/lib/grafana/dashboards/dashboard-armonik.json"
-            sub_path   = "dashboard-armonik.json"
+            mount_path = "/var/lib/grafana/dashboards"
           }
           dynamic "volume_mount" {
             for_each = length(kubernetes_persistent_volume_claim.grafana) > 0 ? [1] : []

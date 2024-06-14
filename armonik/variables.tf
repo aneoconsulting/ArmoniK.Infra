@@ -291,7 +291,8 @@ variable "compute_plane" {
       memory     = bool
       size_limit = string # if larger than supported, the max value for the node will be used instead
     })
-    hpa = any
+    readiness_probe = optional(bool, false)
+    hpa             = any
   }))
 }
 
@@ -433,4 +434,35 @@ variable "metrics_exporter" {
     port               = optional(number, 9419)
     target_port        = optional(number, 1080)
   })
+}
+
+variable "pod_deletion_cost" {
+  description = "value"
+  type = object({
+    image               = string
+    tag                 = string
+    image_pull_policy   = optional(string, "IfNotPresent")
+    image_pull_secrets  = optional(string, "")
+    node_selector       = optional(any, {})
+    annotations         = optional(any, {})
+    name                = optional(string, "pdc-update")
+    label_app           = optional(string, "armonik")
+    prometheus_url      = optional(string)
+    metrics_name        = optional(string)
+    period              = optional(number)
+    ignore_younger_than = optional(number)
+    concurrency         = optional(number)
+    granularity         = optional(number)
+    extra_conf          = optional(map(string), {})
+
+    limits = optional(object({
+      cpu    = optional(string)
+      memory = optional(string)
+    }))
+    requests = optional(object({
+      cpu    = optional(string)
+      memory = optional(string)
+    }))
+  })
+  default = null
 }

@@ -12,3 +12,15 @@ resource "kubernetes_secret" "redis" {
     url         = local.redis_url
   }
 }
+
+#secret for credential to variable
+resource "kubernetes_secret" "redis_user_credentials" {
+  metadata {
+    name      = "redis-user-credentials"
+    namespace = var.namespace
+  }
+  data = {
+    "Redis__User"     = ""
+    "Redis__Password" = random_password.redis_password.result
+  }
+}

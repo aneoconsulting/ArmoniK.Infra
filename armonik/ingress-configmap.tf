@@ -2,8 +2,10 @@
 locals {
   armonik_conf = <<EOF
 map $http_accept_language $accept_language {
-    ~*^en en;
-    ~*^fr fr;
+    default en;
+%{for lang in var.ingress.langs~}
+    ~*^${lang} ${lang};
+%{endfor~}
 }
 
 map $http_upgrade $connection_upgrade {
@@ -47,12 +49,20 @@ server {
     resolver kube-dns.kube-system ipv6=off;
 
     location = / {
-        rewrite ^ $scheme://$http_host/admin/;
+        rewrite ^ $scheme://$http_host/admin/$accept_language/;
     }
 
     location = /admin {
-        rewrite ^ $scheme://$http_host/admin/;
+        rewrite ^ $scheme://$http_host/admin/$accept_language/;
     }
+    location = /admin/ {
+        rewrite ^ $scheme://$http_host/admin/$accept_language/;
+    }
+%{for lang in var.ingress.langs~}
+    location = /admin/${lang} {
+        rewrite ^ $scheme://$http_host/admin/${lang}/;
+    }
+%{endfor~}
 %{if local.admin_app_url != null~}
     set $admin_app_upstream ${local.admin_app_url};
     location /admin/ {
@@ -68,14 +78,12 @@ server {
     location = /admin-0.9/ {
         rewrite ^ $scheme://$http_host/admin-0.9/$accept_language/;
     }
+%{for lang in var.ingress.langs~}
     # Deprecated, must be removed in a new version
-    location = /admin-0.9/en {
-        rewrite ^ $scheme://$http_host/admin-0.9/en/;
+    location = /admin-0.9/${lang} {
+        rewrite ^ $scheme://$http_host/admin-0.9/${lang}/;
     }
-    # Deprecated, must be removed in a new version
-    location = /admin-0.9/fr {
-        rewrite ^ $scheme://$http_host/admin-0.9/fr/;
-    }
+%{endfor~}
     set $admin_0_9_upstream ${local.admin_0_9_url};
     # Deprecated, must be removed in a new version
     location /admin-0.9/ {

@@ -51,9 +51,8 @@ No modules.
 | <a name="input_host_instance_type"></a> [host\_instance\_type](#input\_host\_instance\_type) | AWS MQ host instance type | `string` | `"mq.m5.xlarge"` | no |
 | <a name="input_kms_key_id"></a> [kms\_key\_id](#input\_kms\_key\_id) | AWS KMS key id | `string` | `null` | no |
 | <a name="input_name"></a> [name](#input\_name) | AWS MQ service name | `string` | `"armonik-mq"` | no |
-| <a name="input_namespace"></a> [namespace](#input\_namespace) | Namespace of ArmoniK storage resources | `string` | n/a | yes |
+| <a name="input_namespace"></a> [namespace](#input\_namespace) | Namespace of ArmoniK storage resources | `string` | `"armonik"` | no |
 | <a name="input_password"></a> [password](#input\_password) | User password | `string` | `null` | no |
-| <a name="input_path"></a> [path](#input\_path) | Path for mounting secrets | `string` | `"/amqp"` | no |
 | <a name="input_publicly_accessible"></a> [publicly\_accessible](#input\_publicly\_accessible) | Whether to enable connections from applications outside of the VPC that hosts the broker's subnets | `bool` | `null` | no |
 | <a name="input_scheme"></a> [scheme](#input\_scheme) | The scheme for the AMQP | `string` | `"AMQPS"` | no |
 | <a name="input_storage_type"></a> [storage\_type](#input\_storage\_type) | AWS MQ storage type | `string` | `"efs"` | no |

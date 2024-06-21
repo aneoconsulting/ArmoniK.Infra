@@ -127,13 +127,9 @@ variable "scheme" {
   default     = "AMQPS"
 }
 
-variable "path" {
-  description = "Path for mounting secrets"
-  type        = string
-  default     = "/amqp"
-}
 
 variable "namespace" {
   description = "Namespace of ArmoniK storage resources"
   type        = string
+  default     = "armonik"
 }

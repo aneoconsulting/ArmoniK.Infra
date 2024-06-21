@@ -42,3 +42,23 @@ output "iam_members" {
   description = "The associated IAM policy"
   value       = google_storage_bucket_iam_member.role
 }
+
+#new outputs
+output "env" {
+  description = "Elements to be set as environment variables"
+  value = ({
+    "Components__ObjectStorage" = var.object_storage_adapter
+    "S3__BucketName"            = google_storage_bucket.gcs.name
+    "S3__UseChecksum"           = false
+    "S3__MustForcePathStyle"    = false
+    "S3__UseChunkEncoding"      = false
+    "S3__EndpointUrl"           = "https://storage.googleapis.com"
+  })
+}
+
+output "env_secret" {
+  description = "Secrets to be set as environment variables"
+  value = [
+    kubernetes_secret.s3_user_credentials.metadata[0].name
+  ]
+}

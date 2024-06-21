@@ -108,3 +108,32 @@ variable "kms_key_id" {
   type        = string
   default     = null
 }
+
+variable "adapter_class_name" {
+  description = "Name of the adapter's class"
+  type        = string
+  default     = "ArmoniK.Core.Adapters.Amqp.QueueBuilder"
+}
+
+variable "adapter_absolute_path" {
+  description = "The adapter's absolut path"
+  type        = string
+  default     = "/adapters/queue/amqp/ArmoniK.Core.Adapters.Amqp.dll"
+}
+
+variable "scheme" {
+  description = "The scheme for the AMQP"
+  type        = string
+  default     = "AMQPS"
+}
+
+variable "path" {
+  description = "Path for mounting secrets"
+  type        = string
+  default     = "/amqp"
+}
+
+variable "namespace" {
+  description = "Namespace of ArmoniK storage resources"
+  type        = string
+}

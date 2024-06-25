@@ -186,6 +186,31 @@ resource "kubernetes_deployment" "compute_plane" {
                 }
               }
             }
+            # liveness and startup probes of the worker use the endpoint of the polling agent.
+            # This is effective as the polling agent query the health of the worker and forward it as its own health.
+            liveness_probe {
+              http_get {
+                path = "/liveness"
+                port = 1080
+              }
+              initial_delay_seconds = 15
+              period_seconds        = 10
+              timeout_seconds       = 10
+              success_threshold     = 1
+              failure_threshold     = 3
+            }
+            startup_probe {
+              http_get {
+                path = "/startup"
+                port = 1080
+              }
+              initial_delay_seconds = 1
+              period_seconds        = 3
+              timeout_seconds       = 1
+              success_threshold     = 1
+              failure_threshold     = 20
+              # the pod has (period_seconds x failure_threshold) seconds to finalize its startup
+            }
             dynamic "env_from" {
               for_each = local.worker_configmaps
               content {

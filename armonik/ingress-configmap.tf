@@ -129,6 +129,10 @@ server {
         proxy_send_timeout 1d;
         grpc_read_timeout 30d;
         grpc_send_timeout 1d;
+
+        # Try force keep alive
+        add_header Connection Keep-Alive;
+        add_header Proxy-Connection Keep-Alive;
     }
 
     location /static/ {

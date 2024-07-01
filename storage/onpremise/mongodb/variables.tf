@@ -23,12 +23,12 @@ variable "mongodb" {
   description = "Parameters of the MongoDB deployment"
 
   type = object({
-    architecture          = optional(string, "replicaset") # "replicaset" or "standalone"
-    databases_names       = optional(list(string), ["database"])
+    # architecture          = optional(string, "replicaset") # "replicaset" or "standalone"
+    # databases_names       = optional(list(string), ["database"])
     helm_chart_repository = optional(string, "oci://registry-1.docker.io/bitnamicharts")
-    helm_chart_name       = optional(string, "mongodb")
+    helm_chart_name       = optional(string, "mongodb-sharded")
     helm_chart_version    = string
-    image                 = optional(string, "bitnami/mongodb")
+    image                 = optional(string, "bitnami/mongodb-sharded")
     image_pull_secrets    = optional(any, [""]) # can be a string or a list of strings
     node_selector         = optional(map(string), {})
     registry              = optional(string, "docker.io")
@@ -83,15 +83,15 @@ variable "security_context" {
   }
 }
 
-variable "mtls" {
-  description = "Whether to deploy MongoDB with mTLS"
-  type        = bool
-  default     = false
-  validation {
-    condition     = !var.mtls
-    error_message = "For now, 'mTLSEnabled' must be false as mTLS is not supported yet"
-  }
-}
+# variable "mtls" {
+#   description = "Whether to deploy MongoDB with mTLS"
+#   type        = bool
+#   default     = false
+#   validation {
+#     condition     = !var.mtls
+#     error_message = "For now, 'mTLSEnabled' must be false as mTLS is not supported yet"
+#   }
+# }
 
 variable "timeout" {
   description = "Timeout limit in seconds per replica for the helm release creation"

@@ -1,4 +1,4 @@
-resource "random_string" "mongodb_admin_user" {
+/*resource "random_string" "mongodb_admin_user" {
   length  = 8
   special = false
   numeric = false
@@ -19,6 +19,15 @@ resource "random_password" "mongodb_application_password" {
   length  = 16
   special = false
 }
+*/
+
+data "kubernetes_secret" "mongodb_credentials" {
+  metadata {
+    name = var.name
+    namespace = var.namespace
+  }
+  depends_on = [ helm_release.mongodb ]
+}
 
 resource "kubernetes_secret" "mongodb_admin" {
   metadata {
@@ -26,8 +35,8 @@ resource "kubernetes_secret" "mongodb_admin" {
     namespace = var.namespace
   }
   data = {
-    username = random_string.mongodb_admin_user.result
-    password = random_password.mongodb_admin_password.result
+    username = "root"
+    password = data.kubernetes_secret.mongodb_credentials.data["mongodb-root-password"]
   }
   type = "kubernetes.io/basic-auth"
 }
@@ -38,8 +47,8 @@ resource "kubernetes_secret" "mongodb_user" {
     namespace = var.namespace
   }
   data = {
-    username = random_string.mongodb_application_user.result
-    password = random_password.mongodb_application_password.result
+    username = "root"
+    password = data.kubernetes_secret.mongodb_credentials.data["mongodb-root-password"]
   }
   type = "kubernetes.io/basic-auth"
 }

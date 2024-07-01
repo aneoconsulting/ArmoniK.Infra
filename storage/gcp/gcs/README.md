@@ -16,12 +16,14 @@ This module creates a Google Cloud Storage with these possibilities :
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0 |
 | <a name="requirement_google"></a> [google](#requirement\_google) | >= 4.75.0 |
+| <a name="requirement_kubernetes"></a> [kubernetes](#requirement\_kubernetes) | >= 2.7.1 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
 | <a name="provider_google"></a> [google](#provider\_google) | >= 4.75.0 |
+| <a name="provider_kubernetes"></a> [kubernetes](#provider\_kubernetes) | >= 2.7.1 |
 
 ## Modules
 
@@ -38,6 +40,7 @@ No modules.
 | [google_storage_bucket_acl.predefined_acl](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/storage_bucket_acl) | resource |
 | [google_storage_bucket_acl.role_entity_acl](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/storage_bucket_acl) | resource |
 | [google_storage_bucket_iam_member.role](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/storage_bucket_iam_member) | resource |
+| [kubernetes_secret.s3_user_credentials](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
 | [google_client_config.current](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/client_config) | data source |
 | [google_project.project](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/project) | data source |
 
@@ -58,6 +61,9 @@ No modules.
 | <a name="input_location"></a> [location](#input\_location) | Location for the bucket: regional, dual-regional or multi-regional [GCS locations](https://cloud.google.com/storage/docs/locations). | `string` | n/a | yes |
 | <a name="input_logging"></a> [logging](#input\_logging) | The bucket's Access & Storage Logs configuration. | <pre>object({<br>    log_bucket        = string<br>    log_object_prefix = string<br>  })</pre> | `null` | no |
 | <a name="input_name"></a> [name](#input\_name) | The name of the bucket. | `string` | n/a | yes |
+| <a name="input_namespace"></a> [namespace](#input\_namespace) | Namespace of ArmoniK storage resources | `string` | `""` | no |
+| <a name="input_object_storage_adapter"></a> [object\_storage\_adapter](#input\_object\_storage\_adapter) | Name of the ArmoniK adapter to use for the storage | `string` | `"ArmoniK.Adapters.S3.ObjectStorage"` | no |
+| <a name="input_password"></a> [password](#input\_password) | Google Cloud storage secret to use as passeword | `string` | `""` | no |
 | <a name="input_predefined_acl"></a> [predefined\_acl](#input\_predefined\_acl) | The canned GCS ACL to apply. | `string` | `null` | no |
 | <a name="input_public_access_prevention"></a> [public\_access\_prevention](#input\_public\_access\_prevention) | Prevents public access to a bucket. Acceptable values are 'inherited' or 'enforced' | `string` | `null` | no |
 | <a name="input_requester_pays"></a> [requester\_pays](#input\_requester\_pays) | Enables Requester Pays on a storage bucket. | `bool` | `null` | no |
@@ -67,6 +73,7 @@ No modules.
 | <a name="input_roles"></a> [roles](#input\_roles) | Roles to bind to the bucket | `map(set(string))` | `null` | no |
 | <a name="input_storage_class"></a> [storage\_class](#input\_storage\_class) | The Storage Class of the new bucket. | `string` | `"STANDARD"` | no |
 | <a name="input_uniform_bucket_level_access"></a> [uniform\_bucket\_level\_access](#input\_uniform\_bucket\_level\_access) | Enables Uniform bucket-level access access to a bucket | `bool` | `null` | no |
+| <a name="input_username"></a> [username](#input\_username) | Google Cloud storage access id to use as username | `string` | `""` | no |
 | <a name="input_versioning"></a> [versioning](#input\_versioning) | The bucket's Versioning configuration. | `bool` | `null` | no |
 | <a name="input_website"></a> [website](#input\_website) | Configuration if the bucket acts as a website. Structure is documented below. | <pre>object({<br>    main_page_suffix = string<br>    not_found_page   = string<br>  })</pre> | `null` | no |
 
@@ -79,6 +86,8 @@ No modules.
 | <a name="output_access_control_id"></a> [access\_control\_id](#output\_access\_control\_id) | An identifier for the bucket access control |
 | <a name="output_acls"></a> [acls](#output\_acls) | The associated ACLs |
 | <a name="output_bucket"></a> [bucket](#output\_bucket) | bucket created on GCP |
+| <a name="output_env"></a> [env](#output\_env) | Elements to be set as environment variables |
+| <a name="output_env_secret"></a> [env\_secret](#output\_env\_secret) | Secrets to be set as environment variables |
 | <a name="output_iam_members"></a> [iam\_members](#output\_iam\_members) | The associated IAM policy |
 | <a name="output_name"></a> [name](#output\_name) | Name of the bucket |
 | <a name="output_self_link"></a> [self\_link](#output\_self\_link) | The URI of the created bucket |

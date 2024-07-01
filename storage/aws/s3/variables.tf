@@ -97,3 +97,9 @@ variable "versioning" {
     error_message = "Valid values for \"versioning\": \"Enabled\" | \"Suspended\" | \"Disabled\"."
   }
 }
+
+variable "object_storage_adapter" {
+  description = "Name of the ArmoniK adapter to use for the storage"
+  type        = string
+  default     = "ArmoniK.Adapters.S3.ObjectStorage"
+}

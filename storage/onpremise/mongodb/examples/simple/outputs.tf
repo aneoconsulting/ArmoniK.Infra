@@ -30,8 +30,3 @@ output "endpoints" {
   value       = module.simple_mongodb_instance.endpoints
   sensitive   = true
 }
-
-output "unused_variables" {
-  description = "Map of variables that are not used yet but might be in the future"
-  value       = module.simple_mongodb_instance.unused_variables
-}

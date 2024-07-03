@@ -151,6 +151,15 @@ variable "control_plane" {
     hpa                  = any
     default_partition    = string
     service_account_name = string
+    #conf
+    conf = optional(list(object({
+      env           = optional(map(string), {})
+      env_configmap = optional(set(string), [])
+      env_from_configmap = optional(map(object({
+        configmap = string
+        field     = string
+      })), {})
+    })), [])
   })
 }
 

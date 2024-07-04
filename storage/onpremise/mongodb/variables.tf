@@ -31,7 +31,7 @@ variable "mongodb" {
     image                 = optional(string, "bitnami/mongodb")
     image_pull_secrets    = optional(any, [""]) # can be a string or a list of strings
     node_selector         = optional(map(string), {})
-    registry              = optional(string, "docker.io")
+    registry              = optional(string)
     replicas_number       = optional(number, 2)
     tag                   = string
   })

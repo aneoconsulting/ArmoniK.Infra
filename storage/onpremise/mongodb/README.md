@@ -48,7 +48,7 @@ No modules.
 | <a name="input_namespace"></a> [namespace](#input\_namespace) | Namespace of ArmoniK resources | `string` | `"default"` | no |
 | <a name="input_persistent_volume"></a> [persistent\_volume](#input\_persistent\_volume) | Persistent Volume parameters for MongoDB pods | <pre>object({<br>    access_mode         = optional(list(string), ["ReadWriteMany"])<br>    reclaim_policy      = optional(string, "Delete")<br>    storage_provisioner = string<br>    volume_binding_mode = string<br>    parameters          = optional(map(string), {})<br><br>    # Resources for PVC<br>    resources = object({<br>      limits = object({<br>        storage = string<br>      })<br>      requests = object({<br>        storage = string<br>      })<br>    })<br><br>    wait_until_bound = optional(bool, true)<br>  })</pre> | `null` | no |
 | <a name="input_security_context"></a> [security\_context](#input\_security\_context) | Security context for MongoDB pods | <pre>object({<br>    run_as_user = number<br>    fs_group    = number<br>  })</pre> | <pre>{<br>  "fs_group": 999,<br>  "run_as_user": 999<br>}</pre> | no |
-| <a name="input_timeout"></a> [timeout](#input\_timeout) | Timeout limit in seconds per replica for the helm release creation | `number` | `240` | no |
+| <a name="input_timeout"></a> [timeout](#input\_timeout) | Timeout limit in seconds per replica for the helm release creation | `number` | `480` | no |
 | <a name="input_validity_period_hours"></a> [validity\_period\_hours](#input\_validity\_period\_hours) | Validity period of the TLS certificate in hours | `string` | `"8760"` | no |
 
 ## Outputs

@@ -96,7 +96,7 @@ variable "mtls" {
 variable "timeout" {
   description = "Timeout limit in seconds per replica for the helm release creation"
   type        = number
-  default     = 240 # 4 minutes
+  default     = 480 # 8 minutes
 }
 
 # Not used yet (there for retrocompatibility reasons)

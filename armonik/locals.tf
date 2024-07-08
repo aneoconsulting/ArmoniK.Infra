@@ -121,14 +121,14 @@ locals {
         key  = "password"
         name = local.secrets.activemq.name
       } : { key = "", name = "" }
-      Amqp__Host = local.queue_storage_adapter_from_secret == "amqp" ? {
-        key  = "host"
-        name = local.secrets.activemq.name
-      } : { key = "", name = "" }
-      Amqp__Port = local.queue_storage_adapter_from_secret == "amqp" ? {
-        key  = "port"
-        name = local.secrets.activemq.name
-      } : { key = "", name = "" }
+      # Amqp__Host = local.queue_storage_adapter_from_secret == "amqp" ? {
+      #   key  = "host"
+      #   name = local.secrets.activemq.name
+      # } : { key = "", name = "" }
+      # Amqp__Port = local.queue_storage_adapter_from_secret == "amqp" ? {
+      #   key  = "port"
+      #   name = local.secrets.activemq.name
+      # } : { key = "", name = "" }
       Redis__User = local.object_storage_adapter_from_secret == "redis" ? {
         key  = "username"
         name = local.secrets.redis.name
@@ -137,10 +137,10 @@ locals {
         key  = "password"
         name = local.secrets.redis.name
       } : { key = "", name = "" }
-      Redis__EndpointUrl = local.object_storage_adapter_from_secret == "redis" ? {
-        key  = "url"
-        name = local.secrets.redis.name
-      } : { key = "", name = "" }
+      # Redis__EndpointUrl = local.object_storage_adapter_from_secret == "redis" ? {
+      #   key  = "url"
+      #   name = local.secrets.redis.name
+      # } : { key = "", name = "" }
       MongoDB__User = local.table_storage_adapter_from_secret == "mongodb" ? {
         key  = "username"
         name = local.secrets.mongodb.name

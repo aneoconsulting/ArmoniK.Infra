@@ -90,6 +90,14 @@ resource "kubernetes_deployment" "control_plane" {
             failure_threshold     = 20
             # the pod has (period_seconds x failure_threshold) seconds to finalize its startup
           }
+          #env from config
+          dynamic "env" {
+            for_each = merge([for f in var.control_plane.conf : f.env]...)
+            content {
+              name  = env.key
+              value = env.value
+            }
+          }
           dynamic "env_from" {
             for_each = local.control_plane_configmaps
             content {

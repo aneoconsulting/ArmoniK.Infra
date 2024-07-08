@@ -63,6 +63,14 @@ resource "kubernetes_deployment" "metrics_exporter" {
               name = kubernetes_config_map.core_config.metadata[0].name
             }
           }
+          #env from config
+          dynamic "env" {
+            for_each = merge([for f in var.metrics_exporter.conf : f.env]...)
+            content {
+              name  = env.key
+              value = env.value
+            }
+          }
           dynamic "env" {
             for_each = var.extra_conf.metrics
             content {

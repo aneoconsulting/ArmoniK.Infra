@@ -42,11 +42,17 @@ variable "adapter_absolute_path" {
 variable "scheme" {
   description = "The scheme for the AMQP"
   type        = string
-  default     = "AMQP"
+  default     = "AMQPS"
 }
 
 variable "path" {
   description = "Path for mounting secrets"
   type        = string
   default     = "/amqp"
+}
+
+variable "queue_storage_adapter" {
+  description = "Name of the adapter's"
+  type        = string
+  default     = "ArmoniK.Adapters.Amqp.ObjectStorage"
 }

@@ -64,7 +64,7 @@ output "mount_secret" {
     "redis-secret1" = {
       secret = kubernetes_secret.redis.metadata[0].name
       path   = var.path
-      mode   = "0600"
+      mode   = "0644"
     }
   }
 }

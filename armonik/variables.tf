@@ -154,6 +154,7 @@ variable "control_plane" {
     #conf
     conf = optional(list(object({
       env           = optional(map(string), {})
+      env_secret    = optional(set(string), [])
       env_configmap = optional(set(string), [])
       env_from_configmap = optional(map(object({
         configmap = string
@@ -289,6 +290,7 @@ variable "compute_plane" {
       #conf
       conf = optional(list(object({
         env           = optional(map(string), {})
+        env_secret    = optional(set(string), [])
         env_configmap = optional(set(string), [])
         env_from_configmap = optional(map(object({
           configmap = string
@@ -312,6 +314,7 @@ variable "compute_plane" {
       #conf
       conf = optional(list(object({
         env           = optional(map(string), {})
+        env_secret    = optional(set(string), [])
         env_configmap = optional(set(string), [])
         env_from_configmap = optional(map(object({
           configmap = string
@@ -468,6 +471,7 @@ variable "metrics_exporter" {
     #conf
     conf = optional(list(object({
       env           = optional(map(string), {})
+      env_secret    = optional(set(string), [])
       env_configmap = optional(set(string), [])
       env_from_configmap = optional(map(object({
         configmap = string

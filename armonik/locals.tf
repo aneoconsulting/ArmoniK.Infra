@@ -113,14 +113,14 @@ locals {
   # Credentials
   credentials = {
     for key, value in {
-      Amqp__User = local.queue_storage_adapter_from_secret == "amqp" ? {
-        key  = "username"
-        name = local.secrets.activemq.name
-      } : { key = "", name = "" }
-      Amqp__Password = local.queue_storage_adapter_from_secret == "amqp" ? {
-        key  = "password"
-        name = local.secrets.activemq.name
-      } : { key = "", name = "" }
+      # Amqp__User = local.queue_storage_adapter_from_secret == "amqp" ? {
+      #   key  = "username"
+      #   name = local.secrets.activemq.name
+      # } : { key = "", name = "" }
+      # Amqp__Password = local.queue_storage_adapter_from_secret == "amqp" ? {
+      #   key  = "password"
+      #   name = local.secrets.activemq.name
+      # } : { key = "", name = "" }
       # Amqp__Host = local.queue_storage_adapter_from_secret == "amqp" ? {
       #   key  = "host"
       #   name = local.secrets.activemq.name

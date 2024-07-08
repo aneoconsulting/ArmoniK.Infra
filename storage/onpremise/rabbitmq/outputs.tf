@@ -86,7 +86,7 @@ output "mount_secret" {
     "rabbitmq-secret1" = {
       secret = kubernetes_secret.rabbitmq.metadata[0].name
       path   = var.path
-      mode   = "0600"
+      mode   = "0644"
     }
   }
 }

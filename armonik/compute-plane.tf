@@ -112,10 +112,19 @@ resource "kubernetes_deployment" "compute_plane" {
           }
           #env from config
           dynamic "env" {
-            for_each = merge([for f in each.value.polling_agent.conf : f.env]...)
+            for_each = merge([for element in each.value.polling_agent.conf : element.env]...)
             content {
               name  = env.key
               value = env.value
+            }
+          }
+          #env secret from config
+          dynamic "env_from" {
+            for_each = setunion([for element in each.value.polling_agent.conf : element.env_secret]...)
+            content {
+              secret_ref {
+                name = env_from.value
+              }
             }
           }
           dynamic "env_from" {

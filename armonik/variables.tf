@@ -286,6 +286,15 @@ variable "compute_plane" {
         cpu    = string
         memory = string
       })
+      #conf
+      conf = optional(list(object({
+        env           = optional(map(string), {})
+        env_configmap = optional(set(string), [])
+        env_from_configmap = optional(map(object({
+          configmap = string
+          field     = string
+        })), {})
+      })), [])
     })
     worker = list(object({
       name              = string
@@ -300,6 +309,15 @@ variable "compute_plane" {
         cpu    = string
         memory = string
       })
+      #conf
+      conf = optional(list(object({
+        env           = optional(map(string), {})
+        env_configmap = optional(set(string), [])
+        env_from_configmap = optional(map(object({
+          configmap = string
+          field     = string
+        })), {})
+      })), [])
     }))
     cache_config = object({
       memory     = bool
@@ -447,6 +465,15 @@ variable "metrics_exporter" {
     port_name          = optional(string, "metrics")
     port               = optional(number, 9419)
     target_port        = optional(number, 1080)
+    #conf
+    conf = optional(list(object({
+      env           = optional(map(string), {})
+      env_configmap = optional(set(string), [])
+      env_from_configmap = optional(map(object({
+        configmap = string
+        field     = string
+      })), {})
+    })), [])
   })
 }
 

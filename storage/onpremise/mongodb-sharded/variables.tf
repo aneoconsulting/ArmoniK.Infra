@@ -24,6 +24,7 @@ variable "mongodb" {
   description = "Parameters of the MongoDB deployment"
 
   type = object({
+    database_name             = optional(string, "database")
     helm_chart_repository     = optional(string, "oci://registry-1.docker.io/bitnamicharts")
     helm_chart_name           = optional(string, "mongodb-sharded")
     helm_chart_version        = string

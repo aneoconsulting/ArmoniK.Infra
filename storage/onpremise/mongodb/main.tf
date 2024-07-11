@@ -40,11 +40,11 @@ resource "helm_release" "mongodb" {
 
       "arbiter" = {
         "tolerations" = var.mongodb.node_selector != {} ? [
-        for index in range(0, length(local.node_selector_keys)) : {
-          key   = local.node_selector_keys[index]
-          value = local.node_selector_values[index]
-        }
-      ] : []
+          for index in range(0, length(local.node_selector_keys)) : {
+            key   = local.node_selector_keys[index]
+            value = local.node_selector_values[index]
+          }
+        ] : []
       }
       # As the parameter 'tls.mTLS.enabled' set to false doesn't seem to work (chart v15.1.4) this an
       # alternative to allow mTLS to not be mandatory

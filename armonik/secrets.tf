@@ -12,12 +12,12 @@ data "kubernetes_secret" "deployed_table_storage" {
   }
 }
 
-data "kubernetes_secret" "deployed_queue_storage" {
-  metadata {
-    name      = local.secrets.deployed_queue_storage_secret
-    namespace = var.namespace
-  }
-}
+# data "kubernetes_secret" "deployed_queue_storage" {
+#   metadata {
+#     name      = local.secrets.deployed_queue_storage_secret
+#     namespace = var.namespace
+#   }
+# }
 
 data "kubernetes_secret" "shared_storage" {
   metadata {

@@ -53,7 +53,8 @@ No modules.
 | <a name="input_image"></a> [image](#input\_image) | image for the rabbirmq to be used | `string` | `"bitnami/rabbitmq"` | no |
 | <a name="input_namespace"></a> [namespace](#input\_namespace) | Namespace for rabbitmq | `string` | n/a | yes |
 | <a name="input_path"></a> [path](#input\_path) | Path for mounting secrets | `string` | `"/amqp"` | no |
-| <a name="input_scheme"></a> [scheme](#input\_scheme) | The scheme for the AMQP | `string` | `"AMQP"` | no |
+| <a name="input_queue_storage_adapter"></a> [queue\_storage\_adapter](#input\_queue\_storage\_adapter) | Name of the adapter's | `string` | `"ArmoniK.Adapters.Amqp.ObjectStorage"` | no |
+| <a name="input_scheme"></a> [scheme](#input\_scheme) | The scheme for the AMQP | `string` | `"AMQPS"` | no |
 | <a name="input_tag"></a> [tag](#input\_tag) | tag for the image | `string` | `"3.12.12-debian-11-r21"` | no |
 
 ## Outputs

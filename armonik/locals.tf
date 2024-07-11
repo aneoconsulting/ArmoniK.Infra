@@ -57,18 +57,18 @@ locals {
 
   # Secrets
   secrets = {
-    activemq = {
-      name        = "activemq"
-      ca_filename = "/amqp/chain.pem"
-    }
+    # activemq = {
+    #   name        = "activemq"
+    #   ca_filename = "/amqp/chain.pem"
+    # }
     mongodb = {
       name        = "mongodb"
       ca_filename = "/mongodb/chain.pem"
     }
-    redis = {
-      name        = "redis"
-      ca_filename = "/redis/chain.pem"
-    }
+    # redis = {
+    #   name        = "redis"
+    #   ca_filename = "/redis/chain.pem"
+    # }
     s3                             = var.s3_secret_name
     shared_storage                 = var.shared_storage_secret_name
     metrics_exporter               = var.metrics_exporter_secret_name
@@ -105,10 +105,10 @@ locals {
   table_storage_adapter             = "ArmoniK.Adapters.${data.kubernetes_secret.deployed_table_storage.data.adapter}.TableStorage"
   deployed_table_storages           = split(",", data.kubernetes_secret.deployed_table_storage.data.list)
 
-  # Queue storage
-  queue_storage_adapter_from_secret = lower(data.kubernetes_secret.deployed_queue_storage.data.adapter)
-  queue_storage_adapter             = "ArmoniK.Adapters.${data.kubernetes_secret.deployed_queue_storage.data.adapter}.QueueStorage"
-  deployed_queue_storages           = split(",", data.kubernetes_secret.deployed_queue_storage.data.list)
+  # # Queue storage
+  # queue_storage_adapter_from_secret = lower(data.kubernetes_secret.deployed_queue_storage.data.adapter)
+  # queue_storage_adapter             = "ArmoniK.Adapters.${data.kubernetes_secret.deployed_queue_storage.data.adapter}.QueueStorage"
+  # deployed_queue_storages           = split(",", data.kubernetes_secret.deployed_queue_storage.data.list)
 
   # Credentials
   credentials = {

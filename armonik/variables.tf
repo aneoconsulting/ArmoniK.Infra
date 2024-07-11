@@ -152,20 +152,7 @@ variable "control_plane" {
     default_partition    = string
     service_account_name = string
     #conf
-    conf = optional(list(object({
-      env        = optional(map(string), {})
-      env_secret = optional(set(string), [])
-      mount_secret = optional(map(object({
-        secret = string
-        path   = string
-        mode   = string
-      })), {})
-      env_configmap = optional(set(string), [])
-      env_from_configmap = optional(map(object({
-        configmap = string
-        field     = string
-      })), {})
-    })), [])
+    conf = any
   })
 }
 
@@ -293,20 +280,7 @@ variable "compute_plane" {
         memory = string
       })
       #conf
-      conf = optional(list(object({
-        env        = optional(map(string), {})
-        env_secret = optional(set(string), [])
-        mount_secret = optional(map(object({
-          secret = string
-          path   = string
-          mode   = string
-        })), {})
-        env_configmap = optional(set(string), [])
-        env_from_configmap = optional(map(object({
-          configmap = string
-          field     = string
-        })), {})
-      })), [])
+      conf = any
     })
     worker = list(object({
       name              = string
@@ -322,20 +296,7 @@ variable "compute_plane" {
         memory = string
       })
       #conf
-      conf = optional(list(object({
-        env        = optional(map(string), {})
-        env_secret = optional(set(string), [])
-        mount_secret = optional(map(object({
-          secret = string
-          path   = string
-          mode   = string
-        })), {})
-        env_configmap = optional(set(string), [])
-        env_from_configmap = optional(map(object({
-          configmap = string
-          field     = string
-        })), {})
-      })), [])
+      conf = any
     }))
     cache_config = object({
       memory     = bool
@@ -484,20 +445,7 @@ variable "metrics_exporter" {
     port               = optional(number, 9419)
     target_port        = optional(number, 1080)
     #conf
-    conf = optional(list(object({
-      env        = optional(map(string), {})
-      env_secret = optional(set(string), [])
-      mount_secret = optional(map(object({
-        secret = string
-        path   = string
-        mode   = string
-      })), {})
-      env_configmap = optional(set(string), [])
-      env_from_configmap = optional(map(object({
-        configmap = string
-        field     = string
-      })), {})
-    })), [])
+    conf = any
   })
 }
 

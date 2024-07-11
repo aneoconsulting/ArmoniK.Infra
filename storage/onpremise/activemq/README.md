@@ -63,7 +63,8 @@ No modules.
 | <a name="input_adapter_class_name"></a> [adapter\_class\_name](#input\_adapter\_class\_name) | Name of the adapter's class | `string` | `"ArmoniK.Core.Adapters.Amqp.QueueBuilder"` | no |
 | <a name="input_namespace"></a> [namespace](#input\_namespace) | Namespace of ArmoniK storage resources | `string` | n/a | yes |
 | <a name="input_path"></a> [path](#input\_path) | Path for mounting secrets | `string` | `"/amqp"` | no |
-| <a name="input_scheme"></a> [scheme](#input\_scheme) | The scheme for the AMQP | `string` | `"AMQP"` | no |
+| <a name="input_queue_storage_adapter"></a> [queue\_storage\_adapter](#input\_queue\_storage\_adapter) | Name of the adapter's | `string` | `"ArmoniK.Adapters.Amqp.ObjectStorage"` | no |
+| <a name="input_scheme"></a> [scheme](#input\_scheme) | The scheme for the AMQP | `string` | `"AMQPS"` | no |
 | <a name="input_validity_period_hours"></a> [validity\_period\_hours](#input\_validity\_period\_hours) | Validity period of the certificate in hours | `string` | `"8760"` | no |
 
 ## Outputs

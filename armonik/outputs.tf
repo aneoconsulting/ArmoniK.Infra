@@ -37,14 +37,14 @@ output "table_storage_adapter" {
   }
 }
 
-output "queue_storage_adapter" {
-  description = "Adapter used for the quque storage"
-  value       = local.queue_storage_adapter_from_secret
-  precondition {
-    condition     = can(coalesce(local.queue_storage_adapter_from_secret)) || contains(["amqp"], local.queue_storage_adapter_from_secret)
-    error_message = "\"Queue storage adapter\" must be non-null and non-empty-string. Valid values: \"Amqp\""
-  }
-}
+# output "queue_storage_adapter" {
+#   description = "Adapter used for the quque storage"
+#   value       = local.queue_storage_adapter_from_secret
+#   precondition {
+#     condition     = can(coalesce(local.queue_storage_adapter_from_secret)) || contains(["amqp"], local.queue_storage_adapter_from_secret)
+#     error_message = "\"Queue storage adapter\" must be non-null and non-empty-string. Valid values: \"Amqp\""
+#   }
+# }
 
 output "object_storage_adapter_check" {
   description = "Check the adapter used for the object storage"
@@ -64,11 +64,11 @@ output "table_storage_adapter_check" {
   }
 }
 
-output "queue_storage_adapter_check" {
-  description = "Check the adapter used for the queue storage"
-  value       = local.queue_storage_adapter_from_secret
-  precondition {
-    condition     = contains([for each in local.deployed_queue_storages : lower(each)], local.queue_storage_adapter_from_secret)
-    error_message = "Can't use ${nonsensitive(local.queue_storage_adapter)} because it has not been deployed. Deployed storages are : ${join(",", nonsensitive(local.deployed_queue_storages))}"
-  }
-}
+# output "queue_storage_adapter_check" {
+#   description = "Check the adapter used for the queue storage"
+#   value       = local.queue_storage_adapter_from_secret
+#   precondition {
+#     condition     = contains([for each in local.deployed_queue_storages : lower(each)], local.queue_storage_adapter_from_secret)
+#     error_message = "Can't use ${nonsensitive(local.queue_storage_adapter)} because it has not been deployed. Deployed storages are : ${join(",", nonsensitive(local.deployed_queue_storages))}"
+#   }
+# }

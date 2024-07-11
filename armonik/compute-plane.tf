@@ -54,6 +54,19 @@ resource "kubernetes_deployment" "compute_plane" {
             name = each.value.image_pull_secrets
           }
         }
+        #form conf
+        dynamic "volume" {
+          for_each = merge([for element in each.value.polling_agent.conf : element.mount_secret]...)
+          content {
+
+            name = volume.value.secret
+            secret {
+              secret_name  = volume.value.secret
+              default_mode = volume.value.mode
+
+            }
+          }
+        }
         restart_policy       = "Always" # Always, OnFailure, Never
         service_account_name = each.value.service_account_name
         # Polling agent container
@@ -171,6 +184,15 @@ resource "kubernetes_deployment" "compute_plane" {
             content {
               name       = volume_mount.value.name
               mount_path = volume_mount.value.mount_path
+              read_only  = true
+            }
+          }
+          #mount from conf
+          dynamic "volume_mount" {
+            for_each = merge([for element in each.value.polling_agent.conf : element.mount_secret]...) # keys(volume_mount.mount_secret[volume_mount.value].secret)
+            content {
+              mount_path = volume_mount.value.path
+              name       = volume_mount.value.secret
               read_only  = true
             }
           }

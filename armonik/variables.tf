@@ -153,8 +153,13 @@ variable "control_plane" {
     service_account_name = string
     #conf
     conf = optional(list(object({
-      env           = optional(map(string), {})
-      env_secret    = optional(set(string), [])
+      env        = optional(map(string), {})
+      env_secret = optional(set(string), [])
+      mount_secret = optional(map(object({
+        secret = string
+        path   = string
+        mode   = string
+      })), {})
       env_configmap = optional(set(string), [])
       env_from_configmap = optional(map(object({
         configmap = string
@@ -289,8 +294,13 @@ variable "compute_plane" {
       })
       #conf
       conf = optional(list(object({
-        env           = optional(map(string), {})
-        env_secret    = optional(set(string), [])
+        env        = optional(map(string), {})
+        env_secret = optional(set(string), [])
+        mount_secret = optional(map(object({
+          secret = string
+          path   = string
+          mode   = string
+        })), {})
         env_configmap = optional(set(string), [])
         env_from_configmap = optional(map(object({
           configmap = string
@@ -313,8 +323,13 @@ variable "compute_plane" {
       })
       #conf
       conf = optional(list(object({
-        env           = optional(map(string), {})
-        env_secret    = optional(set(string), [])
+        env        = optional(map(string), {})
+        env_secret = optional(set(string), [])
+        mount_secret = optional(map(object({
+          secret = string
+          path   = string
+          mode   = string
+        })), {})
         env_configmap = optional(set(string), [])
         env_from_configmap = optional(map(object({
           configmap = string
@@ -470,8 +485,13 @@ variable "metrics_exporter" {
     target_port        = optional(number, 1080)
     #conf
     conf = optional(list(object({
-      env           = optional(map(string), {})
-      env_secret    = optional(set(string), [])
+      env        = optional(map(string), {})
+      env_secret = optional(set(string), [])
+      mount_secret = optional(map(object({
+        secret = string
+        path   = string
+        mode   = string
+      })), {})
       env_configmap = optional(set(string), [])
       env_from_configmap = optional(map(object({
         configmap = string

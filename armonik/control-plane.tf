@@ -48,6 +48,19 @@ resource "kubernetes_deployment" "control_plane" {
             name = var.control_plane.image_pull_secrets
           }
         }
+        #form conf
+        dynamic "volume" {
+          for_each = merge([for element in var.control_plane.conf : element.mount_secret]...)
+          content {
+
+            name = volume.value.secret
+            secret {
+              secret_name  = volume.value.secret
+              default_mode = volume.value.mode
+
+            }
+          }
+        }
         restart_policy       = "Always" # Always, OnFailure, Never
         service_account_name = var.control_plane.service_account_name
         # Control plane container
@@ -142,6 +155,15 @@ resource "kubernetes_deployment" "control_plane" {
             content {
               name       = "nfs"
               mount_path = local.local_storage_mount_path
+            }
+          }
+          #mount from conf
+          dynamic "volume_mount" {
+            for_each = merge([for element in var.control_plane.conf : element.mount_secret]...)
+            content {
+              mount_path = volume_mount.value.path
+              name       = volume_mount.value.secret
+              read_only  = true
             }
           }
         }

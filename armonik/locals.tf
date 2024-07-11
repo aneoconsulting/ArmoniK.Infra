@@ -129,14 +129,14 @@ locals {
       #   key  = "port"
       #   name = local.secrets.activemq.name
       # } : { key = "", name = "" }
-      Redis__User = local.object_storage_adapter_from_secret == "redis" ? {
-        key  = "username"
-        name = local.secrets.redis.name
-      } : { key = "", name = "" }
-      Redis__Password = local.object_storage_adapter_from_secret == "redis" ? {
-        key  = "password"
-        name = local.secrets.redis.name
-      } : { key = "", name = "" }
+      # Redis__User = local.object_storage_adapter_from_secret == "redis" ? {
+      #   key  = "username"
+      #   name = local.secrets.redis.name
+      # } : { key = "", name = "" }
+      # Redis__Password = local.object_storage_adapter_from_secret == "redis" ? {
+      #   key  = "password"
+      #   name = local.secrets.redis.name
+      # } : { key = "", name = "" }
       # Redis__EndpointUrl = local.object_storage_adapter_from_secret == "redis" ? {
       #   key  = "url"
       #   name = local.secrets.redis.name
@@ -213,16 +213,16 @@ locals {
   # Certificates
   certificates = {
     for key, value in {
-      activemq = local.queue_storage_adapter_from_secret == "amqp" ? {
-        name        = "activemq-secret-volume"
-        mount_path  = "/amqp"
-        secret_name = local.secrets.activemq.name
-      } : { key = "", name = "" }
-      redis = local.object_storage_adapter_from_secret == "redis" ? {
-        name        = "redis-secret-volume"
-        mount_path  = "/redis"
-        secret_name = local.secrets.redis.name
-      } : { key = "", name = "" }
+      # activemq = local.queue_storage_adapter_from_secret == "amqp" ? {
+      #   name        = "activemq-secret-volume"
+      #   mount_path  = "/amqp"
+      #   secret_name = local.secrets.activemq.name
+      # } : { key = "", name = "" }
+      # redis = local.object_storage_adapter_from_secret == "redis" ? {
+      #   name        = "redis-secret-volume"
+      #   mount_path  = "/redis"
+      #   secret_name = local.secrets.redis.name
+      # } : { key = "", name = "" }
       mongodb = local.table_storage_adapter_from_secret == "mongodb" ? {
         name        = "mongodb-secret-volume"
         mount_path  = "/mongodb"

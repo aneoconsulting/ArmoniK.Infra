@@ -50,6 +50,19 @@ resource "kubernetes_deployment" "metrics_exporter" {
             name = var.metrics_exporter.image_pull_secrets
           }
         }
+        #form conf
+        dynamic "volume" {
+          for_each = merge([for element in var.metrics_exporter.conf : element.mount_secret]...) #keys(module.activemq.mount_secret)
+          content {
+
+            name = volume.value.secret #volume[volume.value].secret #secret #mount_secret #[volume.value].secret
+            secret {
+              secret_name  = volume.value.secret
+              default_mode = volume.value.mode
+
+            }
+          }
+        }
         container {
           name              = var.metrics_exporter.name
           image             = var.metrics_exporter.tag != "" ? "${var.metrics_exporter.image}:${var.metrics_exporter.tag}" : var.metrics_exporter.image
@@ -105,6 +118,15 @@ resource "kubernetes_deployment" "metrics_exporter" {
             content {
               name       = volume_mount.value.name
               mount_path = volume_mount.value.mount_path
+              read_only  = true
+            }
+          }
+          #mount from conf
+          dynamic "volume_mount" {
+            for_each = merge([for element in var.metrics_exporter.conf : element.mount_secret]...) # keys(volume_mount.mount_secret[volume_mount.value].secret)
+            content {
+              mount_path = volume_mount.value.path
+              name       = volume_mount.value.secret
               read_only  = true
             }
           }

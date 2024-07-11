@@ -1,3 +1,9 @@
+#Aggragation
+module "control_plane_aggregation" {
+  source    = "../utils/aggregator"
+  conf_list = var.control_plane.conf
+}
+
 # Control plane deployment
 resource "kubernetes_deployment" "control_plane" {
   metadata {
@@ -50,7 +56,7 @@ resource "kubernetes_deployment" "control_plane" {
         }
         #form conf
         dynamic "volume" {
-          for_each = merge([for element in var.control_plane.conf : element.mount_secret]...)
+          for_each = module.control_plane_aggregation.mount_secret
           content {
 
             name = volume.value.secret
@@ -105,7 +111,7 @@ resource "kubernetes_deployment" "control_plane" {
           }
           #env from config
           dynamic "env" {
-            for_each = merge([for element in var.control_plane.conf : element.env]...)
+            for_each = module.control_plane_aggregation.env
             content {
               name  = env.key
               value = env.value
@@ -113,7 +119,7 @@ resource "kubernetes_deployment" "control_plane" {
           }
           #env secret from config
           dynamic "env_from" {
-            for_each = setunion([for element in var.control_plane.conf : element.env_secret]...)
+            for_each = module.control_plane_aggregation.env_secret
             content {
               secret_ref {
                 name = env_from.value
@@ -159,7 +165,7 @@ resource "kubernetes_deployment" "control_plane" {
           }
           #mount from conf
           dynamic "volume_mount" {
-            for_each = merge([for element in var.control_plane.conf : element.mount_secret]...)
+            for_each = module.control_plane_aggregation.mount_secret
             content {
               mount_path = volume_mount.value.path
               name       = volume_mount.value.secret

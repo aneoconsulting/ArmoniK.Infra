@@ -12,3 +12,16 @@ output "arn" {
   description = "ARN S3"
   value       = aws_s3_bucket.s3_bucket.arn
 }
+
+#new outputs
+output "env" {
+  description = "Elements to be set as environment variables"
+  value = ({
+    "Components__ObjectStorage" = var.object_storage_adapter
+    "S3__BucketName"            = aws_s3_bucket.s3_bucket.bucket
+    "S3__UseChecksum"           = true
+    "S3__MustForcePathStyle"    = true
+    "S3__UseChunkEncoding"      = true
+    "S3__EndpointUrl"           = "https://s3.${aws_s3_bucket.s3_bucket.region}.amazonaws.com"
+  })
+}

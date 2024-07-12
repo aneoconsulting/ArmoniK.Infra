@@ -185,3 +185,27 @@ variable "roles" {
   type        = map(set(string))
   default     = null
 }
+
+variable "object_storage_adapter" {
+  description = "Name of the ArmoniK adapter to use for the storage"
+  type        = string
+  default     = "ArmoniK.Adapters.S3.ObjectStorage"
+}
+
+variable "namespace" {
+  description = "Namespace of ArmoniK storage resources"
+  type        = string
+  default     = ""
+}
+
+variable "username" {
+  description = "Google Cloud storage access id to use as username"
+  type        = string
+  default     = ""
+}
+
+variable "password" {
+  description = "Google Cloud storage secret to use as passeword"
+  type        = string
+  default     = ""
+}

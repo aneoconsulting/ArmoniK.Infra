@@ -53,6 +53,7 @@ No modules.
 | <a name="input_ignore_public_acls"></a> [ignore\_public\_acls](#input\_ignore\_public\_acls) | Whether Amazon S3 should ignore public ACLs for this bucket | `bool` | `true` | no |
 | <a name="input_kms_key_id"></a> [kms\_key\_id](#input\_kms\_key\_id) | Id of the KMS key | `string` | `null` | no |
 | <a name="input_name"></a> [name](#input\_name) | Name of S3 service | `string` | `"armonik-s3"` | no |
+| <a name="input_object_storage_adapter"></a> [object\_storage\_adapter](#input\_object\_storage\_adapter) | Name of the ArmoniK adapter to use for the storage | `string` | `"ArmoniK.Adapters.S3.ObjectStorage"` | no |
 | <a name="input_ownership"></a> [ownership](#input\_ownership) | Object ownership | `string` | `"BucketOwnerPreferred"` | no |
 | <a name="input_policy"></a> [policy](#input\_policy) | Text of the policy | `string` | `null` | no |
 | <a name="input_restrict_public_buckets"></a> [restrict\_public\_buckets](#input\_restrict\_public\_buckets) | Whether Amazon S3 should restrict public bucket policies for this bucket | `bool` | `true` | no |
@@ -65,6 +66,7 @@ No modules.
 | Name | Description |
 |------|-------------|
 | <a name="output_arn"></a> [arn](#output\_arn) | ARN S3 |
+| <a name="output_env"></a> [env](#output\_env) | Elements to be set as environment variables |
 | <a name="output_kms_key_id"></a> [kms\_key\_id](#output\_kms\_key\_id) | ARN of KMS used for S3 |
 | <a name="output_s3_bucket_name"></a> [s3\_bucket\_name](#output\_s3\_bucket\_name) | Name of S3 bucket |
 <!-- END_TF_DOCS -->

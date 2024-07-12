@@ -46,3 +46,23 @@ output "engine_type" {
   description = "Engine type"
   value       = var.engine_type
 }
+
+#new Outputs 
+output "env" {
+  description = "Elements to be set as environment variables"
+  value = ({
+    "Components__QueueAdaptorSettings__ClassName"           = var.adapter_class_name
+    "Components__QueueAdaptorSettings__AdapterAbsolutePath" = var.adapter_absolute_path
+    "Amqp__Host"                                            = aws_mq_broker.mq.engine_type == "ActiveMQ" ? trim(split(":", aws_mq_broker.mq.instances[0].endpoints[1])[1], "//") : trim(split(":", aws_mq_broker.mq.instances[0].endpoints[0])[1], "//")
+    "Amqp__Port"                                            = aws_mq_broker.mq.engine_type == "ActiveMQ" ? tonumber(split(":", aws_mq_broker.mq.instances[0].endpoints[1])[2]) : tonumber(split(":", aws_mq_broker.mq.instances[0].endpoints[0])[2])
+    "Amqp__Scheme"                                          = var.scheme
+  })
+
+}
+
+output "env_secret" {
+  description = "Secrets to be set as environment variables"
+  value = [
+    kubernetes_secret.activemq_user_credentials.metadata[0].name
+  ]
+}

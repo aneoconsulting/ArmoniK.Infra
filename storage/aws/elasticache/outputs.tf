@@ -22,3 +22,16 @@ output "kms_key_id" {
   description = "ARN of KMS used for Elasticache"
   value       = aws_elasticache_replication_group.elasticache.kms_key_id
 }
+
+#new Outputs 
+output "env" {
+  description = "Elements to be set as environment variables"
+  value = ({
+    "Components__ObjectStorage" = var.object_storage_adapter
+    "Redis__EndpointUrl"        = "${aws_elasticache_replication_group.elasticache.primary_endpoint_address}:${aws_elasticache_replication_group.elasticache.port}"
+    "Redis__Ssl"                = var.ssl_option
+    "Redis__ClientName"         = var.client_name
+    "Redis__CaPath"             = "${var.path}/chain.pem"
+    "Redis__InstanceName"       = var.instance_name
+  })
+}

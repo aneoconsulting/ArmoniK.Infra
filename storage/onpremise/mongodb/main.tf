@@ -1,6 +1,6 @@
 locals {
-  architecture = var.mongodb.replicas == 0 ? "standalone" : "replicaset"
-  replicaCount = var.mongodb.replicas == 0 ? 1 : var.mongodb.replicas
+  architecture = coalesce(var.mongodb.replicas, 0) == 0 ? "standalone" : "replicaset"
+  replicas     = max(1, coalesce(var.mongodb.replicas, 0))
   # To ensure image pull secrets are passed as an array/list
   image_pull_secrets = try(tolist(var.mongodb.image_pull_secrets), [tostring(var.mongodb.image_pull_secrets)])
 }
@@ -11,12 +11,12 @@ resource "helm_release" "mongodb" {
   chart      = var.mongodb.helm_chart_name
   repository = var.mongodb.helm_chart_repository
   version    = var.mongodb.helm_chart_version
-  timeout    = var.timeout * (1 + var.mongodb.replicas)
+  timeout    = var.timeout * (1 + local.replicas)
 
   values = [
     yamlencode({
       "labels"       = var.labels
-      "replicaCount" = local.replicaCount
+      "replicaCount" = local.replicas
       "nodeSelector" = var.mongodb.node_selector
       "tolerations" = var.mongodb.node_selector != {} ? [
         for index in range(0, length(local.node_selector_keys)) : {

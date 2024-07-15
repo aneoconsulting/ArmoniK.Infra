@@ -17,6 +17,6 @@ resource "kubernetes_secret" "mongodb" {
     host               = local.mongodb_dns
     port               = 27017
     url                = local.mongodb_url
-    number_of_replicas = var.mongodb.replicas_number
+    number_of_replicas = var.mongodb.replicas
   }
 }

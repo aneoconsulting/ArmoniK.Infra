@@ -14,16 +14,19 @@ variable "labels" {
 }
 
 variable "name" {
-  description = "Name used for the helm chart release and the associated resources, must be shorter than 54 characters"
+  description = "Name used for the helm chart release and the associated resources"
   type        = string
   default     = "mongodb-armonik"
+  validation {
+    condition     = length(var.name) < 54
+    error_message = "Helm release name must be shorter than 54 characters"
+  }
 }
 
 variable "mongodb" {
   description = "Parameters of the MongoDB deployment"
 
   type = object({
-    architecture          = optional(string, "replicaset") # "replicaset" or "standalone"
     databases_names       = optional(list(string), ["database"])
     helm_chart_repository = optional(string, "oci://registry-1.docker.io/bitnamicharts")
     helm_chart_name       = optional(string, "mongodb")
@@ -32,7 +35,7 @@ variable "mongodb" {
     image_pull_secrets    = optional(any, [""]) # can be a string or a list of strings
     node_selector         = optional(map(string), {})
     registry              = optional(string)
-    replicas_number       = optional(number, 2)
+    replicas              = optional(number, 0)
     tag                   = string
   })
 }
@@ -83,15 +86,11 @@ variable "security_context" {
   }
 }
 
-variable "mtls" {
-  description = "Whether to deploy MongoDB with mTLS"
-  type        = bool
-  default     = false
-  validation {
-    condition     = !var.mtls
-    error_message = "For now, 'mTLSEnabled' must be false as mTLS is not supported yet"
-  }
-}
+# variable "mtls" {
+#   description = "Whether to deploy MongoDB with mTLS"
+#   type        = bool
+#   default     = false
+# }
 
 variable "timeout" {
   description = "Timeout limit in seconds per replica for the helm release creation"

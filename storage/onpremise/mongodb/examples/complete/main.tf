@@ -2,7 +2,6 @@ module "complete_mongodb_instance" {
   source    = "../../"
   namespace = var.namespace
   name      = "mongodb-armonik-helm-release"
-  mtls      = false
   timeout   = 300
 
   labels = {
@@ -11,8 +10,6 @@ module "complete_mongodb_instance" {
   }
 
   mongodb = {
-    architecture          = "replicaset"
-    databases_names       = ["database"]
     helm_chart_repository = "oci://registry-1.docker.io/bitnamicharts"
     helm_chart_name       = "mongodb"
     helm_chart_version    = "15.1.4"
@@ -20,7 +17,7 @@ module "complete_mongodb_instance" {
     image_pull_secrets    = [""]
     node_selector         = {}
     registry              = "docker.io"
-    replicas_number       = 2
+    replicas              = 2
     tag                   = "7.0.8-debian-12-r2"
   }
 

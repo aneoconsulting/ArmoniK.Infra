@@ -15,7 +15,7 @@ output "url" {
 
 output "number_of_replicas" {
   description = "Number of replicas of MongoDB"
-  value       = var.mongodb.replicas_number
+  value       = var.mongodb.replicas
 }
 
 output "user_credentials" {

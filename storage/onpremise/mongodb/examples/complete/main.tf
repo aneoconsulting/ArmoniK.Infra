@@ -1,15 +1,27 @@
 module "complete_mongodb_instance" {
   source    = "../../"
   namespace = var.namespace
+  name      = "mongodb-armonik-helm-release"
+  timeout   = 300
 
-  mongodb = {
-    image              = "mongo"
-    tag                = "6.0.7"
-    node_selector      = {}
-    image_pull_secrets = ""
-    replicas_number    = 1
+  labels = {
+    "app"  = "storage"
+    "type" = "table"
   }
 
+  mongodb = {
+    helm_chart_repository = "oci://registry-1.docker.io/bitnamicharts"
+    helm_chart_name       = "mongodb"
+    helm_chart_version    = "15.1.4"
+    image                 = "bitnami/mongodb"
+    image_pull_secrets    = [""]
+    node_selector         = {}
+    registry              = "docker.io"
+    replicas              = 2
+    tag                   = "7.0.8-debian-12-r2"
+  }
+
+  /* Must be null for now
   persistent_volume = {
     access_mode         = ["ReadWriteOnce"]
     reclaim_policy      = "Retain"
@@ -32,4 +44,5 @@ module "complete_mongodb_instance" {
     run_as_user = 999
     fs_group    = 999
   }
+  */
 }

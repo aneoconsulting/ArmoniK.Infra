@@ -35,7 +35,7 @@ variable "mongodb" {
     image_pull_secrets    = optional(any, [""]) # can be a string or a list of strings
     node_selector         = optional(map(string), {})
     registry              = optional(string)
-    replicas              = optional(number, 0)
+    replicas              = optional(number, 1)
     tag                   = string
   })
 }

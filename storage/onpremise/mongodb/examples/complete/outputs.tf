@@ -19,12 +19,6 @@ output "number_of_replicas" {
 }
 
 # SENSITIVE OUTPUTS
-output "user_certificate" {
-  description = "User certificates of MongoDB"
-  value       = module.complete_mongodb_instance.user_certificate
-  sensitive   = true
-}
-
 output "user_credentials" {
   description = "User credentials of MongoDB"
   value       = module.complete_mongodb_instance.user_credentials

@@ -1,171 +1,77 @@
-# Kubernetes MongoDB deployment
-resource "kubernetes_deployment" "mongodb" {
-  count = var.mongodb.replicas_number
-  metadata {
-    name      = "mongodb-${count.index}"
-    namespace = var.namespace
-    labels = {
-      app     = "storage"
-      type    = "table"
-      service = "mongodb-${count.index}"
-    }
-  }
-  spec {
-    replicas = 1
-    selector {
-      match_labels = {
-        app     = "storage"
-        type    = "table"
-        service = "mongodb-${count.index}"
-      }
-    }
-    template {
-      metadata {
-        name = "mongodb"
-        labels = {
-          app     = "storage"
-          type    = "table"
-          service = "mongodb-${count.index}"
-        }
-      }
-      spec {
-        node_selector = var.mongodb.node_selector
-        dynamic "toleration" {
-          for_each = (var.mongodb.node_selector != {} ? [
-            for index in range(0, length(local.node_selector_keys)) : {
-              key   = local.node_selector_keys[index]
-              value = local.node_selector_values[index]
-            }
-          ] : [])
-          content {
-            key      = toleration.value.key
-            operator = "Equal"
-            value    = toleration.value.value
-            effect   = "NoSchedule"
-          }
-        }
-        dynamic "image_pull_secrets" {
-          for_each = (var.mongodb.image_pull_secrets != "" ? [1] : [])
-          content {
-            name = var.mongodb.image_pull_secrets
-          }
-        }
-        security_context {
-          run_as_user     = var.security_context.run_as_user
-          run_as_non_root = true
-          run_as_group    = var.security_context.fs_group
-          fs_group        = var.security_context.fs_group
-        }
-        container {
-          name              = "mongodb"
-          image             = "${var.mongodb.image}:${var.mongodb.tag}"
-          image_pull_policy = "IfNotPresent"
-          command           = ["/bin/bash"]
-          args              = ["/start/mongostart.sh", tostring(count.index)]
-          port {
-            name           = "mongodb"
-            container_port = 27017
-          }
-          env {
-            name  = "MONGO_INITDB_ROOT_USERNAME"
-            value = random_string.mongodb_admin_user.result
-          }
-          env {
-            name  = "MONGO_INITDB_ROOT_PASSWORD"
-            value = random_password.mongodb_admin_password.result
-          }
-          volume_mount {
-            name       = "mongodb-secret-volume"
-            mount_path = "/mongodb/"
-            read_only  = true
-          }
-          volume_mount {
-            name       = "mongodb-cluster-volume"
-            mount_path = "/cluster/"
-            read_only  = true
-          }
-          volume_mount {
-            name       = "init-files"
-            mount_path = "/docker-entrypoint-initdb.d/"
-          }
-          volume_mount {
-            name       = "start-files"
-            mount_path = "/start/"
-          }
-          dynamic "volume_mount" {
-            for_each = length(kubernetes_persistent_volume_claim.mongodb) > 0 ? [1] : []
-            content {
-              name       = "database"
-              mount_path = "/data/db"
-            }
-          }
-        }
-        volume {
-          name = "init-files"
-          config_map {
-            name     = kubernetes_config_map.mongodb_js.metadata[0].name
-            optional = false
-          }
-        }
-        volume {
-          name = "start-files"
-          config_map {
-            name     = kubernetes_config_map.mongo_start_sh.metadata[0].name
-            optional = false
-          }
-        }
-        volume {
-          name = "mongodb-secret-volume"
-          secret {
-            secret_name = kubernetes_secret.mongodb_certificate.metadata[0].name
-            optional    = false
-          }
-        }
-        volume {
-          name = "mongodb-cluster-volume"
-          secret {
-            secret_name = kubernetes_secret.mongodb_cluster.metadata[0].name
-            optional    = false
-          }
-        }
-        dynamic "volume" {
-          for_each = length(kubernetes_persistent_volume_claim.mongodb) > 0 ? [1] : []
-          content {
-            name = "database"
-            persistent_volume_claim {
-              claim_name = kubernetes_persistent_volume_claim.mongodb[0].metadata[0].name
-            }
-          }
-        }
-      }
-    }
-  }
+locals {
+  architecture = coalesce(var.mongodb.replicas, 0) == 0 ? "standalone" : "replicaset"
+  replicas     = max(1, coalesce(var.mongodb.replicas, 0))
+  # To ensure image pull secrets are passed as an array/list
+  image_pull_secrets = try(tolist(var.mongodb.image_pull_secrets), [tostring(var.mongodb.image_pull_secrets)])
 }
 
-# Kubernetes MongoDB service
-resource "kubernetes_service" "mongodb" {
-  count = var.mongodb.replicas_number
-  metadata {
-    name      = "mongodb-${count.index}"
-    namespace = var.namespace
-    labels = {
-      app     = "storage"
-      type    = "table"
-      service = "mongodb"
-    }
+resource "helm_release" "mongodb" {
+  name       = var.name
+  namespace  = var.namespace
+  chart      = var.mongodb.helm_chart_name
+  repository = var.mongodb.helm_chart_repository
+  version    = var.mongodb.helm_chart_version
+  timeout    = var.timeout * (1 + local.replicas)
+
+  values = [
+    yamlencode({
+      "labels"       = var.labels
+      "replicaCount" = local.replicas
+      "nodeSelector" = var.mongodb.node_selector
+      "tolerations" = var.mongodb.node_selector != {} ? [
+        for index in range(0, length(local.node_selector_keys)) : {
+          key   = local.node_selector_keys[index]
+          value = local.node_selector_values[index]
+        }
+      ] : []
+      "podLabels" = var.labels
+      "image" = {
+        "registry"    = var.mongodb.registry
+        "repository"  = var.mongodb.image
+        "tag"         = var.mongodb.tag
+        "pullSecrets" = local.image_pull_secrets
+      }
+      "architecture" = local.architecture
+      "tls" = {
+        "enabled"       = "true"
+        "autoGenerated" = "true"
+      }
+      "auth" = {
+        "databases" = ["database"]
+      }
+      "arbiter" = local.architecture == "replicaset" ? {
+        "tolerations" = var.mongodb.node_selector != {} ? [
+          for index in range(0, length(local.node_selector_keys)) : {
+            key   = local.node_selector_keys[index]
+            value = local.node_selector_values[index]
+          }
+        ] : []
+      } : {}
+      # As the parameter 'tls.mTLS.enabled' set to false doesn't seem to work (chart v15.1.4) this an
+      # alternative to allow mTLS to not be mandatory
+      "extraFlags" = "--tlsAllowConnectionsWithoutCertificates"
+
+      "persistentVolumeClaimRetentionPolicy" = {
+        "enabled"     = "true"
+        "whenDeleted" = "Delete"
+      }
+    })
+  ]
+
+  set_sensitive {
+    name  = "auth.rootUser"
+    value = random_string.mongodb_admin_user.result
   }
-  spec {
-    type = "ClusterIP"
-    selector = {
-      app     = "storage"
-      type    = "table"
-      service = "mongodb-${count.index}"
-    }
-    port {
-      name        = "mongodb"
-      port        = 27017
-      target_port = 27017
-      protocol    = "TCP"
-    }
+  set_sensitive {
+    name  = "auth.rootPassword"
+    value = random_password.mongodb_admin_password.result
+  }
+  set_sensitive {
+    name  = "auth.usernames[0]"
+    value = random_string.mongodb_application_user.result
+  }
+  set_sensitive {
+    name  = "auth.passwords[0]"
+    value = random_password.mongodb_application_password.result
   }
 }

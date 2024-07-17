@@ -50,14 +50,14 @@ variable "persistent_volume" {
     parameters          = optional(map(string), {})
 
     # Resources for PVC
-    resources = object({
-      limits = object({
+    resources = optional(object({
+      limits = optional(object({
         storage = string
-      })
-      requests = object({
+      }))
+      requests = optional(object({
         storage = string
-      })
-    })
+      }))
+    }))
 
     wait_until_bound = optional(bool, true)
   })

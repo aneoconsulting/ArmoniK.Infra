@@ -59,8 +59,9 @@ resource "helm_release" "mongodb" {
         "storageClass" = kubernetes_storage_class.mongodb[0].metadata[0].name
         "accessMode"   = var.persistent_volume.access_mode
         "size"         = var.persistent_volume.resources.requests.storage
-      } : {
+        } : {
         "enabled" = false
+        "size"    = var.persistent_volume.resources.requests.storage
       }
 
       "persistentVolumeClaimRetentionPolicy" = var.persistent_volume != null ? {

@@ -60,7 +60,7 @@ resource "helm_release" "mongodb" {
         "accessMode"   = var.persistent_volume.access_mode
         "size"         = var.persistent_volume.resources.requests.storage
       } : {
-        "enabled" = "false"
+        "enabled" = false
       }
 
       "persistentVolumeClaimRetentionPolicy" = var.persistent_volume != null ? {

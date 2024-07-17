@@ -1,3 +1,16 @@
+#Aggragation
+module "worker_aggregation" {
+  source    = "../utils/aggregator"
+  for_each  = var.compute_plane
+  conf_list = each.value.worker[0].conf
+}
+
+module "polling_agent_aggregation" {
+  source    = "../utils/aggregator"
+  for_each  = var.compute_plane
+  conf_list = each.value.polling_agent.conf
+}
+
 # Agent deployment
 resource "kubernetes_deployment" "compute_plane" {
   for_each = var.compute_plane
@@ -56,7 +69,19 @@ resource "kubernetes_deployment" "compute_plane" {
         }
         #form conf
         dynamic "volume" {
-          for_each = merge([for element in each.value.polling_agent.conf : element.mount_secret]...)
+          for_each = module.polling_agent_aggregation[each.key].mount_secret
+          content {
+
+            name = volume.value.secret
+            secret {
+              secret_name  = volume.value.secret
+              default_mode = volume.value.mode
+
+            }
+          }
+        }
+        dynamic "volume" {
+          for_each = module.worker_aggregation[each.key].mount_secret
           content {
 
             name = volume.value.secret
@@ -125,7 +150,7 @@ resource "kubernetes_deployment" "compute_plane" {
           }
           #env from config
           dynamic "env" {
-            for_each = merge([for element in each.value.polling_agent.conf : element.env]...)
+            for_each = module.polling_agent_aggregation[each.key].env
             content {
               name  = env.key
               value = env.value
@@ -133,7 +158,7 @@ resource "kubernetes_deployment" "compute_plane" {
           }
           #env secret from config
           dynamic "env_from" {
-            for_each = setunion([for element in each.value.polling_agent.conf : element.env_secret]...)
+            for_each = module.polling_agent_aggregation[each.key].env_secret
             content {
               secret_ref {
                 name = env_from.value
@@ -189,7 +214,7 @@ resource "kubernetes_deployment" "compute_plane" {
           }
           #mount from conf
           dynamic "volume_mount" {
-            for_each = merge([for element in each.value.polling_agent.conf : element.mount_secret]...) # keys(volume_mount.mount_secret[volume_mount.value].secret)
+            for_each = module.polling_agent_aggregation[each.key].mount_secret
             content {
               mount_path = volume_mount.value.path
               name       = volume_mount.value.secret
@@ -249,6 +274,33 @@ resource "kubernetes_deployment" "compute_plane" {
               success_threshold     = 1
               failure_threshold     = 20
               # the pod has (period_seconds x failure_threshold) seconds to finalize its startup
+            }
+
+            #env from config
+            dynamic "env" {
+              for_each = module.worker_aggregation[each.key].env
+              content {
+                name  = env.key
+                value = env.value
+              }
+            }
+            #env secret from config
+            dynamic "env_from" {
+              for_each = module.worker_aggregation[each.key].env_secret
+              content {
+                secret_ref {
+                  name = env_from.value
+                }
+              }
+            }
+            #mount from conf
+            dynamic "volume_mount" {
+              for_each = module.worker_aggregation[each.key].mount_secret
+              content {
+                mount_path = volume_mount.value.path
+                name       = volume_mount.value.secret
+                read_only  = true
+              }
             }
             dynamic "env_from" {
               for_each = local.worker_configmaps

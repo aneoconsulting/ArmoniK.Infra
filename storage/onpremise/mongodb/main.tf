@@ -18,12 +18,14 @@ resource "helm_release" "mongodb" {
       "labels"       = var.labels
       "replicaCount" = local.replicas
       "nodeSelector" = var.mongodb.node_selector
+
       "tolerations" = var.mongodb.node_selector != {} ? [
         for index in range(0, length(local.node_selector_keys)) : {
           key   = local.node_selector_keys[index]
           value = local.node_selector_values[index]
         }
       ] : []
+
       "podLabels" = var.labels
       "image" = {
         "registry"    = var.mongodb.registry
@@ -39,6 +41,7 @@ resource "helm_release" "mongodb" {
       "auth" = {
         "databases" = ["database"]
       }
+
       "arbiter" = local.architecture == "replicaset" ? {
         "tolerations" = var.mongodb.node_selector != {} ? [
           for index in range(0, length(local.node_selector_keys)) : {
@@ -47,14 +50,23 @@ resource "helm_release" "mongodb" {
           }
         ] : []
       } : {}
+
       # As the parameter 'tls.mTLS.enabled' set to false doesn't seem to work (chart v15.1.4) this an
       # alternative to allow mTLS to not be mandatory
       "extraFlags" = "--tlsAllowConnectionsWithoutCertificates"
 
-      "persistentVolumeClaimRetentionPolicy" = {
+      "persistence" = var.persistent_volume != null ? {
+        "storageClass" = kubernetes_storage_class.mongodb[0].metadata[0].name
+        "accessMode"   = var.persistent_volume.access_mode
+        "size"         = var.persistent_volume.resources.requests.storage
+      } : {
+        "enabled" = "false"
+      }
+
+      "persistentVolumeClaimRetentionPolicy" = var.persistent_volume != null ? {
         "enabled"     = "true"
         "whenDeleted" = "Delete"
-      }
+      } : {}
     })
   ]
 

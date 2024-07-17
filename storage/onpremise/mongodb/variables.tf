@@ -45,8 +45,8 @@ variable "persistent_volume" {
   type = object({
     access_mode         = optional(list(string), ["ReadWriteMany"])
     reclaim_policy      = optional(string, "Delete")
-    storage_provisioner = string
-    volume_binding_mode = string
+    storage_provisioner = optional(string)
+    volume_binding_mode = optional(string)
     parameters          = optional(map(string), {})
 
     # Resources for PVC
@@ -62,15 +62,6 @@ variable "persistent_volume" {
     wait_until_bound = optional(bool, true)
   })
   default = null
-
-  # For retrocompatibility concerns (AWS deployment), this variable must be null for now
-  validation {
-    condition     = var.persistent_volume == null
-    error_message = <<EOT
-    "For now, 'persistent_volume' variable must be null.
-    Custom persistent volume definition for MongoDB is soon to be implemented"
-    EOT
-  }
 }
 
 # Not used yet (there for retrocompatibility reasons)

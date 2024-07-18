@@ -1,3 +1,8 @@
+#Aggragation
+module "metrics_aggregation" {
+  source    = "../utils/aggregator"
+  conf_list = var.metrics_exporter.conf
+}
 # Metrics exporter deployment
 resource "kubernetes_deployment" "metrics_exporter" {
   metadata {
@@ -52,10 +57,10 @@ resource "kubernetes_deployment" "metrics_exporter" {
         }
         #form conf
         dynamic "volume" {
-          for_each = merge([for element in var.metrics_exporter.conf : element.mount_secret]...) #keys(module.activemq.mount_secret)
+          for_each = module.metrics_aggregation.mount_secret
           content {
 
-            name = volume.value.secret #volume[volume.value].secret #secret #mount_secret #[volume.value].secret
+            name = volume.value.secret
             secret {
               secret_name  = volume.value.secret
               default_mode = volume.value.mode
@@ -78,7 +83,7 @@ resource "kubernetes_deployment" "metrics_exporter" {
           }
           #env from config
           dynamic "env" {
-            for_each = merge([for element in var.metrics_exporter.conf : element.env]...)
+            for_each = module.metrics_aggregation.env
             content {
               name  = env.key
               value = env.value
@@ -86,7 +91,7 @@ resource "kubernetes_deployment" "metrics_exporter" {
           }
           #env secret from config
           dynamic "env_from" {
-            for_each = setunion([for element in var.control_plane.conf : element.env_secret]...)
+            for_each = module.metrics_aggregation.env_secret
             content {
               secret_ref {
                 name = env_from.value
@@ -123,7 +128,7 @@ resource "kubernetes_deployment" "metrics_exporter" {
           }
           #mount from conf
           dynamic "volume_mount" {
-            for_each = merge([for element in var.metrics_exporter.conf : element.mount_secret]...) # keys(volume_mount.mount_secret[volume_mount.value].secret)
+            for_each = module.metrics_aggregation.mount_secret
             content {
               mount_path = volume_mount.value.path
               name       = volume_mount.value.secret

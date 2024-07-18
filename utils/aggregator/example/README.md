@@ -18,6 +18,7 @@
 |------|--------|---------|
 | <a name="module_activemq"></a> [activemq](#module\_activemq) | ../../../storage/onpremise/activemq | n/a |
 | <a name="module_control_plane"></a> [control\_plane](#module\_control\_plane) | ../../aggregator | n/a |
+| <a name="module_redis"></a> [redis](#module\_redis) | ../../../storage/onpremise/redis | n/a |
 
 ## Resources
 

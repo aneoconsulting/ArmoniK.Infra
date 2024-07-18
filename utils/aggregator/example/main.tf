@@ -10,9 +10,23 @@ module "activemq" {
   }
 }
 
+module "redis" {
+  source    = "../../../storage/onpremise/redis"
+  count     = 1
+  namespace = "default"
+  redis = {
+    image              = "redis"
+    tag                = "7.0.12-alpine3.18"
+    node_selector      = {}
+    image_pull_secrets = ""
+    max_memory         = "8000gb"
+    max_memory_samples = 8000
+  }
+}
+
 module "control_plane" {
   source    = "../../aggregator"
-  conf_list = module.activemq
+  conf_list = concat(module.activemq, module.redis)
 
 }
 

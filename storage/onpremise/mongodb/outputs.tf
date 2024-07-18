@@ -65,13 +65,13 @@ output "mount_secret" {
   value = {
     "mongo-certificate" = {
       secret = kubernetes_secret.mongodb.metadata[0].name
-      path   = "/mongodb"
-      mode   = "0600"
+      path   = "/mongodb/certs/"
+      mode   = "0644"
     },
     "mongo-certificate-helm" = {
       secret = "${helm_release.mongodb.name}-ca"
       path   = "/mongodb/certificate/"
-      mode   = "0600"
+      mode   = "0644"
     }
   }
 }

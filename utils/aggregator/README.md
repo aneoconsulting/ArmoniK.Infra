@@ -3,7 +3,7 @@
 
 | Name | Version |
 |------|---------|
-| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0 |
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.3 |
 
 ## Providers
 
@@ -28,6 +28,10 @@ No resources.
 | Name | Description |
 |------|-------------|
 | <a name="output_env"></a> [env](#output\_env) | Environment variables |
+| <a name="output_env_configmap"></a> [env\_configmap](#output\_env\_configmap) | Environment variables as configmaps |
+| <a name="output_env_from_configmap"></a> [env\_from\_configmap](#output\_env\_from\_configmap) | Environment variables from configmaps |
+| <a name="output_env_from_secret"></a> [env\_from\_secret](#output\_env\_from\_secret) | Environment variable from secrets |
 | <a name="output_env_secret"></a> [env\_secret](#output\_env\_secret) | Environment variables as secrets |
+| <a name="output_mount_configmap"></a> [mount\_configmap](#output\_mount\_configmap) | configmaps to mount as volume |
 | <a name="output_mount_secret"></a> [mount\_secret](#output\_mount\_secret) | Secrets to mount as volume |
 <!-- END_TF_DOCS -->

@@ -32,6 +32,7 @@
 | <a name="module_control_plane_aggregation"></a> [control\_plane\_aggregation](#module\_control\_plane\_aggregation) | ../utils/aggregator | n/a |
 | <a name="module_control_plane_endpoint"></a> [control\_plane\_endpoint](#module\_control\_plane\_endpoint) | ../utils/service-ip | n/a |
 | <a name="module_ingress_endpoint"></a> [ingress\_endpoint](#module\_ingress\_endpoint) | ../utils/service-ip | n/a |
+| <a name="module_metrics_aggregation"></a> [metrics\_aggregation](#module\_metrics\_aggregation) | ../utils/aggregator | n/a |
 | <a name="module_polling_agent_aggregation"></a> [polling\_agent\_aggregation](#module\_polling\_agent\_aggregation) | ../utils/aggregator | n/a |
 | <a name="module_worker_aggregation"></a> [worker\_aggregation](#module\_worker\_aggregation) | ../utils/aggregator | n/a |
 

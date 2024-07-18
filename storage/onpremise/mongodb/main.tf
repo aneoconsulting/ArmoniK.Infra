@@ -42,6 +42,14 @@ resource "helm_release" "mongodb" {
         "databases" = ["database"]
       }
 
+      "podSecurityContext" = {
+        "fsGroup" = var.security_context.fs_group
+      }
+      "containerSecurityContext" = {
+        "runAsUser"  = var.security_context.run_as_user
+        "runAsGroup" = var.security_context.fs_group
+      }
+      
       "arbiter" = local.architecture == "replicaset" ? {
         "tolerations" = var.mongodb.node_selector != {} ? [
           for index in range(0, length(local.node_selector_keys)) : {
@@ -55,21 +63,41 @@ resource "helm_release" "mongodb" {
       # alternative to allow mTLS to not be mandatory
       "extraFlags" = "--tlsAllowConnectionsWithoutCertificates"
 
-      "persistence" = var.persistent_volume != null ? {
-        "storageClass" = kubernetes_storage_class.mongodb[0].metadata[0].name
-        "accessMode"   = var.persistent_volume.access_mode
-        "size"         = var.persistent_volume.resources.requests.storage
-        } : {
-        "enabled" = false
-        "size"    = var.persistent_volume.resources.requests.storage
-      }
-
       "persistentVolumeClaimRetentionPolicy" = var.persistent_volume != null ? {
         "enabled"     = "true"
         "whenDeleted" = "Delete"
       } : {}
     })
   ]
+
+  dynamic "set" {
+    for_each = var.persistent_volume == null ? [1] : []
+    content {
+      name  = "persistence.enabled"
+      value = false
+    }
+  }
+  dynamic "set" {
+    for_each = var.persistent_volume != null ? [1] : []
+    content {
+      name  = "persistence.storageClass"
+      value = kubernetes_storage_class.mongodb[0].metadata[0].name
+    }
+  }
+  dynamic "set" {
+    for_each = var.persistent_volume != null ? [1] : []
+    content {
+      name  = "persistence.accessMode[0]"
+      value = var.persistent_volume.access_mode[0]
+    }
+  }
+  dynamic "set" {
+    for_each = var.persistent_volume != null ? [1] : []
+    content {
+      name  = "persistence.size"
+      value = var.persistent_volume.resources.requests.storage
+    }
+  }
 
   set_sensitive {
     name  = "auth.rootUser"

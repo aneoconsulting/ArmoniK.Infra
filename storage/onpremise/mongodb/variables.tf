@@ -64,7 +64,6 @@ variable "persistent_volume" {
   default = null
 }
 
-# Not used yet (there for retrocompatibility reasons)
 variable "security_context" {
   description = "Security context for MongoDB pods"
   type = object({
@@ -72,8 +71,8 @@ variable "security_context" {
     fs_group    = number
   })
   default = {
-    run_as_user = 999
-    fs_group    = 999
+    run_as_user = 1001
+    fs_group    = 1001
   }
 }
 

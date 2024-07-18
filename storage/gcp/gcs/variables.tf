@@ -195,7 +195,7 @@ variable "object_storage_adapter" {
 variable "namespace" {
   description = "Namespace of ArmoniK storage resources"
   type        = string
-  default     = ""
+  default     = "armonik"
 }
 
 variable "username" {

@@ -173,5 +173,5 @@ variable "ssl_option" {
 variable "namespace" {
   description = "Namespace of ArmoniK storage resources"
   type        = string
-  default     = ""
+  default     = "armonik"
 }

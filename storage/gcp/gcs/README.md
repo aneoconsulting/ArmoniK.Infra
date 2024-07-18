@@ -61,7 +61,7 @@ No modules.
 | <a name="input_location"></a> [location](#input\_location) | Location for the bucket: regional, dual-regional or multi-regional [GCS locations](https://cloud.google.com/storage/docs/locations). | `string` | n/a | yes |
 | <a name="input_logging"></a> [logging](#input\_logging) | The bucket's Access & Storage Logs configuration. | <pre>object({<br>    log_bucket        = string<br>    log_object_prefix = string<br>  })</pre> | `null` | no |
 | <a name="input_name"></a> [name](#input\_name) | The name of the bucket. | `string` | n/a | yes |
-| <a name="input_namespace"></a> [namespace](#input\_namespace) | Namespace of ArmoniK storage resources | `string` | `""` | no |
+| <a name="input_namespace"></a> [namespace](#input\_namespace) | Namespace of ArmoniK storage resources | `string` | `"armonik"` | no |
 | <a name="input_object_storage_adapter"></a> [object\_storage\_adapter](#input\_object\_storage\_adapter) | Name of the ArmoniK adapter to use for the storage | `string` | `"ArmoniK.Adapters.S3.ObjectStorage"` | no |
 | <a name="input_password"></a> [password](#input\_password) | Google Cloud storage secret to use as passeword | `string` | `""` | no |
 | <a name="input_predefined_acl"></a> [predefined\_acl](#input\_predefined\_acl) | The canned GCS ACL to apply. | `string` | `null` | no |

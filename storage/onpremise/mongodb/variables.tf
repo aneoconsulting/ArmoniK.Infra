@@ -93,3 +93,9 @@ variable "validity_period_hours" {
   type        = string
   default     = "8760" # 1 year
 }
+
+variable "path" {
+  description = "Path for mounting secrets"
+  type        = string
+  default     = "/mongodb"
+}

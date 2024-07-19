@@ -78,7 +78,7 @@ resource "helm_release" "mongodb" {
     }
   }
   dynamic "set" {
-    for_each = var.persistent_volume != null ? [1] : []
+    for_each = var.persistent_volume != null && try(var.persistent_volume.storage_provisioner, "") != "" ? [1] : []
     content {
       name  = "persistence.storageClass"
       value = kubernetes_storage_class.mongodb[0].metadata[0].name

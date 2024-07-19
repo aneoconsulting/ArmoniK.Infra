@@ -43,3 +43,36 @@ output "unused_variables" {
     "validity_period_hours" = var.validity_period_hours
   }
 }
+
+#new Outputs 
+output "env" {
+  description = "Elements to be set as environment variables"
+  value = ({
+    "MongoDB__Host"             = local.mongodb_dns
+    "MongoDB__Port"             = "27017"
+    "MongoDB__Tls"              = "true"
+    "MongoDB__ReplicaSet"       = "rs0"
+    "MongoDB__DatabaseName"     = var.mongodb.databases_names[0]
+    "MongoDB__DirectConnection" = "false"
+    "MongoDB__CAFile"           = "${var.path}/chain.pem"
+  })
+
+}
+
+output "env_secret" {
+  description = "Secrets to be set as environment variables"
+  value = [
+    kubernetes_secret.mongodb_user.metadata[0].name
+  ]
+}
+
+output "mount_secret" {
+  description = "Secrets to be mounted as volumes"
+  value = {
+    "certificate" = {
+      secret = kubernetes_secret.mongodb.metadata[0].name
+      path   = var.path
+      mode   = "0600"
+    }
+  }
+}

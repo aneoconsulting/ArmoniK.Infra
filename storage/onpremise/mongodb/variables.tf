@@ -55,8 +55,8 @@ variable "persistent_volume" {
         storage = string
       }))
       requests = optional(object({
-        storage = optional(string, "8Gi")
-      }))
+        storage = string
+      }), { storage = "8Gi" })
     }))
 
     #wait_until_bound = optional(bool, true)

@@ -45,8 +45,8 @@ variable "persistent_volume" {
   type = object({
     access_mode         = optional(list(string), ["ReadWriteMany"])
     reclaim_policy      = optional(string, "Delete")
-    storage_provisioner = optional(string)
-    volume_binding_mode = optional(string)
+    storage_provisioner = optional(string, "")
+    volume_binding_mode = optional(string, "")
     parameters          = optional(map(string), {})
 
     # Resources for PVC
@@ -56,10 +56,10 @@ variable "persistent_volume" {
       }))
       requests = optional(object({
         storage = string
-      }))
+      }), "8Gi")
     }))
 
-    wait_until_bound = optional(bool, true)
+    #wait_until_bound = optional(bool, true)
   })
   default = null
 }

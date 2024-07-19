@@ -1,5 +1,5 @@
 resource "kubernetes_storage_class" "mongodb" {
-  count = var.persistent_volume != null ? 1 : 0
+  count = var.persistent_volume != null && try(var.persistent_volume.storage_provisioner, "") != "" ? 1 : 0
   metadata {
     name = "mongodb"
     labels = {

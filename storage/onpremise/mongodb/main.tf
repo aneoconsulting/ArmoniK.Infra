@@ -92,7 +92,7 @@ resource "helm_release" "mongodb" {
     }
   }
   dynamic "set" {
-    for_each = var.persistent_volume != null ? [1] : []
+    for_each = var.persistent_volume != null && var.persistent_volume.resources.requests.storage != "8Gi" ? [1] : []
     content {
       name  = "persistence.size"
       value = var.persistent_volume.resources.requests.storage

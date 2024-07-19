@@ -65,7 +65,7 @@ resource "helm_release" "mongodb" {
 
       "persistentVolumeClaimRetentionPolicy" = var.persistent_volume != null ? {
         "enabled"     = "true"
-        "whenDeleted" = "Delete"
+        "whenDeleted" = var.persistent_volume.reclaim_policy
       } : {}
     })
   ]

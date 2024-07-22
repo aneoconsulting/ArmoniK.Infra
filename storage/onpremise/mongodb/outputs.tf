@@ -48,12 +48,13 @@ output "unused_variables" {
 output "env" {
   description = "Elements to be set as environment variables"
   value = ({
+    "Components__TableStorage"  = var.adapter_class_name
     "MongoDB__Host"             = local.mongodb_dns
     "MongoDB__Port"             = "27017"
-    "MongoDB__Tls"              = "true"
-    "MongoDB__ReplicaSet"       = "rs0"
+    "MongoDB__Tls"              = var.tls
+    "MongoDB__ReplicaSet"       = var.replicaset
     "MongoDB__DatabaseName"     = var.mongodb.databases_names[0]
-    "MongoDB__DirectConnection" = "false"
+    "MongoDB__DirectConnection" = var.direct_connection
     "MongoDB__CAFile"           = "${var.path}/chain.pem"
   })
 

@@ -87,7 +87,7 @@ resource "helm_release" "mongodb" {
   dynamic "set" {
     for_each = var.persistent_volume != null ? [1] : []
     content {
-      name  = "persistence.accessMode[0]"
+      name  = "persistence.accessModes[0]"
       value = var.persistent_volume.access_mode[0]
     }
   }

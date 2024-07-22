@@ -27,10 +27,11 @@ module "complete_mongodb_instance" {
     storage_provisioner = "rancher.io/local-path"
     volume_binding_mode = "WaitForFirstConsumer"
     parameters          = {}
-    
+
     resources = {
       requests = {
         storage = "2Gi"
       }
     }
+  }
 }

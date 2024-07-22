@@ -49,7 +49,7 @@ resource "helm_release" "mongodb" {
         "runAsUser"  = var.security_context.run_as_user
         "runAsGroup" = var.security_context.fs_group
       }
-      
+
       "arbiter" = local.architecture == "replicaset" ? {
         "tolerations" = var.mongodb.node_selector != {} ? [
           for index in range(0, length(local.node_selector_keys)) : {
@@ -78,7 +78,7 @@ resource "helm_release" "mongodb" {
     }
   }
   dynamic "set" {
-    for_each = var.persistent_volume != null && try(var.persistent_volume.storage_provisioner, "") != "" ? [1] : []
+    for_each = can(coalesce(var.persistent_volume.storage_provisioner)) ? [1] : []
     content {
       name  = "persistence.storageClass"
       value = kubernetes_storage_class.mongodb[0].metadata[0].name
@@ -92,7 +92,7 @@ resource "helm_release" "mongodb" {
     }
   }
   dynamic "set" {
-    for_each = var.persistent_volume != null && try(var.persistent_volume.resources.requests.storage, "8Gi") != "8Gi" ? [1] : []
+    for_each = can(coalesce(var.persistent_volume.resources.requests.storage)) ? [1] : []
     content {
       name  = "persistence.size"
       value = var.persistent_volume.resources.requests.storage

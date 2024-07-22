@@ -99,3 +99,27 @@ variable "path" {
   type        = string
   default     = "/mongodb"
 }
+
+variable "adapter_class_name" {
+  description = "Name of the adapter's class"
+  type        = string
+  default     = "ArmoniK.Adapters.MongoDB.TableStorage"
+}
+
+variable "tls" {
+  description = "Whether to deploy MongoDB with TLS"
+  type        = bool
+  default     = true
+}
+
+variable "direct_connection" {
+  description = "Whether we have DirectConnection or not"
+  type        = bool
+  default     = false
+}
+
+variable "replicaset" {
+  description = "Name of the replicaset"
+  type        = string
+  default     = "rs0"
+}

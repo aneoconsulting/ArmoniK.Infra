@@ -93,27 +93,3 @@ variable "validity_period_hours" {
   type        = string
   default     = "8760" # 1 year
 }
-
-variable "path" {
-  description = "Path for mounting secrets"
-  type        = string
-  default     = "/mongodb"
-}
-
-variable "adapter_class_name" {
-  description = "Name of the adapter's class"
-  type        = string
-  default     = "ArmoniK.Adapters.MongoDB.TableStorage"
-}
-
-variable "tls" {
-  description = "Whether to deploy MongoDB with TLS"
-  type        = bool
-  default     = true
-}
-
-variable "replicaset" {
-  description = "Name of the replicaset"
-  type        = string
-  default     = "rs0"
-}

@@ -48,14 +48,14 @@ output "unused_variables" {
 output "env" {
   description = "Elements to be set as environment variables"
   value = ({
-    "Components__TableStorage"  = var.adapter_class_name
+    "Components__TableStorage"  = "ArmoniK.Adapters.MongoDB.TableStorage"
     "MongoDB__Host"             = local.mongodb_dns
     "MongoDB__Port"             = "27017"
-    "MongoDB__Tls"              = var.tls
-    "MongoDB__ReplicaSet"       = var.replicaset
+    "MongoDB__Tls"              = "true"
+    "MongoDB__ReplicaSet"       = "rs0"
     "MongoDB__DatabaseName"     = "database"
     "MongoDB__DirectConnection" = "false"
-    "MongoDB__CAFile"           = "${var.path}/chain.pem"
+    "MongoDB__CAFile"           = "/mongodb/certificate/mongodb-ca-cert"
   })
 
 }
@@ -72,12 +72,12 @@ output "mount_secret" {
   value = {
     "mongo-certificate" = {
       secret = kubernetes_secret.mongodb.metadata[0].name
-      path   = var.path
+      path   = "/mongodb"
       mode   = "0600"
     },
     "mongo-certificate-helm" = {
       secret = "${helm_release.mongodb.name}-ca"
-      path   = "${var.path}/certificate/"
+      path   = "/mongodb/certificate/"
       mode   = "0600"
     }
   }

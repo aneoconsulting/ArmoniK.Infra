@@ -34,4 +34,9 @@ module "complete_mongodb_instance" {
       }
     }
   }
+
+  security_context = {
+    run_as_user = 9001
+    fs_group    = 9001
+  }
 }

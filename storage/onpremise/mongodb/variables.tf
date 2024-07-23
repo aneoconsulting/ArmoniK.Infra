@@ -112,12 +112,6 @@ variable "tls" {
   default     = true
 }
 
-variable "direct_connection" {
-  description = "Whether we have DirectConnection or not"
-  type        = bool
-  default     = false
-}
-
 variable "replicaset" {
   description = "Name of the replicaset"
   type        = string

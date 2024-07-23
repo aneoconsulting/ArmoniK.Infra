@@ -44,7 +44,6 @@ No modules.
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_adapter_class_name"></a> [adapter\_class\_name](#input\_adapter\_class\_name) | Name of the adapter's class | `string` | `"ArmoniK.Adapters.MongoDB.TableStorage"` | no |
-| <a name="input_direct_connection"></a> [direct\_connection](#input\_direct\_connection) | Whether we have DirectConnection or not | `bool` | `false` | no |
 | <a name="input_labels"></a> [labels](#input\_labels) | Labels for the Kubernetes StatefulSet to be deployed | `map(string)` | <pre>{<br>  "app": "storage",<br>  "type": "table"<br>}</pre> | no |
 | <a name="input_mongodb"></a> [mongodb](#input\_mongodb) | Parameters of the MongoDB deployment | <pre>object({<br>    databases_names       = optional(list(string), ["database"])<br>    helm_chart_repository = optional(string, "oci://registry-1.docker.io/bitnamicharts")<br>    helm_chart_name       = optional(string, "mongodb")<br>    helm_chart_version    = string<br>    image                 = optional(string, "bitnami/mongodb")<br>    image_pull_secrets    = optional(any, [""]) # can be a string or a list of strings<br>    node_selector         = optional(map(string), {})<br>    registry              = optional(string)<br>    replicas              = optional(number, 1)<br>    tag                   = string<br>  })</pre> | n/a | yes |
 | <a name="input_name"></a> [name](#input\_name) | Name used for the helm chart release and the associated resources | `string` | `"mongodb-armonik"` | no |
@@ -64,6 +63,7 @@ No modules.
 |------|-------------|
 | <a name="output_endpoints"></a> [endpoints](#output\_endpoints) | Endpoints of MongoDB |
 | <a name="output_env"></a> [env](#output\_env) | Elements to be set as environment variables |
+| <a name="output_env_from_secret"></a> [env\_from\_secret](#output\_env\_from\_secret) | Environment variables from secrets |
 | <a name="output_env_secret"></a> [env\_secret](#output\_env\_secret) | Secrets to be set as environment variables |
 | <a name="output_host"></a> [host](#output\_host) | Hostname or IP address of MongoDB server |
 | <a name="output_mount_secret"></a> [mount\_secret](#output\_mount\_secret) | Secrets to be mounted as volumes |

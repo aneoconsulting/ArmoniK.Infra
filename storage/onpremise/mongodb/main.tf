@@ -20,9 +20,9 @@ resource "helm_release" "mongodb" {
       "nodeSelector" = var.mongodb.node_selector
 
       "tolerations" = var.mongodb.node_selector != {} ? [
-        for index in range(0, length(local.node_selector_keys)) : {
-          key   = local.node_selector_keys[index]
-          value = local.node_selector_values[index]
+        for key, value in var.mongodb.node_selector : {
+          "key"   = key
+          "value" = value
         }
       ] : []
 
@@ -58,9 +58,9 @@ resource "helm_release" "mongodb" {
 
       "arbiter" = local.architecture == "replicaset" ? {
         "tolerations" = var.mongodb.node_selector != {} ? [
-          for index in range(0, length(local.node_selector_keys)) : {
-            key   = local.node_selector_keys[index]
-            value = local.node_selector_values[index]
+          for key, value in var.mongodb.node_selector : {
+            "key"   = key
+            "value" = value
           }
         ] : []
       } : {}

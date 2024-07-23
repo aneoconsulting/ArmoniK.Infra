@@ -60,13 +60,6 @@ output "env" {
 
 }
 
-output "env_secret" {
-  description = "Secrets to be set as environment variables"
-  value = [
-    kubernetes_secret.mongodb_user.metadata[0].name
-  ]
-}
-
 output "mount_secret" {
   description = "Secrets to be mounted as volumes"
   value = {

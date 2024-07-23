@@ -31,7 +31,6 @@ No modules.
 | [kubernetes_secret.mongodb_admin](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
 | [kubernetes_secret.mongodb_user](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
 | [kubernetes_storage_class.mongodb](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/storage_class) | resource |
-| [kubernetes_secret.mongodb_user_credentials](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
 | [local_sensitive_file.mongodb_client_certificate](https://registry.terraform.io/providers/hashicorp/local/latest/docs/resources/sensitive_file) | resource |
 | [random_password.mongodb_admin_password](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/password) | resource |
 | [random_password.mongodb_application_password](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/password) | resource |
@@ -48,8 +47,6 @@ No modules.
 | <a name="input_name"></a> [name](#input\_name) | Name used for the helm chart release and the associated resources | `string` | `"mongodb-armonik"` | no |
 | <a name="input_namespace"></a> [namespace](#input\_namespace) | Namespace of ArmoniK resources | `string` | `"default"` | no |
 | <a name="input_persistent_volume"></a> [persistent\_volume](#input\_persistent\_volume) | Persistent Volume parameters for MongoDB pods | <pre>object({<br>    access_mode         = optional(list(string), ["ReadWriteMany"])<br>    reclaim_policy      = optional(string, "Delete")<br>    storage_provisioner = optional(string, "")<br>    volume_binding_mode = optional(string, "")<br>    parameters          = optional(map(string), {})<br><br>    # Resources for PVC<br>    resources = optional(object({<br>      limits = optional(object({<br>        storage = string<br>      }))<br>      requests = optional(object({<br>        storage = string<br>      }))<br>    }))<br>  })</pre> | `null` | no |
-| <a name="input_path"></a> [path](#input\_path) | Path for mounting secrets | `string` | `"/mongodb"` | no |
-| <a name="input_persistent_volume"></a> [persistent\_volume](#input\_persistent\_volume) | Persistent Volume parameters for MongoDB pods | <pre>object({<br>    access_mode         = optional(list(string), ["ReadWriteMany"])<br>    reclaim_policy      = optional(string, "Delete")<br>    storage_provisioner = string<br>    volume_binding_mode = string<br>    parameters          = optional(map(string), {})<br><br>    # Resources for PVC<br>    resources = object({<br>      limits = object({<br>        storage = string<br>      })<br>      requests = object({<br>        storage = string<br>      })<br>    })<br><br>    wait_until_bound = optional(bool, true)<br>  })</pre> | `null` | no |
 | <a name="input_security_context"></a> [security\_context](#input\_security\_context) | Security context for MongoDB pods | <pre>object({<br>    run_as_user = number<br>    fs_group    = number<br>  })</pre> | <pre>{<br>  "fs_group": 999,<br>  "run_as_user": 999<br>}</pre> | no |
 | <a name="input_timeout"></a> [timeout](#input\_timeout) | Timeout limit in seconds per replica for the helm release creation | `number` | `480` | no |
 | <a name="input_validity_period_hours"></a> [validity\_period\_hours](#input\_validity\_period\_hours) | Validity period of the TLS certificate in hours | `string` | `"8760"` | no |
@@ -61,7 +58,6 @@ No modules.
 | <a name="output_endpoints"></a> [endpoints](#output\_endpoints) | Endpoints of MongoDB |
 | <a name="output_env"></a> [env](#output\_env) | Elements to be set as environment variables |
 | <a name="output_env_from_secret"></a> [env\_from\_secret](#output\_env\_from\_secret) | Environment variables from secrets |
-| <a name="output_env_secret"></a> [env\_secret](#output\_env\_secret) | Secrets to be set as environment variables |
 | <a name="output_host"></a> [host](#output\_host) | Hostname or IP address of MongoDB server |
 | <a name="output_mount_secret"></a> [mount\_secret](#output\_mount\_secret) | Secrets to be mounted as volumes |
 | <a name="output_number_of_replicas"></a> [number\_of\_replicas](#output\_number\_of\_replicas) | Number of replicas of MongoDB |

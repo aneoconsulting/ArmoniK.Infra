@@ -56,7 +56,10 @@ No modules.
 | Name | Description |
 |------|-------------|
 | <a name="output_endpoints"></a> [endpoints](#output\_endpoints) | Endpoints of MongoDB |
+| <a name="output_env"></a> [env](#output\_env) | Elements to be set as environment variables |
+| <a name="output_env_from_secret"></a> [env\_from\_secret](#output\_env\_from\_secret) | Environment variables from secrets |
 | <a name="output_host"></a> [host](#output\_host) | Hostname or IP address of MongoDB server |
+| <a name="output_mount_secret"></a> [mount\_secret](#output\_mount\_secret) | Secrets to be mounted as volumes |
 | <a name="output_number_of_replicas"></a> [number\_of\_replicas](#output\_number\_of\_replicas) | Number of replicas of MongoDB |
 | <a name="output_port"></a> [port](#output\_port) | Port of MongoDB server |
 | <a name="output_unused_variables"></a> [unused\_variables](#output\_unused\_variables) | Map of variables that are not used yet but might be in the future |

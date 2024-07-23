@@ -43,3 +43,49 @@ output "unused_variables" {
     "validity_period_hours" = var.validity_period_hours
   }
 }
+
+#new Outputs 
+output "env" {
+  description = "Elements to be set as environment variables"
+  value = ({
+    "Components__TableStorage"  = "ArmoniK.Adapters.MongoDB.TableStorage"
+    "MongoDB__Host"             = local.mongodb_dns
+    "MongoDB__Port"             = "27017"
+    "MongoDB__Tls"              = "true"
+    "MongoDB__ReplicaSet"       = "rs0"
+    "MongoDB__DatabaseName"     = "database"
+    "MongoDB__DirectConnection" = "false"
+    "MongoDB__CAFile"           = "/mongodb/certificate/mongodb-ca-cert"
+  })
+
+}
+
+output "mount_secret" {
+  description = "Secrets to be mounted as volumes"
+  value = {
+    "mongo-certificate" = {
+      secret = kubernetes_secret.mongodb.metadata[0].name
+      path   = "/mongodb"
+      mode   = "0600"
+    },
+    "mongo-certificate-helm" = {
+      secret = "${helm_release.mongodb.name}-ca"
+      path   = "/mongodb/certificate/"
+      mode   = "0600"
+    }
+  }
+}
+
+output "env_from_secret" {
+  description = "Environment variables from secrets"
+  value = {
+    "MongoDB__User" = {
+      secret = kubernetes_secret.mongodb_user.metadata[0].name
+      field  = "username"
+    },
+    "MongoDB__Password" = {
+      secret = kubernetes_secret.mongodb_user.metadata[0].name
+      field  = "password"
+    }
+  }
+}

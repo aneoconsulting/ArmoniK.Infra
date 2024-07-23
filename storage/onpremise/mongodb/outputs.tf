@@ -53,8 +53,8 @@ output "env" {
     "MongoDB__Port"             = "27017"
     "MongoDB__Tls"              = var.tls
     "MongoDB__ReplicaSet"       = var.replicaset
-    "MongoDB__DatabaseName"     = var.mongodb.databases_names[0]
-    "MongoDB__DirectConnection" = var.direct_connection
+    "MongoDB__DatabaseName"     = "database"
+    "MongoDB__DirectConnection" = "false"
     "MongoDB__CAFile"           = "${var.path}/chain.pem"
   })
 
@@ -70,10 +70,29 @@ output "env_secret" {
 output "mount_secret" {
   description = "Secrets to be mounted as volumes"
   value = {
-    "certificate" = {
+    "mongo-certificate" = {
       secret = kubernetes_secret.mongodb.metadata[0].name
       path   = var.path
       mode   = "0600"
+    },
+    "mongo-certificate-helm" = {
+      secret = "${helm_release.mongodb.name}-ca"
+      path   = "${var.path}/certificate/"
+      mode   = "0600"
+    }
+  }
+}
+
+output "env_from_secret" {
+  description = "Environment variables from secrets"
+  value = {
+    "MongoDB__User" = {
+      secret = kubernetes_secret.mongodb_user.metadata[0].name
+      field  = "username"
+    },
+    "MongoDB__Password" = {
+      secret = kubernetes_secret.mongodb_user.metadata[0].name
+      field  = "password"
     }
   }
 }

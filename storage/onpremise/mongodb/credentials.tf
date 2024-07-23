@@ -43,16 +43,3 @@ resource "kubernetes_secret" "mongodb_user" {
   }
   type = "kubernetes.io/basic-auth"
 }
-
-#secret for credential to variable
-
-resource "kubernetes_secret" "mongodb_user_credentials" {
-  metadata {
-    name      = "mongodb-user-credentials"
-    namespace = var.namespace
-  }
-  data = {
-    "MongoDB__User"     = random_string.mongodb_application_user.result
-    "MongoDB__Password" = random_password.mongodb_application_password.result
-  }
-}

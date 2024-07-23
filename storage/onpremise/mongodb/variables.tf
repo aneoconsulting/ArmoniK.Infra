@@ -69,8 +69,8 @@ variable "security_context" {
     fs_group    = number
   })
   default = {
-    run_as_user = 1001
-    fs_group    = 1001
+    run_as_user = 999
+    fs_group    = 999
   }
 }
 

@@ -2,7 +2,7 @@ data "kubernetes_config_map" "dns" {
   metadata {
     name = "coredns"
     # This dummy regex replace is used to ensure this data source is read *after* Kubernetes is up and running
-    namespace = replace(data.kubernetes_secret.deployed_object_storage.id, "/.*/", "kube-system")
+    namespace = replace(var.namespace, "/.*/", "kube-system")
   }
 }
 

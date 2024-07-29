@@ -143,8 +143,8 @@ server {
   proxy_buffering off;
   proxy_request_buffering off;
 
-%{if data.kubernetes_secret.shared_storage.data.file_storage_type == "s3"~}
- set $minio_upstream ${data.kubernetes_secret.shared_storage.data.service_url};
+%{if var.shared_storage_settings.file_storage_type == "s3"~}
+ set $minio_upstream ${var.shared_storage_settings.service_url};
  location / {
     client_max_body_size 0;
     proxy_set_header Host $http_host;
@@ -161,7 +161,7 @@ server {
     proxy_pass $minio_upstream$uri$is_args$args; # This uses the upstream directive definition to load balance
  }
 
- set $minioconsole_upstream ${data.kubernetes_secret.shared_storage.data.console_url};
+ set $minioconsole_upstream ${var.shared_storage_settings.console_url};
  location /minioconsole {
     proxy_set_header Host $http_host;
     proxy_set_header X-Real-IP $remote_addr;
@@ -189,8 +189,8 @@ server {
  %{endif~}
 
 
-%{if data.kubernetes_secret.seq.data.enabled~}
-    set $seq_upstream ${data.kubernetes_secret.seq.data.web_url};
+%{if length(var.seq_output) > 0~}
+    set $seq_upstream ${var.seq_output[0].web_url};
     location = /seq {
         rewrite ^ $scheme://$http_host/seq/ permanent;
     }
@@ -208,8 +208,8 @@ server {
         proxy_hide_header content-security-policy;
     }
 %{endif~}
-%{if data.kubernetes_secret.grafana.data.enabled != ""~}
-    set $grafana_upstream ${data.kubernetes_secret.grafana.data.url};
+%{if length(var.grafana_output) > 0~}
+    set $grafana_upstream ${var.grafana_output[0].url};
     location = /grafana {
         rewrite ^ $scheme://$http_host/grafana/ permanent;
     }

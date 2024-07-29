@@ -331,72 +331,72 @@ variable "authentication" {
   }
 }
 
-# The name of the secrets.
-variable "fluent_bit_secret_name" {
-  description = "the name of the fluent-bit secret"
-  type        = string
-  default     = "fluent-bit"
+# The output of modules.
+variable "fluent_bit_output" {
+  description = "the fluent-bit module output"
+  type        = any
+  default     = {}
 }
 
-variable "grafana_secret_name" {
-  description = "the name of the grafana secret"
-  type        = string
-  default     = "grafana"
+variable "grafana_output" {
+  description = "the grafana module output"
+  type        = any
+  default     = {}
 }
 
-variable "prometheus_secret_name" {
-  description = "the name of the prometheus secret"
-  type        = string
-  default     = "prometheus"
+variable "prometheus_output" {
+  description = "the prometheus module output"
+  type        = any
+  default     = {}
 }
 
-variable "metrics_exporter_secret_name" {
-  description = "the name of the metrics exporter secret"
-  type        = string
-  default     = "metrics-exporter"
+variable "metrics_exporter_output" {
+  description = "the metrics exporter module output"
+  type        = any
+  default     = {}
 }
 
-variable "partition_metrics_exporter_secret_name" {
-  description = "the name of the partition metrics exporter secret"
-  type        = string
-  default     = "partition-metrics-exporter"
+# variable "partition_metrics_exporter_output" {
+#   description = "the partition metrics exporter module output"
+#   type        = any
+#   default     = {}
+# }
+
+variable "seq_output" {
+  description = "the seq module output"
+  type        = any
+  default     = {}
 }
 
-variable "seq_secret_name" {
-  description = "the name of the seq secret"
-  type        = string
-  default     = "seq"
+variable "shared_storage_settings" {
+  description = "the shared-storage configuration information"
+  type        = any
+  default     = {}
 }
 
-variable "shared_storage_secret_name" {
-  description = "the name of the shared-storage secret"
-  type        = string
-  default     = "shared-storage"
-}
+# variable "deployed_object_storage_secret_name" {
+#   description = "the name of the deployed-object-storage secret"
+#   type        = string
+#   default     = "deployed-object-storage"
+# }
 
-variable "deployed_object_storage_secret_name" {
-  description = "the name of the deployed-object-storage secret"
-  type        = string
-  default     = "deployed-object-storage"
-}
+# variable "deployed_table_storage_secret_name" {
+#   description = "the name of the deployed-table-storage secret"
+#   type        = string
+#   default     = "deployed-table-storage"
+# }
 
-variable "deployed_table_storage_secret_name" {
-  description = "the name of the deployed-table-storage secret"
-  type        = string
-  default     = "deployed-table-storage"
-}
+# variable "deployed_queue_storage_secret_name" {
+#   description = "the name of the deployed-queue-storage secret"
+#   type        = string
+#   default     = "deployed-queue-storage"
+# }
 
-variable "deployed_queue_storage_secret_name" {
-  description = "the name of the deployed-queue-storage secret"
-  type        = string
-  default     = "deployed-queue-storage"
-}
-
-variable "s3_secret_name" {
-  description = "the name of the S3 secret"
-  type        = string
-  default     = "s3"
-}
+# variable "s3_secret_name" {
+#   description = "the name of the S3 secret"
+#   type        = string
+#   default     = "s3"
+# }
 
 variable "keda_chart_name" {
   description = "Name of the Keda Helm chart"
@@ -422,12 +422,12 @@ variable "static" {
   default     = {}
 }
 
-# nfs_parameters
-variable "pvc_name" {
-  description = "Name for the pvc to be used"
-  type        = string
-  default     = "nfsvolume"
-}
+# # nfs_parameters
+# variable "pvc_name" {
+#   description = "Name for the pvc to be used"
+#   type        = string
+#   default     = "nfsvolume"
+# }
 
 # metrics information
 variable "metrics_exporter" {
@@ -478,4 +478,15 @@ variable "pod_deletion_cost" {
     }))
   })
   default = null
+}
+
+# Extra configuration
+variable "others_conf" {
+  description = "Variable"
+  type = object({
+    database = any
+  })
+  default = {
+    database = {}
+  }
 }

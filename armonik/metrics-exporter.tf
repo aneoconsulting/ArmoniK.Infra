@@ -118,27 +118,27 @@ resource "kubernetes_deployment" "metrics_exporter" {
               value = env.value
             }
           }
-          dynamic "env" {
-            for_each = local.credentials
-            content {
-              name = env.key
-              value_from {
-                secret_key_ref {
-                  key      = env.value.key
-                  name     = env.value.name
-                  optional = false
-                }
-              }
-            }
-          }
-          dynamic "volume_mount" {
-            for_each = local.certificates
-            content {
-              name       = volume_mount.value.name
-              mount_path = volume_mount.value.mount_path
-              read_only  = true
-            }
-          }
+          # dynamic "env" {
+          #   for_each = local.credentials
+          #   content {
+          #     name = env.key
+          #     value_from {
+          #       secret_key_ref {
+          #         key      = env.value.key
+          #         name     = env.value.name
+          #         optional = false
+          #       }
+          #     }
+          #   }
+          # }
+          # dynamic "volume_mount" {
+          #   for_each = local.certificates
+          #   content {
+          #     name       = volume_mount.value.name
+          #     mount_path = volume_mount.value.mount_path
+          #     read_only  = true
+          #   }
+          # }
           #mount from conf
           dynamic "volume_mount" {
             for_each = module.metrics_aggregation.mount_secret
@@ -149,16 +149,16 @@ resource "kubernetes_deployment" "metrics_exporter" {
             }
           }
         }
-        dynamic "volume" {
-          for_each = local.certificates
-          content {
-            name = volume.value.name
-            secret {
-              secret_name = volume.value.secret_name
-              optional    = false
-            }
-          }
-        }
+        # dynamic "volume" {
+        #   for_each = local.certificates
+        #   content {
+        #     name = volume.value.name
+        #     secret {
+        #       secret_name = volume.value.secret_name
+        #       optional    = false
+        #     }
+        #   }
+        # }
       }
     }
   }

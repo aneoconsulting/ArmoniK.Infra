@@ -62,15 +62,37 @@ resource "kubernetes_cron_job_v1" "partitions_in_database" {
               image             = var.job_partitions_in_database.tag != "" ? "${var.job_partitions_in_database.image}:${var.job_partitions_in_database.tag}" : var.job_partitions_in_database.image
               image_pull_policy = var.job_partitions_in_database.image_pull_policy
               command           = ["/bin/bash", "-c", local.script_cron]
+              # dynamic "env" {
+              #   for_each = local.database_credentials
+              #   content {
+              #     name = env.key
+              #     value_from {
+              #       secret_key_ref {
+              #         key      = env.value.key
+              #         name     = env.value.name
+              #         optional = false
+              #       }
+              #     }
+              #   }
+              # }
+              #env from config
               dynamic "env" {
-                for_each = local.database_credentials
+                for_each = var.others_conf.database[0].env
+                content {
+                  name  = env.key
+                  value = env.value
+                }
+              }
+
+              #env from secret
+              dynamic "env" {
+                for_each = var.others_conf.database[0].env_from_secret
                 content {
                   name = env.key
                   value_from {
                     secret_key_ref {
-                      key      = env.value.key
-                      name     = env.value.name
-                      optional = false
+                      name = env.value.secret
+                      key  = env.value.field
                     }
                   }
                 }
@@ -80,17 +102,39 @@ resource "kubernetes_cron_job_v1" "partitions_in_database" {
                   name = kubernetes_config_map.jobs_in_database_config.metadata[0].name
                 }
               }
-              volume_mount {
-                name       = "mongodb-secret-volume"
-                mount_path = "/mongodb"
-                read_only  = true
+              # volume_mount {
+              #   name       = "mongodb-secret-volume"
+              #   mount_path = "/mongodb"
+              #   read_only  = true
+              # }
+              #mount from conf
+              dynamic "volume_mount" {
+                for_each = var.others_conf.database[0].mount_secret
+                content {
+                  mount_path = volume_mount.value.path
+                  name       = volume_mount.value.secret
+                  read_only  = true
+                }
               }
             }
-            volume {
-              name = "mongodb-secret-volume"
-              secret {
-                secret_name = local.secrets.mongodb.name
-                optional    = false
+            # volume {
+            #   name = "mongodb-secret-volume"
+            #   secret {
+            #     secret_name = local.secrets.mongodb.name
+            #     optional    = false
+            #   }
+            # }
+            #form conf
+            dynamic "volume" {
+              for_each = var.others_conf.database[0].mount_secret
+              content {
+
+                name = volume.value.secret
+                secret {
+                  secret_name  = volume.value.secret
+                  default_mode = volume.value.mode
+
+                }
               }
             }
           }
@@ -104,9 +148,9 @@ resource "kubernetes_cron_job_v1" "partitions_in_database" {
 locals {
   script_cron = <<EOF
 #!/bin/bash
-export nbElements=$(mongosh --tlsCAFile ${local.secrets.mongodb.ca_filename} --tlsAllowInvalidCertificates --tlsAllowInvalidHostnames --tls --username $MongoDB_User --password $MongoDB_Password mongodb://$MongoDB_Host:$MongoDB_Port/database?directConnection=false --eval 'db.PartitionData.countDocuments()' --quiet)
+export nbElements=$(mongosh --tlsCAFile $MongoDB__CAFile --tlsAllowInvalidCertificates --tlsAllowInvalidHostnames --tls --username $MongoDB__User --password $MongoDB__Password mongodb://$MongoDB__Host:$MongoDB__Port/database?directConnection=false --eval 'db.PartitionData.countDocuments()' --quiet)
 if [[ $nbElements != ${length(local.partition_names)} ]]; then
-  mongosh --tlsCAFile ${local.secrets.mongodb.ca_filename} --tlsAllowInvalidCertificates --tlsAllowInvalidHostnames --tls --username $MongoDB_User --password $MongoDB_Password mongodb://$MongoDB_Host:$MongoDB_Port/database?directConnection=false --eval 'db.PartitionData.insertMany(${jsonencode(local.partitions_data)})'
+  mongosh --tlsCAFile $MongoDB__CAFile --tlsAllowInvalidCertificates --tlsAllowInvalidHostnames --tls --username $MongoDB__User --password $MongoDB__Password mongodb://$MongoDB__Host:$MongoDB__Port/database?directConnection=false --eval 'db.PartitionData.insertMany(${jsonencode(local.partitions_data)})'
 fi
 EOF
 }

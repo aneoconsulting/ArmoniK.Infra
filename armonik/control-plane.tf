@@ -128,7 +128,7 @@ resource "kubernetes_deployment" "control_plane" {
           }
           #env from secret
           dynamic "env" {
-            for_each = { for k, v in jsondecode(jsonencode(module.control_plane_aggregation.env_from_secret)) : k => v }
+            for_each = module.control_plane_aggregation.env_from_secret
             content {
               name = env.key
               value_from {

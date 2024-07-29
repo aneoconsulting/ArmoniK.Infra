@@ -167,7 +167,7 @@ resource "kubernetes_deployment" "compute_plane" {
           }
           #env from secret
           dynamic "env" {
-            for_each = { for k, v in jsondecode(jsonencode(module.polling_agent_aggregation[each.key].env_from_secret)) : k => v }
+            for_each = module.polling_agent_aggregation[each.key].env_from_secret
             content {
               name = env.key
               value_from {
@@ -318,7 +318,7 @@ resource "kubernetes_deployment" "compute_plane" {
             }
             #env from secret
             dynamic "env" {
-              for_each = { for k, v in jsondecode(jsonencode(module.worker_aggregation[each.key].env_from_secret)) : k => v }
+              for_each = module.worker_aggregation[each.key].env_from_secret
               content {
                 name = env.key
                 value_from {

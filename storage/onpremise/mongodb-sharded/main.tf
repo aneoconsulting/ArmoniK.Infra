@@ -44,6 +44,16 @@ resource "helm_release" "mongodb" {
         "mongodbSystemLogVerbosity" = 5
         "initScriptsCM"             = kubernetes_config_map.database_init_script.metadata[0].name
         "extraEnvVarsCM"            = kubernetes_config_map.mongodb_extra_env_vars.metadata[0].name
+        "extraVolumes" = [{
+          name = "mongodb-cert"
+          secret = {
+            secretName = kubernetes_secret.mongodb_certificate.metadata[0].name
+          }
+        }]
+        "extraVolumeMounts" = [{
+          mountPath = "/mongodb/"
+          name      = "mongodb-cert"
+        }]
       }
 
       "volumePermissions" = {
@@ -60,47 +70,49 @@ resource "helm_release" "mongodb" {
       }
 
       "configsvr" = {
-        "replicaCount" = var.mongodb.configsvr_replicas_number
-        #   "mongodbExtraFlags" = var.mtls ? [""] : ["--tlsAllowConnectionsWithoutCertificates"]
-        #   "nodeSelector"      = var.mongodb.node_selector
+        "replicaCount"      = var.mongodb.configsvr_replicas_number
+        "mongodbExtraFlags" = local.mongodb_extra_flags
+        "nodeSelector"      = var.mongodb.node_selector
 
-        #   "tolerations" = var.mongodb.node_selector != {} ? [
-        #     for index in range(0, length(local.node_selector_keys)) : {
-        #       key   = local.node_selector_keys[index]
-        #       value = local.node_selector_values[index]
-        #     }
-        #   ] : []
+        "tolerations" = var.mongodb.node_selector != {} ? [
+          for key, value in var.mongodb.node_selector : {
+            "key"   = key
+            "value" = value
+          }
+        ] : []
+
+        podLabels = var.labels
       }
 
       "mongos" = {
-        "replicaCount" = var.mongodb.mongos_replicas_number
-        #   "mongodbExtraFlags" = var.mtls ? [""] : ["--tlsAllowConnectionsWithoutCertificates"]
-        #   "nodeSelector"      = var.mongodb.node_selector
+        "replicaCount"      = var.mongodb.mongos_replicas_number
+        "mongodbExtraFlags" = local.mongodb_extra_flags
+        "nodeSelector"      = var.mongodb.node_selector
 
-        #   "tolerations" = var.mongodb.node_selector != {} ? [
-        #     for index in range(0, length(local.node_selector_keys)) : {
-        #       key   = local.node_selector_keys[index]
-        #       value = local.node_selector_values[index]
-        #     }
-        #   ] : []
+        "tolerations" = var.mongodb.node_selector != {} ? [
+          for key, value in var.mongodb.node_selector : {
+            "key"   = key
+            "value" = value
+          }
+        ] : []
 
-        #   "podLabels"      = var.labels
+        "podLabels" = var.labels
       }
 
       "shardsvr" = {
         "dataNode" = {
-          "replicaCount" = var.mongodb.replicas_number
-          #     "mongodbExtraFlags" = var.mtls ? [""] : ["--tlsAllowConnectionsWithoutCertificates"]
-          #     "nodeSelector"      = var.mongodb.node_selector
+          "replicaCount"      = var.mongodb.replicas_number
+          "mongodbExtraFlags" = local.mongodb_extra_flags
+          "nodeSelector"      = var.mongodb.node_selector
 
-          #     "tolerations" = var.mongodb.node_selector != {} ? [
-          #       for index in range(0, length(local.node_selector_keys)) : {
-          #         key   = local.node_selector_keys[index]
-          #         value = local.node_selector_values[index]
-          #       }
-          #     ] : []
+          "tolerations" = var.mongodb.node_selector != {} ? [
+            for key, value in var.mongodb.node_selector : {
+              "key"   = key
+              "value" = value
+            }
+          ] : []
 
-          #     "podLabels" = var.labels
+          "podLabels" = var.labels
         }
 
         # "persistence" = {

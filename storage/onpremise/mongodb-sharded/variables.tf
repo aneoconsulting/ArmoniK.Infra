@@ -74,7 +74,7 @@ variable "persistent_volume" {
     condition     = var.persistent_volume == null
     error_message = <<EOT
     "For now, 'persistent_volume' variable must be null.
-    Custom persistent volume definition for MongoDB is soon to be implemented"
+    Custom persistent volume definition for MongoDB sharded is soon to be implemented"
     EOT
   }
 }

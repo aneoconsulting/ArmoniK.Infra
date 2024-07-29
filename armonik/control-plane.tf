@@ -147,35 +147,35 @@ resource "kubernetes_deployment" "control_plane" {
               }
             }
           }
-          dynamic "env" {
-            for_each = local.credentials
-            content {
-              name = env.key
-              value_from {
-                secret_key_ref {
-                  key      = env.value.key
-                  name     = env.value.name
-                  optional = false
-                }
-              }
-            }
-          }
-          dynamic "volume_mount" {
-            for_each = local.certificates
-            content {
-              name       = volume_mount.value.name
-              mount_path = volume_mount.value.mount_path
-              read_only  = true
-            }
-          }
+          # dynamic "env" {
+          #   for_each = local.credentials
+          #   content {
+          #     name = env.key
+          #     value_from {
+          #       secret_key_ref {
+          #         key      = env.value.key
+          #         name     = env.value.name
+          #         optional = false
+          #       }
+          #     }
+          #   }
+          # }
+          # dynamic "volume_mount" {
+          #   for_each = local.certificates
+          #   content {
+          #     name       = volume_mount.value.name
+          #     mount_path = volume_mount.value.mount_path
+          #     read_only  = true
+          #   }
+          # }
 
-          dynamic "volume_mount" {
-            for_each = local.object_storage_adapter == "ArmoniK.Adapters.LocalStorage.ObjectStorage" ? [1] : []
-            content {
-              name       = "nfs"
-              mount_path = local.local_storage_mount_path
-            }
-          }
+          # dynamic "volume_mount" {
+          #   for_each = local.object_storage_adapter == "ArmoniK.Adapters.LocalStorage.ObjectStorage" ? [1] : []
+          #   content {
+          #     name       = "nfs"
+          #     mount_path = local.local_storage_mount_path
+          #   }
+          # }
           #mount from conf
           dynamic "volume_mount" {
             for_each = module.control_plane_aggregation.mount_secret
@@ -186,39 +186,39 @@ resource "kubernetes_deployment" "control_plane" {
             }
           }
         }
-        dynamic "volume" {
-          for_each = local.certificates
-          content {
-            name = volume.value.name
-            secret {
-              secret_name = volume.value.secret_name
-              optional    = false
-            }
-          }
-        }
+        # dynamic "volume" {
+        #   for_each = local.certificates
+        #   content {
+        #     name = volume.value.name
+        #     secret {
+        #       secret_name = volume.value.secret_name
+        #       optional    = false
+        #     }
+        #   }
+        # }
 
-        dynamic "volume" {
-          for_each = local.object_storage_adapter == "ArmoniK.Adapters.LocalStorage.ObjectStorage" ? [1] : []
-          content {
-            name = "nfs"
-            persistent_volume_claim {
-              claim_name = var.pvc_name
-            }
-          }
-        }
+        # dynamic "volume" {
+        #   for_each = local.object_storage_adapter == "ArmoniK.Adapters.LocalStorage.ObjectStorage" ? [1] : []
+        #   content {
+        #     name = "nfs"
+        #     persistent_volume_claim {
+        #       claim_name = var.pvc_name
+        #     }
+        #   }
+        # }
 
 
 
         # Fluent-bit container
         dynamic "container" {
-          for_each = (!data.kubernetes_secret.fluent_bit.data.is_daemonset ? [1] : [])
+          for_each = (!var.fluent_bit_output.is_daemonset ? [1] : [])
           content {
-            name              = data.kubernetes_secret.fluent_bit.data.name
-            image             = "${data.kubernetes_secret.fluent_bit.data.image}:${data.kubernetes_secret.fluent_bit.data.tag}"
+            name              = var.fluent_bit_output.name
+            image             = "${var.fluent_bit_output.image}:${var.fluent_bit_output.tag}"
             image_pull_policy = "IfNotPresent"
             env_from {
               config_map_ref {
-                name = data.kubernetes_secret.fluent_bit.data.envvars
+                name = var.fluent_bit_output.configmaps.envvars
               }
             }
             # Please don't change below read-only permissions
@@ -245,7 +245,7 @@ resource "kubernetes_deployment" "control_plane" {
             dynamic "config_map" {
               for_each = (volume.value.type == "config_map" ? [1] : [])
               content {
-                name = data.kubernetes_secret.fluent_bit.data.config
+                name = var.fluent_bit_output.configmaps.config
               }
             }
           }

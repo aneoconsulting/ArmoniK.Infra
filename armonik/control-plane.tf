@@ -126,6 +126,19 @@ resource "kubernetes_deployment" "control_plane" {
               }
             }
           }
+          #env from secret
+          dynamic "env" {
+            for_each = { for k, v in jsondecode(jsonencode(module.control_plane_aggregation.env_from_secret)) : k => v }
+            content {
+              name = env.key
+              value_from {
+                secret_key_ref {
+                  name = env.value.secret
+                  key  = env.value.field
+                }
+              }
+            }
+          }
           dynamic "env_from" {
             for_each = local.control_plane_configmaps
             content {

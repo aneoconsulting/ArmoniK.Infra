@@ -165,6 +165,20 @@ resource "kubernetes_deployment" "compute_plane" {
               }
             }
           }
+          #env from secret
+          dynamic "env" {
+            for_each = { for k, v in jsondecode(jsonencode(module.polling_agent_aggregation[each.key].env_from_secret)) : k => v }
+            content {
+              name = env.key
+              value_from {
+                secret_key_ref {
+                  name = env.value.secret
+                  key  = env.value.field
+                }
+              }
+            }
+          }
+
           dynamic "env_from" {
             for_each = local.polling_agent_configmaps
             content {
@@ -300,6 +314,19 @@ resource "kubernetes_deployment" "compute_plane" {
                 mount_path = volume_mount.value.path
                 name       = volume_mount.value.secret
                 read_only  = true
+              }
+            }
+            #env from secret
+            dynamic "env" {
+              for_each = { for k, v in jsondecode(jsonencode(module.worker_aggregation[each.key].env_from_secret)) : k => v }
+              content {
+                name = env.key
+                value_from {
+                  secret_key_ref {
+                    name = env.value.secret
+                    key  = env.value.field
+                  }
+                }
               }
             }
             dynamic "env_from" {

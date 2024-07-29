@@ -100,7 +100,7 @@ resource "kubernetes_deployment" "metrics_exporter" {
           }
           #env from secret
           dynamic "env" {
-            for_each = { for k, v in jsondecode(jsonencode(module.metrics_aggregation.env_from_secret)) : k => v }
+            for_each = module.metrics_aggregation.env_from_secret
             content {
               name = env.key
               value_from {

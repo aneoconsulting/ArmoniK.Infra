@@ -56,13 +56,13 @@ resource "kubernetes_deployment" "example" {
 
       spec {
         dynamic "volume" {
-          for_each = keys(module.control_plane.mount_secret)
+          for_each = module.control_plane.mount_secret
           content {
 
-            name = module.control_plane.mount_secret[volume.value].secret
+            name = volume.value.secret
             secret {
-              secret_name  = module.control_plane.mount_secret[volume.value].secret
-              default_mode = module.control_plane.mount_secret[volume.value].mode
+              secret_name  = volume.value.secret
+              default_mode = volume.value.mode
 
             }
           }
@@ -100,10 +100,10 @@ resource "kubernetes_deployment" "example" {
           }
 
           dynamic "volume_mount" {
-            for_each = keys(module.control_plane.mount_secret)
+            for_each = module.control_plane.mount_secret
             content {
-              mount_path = module.control_plane.mount_secret[volume_mount.value].path
-              name       = module.control_plane.mount_secret[volume_mount.value].secret
+              mount_path = volume_mount.value.path
+              name       = volume_mount.value.secret
               read_only  = true
 
             }

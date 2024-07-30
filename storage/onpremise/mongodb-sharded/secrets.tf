@@ -32,7 +32,7 @@ resource "kubernetes_secret" "mongodb_user" {
 resource "kubernetes_secret" "mongodb" {
   metadata {
     name      = "mongodb"
-    namespace = var.namespace
+    namespace = helm_release.mongodb.namespace
   }
   data = {
     "chain.pem"        = format("%s\n%s", tls_locally_signed_cert.mongodb_certificate.cert_pem, tls_self_signed_cert.root_mongodb.cert_pem)

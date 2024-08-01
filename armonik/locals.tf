@@ -83,7 +83,7 @@ locals {
   # }
 
   # Shared storage
-  file_storage_type       = lower(var.shared_storage_settings.file_storage_type)
+  file_storage_type       = lower(lookup(var.shared_storage_settings, "file_storage_type", "FS"))
   check_file_storage_type = local.file_storage_type == "s3" ? "S3" : "FS"
   file_storage_endpoints = local.check_file_storage_type == "S3" ? {
     S3Storage__ServiceURL         = var.shared_storage_settings.service_url
@@ -266,27 +266,27 @@ locals {
     }
   }
 
-  # Configmaps for polling agent
-  polling_agent_configmaps = {
-    log           = kubernetes_config_map.log_config.metadata[0].name
-    polling_agent = kubernetes_config_map.polling_agent_config.metadata[0].name
-    core          = kubernetes_config_map.core_config.metadata[0].name
-    compute_plane = kubernetes_config_map.compute_plane_config.metadata[0].name
-  }
+  # # Configmaps for polling agent
+  # polling_agent_configmaps = {
+  #   log           = kubernetes_config_map.log_config.metadata[0].name
+  #   polling_agent = kubernetes_config_map.polling_agent_config.metadata[0].name
+  #   core          = kubernetes_config_map.core_config.metadata[0].name
+  #   compute_plane = kubernetes_config_map.compute_plane_config.metadata[0].name
+  # }
 
-  # Configmaps for worker
-  worker_configmaps = {
-    worker        = kubernetes_config_map.worker_config.metadata[0].name
-    compute_plane = kubernetes_config_map.compute_plane_config.metadata[0].name
-    log           = kubernetes_config_map.log_config.metadata[0].name
-  }
+  # # Configmaps for worker
+  # worker_configmaps = {
+  #   worker        = kubernetes_config_map.worker_config.metadata[0].name
+  #   compute_plane = kubernetes_config_map.compute_plane_config.metadata[0].name
+  #   log           = kubernetes_config_map.log_config.metadata[0].name
+  # }
 
-  # Configmaps for control plane
-  control_plane_configmaps = {
-    core          = kubernetes_config_map.core_config.metadata[0].name
-    log           = kubernetes_config_map.log_config.metadata[0].name
-    control_plane = kubernetes_config_map.control_plane_config.metadata[0].name
-  }
+  # # Configmaps for control plane
+  # control_plane_configmaps = {
+  #   core          = kubernetes_config_map.core_config.metadata[0].name
+  #   log           = kubernetes_config_map.log_config.metadata[0].name
+  #   control_plane = kubernetes_config_map.control_plane_config.metadata[0].name
+  # }
 
   # Partitions data
   partitions_data = [
@@ -357,4 +357,10 @@ locals {
     node_selector_keys   = keys(var.metrics_exporter.node_selector)
     node_selector_values = values(var.metrics_exporter.node_selector)
   }
+}
+
+#Aggregation for jobs-in-database, authentication-in-database, partitions-in-database
+module "partition_database_aggregation" {
+  source    = "../utils/aggregator"
+  conf_list = concat([module.job_aggregation, var.others_conf])
 }

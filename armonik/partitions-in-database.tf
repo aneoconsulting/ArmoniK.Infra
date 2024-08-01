@@ -61,7 +61,7 @@ resource "kubernetes_job" "partitions_in_database" {
           # }
           #env from config
           dynamic "env" {
-            for_each = var.others_conf.database[0].env
+            for_each = module.partition_database_aggregation.env
             content {
               name  = env.key
               value = env.value
@@ -70,7 +70,7 @@ resource "kubernetes_job" "partitions_in_database" {
 
           #env from secret
           dynamic "env" {
-            for_each = var.others_conf.database[0].env_from_secret
+            for_each = module.partition_database_aggregation.env_from_secret
             content {
               name = env.key
               value_from {
@@ -81,11 +81,19 @@ resource "kubernetes_job" "partitions_in_database" {
               }
             }
           }
-          env_from {
-            config_map_ref {
-              name = kubernetes_config_map.jobs_in_database_config.metadata[0].name
+          dynamic "env_from" {
+            for_each = module.partition_database_aggregation.env_configmap
+            content {
+              config_map_ref {
+                name = env_from.value
+              }
             }
           }
+          # env_from {
+          #   config_map_ref {
+          #     name = kubernetes_config_map.jobs_in_database_config.metadata[0].name
+          #   }
+          # }
           # volume_mount {
           #   name       = "mongodb-secret-volume"
           #   mount_path = "/mongodb"
@@ -93,7 +101,7 @@ resource "kubernetes_job" "partitions_in_database" {
           # }
           #mount from conf
           dynamic "volume_mount" {
-            for_each = var.others_conf.database[0].mount_secret
+            for_each = module.partition_database_aggregation.mount_secret
             content {
               mount_path = volume_mount.value.path
               name       = volume_mount.value.secret
@@ -110,7 +118,7 @@ resource "kubernetes_job" "partitions_in_database" {
         # }
         #form conf
         dynamic "volume" {
-          for_each = var.others_conf.database[0].mount_secret
+          for_each = module.partition_database_aggregation.mount_secret
           content {
 
             name = volume.value.secret

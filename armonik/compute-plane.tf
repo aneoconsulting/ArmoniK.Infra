@@ -2,13 +2,13 @@
 module "worker_aggregation" {
   source    = "../utils/aggregator"
   for_each  = var.compute_plane
-  conf_list = each.value.worker[0].conf
+  conf_list = concat([module.worker_map_aggregation, module.compute_aggregation, module.log_aggregation], each.value.worker[0].conf)
 }
 
 module "polling_agent_aggregation" {
   source    = "../utils/aggregator"
   for_each  = var.compute_plane
-  conf_list = each.value.polling_agent.conf
+  conf_list = concat([module.log_aggregation, module.polling_aggregation, module.core_aggregation, module.compute_aggregation], each.value.polling_agent.conf)
 }
 
 # Agent deployment
@@ -180,7 +180,7 @@ resource "kubernetes_deployment" "compute_plane" {
           }
 
           dynamic "env_from" {
-            for_each = local.polling_agent_configmaps
+            for_each = module.polling_agent_aggregation[each.key].env_configmap
             content {
               config_map_ref {
                 name = env_from.value
@@ -330,7 +330,7 @@ resource "kubernetes_deployment" "compute_plane" {
               }
             }
             dynamic "env_from" {
-              for_each = local.worker_configmaps
+              for_each = module.worker_aggregation[each.key].env_configmap
               content {
                 config_map_ref {
                   name = env_from.value

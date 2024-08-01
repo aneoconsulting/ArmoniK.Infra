@@ -1,7 +1,7 @@
 #Aggragation
 module "control_plane_aggregation" {
   source    = "../utils/aggregator"
-  conf_list = var.control_plane.conf
+  conf_list = concat([module.core_aggregation, module.log_aggregation, module.control_aggregation], var.control_plane.conf)
 }
 
 # Control plane deployment
@@ -140,7 +140,7 @@ resource "kubernetes_deployment" "control_plane" {
             }
           }
           dynamic "env_from" {
-            for_each = local.control_plane_configmaps
+            for_each = module.control_plane_aggregation.env_configmap
             content {
               config_map_ref {
                 name = env_from.value

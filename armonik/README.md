@@ -29,12 +29,18 @@
 | <a name="module_admin_0_8_gui_endpoint"></a> [admin\_0\_8\_gui\_endpoint](#module\_admin\_0\_8\_gui\_endpoint) | ../utils/service-ip | n/a |
 | <a name="module_admin_0_9_gui_endpoint"></a> [admin\_0\_9\_gui\_endpoint](#module\_admin\_0\_9\_gui\_endpoint) | ../utils/service-ip | n/a |
 | <a name="module_admin_gui_endpoint"></a> [admin\_gui\_endpoint](#module\_admin\_gui\_endpoint) | ../utils/service-ip | n/a |
+| <a name="module_compute_aggregation"></a> [compute\_aggregation](#module\_compute\_aggregation) | ../utils/aggregator | n/a |
+| <a name="module_control_aggregation"></a> [control\_aggregation](#module\_control\_aggregation) | ../utils/aggregator | n/a |
 | <a name="module_control_plane_aggregation"></a> [control\_plane\_aggregation](#module\_control\_plane\_aggregation) | ../utils/aggregator | n/a |
 | <a name="module_control_plane_endpoint"></a> [control\_plane\_endpoint](#module\_control\_plane\_endpoint) | ../utils/service-ip | n/a |
+| <a name="module_core_aggregation"></a> [core\_aggregation](#module\_core\_aggregation) | ../utils/aggregator | n/a |
 | <a name="module_ingress_endpoint"></a> [ingress\_endpoint](#module\_ingress\_endpoint) | ../utils/service-ip | n/a |
+| <a name="module_log_aggregation"></a> [log\_aggregation](#module\_log\_aggregation) | ../utils/aggregator | n/a |
 | <a name="module_metrics_aggregation"></a> [metrics\_aggregation](#module\_metrics\_aggregation) | ../utils/aggregator | n/a |
 | <a name="module_polling_agent_aggregation"></a> [polling\_agent\_aggregation](#module\_polling\_agent\_aggregation) | ../utils/aggregator | n/a |
+| <a name="module_polling_aggregation"></a> [polling\_aggregation](#module\_polling\_aggregation) | ../utils/aggregator | n/a |
 | <a name="module_worker_aggregation"></a> [worker\_aggregation](#module\_worker\_aggregation) | ../utils/aggregator | n/a |
+| <a name="module_worker_map_aggregation"></a> [worker\_map\_aggregation](#module\_worker\_map\_aggregation) | ../utils/aggregator | n/a |
 
 ## Resources
 
@@ -43,15 +49,9 @@
 | [helm_release.keda_hpa_compute_plane](https://registry.terraform.io/providers/hashicorp/helm/latest/docs/resources/release) | resource |
 | [helm_release.keda_hpa_control_plane](https://registry.terraform.io/providers/hashicorp/helm/latest/docs/resources/release) | resource |
 | [kubernetes_config_map.authmongo](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/config_map) | resource |
-| [kubernetes_config_map.compute_plane_config](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/config_map) | resource |
-| [kubernetes_config_map.control_plane_config](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/config_map) | resource |
-| [kubernetes_config_map.core_config](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/config_map) | resource |
 | [kubernetes_config_map.ingress](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/config_map) | resource |
 | [kubernetes_config_map.jobs_in_database_config](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/config_map) | resource |
-| [kubernetes_config_map.log_config](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/config_map) | resource |
-| [kubernetes_config_map.polling_agent_config](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/config_map) | resource |
 | [kubernetes_config_map.static](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/config_map) | resource |
-| [kubernetes_config_map.worker_config](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/config_map) | resource |
 | [kubernetes_cron_job_v1.partitions_in_database](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/cron_job_v1) | resource |
 | [kubernetes_deployment.admin_0_8_gui](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/deployment) | resource |
 | [kubernetes_deployment.admin_0_9_gui](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/deployment) | resource |

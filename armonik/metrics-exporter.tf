@@ -1,7 +1,7 @@
 #Aggragation
 module "metrics_aggregation" {
   source    = "../utils/aggregator"
-  conf_list = var.metrics_exporter.conf
+  conf_list = concat([module.core_aggregation], var.metrics_exporter.conf)
 }
 # Metrics exporter deployment
 resource "kubernetes_deployment" "metrics_exporter" {
@@ -76,11 +76,20 @@ resource "kubernetes_deployment" "metrics_exporter" {
             name           = var.metrics_exporter.port_name
             container_port = var.metrics_exporter.target_port
           }
-          env_from {
-            config_map_ref {
-              name = kubernetes_config_map.core_config.metadata[0].name
+
+          dynamic "env_from" {
+            for_each = module.metrics_aggregation.env_configmap
+            content {
+              config_map_ref {
+                name = env_from.value
+              }
             }
           }
+          # env_from {
+          #   config_map_ref {
+          #     name = kubernetes_config_map.core_config.metadata[0].name
+          #   }
+          # }
           #env from config
           dynamic "env" {
             for_each = module.metrics_aggregation.env

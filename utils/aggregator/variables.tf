@@ -34,3 +34,12 @@ variable "conf_list" {
     })), {})
   }))
 }
+
+variable "materialize_configmap" {
+  description = "Set to use the aggregatior to create a config map"
+  type = object({
+    name      = string
+    namespace = string
+  })
+  default = null
+}

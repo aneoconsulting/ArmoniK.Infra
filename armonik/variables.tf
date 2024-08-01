@@ -483,10 +483,6 @@ variable "pod_deletion_cost" {
 # Extra configuration
 variable "others_conf" {
   description = "Variable"
-  type = object({
-    database = any
-  })
-  default = {
-    database = {}
-  }
+  type        = any
+  default     = {}
 }

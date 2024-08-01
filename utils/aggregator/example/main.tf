@@ -26,8 +26,7 @@ module "redis" {
 
 module "control_plane" {
   source    = "../../aggregator"
-  conf_list = concat(module.activemq, module.redis)
-
+  conf_list = concat(module.activemq, module.redis, [module.core_aggregation])
 }
 
 resource "kubernetes_deployment" "example" {
@@ -94,6 +93,14 @@ resource "kubernetes_deployment" "example" {
             for_each = module.control_plane.env_secret
             content {
               secret_ref {
+                name = env_from.value
+              }
+            }
+          }
+          dynamic "env_from" {
+            for_each = module.control_plane.env_configmap
+            content {
+              config_map_ref {
                 name = env_from.value
               }
             }

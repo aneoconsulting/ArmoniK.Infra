@@ -194,38 +194,11 @@ resource "kubernetes_deployment" "compute_plane" {
               value = each.key
             }
           }
-          # dynamic "env" {
-          #   for_each = local.credentials
-          #   content {
-          #     name = env.key
-          #     value_from {
-          #       secret_key_ref {
-          #         key      = env.value.key
-          #         name     = env.value.name
-          #         optional = false
-          #       }
-          #     }
-          #   }
-          # }
           volume_mount {
             name       = "cache-volume"
             mount_path = "/cache"
           }
-          # dynamic "volume_mount" {
-          #   for_each = local.object_storage_adapter == "ArmoniK.Adapters.LocalStorage.ObjectStorage" ? [1] : []
-          #   content {
-          #     name       = "nfs"
-          #     mount_path = local.local_storage_mount_path
-          #   }
-          # }
-          # dynamic "volume_mount" {
-          #   for_each = local.certificates
-          #   content {
-          #     name       = volume_mount.value.name
-          #     mount_path = volume_mount.value.mount_path
-          #     read_only  = true
-          #   }
-          # }
+
           #mount from conf
           dynamic "volume_mount" {
             for_each = module.polling_agent_aggregation[each.key].mount_secret
@@ -236,15 +209,7 @@ resource "kubernetes_deployment" "compute_plane" {
             }
           }
         }
-        # dynamic "volume" {
-        #   for_each = local.object_storage_adapter == "ArmoniK.Adapters.LocalStorage.ObjectStorage" ? [1] : []
-        #   content {
-        #     name = "nfs"
-        #     persistent_volume_claim {
-        #       claim_name = var.pvc_name
-        #     }
-        #   }
-        # }
+
         # Containers of worker
         dynamic "container" {
           iterator = worker
@@ -358,17 +323,7 @@ resource "kubernetes_deployment" "compute_plane" {
             size_limit = try(each.value.cache_config.size_limit, null)
           }
         }
-        # dynamic "volume" {
-        #   for_each = (local.file_storage_type == "nfs" ? [1] : [])
-        #   content {
-        #     name = "shared-volume"
-        #     nfs {
-        #       path      = data.kubernetes_secret.shared_storage.data.host_path
-        #       server    = data.kubernetes_secret.shared_storage.data.file_server_ip
-        #       read_only = true
-        #     }
-        #   }
-        # }
+
         dynamic "volume" {
           for_each = (local.file_storage_type == "hostpath" ? [1] : [])
           content {
@@ -379,16 +334,7 @@ resource "kubernetes_deployment" "compute_plane" {
             }
           }
         }
-        # dynamic "volume" {
-        #   for_each = local.certificates
-        #   content {
-        #     name = volume.value.name
-        #     secret {
-        #       secret_name = volume.value.secret_name
-        #       optional    = false
-        #     }
-        #   }
-        # }
+
         # Fluent-bit container
         dynamic "container" {
           for_each = (!var.fluent_bit_output.is_daemonset ? [1] : [])

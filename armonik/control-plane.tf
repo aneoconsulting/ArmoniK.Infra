@@ -147,35 +147,7 @@ resource "kubernetes_deployment" "control_plane" {
               }
             }
           }
-          # dynamic "env" {
-          #   for_each = local.credentials
-          #   content {
-          #     name = env.key
-          #     value_from {
-          #       secret_key_ref {
-          #         key      = env.value.key
-          #         name     = env.value.name
-          #         optional = false
-          #       }
-          #     }
-          #   }
-          # }
-          # dynamic "volume_mount" {
-          #   for_each = local.certificates
-          #   content {
-          #     name       = volume_mount.value.name
-          #     mount_path = volume_mount.value.mount_path
-          #     read_only  = true
-          #   }
-          # }
 
-          # dynamic "volume_mount" {
-          #   for_each = local.object_storage_adapter == "ArmoniK.Adapters.LocalStorage.ObjectStorage" ? [1] : []
-          #   content {
-          #     name       = "nfs"
-          #     mount_path = local.local_storage_mount_path
-          #   }
-          # }
           #mount from conf
           dynamic "volume_mount" {
             for_each = module.control_plane_aggregation.mount_secret
@@ -186,28 +158,6 @@ resource "kubernetes_deployment" "control_plane" {
             }
           }
         }
-        # dynamic "volume" {
-        #   for_each = local.certificates
-        #   content {
-        #     name = volume.value.name
-        #     secret {
-        #       secret_name = volume.value.secret_name
-        #       optional    = false
-        #     }
-        #   }
-        # }
-
-        # dynamic "volume" {
-        #   for_each = local.object_storage_adapter == "ArmoniK.Adapters.LocalStorage.ObjectStorage" ? [1] : []
-        #   content {
-        #     name = "nfs"
-        #     persistent_volume_claim {
-        #       claim_name = var.pvc_name
-        #     }
-        #   }
-        # }
-
-
 
         # Fluent-bit container
         dynamic "container" {

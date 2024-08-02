@@ -1,3 +1,9 @@
+#Aggragation
+module "partition_metrics_exporter_aggregation" {
+  source    = "../../../../utils/aggregator"
+  conf_list = concat([module.partition_exporter_aggregation, var.conf])
+}
+
 # Partition metrics exporter deployment
 resource "kubernetes_deployment" "partition_metrics_exporter" {
   metadata {
@@ -58,40 +64,72 @@ resource "kubernetes_deployment" "partition_metrics_exporter" {
             name           = "metrics"
             container_port = 1080
           }
-          env_from {
-            config_map_ref {
-              name = kubernetes_config_map.partition_metrics_exporter_config.metadata[0].name
+          dynamic "env_from" {
+            for_each = module.partition_exporter_aggregation.env_configmap
+            content {
+              config_map_ref {
+                name = env_from.value
+              }
             }
           }
+          #env from config
           dynamic "env" {
-            for_each = local.credentials
+            for_each = module.partition_exporter_aggregation.env
+            content {
+              name  = env.key
+              value = env.value
+            }
+          }
+          #env secret from config
+          dynamic "env_from" {
+            for_each = module.partition_exporter_aggregation.env_secret
+            content {
+              secret_ref {
+                name = env_from.value
+              }
+            }
+          }
+          #env from secret
+          dynamic "env" {
+            for_each = module.partition_exporter_aggregation.env_from_secret
             content {
               name = env.key
               value_from {
                 secret_key_ref {
-                  key      = env.value.key
-                  name     = env.value.name
-                  optional = false
+                  name = env.value.secret
+                  key  = env.value.field
                 }
               }
             }
           }
-          dynamic "volume_mount" {
-            for_each = local.certificates
+          dynamic "env_from" {
+            for_each = module.partition_exporter_aggregation.env_configmap
             content {
-              name       = volume_mount.value.name
-              mount_path = volume_mount.value.mount_path
+              config_map_ref {
+                name = env_from.value
+              }
+            }
+          }
+          #mount from conf
+          dynamic "volume_mount" {
+            for_each = module.partition_exporter_aggregation.mount_secret
+            content {
+              mount_path = volume_mount.value.path
+              name       = volume_mount.value.secret
               read_only  = true
             }
           }
         }
+        #form conf
         dynamic "volume" {
-          for_each = local.certificates
+          for_each = module.partition_exporter_aggregation.mount_secret
           content {
-            name = volume.value.name
+
+            name = volume.value.secret
             secret {
-              secret_name = volume.value.secret_name
-              optional    = false
+              secret_name  = volume.value.secret
+              default_mode = volume.value.mode
+
             }
           }
         }

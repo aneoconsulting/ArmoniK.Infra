@@ -356,12 +356,6 @@ variable "metrics_exporter_output" {
   default     = {}
 }
 
-# variable "partition_metrics_exporter_output" {
-#   description = "the partition metrics exporter module output"
-#   type        = any
-#   default     = {}
-# }
-
 variable "seq_output" {
   description = "the seq module output"
   type        = any
@@ -373,30 +367,6 @@ variable "shared_storage_settings" {
   type        = any
   default     = {}
 }
-
-# variable "deployed_object_storage_secret_name" {
-#   description = "the name of the deployed-object-storage secret"
-#   type        = string
-#   default     = "deployed-object-storage"
-# }
-
-# variable "deployed_table_storage_secret_name" {
-#   description = "the name of the deployed-table-storage secret"
-#   type        = string
-#   default     = "deployed-table-storage"
-# }
-
-# variable "deployed_queue_storage_secret_name" {
-#   description = "the name of the deployed-queue-storage secret"
-#   type        = string
-#   default     = "deployed-queue-storage"
-# }
-
-# variable "s3_secret_name" {
-#   description = "the name of the S3 secret"
-#   type        = string
-#   default     = "s3"
-# }
 
 variable "keda_chart_name" {
   description = "Name of the Keda Helm chart"
@@ -421,13 +391,6 @@ variable "static" {
   type        = any
   default     = {}
 }
-
-# # nfs_parameters
-# variable "pvc_name" {
-#   description = "Name for the pvc to be used"
-#   type        = string
-#   default     = "nfsvolume"
-# }
 
 # metrics information
 variable "metrics_exporter" {

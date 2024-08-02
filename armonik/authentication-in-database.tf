@@ -50,19 +50,7 @@ resource "kubernetes_job" "authentication_in_database" {
           image             = var.authentication.tag != "" ? "${var.authentication.image}:${var.authentication.tag}" : var.authentication.image
           image_pull_policy = var.authentication.image_pull_policy
           command           = ["/bin/bash", "-c", local.authentication_script]
-          # dynamic "env" {
-          #   for_each = local.database_credentials
-          #   content {
-          #     name = env.key
-          #     value_from {
-          #       secret_key_ref {
-          #         key      = env.value.key
-          #         name     = env.value.name
-          #         optional = false
-          #       }
-          #     }
-          #   }
-          # }
+
           #env from config
           dynamic "env" {
             for_each = module.partition_database_aggregation.env
@@ -94,15 +82,10 @@ resource "kubernetes_job" "authentication_in_database" {
               }
             }
           }
-          # env_from {
-          #   config_map_ref {
-          #     name = kubernetes_config_map.jobs_in_database_config.metadata[0].name
-          #   }
-          # }
+
           dynamic "volume_mount" {
             for_each = {
               mongodb-script = "/mongodb/script"
-              #mongodb-secret-volume = "/mongodb"
             }
             content {
               name       = volume_mount.key
@@ -120,13 +103,6 @@ resource "kubernetes_job" "authentication_in_database" {
             }
           }
         }
-        # volume {
-        #   name = "mongodb-secret-volume"
-        #   secret {
-        #     secret_name = local.secrets.mongodb.name
-        #     optional    = false
-        #   }
-        # }
         volume {
           name = "mongodb-script"
           config_map {

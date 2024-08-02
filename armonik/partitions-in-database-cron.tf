@@ -62,19 +62,7 @@ resource "kubernetes_cron_job_v1" "partitions_in_database" {
               image             = var.job_partitions_in_database.tag != "" ? "${var.job_partitions_in_database.image}:${var.job_partitions_in_database.tag}" : var.job_partitions_in_database.image
               image_pull_policy = var.job_partitions_in_database.image_pull_policy
               command           = ["/bin/bash", "-c", local.script_cron]
-              # dynamic "env" {
-              #   for_each = local.database_credentials
-              #   content {
-              #     name = env.key
-              #     value_from {
-              #       secret_key_ref {
-              #         key      = env.value.key
-              #         name     = env.value.name
-              #         optional = false
-              #       }
-              #     }
-              #   }
-              # }
+
               #env from config
               dynamic "env" {
                 for_each = module.partition_database_aggregation.env
@@ -105,16 +93,7 @@ resource "kubernetes_cron_job_v1" "partitions_in_database" {
                   }
                 }
               }
-              # env_from {
-              #   config_map_ref {
-              #     name = kubernetes_config_map.jobs_in_database_config.metadata[0].name
-              #   }
-              # }
-              # volume_mount {
-              #   name       = "mongodb-secret-volume"
-              #   mount_path = "/mongodb"
-              #   read_only  = true
-              # }
+
               #mount from conf
               dynamic "volume_mount" {
                 for_each = module.partition_database_aggregation.mount_secret
@@ -125,13 +104,6 @@ resource "kubernetes_cron_job_v1" "partitions_in_database" {
                 }
               }
             }
-            # volume {
-            #   name = "mongodb-secret-volume"
-            #   secret {
-            #     secret_name = local.secrets.mongodb.name
-            #     optional    = false
-            #   }
-            # }
             #form conf
             dynamic "volume" {
               for_each = module.partition_database_aggregation.mount_secret

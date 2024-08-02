@@ -1,6 +1,6 @@
 locals {
   # EFS CSI
-  efs_csi_name                          = coalesce(var.efs_csi_name, "efs-csi-driver")
+  efs_csi_name                          = coalesce(var.efs_csi_name, "${var.name}-efs-csi-driver")
   oidc_arn                              = module.eks.oidc_provider_arn
   oidc_url                              = trimprefix(module.eks.cluster_oidc_issuer_url, "https://")
   efs_csi_namespace                     = coalesce(var.efs_csi_namespace, "kube-system")

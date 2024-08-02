@@ -35,8 +35,10 @@
 | <a name="module_control_plane_endpoint"></a> [control\_plane\_endpoint](#module\_control\_plane\_endpoint) | ../utils/service-ip | n/a |
 | <a name="module_core_aggregation"></a> [core\_aggregation](#module\_core\_aggregation) | ../utils/aggregator | n/a |
 | <a name="module_ingress_endpoint"></a> [ingress\_endpoint](#module\_ingress\_endpoint) | ../utils/service-ip | n/a |
+| <a name="module_job_aggregation"></a> [job\_aggregation](#module\_job\_aggregation) | ../utils/aggregator | n/a |
 | <a name="module_log_aggregation"></a> [log\_aggregation](#module\_log\_aggregation) | ../utils/aggregator | n/a |
 | <a name="module_metrics_aggregation"></a> [metrics\_aggregation](#module\_metrics\_aggregation) | ../utils/aggregator | n/a |
+| <a name="module_partition_database_aggregation"></a> [partition\_database\_aggregation](#module\_partition\_database\_aggregation) | ../utils/aggregator | n/a |
 | <a name="module_polling_agent_aggregation"></a> [polling\_agent\_aggregation](#module\_polling\_agent\_aggregation) | ../utils/aggregator | n/a |
 | <a name="module_polling_aggregation"></a> [polling\_aggregation](#module\_polling\_aggregation) | ../utils/aggregator | n/a |
 | <a name="module_worker_aggregation"></a> [worker\_aggregation](#module\_worker\_aggregation) | ../utils/aggregator | n/a |
@@ -50,7 +52,6 @@
 | [helm_release.keda_hpa_control_plane](https://registry.terraform.io/providers/hashicorp/helm/latest/docs/resources/release) | resource |
 | [kubernetes_config_map.authmongo](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/config_map) | resource |
 | [kubernetes_config_map.ingress](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/config_map) | resource |
-| [kubernetes_config_map.jobs_in_database_config](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/config_map) | resource |
 | [kubernetes_config_map.static](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/config_map) | resource |
 | [kubernetes_cron_job_v1.partitions_in_database](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/cron_job_v1) | resource |
 | [kubernetes_deployment.admin_0_8_gui](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/deployment) | resource |
@@ -122,7 +123,7 @@
 | <a name="input_metrics_exporter_output"></a> [metrics\_exporter\_output](#input\_metrics\_exporter\_output) | the metrics exporter module output | `any` | `{}` | no |
 | <a name="input_metrics_server_chart_name"></a> [metrics\_server\_chart\_name](#input\_metrics\_server\_chart\_name) | Name of the metrics-server Helm chart | `string` | `"metrics-server"` | no |
 | <a name="input_namespace"></a> [namespace](#input\_namespace) | Namespace of ArmoniK resources | `string` | n/a | yes |
-| <a name="input_others_conf"></a> [others\_conf](#input\_others\_conf) | Variable | <pre>object({<br>    database = any<br>  })</pre> | <pre>{<br>  "database": {}<br>}</pre> | no |
+| <a name="input_others_conf"></a> [others\_conf](#input\_others\_conf) | Variable | `any` | `{}` | no |
 | <a name="input_pod_deletion_cost"></a> [pod\_deletion\_cost](#input\_pod\_deletion\_cost) | value | <pre>object({<br>    image               = string<br>    tag                 = string<br>    image_pull_policy   = optional(string, "IfNotPresent")<br>    image_pull_secrets  = optional(string, "")<br>    node_selector       = optional(any, {})<br>    annotations         = optional(any, {})<br>    name                = optional(string, "pdc-update")<br>    label_app           = optional(string, "armonik")<br>    prometheus_url      = optional(string)<br>    metrics_name        = optional(string)<br>    period              = optional(number)<br>    ignore_younger_than = optional(number)<br>    concurrency         = optional(number)<br>    granularity         = optional(number)<br>    extra_conf          = optional(map(string), {})<br><br>    limits = optional(object({<br>      cpu    = optional(string)<br>      memory = optional(string)<br>    }))<br>    requests = optional(object({<br>      cpu    = optional(string)<br>      memory = optional(string)<br>    }))<br>  })</pre> | `null` | no |
 | <a name="input_prometheus_output"></a> [prometheus\_output](#input\_prometheus\_output) | the prometheus module output | `any` | `{}` | no |
 | <a name="input_seq_output"></a> [seq\_output](#input\_seq\_output) | the seq module output | `any` | `{}` | no |

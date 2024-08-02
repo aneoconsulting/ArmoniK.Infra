@@ -1,9 +1,11 @@
 data "kubernetes_config_map" "dns" {
   metadata {
-    name = "coredns"
-    # This dummy regex replace is used to ensure this data source is read *after* Kubernetes is up and running
-    namespace = replace(var.namespace, "/.*/", "kube-system")
+    name      = "coredns"
+    namespace = "kube-system"
   }
+
+  # This dependency ensures this data source is read *after* Kubernetes is up and running
+  depends_on = [kubernetes_config_map.core_config]
 }
 
 module "control_plane_endpoint" {

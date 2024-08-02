@@ -73,6 +73,8 @@ resource "helm_release" "mongodb" {
         "enabled"     = "true"
         "whenDeleted" = var.persistent_volume.reclaim_policy
       } : {}
+
+      "resources" = var.mongodb_resources
     })
   ]
 

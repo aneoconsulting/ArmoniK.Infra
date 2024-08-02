@@ -109,8 +109,7 @@ resource "aws_mq_configuration" "mq_configuration" {
     <transportConnector name="mqtt" uri="mqtt://0.0.0.0:1883?maximumConnections=1000&amp;wireFormat.maxFrameSize=104857600"/>
     <transportConnector name="ws" uri="ws://0.0.0.0:61614?maximumConnections=1000&amp;wireFormat.maxFrameSize=104857600"/>
     -->
-    <transportConnector name="openwire" uri="amqp+ssl://0.0.0.0:5672?maximumConnections=1000000&amp;wireFormat.maxFrameSize=1048576000" updateClusterClients="true" rebalanceClusterClients="true" updateClusterClientsOnRemove="true"/>
-
+    <transportConnector name="openwire" rebalanceClusterClients="true" updateClusterClients="true" updateClusterClientsOnRemove="true"/>
   </transportConnectors>
 </broker>
 DATA

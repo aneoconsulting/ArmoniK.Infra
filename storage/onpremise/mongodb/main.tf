@@ -56,14 +56,16 @@ resource "helm_release" "mongodb" {
         "runAsGroup" = var.security_context.fs_group
       }
 
-      "arbiter" = local.architecture == "replicaset" ? {
+      "arbiter" = {
         "tolerations" = var.mongodb.node_selector != {} ? [
           for key, value in var.mongodb.node_selector : {
             "key"   = key
             "value" = value
           }
         ] : []
-      } : {}
+
+        "resources" = var.arbiter_resources
+      }
 
       # As the parameter 'tls.mTLS.enabled' set to false doesn't seem to work (chart v15.1.4) this an
       # alternative to allow mTLS to not be mandatory

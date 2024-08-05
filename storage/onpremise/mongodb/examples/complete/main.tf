@@ -21,6 +21,18 @@ module "complete_mongodb_instance" {
     tag                   = "7.0.12-debian-12-r0"
   }
 
+  mongodb_resources = {
+    limits = {
+      memory = "900Mi"
+    }
+  }
+
+  arbiter_resources = {
+    requests = {
+      "cpu" = "300m"
+    }
+  }
+
   persistent_volume = {
     access_mode         = ["ReadWriteOnce"]
     reclaim_policy      = "Delete"

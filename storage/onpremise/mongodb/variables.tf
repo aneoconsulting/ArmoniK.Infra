@@ -46,30 +46,29 @@ variable "mongodb_resources" {
     limits = optional(object({
       cpu    = optional(string, "750m")
       memory = optional(string, "768Mi")
-      }), {
-      cpu    = "750m"
-      memory = "768Mi"
-    })
+    }), {})
     requests = optional(object({
       cpu    = optional(string, "500m")
       memory = optional(string, "512Mi")
-      }), {
-      cpu    = "500m"
-      memory = "512Mi"
-    })
+    }), {})
   })
-  default = {
-    limits = {
-      cpu    = "750m"
-      memory = "768Mi"
-    }
-    requests = {
-      cpu    = "500m"
-      memory = "512Mi"
-    }
-  }
+  default = {}
 }
 
+variable "arbiter_resources" {
+  description = "CPU and Memory limits and requests for MongoDB arbiter"
+  type = object({
+    limits = optional(object({
+      cpu    = optional(string, "750m")
+      memory = optional(string, "768Mi")
+    }), {})
+    requests = optional(object({
+      cpu    = optional(string, "500m")
+      memory = optional(string, "512Mi")
+    }), {})
+  })
+  default = {}
+}
 
 variable "persistent_volume" {
   description = "Persistent Volume parameters for MongoDB pods"

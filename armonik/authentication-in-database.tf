@@ -74,10 +74,32 @@ resource "kubernetes_job" "authentication_in_database" {
             }
           }
 
+          dynamic "env" {
+            for_each = module.partition_database_aggregation.env_from_configmap
+            content {
+              name = env.key
+              value_from {
+                config_map_key_ref {
+                  name = env.value.configmap
+                  key  = env.value.field
+                }
+              }
+            }
+          }
+
           dynamic "env_from" {
             for_each = module.partition_database_aggregation.env_configmap
             content {
               config_map_ref {
+                name = env_from.value
+              }
+            }
+          }
+
+          dynamic "env_from" {
+            for_each = module.partition_database_aggregation.env_secret
+            content {
+              secret_ref {
                 name = env_from.value
               }
             }
@@ -102,6 +124,16 @@ resource "kubernetes_job" "authentication_in_database" {
               read_only  = true
             }
           }
+
+          dynamic "volume_mount" {
+            for_each = module.partition_database_aggregation.mount_configmap
+            content {
+              name       = volume.value.configmap
+              mount_path = volume.value.path
+              sub_path   = lookup(volume.value, "subpath", null)
+              read_only  = true
+            }
+          }
         }
         volume {
           name = "mongodb-script"
@@ -120,6 +152,25 @@ resource "kubernetes_job" "authentication_in_database" {
               secret_name  = volume.value.secret
               default_mode = volume.value.mode
 
+            }
+          }
+        }
+
+        dynamic "volume" {
+          for_each = module.partition_database_aggregation.mount_configmap
+          content {
+            name = volume.value.configmap
+            config_map {
+              name         = volume.value.configmap
+              default_mode = volume.value.mode
+              dynamic "items" {
+                for_each = lookup(volume.value, "items", {})
+                content {
+                  key  = items.key
+                  path = items.value.field
+                  mode = items.value.mode
+                }
+              }
             }
           }
         }

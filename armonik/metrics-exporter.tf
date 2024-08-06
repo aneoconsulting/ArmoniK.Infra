@@ -1,7 +1,7 @@
 #Aggragation
 module "metrics_aggregation" {
   source    = "../utils/aggregator"
-  conf_list = concat([module.core_aggregation], var.metrics_exporter.conf)
+  conf_list = concat([module.core_aggregation], var.metrics_exporter.conf, [for key, value in var.extra_conf.metrics : { (key) = value }])
 }
 # Metrics exporter deployment
 resource "kubernetes_deployment" "metrics_exporter" {
@@ -68,6 +68,25 @@ resource "kubernetes_deployment" "metrics_exporter" {
             }
           }
         }
+
+        dynamic "volume" {
+          for_each = module.metrics_aggregation.mount_configmap
+          content {
+            name = volume.value.configmap
+            config_map {
+              name         = volume.value.configmap
+              default_mode = volume.value.mode
+              dynamic "items" {
+                for_each = lookup(volume.value, "items", {})
+                content {
+                  key  = items.key
+                  path = items.value.field
+                  mode = items.value.mode
+                }
+              }
+            }
+          }
+        }
         container {
           name              = var.metrics_exporter.name
           image             = var.metrics_exporter.tag != "" ? "${var.metrics_exporter.image}:${var.metrics_exporter.tag}" : var.metrics_exporter.image
@@ -116,10 +135,15 @@ resource "kubernetes_deployment" "metrics_exporter" {
             }
           }
           dynamic "env" {
-            for_each = var.extra_conf.metrics
+            for_each = module.metrics_aggregation.env_from_configmap
             content {
-              name  = env.key
-              value = env.value
+              name = env.key
+              value_from {
+                config_map_key_ref {
+                  name = env.value.configmap
+                  key  = env.value.field
+                }
+              }
             }
           }
           #mount from conf
@@ -128,6 +152,15 @@ resource "kubernetes_deployment" "metrics_exporter" {
             content {
               mount_path = volume_mount.value.path
               name       = volume_mount.value.secret
+              read_only  = true
+            }
+          }
+          dynamic "volume_mount" {
+            for_each = module.metrics_aggregation.mount_configmap
+            content {
+              name       = volume.value.configmap
+              mount_path = volume.value.path
+              sub_path   = lookup(volume.value, "subpath", null)
               read_only  = true
             }
           }

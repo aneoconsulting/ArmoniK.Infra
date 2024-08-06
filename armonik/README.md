@@ -26,8 +26,6 @@
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_admin_0_8_gui_endpoint"></a> [admin\_0\_8\_gui\_endpoint](#module\_admin\_0\_8\_gui\_endpoint) | ../utils/service-ip | n/a |
-| <a name="module_admin_0_9_gui_endpoint"></a> [admin\_0\_9\_gui\_endpoint](#module\_admin\_0\_9\_gui\_endpoint) | ../utils/service-ip | n/a |
 | <a name="module_admin_gui_endpoint"></a> [admin\_gui\_endpoint](#module\_admin\_gui\_endpoint) | ../utils/service-ip | n/a |
 | <a name="module_compute_aggregation"></a> [compute\_aggregation](#module\_compute\_aggregation) | ../utils/aggregator | n/a |
 | <a name="module_control_aggregation"></a> [control\_aggregation](#module\_control\_aggregation) | ../utils/aggregator | n/a |
@@ -54,8 +52,6 @@
 | [kubernetes_config_map.ingress](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/config_map) | resource |
 | [kubernetes_config_map.static](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/config_map) | resource |
 | [kubernetes_cron_job_v1.partitions_in_database](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/cron_job_v1) | resource |
-| [kubernetes_deployment.admin_0_8_gui](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/deployment) | resource |
-| [kubernetes_deployment.admin_0_9_gui](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/deployment) | resource |
 | [kubernetes_deployment.admin_gui](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/deployment) | resource |
 | [kubernetes_deployment.compute_plane](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/deployment) | resource |
 | [kubernetes_deployment.control_plane](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/deployment) | resource |
@@ -69,8 +65,6 @@
 | [kubernetes_secret.ingress_certificate](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
 | [kubernetes_secret.ingress_client_certificate](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
 | [kubernetes_secret.ingress_client_certificate_authority](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
-| [kubernetes_service.admin_0_8_gui](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/service) | resource |
-| [kubernetes_service.admin_0_9_gui](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/service) | resource |
 | [kubernetes_service.admin_gui](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/service) | resource |
 | [kubernetes_service.control_plane](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/service) | resource |
 | [kubernetes_service.ingress](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/service) | resource |
@@ -101,8 +95,6 @@
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_admin_0_8_gui"></a> [admin\_0\_8\_gui](#input\_admin\_0\_8\_gui) | Parameters of the admin GUI v0.8 | <pre>object({<br>    api = object({<br>      name  = string<br>      image = string<br>      tag   = string<br>      port  = number<br>      limits = object({<br>        cpu    = string<br>        memory = string<br>      })<br>      requests = object({<br>        cpu    = string<br>        memory = string<br>      })<br>    })<br>    app = object({<br>      name  = string<br>      image = string<br>      tag   = string<br>      port  = number<br>      limits = object({<br>        cpu    = string<br>        memory = string<br>      })<br>      requests = object({<br>        cpu    = string<br>        memory = string<br>      })<br>    })<br>    service_type       = string<br>    replicas           = number<br>    image_pull_policy  = string<br>    image_pull_secrets = string<br>    node_selector      = any<br>  })</pre> | `null` | no |
-| <a name="input_admin_0_9_gui"></a> [admin\_0\_9\_gui](#input\_admin\_0\_9\_gui) | Parameters of the admin GUI v0.9 | <pre>object({<br>    name  = string<br>    image = string<br>    tag   = string<br>    port  = number<br>    limits = object({<br>      cpu    = string<br>      memory = string<br>    })<br>    requests = object({<br>      cpu    = string<br>      memory = string<br>    })<br>    service_type       = string<br>    replicas           = number<br>    image_pull_policy  = string<br>    image_pull_secrets = string<br>    node_selector      = any<br>  })</pre> | `null` | no |
 | <a name="input_admin_gui"></a> [admin\_gui](#input\_admin\_gui) | Parameters of the admin GUI | <pre>object({<br>    name  = string<br>    image = string<br>    tag   = string<br>    port  = number<br>    limits = object({<br>      cpu    = string<br>      memory = string<br>    })<br>    requests = object({<br>      cpu    = string<br>      memory = string<br>    })<br>    service_type       = string<br>    replicas           = number<br>    image_pull_policy  = string<br>    image_pull_secrets = string<br>    node_selector      = any<br>  })</pre> | `null` | no |
 | <a name="input_authentication"></a> [authentication](#input\_authentication) | Authentication behavior | <pre>object({<br>    name                    = string<br>    image                   = string<br>    tag                     = string<br>    image_pull_policy       = string<br>    image_pull_secrets      = string<br>    node_selector           = any<br>    authentication_datafile = string<br>    require_authentication  = bool<br>    require_authorization   = bool<br>  })</pre> | n/a | yes |
 | <a name="input_chart_name"></a> [chart\_name](#input\_chart\_name) | Name for chart | `string` | `"keda-hpa"` | no |

@@ -67,6 +67,25 @@ resource "kubernetes_deployment" "control_plane" {
             }
           }
         }
+
+        dynamic "volume" {
+          for_each = module.control_plane_aggregation.mount_configmap
+          content {
+            name = volume.value.configmap
+            config_map {
+              name         = volume.value.configmap
+              default_mode = volume.value.mode
+              dynamic "items" {
+                for_each = lookup(volume.value, "items", {})
+                content {
+                  key  = items.key
+                  path = items.value.field
+                  mode = items.value.mode
+                }
+              }
+            }
+          }
+        }
         restart_policy       = "Always" # Always, OnFailure, Never
         service_account_name = var.control_plane.service_account_name
         # Control plane container
@@ -139,6 +158,19 @@ resource "kubernetes_deployment" "control_plane" {
               }
             }
           }
+
+          dynamic "env" {
+            for_each = module.control_plane_aggregation.env_from_configmap
+            content {
+              name = env.key
+              value_from {
+                config_map_key_ref {
+                  name = env.value.configmap
+                  key  = env.value.field
+                }
+              }
+            }
+          }
           dynamic "env_from" {
             for_each = module.control_plane_aggregation.env_configmap
             content {
@@ -154,6 +186,16 @@ resource "kubernetes_deployment" "control_plane" {
             content {
               mount_path = volume_mount.value.path
               name       = volume_mount.value.secret
+              read_only  = true
+            }
+          }
+
+          dynamic "volume_mount" {
+            for_each = module.control_plane_aggregation.mount_configmap
+            content {
+              name       = volume.value.configmap
+              mount_path = volume.value.path
+              sub_path   = lookup(volume.value, "subpath", null)
               read_only  = true
             }
           }

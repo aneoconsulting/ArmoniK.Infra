@@ -69,48 +69,6 @@ server {
         proxy_pass $admin_app_upstream$uri$is_args$args;
     }
 %{endif~}
-%{if local.admin_0_9_url != null~}
-    # Deprecated, must be removed in a new version
-    location = /admin-0.9 {
-        rewrite ^ $scheme://$http_host/admin-0.9/$accept_language/;
-    }
-    # Deprecated, must be removed in a new version
-    location = /admin-0.9/ {
-        rewrite ^ $scheme://$http_host/admin-0.9/$accept_language/;
-    }
-%{for lang in var.ingress.langs~}
-    # Deprecated, must be removed in a new version
-    location = /admin-0.9/${lang} {
-        rewrite ^ $scheme://$http_host/admin-0.9/${lang}/;
-    }
-%{endfor~}
-    set $admin_0_9_upstream ${local.admin_0_9_url};
-    # Deprecated, must be removed in a new version
-    location /admin-0.9/ {
-        proxy_pass $admin_0_9_upstream$uri$is_args$args;
-    }
-%{endif~}
-%{if local.admin_0_8_url != null~}
-    # Deprecated, must be removed in a new version. Keeped for retrocompatibility
-    location = /old-admin {
-        rewrite ^ $scheme://$http_host/admin-0.8/ permanent;
-    }
-    # Deprecated, must be removed in a new version
-    location = /admin-0.8 {
-        rewrite ^ $scheme://$http_host/admin-0.8/ permanent;
-    }
-    set $admin_0_8_upstream ${local.admin_0_8_url};
-    set $admin_api_upstream ${local.admin_api_url};
-    # Deprecated, must be removed in a new version
-    location /admin-0.8/ {
-        proxy_pass $admin_0_8_upstream$uri$is_args$args;
-    }
-    # Deprecated, must be removed in a new version
-    location /api {
-        proxy_pass $admin_api_upstream$uri$is_args$args;
-    }
-%{endif~}
-
     set $armonik_upstream grpc://${local.control_plane_endpoints.ip}:${local.control_plane_endpoints.port};
     location ~* ^/armonik\. {
 %{if var.ingress != null ? var.ingress.mtls : false~}

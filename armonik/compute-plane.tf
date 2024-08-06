@@ -8,7 +8,7 @@ module "worker_aggregation" {
 module "polling_agent_aggregation" {
   source    = "../utils/aggregator"
   for_each  = var.compute_plane
-  conf_list = concat([module.log_aggregation, module.polling_aggregation, module.core_aggregation, module.compute_aggregation], each.value.polling_agent.conf)
+  conf_list = concat([module.log_aggregation, module.polling_aggregation, module.core_aggregation, module.compute_aggregation], [for queue in tolist(local.supported_queues) : { queue = queue }], each.value.polling_agent.conf)
 }
 
 # Agent deployment
@@ -69,7 +69,7 @@ resource "kubernetes_deployment" "compute_plane" {
         }
         #form conf
         dynamic "volume" {
-          for_each = module.polling_agent_aggregation[each.key].mount_secret
+          for_each = merge(module.polling_agent_aggregation[each.key].mount_secret, module.worker_aggregation[each.key].mount_secret)
           content {
 
             name = volume.value.secret
@@ -80,15 +80,22 @@ resource "kubernetes_deployment" "compute_plane" {
             }
           }
         }
+
         dynamic "volume" {
-          for_each = module.worker_aggregation[each.key].mount_secret
+          for_each = merge(module.polling_agent_aggregation[each.key].mount_configmap, module.worker_aggregation[each.key].mount_configmap)
           content {
-
-            name = volume.value.secret
-            secret {
-              secret_name  = volume.value.secret
+            name = volume.value.configmap
+            config_map {
+              name         = volume.value.configmap
               default_mode = volume.value.mode
-
+              dynamic "items" {
+                for_each = lookup(volume.value, "items", {})
+                content {
+                  key  = items.key
+                  path = items.value.field
+                  mode = items.value.mode
+                }
+              }
             }
           }
         }
@@ -179,6 +186,19 @@ resource "kubernetes_deployment" "compute_plane" {
             }
           }
 
+          dynamic "env" {
+            for_each = module.polling_agent_aggregation[each.key].env_from_configmap
+            content {
+              name = env.key
+              value_from {
+                config_map_key_ref {
+                  name = env.value.configmap
+                  key  = env.value.field
+                }
+              }
+            }
+          }
+
           dynamic "env_from" {
             for_each = module.polling_agent_aggregation[each.key].env_configmap
             content {
@@ -187,13 +207,7 @@ resource "kubernetes_deployment" "compute_plane" {
               }
             }
           }
-          dynamic "env" {
-            for_each = local.supported_queues
-            content {
-              name  = env.value
-              value = each.key
-            }
-          }
+
           volume_mount {
             name       = "cache-volume"
             mount_path = "/cache"
@@ -205,6 +219,16 @@ resource "kubernetes_deployment" "compute_plane" {
             content {
               mount_path = volume_mount.value.path
               name       = volume_mount.value.secret
+              read_only  = true
+            }
+          }
+
+          dynamic "volume_mount" {
+            for_each = module.polling_agent_aggregation[each.key].mount_configmap
+            content {
+              name       = volume.value.configmap
+              mount_path = volume.value.path
+              sub_path   = lookup(volume.value, "subpath", null)
               read_only  = true
             }
           }
@@ -281,6 +305,17 @@ resource "kubernetes_deployment" "compute_plane" {
                 read_only  = true
               }
             }
+
+            dynamic "volume_mount" {
+              for_each = module.worker_aggregation[each.key].mount_configmap
+              content {
+                name       = volume.value.configmap
+                mount_path = volume.value.path
+                sub_path   = lookup(volume.value, "subpath", null)
+                read_only  = true
+              }
+            }
+
             #env from secret
             dynamic "env" {
               for_each = module.worker_aggregation[each.key].env_from_secret
@@ -294,6 +329,20 @@ resource "kubernetes_deployment" "compute_plane" {
                 }
               }
             }
+
+            dynamic "env" {
+              for_each = module.worker_aggregation[each.key].env_from_configmap
+              content {
+                name = env.key
+                value_from {
+                  config_map_key_ref {
+                    name = env.value.configmap
+                    key  = env.value.field
+                  }
+                }
+              }
+            }
+
             dynamic "env_from" {
               for_each = module.worker_aggregation[each.key].env_configmap
               content {

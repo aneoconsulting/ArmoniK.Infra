@@ -21,16 +21,6 @@ locals {
   admin_gui_node_selector_keys   = keys(local.admin_gui_node_selector)
   admin_gui_node_selector_values = values(local.admin_gui_node_selector)
 
-  # Node selector for admin GUI 0.9
-  admin_0_9_gui_node_selector        = try(var.admin_0_9_gui.node_selector, {})
-  admin_0_9_gui_node_selector_keys   = keys(local.admin_0_9_gui_node_selector)
-  admin_0_9_gui_node_selector_values = values(local.admin_0_9_gui_node_selector)
-
-  # Node selector for admin GUI 0.8
-  admin_0_8_gui_node_selector        = try(var.admin_0_8_gui.node_selector, {})
-  admin_0_8_gui_node_selector_keys   = keys(local.admin_0_8_gui_node_selector)
-  admin_0_8_gui_node_selector_values = values(local.admin_0_8_gui_node_selector)
-
   # Node selector for compute plane
   compute_plane_node_selector        = { for partition, compute_plane in var.compute_plane : partition => try(compute_plane.node_selector, {}) }
   compute_plane_node_selector_keys   = { for partition in local.partition_names : partition => keys(local.compute_plane_node_selector[partition]) }

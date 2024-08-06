@@ -57,15 +57,32 @@ resource "kubernetes_deployment" "example" {
         dynamic "volume" {
           for_each = module.control_plane.mount_secret
           content {
-
             name = volume.value.secret
             secret {
               secret_name  = volume.value.secret
               default_mode = volume.value.mode
-
             }
           }
         }
+        dynamic "volume" {
+          for_each = module.control_plane.mount_configmap
+          content {
+            name = volume.value.configmap
+            config_map {
+              name         = volume.value.configmap
+              default_mode = volume.value.mode
+              dynamic "items" {
+                for_each = lookup(volume.value, "items", {})
+                content {
+                  key  = items.key
+                  path = items.value.field
+                  mode = items.value.mode
+                }
+              }
+            }
+          }
+        }
+
 
         container {
           image = "nginx:1.21.6"
@@ -86,6 +103,31 @@ resource "kubernetes_deployment" "example" {
             content {
               name  = env.key
               value = env.value
+            }
+          }
+
+          dynamic "env" {
+            for_each = module.control_plane.env_from_secret
+            content {
+              name = env.key
+              value_from {
+                secret_key_ref {
+                  name = env.value.secret
+                  key  = env.value.field
+                }
+              }
+            }
+          }
+          dynamic "env" {
+            for_each = module.control_plane.env_from_configmap
+            content {
+              name = env.key
+              value_from {
+                config_map_key_ref {
+                  name = env.value.configmap
+                  key  = env.value.field
+                }
+              }
             }
           }
 
@@ -112,9 +154,16 @@ resource "kubernetes_deployment" "example" {
               mount_path = volume_mount.value.path
               name       = volume_mount.value.secret
               read_only  = true
-
             }
-
+          }
+          dynamic "volume_mount" {
+            for_each = module.control_plane.mount_configmap
+            content {
+              name       = volume.value.configmap
+              mount_path = volume.value.path
+              sub_path   = lookup(volume.value, "subpath", null)
+              read_only  = true
+            }
           }
 
           liveness_probe {

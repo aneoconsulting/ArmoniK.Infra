@@ -148,7 +148,7 @@ server {
 
 
 %{if length(var.seq_output) > 0~}
-    set $seq_upstream ${var.seq_output[0].web_url};
+    set $seq_upstream ${var.seq_output.web_url};
     location = /seq {
         rewrite ^ $scheme://$http_host/seq/ permanent;
     }
@@ -167,7 +167,7 @@ server {
     }
 %{endif~}
 %{if length(var.grafana_output) > 0~}
-    set $grafana_upstream ${var.grafana_output[0].url};
+    set $grafana_upstream ${var.grafana_output.url};
     location = /grafana {
         rewrite ^ $scheme://$http_host/grafana/ permanent;
     }

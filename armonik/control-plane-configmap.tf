@@ -2,10 +2,14 @@
 module "control_aggregation" {
   source = "../utils/aggregator"
   conf_list = [{
-    env = merge({
-      Submitter__DefaultPartition = (local.default_partition == null || local.default_partition == "" || !contains(local.partition_names, local.default_partition) ? (length(local.partition_names) > 0 ? local.partition_names[0] : "") : local.default_partition)
-    }, var.extra_conf.control)
-  }]
+    env = {
+      Submitter__DefaultPartition = try(contains(local.partition_names, coalesce(local.default_partition)), false) ? local.default_partition : try(local.partition_names[0], "")
+    }
+    },
+    {
+      env = var.extra_conf.control
+    }
+  ]
   materialize_configmap = {
     name      = "control-plane-configmap"
     namespace = var.namespace

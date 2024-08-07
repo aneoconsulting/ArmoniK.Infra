@@ -58,7 +58,6 @@ resource "kubernetes_deployment" "control_plane" {
         dynamic "volume" {
           for_each = module.control_plane_aggregation.mount_secret
           content {
-
             name = volume.value.secret
             secret {
               secret_name  = volume.value.secret

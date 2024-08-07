@@ -46,7 +46,7 @@ locals {
   ingress_annotations       = try(var.ingress.annotations, {})
 
   # Shared storage
-  file_storage_type       = lower(lookup(var.shared_storage_settings, "file_storage_type", "FS"))
+  file_storage_type       = var.shared_storage_settings != null ? lower(var.shared_storage_settings.file_storage_type) : "FS"
   check_file_storage_type = local.file_storage_type == "s3" ? "S3" : "FS"
   file_storage_endpoints = local.check_file_storage_type == "S3" ? {
     S3Storage__ServiceURL         = var.shared_storage_settings.service_url

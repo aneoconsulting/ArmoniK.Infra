@@ -266,38 +266,77 @@ variable "authentication" {
 # The output of modules.
 variable "fluent_bit_output" {
   description = "the fluent-bit module output"
-  type        = any
-  default     = {}
+  type = object({
+    configmaps = object({
+      envvars = string
+      config  = string
+    })
+    container_name = string
+    image          = string
+    is_daemonset   = bool
+    tag            = string
+  })
+  default = null
 }
 
 variable "grafana_output" {
   description = "the grafana module output"
-  type        = any
-  default     = {}
+  type = object({
+    host = string
+    port = string
+    url  = string
+  })
+  default = null
 }
+
 
 variable "prometheus_output" {
   description = "the prometheus module output"
-  type        = any
-  default     = {}
+  type = object({
+    host = string
+    port = string
+    url  = string
+  })
+  default = null
 }
 
 variable "metrics_exporter_output" {
   description = "the metrics exporter module output"
-  type        = any
-  default     = {}
+  type = object({
+    host      = string
+    name      = string
+    namespace = string
+    port      = string
+    url       = string
+  })
+  default = null
 }
 
 variable "seq_output" {
   description = "the seq module output"
-  type        = any
-  default     = {}
+  type = object({
+    host    = string
+    port    = string
+    url     = string
+    web_url = string
+  })
+  default = null
 }
 
 variable "shared_storage_settings" {
   description = "the shared-storage configuration information"
-  type        = any
-  default     = {}
+  type = object({
+    file_storage_type     = optional(string)
+    service_url           = optional(string)
+    console_url           = optional(string)
+    access_key_id         = optional(string)
+    secret_access_key     = optional(string)
+    name                  = optional(string)
+    must_force_path_style = optional(string)
+    host_path             = optional(string)
+    file_server_ip        = optional(string)
+  })
+  default = null
 }
 
 variable "keda_chart_name" {
@@ -377,7 +416,7 @@ variable "pod_deletion_cost" {
 
 # Extra configuration
 variable "others_conf" {
-  description = "Variable"
+  description = "Variable used to send specific modules output configuration to a module.Variable used to send specific modules output configuration to a module."
   type        = any
   default     = {}
 }

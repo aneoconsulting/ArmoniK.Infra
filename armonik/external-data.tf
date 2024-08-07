@@ -5,7 +5,7 @@ data "kubernetes_config_map" "dns" {
   }
 
   # This dependency ensures this data source is read *after* Kubernetes is up and running
-  depends_on = [kubernetes_config_map.core_config]
+  depends_on = [module.core_aggregation]
 }
 
 module "control_plane_endpoint" {

@@ -113,11 +113,11 @@ locals {
         (lower(try(trigger.type, "")) == "prometheus" ? {
           type = "prometheus"
           metadata = {
-            serverAddress = var.prometheus_output.url
+            serverAddress = var.prometheus.url
             metricName    = "armonik_${partition}_tasks_queued"
             threshold     = tostring(try(trigger.threshold, "2"))
-            namespace     = var.metrics_exporter_output.namespace
-            query         = "armonik_${partition}_tasks_queued{job=\"${var.metrics_exporter_output.name}\"}"
+            namespace     = var.metrics.namespace
+            query         = "armonik_${partition}_tasks_queued{job=\"${var.metrics.name}\"}"
           }
           } :
           (lower(try(trigger.type, "")) == "cpu" || lower(try(trigger.type, "")) == "memory" ? {

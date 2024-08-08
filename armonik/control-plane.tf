@@ -1,9 +1,3 @@
-#Aggragation
-module "control_plane_aggregation" {
-  source    = "../utils/aggregator"
-  conf_list = concat([module.core_aggregation, module.log_aggregation, module.control_aggregation], var.control_plane.conf)
-}
-
 # Control plane deployment
 resource "kubernetes_deployment" "control_plane" {
   metadata {

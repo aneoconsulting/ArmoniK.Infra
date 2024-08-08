@@ -1,5 +1,5 @@
 variable "conf_list" {
-  description = "List of module output with the config"
+  description = "List of module output with the config; in case of a conflict, the last element has precedence"
   type = list(object({
     env           = optional(map(string), {})
     env_configmap = optional(set(string), [])

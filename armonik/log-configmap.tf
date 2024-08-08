@@ -4,7 +4,7 @@ locals {
 # configmap with all the environment variables to set loglevels
 module "log_aggregation" {
   source = "../utils/aggregator"
-  conf_list = [{
+  conf_list = flatten([{
     env = {
       "Serilog__MinimumLevel" : var.logging_level,
       "Serilog__MinimumLevel__Override__Microsoft.AspNetCore.Hosting.Diagnostics" : local.logging_level_routing,
@@ -18,9 +18,7 @@ module "log_aggregation" {
       "Serilog__MinimumLevel__Override__Microsoft.Extensions.Http.DefaultHttpClientFactory" : local.logging_level_routing,
       "Serilog__MinimumLevel__Override__ArmoniK.Core.Common.Auth.Authentication.Authenticator" : local.logging_level_routing
     }
-    }, {
-    env = var.extra_conf.log
-  }]
+  }, var.configurations.log])
   materialize_configmap = {
     name      = "log-configmap"
     namespace = var.namespace

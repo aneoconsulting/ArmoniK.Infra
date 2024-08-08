@@ -82,36 +82,6 @@ variable "ingress" {
   }
 }
 
-# Extra configuration
-variable "extra_conf" {
-  description = "Add extra configuration in the configmaps"
-  type = object({
-    compute = map(string)
-    control = map(string)
-    core    = map(string)
-    log     = map(string)
-    metrics = map(string)
-    polling = map(string)
-    worker  = map(string)
-  })
-  default = {
-    compute = {}
-    control = {}
-    core    = {}
-    log     = {}
-    metrics = {}
-    polling = {}
-    worker  = {}
-  }
-}
-
-# Extra configuration
-variable "jobs_in_database_extra_conf" {
-  description = "Add extra configuration in the configmaps for jobs connecting to database"
-  type        = map(string)
-  default     = {}
-}
-
 # Job to insert partitions in the database
 variable "job_partitions_in_database" {
   description = "Job to insert partitions IDs in the database"
@@ -151,8 +121,6 @@ variable "control_plane" {
     hpa                  = any
     default_partition    = string
     service_account_name = string
-    #conf
-    conf = any
   })
 }
 
@@ -378,8 +346,6 @@ variable "metrics_exporter" {
     port_name          = optional(string, "metrics")
     port               = optional(number, 9419)
     target_port        = optional(number, 1080)
-    #conf
-    conf = any
   })
 }
 
@@ -414,9 +380,16 @@ variable "pod_deletion_cost" {
   default = null
 }
 
-# Extra configuration
-variable "others_conf" {
-  description = "Variable used to send specific modules output configuration to a module.Variable used to send specific modules output configuration to a module."
-  type        = any
-  default     = {}
+variable "configurations" {
+  description = "Extra configurations for the various components"
+  type = object({
+    core    = optional(any, [])
+    control = optional(any, [])
+    compute = optional(any, [])
+    worker  = optional(any, [])
+    polling = optional(any, [])
+    log     = optional(any, [])
+    metrics = optional(any, [])
+    jobs    = optional(any, [])
+  })
 }

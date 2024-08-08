@@ -4,7 +4,7 @@ locals {
 
   # list of partitions
   partition_names   = keys(try(var.compute_plane, {}))
-  default_partition = try(var.control_plane.default_partition, "")
+  default_partition = try(contains(local.partition_names, coalesce(var.control_plane.default_partition)), false) ? var.control_plane.default_partition : try(local.partition_names[0], "")
 
   # Node selector for control plane
   control_plane_node_selector        = try(var.control_plane.node_selector, {})
@@ -160,10 +160,4 @@ locals {
     node_selector_keys   = keys(var.metrics_exporter.node_selector)
     node_selector_values = values(var.metrics_exporter.node_selector)
   }
-}
-
-#Aggregation for jobs-in-database, authentication-in-database, partitions-in-database
-module "partition_database_aggregation" {
-  source    = "../utils/aggregator"
-  conf_list = concat([module.job_aggregation, var.others_conf])
 }

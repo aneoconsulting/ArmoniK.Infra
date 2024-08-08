@@ -53,7 +53,7 @@ resource "kubernetes_job" "authentication_in_database" {
 
           #env from config
           dynamic "env" {
-            for_each = module.partition_database_aggregation.env
+            for_each = module.job_aggregation.env
             content {
               name  = env.key
               value = env.value
@@ -62,7 +62,7 @@ resource "kubernetes_job" "authentication_in_database" {
 
           #env from secret
           dynamic "env" {
-            for_each = module.partition_database_aggregation.env_from_secret
+            for_each = module.job_aggregation.env_from_secret
             content {
               name = env.key
               value_from {
@@ -75,7 +75,7 @@ resource "kubernetes_job" "authentication_in_database" {
           }
 
           dynamic "env" {
-            for_each = module.partition_database_aggregation.env_from_configmap
+            for_each = module.job_aggregation.env_from_configmap
             content {
               name = env.key
               value_from {
@@ -88,7 +88,7 @@ resource "kubernetes_job" "authentication_in_database" {
           }
 
           dynamic "env_from" {
-            for_each = module.partition_database_aggregation.env_configmap
+            for_each = module.job_aggregation.env_configmap
             content {
               config_map_ref {
                 name = env_from.value
@@ -97,7 +97,7 @@ resource "kubernetes_job" "authentication_in_database" {
           }
 
           dynamic "env_from" {
-            for_each = module.partition_database_aggregation.env_secret
+            for_each = module.job_aggregation.env_secret
             content {
               secret_ref {
                 name = env_from.value
@@ -105,19 +105,9 @@ resource "kubernetes_job" "authentication_in_database" {
             }
           }
 
-          dynamic "volume_mount" {
-            for_each = {
-              mongodb-script = "/mongodb/script"
-            }
-            content {
-              name       = volume_mount.key
-              mount_path = volume_mount.value
-              read_only  = true
-            }
-          }
           #mount from conf
           dynamic "volume_mount" {
-            for_each = module.partition_database_aggregation.mount_secret
+            for_each = module.job_aggregation.mount_secret
             content {
               mount_path = volume_mount.value.path
               name       = volume_mount.value.secret
@@ -126,7 +116,7 @@ resource "kubernetes_job" "authentication_in_database" {
           }
 
           dynamic "volume_mount" {
-            for_each = module.partition_database_aggregation.mount_configmap
+            for_each = module.job_aggregation.mount_configmap
             content {
               name       = volume.value.configmap
               mount_path = volume.value.path
@@ -135,16 +125,10 @@ resource "kubernetes_job" "authentication_in_database" {
             }
           }
         }
-        volume {
-          name = "mongodb-script"
-          config_map {
-            name     = kubernetes_config_map.authmongo[0].metadata[0].name
-            optional = false
-          }
-        }
+
         #form conf
         dynamic "volume" {
-          for_each = module.partition_database_aggregation.mount_secret
+          for_each = module.job_aggregation.mount_secret
           content {
 
             name = volume.value.secret
@@ -157,7 +141,7 @@ resource "kubernetes_job" "authentication_in_database" {
         }
 
         dynamic "volume" {
-          for_each = module.partition_database_aggregation.mount_configmap
+          for_each = module.job_aggregation.mount_configmap
           content {
             name = volume.value.configmap
             config_map {

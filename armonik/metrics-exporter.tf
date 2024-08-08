@@ -1,7 +1,7 @@
 #Aggragation
 module "metrics_aggregation" {
   source    = "../utils/aggregator"
-  conf_list = concat([module.core_aggregation], var.metrics_exporter.conf, [{ env = var.extra_conf.metrics }])
+  conf_list = flatten([module.log_aggregation, module.core_aggregation, var.configurations.metrics])
 }
 # Metrics exporter deployment
 resource "kubernetes_deployment" "metrics_exporter" {

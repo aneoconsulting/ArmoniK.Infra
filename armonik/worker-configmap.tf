@@ -1,4 +1,5 @@
 # configmap with all the variables
+/*
 module "worker_map_aggregation" {
   source = "../utils/aggregator"
   conf_list = [{
@@ -17,3 +18,4 @@ module "worker_map_aggregation" {
   }
   depends_on = [kubernetes_service.control_plane]
 }
+*/

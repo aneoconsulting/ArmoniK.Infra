@@ -2,18 +2,18 @@
 module "worker_aggregation" {
   source    = "../utils/aggregator"
   for_each  = var.compute_plane
-  conf_list = concat([module.worker_map_aggregation, module.compute_aggregation, module.log_aggregation], each.value.worker[0].conf)
+  conf_list = flatten([module.worker_all_aggregation, each.value.worker[0].conf])
 }
 
 module "polling_agent_aggregation" {
   source   = "../utils/aggregator"
   for_each = var.compute_plane
-  conf_list = concat([module.log_aggregation, module.polling_aggregation, module.core_aggregation, module.compute_aggregation], each.value.polling_agent.conf,
-    [{
+  conf_list = flatten([module.polling_all_aggregation,
+    {
       env = {
         for queue in tolist(local.supported_queues) : queue => each.key
       }
-  }])
+  }, each.value.polling_agent.conf])
 }
 
 # Agent deployment

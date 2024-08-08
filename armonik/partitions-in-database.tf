@@ -49,7 +49,7 @@ resource "kubernetes_job" "partitions_in_database" {
 
           #env from config
           dynamic "env" {
-            for_each = module.partition_database_aggregation.env
+            for_each = module.job_aggregation.env
             content {
               name  = env.key
               value = env.value
@@ -58,7 +58,7 @@ resource "kubernetes_job" "partitions_in_database" {
 
           #env from secret
           dynamic "env" {
-            for_each = module.partition_database_aggregation.env_from_secret
+            for_each = module.job_aggregation.env_from_secret
             content {
               name = env.key
               value_from {
@@ -70,7 +70,7 @@ resource "kubernetes_job" "partitions_in_database" {
             }
           }
           dynamic "env" {
-            for_each = module.partition_database_aggregation.env_from_configmap
+            for_each = module.job_aggregation.env_from_configmap
             content {
               name = env.key
               value_from {
@@ -82,7 +82,7 @@ resource "kubernetes_job" "partitions_in_database" {
             }
           }
           dynamic "env_from" {
-            for_each = module.partition_database_aggregation.env_configmap
+            for_each = module.job_aggregation.env_configmap
             content {
               config_map_ref {
                 name = env_from.value
@@ -90,7 +90,7 @@ resource "kubernetes_job" "partitions_in_database" {
             }
           }
           dynamic "env_from" {
-            for_each = module.partition_database_aggregation.env_secret
+            for_each = module.job_aggregation.env_secret
             content {
               secret_ref {
                 name = env_from.value
@@ -100,7 +100,7 @@ resource "kubernetes_job" "partitions_in_database" {
 
           #mount from conf
           dynamic "volume_mount" {
-            for_each = module.partition_database_aggregation.mount_secret
+            for_each = module.job_aggregation.mount_secret
             content {
               mount_path = volume_mount.value.path
               name       = volume_mount.value.secret
@@ -108,7 +108,7 @@ resource "kubernetes_job" "partitions_in_database" {
             }
           }
           dynamic "volume_mount" {
-            for_each = module.partition_database_aggregation.mount_configmap
+            for_each = module.job_aggregation.mount_configmap
             content {
               name       = volume.value.configmap
               mount_path = volume.value.path
@@ -120,7 +120,7 @@ resource "kubernetes_job" "partitions_in_database" {
 
         #form conf
         dynamic "volume" {
-          for_each = module.partition_database_aggregation.mount_secret
+          for_each = module.job_aggregation.mount_secret
           content {
 
             name = volume.value.secret
@@ -133,7 +133,7 @@ resource "kubernetes_job" "partitions_in_database" {
         }
 
         dynamic "volume" {
-          for_each = module.partition_database_aggregation.mount_configmap
+          for_each = module.job_aggregation.mount_configmap
           content {
             name = volume.value.configmap
             config_map {

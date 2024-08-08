@@ -1,3 +1,5 @@
+/*
+
 # configmap with all the variables
 module "polling_aggregation" {
   source = "../utils/aggregator"
@@ -17,3 +19,5 @@ module "polling_aggregation" {
     namespace = var.namespace
   }
 }
+
+*/

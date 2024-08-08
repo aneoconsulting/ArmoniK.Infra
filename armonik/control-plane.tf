@@ -202,14 +202,14 @@ resource "kubernetes_deployment" "control_plane" {
 
         # Fluent-bit container
         dynamic "container" {
-          for_each = (!var.fluent_bit_output.is_daemonset ? [1] : [])
+          for_each = (!var.fluent_bit.is_daemonset ? [1] : [])
           content {
-            name              = var.fluent_bit_output.name
-            image             = "${var.fluent_bit_output.image}:${var.fluent_bit_output.tag}"
+            name              = var.fluent_bit.name
+            image             = "${var.fluent_bit.image}:${var.fluent_bit.tag}"
             image_pull_policy = "IfNotPresent"
             env_from {
               config_map_ref {
-                name = var.fluent_bit_output.configmaps.envvars
+                name = var.fluent_bit.configmaps.envvars
               }
             }
             # Please don't change below read-only permissions
@@ -236,7 +236,7 @@ resource "kubernetes_deployment" "control_plane" {
             dynamic "config_map" {
               for_each = (volume.value.type == "config_map" ? [1] : [])
               content {
-                name = var.fluent_bit_output.configmaps.config
+                name = var.fluent_bit.configmaps.config
               }
             }
           }

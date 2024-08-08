@@ -264,7 +264,7 @@ variable "authentication" {
 }
 
 # The output of modules.
-variable "fluent_bit_output" {
+variable "fluent_bit" {
   description = "the fluent-bit module output"
   type = object({
     configmaps = object({
@@ -279,7 +279,7 @@ variable "fluent_bit_output" {
   default = null
 }
 
-variable "grafana_output" {
+variable "grafana" {
   description = "the grafana module output"
   type = object({
     host = string
@@ -290,7 +290,7 @@ variable "grafana_output" {
 }
 
 
-variable "prometheus_output" {
+variable "prometheus" {
   description = "the prometheus module output"
   type = object({
     host = string
@@ -300,7 +300,7 @@ variable "prometheus_output" {
   default = null
 }
 
-variable "metrics_exporter_output" {
+variable "metrics" {
   description = "the metrics exporter module output"
   type = object({
     host      = string
@@ -312,7 +312,7 @@ variable "metrics_exporter_output" {
   default = null
 }
 
-variable "seq_output" {
+variable "seq" {
   description = "the seq module output"
   type = object({
     host    = string

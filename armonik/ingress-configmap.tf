@@ -147,8 +147,8 @@ server {
  %{endif~}
 
 
-%{if length(var.seq_output) > 0~}
-    set $seq_upstream ${var.seq_output.web_url};
+%{if length(var.seq) > 0~}
+    set $seq_upstream ${var.seq.web_url};
     location = /seq {
         rewrite ^ $scheme://$http_host/seq/ permanent;
     }
@@ -166,8 +166,8 @@ server {
         proxy_hide_header content-security-policy;
     }
 %{endif~}
-%{if length(var.grafana_output) > 0~}
-    set $grafana_upstream ${var.grafana_output.url};
+%{if length(var.grafana) > 0~}
+    set $grafana_upstream ${var.grafana.url};
     location = /grafana {
         rewrite ^ $scheme://$http_host/grafana/ permanent;
     }

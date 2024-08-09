@@ -1,8 +1,8 @@
 locals {
   architecture = coalesce(var.mongodb.replicas, 0) == 0 ? "standalone" : "replicaset"
   replicas     = max(1, coalesce(var.mongodb.replicas, 0))
-  # To ensure image pull secrets are passed as an array/list
-  image_pull_secrets = try(tolist(var.mongodb.image_pull_secrets), [tostring(var.mongodb.image_pull_secrets)])
+  # To ensure image pull secrets are passed as an array/list with no empty string or null
+  image_pull_secrets = compact(try(tolist(var.mongodb.image_pull_secrets), [tostring(var.mongodb.image_pull_secrets)]))
 }
 
 resource "helm_release" "mongodb" {

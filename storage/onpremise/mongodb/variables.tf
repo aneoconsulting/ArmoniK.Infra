@@ -43,14 +43,8 @@ variable "mongodb" {
 variable "mongodb_resources" {
   description = "CPU and Memory limits and requests for MongoDB"
   type = object({
-    limits = optional(object({
-      cpu    = optional(string, "750m")
-      memory = optional(string, "768Mi")
-    }), {})
-    requests = optional(object({
-      cpu    = optional(string, "500m")
-      memory = optional(string, "512Mi")
-    }), {})
+    limits   = optional(map(string))
+    requests = optional(map(string))
   })
   default = {}
 }
@@ -58,14 +52,8 @@ variable "mongodb_resources" {
 variable "arbiter_resources" {
   description = "CPU and Memory limits and requests for MongoDB arbiter"
   type = object({
-    limits = optional(object({
-      cpu    = optional(string, "750m")
-      memory = optional(string, "768Mi")
-    }), {})
-    requests = optional(object({
-      cpu    = optional(string, "500m")
-      memory = optional(string, "512Mi")
-    }), {})
+    limits   = optional(map(string))
+    requests = optional(map(string))
   })
   default = {}
 }

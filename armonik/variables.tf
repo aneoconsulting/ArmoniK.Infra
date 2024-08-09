@@ -82,36 +82,6 @@ variable "ingress" {
   }
 }
 
-# Extra configuration
-variable "extra_conf" {
-  description = "Add extra configuration in the configmaps"
-  type = object({
-    compute = map(string)
-    control = map(string)
-    core    = map(string)
-    log     = map(string)
-    metrics = map(string)
-    polling = map(string)
-    worker  = map(string)
-  })
-  default = {
-    compute = {}
-    control = {}
-    core    = {}
-    log     = {}
-    metrics = {}
-    polling = {}
-    worker  = {}
-  }
-}
-
-# Extra configuration
-variable "jobs_in_database_extra_conf" {
-  description = "Add extra configuration in the configmaps for jobs connecting to database"
-  type        = map(string)
-  default     = {}
-}
-
 # Job to insert partitions in the database
 variable "job_partitions_in_database" {
   description = "Job to insert partitions IDs in the database"
@@ -179,74 +149,6 @@ variable "admin_gui" {
   default = null
 }
 
-# Deprecated, must be removed in a future version
-# Parameters of admin gui v0.8 (previously called old admin gui)
-variable "admin_0_8_gui" {
-  description = "Parameters of the admin GUI v0.8"
-  type = object({
-    api = object({
-      name  = string
-      image = string
-      tag   = string
-      port  = number
-      limits = object({
-        cpu    = string
-        memory = string
-      })
-      requests = object({
-        cpu    = string
-        memory = string
-      })
-    })
-    app = object({
-      name  = string
-      image = string
-      tag   = string
-      port  = number
-      limits = object({
-        cpu    = string
-        memory = string
-      })
-      requests = object({
-        cpu    = string
-        memory = string
-      })
-    })
-    service_type       = string
-    replicas           = number
-    image_pull_policy  = string
-    image_pull_secrets = string
-    node_selector      = any
-  })
-  default = null
-}
-
-# Deprecated, must be removed in a future version
-# Parameters of admin gui v0.9
-variable "admin_0_9_gui" {
-  description = "Parameters of the admin GUI v0.9"
-  type = object({
-    name  = string
-    image = string
-    tag   = string
-    port  = number
-    limits = object({
-      cpu    = string
-      memory = string
-    })
-    requests = object({
-      cpu    = string
-      memory = string
-    })
-    service_type       = string
-    replicas           = number
-    image_pull_policy  = string
-    image_pull_secrets = string
-    node_selector      = any
-  })
-  default = null
-}
-
 # Parameters of the compute plane
 variable "compute_plane" {
   description = "Parameters of the compute plane"
@@ -277,6 +179,8 @@ variable "compute_plane" {
         cpu    = string
         memory = string
       })
+      #conf
+      conf = any
     })
     worker = list(object({
       name              = string
@@ -291,6 +195,8 @@ variable "compute_plane" {
         cpu    = string
         memory = string
       })
+      #conf
+      conf = any
     }))
     cache_config = object({
       memory     = bool
@@ -325,71 +231,80 @@ variable "authentication" {
   }
 }
 
-# The name of the secrets.
-variable "fluent_bit_secret_name" {
-  description = "the name of the fluent-bit secret"
-  type        = string
-  default     = "fluent-bit"
+# The output of modules.
+variable "fluent_bit" {
+  description = "the fluent-bit module output"
+  type = object({
+    configmaps = object({
+      envvars = string
+      config  = string
+    })
+    container_name = string
+    image          = string
+    is_daemonset   = bool
+    tag            = string
+  })
+  default = null
 }
 
-variable "grafana_secret_name" {
-  description = "the name of the grafana secret"
-  type        = string
-  default     = "grafana"
+variable "grafana" {
+  description = "the grafana module output"
+  type = object({
+    host = string
+    port = string
+    url  = string
+  })
+  default = null
 }
 
-variable "prometheus_secret_name" {
-  description = "the name of the prometheus secret"
-  type        = string
-  default     = "prometheus"
+
+variable "prometheus" {
+  description = "the prometheus module output"
+  type = object({
+    host = string
+    port = string
+    url  = string
+  })
+  default = null
 }
 
-variable "metrics_exporter_secret_name" {
-  description = "the name of the metrics exporter secret"
-  type        = string
-  default     = "metrics-exporter"
+variable "metrics" {
+  description = "the metrics exporter module output"
+  type = object({
+    host      = string
+    name      = string
+    namespace = string
+    port      = string
+    url       = string
+  })
+  default = null
 }
 
-variable "partition_metrics_exporter_secret_name" {
-  description = "the name of the partition metrics exporter secret"
-  type        = string
-  default     = "partition-metrics-exporter"
+variable "seq" {
+  description = "the seq module output"
+  type = object({
+    host    = string
+    port    = string
+    url     = string
+    web_url = string
+  })
+  default = null
 }
 
-variable "seq_secret_name" {
-  description = "the name of the seq secret"
-  type        = string
-  default     = "seq"
-}
-
-variable "shared_storage_secret_name" {
-  description = "the name of the shared-storage secret"
-  type        = string
-  default     = "shared-storage"
-}
-
-variable "deployed_object_storage_secret_name" {
-  description = "the name of the deployed-object-storage secret"
-  type        = string
-  default     = "deployed-object-storage"
-}
-
-variable "deployed_table_storage_secret_name" {
-  description = "the name of the deployed-table-storage secret"
-  type        = string
-  default     = "deployed-table-storage"
-}
-
-variable "deployed_queue_storage_secret_name" {
-  description = "the name of the deployed-queue-storage secret"
-  type        = string
-  default     = "deployed-queue-storage"
-}
-
-variable "s3_secret_name" {
-  description = "the name of the S3 secret"
-  type        = string
-  default     = "s3"
+variable "shared_storage_settings" {
+  description = "the shared-storage configuration information"
+  type = object({
+    file_storage_type     = optional(string)
+    service_url           = optional(string)
+    console_url           = optional(string)
+    access_key_id         = optional(string)
+    secret_access_key     = optional(string)
+    name                  = optional(string)
+    must_force_path_style = optional(string)
+    host_path             = optional(string)
+    file_server_ip        = optional(string)
+  })
+  default = null
 }
 
 variable "keda_chart_name" {
@@ -414,13 +329,6 @@ variable "static" {
   description = "json files to be served statically by the ingress"
   type        = any
   default     = {}
-}
-
-# nfs_parameters
-variable "pvc_name" {
-  description = "Name for the pvc to be used"
-  type        = string
-  default     = "nfsvolume"
 }
 
 # metrics information
@@ -470,4 +378,18 @@ variable "pod_deletion_cost" {
     }))
   })
   default = null
+}
+
+variable "configurations" {
+  description = "Extra configurations for the various components"
+  type = object({
+    core    = optional(any, [])
+    control = optional(any, [])
+    compute = optional(any, [])
+    worker  = optional(any, [])
+    polling = optional(any, [])
+    log     = optional(any, [])
+    metrics = optional(any, [])
+    jobs    = optional(any, [])
+  })
 }

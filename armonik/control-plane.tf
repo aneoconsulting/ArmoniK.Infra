@@ -48,6 +48,37 @@ resource "kubernetes_deployment" "control_plane" {
             name = var.control_plane.image_pull_secrets
           }
         }
+        #form conf
+        dynamic "volume" {
+          for_each = module.control_plane_aggregation.mount_secret
+          content {
+            name = volume.value.secret
+            secret {
+              secret_name  = volume.value.secret
+              default_mode = volume.value.mode
+
+            }
+          }
+        }
+
+        dynamic "volume" {
+          for_each = module.control_plane_aggregation.mount_configmap
+          content {
+            name = volume.value.configmap
+            config_map {
+              name         = volume.value.configmap
+              default_mode = volume.value.mode
+              dynamic "items" {
+                for_each = lookup(volume.value, "items", {})
+                content {
+                  key  = items.key
+                  path = items.value.field
+                  mode = items.value.mode
+                }
+              }
+            }
+          }
+        }
         restart_policy       = "Always" # Always, OnFailure, Never
         service_account_name = var.control_plane.service_account_name
         # Control plane container
@@ -90,77 +121,89 @@ resource "kubernetes_deployment" "control_plane" {
             failure_threshold     = 20
             # the pod has (period_seconds x failure_threshold) seconds to finalize its startup
           }
+          #env from config
+          dynamic "env" {
+            for_each = module.control_plane_aggregation.env
+            content {
+              name  = env.key
+              value = env.value
+            }
+          }
+          #env secret from config
           dynamic "env_from" {
-            for_each = local.control_plane_configmaps
+            for_each = module.control_plane_aggregation.env_secret
+            content {
+              secret_ref {
+                name = env_from.value
+              }
+            }
+          }
+          #env from secret
+          dynamic "env" {
+            for_each = module.control_plane_aggregation.env_from_secret
+            content {
+              name = env.key
+              value_from {
+                secret_key_ref {
+                  name = env.value.secret
+                  key  = env.value.field
+                }
+              }
+            }
+          }
+
+          dynamic "env" {
+            for_each = module.control_plane_aggregation.env_from_configmap
+            content {
+              name = env.key
+              value_from {
+                config_map_key_ref {
+                  name = env.value.configmap
+                  key  = env.value.field
+                }
+              }
+            }
+          }
+          dynamic "env_from" {
+            for_each = module.control_plane_aggregation.env_configmap
             content {
               config_map_ref {
                 name = env_from.value
               }
             }
           }
-          dynamic "env" {
-            for_each = local.credentials
-            content {
-              name = env.key
-              value_from {
-                secret_key_ref {
-                  key      = env.value.key
-                  name     = env.value.name
-                  optional = false
-                }
-              }
-            }
-          }
+
+          #mount from conf
           dynamic "volume_mount" {
-            for_each = local.certificates
+            for_each = module.control_plane_aggregation.mount_secret
             content {
-              name       = volume_mount.value.name
-              mount_path = volume_mount.value.mount_path
+              mount_path = volume_mount.value.path
+              name       = volume_mount.value.secret
               read_only  = true
             }
           }
 
           dynamic "volume_mount" {
-            for_each = local.object_storage_adapter == "ArmoniK.Adapters.LocalStorage.ObjectStorage" ? [1] : []
+            for_each = module.control_plane_aggregation.mount_configmap
             content {
-              name       = "nfs"
-              mount_path = local.local_storage_mount_path
+              name       = volume.value.configmap
+              mount_path = volume.value.path
+              sub_path   = lookup(volume.value, "subpath", null)
+              read_only  = true
             }
           }
         }
-        dynamic "volume" {
-          for_each = local.certificates
-          content {
-            name = volume.value.name
-            secret {
-              secret_name = volume.value.secret_name
-              optional    = false
-            }
-          }
-        }
-
-        dynamic "volume" {
-          for_each = local.object_storage_adapter == "ArmoniK.Adapters.LocalStorage.ObjectStorage" ? [1] : []
-          content {
-            name = "nfs"
-            persistent_volume_claim {
-              claim_name = var.pvc_name
-            }
-          }
-        }
-
-
 
         # Fluent-bit container
         dynamic "container" {
-          for_each = (!data.kubernetes_secret.fluent_bit.data.is_daemonset ? [1] : [])
+          for_each = (!var.fluent_bit.is_daemonset ? [1] : [])
           content {
-            name              = data.kubernetes_secret.fluent_bit.data.name
-            image             = "${data.kubernetes_secret.fluent_bit.data.image}:${data.kubernetes_secret.fluent_bit.data.tag}"
+            name              = var.fluent_bit.name
+            image             = "${var.fluent_bit.image}:${var.fluent_bit.tag}"
             image_pull_policy = "IfNotPresent"
             env_from {
               config_map_ref {
-                name = data.kubernetes_secret.fluent_bit.data.envvars
+                name = var.fluent_bit.configmaps.envvars
               }
             }
             # Please don't change below read-only permissions
@@ -187,7 +230,7 @@ resource "kubernetes_deployment" "control_plane" {
             dynamic "config_map" {
               for_each = (volume.value.type == "config_map" ? [1] : [])
               content {
-                name = data.kubernetes_secret.fluent_bit.data.config
+                name = var.fluent_bit.configmaps.config
               }
             }
           }

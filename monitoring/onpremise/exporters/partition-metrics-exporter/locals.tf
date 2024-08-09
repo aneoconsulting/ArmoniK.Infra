@@ -6,43 +6,6 @@ locals {
   metrics_exporter_host = split(":", try(var.metrics_exporter_url, ""))[0]
   metrics_exporter_port = split(":", try(var.metrics_exporter_url, ""))[1]
 
-  # Storage secrets
-  secrets = {
-    mongodb = {
-      name        = "mongodb"
-      ca_filename = "/mongodb/chain.pem"
-    }
-  }
-
-  # Credentials
-  credentials = {
-    MongoDB__User = {
-      key  = "username"
-      name = local.secrets.mongodb.name
-    }
-    MongoDB__Password = {
-      key  = "password"
-      name = local.secrets.mongodb.name
-    }
-    MongoDB__Host = {
-      key  = "host"
-      name = local.secrets.mongodb.name
-    }
-    MongoDB__Port = {
-      key  = "port"
-      name = local.secrets.mongodb.name
-    }
-  }
-
-  # Certificates
-  certificates = {
-    mongodb = {
-      name        = "mongodb-secret-volume"
-      mount_path  = "/mongodb"
-      secret_name = local.secrets.mongodb.name
-    }
-  }
-
   # Endpoint urls
   load_balancer = (kubernetes_service.partition_metrics_exporter.spec[0].type == "LoadBalancer" ? {
     ip   = (kubernetes_service.partition_metrics_exporter.status[0].load_balancer[0].ingress[0].ip == "" ? kubernetes_service.partition_metrics_exporter.status[0].load_balancer[0].ingress[0].hostname : kubernetes_service.partition_metrics_exporter.status[0].load_balancer[0].ingress[0].ip)

@@ -31,7 +31,7 @@ output "env" {
     "Redis__EndpointUrl"        = "${aws_elasticache_replication_group.elasticache.primary_endpoint_address}:${aws_elasticache_replication_group.elasticache.port}"
     "Redis__Ssl"                = var.ssl_option
     "Redis__ClientName"         = var.client_name
-    "Redis__CaPath"             = "${var.path}/chain.pem"
+    "Redis__CaPath"             = ""
     "Redis__InstanceName"       = var.instance_name
   })
 }

@@ -53,7 +53,6 @@ Amazon ElastiCache is a fully managed, Redis- and Memcached-compatible service d
 | <a name="input_node_type"></a> [node\_type](#input\_node\_type) | Instance class to be used | `string` | `"cache.r4.large"` | no |
 | <a name="input_num_cache_clusters"></a> [num\_cache\_clusters](#input\_num\_cache\_clusters) | Number of cache clusters (primary and replicas) this replication group will have | `number` | `1` | no |
 | <a name="input_object_storage_adapter"></a> [object\_storage\_adapter](#input\_object\_storage\_adapter) | Name of the adapter's | `string` | `"ArmoniK.Adapters.Redis.ObjectStorage"` | no |
-| <a name="input_path"></a> [path](#input\_path) | Path for mounting secrets | `string` | `"/redis"` | no |
 | <a name="input_preferred_cache_cluster_azs"></a> [preferred\_cache\_cluster\_azs](#input\_preferred\_cache\_cluster\_azs) | List of EC2 availability zones in which the replication group's cache clusters will be created | `list(string)` | `[]` | no |
 | <a name="input_slow_log"></a> [slow\_log](#input\_slow\_log) | Slow log | `string` | `""` | no |
 | <a name="input_ssl_option"></a> [ssl\_option](#input\_ssl\_option) | Ssl option | `string` | `"true"` | no |

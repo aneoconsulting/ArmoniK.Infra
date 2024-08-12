@@ -51,6 +51,7 @@ output "engine_type" {
 output "env" {
   description = "Elements to be set as environment variables"
   value = ({
+    "Components__QueueStorage"                              = var.queue_storage_adapter
     "Components__QueueAdaptorSettings__ClassName"           = var.adapter_class_name
     "Components__QueueAdaptorSettings__AdapterAbsolutePath" = var.adapter_absolute_path
     "Amqp__Host"                                            = aws_mq_broker.mq.engine_type == "ActiveMQ" ? trim(split(":", aws_mq_broker.mq.instances[0].endpoints[1])[1], "//") : trim(split(":", aws_mq_broker.mq.instances[0].endpoints[0])[1], "//")

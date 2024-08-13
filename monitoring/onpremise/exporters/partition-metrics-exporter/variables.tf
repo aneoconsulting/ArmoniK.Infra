@@ -39,3 +39,10 @@ variable "extra_conf" {
   type        = map(string)
   default     = {}
 }
+
+# conf
+variable "conf" {
+  description = "external module configuration"
+  type        = any
+  default     = {}
+}

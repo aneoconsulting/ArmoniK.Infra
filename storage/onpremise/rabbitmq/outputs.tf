@@ -62,6 +62,7 @@ output "adapter_absolute_path" {
 output "env" {
   description = "Elements to be set as environment variables"
   value = ({
+    "Components__QueueStorage"                              = var.queue_storage_adapter
     "Components__QueueAdaptorSettings__ClassName"           = local.adapter_class_name
     "Components__QueueAdaptorSettings__AdapterAbsolutePath" = local.adapter_absolute_path
     "Amqp__Host"                                            = local.rabbitmq_endpoints.ip
@@ -85,7 +86,7 @@ output "mount_secret" {
     "rabbitmq-secret1" = {
       secret = kubernetes_secret.rabbitmq.metadata[0].name
       path   = var.path
-      mode   = "0600"
+      mode   = "0644"
     }
   }
 }

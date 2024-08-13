@@ -14,13 +14,15 @@
 
 ## Modules
 
-No modules.
+| Name | Source | Version |
+|------|--------|---------|
+| <a name="module_partition_exporter_aggregation"></a> [partition\_exporter\_aggregation](#module\_partition\_exporter\_aggregation) | ../../../../utils/aggregator | n/a |
+| <a name="module_partition_metrics_exporter_aggregation"></a> [partition\_metrics\_exporter\_aggregation](#module\_partition\_metrics\_exporter\_aggregation) | ../../../../utils/aggregator | n/a |
 
 ## Resources
 
 | Name | Type |
 |------|------|
-| [kubernetes_config_map.partition_metrics_exporter_config](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/config_map) | resource |
 | [kubernetes_deployment.partition_metrics_exporter](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/deployment) | resource |
 | [kubernetes_service.partition_metrics_exporter](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/service) | resource |
 
@@ -28,6 +30,7 @@ No modules.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
+| <a name="input_conf"></a> [conf](#input\_conf) | external module configuration | `any` | `{}` | no |
 | <a name="input_docker_image"></a> [docker\_image](#input\_docker\_image) | Docker image for partition metrics exporter | <pre>object({<br>    image              = string<br>    tag                = string<br>    image_pull_secrets = string<br>  })</pre> | n/a | yes |
 | <a name="input_extra_conf"></a> [extra\_conf](#input\_extra\_conf) | Add extra configuration in the configmaps | `map(string)` | `{}` | no |
 | <a name="input_metrics_exporter_url"></a> [metrics\_exporter\_url](#input\_metrics\_exporter\_url) | URL of metrics exporter | `string` | n/a | yes |

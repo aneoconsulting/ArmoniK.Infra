@@ -6,7 +6,7 @@ resource "kubernetes_secret" "activemq_user_credentials" {
     namespace = var.namespace
   }
   data = {
-    "Amqp__User"     = var.username
-    "Amqp__Password" = var.password
+    "Amqp__User"     = local.username
+    "Amqp__Password" = local.password
   }
 }

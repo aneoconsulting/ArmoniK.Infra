@@ -133,3 +133,9 @@ variable "namespace" {
   type        = string
   default     = "armonik"
 }
+
+variable "queue_storage_adapter" {
+  description = "Name of the adapter's"
+  type        = string
+  default     = "ArmoniK.Adapters.Amqp.ObjectStorage"
+}

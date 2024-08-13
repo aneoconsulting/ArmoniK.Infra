@@ -1,3 +1,21 @@
+#Aggragation
+module "worker_aggregation" {
+  source    = "../utils/aggregator"
+  for_each  = var.compute_plane
+  conf_list = flatten([module.worker_all_aggregation, each.value.worker[0].conf])
+}
+
+module "polling_agent_aggregation" {
+  source   = "../utils/aggregator"
+  for_each = var.compute_plane
+  conf_list = flatten([module.polling_all_aggregation,
+    {
+      env = {
+        for queue in tolist(local.supported_queues) : queue => each.key
+      }
+  }, each.value.polling_agent.conf])
+}
+
 # Agent deployment
 resource "kubernetes_deployment" "compute_plane" {
   for_each = var.compute_plane
@@ -52,6 +70,38 @@ resource "kubernetes_deployment" "compute_plane" {
           for_each = (each.value.image_pull_secrets != "" ? [1] : [])
           content {
             name = each.value.image_pull_secrets
+          }
+        }
+        #form conf
+        dynamic "volume" {
+          for_each = merge(module.polling_agent_aggregation[each.key].mount_secret, module.worker_aggregation[each.key].mount_secret)
+          content {
+
+            name = volume.value.secret
+            secret {
+              secret_name  = volume.value.secret
+              default_mode = volume.value.mode
+
+            }
+          }
+        }
+
+        dynamic "volume" {
+          for_each = merge(module.polling_agent_aggregation[each.key].mount_configmap, module.worker_aggregation[each.key].mount_configmap)
+          content {
+            name = volume.value.configmap
+            config_map {
+              name         = volume.value.configmap
+              default_mode = volume.value.mode
+              dynamic "items" {
+                for_each = lookup(volume.value, "items", {})
+                content {
+                  key  = items.key
+                  path = items.value.field
+                  mode = items.value.mode
+                }
+              }
+            }
           }
         }
         restart_policy       = "Always" # Always, OnFailure, Never
@@ -110,63 +160,85 @@ resource "kubernetes_deployment" "compute_plane" {
             failure_threshold     = 20
             # the pod has (period_seconds x failure_threshold) seconds to finalize its startup
           }
+          #env from config
+          dynamic "env" {
+            for_each = module.polling_agent_aggregation[each.key].env
+            content {
+              name  = env.key
+              value = env.value
+            }
+          }
+          #env secret from config
           dynamic "env_from" {
-            for_each = local.polling_agent_configmaps
+            for_each = module.polling_agent_aggregation[each.key].env_secret
+            content {
+              secret_ref {
+                name = env_from.value
+              }
+            }
+          }
+          #env from secret
+          dynamic "env" {
+            for_each = module.polling_agent_aggregation[each.key].env_from_secret
+            content {
+              name = env.key
+              value_from {
+                secret_key_ref {
+                  name = env.value.secret
+                  key  = env.value.field
+                }
+              }
+            }
+          }
+
+          dynamic "env" {
+            for_each = module.polling_agent_aggregation[each.key].env_from_configmap
+            content {
+              name = env.key
+              value_from {
+                config_map_key_ref {
+                  name = env.value.configmap
+                  key  = env.value.field
+                }
+              }
+            }
+          }
+
+          dynamic "env_from" {
+            for_each = module.polling_agent_aggregation[each.key].env_configmap
             content {
               config_map_ref {
                 name = env_from.value
               }
             }
           }
-          dynamic "env" {
-            for_each = local.supported_queues
-            content {
-              name  = env.value
-              value = each.key
-            }
-          }
-          dynamic "env" {
-            for_each = local.credentials
-            content {
-              name = env.key
-              value_from {
-                secret_key_ref {
-                  key      = env.value.key
-                  name     = env.value.name
-                  optional = false
-                }
-              }
-            }
-          }
+
           volume_mount {
             name       = "cache-volume"
             mount_path = "/cache"
           }
+
+          #mount from conf
           dynamic "volume_mount" {
-            for_each = local.object_storage_adapter == "ArmoniK.Adapters.LocalStorage.ObjectStorage" ? [1] : []
+            for_each = module.polling_agent_aggregation[each.key].mount_secret
             content {
-              name       = "nfs"
-              mount_path = local.local_storage_mount_path
+              mount_path = volume_mount.value.path
+              name       = volume_mount.value.secret
+              read_only  = true
             }
           }
+
           dynamic "volume_mount" {
-            for_each = local.certificates
+            for_each = module.polling_agent_aggregation[each.key].mount_configmap
             content {
-              name       = volume_mount.value.name
-              mount_path = volume_mount.value.mount_path
+              name       = volume.value.configmap
+              mount_path = volume.value.path
+              sub_path   = lookup(volume.value, "subpath", null)
               read_only  = true
             }
           }
         }
-        dynamic "volume" {
-          for_each = local.object_storage_adapter == "ArmoniK.Adapters.LocalStorage.ObjectStorage" ? [1] : []
-          content {
-            name = "nfs"
-            persistent_volume_claim {
-              claim_name = var.pvc_name
-            }
-          }
-        }
+
         # Containers of worker
         dynamic "container" {
           iterator = worker
@@ -211,8 +283,73 @@ resource "kubernetes_deployment" "compute_plane" {
               failure_threshold     = 20
               # the pod has (period_seconds x failure_threshold) seconds to finalize its startup
             }
+
+            #env from config
+            dynamic "env" {
+              for_each = module.worker_aggregation[each.key].env
+              content {
+                name  = env.key
+                value = env.value
+              }
+            }
+            #env secret from config
             dynamic "env_from" {
-              for_each = local.worker_configmaps
+              for_each = module.worker_aggregation[each.key].env_secret
+              content {
+                secret_ref {
+                  name = env_from.value
+                }
+              }
+            }
+            #mount from conf
+            dynamic "volume_mount" {
+              for_each = module.worker_aggregation[each.key].mount_secret
+              content {
+                mount_path = volume_mount.value.path
+                name       = volume_mount.value.secret
+                read_only  = true
+              }
+            }
+
+            dynamic "volume_mount" {
+              for_each = module.worker_aggregation[each.key].mount_configmap
+              content {
+                name       = volume.value.configmap
+                mount_path = volume.value.path
+                sub_path   = lookup(volume.value, "subpath", null)
+                read_only  = true
+              }
+            }
+
+            #env from secret
+            dynamic "env" {
+              for_each = module.worker_aggregation[each.key].env_from_secret
+              content {
+                name = env.key
+                value_from {
+                  secret_key_ref {
+                    name = env.value.secret
+                    key  = env.value.field
+                  }
+                }
+              }
+            }
+
+            dynamic "env" {
+              for_each = module.worker_aggregation[each.key].env_from_configmap
+              content {
+                name = env.key
+                value_from {
+                  config_map_key_ref {
+                    name = env.value.configmap
+                    key  = env.value.field
+                  }
+                }
+              }
+            }
+
+            dynamic "env_from" {
+              for_each = module.worker_aggregation[each.key].env_configmap
               content {
                 config_map_ref {
                   name = env_from.value
@@ -240,47 +377,28 @@ resource "kubernetes_deployment" "compute_plane" {
             size_limit = try(each.value.cache_config.size_limit, null)
           }
         }
-        dynamic "volume" {
-          for_each = (local.file_storage_type == "nfs" ? [1] : [])
-          content {
-            name = "shared-volume"
-            nfs {
-              path      = data.kubernetes_secret.shared_storage.data.host_path
-              server    = data.kubernetes_secret.shared_storage.data.file_server_ip
-              read_only = true
-            }
-          }
-        }
+
         dynamic "volume" {
           for_each = (local.file_storage_type == "hostpath" ? [1] : [])
           content {
             name = "shared-volume"
             host_path {
-              path = data.kubernetes_secret.shared_storage.data.host_path
+              path = var.shared_storage_settings.host_path
               type = "Directory"
             }
           }
         }
-        dynamic "volume" {
-          for_each = local.certificates
-          content {
-            name = volume.value.name
-            secret {
-              secret_name = volume.value.secret_name
-              optional    = false
-            }
-          }
-        }
+
         # Fluent-bit container
         dynamic "container" {
-          for_each = (!data.kubernetes_secret.fluent_bit.data.is_daemonset ? [1] : [])
+          for_each = (!var.fluent_bit.is_daemonset ? [1] : [])
           content {
-            name              = data.kubernetes_secret.fluent_bit.data.name
-            image             = "${data.kubernetes_secret.fluent_bit.data.image}:${data.kubernetes_secret.fluent_bit.data.tag}"
+            name              = var.fluent_bit.name
+            image             = "${var.fluent_bit.image}:${var.fluent_bit.tag}"
             image_pull_policy = "IfNotPresent"
             env_from {
               config_map_ref {
-                name = data.kubernetes_secret.fluent_bit.data.envvars
+                name = var.fluent_bit.configmaps.envvars
               }
             }
             lifecycle {
@@ -319,7 +437,7 @@ resource "kubernetes_deployment" "compute_plane" {
             dynamic "config_map" {
               for_each = (volume.value.type == "config_map" ? [1] : [])
               content {
-                name = data.kubernetes_secret.fluent_bit.data.config
+                name = var.fluent_bit.configmaps.config
               }
             }
           }

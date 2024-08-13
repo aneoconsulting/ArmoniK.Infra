@@ -1,3 +1,8 @@
+#Aggragation
+module "metrics_aggregation" {
+  source    = "../utils/aggregator"
+  conf_list = flatten([module.log_aggregation, module.core_aggregation, var.configurations.metrics])
+}
 # Metrics exporter deployment
 resource "kubernetes_deployment" "metrics_exporter" {
   metadata {
@@ -50,6 +55,38 @@ resource "kubernetes_deployment" "metrics_exporter" {
             name = var.metrics_exporter.image_pull_secrets
           }
         }
+        #form conf
+        dynamic "volume" {
+          for_each = module.metrics_aggregation.mount_secret
+          content {
+
+            name = volume.value.secret
+            secret {
+              secret_name  = volume.value.secret
+              default_mode = volume.value.mode
+
+            }
+          }
+        }
+
+        dynamic "volume" {
+          for_each = module.metrics_aggregation.mount_configmap
+          content {
+            name = volume.value.configmap
+            config_map {
+              name         = volume.value.configmap
+              default_mode = volume.value.mode
+              dynamic "items" {
+                for_each = lookup(volume.value, "items", {})
+                content {
+                  key  = items.key
+                  path = items.value.field
+                  mode = items.value.mode
+                }
+              }
+            }
+          }
+        }
         container {
           name              = var.metrics_exporter.name
           image             = var.metrics_exporter.tag != "" ? "${var.metrics_exporter.image}:${var.metrics_exporter.tag}" : var.metrics_exporter.image
@@ -58,47 +95,73 @@ resource "kubernetes_deployment" "metrics_exporter" {
             name           = var.metrics_exporter.port_name
             container_port = var.metrics_exporter.target_port
           }
-          env_from {
-            config_map_ref {
-              name = kubernetes_config_map.core_config.metadata[0].name
+
+          dynamic "env_from" {
+            for_each = module.metrics_aggregation.env_configmap
+            content {
+              config_map_ref {
+                name = env_from.value
+              }
             }
           }
+          #env from config
           dynamic "env" {
-            for_each = var.extra_conf.metrics
+            for_each = module.metrics_aggregation.env
             content {
               name  = env.key
               value = env.value
             }
           }
+          #env secret from config
+          dynamic "env_from" {
+            for_each = module.metrics_aggregation.env_secret
+            content {
+              secret_ref {
+                name = env_from.value
+              }
+            }
+          }
+          #env from secret
           dynamic "env" {
-            for_each = local.credentials
+            for_each = module.metrics_aggregation.env_from_secret
             content {
               name = env.key
               value_from {
                 secret_key_ref {
-                  key      = env.value.key
-                  name     = env.value.name
-                  optional = false
+                  name = env.value.secret
+                  key  = env.value.field
                 }
               }
             }
           }
-          dynamic "volume_mount" {
-            for_each = local.certificates
+          dynamic "env" {
+            for_each = module.metrics_aggregation.env_from_configmap
             content {
-              name       = volume_mount.value.name
-              mount_path = volume_mount.value.mount_path
+              name = env.key
+              value_from {
+                config_map_key_ref {
+                  name = env.value.configmap
+                  key  = env.value.field
+                }
+              }
+            }
+          }
+          #mount from conf
+          dynamic "volume_mount" {
+            for_each = module.metrics_aggregation.mount_secret
+            content {
+              mount_path = volume_mount.value.path
+              name       = volume_mount.value.secret
               read_only  = true
             }
           }
-        }
-        dynamic "volume" {
-          for_each = local.certificates
-          content {
-            name = volume.value.name
-            secret {
-              secret_name = volume.value.secret_name
-              optional    = false
+          dynamic "volume_mount" {
+            for_each = module.metrics_aggregation.mount_configmap
+            content {
+              name       = volume.value.configmap
+              mount_path = volume.value.path
+              sub_path   = lookup(volume.value, "subpath", null)
+              read_only  = true
             }
           }
         }

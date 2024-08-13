@@ -4,7 +4,7 @@ locals {
 
   # list of partitions
   partition_names   = keys(try(var.compute_plane, {}))
-  default_partition = try(var.control_plane.default_partition, "")
+  default_partition = try(contains(local.partition_names, coalesce(var.control_plane.default_partition)), false) ? var.control_plane.default_partition : try(local.partition_names[0], "")
 
   # Node selector for control plane
   control_plane_node_selector        = try(var.control_plane.node_selector, {})
@@ -20,16 +20,6 @@ locals {
   admin_gui_node_selector        = try(var.admin_gui.node_selector, {})
   admin_gui_node_selector_keys   = keys(local.admin_gui_node_selector)
   admin_gui_node_selector_values = values(local.admin_gui_node_selector)
-
-  # Node selector for admin GUI 0.9
-  admin_0_9_gui_node_selector        = try(var.admin_0_9_gui.node_selector, {})
-  admin_0_9_gui_node_selector_keys   = keys(local.admin_0_9_gui_node_selector)
-  admin_0_9_gui_node_selector_values = values(local.admin_0_9_gui_node_selector)
-
-  # Node selector for admin GUI 0.8
-  admin_0_8_gui_node_selector        = try(var.admin_0_8_gui.node_selector, {})
-  admin_0_8_gui_node_selector_keys   = keys(local.admin_0_8_gui_node_selector)
-  admin_0_8_gui_node_selector_values = values(local.admin_0_8_gui_node_selector)
 
   # Node selector for compute plane
   compute_plane_node_selector        = { for partition, compute_plane in var.compute_plane : partition => try(compute_plane.node_selector, {}) }
@@ -55,181 +45,16 @@ locals {
   compute_plane_annotations = { for partition in local.partition_names : partition => try(var.compute_plane[partition].annotations, {}) }
   ingress_annotations       = try(var.ingress.annotations, {})
 
-  # Secrets
-  secrets = {
-    activemq = {
-      name        = "activemq"
-      ca_filename = "/amqp/chain.pem"
-    }
-    mongodb = {
-      name        = "mongodb"
-      ca_filename = "/mongodb/chain.pem"
-    }
-    redis = {
-      name        = "redis"
-      ca_filename = "/redis/chain.pem"
-    }
-    s3                             = var.s3_secret_name
-    shared_storage                 = var.shared_storage_secret_name
-    metrics_exporter               = var.metrics_exporter_secret_name
-    partition_metrics_exporter     = var.partition_metrics_exporter_secret_name
-    fluent_bit                     = var.fluent_bit_secret_name
-    seq                            = var.seq_secret_name
-    grafana                        = var.grafana_secret_name
-    prometheus                     = var.prometheus_secret_name
-    deployed_object_storage_secret = var.deployed_object_storage_secret_name
-    deployed_table_storage_secret  = var.deployed_table_storage_secret_name
-    deployed_queue_storage_secret  = var.deployed_queue_storage_secret_name
-  }
-
   # Shared storage
-  file_storage_type       = lower(data.kubernetes_secret.shared_storage.data.file_storage_type)
+  file_storage_type       = var.shared_storage_settings != null ? lower(var.shared_storage_settings.file_storage_type) : "FS"
   check_file_storage_type = local.file_storage_type == "s3" ? "S3" : "FS"
   file_storage_endpoints = local.check_file_storage_type == "S3" ? {
-    S3Storage__ServiceURL         = data.kubernetes_secret.shared_storage.data.service_url
-    S3Storage__AccessKeyId        = data.kubernetes_secret.shared_storage.data.access_key_id
-    S3Storage__SecretAccessKey    = data.kubernetes_secret.shared_storage.data.secret_access_key
-    S3Storage__BucketName         = data.kubernetes_secret.shared_storage.data.name
-    S3Storage__MustForcePathStyle = data.kubernetes_secret.shared_storage.data.must_force_path_style
-    S3Storage__UseChunkEncoding   = data.kubernetes_secret.shared_storage.data.use_chunk_encoding
-    S3Storage__UseChecksum        = data.kubernetes_secret.shared_storage.data.use_check_sum
+    S3Storage__ServiceURL         = var.shared_storage_settings.service_url
+    S3Storage__AccessKeyId        = var.shared_storage_settings.access_key_id
+    S3Storage__SecretAccessKey    = var.shared_storage_settings.secret_access_key
+    S3Storage__BucketName         = var.shared_storage_settings.name
+    S3Storage__MustForcePathStyle = var.shared_storage_settings.must_force_path_style
   } : {}
-
-  # Object storage
-  object_storage_adapter_from_secret = lower(data.kubernetes_secret.deployed_object_storage.data.adapter)
-  object_storage_adapter             = "ArmoniK.Adapters.${data.kubernetes_secret.deployed_object_storage.data.adapter}.ObjectStorage"
-  deployed_object_storages           = split(",", data.kubernetes_secret.deployed_object_storage.data.list)
-
-  # Table storage
-  table_storage_adapter_from_secret = lower(data.kubernetes_secret.deployed_table_storage.data.adapter)
-  table_storage_adapter             = "ArmoniK.Adapters.${data.kubernetes_secret.deployed_table_storage.data.adapter}.TableStorage"
-  deployed_table_storages           = split(",", data.kubernetes_secret.deployed_table_storage.data.list)
-
-  # Queue storage
-  queue_storage_adapter_from_secret = lower(data.kubernetes_secret.deployed_queue_storage.data.adapter)
-  queue_storage_adapter             = "ArmoniK.Adapters.${data.kubernetes_secret.deployed_queue_storage.data.adapter}.QueueStorage"
-  deployed_queue_storages           = split(",", data.kubernetes_secret.deployed_queue_storage.data.list)
-
-  # Credentials
-  credentials = {
-    for key, value in {
-      Amqp__User = local.queue_storage_adapter_from_secret == "amqp" ? {
-        key  = "username"
-        name = local.secrets.activemq.name
-      } : { key = "", name = "" }
-      Amqp__Password = local.queue_storage_adapter_from_secret == "amqp" ? {
-        key  = "password"
-        name = local.secrets.activemq.name
-      } : { key = "", name = "" }
-      Amqp__Host = local.queue_storage_adapter_from_secret == "amqp" ? {
-        key  = "host"
-        name = local.secrets.activemq.name
-      } : { key = "", name = "" }
-      Amqp__Port = local.queue_storage_adapter_from_secret == "amqp" ? {
-        key  = "port"
-        name = local.secrets.activemq.name
-      } : { key = "", name = "" }
-      Redis__User = local.object_storage_adapter_from_secret == "redis" ? {
-        key  = "username"
-        name = local.secrets.redis.name
-      } : { key = "", name = "" }
-      Redis__Password = local.object_storage_adapter_from_secret == "redis" ? {
-        key  = "password"
-        name = local.secrets.redis.name
-      } : { key = "", name = "" }
-      Redis__EndpointUrl = local.object_storage_adapter_from_secret == "redis" ? {
-        key  = "url"
-        name = local.secrets.redis.name
-      } : { key = "", name = "" }
-      MongoDB__User = local.table_storage_adapter_from_secret == "mongodb" ? {
-        key  = "username"
-        name = local.secrets.mongodb.name
-      } : { key = "", name = "" }
-      MongoDB__Password = local.table_storage_adapter_from_secret == "mongodb" ? {
-        key  = "password"
-        name = local.secrets.mongodb.name
-      } : { key = "", name = "" }
-      MongoDB__Host = local.table_storage_adapter_from_secret == "mongodb" ? {
-        key  = "host"
-        name = local.secrets.mongodb.name
-      } : { key = "", name = "" }
-      MongoDB__Port = local.table_storage_adapter_from_secret == "mongodb" ? {
-        key  = "port"
-        name = local.secrets.mongodb.name
-      } : { key = "", name = "" }
-      S3__Login = local.object_storage_adapter_from_secret == "s3" ? {
-        key  = "username"
-        name = local.secrets.s3
-      } : { key = "", name = "" }
-      S3__Password = local.object_storage_adapter_from_secret == "s3" ? {
-        key  = "password"
-        name = local.secrets.s3
-      } : { key = "", name = "" }
-      S3__EndpointUrl = local.object_storage_adapter_from_secret == "s3" ? {
-        key  = "url"
-        name = local.secrets.s3
-      } : { key = "", name = "" }
-      S3__MustForcePathStyle = local.object_storage_adapter_from_secret == "s3" ? {
-        key  = "must_force_path_style"
-        name = local.secrets.s3
-      } : { key = "", name = "" }
-      S3__BucketName = local.object_storage_adapter_from_secret == "s3" ? {
-        key  = "bucket_name"
-        name = local.secrets.s3
-      } : { key = "", name = "" }
-      S3__UseChunkEncoding = local.object_storage_adapter_from_secret == "s3" ? {
-        key  = "use_chunk_encoding"
-        name = local.secrets.s3
-      } : { key = "", name = "" }
-      S3__UseChecksum = local.object_storage_adapter_from_secret == "s3" ? {
-        key  = "use_check_sum"
-        name = local.secrets.s3
-      } : { key = "", name = "" }
-    } : key => value if !contains(values(value), "")
-  }
-
-  # Credentials
-  database_credentials = {
-    for key, value in {
-      MongoDB_User = local.table_storage_adapter_from_secret == "mongodb" ? {
-        key  = "username"
-        name = local.secrets.mongodb.name
-      } : { key = "", name = "" }
-      MongoDB_Password = local.table_storage_adapter_from_secret == "mongodb" ? {
-        key  = "password"
-        name = local.secrets.mongodb.name
-      } : { key = "", name = "" }
-      MongoDB_Host = local.table_storage_adapter_from_secret == "mongodb" ? {
-        key  = "host"
-        name = local.secrets.mongodb.name
-      } : { key = "", name = "" }
-      MongoDB_Port = local.table_storage_adapter_from_secret == "mongodb" ? {
-        key  = "port"
-        name = local.secrets.mongodb.name
-      } : { key = "", name = "" }
-    } : key => value if !contains(values(value), "")
-  }
-
-  # Certificates
-  certificates = {
-    for key, value in {
-      activemq = local.queue_storage_adapter_from_secret == "amqp" ? {
-        name        = "activemq-secret-volume"
-        mount_path  = "/amqp"
-        secret_name = local.secrets.activemq.name
-      } : { key = "", name = "" }
-      redis = local.object_storage_adapter_from_secret == "redis" ? {
-        name        = "redis-secret-volume"
-        mount_path  = "/redis"
-        secret_name = local.secrets.redis.name
-      } : { key = "", name = "" }
-      mongodb = local.table_storage_adapter_from_secret == "mongodb" ? {
-        name        = "mongodb-secret-volume"
-        mount_path  = "/mongodb"
-        secret_name = local.secrets.mongodb.name
-      } : { key = "", name = "" }
-    } : key => value if !contains(values(value), "")
-  }
 
   # Fluent-bit volumes
   # Please don't change below read-only permissions
@@ -266,31 +91,6 @@ locals {
     }
   }
 
-  #nfs 
-  local_storage_mount_path = "/local_storage"
-
-  # Configmaps for polling agent
-  polling_agent_configmaps = {
-    log           = kubernetes_config_map.log_config.metadata[0].name
-    polling_agent = kubernetes_config_map.polling_agent_config.metadata[0].name
-    core          = kubernetes_config_map.core_config.metadata[0].name
-    compute_plane = kubernetes_config_map.compute_plane_config.metadata[0].name
-  }
-
-  # Configmaps for worker
-  worker_configmaps = {
-    worker        = kubernetes_config_map.worker_config.metadata[0].name
-    compute_plane = kubernetes_config_map.compute_plane_config.metadata[0].name
-    log           = kubernetes_config_map.log_config.metadata[0].name
-  }
-
-  # Configmaps for control plane
-  control_plane_configmaps = {
-    core          = kubernetes_config_map.core_config.metadata[0].name
-    log           = kubernetes_config_map.log_config.metadata[0].name
-    control_plane = kubernetes_config_map.control_plane_config.metadata[0].name
-  }
-
   # Partitions data
   partitions_data = [
     for key, value in var.compute_plane : {
@@ -313,11 +113,11 @@ locals {
         (lower(try(trigger.type, "")) == "prometheus" ? {
           type = "prometheus"
           metadata = {
-            serverAddress = data.kubernetes_secret.prometheus.data.url
+            serverAddress = var.prometheus.url
             metricName    = "armonik_${partition}_tasks_queued"
             threshold     = tostring(try(trigger.threshold, "2"))
-            namespace     = data.kubernetes_secret.metrics_exporter.data.namespace
-            query         = "armonik_${partition}_tasks_queued{job=\"${data.kubernetes_secret.metrics_exporter.data.name}\"}"
+            namespace     = var.metrics.namespace
+            query         = "armonik_${partition}_tasks_queued{job=\"${var.metrics.name}\"}"
           }
           } :
           (lower(try(trigger.type, "")) == "cpu" || lower(try(trigger.type, "")) == "memory" ? {

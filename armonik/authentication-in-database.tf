@@ -50,48 +50,112 @@ resource "kubernetes_job" "authentication_in_database" {
           image             = var.authentication.tag != "" ? "${var.authentication.image}:${var.authentication.tag}" : var.authentication.image
           image_pull_policy = var.authentication.image_pull_policy
           command           = ["/bin/bash", "-c", local.authentication_script]
+
+          #env from config
           dynamic "env" {
-            for_each = local.database_credentials
+            for_each = module.job_aggregation.env
+            content {
+              name  = env.key
+              value = env.value
+            }
+          }
+
+          #env from secret
+          dynamic "env" {
+            for_each = module.job_aggregation.env_from_secret
             content {
               name = env.key
               value_from {
                 secret_key_ref {
-                  key      = env.value.key
-                  name     = env.value.name
-                  optional = false
+                  name = env.value.secret
+                  key  = env.value.field
                 }
               }
             }
           }
-          env_from {
-            config_map_ref {
-              name = kubernetes_config_map.jobs_in_database_config.metadata[0].name
+
+          dynamic "env" {
+            for_each = module.job_aggregation.env_from_configmap
+            content {
+              name = env.key
+              value_from {
+                config_map_key_ref {
+                  name = env.value.configmap
+                  key  = env.value.field
+                }
+              }
             }
           }
-          dynamic "volume_mount" {
-            for_each = {
-              mongodb-script        = "/mongodb/script"
-              mongodb-secret-volume = "/mongodb"
-            }
+
+          dynamic "env_from" {
+            for_each = module.job_aggregation.env_configmap
             content {
-              name       = volume_mount.key
-              mount_path = volume_mount.value
+              config_map_ref {
+                name = env_from.value
+              }
+            }
+          }
+
+          dynamic "env_from" {
+            for_each = module.job_aggregation.env_secret
+            content {
+              secret_ref {
+                name = env_from.value
+              }
+            }
+          }
+
+          #mount from conf
+          dynamic "volume_mount" {
+            for_each = module.job_aggregation.mount_secret
+            content {
+              mount_path = volume_mount.value.path
+              name       = volume_mount.value.secret
+              read_only  = true
+            }
+          }
+
+          dynamic "volume_mount" {
+            for_each = module.job_aggregation.mount_configmap
+            content {
+              name       = volume.value.configmap
+              mount_path = volume.value.path
+              sub_path   = lookup(volume.value, "subpath", null)
               read_only  = true
             }
           }
         }
-        volume {
-          name = "mongodb-secret-volume"
-          secret {
-            secret_name = local.secrets.mongodb.name
-            optional    = false
+
+        #form conf
+        dynamic "volume" {
+          for_each = module.job_aggregation.mount_secret
+          content {
+
+            name = volume.value.secret
+            secret {
+              secret_name  = volume.value.secret
+              default_mode = volume.value.mode
+
+            }
           }
         }
-        volume {
-          name = "mongodb-script"
-          config_map {
-            name     = kubernetes_config_map.authmongo[0].metadata[0].name
-            optional = false
+
+        dynamic "volume" {
+          for_each = module.job_aggregation.mount_configmap
+          content {
+            name = volume.value.configmap
+            config_map {
+              name         = volume.value.configmap
+              default_mode = volume.value.mode
+              dynamic "items" {
+                for_each = lookup(volume.value, "items", {})
+                content {
+                  key  = items.key
+                  path = items.value.field
+                  mode = items.value.mode
+                }
+              }
+            }
           }
         }
       }
@@ -217,7 +281,7 @@ db.Temp_AuthData.drop();
 
   authentication_script = <<EOF
 #!/bin/bash
-mongosh --tlsCAFile ${local.secrets.mongodb.ca_filename} --tlsAllowInvalidCertificates --tlsAllowInvalidHostnames --tls --username $MongoDB_User --password $MongoDB_Password mongodb://$MongoDB_Host:$MongoDB_Port/database /mongodb/script/initauth.js
+mongosh --tlsCAFile $MongoDB__CAFile --tlsAllowInvalidCertificates --tlsAllowInvalidHostnames --tls --username $MongoDB__User --password $MongoDB__Password mongodb://$MongoDB__Host:$MongoDB__Port/database /mongodb/script/initauth.js
 EOF
 }
 

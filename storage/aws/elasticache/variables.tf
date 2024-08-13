@@ -129,12 +129,6 @@ variable "object_storage_adapter" {
   default     = "ArmoniK.Adapters.Redis.ObjectStorage"
 }
 
-variable "path" {
-  description = "Path for mounting secrets"
-  type        = string
-  default     = "/redis"
-}
-
 variable "client_name" {
   description = "Name of the redis client"
   type        = string

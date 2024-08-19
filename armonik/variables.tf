@@ -179,8 +179,7 @@ variable "compute_plane" {
         cpu    = string
         memory = string
       })
-      #conf
-      conf = any
+      conf = optional(any, {})
     })
     worker = list(object({
       name              = string
@@ -195,8 +194,7 @@ variable "compute_plane" {
         cpu    = string
         memory = string
       })
-      #conf
-      conf = any
+      conf = optional(any, {})
     }))
     cache_config = object({
       memory     = bool

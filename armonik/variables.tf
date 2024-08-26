@@ -35,22 +35,16 @@ variable "logging_level" {
 variable "ingress" {
   description = "Parameters of the ingress controller"
   type = object({
-    name              = string
-    service_type      = string
-    replicas          = number
-    image             = string
-    tag               = string
-    image_pull_policy = string
-    http_port         = number
-    grpc_port         = number
-    limits = object({
-      cpu    = string
-      memory = string
-    })
-    requests = object({
-      cpu    = string
-      memory = string
-    })
+    name                  = string
+    service_type          = string
+    replicas              = number
+    image                 = string
+    tag                   = string
+    image_pull_policy     = string
+    http_port             = number
+    grpc_port             = number
+    limits                = optional(map(string))
+    requests              = optional(map(string))
     image_pull_secrets    = string
     node_selector         = any
     annotations           = any
@@ -100,21 +94,15 @@ variable "job_partitions_in_database" {
 variable "control_plane" {
   description = "Parameters of the control plane"
   type = object({
-    name              = string
-    service_type      = string
-    replicas          = number
-    image             = string
-    tag               = string
-    image_pull_policy = string
-    port              = number
-    limits = object({
-      cpu    = string
-      memory = string
-    })
-    requests = object({
-      cpu    = string
-      memory = string
-    })
+    name                 = string
+    service_type         = string
+    replicas             = number
+    image                = string
+    tag                  = string
+    image_pull_policy    = string
+    port                 = number
+    limits               = optional(map(string))
+    requests             = optional(map(string))
     image_pull_secrets   = string
     node_selector        = any
     annotations          = any
@@ -128,18 +116,12 @@ variable "control_plane" {
 variable "admin_gui" {
   description = "Parameters of the admin GUI"
   type = object({
-    name  = string
-    image = string
-    tag   = string
-    port  = number
-    limits = object({
-      cpu    = string
-      memory = string
-    })
-    requests = object({
-      cpu    = string
-      memory = string
-    })
+    name               = string
+    image              = string
+    tag                = string
+    port               = number
+    limits             = optional(map(string))
+    requests           = optional(map(string))
     service_type       = string
     replicas           = number
     image_pull_policy  = string
@@ -171,30 +153,18 @@ variable "compute_plane" {
       image             = string
       tag               = string
       image_pull_policy = string
-      limits = object({
-        cpu    = string
-        memory = string
-      })
-      requests = object({
-        cpu    = string
-        memory = string
-      })
-      conf = optional(any, {})
+      limits            = optional(map(string))
+      requests          = optional(map(string))
+      conf              = optional(any, {})
     })
     worker = list(object({
       name              = string
       image             = string
       tag               = string
       image_pull_policy = string
-      limits = object({
-        cpu    = string
-        memory = string
-      })
-      requests = object({
-        cpu    = string
-        memory = string
-      })
-      conf = optional(any, {})
+      limits            = optional(map(string))
+      requests          = optional(map(string))
+      conf              = optional(any, {})
     }))
     cache_config = object({
       memory     = bool
@@ -365,15 +335,8 @@ variable "pod_deletion_cost" {
     concurrency         = optional(number)
     granularity         = optional(number)
     extra_conf          = optional(map(string), {})
-
-    limits = optional(object({
-      cpu    = optional(string)
-      memory = optional(string)
-    }))
-    requests = optional(object({
-      cpu    = optional(string)
-      memory = optional(string)
-    }))
+    limits              = optional(map(string))
+    requests            = optional(map(string))
   })
   default = null
 }

@@ -62,12 +62,12 @@ resource "kubernetes_daemonset" "fluent_bit" {
               name = kubernetes_config_map.fluent_bit_envvars_config.metadata[0].name
             }
           }
+          # FIXME: use PVC instead
+          # volume_mount {
+          #   name       = "fluentbitstate"
+          #   mount_path = "/var/fluent-bit/state"
+          # }
           # Please don't change below read-only permissions
-          volume_mount {
-            name       = "fluentbitstate"
-            mount_path = "/var/fluent-bit/state"
-            read_only  = true
-          }
           volume_mount {
             name       = "varlog"
             mount_path = "/var/log"
@@ -94,12 +94,12 @@ resource "kubernetes_daemonset" "fluent_bit" {
             read_only  = true
           }
         }
-        volume {
-          name = "fluentbitstate"
-          host_path {
-            path = local.fluent_bit_state_hostpath
-          }
-        }
+        # volume {
+        #   name = "fluentbitstate"
+        #   host_path {
+        #     path = local.fluent_bit_state_hostpath
+        #   }
+        # }
         volume {
           name = "varlog"
           host_path {

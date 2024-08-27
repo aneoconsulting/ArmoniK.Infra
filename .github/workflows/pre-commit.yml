@@ -29,22 +29,22 @@ jobs:
           version: 1.7.0
       
       - name: Install terraform-docs
-        uses: jaxxstorm/action-install-gh-release@v1.10.0
+        uses: jaxxstorm/action-install-gh-release@v1.12.0
         with: # Grab the latest version
           repo: terraform-docs/terraform-docs
           tag: v0.18.0
       
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
       
       - name: Setup Python
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v5
       
       - id: pre-commit
         name: Pre Commit
-        uses: pre-commit/action@v3.0.0
+        uses: pre-commit/action@v3.0.1
 
       - name: Generate patch
         if: ${{ failure() && steps.pre-commit.conclusion == 'failure' }}

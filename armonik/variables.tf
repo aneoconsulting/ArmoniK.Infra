@@ -149,6 +149,10 @@ variable "compute_plane" {
     node_selector                    = any
     annotations                      = any
     service_account_name             = string
+    security_context = optional(object({
+      user = optional(string, 5000)
+      group = optional(string, 5000)
+    }), {})
     polling_agent = object({
       image             = string
       tag               = string

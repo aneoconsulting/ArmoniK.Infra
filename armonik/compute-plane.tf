@@ -370,6 +370,12 @@ resource "kubernetes_deployment" "compute_plane" {
             }
           }
         }
+        security_context {
+          run_as_non_root = true
+          fs_group = each.value.security_context.group
+          run_as_user = each.value.security_context.user
+          run_as_group = each.value.security_context.group
+        }
         volume {
           name = "cache-volume"
           empty_dir {

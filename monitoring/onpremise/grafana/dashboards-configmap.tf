@@ -7,6 +7,7 @@ resource "kubernetes_config_map" "dashboards_json_config" {
     "dashboard-armonik.json" = file("${path.module}/dashboard-armonik.json")
     "dashboard-pods.json"    = file("${path.module}/dashboard-pods.json")
     "dashboard-compute.json" = file("${path.module}/dashboard-compute.json")
+    "dashboard-compute.json" = file("${path.module}/dashboard-diskio.json")
   }
 }
 

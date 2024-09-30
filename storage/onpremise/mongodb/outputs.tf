@@ -56,6 +56,7 @@ output "env" {
     "MongoDB__DatabaseName"     = "database"
     "MongoDB__DirectConnection" = "false"
     "MongoDB__CAFile"           = "/mongodb/certificate/mongodb-ca-cert"
+    "MongoDB_AuthSource"        = "database"
   })
 
 }

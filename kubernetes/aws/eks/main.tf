@@ -72,6 +72,7 @@ locals {
     for key, value in var.eks_managed_node_groups : key => merge(value, {
       name                       = can(coalesce(value.name)) ? "${try(value.name, "")}-${var.name}" : "${key}-${var.name}",
       enable_bootstrap_user_data = can(coalesce(value.ami_id))
+      vpc_security_group_ids     = [module.eks.node_security_group_id]
     })
   }
 

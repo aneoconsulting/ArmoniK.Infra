@@ -21,3 +21,15 @@ resource "null_resource" "change_cni_label" {
     null_resource.update_kubeconfig
   ]
 }
+
+#update the config map for windows to be able to give IP to pods
+resource "kubernetes_config_map_v1_data" "amazon_vpc_cni" {
+  metadata {
+    name      = "amazon-vpc-cni"
+    namespace = "kube-system"
+  }
+  force = true
+  data = {
+    enable-windows-ipam = "true"
+  }
+}

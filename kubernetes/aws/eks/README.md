@@ -14,11 +14,11 @@
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 5.3.0 |
-| <a name="provider_helm"></a> [helm](#provider\_helm) | >= 2.10.1 |
-| <a name="provider_kubernetes"></a> [kubernetes](#provider\_kubernetes) | >= 2.13.0 |
-| <a name="provider_null"></a> [null](#provider\_null) | >= 3.2.1 |
-| <a name="provider_random"></a> [random](#provider\_random) | >= 3.5.1 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.38.0 |
+| <a name="provider_helm"></a> [helm](#provider\_helm) | 2.12.1 |
+| <a name="provider_kubernetes"></a> [kubernetes](#provider\_kubernetes) | 2.26.0 |
+| <a name="provider_null"></a> [null](#provider\_null) | 3.2.2 |
+| <a name="provider_random"></a> [random](#provider\_random) | 3.6.0 |
 
 ## Modules
 
@@ -45,6 +45,7 @@
 | [helm_release.cluster_autoscaler](https://registry.terraform.io/providers/hashicorp/helm/latest/docs/resources/release) | resource |
 | [helm_release.efs_csi](https://registry.terraform.io/providers/hashicorp/helm/latest/docs/resources/release) | resource |
 | [helm_release.eni_config](https://registry.terraform.io/providers/hashicorp/helm/latest/docs/resources/release) | resource |
+| [kubernetes_config_map_v1_data.amazon_vpc_cni](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/config_map_v1_data) | resource |
 | [kubernetes_service_account.efs_csi_driver_controller](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/service_account) | resource |
 | [kubernetes_service_account.efs_csi_driver_node](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/service_account) | resource |
 | [null_resource.change_cni_label](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |

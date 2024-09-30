@@ -13,10 +13,10 @@
 
 | Name | Version |
 |------|---------|
-| <a name="provider_helm"></a> [helm](#provider\_helm) | >= 2.10.1 |
-| <a name="provider_kubernetes"></a> [kubernetes](#provider\_kubernetes) | >= 2.21.1 |
-| <a name="provider_local"></a> [local](#provider\_local) | >= 2.4.0 |
-| <a name="provider_random"></a> [random](#provider\_random) | >= 3.5.1 |
+| <a name="provider_helm"></a> [helm](#provider\_helm) | 2.14.0 |
+| <a name="provider_kubernetes"></a> [kubernetes](#provider\_kubernetes) | 2.26.0 |
+| <a name="provider_local"></a> [local](#provider\_local) | 2.4.1 |
+| <a name="provider_random"></a> [random](#provider\_random) | 3.6.0 |
 
 ## Modules
 

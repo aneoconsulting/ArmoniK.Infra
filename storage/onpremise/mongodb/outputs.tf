@@ -38,8 +38,6 @@ output "endpoints" {
 output "unused_variables" {
   description = "Map of variables that are not used yet but might be in the future"
   value = {
-    "persistent_volume"     = var.persistent_volume
-    "security_context"      = var.security_context
     "validity_period_hours" = var.validity_period_hours
   }
 }

@@ -23,6 +23,14 @@ scrape_configs:
       - targets: ["${var.metrics_exporter_url}"]
         labels:
           namespace: "${var.namespace}"
+          
+  - job_name: "mongodb-metrics-exporter"
+    static_configs: 
+      - targets: ["${var.mongo_metrics_exporter_url}"]
+        labels:
+          namespace: "${var.namespace}"
+    metrics_path: /metrics
+    scheme: http
 
   - job_name: "kubernetes-apiservers"
     kubernetes_sd_configs:

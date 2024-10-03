@@ -8,7 +8,7 @@ Amazon MQ is a managed message broker service for Apache ActiveMQ and RabbitMQ t
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.4.0 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.61 |
 | <a name="requirement_kubernetes"></a> [kubernetes](#requirement\_kubernetes) | >= 2.7.1 |
 | <a name="requirement_random"></a> [random](#requirement\_random) | >= 3.5.1 |
 
@@ -16,9 +16,9 @@ Amazon MQ is a managed message broker service for Apache ActiveMQ and RabbitMQ t
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 5.4.0 |
-| <a name="provider_kubernetes"></a> [kubernetes](#provider\_kubernetes) | >= 2.7.1 |
-| <a name="provider_random"></a> [random](#provider\_random) | >= 3.5.1 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.69.0 |
+| <a name="provider_kubernetes"></a> [kubernetes](#provider\_kubernetes) | 2.32.0 |
+| <a name="provider_random"></a> [random](#provider\_random) | 3.6.3 |
 
 ## Modules
 

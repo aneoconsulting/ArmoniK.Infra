@@ -123,6 +123,10 @@ module "eks" {
   # If you want to maintain the current default behavior of v19.x
   kms_key_enable_default_policy = false
 
+  # Cluster access entry
+  # To add the current caller identity as an administrator
+  enable_cluster_creator_admin_permissions = true
+
   # VPC
   subnet_ids = var.vpc_private_subnet_ids
   vpc_id     = var.vpc_id

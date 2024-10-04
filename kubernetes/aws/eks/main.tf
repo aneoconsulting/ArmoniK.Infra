@@ -135,6 +135,12 @@ module "eks" {
   # Needed to add self managed node group configuration.
   # => kubectl get cm aws-auth -n kube-system -o yaml
   #manage_aws_auth_configmap = true
+  cluster_addons = {
+    coredns                = {}
+    eks-pod-identity-agent = {}
+    kube-proxy             = {}
+    vpc-cni                = {}
+  }
 
   # Private cluster
   cluster_endpoint_private_access = var.cluster_endpoint_private_access
@@ -160,6 +166,12 @@ module "eks" {
       self        = true
     }
   }
+
+
+  cluster_security_group_additional_rules = {
+    source_node_security_group = true
+  }
+
 
   cluster_encryption_config = {
     provider_key_arn = var.cluster_encryption_config

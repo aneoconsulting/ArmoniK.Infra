@@ -167,11 +167,7 @@ module "eks" {
     }
   }
 
-
-  cluster_security_group_additional_rules = {
-    source_node_security_group = true
-  }
-
+  cluster_additional_security_group_ids = [module.eks.node_security_group_id]
 
   cluster_encryption_config = {
     provider_key_arn = var.cluster_encryption_config

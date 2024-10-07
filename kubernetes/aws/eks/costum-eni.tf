@@ -32,4 +32,7 @@ resource "kubernetes_config_map_v1_data" "amazon_vpc_cni" {
   data = {
     enable-windows-ipam = "true"
   }
+  depends_on = [
+    null_resource.update_kubeconfig
+  ]
 }

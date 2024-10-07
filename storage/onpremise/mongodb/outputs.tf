@@ -55,7 +55,7 @@ output "env" {
     "MongoDB__ReplicaSet"       = "rs0"
     "MongoDB__DatabaseName"     = "database"
     "MongoDB__DirectConnection" = "false"
-    "MongoDB__CAFile"           = "/mongodb/certificate/mongodb-ca-cert"
+    "MongoDB__CAFile"           = "" #/mongodb/certificate/mongodb-ca-cert
   })
 
 }

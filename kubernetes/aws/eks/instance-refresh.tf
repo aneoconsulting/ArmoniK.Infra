@@ -108,6 +108,7 @@ module "aws_node_termination_handler_role" {
   provider_url                  = replace(module.eks.cluster_oidc_issuer_url, "https://", "")
   role_policy_arns              = [aws_iam_policy.aws_node_termination_handler.arn]
   oidc_fully_qualified_subjects = ["system:serviceaccount:kube-system:aws-node-termination-handler"]
+  depends_on                    = [aws_iam_policy.aws_node_termination_handler]
 }
 
 resource "aws_cloudwatch_event_rule" "aws_node_termination_handler_asg" {

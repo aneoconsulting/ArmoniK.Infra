@@ -1,6 +1,3 @@
-# Current account
-data "aws_caller_identity" "current" {}
-
 data "aws_region" "current" {}
 
 # Available zones
@@ -178,17 +175,6 @@ module "eks" {
   tags         = local.tags
   cluster_tags = local.tags
 
-  # IAM
-  # used to allow other users to interact with our cluster
-  # aws_auth_roles = var.map_roles_groups
-  # aws_auth_users = concat([
-  #   {
-  #     userarn  = "arn:aws:iam::${data.aws_caller_identity.current.arn}:user/admin"
-  #     username = "admin"
-  #     groups   = ["system:masters", "system:bootstrappers", "system:nodes"]
-  #   }
-  # ], var.map_users_groups)
-
   # List of EKS managed node groups
   eks_managed_node_group_defaults = {
     enable_monitoring = true
@@ -240,19 +226,4 @@ module "eks" {
   eks_managed_node_groups  = local.eks_managed_node_groups
   self_managed_node_groups = local.self_managed_node_groups
   fargate_profiles         = local.fargate_profiles
-}
-
-module "eks_aws_auth" {
-  source                    = "terraform-aws-modules/eks/aws//modules/aws-auth"
-  version                   = "20.24.2"
-  manage_aws_auth_configmap = true
-
-  aws_auth_roles = var.map_roles_groups
-  aws_auth_users = concat([
-    {
-      userarn  = "arn:aws:iam::${data.aws_caller_identity.current.arn}:user/admin"
-      username = "admin"
-      groups   = ["system:masters", "system:bootstrappers", "system:nodes"]
-    }
-  ], var.map_users_groups)
 }

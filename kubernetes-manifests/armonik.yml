@@ -1,0 +1,216 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: control-plane
+spec:
+  selector:
+    app.kubernetes.io/name: control-plane
+  ports:
+    - port: 1081
+      targetPort: metrics
+      name: metrics
+    - port: 1080
+      targetPort: submitter
+      name: submitter
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: control-plane
+  labels:
+    app.kubernetes.io/name: control-plane
+spec:
+  containers:
+  - name: control-plane
+    image: dockerhubaneo/armonik_control:0.24.4
+    ports:
+    - containerPort: 1081
+      name: metrics
+    - containerPort: 1080
+      name: submitter
+    #  docker inspect armonik.control.submitter | jq -r '.[].Config.Env | map(split("=") | {name:.[0], value:.[1]})' | yq -P
+    env:
+      - name: Amqp__Port
+        value: "5672"
+      - name: Submitter__DefaultPartition
+        value: TestPartition0
+      - name: Components__TableStorage
+        value: ArmoniK.Adapters.MongoDB.TableStorage
+      - name: MongoDB__DatabaseName
+        value: database
+      - name: MongoDB__ReplicaSet
+        value: repSet0
+      - name: MongoDB__DirectConnection
+        value: "true"
+      - name: MongoDB__Host
+        value: database
+      - name: MongoDB__Port
+        value: "27017"
+      - name: Components__QueueAdaptorSettings__AdapterAbsolutePath
+        value: /adapters/queue/amqp/ArmoniK.Core.Adapters.Amqp.dll
+      - name: Components__QueueAdaptorSettings__ClassName
+        value: ArmoniK.Core.Adapters.Amqp.QueueBuilder
+      - name: Amqp__Host
+        value: queue
+      - name: Amqp__Scheme
+        value: AMQP
+      - name: Amqp__Password
+        value: admin
+      - name: Amqp__MaxRetries
+        value: "10"
+      - name: Amqp__LinkCredit
+        value: "2"
+      - name: Amqp__MaxPriority
+        value: "10"
+      - name: Amqp__User
+        value: admin
+      - name: ASPNETCORE_URLS
+        value: http://+:1080, http://+:1081
+      - name: Components__ObjectStorage
+        value: ArmoniK.Adapters.Redis.ObjectStorage
+      - name: Redis__EndpointUrl
+        value: object:6379
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: compute-plane
+  labels:
+    app: armonik
+    service: compute-plane
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: armonik
+      service: compute-plane
+  template:
+    metadata:
+      labels:
+        app: armonik
+        service: compute-plane
+      name: compute-plane
+    spec:
+      containers:
+      - name: agent
+        image: dockerhubaneo/armonik_pollingagent:0.24.4
+        #  docker inspect armonik.compute.pollingagent0 | jq -r '.[].Config.Env | map(split("=") | {name:.[0], value:.[1]})' | yq -P
+        env:
+          - name: Amqp__Port
+            value: "5672"
+          - name: Components__TableStorage
+            value: ArmoniK.Adapters.MongoDB.TableStorage
+          - name: MongoDB__DatabaseName
+            value: database
+          - name: MongoDB__ReplicaSet
+            value: repSet0
+          - name: MongoDB__DirectConnection
+            value: "true"
+          - name: MongoDB__Host
+            value: database
+          - name: MongoDB__Port
+            value: "27017"
+          - name: Components__QueueAdaptorSettings__AdapterAbsolutePath
+            value: /adapters/queue/amqp/ArmoniK.Core.Adapters.Amqp.dll
+          - name: Components__QueueAdaptorSettings__ClassName
+            value: ArmoniK.Core.Adapters.Amqp.QueueBuilder
+          - name: Amqp__Host
+            value: queue
+          - name: Amqp__Scheme
+            value: AMQP
+          - name: Amqp__Password
+            value: admin
+          - name: Amqp__MaxRetries
+            value: "10"
+          - name: Amqp__LinkCredit
+            value: "2"
+          - name: Amqp__MaxPriority
+            value: "10"
+          - name: Amqp__User
+            value: admin
+          # how to say on which partition is the instance of the pod
+          - name: Amqp__PartitionId
+            value: TestPartition0
+          - name: ASPNETCORE_URLS
+            value: http://+:1080
+          - name: Components__ObjectStorage
+            value: ArmoniK.Adapters.Redis.ObjectStorage
+          - name: Redis__EndpointUrl
+            value: object:6379
+          - name: ComputePlane__WorkerChannel__Address
+            value: /cache/armonik_worker.sock
+          - name: ComputePlane__WorkerChannel__SocketType
+            value: unixdomainsocket
+          - name: ComputePlane__AgentChannel__Address
+            value: /cache/armonik_agent.sock
+          - name: ComputePlane__AgentChannel__SocketType
+            value: unixdomainsocket
+          - name: Pollster__SharedCacheFolder
+            value: /cache/shared
+          - name: Pollster__InternalCacheFolder
+            value: /cache/internal
+          - name: InitWorker__WorkerCheckDelay
+            value: 00:00:01
+          - name: InitWorker__WorkerCheckRetries
+            value: "10"
+        volumeMounts:
+        - mountPath: /cache
+          name: cache-volume
+      - name: worker
+        image: dockerhubaneo/armonik_core_bench_test_worker:0.24.4
+        env:
+          - name: ComputePlane__WorkerChannel__Address
+            value: /cache/armonik_worker.sock
+          - name: ComputePlane__WorkerChannel__SocketType
+            value: unixdomainsocket
+          - name: ComputePlane__AgentChannel__Address
+            value: /cache/armonik_agent.sock
+          - name: ComputePlane__AgentChannel__SocketType
+            value: unixdomainsocket
+        volumeMounts:
+        - mountPath: /cache
+          name: cache-volume
+      volumes:
+      - name: cache-volume
+        emptyDir:
+          sizeLimit: 10Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gui
+spec:
+  selector:
+    app: armonik
+    service: admin-gui
+  ports:
+    - port: 2080
+      targetPort: app-port
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: armonik
+    service: admin-gui
+  name: admin-gui
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: armonik
+      service: admin-gui
+  template:
+    metadata:
+      labels:
+        app: armonik
+        service: admin-gui
+      name: admin-gui
+    spec:
+      containers:
+      - image: dockerhubaneo/armonik_admin_app:0.12.4
+        name: admin-app
+        ports:
+        - containerPort: 1080
+          name: app-port
+          protocol: TCP

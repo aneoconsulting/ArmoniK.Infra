@@ -132,7 +132,8 @@ resource "aws_iam_role" "efs_csi_driver" {
       }
     ]
   })
-  tags = local.tags
+  tags       = local.tags
+  depends_on = [aws_iam_policy.efs_csi_driver]
 }
 
 resource "aws_iam_role_policy_attachment" "efs_csi_driver" {

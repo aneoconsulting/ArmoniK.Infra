@@ -4,10 +4,11 @@ resource "kubernetes_config_map" "dashboards_json_config" {
     namespace = var.namespace
   }
   data = {
-    "dashboard-armonik.json" = file("${path.module}/dashboard-armonik.json")
-    "dashboard-pods.json"    = file("${path.module}/dashboard-pods.json")
-    "dashboard-compute.json" = file("${path.module}/dashboard-compute.json")
-    "dashboard-compute.json" = file("${path.module}/dashboard-diskio.json")
+    "dashboard-armonik.json"     = file("${path.module}/dashboard-armonik.json")
+    "dashboard-pods.json"        = file("${path.module}/dashboard-pods.json")
+    "dashboard-compute.json"     = file("${path.module}/dashboard-compute.json")
+    "dashboard-diskio.json"      = file("${path.module}/dashboard-diskio.json")
+    "dashboard-taskhandler.json" = file("${path.module}/dashboard-taskhandler.json")
   }
 }
 

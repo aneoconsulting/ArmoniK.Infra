@@ -67,7 +67,7 @@ variable "sharding" {
     }))
 
     router = optional(object({
-      replicas      = optional(number, 2)
+      replicas      = optional(number, 1)
       node_selector = optional(map(string))
     }))
 

@@ -4,6 +4,8 @@ data "aws_caller_identity" "current" {}
 # Current AWS region
 data "aws_region" "current" {}
 
+data "aws_ecr_authorization_token" "current" {}
+
 locals {
   region                      = data.aws_region.current.name
   current_account             = data.aws_caller_identity.current.account_id
@@ -33,6 +35,7 @@ locals {
   lifecycle_policy = can(coalesce(var.lifecycle_policy)) ? jsonencode(var.lifecycle_policy) : null
   tags             = merge({ module = "ecr" }, var.tags)
 }
+
 
 # create ECR repositories
 resource "aws_ecr_repository" "ecr" {
@@ -119,35 +122,14 @@ resource "aws_ecr_lifecycle_policy" "ecr_lifecycle_policy" {
 }
 
 # Push images
-resource "null_resource" "copy_images" {
-  for_each = aws_ecr_repository.ecr
-  triggers = {
-    state = join("-", [
-      each.key, var.repositories[each.key].image, var.repositories[each.key].tag
-    ])
-  }
-  provisioner "local-exec" {
-    command = <<-EOT
-aws ecr get-login-password --profile ${var.aws_profile} --region ${local.region}  | docker login --username AWS --password-stdin ${local.current_account}.dkr.ecr.${local.region}.amazonaws.com
-aws ecr-public get-login-password --profile ${var.aws_profile} --region us-east-1  | docker login --username AWS --password-stdin public.ecr.aws
-if [ -z "$(docker images -q '${var.repositories[each.key].image}:${var.repositories[each.key].tag}')" ]
-then
-  if ! docker pull ${var.repositories[each.key].image}:${var.repositories[each.key].tag}
-  then
-    echo "cannot download image ${var.repositories[each.key].image}:${var.repositories[each.key].tag}"
-    exit 1
-  fi
-fi
-if ! docker tag ${var.repositories[each.key].image}:${var.repositories[each.key].tag} ${local.current_account}.dkr.ecr.${local.region}.amazonaws.com/${each.key}:${var.repositories[each.key].tag}
-then
-  echo "cannot tag image ${var.repositories[each.key].image}:${var.repositories[each.key].tag} to ${local.current_account}.dkr.ecr.${local.region}.amazonaws.com/${each.key}:${var.repositories[each.key].tag}"
-  exit 1
-fi
-if ! docker push ${local.current_account}.dkr.ecr.${local.region}.amazonaws.com/${each.key}:${var.repositories[each.key].tag}
-then
-  echo "cannot push image ${local.current_account}.dkr.ecr.${local.region}.amazonaws.com/${each.key}:${var.repositories[each.key].tag}"
-  exit 1
-fi
-EOT
-  }
+resource "skopeo2_copy" "copy_images" {
+  for_each          = aws_ecr_repository.ecr
+  source_image      = "docker://${var.repositories[each.key].image}:${var.repositories[each.key].tag}"
+  destination_image = "docker://${local.current_account}.dkr.ecr.${local.region}.amazonaws.com/${each.key}:${var.repositories[each.key].tag}"
+
+  copy_all_images = true
+  retries         = 5
+  retry_delay     = 10
+
+  depends_on = [aws_ecr_repository.ecr]
 }

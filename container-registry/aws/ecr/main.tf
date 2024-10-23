@@ -128,7 +128,7 @@ resource "skopeo2_copy" "copy_images" {
   destination_image = "docker://${local.current_account}.dkr.ecr.${local.region}.amazonaws.com/${each.key}:${var.repositories[each.key].tag}"
 
   copy_all_images = true
-  retries         = 5
+  retries         = 10
   retry_delay     = 10
 
   depends_on = [aws_ecr_repository.ecr, null_resource.logout_public_ecr]

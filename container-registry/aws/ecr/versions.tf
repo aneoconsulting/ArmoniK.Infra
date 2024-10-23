@@ -14,11 +14,11 @@ terraform {
     }
     skopeo2 = {
       source  = "bsquare-corp/skopeo2"
-      version = "~> 1.1.1"
+      version = ">= 1.1.1"
     }
     null = {
       source  = "hashicorp/null"
-      version = "~> 3.2.1"
+      version = ">= 3.2.1"
     }
   }
 }

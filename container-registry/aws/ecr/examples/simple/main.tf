@@ -29,7 +29,6 @@ locals {
 # AWS ECR
 module "simple_ecr" {
   source       = "../../../ecr"
-  aws_profile  = var.aws_profile
   repositories = local.new_repositories
   tags = {
     env             = "test"

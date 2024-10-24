@@ -9,6 +9,7 @@ resource "kubernetes_config_map" "dashboards_json_config" {
     "dashboard-compute.json"     = file("${path.module}/dashboard-compute.json")
     "dashboard-diskio.json"      = file("${path.module}/dashboard-diskio.json")
     "dashboard-taskhandler.json" = file("${path.module}/dashboard-taskhandler.json")
+    "dashboard-mongodb.json"     = file("${path.module}/dashboard-mongodb.json")
   }
 }
 

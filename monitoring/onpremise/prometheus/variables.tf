@@ -33,6 +33,13 @@ variable "metrics_exporter_url" {
   type        = string
 }
 
+# MongoDB metrics exporter url 
+variable "mongo_metrics_exporter_url" {
+  description = "URL of the MongoDB metrics exporter"
+  type        = string
+  default     = null
+}
+
 variable "security_context" {
   description = "security context for Prometheus pods"
   type = object({

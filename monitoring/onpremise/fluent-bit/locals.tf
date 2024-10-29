@@ -14,8 +14,6 @@ locals {
   fluent_bit_image_pull_secrets                 = try(var.fluent_bit.image_pull_secrets, "")
   fluent_bit_var_lib_docker_containers_hostpath = try(var.fluent_bit.var_lib_docker_containers_hostpath, "/var/lib/docker/containers")
   fluent_bit_run_log_journal_hostpath           = try(var.fluent_bit.run_log_journal_hostpath, "/run/log/journal")
-  fluent_bit_node_selector_keys                 = keys(var.node_selector)
-  fluent_bit_node_selector_values               = values(var.node_selector)
 
   # Seq
   seq_host    = try(var.seq.host, "")

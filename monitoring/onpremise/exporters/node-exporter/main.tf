@@ -32,18 +32,13 @@ resource "kubernetes_daemonset" "node_exporter" {
         }
       }
       spec {
-        node_selector = local.node_exporter_node_selector
+        node_selector = var.node_selector
         dynamic "toleration" {
-          for_each = (var.node_selector != {} ? [
-            for index in range(0, length(local.node_selector_keys)) : {
-              key   = local.node_selector_keys[index]
-              value = local.node_selector_values[index]
-            }
-          ] : [])
+          for_each = var.node_selector != {} ? var.node_selector : {}
           content {
-            key      = toleration.value.key
+            key      = toleration.key
             operator = "Equal"
-            value    = toleration.value.value
+            value    = toleration.value
             effect   = "NoSchedule"
           }
         }

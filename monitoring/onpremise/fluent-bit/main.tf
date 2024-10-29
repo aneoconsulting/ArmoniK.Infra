@@ -24,17 +24,13 @@ resource "kubernetes_daemonset" "fluent_bit" {
         }
       }
       spec {
+        node_selector = var.node_selector
         dynamic "toleration" {
-          for_each = (var.node_selector != {} ? [
-            for index in range(0, length(local.fluent_bit_node_selector_keys)) : {
-              key   = local.fluent_bit_node_selector_keys[index]
-              value = local.fluent_bit_node_selector_values[index]
-            }
-          ] : [])
+          for_each = var.node_selector != {} ? var.node_selector : {}
           content {
-            key      = toleration.value.key
+            key      = toleration.key
             operator = "Equal"
-            value    = toleration.value.value
+            value    = toleration.value
             effect   = "NoSchedule"
           }
         }

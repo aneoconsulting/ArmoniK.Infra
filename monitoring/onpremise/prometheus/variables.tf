@@ -37,7 +37,7 @@ variable "metrics_exporter_url" {
 variable "mongo_metrics_exporter_url" {
   description = "URL of the MongoDB metrics exporter"
   type        = string
-  default     = null
+  default     = ""
 }
 
 variable "security_context" {

@@ -1,13 +1,9 @@
 # Current account
 data "aws_caller_identity" "current" {}
 
-# Current AWS region
-data "aws_region" "current" {}
-
 data "aws_ecr_authorization_token" "current" {}
 
 locals {
-  region                      = data.aws_region.current.name
   current_account             = data.aws_caller_identity.current.account_id
   only_pull_accounts_root     = formatlist("arn:aws:iam::%s:root", var.only_pull_accounts)
   push_and_pull_accounts_root = formatlist("arn:aws:iam::%s:root", var.push_and_pull_accounts)
@@ -131,7 +127,7 @@ resource "skopeo2_copy" "copy_images" {
   retries         = 10
   retry_delay     = 10
 
-  depends_on = [aws_ecr_repository.ecr, null_resource.logout_public_ecr]
+  depends_on = [null_resource.logout_public_ecr]
 }
 
 # This is to fix the auth token expired issue describe here: https://docs.aws.amazon.com/AmazonECR/latest/public/public-registries.html

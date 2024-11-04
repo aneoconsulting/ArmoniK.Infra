@@ -124,13 +124,16 @@ resource "kubernetes_config_map" "windows_exporter_config" {
   }
 
   data = {
-    "config.yml" = <<-EOT
-      collectors:
-        enabled: cpu_info,container,logical_disk,memory,net,os
-      collector:
-        service:
-          services-where: "Name='containerd' or Name='kubelet'"
-    EOT
+    "config.yml" = yamlencode({
+      collectors = {
+      	enabled = "cpu_info,container,logical_disk,memory,net,os"
+      }
+      collector = {
+        service = {
+          services-where = "Name='containerd' or Name='kubelet'"
+        }
+      }
+    })
   }
 }
 

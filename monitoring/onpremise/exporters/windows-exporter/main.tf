@@ -5,7 +5,7 @@ resource "kubectl_manifest" "windows_exporter" {
     apiVersion = "apps/v1"
     kind       = "DaemonSet"
     metadata = {
-      name      = "windows-exporter"
+      name      = var.name
       namespace = var.namespace
       labels = {
         app     = "armonik"
@@ -47,7 +47,7 @@ resource "kubectl_manifest" "windows_exporter" {
           initContainers = [
             {
               name    = "configure-firewall"
-              image   = "mcr.microsoft.com/windows/nanoserver:ltsc2022"
+              image   = "${var.init_docker_image.image}:${var.init_docker_image.tag}"
               command = ["powershell"]
               args    = ["New-NetFirewallRule", "-DisplayName", "'windows-exporter'", "-Direction", "inbound", "-Profile", "Any", "-Action", "Allow", "-LocalPort", "9182", "-Protocol", "TCP"]
             }
@@ -78,7 +78,7 @@ resource "kubectl_manifest" "windows_exporter" {
               "kubernetes.io/os"   = "windows"
               "kubernetes.io/arch" = "amd64"
             },
-            local.node_selector
+            var.node_selector
           )
           tolerations = concat(
             [
@@ -95,7 +95,14 @@ resource "kubectl_manifest" "windows_exporter" {
                 effect   = "NoSchedule"
               }
             ],
-            local.tolerations
+            [
+              for key, value in var.node_selector : {
+                key      = key
+                operator = "Equal"
+                value    = value
+                effect   = "NoSchedule"
+              }
+            ]
           )
           volumes = [
             {
@@ -126,7 +133,7 @@ resource "kubernetes_config_map" "windows_exporter_config" {
   data = {
     "config.yml" = yamlencode({
       collectors = {
-      	enabled = "cpu_info,container,logical_disk,memory,net,os"
+        enabled = "cpu_info,container,logical_disk,memory,net,os"
       }
       collector = {
         service = {

@@ -31,6 +31,8 @@ No modules.
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_docker_image"></a> [docker\_image](#input\_docker\_image) | Docker image for windows exporter | <pre>object({<br>    image              = string<br>    tag                = string<br>    image_pull_secrets = string<br>  })</pre> | n/a | yes |
+| <a name="input_init_docker_image"></a> [init\_docker\_image](#input\_init\_docker\_image) | Docker image for windows exporter | <pre>object({<br>    image              = string<br>    tag                = string<br>    image_pull_secrets = string<br>  })</pre> | n/a | yes |
+| <a name="input_name"></a> [name](#input\_name) | Name for the resource | `string` | `"windows-exporter"` | no |
 | <a name="input_namespace"></a> [namespace](#input\_namespace) | Namespace of ArmoniK monitoring | `string` | n/a | yes |
 | <a name="input_node_selector"></a> [node\_selector](#input\_node\_selector) | Node selector for windows exporter | `any` | `{}` | no |
 

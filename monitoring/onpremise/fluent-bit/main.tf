@@ -26,7 +26,7 @@ resource "kubernetes_daemonset" "fluent_bit" {
       spec {
         node_selector = var.node_selector
         dynamic "toleration" {
-          for_each = var.node_selector != {} ? var.node_selector : {}
+          for_each = var.node_selector
           content {
             key      = toleration.key
             operator = "Equal"

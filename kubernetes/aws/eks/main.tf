@@ -131,17 +131,6 @@ module "eks" {
   subnet_ids = var.vpc_private_subnet_ids
   vpc_id     = var.vpc_id
 
-  # create_aws_auth_configmap = !(can(coalesce(var.eks_managed_node_groups)) && can(coalesce(var.fargate_profiles)))
-  # Needed to add self managed node group configuration.
-  # => kubectl get cm aws-auth -n kube-system -o yaml
-  #manage_aws_auth_configmap = true
-  cluster_addons = {
-    coredns                = {}
-    eks-pod-identity-agent = {}
-    kube-proxy             = {}
-    vpc-cni                = {}
-  }
-
   # Private cluster
   cluster_endpoint_private_access = var.cluster_endpoint_private_access
 
@@ -167,11 +156,7 @@ module "eks" {
     }
   }
 
-
-  cluster_security_group_additional_rules = {
-    source_node_security_group = true
-  }
-
+  cluster_additional_security_group_ids = [module.eks.node_security_group_id]
 
   cluster_encryption_config = {
     provider_key_arn = var.cluster_encryption_config

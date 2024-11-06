@@ -30,9 +30,9 @@ terraform destroy
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.38.0 |
-| <a name="provider_external"></a> [external](#provider\_external) | 2.3.3 |
-| <a name="provider_null"></a> [null](#provider\_null) | 3.2.2 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 5.61 |
+| <a name="provider_external"></a> [external](#provider\_external) | ~> 2.3.1 |
+| <a name="provider_null"></a> [null](#provider\_null) | >= 3.2.1 |
 
 ## Modules
 

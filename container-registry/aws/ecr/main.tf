@@ -127,14 +127,12 @@ resource "skopeo2_copy" "copy_images" {
   retries         = 10
   retry_delay     = 10
 
-  depends_on = [null_resource.logout_public_ecr]
+  depends_on = [generic_local_cmd.logout_public_ecr]
 }
 
 # This is to fix the auth token expired issue describe here: https://docs.aws.amazon.com/AmazonECR/latest/public/public-registries.html
-resource "null_resource" "logout_public_ecr" {
+resource "generic_local_cmd" "logout_public_ecr" {
   provisioner "local-exec" {
-    command = <<-EOT
-        docker logout public.ecr.aws
-    EOT   
+    command = "docker logout public.ecr.aws"
   }
 }

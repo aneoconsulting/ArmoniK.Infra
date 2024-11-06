@@ -163,6 +163,7 @@ locals {
 # AWS ECR
 module "complete_ecr" {
   source                 = "../../../ecr"
+  aws_profile            = var.aws_profile
   kms_key_id             = null
   repositories           = local.new_repositories
   mutability             = "IMMUTABLE"

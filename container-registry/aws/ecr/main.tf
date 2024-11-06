@@ -3,7 +3,10 @@ data "aws_caller_identity" "current" {}
 
 data "aws_ecr_authorization_token" "current" {}
 
+data "aws_region" "current" {}
+
 locals {
+  region                      = data.aws_region.current.name
   current_account             = data.aws_caller_identity.current.account_id
   only_pull_accounts_root     = formatlist("arn:aws:iam::%s:root", var.only_pull_accounts)
   push_and_pull_accounts_root = formatlist("arn:aws:iam::%s:root", var.push_and_pull_accounts)
@@ -31,7 +34,6 @@ locals {
   lifecycle_policy = can(coalesce(var.lifecycle_policy)) ? jsonencode(var.lifecycle_policy) : null
   tags             = merge({ module = "ecr" }, var.tags)
 }
-
 
 # create ECR repositories
 resource "aws_ecr_repository" "ecr" {
@@ -127,12 +129,15 @@ resource "skopeo2_copy" "copy_images" {
   retries         = 10
   retry_delay     = 10
 
-  depends_on = [generic_local_cmd.logout_public_ecr]
+  depends_on = [generic_local_cmd.logout_public_ecr_login_private]
 }
 
 # This is to fix the auth token expired issue describe here: https://docs.aws.amazon.com/AmazonECR/latest/public/public-registries.html
-resource "generic_local_cmd" "logout_public_ecr" {
+resource "generic_local_cmd" "logout_public_ecr_login_private" {
   provisioner "local-exec" {
-    command = "docker logout public.ecr.aws"
+    command = <<EOT
+      docker logout public.ecr.aws
+      aws ecr get-login-password --profile ${var.aws_profile} --region ${local.region}  | docker login --username AWS --password-stdin ${local.current_account}.dkr.ecr.${local.region}.amazonaws.com    
+      EOT
   }
 }

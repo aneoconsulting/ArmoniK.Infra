@@ -154,7 +154,7 @@ resource "generic_local_cmd" "logout_public_ecr_login_private" {
   }
 
   update {
-    triggers = ["profile"]
+    triggers = []
     cmd      = <<EOT
       aws ecr get-login-password --profile "$INPUT_profile" --region "$INPUT_region"  | docker login --username AWS --password-stdin "$INPUT_current_account".dkr.ecr."$INPUT_region".amazonaws.com    
       EOT

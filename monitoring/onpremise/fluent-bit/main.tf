@@ -93,6 +93,11 @@ resource "kubernetes_daemonset" "fluent_bit" {
             mount_path = "/fluent-bit/etc/"
             read_only  = true
           }
+          volume_mount {
+            name       = "aws-auth-config"
+            mount_path = "/root/.aws"
+            read_only  = true
+          }
         }
         # volume {
         #   name = "fluentbitstate"
@@ -128,6 +133,12 @@ resource "kubernetes_daemonset" "fluent_bit" {
           name = "fluent-bit-config"
           config_map {
             name = kubernetes_config_map.fluent_bit_config.metadata[0].name
+          }
+        }
+        volume {
+          name = "aws-auth-config"
+          secret {
+            secret_name = kubernetes_secret.aws_auth_config.metadata[0].name
           }
         }
         host_network                     = false

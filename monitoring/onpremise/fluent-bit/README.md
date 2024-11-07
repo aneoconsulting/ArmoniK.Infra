@@ -25,12 +25,14 @@ No modules.
 | [kubernetes_config_map.fluent_bit_config](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/config_map) | resource |
 | [kubernetes_config_map.fluent_bit_envvars_config](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/config_map) | resource |
 | [kubernetes_daemonset.fluent_bit](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/daemonset) | resource |
+| [kubernetes_secret.aws_auth_config](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
 | [kubernetes_service_account.fluent_bit](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/service_account) | resource |
 
 ## Inputs
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
+| <a name="input_aws"></a> [aws](#input\_aws) | AWS user for logs, prefer to pass them through env('AWS\_*') in your parameters.tfvars | <pre>object({<br>    aws_secret_access_key = optional(string, "")<br>    aws_access_id         = optional(string, "")<br>    aws_session_token     = optional(string, "")<br>  })</pre> | `{}` | no |
 | <a name="input_cloudwatch"></a> [cloudwatch](#input\_cloudwatch) | CloudWatch info | `any` | `{}` | no |
 | <a name="input_fluent_bit"></a> [fluent\_bit](#input\_fluent\_bit) | Parameters of Fluent bit | <pre>object({<br>    container_name                     = string<br>    image                              = string<br>    tag                                = string<br>    is_daemonset                       = bool<br>    http_server                        = string<br>    http_port                          = string<br>    read_from_head                     = string<br>    read_from_tail                     = string<br>    image_pull_secrets                 = string<br>    parser                             = string<br>    fluent_bit_state_hostpath          = string # path = "/var/log/fluent-bit/state" for GCP Autopilot | path = "/var/fluent-bit/state" for localhost, AWS EKS, GCP GKE<br>    var_lib_docker_containers_hostpath = string # path = "/var/log/lib/docker/containers" for GCP Autopilot | path = "/var/lib/docker/containers" for localhost, AWS EKS, GCP GKE<br>    run_log_journal_hostpath           = string # path = "/var/log/run/log/journal" -for GCP Autopilot | path = "/run/log/journal" for localhost, AWS EKS, GCP GKE<br>  })</pre> | n/a | yes |
 | <a name="input_namespace"></a> [namespace](#input\_namespace) | Namespace of ArmoniK monitoring | `string` | n/a | yes |

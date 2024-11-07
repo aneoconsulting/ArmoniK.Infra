@@ -18,7 +18,7 @@ terraform {
     }
     generic = {
       source  = "aneoconsulting.github.io/aneoconsulting/generic"
-      version = ">= 0.1.0"
+      version = ">= 0.1.1"
     }
   }
 }

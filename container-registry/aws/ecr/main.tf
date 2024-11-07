@@ -134,10 +134,29 @@ resource "skopeo2_copy" "copy_images" {
 
 # This is to fix the auth token expired issue describe here: https://docs.aws.amazon.com/AmazonECR/latest/public/public-registries.html
 resource "generic_local_cmd" "logout_public_ecr_login_private" {
-  provisioner "local-exec" {
-    command = <<EOT
+  inputs = {
+    profile         = var.aws_profile
+    region          = local.region
+    current_account = local.current_account
+  }
+
+  create {
+    cmd = <<EOT
       docker logout public.ecr.aws
-      aws ecr get-login-password --profile ${var.aws_profile} --region ${local.region}  | docker login --username AWS --password-stdin ${local.current_account}.dkr.ecr.${local.region}.amazonaws.com    
+      aws ecr get-login-password --profile "$INPUT_profile" --region "$INPUT_region"  | docker login --username AWS --password-stdin "$INPUT_current_account".dkr.ecr."$INPUT_region".amazonaws.com    
+      EOT
+  }
+
+  destroy {
+    cmd = <<EOT
+      docker logout "$INPUT_current_account".dkr.ecr."$INPUT_region".amazonaws.com    
+      EOT
+  }
+
+  update {
+    triggers = ["profile"]
+    cmd      = <<EOT
+      aws ecr get-login-password --profile "$INPUT_profile" --region "$INPUT_region"  | docker login --username AWS --password-stdin "$INPUT_current_account".dkr.ecr."$INPUT_region".amazonaws.com    
       EOT
   }
 }

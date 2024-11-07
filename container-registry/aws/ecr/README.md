@@ -23,16 +23,16 @@ This module must be used with these constraints:
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0 |
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.4.0 |
-| <a name="requirement_generic"></a> [generic](#requirement\_generic) | >= 0.1.0 |
+| <a name="requirement_generic"></a> [generic](#requirement\_generic) | >= 0.1.1 |
 | <a name="requirement_skopeo2"></a> [skopeo2](#requirement\_skopeo2) | >= 1.1.1 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 5.4.0 |
-| <a name="provider_generic"></a> [generic](#provider\_generic) | >= 0.1.0 |
-| <a name="provider_skopeo2"></a> [skopeo2](#provider\_skopeo2) | >= 1.1.1 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.72.1 |
+| <a name="provider_generic"></a> [generic](#provider\_generic) | 0.1.1 |
+| <a name="provider_skopeo2"></a> [skopeo2](#provider\_skopeo2) | 1.1.1 |
 
 ## Modules
 

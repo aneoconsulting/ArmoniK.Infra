@@ -30,9 +30,9 @@ This module must be used with these constraints:
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.72.1 |
-| <a name="provider_generic"></a> [generic](#provider\_generic) | 0.1.1 |
-| <a name="provider_skopeo2"></a> [skopeo2](#provider\_skopeo2) | 1.1.1 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 5.4.0 |
+| <a name="provider_generic"></a> [generic](#provider\_generic) | >= 0.1.1 |
+| <a name="provider_skopeo2"></a> [skopeo2](#provider\_skopeo2) | >= 1.1.1 |
 
 ## Modules
 

@@ -3,7 +3,6 @@ variable "aws_profile" {
   description = "AWS Profile used to login and push container images on ECR"
   type        = string
 }
-
 # Tags
 variable "tags" {
   description = "Tags for resource"

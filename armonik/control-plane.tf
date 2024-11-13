@@ -198,7 +198,7 @@ resource "kubernetes_deployment" "control_plane" {
         dynamic "container" {
           for_each = (!var.fluent_bit.is_daemonset ? [1] : [])
           content {
-            name              = var.fluent_bit.name
+            name              = var.fluent_bit.container_name
             image             = "${var.fluent_bit.image}:${var.fluent_bit.tag}"
             image_pull_policy = "IfNotPresent"
             env_from {

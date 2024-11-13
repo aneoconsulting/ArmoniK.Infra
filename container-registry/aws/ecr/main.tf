@@ -1,7 +1,8 @@
 # Current account
 data "aws_caller_identity" "current" {}
 
-# Current AWS region
+data "aws_ecr_authorization_token" "current" {}
+
 data "aws_region" "current" {}
 
 locals {
@@ -119,35 +120,44 @@ resource "aws_ecr_lifecycle_policy" "ecr_lifecycle_policy" {
 }
 
 # Push images
-resource "null_resource" "copy_images" {
-  for_each = aws_ecr_repository.ecr
-  triggers = {
-    state = join("-", [
-      each.key, var.repositories[each.key].image, var.repositories[each.key].tag
-    ])
+resource "skopeo2_copy" "copy_images" {
+  for_each          = aws_ecr_repository.ecr
+  source_image      = "docker://${var.repositories[each.key].image}:${var.repositories[each.key].tag}"
+  destination_image = "docker://${each.value.repository_url}:${var.repositories[each.key].tag}"
+
+  copy_all_images = true
+  retries         = 10
+  retry_delay     = 10
+
+  depends_on = [generic_local_cmd.logout_public_ecr_login_private]
+}
+
+# This is to fix the auth token expired issue describe here: https://docs.aws.amazon.com/AmazonECR/latest/public/public-registries.html
+resource "generic_local_cmd" "logout_public_ecr_login_private" {
+  inputs = {
+    profile         = var.aws_profile
+    region          = local.region
+    current_account = local.current_account
   }
-  provisioner "local-exec" {
-    command = <<-EOT
-aws ecr get-login-password --profile ${var.aws_profile} --region ${local.region}  | docker login --username AWS --password-stdin ${local.current_account}.dkr.ecr.${local.region}.amazonaws.com
-aws ecr-public get-login-password --profile ${var.aws_profile} --region us-east-1  | docker login --username AWS --password-stdin public.ecr.aws
-if [ -z "$(docker images -q '${var.repositories[each.key].image}:${var.repositories[each.key].tag}')" ]
-then
-  if ! docker pull ${var.repositories[each.key].image}:${var.repositories[each.key].tag}
-  then
-    echo "cannot download image ${var.repositories[each.key].image}:${var.repositories[each.key].tag}"
-    exit 1
-  fi
-fi
-if ! docker tag ${var.repositories[each.key].image}:${var.repositories[each.key].tag} ${local.current_account}.dkr.ecr.${local.region}.amazonaws.com/${each.key}:${var.repositories[each.key].tag}
-then
-  echo "cannot tag image ${var.repositories[each.key].image}:${var.repositories[each.key].tag} to ${local.current_account}.dkr.ecr.${local.region}.amazonaws.com/${each.key}:${var.repositories[each.key].tag}"
-  exit 1
-fi
-if ! docker push ${local.current_account}.dkr.ecr.${local.region}.amazonaws.com/${each.key}:${var.repositories[each.key].tag}
-then
-  echo "cannot push image ${local.current_account}.dkr.ecr.${local.region}.amazonaws.com/${each.key}:${var.repositories[each.key].tag}"
-  exit 1
-fi
-EOT
+
+  create {
+    cmd = <<EOT
+      docker logout public.ecr.aws
+      aws ecr get-login-password --profile "$INPUT_profile" --region "$INPUT_region"  | docker login --username AWS --password-stdin "$INPUT_current_account".dkr.ecr."$INPUT_region".amazonaws.com    
+      EOT
+  }
+
+  destroy {
+    cmd = <<EOT
+      docker logout "$INPUT_current_account".dkr.ecr."$INPUT_region".amazonaws.com    
+      EOT
+  }
+
+  update {
+    triggers = []
+    cmd      = <<EOT
+      docker logout public.ecr.aws
+      aws ecr get-login-password --profile "$INPUT_profile" --region "$INPUT_region"  | docker login --username AWS --password-stdin "$INPUT_current_account".dkr.ecr."$INPUT_region".amazonaws.com    
+      EOT
   }
 }

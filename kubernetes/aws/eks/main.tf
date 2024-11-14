@@ -223,6 +223,7 @@ module "eks" {
 module "eks_aws_auth" {
   source                    = "terraform-aws-modules/eks/aws//modules/aws-auth"
   version                   = "20.24.2"
+  create_aws_auth_configmap = !(can(coalesce(var.eks_managed_node_groups)) && can(coalesce(var.fargate_profiles)))
   manage_aws_auth_configmap = true
 
   aws_auth_roles = var.map_roles_groups

@@ -63,8 +63,6 @@ module "eks" {
   instance_refresh_tag                                     = "v1.19.0"
   instance_refresh_version                                 = "0.21.0"
   kubeconfig_file                                          = "generated/kubeconfig"
-  map_roles_groups                                         = []
-  map_users_groups                                         = []
   vpc_id                                                   = data.aws_vpc.default.id
   vpc_pods_subnet_ids                                      = data.aws_subnets.subnets.ids
   vpc_private_subnet_ids                                   = data.aws_subnets.subnets.ids

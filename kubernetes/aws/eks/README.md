@@ -4,7 +4,7 @@
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.3.0 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.61 |
 | <a name="requirement_helm"></a> [helm](#requirement\_helm) | >= 2.10.1 |
 | <a name="requirement_kubernetes"></a> [kubernetes](#requirement\_kubernetes) | >= 2.13.0 |
 | <a name="requirement_null"></a> [null](#requirement\_null) | >= 3.2.1 |
@@ -14,7 +14,7 @@
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 5.3.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 5.61 |
 | <a name="provider_helm"></a> [helm](#provider\_helm) | >= 2.10.1 |
 | <a name="provider_kubernetes"></a> [kubernetes](#provider\_kubernetes) | >= 2.13.0 |
 | <a name="provider_null"></a> [null](#provider\_null) | >= 3.2.1 |
@@ -25,7 +25,7 @@
 | Name | Source | Version |
 |------|--------|---------|
 | <a name="module_aws_node_termination_handler_role"></a> [aws\_node\_termination\_handler\_role](#module\_aws\_node\_termination\_handler\_role) | terraform-aws-modules/iam/aws//modules/iam-assumable-role-with-oidc | 4.1.0 |
-| <a name="module_eks"></a> [eks](#module\_eks) | terraform-aws-modules/eks/aws | 19.16.0 |
+| <a name="module_eks"></a> [eks](#module\_eks) | terraform-aws-modules/eks/aws | 20.29.0 |
 
 ## Resources
 
@@ -53,7 +53,6 @@
 | [random_string.random_resources](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/string) | resource |
 | [aws_autoscaling_groups.groups](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/autoscaling_groups) | data source |
 | [aws_availability_zones.available](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/availability_zones) | data source |
-| [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
 | [aws_iam_policy_document.aws_node_termination_handler](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.efs_csi_driver](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.worker_autoscaling](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
@@ -113,8 +112,6 @@
 | <a name="input_instance_refresh_tag"></a> [instance\_refresh\_tag](#input\_instance\_refresh\_tag) | Instance refresh tag | `string` | n/a | yes |
 | <a name="input_instance_refresh_version"></a> [instance\_refresh\_version](#input\_instance\_refresh\_version) | Instance refresh helm chart version | `string` | n/a | yes |
 | <a name="input_kubeconfig_file"></a> [kubeconfig\_file](#input\_kubeconfig\_file) | Kubeconfig file path | `string` | n/a | yes |
-| <a name="input_map_roles_groups"></a> [map\_roles\_groups](#input\_map\_roles\_groups) | List of map roles group | <pre>list(object({<br>    rolearn  = string<br>    username = string<br>    groups   = list(string)<br>  }))</pre> | n/a | yes |
-| <a name="input_map_users_groups"></a> [map\_users\_groups](#input\_map\_users\_groups) | List of map users group | <pre>list(object({<br>    userarn  = string<br>    username = string<br>    groups   = list(string)<br>  }))</pre> | n/a | yes |
 | <a name="input_name"></a> [name](#input\_name) | AWS EKS service name | `string` | `"armonik-eks"` | no |
 | <a name="input_node_selector"></a> [node\_selector](#input\_node\_selector) | Node selector for pods of EKS system | `any` | `{}` | no |
 | <a name="input_profile"></a> [profile](#input\_profile) | Profile of AWS credentials to deploy Terraform sources | `string` | n/a | yes |

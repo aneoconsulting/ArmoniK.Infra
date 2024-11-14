@@ -1,6 +1,3 @@
-# Current account
-data "aws_caller_identity" "current" {}
-
 data "aws_region" "current" {}
 
 # Available zones
@@ -115,19 +112,21 @@ locals {
 
 module "eks" {
   source          = "terraform-aws-modules/eks/aws"
-  version         = "19.16.0"
+  version         = "20.29.0"
   create          = true
   cluster_name    = var.name
   cluster_version = var.cluster_version
 
+  # If you want to maintain the current default behavior of v19.x
+  kms_key_enable_default_policy = false
+
+  # Cluster access entry
+  # To add the current caller identity as an administrator
+  enable_cluster_creator_admin_permissions = true
+
   # VPC
   subnet_ids = var.vpc_private_subnet_ids
   vpc_id     = var.vpc_id
-
-  create_aws_auth_configmap = !(can(coalesce(var.eks_managed_node_groups)) && can(coalesce(var.fargate_profiles)))
-  # Needed to add self managed node group configuration.
-  # => kubectl get cm aws-auth -n kube-system -o yaml
-  manage_aws_auth_configmap = true
 
   # Private cluster
   cluster_endpoint_private_access = var.cluster_endpoint_private_access
@@ -154,6 +153,8 @@ module "eks" {
     }
   }
 
+  cluster_additional_security_group_ids = [module.eks.node_security_group_id]
+
   cluster_encryption_config = {
     provider_key_arn = var.cluster_encryption_config
     resources        = ["secrets"]
@@ -162,17 +163,6 @@ module "eks" {
   # Tags
   tags         = local.tags
   cluster_tags = local.tags
-
-  # IAM
-  # used to allow other users to interact with our cluster
-  aws_auth_roles = var.map_roles_groups
-  aws_auth_users = concat([
-    {
-      userarn  = "arn:aws:iam::${data.aws_caller_identity.current.arn}:user/admin"
-      username = "admin"
-      groups   = ["system:masters", "system:bootstrappers", "system:nodes"]
-    }
-  ], var.map_users_groups)
 
   # List of EKS managed node groups
   eks_managed_node_group_defaults = {

@@ -31,5 +31,10 @@ resource "kubernetes_config_map_v1_data" "amazon_vpc_cni" {
   force = true
   data = {
     enable-windows-ipam = "true"
+    enable-windows-prefix-delegation : "true"
   }
+  depends_on = [
+    module.eks,
+    null_resource.update_kubeconfig
+  ]
 }

@@ -1,0 +1,57 @@
+diff --git a/armonik/README.md b/armonik/README.md
+index 9f9010b5..f3fc6c95 100644
+--- a/armonik/README.md
++++ b/armonik/README.md
+@@ -15,12 +15,12 @@
+ 
+ | Name | Version |
+ |------|---------|
+-| <a name="provider_helm"></a> [helm](#provider\_helm) | 2.12.1 |
+-| <a name="provider_kubernetes"></a> [kubernetes](#provider\_kubernetes) | 2.26.0 |
+-| <a name="provider_local"></a> [local](#provider\_local) | 2.4.1 |
+-| <a name="provider_pkcs12"></a> [pkcs12](#provider\_pkcs12) | 0.2.5 |
+-| <a name="provider_random"></a> [random](#provider\_random) | 3.6.0 |
+-| <a name="provider_tls"></a> [tls](#provider\_tls) | 4.0.5 |
++| <a name="provider_helm"></a> [helm](#provider\_helm) | >= 2.10.1 |
++| <a name="provider_kubernetes"></a> [kubernetes](#provider\_kubernetes) | >= 2.21.1 |
++| <a name="provider_local"></a> [local](#provider\_local) | >= 2.1.0 |
++| <a name="provider_pkcs12"></a> [pkcs12](#provider\_pkcs12) | >= 0.0.7 |
++| <a name="provider_random"></a> [random](#provider\_random) | >= 3.5.1 |
++| <a name="provider_tls"></a> [tls](#provider\_tls) | >= 4.0.4 |
+ 
+ ## Modules
+ 
+diff --git a/kubernetes/aws/eks/README.md b/kubernetes/aws/eks/README.md
+index 28244d06..c64cffe5 100644
+--- a/kubernetes/aws/eks/README.md
++++ b/kubernetes/aws/eks/README.md
+@@ -14,11 +14,11 @@
+ 
+ | Name | Version |
+ |------|---------|
+-| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.75.1 |
+-| <a name="provider_helm"></a> [helm](#provider\_helm) | 2.16.1 |
+-| <a name="provider_kubernetes"></a> [kubernetes](#provider\_kubernetes) | 2.33.0 |
+-| <a name="provider_null"></a> [null](#provider\_null) | 3.2.3 |
+-| <a name="provider_random"></a> [random](#provider\_random) | 3.6.3 |
++| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 5.61 |
++| <a name="provider_helm"></a> [helm](#provider\_helm) | >= 2.10.1 |
++| <a name="provider_kubernetes"></a> [kubernetes](#provider\_kubernetes) | >= 2.13.0 |
++| <a name="provider_null"></a> [null](#provider\_null) | >= 3.2.1 |
++| <a name="provider_random"></a> [random](#provider\_random) | >= 3.5.1 |
+ 
+ ## Modules
+ 
+diff --git a/monitoring/onpremise/fluent-bit/README.md b/monitoring/onpremise/fluent-bit/README.md
+index e9151bf4..ae5a5f8b 100644
+--- a/monitoring/onpremise/fluent-bit/README.md
++++ b/monitoring/onpremise/fluent-bit/README.md
+@@ -10,7 +10,7 @@
+ 
+ | Name | Version |
+ |------|---------|
+-| <a name="provider_kubernetes"></a> [kubernetes](#provider\_kubernetes) | 2.34.0 |
++| <a name="provider_kubernetes"></a> [kubernetes](#provider\_kubernetes) | >= 2.21.1 |
+ 
+ ## Modules
+ 

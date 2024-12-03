@@ -6,12 +6,20 @@ resource "helm_release" "keda" {
   version    = var.helm_chart_version
 
   set {
+    name  = "image.keda.registry"
+    value = var.docker_image.keda.registry
+  }
+  set {
     name  = "image.keda.repository"
     value = var.docker_image.keda.image
   }
   set {
     name  = "image.keda.tag"
     value = var.docker_image.keda.tag
+  }
+  set {
+    name  = "image.metricsApiServer.registry"
+    value = var.docker_image.metricsApiServer.registry
   }
   set {
     name  = "image.metricsApiServer.repository"

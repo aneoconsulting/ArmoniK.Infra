@@ -1,5 +1,6 @@
 # configmap with all the variables
 resource "kubernetes_config_map" "fluent_bit_envvars_config_windows" {
+  count = (length(var.node_selector_windows) > 0 ? 1 : 0)
   metadata {
     name      = "fluent-bit-envvars-config-windows"
     namespace = var.namespace
@@ -17,7 +18,7 @@ resource "kubernetes_config_map" "fluent_bit_envvars_config_windows" {
     APPLICATION_CLOUDWATCH_AUTO_CREATE_LOG_GROUP = (local.cloudwatch_name == "" && local.cloudwatch_enabled)
     AWS_S3_NAME                                  = local.s3_name
     AWS_REGION_S3                                = local.s3_region
-    PREFIX                                       = local.s3_prefix
+    S3_KEY_FORMAT                                = local.s3_key_format
     PARSER                                       = local.fluent_bit_windows_parser
     KUBE_CA_FILE                                 = local.fluent_bit_kube_ca_file_windows
     KUBE_TOKEN_FILE                              = local.fluent_bit_kube_token_file_windows

@@ -49,8 +49,8 @@ output "windows_is_daemonset" {
 output "windows_configmaps" {
   description = "Configmaps of Fluent-bit"
   value = {
-    envvars = kubernetes_config_map.fluent_bit_envvars_config_windows.metadata[0].name
-    config  = kubernetes_config_map.fluent_bit_config_windows.metadata[0].name
-    entry   = kubernetes_config_map.fluent_bit_entrypoint.metadata[0].name
+    envvars = kubernetes_config_map.fluent_bit_envvars_config_windows[0].metadata[0].name
+    config  = kubernetes_config_map.fluent_bit_config_windows[0].metadata[0].name
+    entry   = kubernetes_config_map.fluent_bit_entrypoint[0].metadata[0].name
   }
 }

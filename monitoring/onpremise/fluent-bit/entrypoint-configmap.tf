@@ -1,4 +1,5 @@
 resource "kubernetes_config_map" "fluent_bit_entrypoint" {
+  count = (length(var.node_selector_windows) > 0 ? 1 : 0)
   metadata {
     name      = "fluent-bit-entrypoint"
     namespace = var.namespace

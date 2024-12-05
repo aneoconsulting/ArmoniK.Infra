@@ -221,7 +221,7 @@ resource "kubernetes_daemonset" "fluent_bit_windows" {
           }
           env_from {
             config_map_ref {
-              name = kubernetes_config_map.fluent_bit_envvars_config_windows.metadata[0].name
+              name = kubernetes_config_map.fluent_bit_envvars_config_windows[0].metadata[0].name
             }
           }
           volume_mount {
@@ -260,13 +260,13 @@ resource "kubernetes_daemonset" "fluent_bit_windows" {
         volume {
           name = "fluent-bit-config"
           config_map {
-            name = kubernetes_config_map.fluent_bit_config_windows.metadata[0].name
+            name = kubernetes_config_map.fluent_bit_config_windows[0].metadata[0].name
           }
         }
         volume {
           name = "entrypoint-script"
           config_map {
-            name = kubernetes_config_map.fluent_bit_entrypoint.metadata[0].name
+            name = kubernetes_config_map.fluent_bit_entrypoint[0].metadata[0].name
           }
         }
         host_network                     = false

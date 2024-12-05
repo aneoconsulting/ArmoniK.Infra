@@ -1,7 +1,7 @@
 # Service account and role for Fluent-bit
 # For Kubernetes 1.23 and later, otherwise use kubernetes_manifest
 resource "kubernetes_service_account" "fluent_bit_windows" {
-  count = (local.fluent_bit_windows_is_daemonset ? 1 : 0)
+  count = (local.windows_and_daemonset ? 1 : 0)
   metadata {
     name      = "fluent-bit-windows"
     namespace = var.namespace
@@ -9,7 +9,7 @@ resource "kubernetes_service_account" "fluent_bit_windows" {
 }
 
 resource "kubernetes_cluster_role" "fluent_bit_role_windows" {
-  count = (local.fluent_bit_windows_is_daemonset ? 1 : 0)
+  count = (local.windows_and_daemonset ? 1 : 0)
   metadata {
     name = "fluent-bit-role-windows"
   }
@@ -25,7 +25,7 @@ resource "kubernetes_cluster_role" "fluent_bit_role_windows" {
 }
 
 resource "kubernetes_cluster_role_binding" "fluent_bit_role_binding_windows" {
-  count = (local.fluent_bit_windows_is_daemonset ? 1 : 0)
+  count = (local.windows_and_daemonset ? 1 : 0)
   metadata {
     name = "fluent-bit-role-binding-windows"
   }

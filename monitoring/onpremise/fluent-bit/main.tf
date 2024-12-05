@@ -162,7 +162,7 @@ resource "kubernetes_daemonset" "fluent_bit" {
 }
 
 resource "kubernetes_daemonset" "fluent_bit_windows" {
-  count = (local.fluent_bit_windows_is_daemonset && length(var.node_selector_windows) > 0) ? 1 : 0
+  count = (local.windows_and_daemonset ? 1 : 0)
 
   metadata {
     name      = "fluent-bit-windows"

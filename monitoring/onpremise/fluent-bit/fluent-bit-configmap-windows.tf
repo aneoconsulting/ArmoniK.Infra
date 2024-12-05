@@ -1,5 +1,6 @@
 # configmap with all the variables
 resource "kubernetes_config_map" "fluent_bit_config_windows" {
+  count = (length(var.node_selector_windows) > 0 ? 1 : 0)
   metadata {
     name      = "fluent-bit-configmap-windows"
     namespace = var.namespace

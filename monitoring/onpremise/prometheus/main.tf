@@ -74,6 +74,11 @@ resource "kubernetes_deployment" "prometheus" {
             mount_path = "/etc/prometheus/prometheus.yml"
             sub_path   = "prometheus.yml"
           }
+          volume_mount {
+            name       = "kubecost-rules"
+            mount_path = "/etc/prometheus/kubecost.rules"
+            sub_path   = "kubecost.rules"
+          }
           dynamic "volume_mount" {
             for_each = length(kubernetes_persistent_volume_claim.prometheus) > 0 ? [1] : []
             content {
@@ -86,6 +91,13 @@ resource "kubernetes_deployment" "prometheus" {
           name = "prometheus-configmap"
           config_map {
             name     = kubernetes_config_map.prometheus_config.metadata[0].name
+            optional = false
+          }
+        }
+        volume {
+          name = "kubecost-rules"
+          config_map {
+            name     = kubernetes_config_map.kubecost_rules.metadata[0].name
             optional = false
           }
         }

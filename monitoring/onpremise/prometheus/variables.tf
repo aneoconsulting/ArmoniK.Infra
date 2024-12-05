@@ -52,6 +52,13 @@ variable "security_context" {
   }
 }
 
+# Optional Kubecost
+variable "enable_kubecost" {
+  description = "Whether or not to add the Prometheus rules and configuration related to Kubecost"
+  type = bool
+  default = false
+}
+
 # Persistent volume
 variable "persistent_volume" {
   description = "Persistent volume info"

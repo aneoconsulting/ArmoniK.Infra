@@ -11,12 +11,14 @@ global:
 rule_files:
   - "first.rules"
   - "my/*.rules"
-
-
+%{if var.enable_kubecost~}
+  - "/etc/prometheus/kubecost.rules"
+%{endif~}
 scrape_configs:
   - job_name: "prometheus"
     static_configs:
       - targets: ["localhost:9090"]
+
 
   - job_name: "metrics-exporter"
     static_configs:
@@ -160,6 +162,55 @@ scrape_configs:
         action: replace
         target_label: kubernetes_pod_name
 
+%{if var.enable_kubecost~}
+  - job_name: kubecost
+    honor_labels: true
+    scrape_interval: 1m
+    scrape_timeout: 10s
+    metrics_path: /metrics
+    scheme: http
+    dns_sd_configs:
+    - names:
+      - kubecost-cost-analyzer.armonik
+      type: 'A'
+      port: 9003
+%{endif~}
+
+EOF
+
+  kubecost_rules = <<EOF
+groups:
+  - name: CPU
+    rules:
+      - expr: sum(rate(container_cpu_usage_seconds_total{container!=""}[5m]))
+        record: cluster:cpu_usage:rate5m
+      - expr: rate(container_cpu_usage_seconds_total{container!=""}[5m])
+        record: cluster:cpu_usage_nosum:rate5m
+      - expr: avg(irate(container_cpu_usage_seconds_total{container!="POD", container!=""}[5m])) by (container,pod,namespace)
+        record: kubecost_container_cpu_usage_irate
+      - expr: sum(container_memory_working_set_bytes{container!="POD",container!=""}) by (container,pod,namespace)
+        record: kubecost_container_memory_working_set_bytes
+      - expr: sum(container_memory_working_set_bytes{container!="POD",container!=""})
+        record: kubecost_cluster_memory_working_set_bytes
+  - name: Savings
+    rules:
+      - expr: sum(avg(kube_pod_owner{owner_kind!="DaemonSet"}) by (pod) * sum(container_cpu_allocation) by (pod))
+        record: kubecost_savings_cpu_allocation
+        labels:
+          daemonset: "false"
+      - expr: sum(avg(kube_pod_owner{owner_kind="DaemonSet"}) by (pod) * sum(container_cpu_allocation) by (pod)) / sum(kube_node_info)
+        record: kubecost_savings_cpu_allocation
+        labels:
+          daemonset: "true"
+      - expr: sum(avg(kube_pod_owner{owner_kind!="DaemonSet"}) by (pod) * sum(container_memory_allocation_bytes) by (pod))
+        record: kubecost_savings_memory_allocation_bytes
+        labels:
+          daemonset: "false"
+      - expr: sum(avg(kube_pod_owner{owner_kind="DaemonSet"}) by (pod) * sum(container_memory_allocation_bytes) by (pod)) / sum(kube_node_info)
+        record: kubecost_savings_memory_allocation_bytes
+        labels:
+          daemonset: "true"
+
 EOF
 }
 
@@ -172,6 +223,18 @@ resource "kubernetes_config_map" "prometheus_config" {
   data = {
     "prometheus.yml" = local.prometheus_config
   }
+}
+
+resource "kubernetes_config_map" "kubecost_rules" {
+  metadata {
+    name = "kubecost-rules"
+    namespace = var.namespace
+  }
+  
+  data = {
+    "kubecost.rules" = local.kubecost_rules
+  }
+
 }
 
 resource "local_file" "prometheus_config_file" {

@@ -32,6 +32,16 @@ variable "s3" {
   default     = {}
 }
 
+variable "aws" {
+  description = "AWS user for logs, prefer to pass them through env('AWS_*') in your parameters.tfvars"
+  type = object({
+    aws_secret_access_key = optional(string, "")
+    aws_access_id         = optional(string, "")
+    aws_session_token     = optional(string, "")
+  })
+  default = {}
+}
+
 # Fluent-bit
 variable "fluent_bit" {
   description = "Parameters of Fluent bit"

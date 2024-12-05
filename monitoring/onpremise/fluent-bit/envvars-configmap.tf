@@ -17,7 +17,7 @@ resource "kubernetes_config_map" "fluent_bit_envvars_config" {
     APPLICATION_CLOUDWATCH_AUTO_CREATE_LOG_GROUP = (local.cloudwatch_name == "" && local.cloudwatch_enabled)
     AWS_S3_NAME                                  = local.s3_name
     AWS_REGION_S3                                = local.s3_region
-    PREFIX                                       = local.s3_prefix
+    S3_KEY_FORMAT                                = local.s3_key_format
     PARSER                                       = local.fluent_bit_parser
   }
 }

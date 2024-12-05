@@ -18,7 +18,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 6,
+  "id": 8,
   "links": [],
   "panels": [
     {
@@ -39,6 +39,7 @@
         "type": "prometheus",
         "uid": "PBFA97CFB590B2093"
       },
+      "description": "Rate of disk reads/writes for the database",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -96,8 +97,8 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 10,
-        "w": 10,
+        "h": 13,
+        "w": 24,
         "x": 0,
         "y": 1
       },
@@ -121,7 +122,7 @@
             "uid": "PBFA97CFB590B2093"
           },
           "editorMode": "code",
-          "expr": "sum(rate(node_disk_reads_completed_total{kubernetes_pod_node_name=~\"$nodeNames\"}[$__rate_interval])) + sum(rate(node_disk_writes_completed_total{kubernetes_pod_node_name=~\"$nodeNames\"}[$__rate_interval]))",
+          "expr": "sum(rate(container_fs_reads_total{service=\"state-database\"}[$__rate_interval])) + sum(rate(container_fs_writes_total{service=\"state-database\"}[$__rate_interval]))",
           "instant": false,
           "legendFormat": "IOPS",
           "range": true,
@@ -188,17 +189,17 @@
               }
             ]
           },
-          "unit": "wps"
+          "unit": "rps"
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 10,
-        "w": 7,
-        "x": 10,
-        "y": 1
+        "h": 13,
+        "w": 13,
+        "x": 0,
+        "y": 14
       },
-      "id": 2,
+      "id": 1,
       "options": {
         "legend": {
           "calcs": [],
@@ -218,14 +219,14 @@
             "uid": "PBFA97CFB590B2093"
           },
           "editorMode": "code",
-          "expr": "sum(rate(node_disk_writes_completed_total{kubernetes_pod_node_name=~\"$nodeNames\"}[$__rate_interval]))",
+          "expr": "sum(rate(container_fs_reads_total{service=\"state-database\"}[$__rate_interval]))",
           "instant": false,
-          "legendFormat": "Node writes per second",
+          "legendFormat": "Node reads per second",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Writes per second",
+      "title": "Reads per second",
       "type": "timeseries"
     },
     {
@@ -285,17 +286,17 @@
               }
             ]
           },
-          "unit": "rps"
+          "unit": "wps"
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 10,
-        "w": 7,
-        "x": 17,
-        "y": 1
+        "h": 13,
+        "w": 11,
+        "x": 13,
+        "y": 14
       },
-      "id": 1,
+      "id": 2,
       "options": {
         "legend": {
           "calcs": [],
@@ -315,14 +316,14 @@
             "uid": "PBFA97CFB590B2093"
           },
           "editorMode": "code",
-          "expr": "sum(rate(node_disk_reads_completed_total{kubernetes_pod_node_name=~\"$nodeNames\"}[$__rate_interval]))",
+          "expr": "sum(rate(container_fs_writes_total{service=\"state-database\"}[$__rate_interval]))",
           "instant": false,
-          "legendFormat": "Node reads per second",
+          "legendFormat": "Node writes per second",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Reads per second",
+      "title": "Writes per second",
       "type": "timeseries"
     },
     {
@@ -330,7 +331,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 11
+        "y": 27
       },
       "id": 11,
       "title": "Rates",
@@ -344,7 +345,39 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "thresholds"
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
           },
           "mappings": [],
           "min": 0,
@@ -370,26 +403,23 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 4,
-        "w": 4,
+        "h": 10,
+        "w": 13,
         "x": 0,
-        "y": 12
+        "y": 28
       },
       "id": 9,
       "options": {
-        "minVizHeight": 75,
-        "minVizWidth": 75,
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
         },
-        "showThresholdLabels": true,
-        "showThresholdMarkers": true,
-        "sizing": "auto"
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
       },
       "pluginVersion": "11.1.1",
       "targets": [
@@ -399,9 +429,9 @@
             "uid": "PBFA97CFB590B2093"
           },
           "editorMode": "code",
-          "expr": "node_memory_MemTotal_bytes{kubernetes_pod_node_name=~\"$nodeNames\"} - node_memory_MemFree_bytes{kubernetes_pod_node_name=~\"$nodeNames\"}",
+          "expr": "sum(container_memory_usage_bytes{service=\"state-database\"})",
           "instant": false,
-          "legendFormat": "__auto",
+          "legendFormat": "Current memory usage",
           "range": true,
           "refId": "A"
         },
@@ -411,40 +441,118 @@
             "uid": "PBFA97CFB590B2093"
           },
           "editorMode": "code",
-          "exemplar": false,
-          "expr": "node_memory_MemTotal_bytes{kubernetes_pod_node_name=~\"$nodeNames\"}",
+          "expr": "sum(container_memory_max_usage_bytes{service=\"state-database\"})",
           "hide": false,
           "instant": false,
-          "legendFormat": "__auto",
+          "legendFormat": "Max memory usage",
           "range": true,
           "refId": "B"
         }
       ],
-      "title": "Node memory usage",
-      "transformations": [
-        {
-          "id": "configFromData",
-          "options": {
-            "applyTo": {
-              "id": "byName",
-              "options": "Value"
+      "title": "Database memory usage",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
             },
-            "configRefId": "B",
-            "mappings": [
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
               {
-                "fieldName": "sum(node_memory_MemTotal_bytes{kubernetes_pod_node_name=~\"desktop-n60j4kt\"})",
-                "handlerKey": "max",
-                "reducerId": "lastNotNull"
+                "color": "green",
+                "value": null
               },
               {
-                "fieldName": "Time",
-                "handlerKey": "__ignore"
+                "color": "#EAB839",
+                "value": 80
+              },
+              {
+                "color": "red",
+                "value": 90
               }
             ]
-          }
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 11,
+        "x": 13,
+        "y": 28
+      },
+      "id": 10,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "11.1.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "editorMode": "code",
+          "expr": "sum(rate(container_cpu_usage_seconds_total{container!=\"\", service=\"state-database\"}[$interval])) by (pod)",
+          "instant": false,
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A"
         }
       ],
-      "type": "gauge"
+      "title": "Node CPU usage",
+      "type": "timeseries"
     },
     {
       "datasource": {
@@ -507,10 +615,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 6,
-        "x": 4,
-        "y": 12
+        "h": 11,
+        "w": 13,
+        "x": 0,
+        "y": 38
       },
       "id": 4,
       "options": {
@@ -532,7 +640,7 @@
             "uid": "PBFA97CFB590B2093"
           },
           "editorMode": "code",
-          "expr": "sum(delta(node_disk_read_time_seconds_total[5m])) / sum(delta(node_disk_reads_completed_total[5m]))",
+          "expr": "sum(delta(container_fs_read_seconds_total{service=\"state-database\"}[$interval])) / sum(delta(container_fs_reads_total{service=\"state-database\"}[$interval]))",
           "instant": false,
           "legendFormat": "Average time spent per read",
           "range": true,
@@ -603,10 +711,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 6,
-        "x": 10,
-        "y": 12
+        "h": 11,
+        "w": 11,
+        "x": 13,
+        "y": 38
       },
       "id": 5,
       "options": {
@@ -628,7 +736,7 @@
             "uid": "PBFA97CFB590B2093"
           },
           "editorMode": "code",
-          "expr": "sum(delta(node_disk_write_time_seconds_total[5m])) / sum(delta(node_disk_writes_completed_total[5m]))",
+          "expr": "sum(delta(container_fs_write_seconds_total{service=\"state-database\"}[$interval])) / sum(delta(container_fs_writes_total[$interval]))",
           "instant": false,
           "legendFormat": "Average time spent per write",
           "range": true,
@@ -681,6 +789,7 @@
             }
           },
           "mappings": [],
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -699,217 +808,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 10,
-        "w": 8,
-        "x": 16,
-        "y": 12
-      },
-      "id": 8,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
-          },
-          "editorMode": "code",
-          "expr": "sum(irate(node_disk_read_bytes_total[$__rate_interval])) + sum(irate(node_disk_written_bytes_total[$__rate_interval]))",
-          "instant": false,
-          "legendFormat": "__auto",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "Data read/write rate",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "min": 0,
-          "thresholds": {
-            "mode": "percentage",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "#EAB839",
-                "value": 80
-              },
-              {
-                "color": "red",
-                "value": 90
-              }
-            ]
-          },
-          "unit": "percentunit"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 4,
+        "h": 12,
+        "w": 13,
         "x": 0,
-        "y": 16
-      },
-      "id": 10,
-      "options": {
-        "minVizHeight": 75,
-        "minVizWidth": 75,
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showThresholdLabels": true,
-        "showThresholdMarkers": true,
-        "sizing": "auto"
-      },
-      "pluginVersion": "11.1.1",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
-          },
-          "editorMode": "code",
-          "expr": "sum(irate(node_cpu_seconds_total{kubernetes_pod_node_name=~\"$nodeNames\", mode!='idle'}[$__rate_interval]))",
-          "instant": false,
-          "legendFormat": "__auto",
-          "range": true,
-          "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
-          },
-          "editorMode": "code",
-          "exemplar": false,
-          "expr": "sum(irate(node_cpu_usage_seconds_total{kubernetes_pod_node_name=~\"$nodeNames\", mode!='idle'}[$__rate_interval]))",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "__auto",
-          "range": true,
-          "refId": "B"
-        }
-      ],
-      "title": "Node CPU usage",
-      "transformations": [
-        {
-          "id": "configFromData",
-          "options": {
-            "applyTo": {
-              "id": "byName",
-              "options": "Value"
-            },
-            "configRefId": "B",
-            "mappings": [
-              {
-                "fieldName": "sum(node_memory_MemTotal_bytes{kubernetes_pod_node_name=~\"desktop-n60j4kt\"})",
-                "handlerKey": "max",
-                "reducerId": "lastNotNull"
-              },
-              {
-                "fieldName": "Time",
-                "handlerKey": "__ignore"
-              }
-            ]
-          }
-        }
-      ],
-      "type": "gauge"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "binBps"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 6,
-        "x": 4,
-        "y": 20
+        "y": 49
       },
       "id": 6,
       "options": {
@@ -931,7 +833,7 @@
             "uid": "PBFA97CFB590B2093"
           },
           "editorMode": "code",
-          "expr": "sum(irate(node_disk_read_bytes_total[$__rate_interval]))",
+          "expr": "sum(irate(container_fs_reads_bytes_total{service=\"state-database\"}[$__rate_interval]))",
           "instant": false,
           "legendFormat": "Average bytes read",
           "range": true,
@@ -1003,10 +905,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 6,
-        "x": 10,
-        "y": 20
+        "h": 12,
+        "w": 11,
+        "x": 13,
+        "y": 49
       },
       "id": 7,
       "options": {
@@ -1028,7 +930,7 @@
             "uid": "PBFA97CFB590B2093"
           },
           "editorMode": "code",
-          "expr": "sum(irate(node_disk_written_bytes_total[$__rate_interval]))",
+          "expr": "sum(irate(container_fs_writes_bytes_total{service=\"state-database\"}[$__rate_interval]))",
           "instant": false,
           "legendFormat": "Average bytes written",
           "range": true,
@@ -1037,55 +939,118 @@
       ],
       "title": "Data write rate",
       "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "binBps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 24,
+        "x": 0,
+        "y": 61
+      },
+      "id": 8,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "editorMode": "code",
+          "expr": "sum(irate(container_fs_reads_bytes_total{service=\"state-database\"}[$__rate_interval])) + sum(irate(container_fs_writes_bytes_total{service=\"state-database\"}[$__rate_interval]))",
+          "instant": false,
+          "legendFormat": "Read/Written bytes per second",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Data read/write rate",
+      "type": "timeseries"
     }
   ],
-  "refresh": "5s",
+  "refresh": "",
   "schemaVersion": 39,
   "tags": [],
   "templating": {
-    "list": [
-      {
-        "current": {
-          "selected": true,
-          "text": [
-            "desktop-n60j4kt"
-          ],
-          "value": [
-            "desktop-n60j4kt"
-          ]
-        },
-        "datasource": {
-          "type": "prometheus",
-          "uid": "PBFA97CFB590B2093"
-        },
-        "definition": "label_values(kubernetes_pod_node_name)",
-        "hide": 0,
-        "includeAll": true,
-        "label": "Database node names",
-        "multi": true,
-        "name": "nodeNames",
-        "options": [],
-        "query": {
-          "qryType": 1,
-          "query": "label_values(kubernetes_pod_node_name)",
-          "refId": "PrometheusVariableQueryEditor-VariableQuery"
-        },
-        "refresh": 1,
-        "regex": "",
-        "skipUrlSync": false,
-        "sort": 0,
-        "type": "query"
-      }
-    ]
+    "list": []
   },
   "time": {
-    "from": "now-15m",
-    "to": "now"
+    "from": "2024-12-04T11:49:07.416Z",
+    "to": "2024-12-04T12:36:15.346Z"
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "Node disk monitoring",
-  "uid": "cdy3jenh325moc",
-  "version": 3,
+  "title": "Updated Node disk monitoring",
+  "uid": "cdy3jenh325moc-updated",
+  "version": 5,
   "weekStart": ""
 }

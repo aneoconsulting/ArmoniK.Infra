@@ -18,7 +18,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 4,
+  "id": 6,
   "links": [],
   "panels": [
     {
@@ -288,7 +288,7 @@
           "editorMode": "code",
           "expr": "sum(rate(TaskHandler_ExecuteTask_Count_total{kubernetes_pod_name=~\"$podName\"}[$__rate_interval]))",
           "instant": false,
-          "legendFormat": "__auto",
+          "legendFormat": "Throughput",
           "range": true,
           "refId": "A"
         }
@@ -725,8 +725,8 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 6,
+        "h": 9,
+        "w": 12,
         "x": 0,
         "y": 18
       },
@@ -755,7 +755,7 @@
           "fullMetaSearch": false,
           "includeNullMetadata": false,
           "instant": false,
-          "legendFormat": "__auto",
+          "legendFormat": "Duration",
           "range": true,
           "refId": "A",
           "useBackend": false
@@ -831,9 +831,9 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 6,
-        "x": 6,
+        "h": 9,
+        "w": 12,
+        "x": 12,
         "y": 18
       },
       "id": 3,
@@ -856,12 +856,12 @@
             "uid": "PBFA97CFB590B2093"
           },
           "disableTextWrap": false,
-          "editorMode": "builder",
+          "editorMode": "code",
           "expr": "histogram_quantile(0.95, sum by(le) (rate(TaskHandler_PreProcessing_milliseconds_bucket[$__rate_interval])))",
           "fullMetaSearch": false,
           "includeNullMetadata": false,
           "instant": false,
-          "legendFormat": "__auto",
+          "legendFormat": "Duration",
           "range": true,
           "refId": "A",
           "useBackend": false
@@ -937,10 +937,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 6,
-        "x": 12,
-        "y": 18
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 27
       },
       "id": 4,
       "options": {
@@ -967,7 +967,7 @@
           "fullMetaSearch": false,
           "includeNullMetadata": false,
           "instant": false,
-          "legendFormat": "__auto",
+          "legendFormat": "Duration",
           "range": true,
           "refId": "A",
           "useBackend": false
@@ -1043,10 +1043,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 6,
-        "x": 18,
-        "y": 18
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 27
       },
       "id": 7,
       "options": {
@@ -1073,7 +1073,7 @@
           "fullMetaSearch": false,
           "includeNullMetadata": false,
           "instant": false,
-          "legendFormat": "__auto",
+          "legendFormat": "Duration",
           "range": true,
           "refId": "A",
           "useBackend": false
@@ -1149,10 +1149,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 6,
+        "h": 9,
+        "w": 12,
         "x": 0,
-        "y": 26
+        "y": 36
       },
       "id": 10,
       "options": {
@@ -1179,7 +1179,7 @@
           "fullMetaSearch": false,
           "includeNullMetadata": false,
           "instant": false,
-          "legendFormat": "__auto",
+          "legendFormat": "Duration",
           "range": true,
           "refId": "A",
           "useBackend": false
@@ -1255,10 +1255,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 6,
-        "x": 6,
-        "y": 26
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 36
       },
       "id": 11,
       "options": {
@@ -1285,7 +1285,7 @@
           "fullMetaSearch": false,
           "includeNullMetadata": false,
           "instant": false,
-          "legendFormat": "__auto",
+          "legendFormat": "Duration",
           "range": true,
           "refId": "A",
           "useBackend": false
@@ -1301,7 +1301,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 34
+        "y": 45
       },
       "id": 13,
       "panels": [],
@@ -1374,10 +1374,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 6,
+        "h": 9,
+        "w": 12,
         "x": 0,
-        "y": 35
+        "y": 46
       },
       "id": 14,
       "options": {
@@ -1482,10 +1482,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 6,
-        "x": 6,
-        "y": 35
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 46
       },
       "id": 18,
       "options": {
@@ -1590,10 +1590,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 6,
-        "x": 12,
-        "y": 35
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 55
       },
       "id": 15,
       "options": {
@@ -1698,10 +1698,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 6,
-        "x": 18,
-        "y": 35
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 55
       },
       "id": 17,
       "options": {
@@ -1807,9 +1807,9 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 6,
+        "w": 12,
         "x": 0,
-        "y": 43
+        "y": 64
       },
       "id": 16,
       "options": {
@@ -1915,9 +1915,9 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 6,
-        "x": 6,
-        "y": 43
+        "w": 12,
+        "x": 12,
+        "y": 64
       },
       "id": 19,
       "options": {
@@ -2004,6 +2004,6 @@
   "timezone": "browser",
   "title": "Task Handler Analytics",
   "uid": "fdxogxblqtuyoe",
-  "version": 7,
+  "version": 2,
   "weekStart": ""
 }

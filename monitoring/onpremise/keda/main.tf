@@ -7,7 +7,7 @@ resource "helm_release" "keda" {
 
   set {
     name  = "image.keda.registry"
-    value = var.docker_image.keda.registry
+    value = ""
   }
   set {
     name  = "image.keda.repository"
@@ -19,7 +19,7 @@ resource "helm_release" "keda" {
   }
   set {
     name  = "image.metricsApiServer.registry"
-    value = var.docker_image.metricsApiServer.registry
+    value = ""
   }
   set {
     name  = "image.metricsApiServer.repository"

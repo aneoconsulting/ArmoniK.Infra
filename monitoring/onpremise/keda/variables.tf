@@ -9,14 +9,12 @@ variable "docker_image" {
   description = "Docker image for Keda"
   type = object({
     keda = object({
-      registry = string
-      image    = string
-      tag      = string
+      image = string
+      tag   = string
     })
     metricsApiServer = object({
-      registry = string
-      image    = string
-      tag      = string
+      image = string
+      tag   = string
     })
   })
 }

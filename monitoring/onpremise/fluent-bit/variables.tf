@@ -6,7 +6,12 @@ variable "namespace" {
 
 # Node selector
 variable "node_selector" {
-  description = "Node selector for Seq"
+  description = "Node selector for fluent-bit on linux"
+  type        = any
+  default     = {}
+}
+variable "node_selector_windows" {
+  description = "Node selector for fluent-bit on windows"
   type        = any
   default     = {}
 }
@@ -62,6 +67,29 @@ variable "fluent_bit" {
   })
   validation {
     condition     = contains(["apache", "apache2", "apache_error", "nginx", "json", "docker", "cri", "syslog"], var.fluent_bit.parser)
+    error_message = "Valid values for Fluent-bit parsers are: \"apache\" | \"apache2\" | \"apache_error\" | \"nginx\" | \"json\" | \"docker\" | \"cri\" | \"syslog\"."
+  }
+}
+
+variable "fluent_bit_windows" {
+  description = "Parameters of Fluent bit for windows"
+  type = object({
+    container_name                     = string
+    image                              = string
+    tag                                = string
+    is_daemonset                       = bool
+    http_server                        = string
+    http_port                          = string
+    read_from_head                     = string
+    read_from_tail                     = string
+    image_pull_secrets                 = string
+    parser                             = string
+    fluent_bit_state_hostpath          = string
+    var_lib_docker_containers_hostpath = string
+    run_log_journal_hostpath           = string
+  })
+  validation {
+    condition     = contains(["apache", "apache2", "apache_error", "nginx", "json", "docker", "cri", "syslog"], var.fluent_bit_windows.parser)
     error_message = "Valid values for Fluent-bit parsers are: \"apache\" | \"apache2\" | \"apache_error\" | \"nginx\" | \"json\" | \"docker\" | \"cri\" | \"syslog\"."
   }
 }

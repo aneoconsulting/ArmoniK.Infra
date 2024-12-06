@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: object
+spec:
+  selector:
+    app.kubernetes.io/name: object
+  ports:
+    - port: 6379
+      targetPort: conn
+  # type: LoadBalancer
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: object
+  labels:
+    app.kubernetes.io/name: object
+spec:
+  containers:
+  - name: object
+    image: redis:7.2.5-alpine
+    command:
+      - redis-server
+    ports:
+      - containerPort: 6379
+        name: conn

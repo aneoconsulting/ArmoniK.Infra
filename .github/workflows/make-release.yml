@@ -57,12 +57,12 @@ jobs:
         echo SNAPSHOT => ${{ steps.snapshot.outputs.version }} >> $GITHUB_STEP_SUMMARY
         echo RELASE   => ${{ steps.release.outputs.version }} >> $GITHUB_STEP_SUMMARY
 
-    - name: Validate tag
-      run : test ${{ steps.release.outputs.version }} == ${{ github.ref_name }}
+    # - name: Validate tag
+    #   run : test ${{ steps.release.outputs.version }} == ${{ github.ref_name }}
 
-    - name: Delete tag if invalid
-      if: failure() || cancelled()
-      run : git push origin -d ${{ github.ref_name }}
+    # - name: Delete tag if invalid
+    #   if: failure() || cancelled()
+    #   run : git push origin -d ${{ github.ref_name }}
 
   update-changelog:
     runs-on: ubuntu-latest

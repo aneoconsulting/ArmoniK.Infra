@@ -24,10 +24,10 @@ jobs:
         ref: ${{ github.ref }}
         fetch-depth: 0
 
-    - name: Remove tag locally
-    # This is done so that codacy/git-version can compute the version of the images deployed on docker hub
-      run: |
-        git tag -d ${{ github.ref_name }}
+    # - name: Remove tag locally
+    # # This is done so that codacy/git-version can compute the version of the images deployed on docker hub
+    #   run: |
+    #     git tag -d ${{ github.ref_name }}
 
     - name: Compute branch for codacy
     # This is the branch to give to codacy to compute the snapshot version

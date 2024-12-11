@@ -77,7 +77,7 @@ jobs:
         with:
           node-version: 18
 
-      - run: npx @aneoconsultingfr/order-github-release-notes --dry
+      - run: npx @aneoconsultingfr/order-github-release-notes
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
           # GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

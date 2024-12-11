@@ -1,7 +1,7 @@
 name: Release
 
-permissions:
-  contents: write
+# permissions:
+#   contents: write
 
 on:
   pull_request:

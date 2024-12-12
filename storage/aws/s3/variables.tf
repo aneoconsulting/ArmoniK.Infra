@@ -115,3 +115,9 @@ variable "adapter_absolute_path" {
   type        = string
   default     = "/adapters/object/s3/ArmoniK.Core.Adapters.S3.dll"
 }
+
+variable "role_name" {
+  description = "Name of the IAM role to give the S3 permissions to"
+  type        = string
+  default     = ""
+}

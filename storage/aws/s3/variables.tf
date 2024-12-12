@@ -103,3 +103,9 @@ variable "object_storage_adapter" {
   type        = string
   default     = "ArmoniK.Adapters.S3.ObjectStorage"
 }
+
+variable "service_account_role_name" {
+  description = "Name of the IAM role to give the SQS permissions to"
+  type        = string
+  default     = ""
+}

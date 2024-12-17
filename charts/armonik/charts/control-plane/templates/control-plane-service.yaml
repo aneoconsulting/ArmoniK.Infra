@@ -4,17 +4,19 @@ metadata:
   name: {{ .Values.name }}
   namespace: {{ .Values.namespace }}
   labels:
+{{ include "control-plane.labels" . | indent 4 }}
     app: {{ .Values.labelsApp | default "armonik" | quote }}
     service: {{ .Values.labelsService | default "control-plane" | quote }}
   annotations:
   {{- range $key, $value := .Values.annotations }}
     {{ $key }}: {{ $value }}
-  {{- end }}spec:
+  {{- end }}
+spec:
 {{ if eq .Values.serviceType "HeadLess" }}
   type: "ClusterIP"
   clusterIP: "None"
 {{ else }}
-  type: .Values.serviceType
+  type: {{ .Values.serviceType }}
   clusterIP: null
 {{ end }}
   selector:
@@ -29,4 +31,3 @@ metadata:
     {{ end }}
       targetPort: {{ .Values.containerPort }}
       protocol: "TCP"
-    

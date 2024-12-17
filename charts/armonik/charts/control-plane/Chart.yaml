@@ -1,23 +1,17 @@
 apiVersion: v2
+appVersion: "0.2.2"
+version: 0.1.0
 name: control-plane
-description: A Helm chart for ArmoniK Control Plane
-
-# Specify the Kubernetes version range that we support.
+description: A Helm chart for Armonik
+icon: https://25070129.fs1.hubspotusercontent-eu1.net/hubfs/25070129/Website/Images%20-%20Website/ArmoniK/logo_armonik_by_aneo%201.svg
 kubeVersion: ">=v1.23.0-0"
 keywords:
   - armonik
   - helm
-  - control-plane
-
 type: application
-version: 0.1.0
-appVersion: "0.2.2"
-
-# home: https://github.com/aneoconsulting/ArmoniK.Infra/tree/main/charts/armonik/charts/control-plane
-# sources:
-#   - https://github.com/aneoconsulting/ArmoniK.Infra/tree/main/charts/armonik/charts/control-plane
-
-# Maintainers
+home: https://github.com/aneoconsulting/ArmoniK
+sources:
+  - https://aneoconsulting.github.io/
 maintainers:
   - name: Aneo
     email: armonik-support@aneo.fr

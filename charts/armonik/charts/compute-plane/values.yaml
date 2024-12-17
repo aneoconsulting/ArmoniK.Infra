@@ -1,10 +1,4 @@
-# Default values for armonik-compute-plane.
-# This is a YAML-formatted file.
-# Declare variables to be passed into your templates.
-
 nameOverride: "armonik-compute-plane"
-# -- namespace is the namespace used for all resources
-namespace: "armonik"
 replicaCount: 1
 
 #image:
@@ -20,12 +14,11 @@ computePlane:
       service: "compute-plane"
   partition: 
     default:
-      replicas: 0 # number of replicas for each deployment of compute plane
-      # ArmoniK polling agent
+      replicas: 0
       pollingAgent:
         image: "dockerhubaneo/armonik_pollingagent"
         #tag: ""
-        # imagePullPolicy: "IfNotPresent"
+        imagePullPolicy: "IfNotPresent"
         limits:
           cpu: "2000m"
           memory: "2048Mi"
@@ -66,7 +59,7 @@ computePlane:
       pollingAgent:
         image: "dockerhubaneo/armonik_core_stream_test_client"
         #tag: ""
-        #image_pull_policy: "IfNotPresent"
+        image_pull_policy: "IfNotPresent"
         limits:
           cpu: "2000m"
           memory: "2048Mi"
@@ -77,7 +70,7 @@ computePlane:
         - name: "stream-worker"
           image: "dockerhubaneo/armonik_core_stream_test_worker"
           #tag: ""
-          #image_pull_policy: "IfNotPresent"
+          image_pull_policy: "IfNotPresent"
           limits:
             cpu: "1000m"
             memory: "1024Mi"
@@ -106,7 +99,7 @@ computePlane:
       pollingAgent:
         image: "dockerhubaneo/armonik_core_htcmock_test_client"
         #tag: ""
-        #image_pull_policy: "IfNotPresent"
+        image_pull_policy: "IfNotPresent"
         limits:
           cpu: "2000m"
           memory: "2048Mi"
@@ -145,7 +138,7 @@ computePlane:
       pollingAgent:
         image: "dockerhubaneo/armonik_core_bench_test_client"
         #tag: ""
-        #image_pull_policy: "IfNotPresent"
+        image_pull_policy: "IfNotPresent"
         limits:
           cpu: "2000m"
           memory: "2048Mi"

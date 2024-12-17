@@ -1,0 +1,42 @@
+dependencies:
+- name: control-plane
+  repository: file://charts/control-plane
+  version: 0.1.0
+- name: compute-plane
+  repository: file://charts/compute-plane
+  version: 0.1.0
+- name: ingress
+  repository: file://charts/ingress
+  version: 0.1.0
+- name: eniconfig
+  repository: file://charts/eniconfig
+  version: 0.1.0
+- name: minio
+  repository: https://charts.bitnami.com/bitnami
+  version: 14.8.6
+- name: redis
+  repository: https://charts.bitnami.com/bitnami
+  version: 20.4.0
+- name: mongodb
+  repository: https://charts.bitnami.com/bitnami
+  version: 16.3.2
+- name: mongodb-sharded
+  repository: https://charts.bitnami.com/bitnami
+  version: 9.0.3
+- name: prometheus
+  repository: https://charts.bitnami.com/bitnami
+  version: 1.3.29
+- name: rabbitmq
+  repository: https://charts.bitnami.com/bitnami
+  version: 15.1.0
+- name: keda
+  repository: https://kedacore.github.io/charts
+  version: 2.9.3
+- name: metrics-server
+  repository: https://kubernetes-sigs.github.io/metrics-server/
+  version: 3.12.0
+- name: cluster-autoscaler
+  repository: https://kubernetes.github.io/autoscaler
+  version: 9.36.0
+digest: sha256:7811678565b10029c7fc773d315f28718b47b7594099d82b97e1882577f853e4
+generated: "2024-12-17T11:10:27.859241085+01:00"

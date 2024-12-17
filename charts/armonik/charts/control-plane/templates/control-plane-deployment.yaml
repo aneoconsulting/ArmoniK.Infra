@@ -8,7 +8,6 @@ metadata:
   namespace: {{ .Values.namespace }}
 {{- end }}
   labels:
-{{/* Add common labels to the deployment */}}
 {{ include "control-plane.labels" . | indent 4 }}
     app: {{ .Values.labelsApp | default "armonik" | quote }}
     service: {{ .Values.labelsService | default "control-plane" | quote }}

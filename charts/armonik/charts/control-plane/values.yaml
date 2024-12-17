@@ -1,23 +1,12 @@
-# Default values for armonik-contorol-plane.
-# This is a YAML-formatted file.
-# Declare variables to be passed into your templates.
-
 nameOverride: ""
 
-# -- namespace is the namespace used for all resources
-namespace: "armonik"
-
-# -- replicaCount is the number of replicas
 replicaCount: 1
 
-# -- image is the armonik control plane image and the tag image:tag
 image: "dockerhubaneo/armonik_control:0.19.3"
-# -- image 
 imageInfo:
   registry: docker.io
   repository: dockerhubaneo/armonik_control
   tag: 0.19.3
-  ## Specify a imagePullPolicy
   pullPolicy: IfNotPresent
   ## Optionally specify an array of imagePullSecrets.
   pullSecrets: ""
@@ -29,9 +18,9 @@ serviceAccountName: ""
 # control plane selector
 controlPlaneSelector: []
 # -- controlPlane contains all the values of the control plane deployment
-name: "control-plane-helm"
+name: "control-plane"
 labelsApp: "armonik"
-labelsService: "control-plane-helm"
+labelsService: "control-plane"
 
 # -- deployment port name and containerPort
 namePort: "http"

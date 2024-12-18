@@ -59,11 +59,6 @@ locals {
   # Fluent-bit volumes
   # Please don't change below read-only permissions
   fluent_bit_volumes = {
-    fluentbitstate = {
-      mount_path = "/var/fluent-bit/state"
-      read_only  = false
-      type       = "host_path"
-    }
     varlog = {
       mount_path = "/var/log"
       read_only  = true

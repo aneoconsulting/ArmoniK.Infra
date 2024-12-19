@@ -36,7 +36,7 @@ resource "tls_cert_request" "mongodb_cert_request" {
   private_key_pem = tls_private_key.mongodb_private_key.private_key_pem
   subject {
     country     = "France"
-    common_name = "127.0.0.1"
+    common_name = local.mongodb_dns
     # organization = "127.0.0.1"
   }
 }
@@ -67,6 +67,7 @@ resource "kubernetes_secret" "mongodb_certificate" {
   data = {
     "mongodb.pem" = format("%s\n%s", tls_locally_signed_cert.mongodb_certificate.cert_pem, tls_private_key.mongodb_private_key.private_key_pem)
     "chain.pem"   = format("%s\n%s", tls_locally_signed_cert.mongodb_certificate.cert_pem, tls_self_signed_cert.root_mongodb.cert_pem)
+    "ca.pem"      = tls_self_signed_cert.root_mongodb.cert_pem
   }
 }
 

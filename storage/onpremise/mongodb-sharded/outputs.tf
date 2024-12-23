@@ -50,7 +50,7 @@ output "env" {
     "MongoDB__ReplicaSet"       = "rs0"
     "MongoDB__DatabaseName"     = "database"
     "MongoDB__DirectConnection" = "true"
-    "MongoDB__CAFile"           = "/mongodb/certs/chain.pem"
+    "MongoDB__CAFile"           = "/mongodb/certs/ca.pem"
     "MongoDB__Sharding"         = "true"
     "MongoDB__AuthSource"       = "admin"
   })

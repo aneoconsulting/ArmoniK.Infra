@@ -1,0 +1,117 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.name | default "control-plane" | quote }}
+{{- if .Values.global }} # use the global value if it is set
+  namespace: {{ .Values.global.namespace }} 
+{{- else }} # else use local value
+  namespace: {{ .Values.namespace }}
+{{- end }}
+  labels:
+{{ include "control-plane.labels" . | indent 4 }}
+    app: {{ .Values.labelsApp | default "armonik" | quote }}
+    service: {{ .Values.labelsService | default "control-plane" | quote }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.labelsApp | default "armonik" | quote }}
+      service: {{ .Values.labelsService | default "control-plane" | quote }}
+  template:
+    metadata:
+      name: {{ .Values.name }}
+    {{- if .Values.global }} # use the global value if it is set
+      namespace: {{ .Values.global.namespace }} 
+    {{- else }} # else use local value
+      namespace: {{ .Values.namespace }}
+    {{- end }}
+      labels:
+        app: {{ .Values.labelsApp | default "armonik" | quote }}
+        service: {{ .Values.labelsService | default "control-plane" | quote }}
+      annotations: 
+      {{- range $key, $value := .Values.annotations }} ## use it for labels
+        {{ $key }}: {{ $value }}
+      {{- end }}
+    spec:
+      nodeSelector: 
+      {{- range $i, $value := .Values.nodeSelector }}
+        {{ $value.key }}: {{ $value.value }}
+      {{- end }}
+      tolerations:
+        {{- range $i, $value := .Values.nodeSelector }}
+        - key: {{ $value.key | quote }}
+          value: {{ $value.value | quote }}
+          operator: "Equal"
+          effect: "NoSchedule"
+        {{- end }}
+      {{- if (ne .Values.imageInfo.pullSecrets "") }}
+      imagePullSecrets:
+        name: {{ .Values.imageInfo.pullSecrets }}
+      {{- end }}
+      restartPolicy: {{ .Values.restartPolicy | default "Always" | quote }}
+      serviceAccountName: {{ .Values.serviceAccountName }}
+      containers:
+        - name: {{ .Values.name }} 
+          image: {{ .Values.image }}
+          imagePullPolicy: {{ .Values.imageInfo.pullPolicy }}
+          resources:
+            limits: 
+              cpu: {{ .Values.resources.limits.cpu }}
+              memory: {{ .Values.resources.limits.memory }}
+            requests: 
+              cpu: {{ .Values.resources.requests.cpu }}
+              memory: {{ .Values.resources.requests.memory }}
+          ports:
+            - name: {{ .Values.namePort }}
+              containerPort: {{ .Values.containerPort }}
+          livenessProbe:
+            {{/* it would be better to use toYaml but it unquote strings 
+              {{ toYaml .Values.livenessProbe | nindent 12 }}
+            */}}
+            httpGet:
+              path: {{ .Values.livenessProbe.httpGet.path | quote }}
+              port: {{ .Values.livenessProbe.httpGet.port }}
+            initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.livenessProbe.timeoutSeconds }}
+            successThreshold: {{ .Values.livenessProbe.successThreshold }}
+            failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
+          startupProbe:
+            {{/* it would be better to use toYaml but it unquote strings 
+              {{- toYaml .Values.startupProbe | nindent 12 }}
+            */}}
+            httpGet:
+              path: {{ .Values.startupProbe.httpGet.path | quote }}
+              port: {{ .Values.startupProbe.httpGet.port }}
+            initialDelaySeconds: {{ .Values.startupProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.startupProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.startupProbe.timeoutSeconds }}
+            successThreshold: {{ .Values.startupProbe.successThreshold }}
+            failureThreshold: {{ .Values.startupProbe.failureThreshold }}
+          envFrom:
+          {{- range $i, $value := .Values.configmaps }}
+            - configMapRef:  
+                name: {{ $value }}
+          {{- end }}
+          env:
+            {{- range $name, $value := .Values.credentials }}
+            - name: {{ $name | quote }}
+              valueFrom:
+                secretKeyRef:
+                  key: {{ $value.key | quote }}
+                  name: {{ $value.name | quote }}
+                  optional: false
+            {{- end }}
+          volumeMounts:
+          {{- range $i, $value := .Values.certificates }}
+          - mountPath: {{ $value.mountPath | quote }}
+            name: {{ $value.name | quote }}
+            readOnly: true
+          {{- end }}
+      volumes:
+      {{- range $i, $value := .Values.certificates }}
+        - name: {{ $value.name | quote }}
+          secret:
+            secretName: {{ $value.secretName | quote }}
+            optional: false
+      {{- end }}

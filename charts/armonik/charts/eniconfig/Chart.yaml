@@ -1,0 +1,14 @@
+apiVersion: v2
+name: eniconfig
+description: Patch CNI in AWS EKS
+kubeVersion: ">=v1.23.0-0"
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+home: https://github.com/aneoconsulting/ArmoniK.Infra/tree/main/charts/eniconfig
+sources:
+  - https://github.com/aneoconsulting/ArmoniK.Infra/tree/main/charts/eniconfig
+maintainers:
+  - name: Aneo
+    email: armonik-support@aneo.fr
+    url: armonik.fr

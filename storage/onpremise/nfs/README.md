@@ -83,6 +83,8 @@ No modules.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
+| <a name="input_adapter_absolute_path"></a> [adapter\_absolute\_path](#input\_adapter\_absolute\_path) | The adapter's absolute path | `string` | `"/adapters/object/local_storage/ArmoniK.Core.Adapters.LocalStorage.dll"` | no |
+| <a name="input_adapter_class_name"></a> [adapter\_class\_name](#input\_adapter\_class\_name) | Name of the adapter's class | `string` | `"ArmoniK.Core.Adapters.LocalStorage.ObjectBuilder"` | no |
 | <a name="input_image"></a> [image](#input\_image) | image for the external client provisioner | `string` | `"k8s.gcr.io/sig-storage/nfs-subdir-external-provisioner"` | no |
 | <a name="input_image_policy"></a> [image\_policy](#input\_image\_policy) | policy  for getting the image | `string` | `"IfNotPresent"` | no |
 | <a name="input_image_pull_secrets"></a> [image\_pull\_secrets](#input\_image\_pull\_secrets) | pull secrets if needed | `string` | `""` | no |

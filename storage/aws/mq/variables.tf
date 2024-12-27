@@ -116,7 +116,7 @@ variable "adapter_class_name" {
 }
 
 variable "adapter_absolute_path" {
-  description = "The adapter's absolut path"
+  description = "The adapter's absolute path"
   type        = string
   default     = "/adapters/queue/amqp/ArmoniK.Core.Adapters.Amqp.dll"
 }

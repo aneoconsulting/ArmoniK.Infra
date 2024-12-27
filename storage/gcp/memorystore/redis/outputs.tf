@@ -69,11 +69,13 @@ output "region" {
 output "env" {
   description = "Elements to be set as environment variables"
   value = ({
-    "Components__ObjectStorage" = var.object_storage_adapter
-    "Redis__EndpointUrl"        = "${google_redis_instance.cache.read_endpoint}:${google_redis_instance.cache.read_endpoint_port}"
-    "Redis__Ssl"                = var.ssl_option
-    "Redis__ClientName"         = var.client_name
-    "Redis__InstanceName"       = var.instance_name
+    "Components__ObjectStorage"                                     = var.object_storage_adapter
+    "Components__ObjectStorageAdaptorSettings__ClassName"           = var.adapter_class_name
+    "Components__ObjectStorageAdaptorSettings__AdapterAbsolutePath" = var.adapter_absolute_path
+    "Redis__EndpointUrl"                                            = "${google_redis_instance.cache.read_endpoint}:${google_redis_instance.cache.read_endpoint_port}"
+    "Redis__Ssl"                                                    = var.ssl_option
+    "Redis__ClientName"                                             = var.client_name
+    "Redis__InstanceName"                                           = var.instance_name
   })
 }
 

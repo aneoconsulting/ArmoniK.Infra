@@ -22,3 +22,15 @@ variable "object_storage_adapter" {
   type        = string
   default     = "ArmoniK.Adapters.S3.ObjectStorage"
 }
+
+variable "adapter_class_name" {
+  description = "Name of the adapter's class"
+  type        = string
+  default     = "ArmoniK.Core.Adapters.S3.ObjectBuilder"
+}
+
+variable "adapter_absolute_path" {
+  description = "The adapter's absolute path"
+  type        = string
+  default     = "/adapters/object/s3/ArmoniK.Core.Adapters.S3.dll"
+}

@@ -45,12 +45,14 @@ output "must_force_path_style" {
 output "env" {
   description = "Elements to be set as environment variables"
   value = ({
-    "Components__ObjectStorage" = var.object_storage_adapter
-    "S3__BucketName"            = var.minio.bucket_name
-    "S3__UseChecksum"           = true
-    "S3__MustForcePathStyle"    = true
-    "S3__UseChunkEncoding"      = true
-    "S3__EndpointUrl"           = "http://${var.minio.host}:${local.port}"
+    "Components__ObjectStorage"                                     = var.object_storage_adapter
+    "Components__ObjectStorageAdaptorSettings__ClassName"           = var.adapter_class_name
+    "Components__ObjectStorageAdaptorSettings__AdapterAbsolutePath" = var.adapter_absolute_path
+    "S3__BucketName"                                                = var.minio.bucket_name
+    "S3__UseChecksum"                                               = true
+    "S3__MustForcePathStyle"                                        = true
+    "S3__UseChunkEncoding"                                          = true
+    "S3__EndpointUrl"                                               = "http://${var.minio.host}:${local.port}"
   })
 }
 

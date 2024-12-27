@@ -146,3 +146,15 @@ variable "ssl_option" {
   type        = string
   default     = "true"
 }
+
+variable "adapter_class_name" {
+  description = "Name of the adapter's class"
+  type        = string
+  default     = "ArmoniK.Core.Adapters.Redis.ObjectBuilder"
+}
+
+variable "adapter_absolute_path" {
+  description = "The adapter's absolute path"
+  type        = string
+  default     = "/adapters/object/redis/ArmoniK.Core.Adapters.Redis.dll"
+}

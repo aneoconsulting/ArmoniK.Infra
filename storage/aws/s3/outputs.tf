@@ -17,11 +17,13 @@ output "arn" {
 output "env" {
   description = "Elements to be set as environment variables"
   value = ({
-    "Components__ObjectStorage" = var.object_storage_adapter
-    "S3__BucketName"            = aws_s3_bucket.s3_bucket.bucket
-    "S3__UseChecksum"           = true
-    "S3__MustForcePathStyle"    = true
-    "S3__UseChunkEncoding"      = true
-    "S3__EndpointUrl"           = "https://s3.${aws_s3_bucket.s3_bucket.region}.amazonaws.com"
+    "Components__ObjectStorage"                                     = var.object_storage_adapter
+    "Components__ObjectStorageAdaptorSettings__ClassName"           = var.adapter_class_name
+    "Components__ObjectStorageAdaptorSettings__AdapterAbsolutePath" = var.adapter_absolute_path
+    "S3__BucketName"                                                = aws_s3_bucket.s3_bucket.bucket
+    "S3__UseChecksum"                                               = true
+    "S3__MustForcePathStyle"                                        = true
+    "S3__UseChunkEncoding"                                          = true
+    "S3__EndpointUrl"                                               = "https://s3.${aws_s3_bucket.s3_bucket.region}.amazonaws.com"
   })
 }

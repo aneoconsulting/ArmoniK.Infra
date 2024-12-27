@@ -69,3 +69,15 @@ variable "mount_path" {
   type        = string
   default     = "/local_storage"
 }
+
+variable "adapter_class_name" {
+  description = "Name of the adapter's class"
+  type        = string
+  default     = "ArmoniK.Core.Adapters.LocalStorage.ObjectBuilder"
+}
+
+variable "adapter_absolute_path" {
+  description = "The adapter's absolute path"
+  type        = string
+  default     = "/adapters/object/local_storage/ArmoniK.Core.Adapters.LocalStorage.dll"
+}

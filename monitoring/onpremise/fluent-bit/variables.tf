@@ -74,22 +74,19 @@ variable "fluent_bit" {
 variable "fluent_bit_windows" {
   description = "Parameters of Fluent bit for windows"
   type = object({
-    container_name                     = string
-    image                              = string
-    tag                                = string
-    is_daemonset                       = bool
-    http_server                        = string
-    http_port                          = string
-    read_from_head                     = string
-    read_from_tail                     = string
-    image_pull_secrets                 = string
-    parser                             = string
-    fluent_bit_state_hostpath          = string
-    var_lib_docker_containers_hostpath = string
-    run_log_journal_hostpath           = string
+    container_name                     = optional(string)
+    image                              = optional(string)
+    tag                                = optional(string)
+    is_daemonset                       = optional(bool)
+    http_server                        = optional(string)
+    http_port                          = optional(string)
+    read_from_head                     = optional(string)
+    read_from_tail                     = optional(string)
+    image_pull_secrets                 = optional(string)
+    parser                             = optional(string)
+    fluent_bit_state_hostpath          = optional(string)
+    var_lib_docker_containers_hostpath = optional(string)
+    run_log_journal_hostpath           = optional(string)
   })
-  validation {
-    condition     = contains(["apache", "apache2", "apache_error", "nginx", "json", "docker", "cri", "syslog"], var.fluent_bit_windows.parser)
-    error_message = "Valid values for Fluent-bit parsers are: \"apache\" | \"apache2\" | \"apache_error\" | \"nginx\" | \"json\" | \"docker\" | \"cri\" | \"syslog\"."
-  }
+  default = null
 }

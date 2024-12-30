@@ -11,6 +11,7 @@ resource "helm_release" "eni_config" {
 }
 
 resource "null_resource" "change_cni_label" {
+  count = local.enable_calico ? 0 : 1
   provisioner "local-exec" {
     command = "kubectl set env daemonset aws-node -n kube-system ENI_CONFIG_LABEL_DEF=topology.kubernetes.io/zone"
     environment = {

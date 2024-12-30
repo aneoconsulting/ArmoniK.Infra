@@ -322,3 +322,45 @@ variable "fargate_profiles" {
   type        = any
   default     = null
 }
+
+# calico
+variable "calico_chart_name" {
+  description = "Name of the calico chart"
+  type        = string
+  default     = null
+}
+variable "calico_chart_repository" {
+  description = "Repository for the calico chart"
+  type        = string
+  default     = null
+}
+variable "calico_chart_version" {
+  description = "Version of the calico chart"
+  type        = string
+  default     = null
+}
+variable "calico_operator_image_name" {
+  description = "Image name for the Tigera operator"
+  type        = string
+  default     = null
+}
+variable "calico_operator_image_tag" {
+  description = "Image tag for the Tigera operator"
+  type        = string
+  default     = null
+}
+variable "calico_controller_image_name" {
+  description = "Image name for the Calico controller"
+  type        = string
+  default     = null
+}
+variable "calico_controller_image_tag" {
+  description = "Image tag for the Calico controller"
+  type        = string
+  default     = null
+}
+variable "calico_image_pull_secrets" {
+  description = "Image pull secrets for the Calico controller and Tigera operator"
+  type        = list(string)
+  default     = []
+}

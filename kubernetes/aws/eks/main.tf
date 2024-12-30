@@ -12,6 +12,16 @@ resource "random_string" "random_resources" {
 }
 
 locals {
+  enable_calico = (
+    can(coalesce(var.calico_chart_name)) &&
+    can(coalesce(var.calico_chart_repository)) &&
+    can(coalesce(var.calico_chart_version)) &&
+    can(coalesce(var.calico_operator_image_name)) &&
+    can(coalesce(var.calico_operator_image_tag)) &&
+    can(coalesce(var.calico_controller_image_name)) &&
+    can(coalesce(var.calico_controller_image_tag)) &&
+    can(coalesce(var.calico_image_pull_secrets))
+  )
   region                                 = data.aws_region.current.name
   tags                                   = merge({ module = "eks-${var.name}" }, var.tags)
   iam_worker_autoscaling_policy_name     = "eks-worker-autoscaling-${var.name}"
@@ -148,6 +158,14 @@ module "eks" {
       protocol    = "tcp"
       from_port   = 80
       to_port     = 80
+      type        = "ingress"
+      self        = true
+    }
+    vxlan = {
+      description = "Node to node port 4789 for VXLAN"
+      protocol    = "udp"
+      from_port   = 4789
+      to_port     = 4789
       type        = "ingress"
       self        = true
     }

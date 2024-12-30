@@ -6,6 +6,7 @@
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0 |
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.61 |
 | <a name="requirement_helm"></a> [helm](#requirement\_helm) | >= 2.10.1 |
+| <a name="requirement_kubectl"></a> [kubectl](#requirement\_kubectl) | >= 1.14.0 |
 | <a name="requirement_kubernetes"></a> [kubernetes](#requirement\_kubernetes) | >= 2.13.0 |
 | <a name="requirement_null"></a> [null](#requirement\_null) | >= 3.2.1 |
 | <a name="requirement_random"></a> [random](#requirement\_random) | >= 3.5.1 |
@@ -16,6 +17,7 @@
 |------|---------|
 | <a name="provider_aws"></a> [aws](#provider\_aws) | >= 5.61 |
 | <a name="provider_helm"></a> [helm](#provider\_helm) | >= 2.10.1 |
+| <a name="provider_kubectl"></a> [kubectl](#provider\_kubectl) | >= 1.14.0 |
 | <a name="provider_kubernetes"></a> [kubernetes](#provider\_kubernetes) | >= 2.13.0 |
 | <a name="provider_null"></a> [null](#provider\_null) | >= 3.2.1 |
 | <a name="provider_random"></a> [random](#provider\_random) | >= 3.5.1 |
@@ -42,13 +44,16 @@
 | [aws_iam_role.efs_csi_driver](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
 | [aws_iam_role_policy_attachment.efs_csi_driver](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment) | resource |
 | [helm_release.aws_node_termination_handler](https://registry.terraform.io/providers/hashicorp/helm/latest/docs/resources/release) | resource |
+| [helm_release.calico](https://registry.terraform.io/providers/hashicorp/helm/latest/docs/resources/release) | resource |
 | [helm_release.cluster_autoscaler](https://registry.terraform.io/providers/hashicorp/helm/latest/docs/resources/release) | resource |
 | [helm_release.efs_csi](https://registry.terraform.io/providers/hashicorp/helm/latest/docs/resources/release) | resource |
 | [helm_release.eni_config](https://registry.terraform.io/providers/hashicorp/helm/latest/docs/resources/release) | resource |
+| [kubectl_manifest.calico_installation](https://registry.terraform.io/providers/gavinbunney/kubectl/latest/docs/resources/manifest) | resource |
 | [kubernetes_service_account.efs_csi_driver_controller](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/service_account) | resource |
 | [kubernetes_service_account.efs_csi_driver_node](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/service_account) | resource |
 | [null_resource.change_cni_label](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
 | [null_resource.patch_coredns](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
+| [null_resource.remove_aws_node](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
 | [null_resource.update_kubeconfig](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
 | [random_string.random_resources](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/string) | resource |
 | [aws_autoscaling_groups.groups](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/autoscaling_groups) | data source |
@@ -62,6 +67,14 @@
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
+| <a name="input_calico_chart_name"></a> [calico\_chart\_name](#input\_calico\_chart\_name) | Name of the calico chart | `string` | `null` | no |
+| <a name="input_calico_chart_repository"></a> [calico\_chart\_repository](#input\_calico\_chart\_repository) | Repository for the calico chart | `string` | `null` | no |
+| <a name="input_calico_chart_version"></a> [calico\_chart\_version](#input\_calico\_chart\_version) | Version of the calico chart | `string` | `null` | no |
+| <a name="input_calico_controller_image_name"></a> [calico\_controller\_image\_name](#input\_calico\_controller\_image\_name) | Image name for the Calico controller | `string` | `null` | no |
+| <a name="input_calico_controller_image_tag"></a> [calico\_controller\_image\_tag](#input\_calico\_controller\_image\_tag) | Image tag for the Calico controller | `string` | `null` | no |
+| <a name="input_calico_image_pull_secrets"></a> [calico\_image\_pull\_secrets](#input\_calico\_image\_pull\_secrets) | Image pull secrets for the Calico controller and Tigera operator | `list(string)` | `[]` | no |
+| <a name="input_calico_operator_image_name"></a> [calico\_operator\_image\_name](#input\_calico\_operator\_image\_name) | Image name for the Tigera operator | `string` | `null` | no |
+| <a name="input_calico_operator_image_tag"></a> [calico\_operator\_image\_tag](#input\_calico\_operator\_image\_tag) | Image tag for the Tigera operator | `string` | `null` | no |
 | <a name="input_chart_name"></a> [chart\_name](#input\_chart\_name) | Name for chart | `string` | `"eniconfig"` | no |
 | <a name="input_chart_namespace"></a> [chart\_namespace](#input\_chart\_namespace) | Version for chart | `string` | `"default"` | no |
 | <a name="input_chart_repository"></a> [chart\_repository](#input\_chart\_repository) | Path to the charts repository | `string` | `"../../../charts"` | no |

@@ -246,7 +246,7 @@ resource "kubernetes_deployment" "control_plane" {
             command           = ["powershell", "-ExecutionPolicy", "Bypass", "-File", "C:/fluent-bit/entrypoint.ps1"]
             env_from {
               config_map_ref {
-                name = var.fluent_bit.windows_configmaps.envvars
+                name = try(var.fluent_bit.windows_configmaps.envvars, "")
               }
             }
             # Please don't change below read-only permissions

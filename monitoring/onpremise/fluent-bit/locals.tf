@@ -33,7 +33,7 @@ locals {
   fluent_bit_windows_image              = try(var.fluent_bit_windows.image, "fluent/fluent-bit")
   fluent_bit_windows_tag                = try(var.fluent_bit_windows.tag, "windows-2022-3.2.0")
   fluent_bit_windows_is_daemonset       = tobool(try(var.fluent_bit_windows.is_daemonset, false))
-  fluent_bit_windows_parser             = try(var.fluent_bit_windows.parser)
+  fluent_bit_windows_parser             = try(var.fluent_bit_windows.parser, "")
   fluent_bit_windows_http_server        = try(var.fluent_bit_windows.http_server, "Off")
   fluent_bit_windows_http_port          = try(var.fluent_bit_windows.http_port, "")
   fluent_bit_windows_read_from_head     = try(var.fluent_bit_windows.read_from_head, "On")

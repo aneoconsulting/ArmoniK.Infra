@@ -28,29 +28,29 @@ output "configmaps" {
 
 output "windows_container_name" {
   description = "Container name of Fluent-bit"
-  value       = var.fluent_bit_windows.container_name
+  value       = var.fluent_bit_windows != null ? var.fluent_bit_windows.container_name : ""
 }
 
 output "windows_image" {
   description = "image of Fluent-bit"
-  value       = var.fluent_bit_windows.image
+  value       = var.fluent_bit_windows != null ? var.fluent_bit_windows.image : ""
 }
 
 output "windows_tag" {
   description = "tag of Fluent-bit"
-  value       = var.fluent_bit_windows.tag
+  value       = var.fluent_bit_windows != null ? var.fluent_bit_windows.tag : ""
 }
 
 output "windows_is_daemonset" {
   description = "Is Fluent-bit a daemonset"
-  value       = var.fluent_bit_windows.is_daemonset
+  value       = var.fluent_bit_windows != null ? var.fluent_bit_windows.is_daemonset : true
 }
 
 output "windows_configmaps" {
   description = "Configmaps of Fluent-bit"
   value = {
-    envvars = kubernetes_config_map.fluent_bit_envvars_config_windows[0].metadata[0].name
-    config  = kubernetes_config_map.fluent_bit_config_windows[0].metadata[0].name
-    entry   = kubernetes_config_map.fluent_bit_entrypoint[0].metadata[0].name
+    envvars = var.fluent_bit_windows != null ? kubernetes_config_map.fluent_bit_envvars_config_windows[0].metadata[0].name : ""
+    config  = var.fluent_bit_windows != null ? kubernetes_config_map.fluent_bit_config_windows[0].metadata[0].name : ""
+    entry   = var.fluent_bit_windows != null ? kubernetes_config_map.fluent_bit_entrypoint[0].metadata[0].name : ""
   }
 }

@@ -3,7 +3,7 @@ namespace: "armonik"
 replicaCount: 1
 
 global:
-  registry: dockerhubaneo 
+  registry: dockerhubaneo
   namespace: "armonik"
   app:
     name: my-app

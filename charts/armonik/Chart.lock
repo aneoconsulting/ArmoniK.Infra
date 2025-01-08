@@ -28,7 +28,7 @@ dependencies:
   version: 9.0.3
 - name: prometheus
   repository: https://charts.bitnami.com/bitnami
-  version: 1.3.29
+  version: 1.4.0
 - name: rabbitmq
   repository: https://charts.bitnami.com/bitnami
   version: 15.1.0
@@ -62,5 +62,5 @@ dependencies:
 - name: seq
   repository: https://cloudnativeapp.github.io/charts/curated/
   version: 1.0.0
-digest: sha256:992f948c8d2bf22c113499908321546d67af938638b906f1f031024a3d673963
-generated: "2025-01-06T13:55:05.663182+01:00"
+digest: sha256:24507204549c1f2d37fe42d996b4c0cfd79e59757d755f30e1dd944a81c4b173
+generated: "2025-01-08T11:43:03.099967+01:00"

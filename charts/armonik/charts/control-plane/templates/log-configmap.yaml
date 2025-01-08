@@ -1,0 +1,20 @@
+{{ if not .Values.global }}
+{{ if .Values.logConfigmap.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.logConfigmap.metadata.name }}
+  namespace: {{ .Values.namespace }}
+data:
+  Serilog__MinimumLevel: {{ .Values.logConfigmap.data.loggingLevel }}
+  # {{ if eq .Values.logConfigmap.data.loggingLevel "Information" }}
+  # {{ $loggingLevelRouting := "Warning"}}
+  # {{ else }}
+  # {{ $loggingLevelRouting := .Values.logConfigmap.data.loggingLevel }}
+  # {{ end }}
+  {{ $loggingLevelRouting := ternary "Warning" .Values.logConfigmap.data.loggingLevel (eq .Values.logConfigmap.data.loggingLevel "Information") }}
+  Serilog__MinimumLevel__Override__Microsoft.AspNetCore.Hosting.Diagnostics: {{ $loggingLevelRouting }}
+  Serilog__MinimumLevel__Override__Microsoft.AspNetCore.Routing.EndpointMiddleware: {{ $loggingLevelRouting }}
+  Serilog__MinimumLevel__Override__Serilog.AspNetCore.RequestLoggingMiddleware: {{ $loggingLevelRouting }}
+{{ end }}
+{{ end }}

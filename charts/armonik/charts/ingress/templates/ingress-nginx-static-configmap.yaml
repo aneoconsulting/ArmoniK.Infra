@@ -1,0 +1,8 @@
+apiVersion: v1
+data:
+  environment.json: '{"color":"#80ff80","description":"AWS environment","name":"aws-dev","version":"0.0.0"}'
+immutable: false
+kind: ConfigMap
+metadata:
+  name: ingress-nginx-static
+  namespace: armonik

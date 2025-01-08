@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-armonik
+  labels:
+    grafana_dashboard: "1"
+data:
+  dashboard-armonik.json: |-
+{{ .Files.Get "grafana-dashboards/dashboard-armonik.json" | indent 4 }}
+  dashboard-compute.json: |-
+{{ .Files.Get "grafana-dashboards/dashboard-compute.json" | indent 4 }}
+  dashboard-diskio.json: |-
+{{ .Files.Get "grafana-dashboards/dashboard-diskio.json" | indent 4 }}
+  dashboard-mongodb.json: |-
+{{ .Files.Get "grafana-dashboards/dashboard-mongodb.json" | indent 4 }}
+  dashboard-pods.json: |-
+{{ .Files.Get "grafana-dashboards/dashboard-pods.json" | indent 4 }}
+  dashboard-taskhandler.json: |-
+{{ .Files.Get "grafana-dashboards/dashboard-taskhandler.json" | indent 4 }}

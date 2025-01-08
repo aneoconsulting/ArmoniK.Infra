@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: armonik
+    service: admin-gui
+  name: admin-gui
+  namespace: {{ .Values.global.namespace }}
+spec:
+  selector:
+    matchLabels:
+      app: armonik
+      service: admin-gui
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: armonik
+        service: admin-gui
+      name: admin-gui
+      namespace: {{ .Values.global.namespace }}
+    spec:
+      automountServiceAccountToken: true
+      containers:
+      - image: {{ .Values.global.registry }}/armonik_admin_app:0.12.4
+        imagePullPolicy: IfNotPresent
+        name: admin-app
+        ports:
+        - containerPort: 1080
+          name: app-port
+          protocol: TCP
+        resources:
+          limits:
+            cpu: "1"
+            memory: 1Gi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      enableServiceLinks: true
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      shareProcessNamespace: false
+      terminationGracePeriodSeconds: 30
+      tolerations:
+      - effect: NoSchedule
+        key: service
+        operator: Equal
+        value: monitoring

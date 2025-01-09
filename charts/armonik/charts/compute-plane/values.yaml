@@ -1,6 +1,6 @@
 nameOverride: "armonik-compute-plane"
 replicaCount: 1
-
+namespace: armonik
 #image:
 # tag: ""
 #imagePullSecrets: []
@@ -17,7 +17,7 @@ computePlane:
       replicas: 0
       pollingAgent:
         image: "dockerhubaneo/armonik_pollingagent"
-        #tag: ""
+        tag: ""
         imagePullPolicy: "IfNotPresent"
         limits:
           cpu: "2000m"
@@ -25,6 +25,23 @@ computePlane:
         requests:
           cpu: "50m"
           memory: "50Mi"
+        securityContext:
+          drop: ["SYS_PTRACE"]
+        
+      annotations: {}
+      nodeSelector: {}
+      tolerations: []
+      terminationGracePeriodSeconds: 30
+      ImagePullSecrets:
+        - name: "IfNotPresent"
+      serviceAccountName: ""
+      readinessProbe: {}
+      envFrom:
+        - secretRef: "activemq-user-credentials"
+        - secretRef: "redis-user-credentials"
+        - configMapRef: "control-plane-configmap"
+        - configMapRef: "core-configmap"
+        - configMapRef: "log-configmap"
       # ArmoniK workers
       worker:
         - name: "default-worker"
@@ -197,6 +214,25 @@ pollingAgent:
     failureThreshold: 20
   workerCheckRetries: "10"  
   workerCheckDelay: "00:00:10"
+  
+  envHardValue:
+    - name: Amqp__PartitionId
+      value: default
+    - name: PubSub__PartitionId
+      value: default
+    - name: SQS__PartitionId
+      value: default      
+  envSecretValue:
+    - name: MongoDB__Password
+      valueFrom:
+        secretKeyRef:
+          key: MONGO_PASSWORD
+          name: mongodb-sharded-admin
+    - name: MongoDB__User
+      valueFrom:
+        secretKeyRef:
+          key: MONGO_USERNAME
+          name: mongodb-sharded-admin
 
 supportedQueues:
   - Amqp__PartitionId

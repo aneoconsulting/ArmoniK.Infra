@@ -1,16 +1,11 @@
-{{ if not .Values.global }}
-{{ if .Values.coreConfigmap.enabled }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ .Values.coreConfigmap.metadata.name }}
+  name: {{ .Values.config.core.name }}
   namespace: {{ .Values.namespace }}
 data:
-  {{- range $i, $value := .Values.coreConfigmap.data }}
-  {{ $i }}: {{ $value | quote }}
+  {{- range $key, $value := .Values.config.core.data }}
+  {{ $key }}: "{{ $value }}"
   {{- end }}
-  {{- range $i, $value := .Values.extraConf.core }}
-  {{ $i }}: {{ $value | quote }}
-  {{- end }}
-{{ end }}
-{{ end }}
+
+

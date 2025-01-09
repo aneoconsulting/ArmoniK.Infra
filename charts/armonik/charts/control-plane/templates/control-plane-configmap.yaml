@@ -1,18 +1,21 @@
-{{ if .Values.controlPlanConfigmap.enabled }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ first .Values.configmaps }}
+  name: {{ .Values.config.controlPlane.name }}
   namespace: {{ .Values.namespace }}
 data:
-{{ if or (not .Values.defaultPartition) (eq .Values.defaultPartition "") (not (has .Values.defaultPartition .Values.partitionNames ))}}
-  {{ if gt (len .Values.partitionNames) 0 }}
-  Submitter__DefaultPartition: {{ first .Values.partitionNames }}
-  {{ else }}
+  {{- $defaultPartition := .Values.config.controlPlane.defaultPartition }}
+  {{- $partitionNames := keys .Values.config.computePlane.partitions | default list }}
+
+  {{- if and $defaultPartition (has $defaultPartition $partitionNames) }}
+  Submitter__DefaultPartition: {{ $defaultPartition }}
+  {{- else if gt (len $partitionNames) 0 }}
+  Submitter__DefaultPartition: {{ index $partitionNames 0 }}
+  {{- else }}
   Submitter__DefaultPartition: ""
-  {{ end }} 
-{{ else }}  
-  Submitter__DefaultPartition: {{ .Values.defaultPartition }}
-{{ end}}
-{{ toYaml .Values.extraConf.control | indent 2 }}
-{{ end }}
+  {{- end }}
+
+  {{- range $key, $value := .Values.config.controlPlane.data }}
+  {{ $key }}: "{{ $value }}"
+  {{- end }}
+

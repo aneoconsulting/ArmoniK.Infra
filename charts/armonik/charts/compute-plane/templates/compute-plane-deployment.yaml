@@ -23,14 +23,15 @@ spec:
       labels:
         app: {{ $.Values.computePlane.metadata.labels.app }}
         service: {{ $.Values.computePlane.metadata.labels.service }}
-        partition: {{ $partitionName }}  
+        partition: {{ $partitionName }}
+      {{if $config.annotations}}
       annotations:
         {{- range $key, $value := $config.annotations }}
         {{ $key }}: {{ $value | quote }}
-        {{- end }}  
+        {{- end }}
+      {{- end }}
     spec:
       nodeSelector:
-        #{{- toYaml $config.nodeSelector | nindent 8 }}
         {{- range $key, $value := $config.nodeSelector }}
         {{ $key }}: {{ $value | quote }}
         {{- end }}  
@@ -43,17 +44,18 @@ spec:
         {{- end }}
       terminationGracePeriodSeconds: {{ $config.terminationGracePeriodSeconds }}
       shareProcessNamespace: {{ $.Values.shareProcessNamespace }}
+      {{if $config.imagePullSecrets }}
       imagePullSecrets:
-      {{- range $key, $value := $config.imagePullSecrets }}
+        {{- range $key, $value := $config.imagePullSecrets }}
         - name: {{ $value }}
+        {{- end }}
       {{- end }}
-      restartPolicy: {{ $.Values.restartPolicy }} 
+      restartPolicy: {{ $.Values.restartPolicy }}
       serviceAccountName: {{ $config.serviceAccountName }}
-
       containers:
       - name: {{ $.Values.pollingAgent.name }}
       {{ if (ne $config.pollingAgent.tag "") }}
-        image: {{ $config.pollingAgent.image }}
+        image: {{ $config.pollingAgent.image }}:{{ $config.pollingAgent.tag }}
       {{ else }}
         image: {{ $config.pollingAgent.image }}
       {{ end }}
@@ -65,9 +67,20 @@ spec:
           requests:
             cpu: "{{ $config.pollingAgent.requests.cpu }}"
             memory: "{{ $config.pollingAgent.requests.memory }}"
+        {{- toYaml $config.pollingAgent.securityContext | nindent 8}}
         ports:
         - name: {{$.Values.pollingAgent.ports.name}}
           containerPort: {{$.Values.pollingAgent.ports.containerPort}}
+          protocol: TCP
+        {{if $config.pollingAgent.readinessProbe }}
+        readinessProbe:
+          httpGet:
+           path: {{$.Values.pollingAgent.readinessProbe.httpGet.path}}
+            port: {{$.Values.pollingAgent.readinessProbe.httpGet.port}}
+          periodSeconds: {{$.Values.pollingAgent.readinessProbe.periodSeconds}}
+          timeoutSeconds: {{$.Values.pollingAgent.readinessProbe.timeoutSeconds}}
+          successThreshold: {{$.Values.pollingAgent.readinessProbe.successThreshold}}
+          failureThreshold: {{$.Values.pollingAgent.readinessProbe.failureThreshold}}
         livenessProbe:
           httpGet:
             path: {{$.Values.pollingAgent.livenessProbe.httpGet.path}}
@@ -86,19 +99,31 @@ spec:
           timeoutSeconds: {{$.Values.pollingAgent.startupProbe.timeoutSeconds}}
           successThreshold: {{$.Values.pollingAgent.startupProbe.successThreshold}}
           failureThreshold: {{$.Values.pollingAgent.startupProbe.failureThreshold}}
+        {{-if $config.envFrom }}
         envFrom:
-        {{- range $key, $value := $.Values.pollingAgentConfigmaps }}
-        - configMapRef:
-            name: {{ $value }}
-        {{- end}}
+          {{- range $index, $item := $config.envFrom }}
+          {{- range $key, $value := $item }}
+          - {{ $key }}:
+              name: {{ $value }}
+              optional: false
+          {{- end }}
+          {{- end }}
+        {{- end }}
+        {{- if or .Values.pollingAgent.envHardValue .Values.pollingAgent.envSecretValue}}
         env:
-        {{- range $i, $value := $.Values.credentials }}
-          - name: {{ $i | quote }}
+          {{- if .Values.pollingAgent.envHardValue }}
+          {{- range $index, $item := .Values.pollingAgent.envHardValue }}
+          - name: {{ $item.name }}
+            value: {{ $item.value }}
+          {{- end }}
+          {{- end }}
+          {{- if .Values.pollingAgent.envSecretValue }}
+          {{- range .Values.pollingAgent.envSecretValue }}
+          - name: {{ .name }}
             valueFrom:
-              secretKeyRef:
-                key: {{ $value.key | quote }}
-                name: {{ $value.name | quote }}
-                optional: false
+              {{- toYaml .valueFrom | nindent 14 }}
+          {{- end }}
+          {{- end }}  
         {{- end }}
         volumeMounts: 
           - name: {{$.Values.volumeMount.name}}

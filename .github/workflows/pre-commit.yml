@@ -11,6 +11,11 @@ jobs:
     name: Pre-commit checks
     runs-on: ubuntu-latest
     steps:
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+            terraform_version: latest
+
       - name: Configure Terraform cache dir
         run: |
           mkdir -p "$HOME/.terraform.d/plugin-cache"

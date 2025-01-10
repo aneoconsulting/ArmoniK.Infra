@@ -24,7 +24,7 @@ spec:
         app: {{ $.Values.computePlane.metadata.labels.app }}
         service: {{ $.Values.computePlane.metadata.labels.service }}
         partition: {{ $partitionName }}
-      {{if $config.annotations}}
+      {{- if $config.annotations}}
       annotations:
         {{- range $key, $value := $config.annotations }}
         {{ $key }}: {{ $value | quote }}
@@ -44,7 +44,7 @@ spec:
         {{- end }}
       terminationGracePeriodSeconds: {{ $config.terminationGracePeriodSeconds }}
       shareProcessNamespace: {{ $.Values.shareProcessNamespace }}
-      {{if $config.imagePullSecrets }}
+      {{- if $config.imagePullSecrets }}
       imagePullSecrets:
         {{- range $key, $value := $config.imagePullSecrets }}
         - name: {{ $value }}
@@ -54,7 +54,7 @@ spec:
       serviceAccountName: {{ $config.serviceAccountName }}
       containers:
       - name: {{ $.Values.pollingAgent.name }}
-      {{ if (ne $config.pollingAgent.tag "") }}
+      {{- if (ne $config.pollingAgent.tag "") }}
         image: {{ $config.pollingAgent.image }}:{{ $config.pollingAgent.tag }}
       {{ else }}
         image: {{ $config.pollingAgent.image }}
@@ -72,7 +72,7 @@ spec:
         - name: {{$.Values.pollingAgent.ports.name}}
           containerPort: {{$.Values.pollingAgent.ports.containerPort}}
           protocol: TCP
-        {{if $config.pollingAgent.readinessProbe }}
+        {{- if $config.pollingAgent.readinessProbe }}
         readinessProbe:
           httpGet:
            path: {{$.Values.pollingAgent.readinessProbe.httpGet.path}}
@@ -99,7 +99,7 @@ spec:
           timeoutSeconds: {{$.Values.pollingAgent.startupProbe.timeoutSeconds}}
           successThreshold: {{$.Values.pollingAgent.startupProbe.successThreshold}}
           failureThreshold: {{$.Values.pollingAgent.startupProbe.failureThreshold}}
-        {{-if $config.envFrom }}
+        {{- if $config.envFrom }}
         envFrom:
           {{- range $index, $item := $config.envFrom }}
           {{- range $key, $value := $item }}

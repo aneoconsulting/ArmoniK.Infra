@@ -57,10 +57,10 @@ dependencies:
   repository: https://grafana.github.io/helm-charts
   version: 8.8.2
 - name: fluent-bit
-  repository: https://fluent.github.io/helm-charts
-  version: 0.48.4
+  repository: https://charts.bitnami.com/bitnami
+  version: 2.4.3
 - name: seq
   repository: https://cloudnativeapp.github.io/charts/curated/
   version: 1.0.0
-digest: sha256:24507204549c1f2d37fe42d996b4c0cfd79e59757d755f30e1dd944a81c4b173
-generated: "2025-01-08T11:43:03.099967+01:00"
+digest: sha256:e482bb8b4a0f85b7f7aad0c445fb9cdd3116812ce191e5fe951b22494d044b9e
+generated: "2025-01-09T15:33:48.19231+01:00"

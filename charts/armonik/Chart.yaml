@@ -97,13 +97,17 @@ dependencies:
     repository: https://grafana.github.io/helm-charts
     condition: grafana.enabled
   - name: fluent-bit
-    version: 0.48.4
-    repository: https://fluent.github.io/helm-charts
+    version: 2.4.3
+    repository: https://charts.bitnami.com/bitnami
     condition: fluent-bit.enabled
   - name: seq
     version: 1.0.0
     repository: https://cloudnativeapp.github.io/charts/curated/
     condition: seq.enabled
+  - name: cert-manager
+    version: 1.16.2
+    repository: https://charts.jetstack.io
+    condition: cert-manager.enabled
 
     
 

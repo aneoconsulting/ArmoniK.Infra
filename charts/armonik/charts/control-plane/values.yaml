@@ -48,10 +48,14 @@ volumes:
     enabled: true
     mountPath: /amqp
     secretName: activemq
-  custom-mongodb-sharded:
+  mongodb:
     enabled: true
     mountPath: /mongodb/certs/
-    secretName: custom-mongodb-sharded
+    secretName: mongodb-cert
+  mongodb-ca:
+    enabled: true
+    mountPath: /mongodb/certificate/
+    secretName: mongodb-ca
   redis:
     enabled: true
     mountPath: /redis
@@ -61,18 +65,17 @@ env:
   - name: MongoDB__Password
     valueFrom:
       secretKeyRef:
-        key: MONGO_PASSWORD
-        name: mongodb-sharded-admin
+        key: mongodb-root-password
+        name: mongodb
   - name: MongoDB__User
-    valueFrom:
-      secretKeyRef:
-        key: MONGO_USERNAME
-        name: mongodb-sharded-admin
+    value:
+      key: MONGO_USERNAME
+      name: root
 
 envFrom:
   secretRef:
-    - activemq-user-credentials
-    - redis-user-credentials
+    - activemq
+    - redis
   configMapRef:
     - control-plane-configmap
     - core-configmap
@@ -113,7 +116,7 @@ config:
       MongoDB__DataRetention: 1.00:00:00
       MongoDB__DatabaseName: database
       MongoDB__DirectConnection: "true"
-      MongoDB__Host: mongodb-sharded.armonik.svc.cluster.local
+      MongoDB__Host: mongodb.armonik.svc.cluster.local
       MongoDB__Port: "27017"
       MongoDB__ReplicaSet: rs0
       MongoDB__Sharding: "true"
@@ -121,7 +124,7 @@ config:
       MongoDB__TableStorage__PollingDelayMax: "00:00:10"
       MongoDB__TableStorage__PollingDelayMin: "00:00:01"
       MongoDB__Tls: "true"
-      Redis__CaPath: /redis/chain.pem
+      Redis__CaPath: /redis-crt/ca.crt
       Redis__ClientName: ArmoniK.Core
       Redis__EndpointUrl: redis.armonik.svc.cluster.local:6379
       Redis__InstanceName: ArmoniKRedis

@@ -1,0 +1,27 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: activemq-crt
+spec:
+  isCA: false
+  usages:
+    - server auth
+    - client auth
+  commonName: "armonik.local"
+  subject:
+    organizations:
+      - ANEO
+    organizationalUnits:
+      - Armonik
+  secretName: activemq-crt
+  privateKey:
+    algorithm: RSA
+    encoding: PKCS1
+    size: 4096
+  issuerRef:
+    name: armonik-selfsigned-issuer
+    kind: ClusterIssuer
+    group: cert-manager.io
+  additionalOutputFormats:
+  - type: CombinedPEM
+  - type: DER

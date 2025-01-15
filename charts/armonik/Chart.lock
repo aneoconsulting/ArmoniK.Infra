@@ -11,27 +11,18 @@ dependencies:
 - name: eniconfig
   repository: file://charts/eniconfig
   version: 0.1.0
-- name: minio
-  repository: https://charts.bitnami.com/bitnami
-  version: 14.8.6
+- name: activemq
+  repository: file://charts/activemq
+  version: 1.0.0
 - name: redis
   repository: https://charts.bitnami.com/bitnami
   version: 20.4.0
-- name: activemq-artemis
-  repository: https://kahootali.github.io/activemq-artemis-helm/
-  version: 1.0.1
 - name: mongodb
   repository: https://charts.bitnami.com/bitnami
-  version: 16.3.2
-- name: mongodb-sharded
-  repository: https://charts.bitnami.com/bitnami
-  version: 9.0.3
+  version: 16.4.0
 - name: prometheus
   repository: https://charts.bitnami.com/bitnami
   version: 1.4.0
-- name: rabbitmq
-  repository: https://charts.bitnami.com/bitnami
-  version: 15.1.0
 - name: keda
   repository: https://kedacore.github.io/charts
   version: 2.16.1
@@ -62,5 +53,8 @@ dependencies:
 - name: seq
   repository: https://cloudnativeapp.github.io/charts/curated/
   version: 1.0.0
-digest: sha256:e482bb8b4a0f85b7f7aad0c445fb9cdd3116812ce191e5fe951b22494d044b9e
-generated: "2025-01-09T15:33:48.19231+01:00"
+- name: cert-manager
+  repository: https://charts.jetstack.io
+  version: v1.16.2
+digest: sha256:cedcf3059f93c8424fa72f440746012352d6237fdd814969fea23704bf8ec0ae
+generated: "2025-01-14T11:32:02.685557+01:00"

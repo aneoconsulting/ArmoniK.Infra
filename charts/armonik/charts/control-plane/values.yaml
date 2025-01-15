@@ -5,37 +5,46 @@ image:
   tag: 0.27.2
   pullPolicy: IfNotPresent
 
+grafanaDashboard: 
+  enable: true
+certificates:
+  enable: true
+partitionMetricsExporter:
+  enable: false
+metricsExporter:
+  enable: true
+
 namespace: armonik
 
 name: control-plane
 
 resources:
   limits:
-    cpu: "1"
-    memory: 2Gi
+    cpu: 500m
+    memory: 1Gi
   requests:
     cpu: 50m
     memory: 50Mi
 
-livenessProbe:
-  httpGet:
-    path: /liveness
-    port: 1081
-  initialDelaySeconds: 15
-  periodSeconds: 5
-  timeoutSeconds: 1
-  successThreshold: 1
-  failureThreshold: 1
+# livenessProbe:
+#   httpGet:
+#     path: /liveness
+#     port: 1081
+#   initialDelaySeconds: 15
+#   periodSeconds: 5
+#   timeoutSeconds: 1
+#   successThreshold: 1
+#   failureThreshold: 1
 
-startupProbe:
-  httpGet:
-    path: /startup
-    port: 1081
-  initialDelaySeconds: 15
-  periodSeconds: 3
-  timeoutSeconds: 5
-  successThreshold: 1
-  failureThreshold: 20
+# startupProbe:
+#   httpGet:
+#     path: /startup
+#     port: 1081
+#   initialDelaySeconds: 15
+#   periodSeconds: 3
+#   timeoutSeconds: 5
+#   successThreshold: 1
+#   failureThreshold: 20
 
 nodeSelector: {}
 
@@ -47,19 +56,19 @@ volumes:
   activemq:
     enabled: true
     mountPath: /amqp
-    secretName: activemq
+    secretName: activemq-crt
   mongodb:
     enabled: true
     mountPath: /mongodb/certs/
-    secretName: mongodb-cert
+    secretName: mongodb-crt
   mongodb-ca:
     enabled: true
     mountPath: /mongodb/certificate/
-    secretName: mongodb-ca
+    secretName: mongodb
   redis:
     enabled: true
     mountPath: /redis
-    secretName: redis
+    secretName: redis-crt
 
 env:
   - name: MongoDB__Password
@@ -67,14 +76,14 @@ env:
       secretKeyRef:
         key: mongodb-root-password
         name: mongodb
-  - name: MongoDB__User
-    value:
-      key: MONGO_USERNAME
-      name: root
+  - name: Redis__Password
+    valueFrom:
+      secretKeyRef:
+        key: redis-password
+        name: redis
 
 envFrom:
   secretRef:
-    - activemq
     - redis
   configMapRef:
     - control-plane-configmap
@@ -93,16 +102,18 @@ config:
   core:
     name: core-configmap
     data:
-      Amqp__AllowHostMismatch: "true"
-      Amqp__CaPath: /amqp/chain.pem
-      Amqp__Host: activemq.{{ .Release.Namespace }}.svc.cluster.local
+      #Amqp__AllowHostMismatch: "true"
+      #Amqp__CaPath: /amqp/tls-combined.pem
+      Amqp__Host: activemq
       Amqp__MaxPriority: "10"
-      Amqp__MaxRetries: "5"
+      #Amqp__MaxRetries: "5"
       Amqp__Port: "5672"
       Amqp__QueueStorage__LockRefreshExtension: "00:02:00"
       Amqp__QueueStorage__LockRefreshPeriodicity: "00:00:45"
       Amqp__QueueStorage__PollPeriodicity: "00:00:10"
-      Amqp__Scheme: AMQPS
+      Amqp__Scheme: AMQP
+      Amqp__Password: admin
+      Amqp__User: admin
       Authenticator__RequireAuthentication: "false"
       Authenticator__RequireAuthorization: "false"
       Components__ObjectStorage: ArmoniK.Adapters.Redis.ObjectStorage
@@ -110,26 +121,28 @@ config:
       Components__QueueAdaptorSettings__ClassName: ArmoniK.Core.Adapters.Amqp.QueueBuilder
       Components__QueueStorage: ArmoniK.Adapters.Amqp.ObjectStorage
       Components__TableStorage: ArmoniK.Adapters.MongoDB.TableStorage
+      MongoDB__User: root
       MongoDB__AllowInsecureTls: "true"
       MongoDB__AuthSource: admin
-      MongoDB__CAFile: /mongodb/certs/chain.pem
+      MongoDB__CAFile: /mongodb/certs/tls-combined.pem
       MongoDB__DataRetention: 1.00:00:00
       MongoDB__DatabaseName: database
       MongoDB__DirectConnection: "true"
-      MongoDB__Host: mongodb.armonik.svc.cluster.local
+      MongoDB__Host: mongodb
       MongoDB__Port: "27017"
       MongoDB__ReplicaSet: rs0
-      MongoDB__Sharding: "true"
+      #MongoDB__Sharding: "true"
       MongoDB__TableStorage__PollingDelay: "00:00:01"
       MongoDB__TableStorage__PollingDelayMax: "00:00:10"
       MongoDB__TableStorage__PollingDelayMin: "00:00:01"
-      MongoDB__Tls: "true"
-      Redis__CaPath: /redis-crt/ca.crt
+      MongoDB__Tls: "false"
+      Redis__User: ""
+      #Redis__CaPath: /redis/ca.crt
       Redis__ClientName: ArmoniK.Core
-      Redis__EndpointUrl: redis-master.{{ .Release.Namespace }}.svc.cluster.local:6379
+      Redis__EndpointUrl: redis-master:6379
       Redis__InstanceName: ArmoniKRedis
-      Redis__Ssl: "true"
-      Redis__SslHost: 127.0.0.1
+      #Redis__Ssl: "false"
+      #Redis__SslHost: 127.0.0.1
       Redis__Timeout: "30000"
       Redis__TtlTimeSpan: 1.00:00:00
       Submitter__DeletePayload: "true"

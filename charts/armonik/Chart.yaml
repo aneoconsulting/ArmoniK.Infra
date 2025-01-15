@@ -35,35 +35,23 @@ dependencies:
     version: 0.1.0
     repository: file://charts/eniconfig
     condition: eniconfig.enabled
+  - name: activemq
+    version: 1.0.0
+    repository: file://charts/activemq
+    condition: activemq.enabled
 ### Armonik dependencies
-  - name: minio
-    version: 14.8.6
-    repository: https://charts.bitnami.com/bitnami
-    condition: minio.enabled
   - name: redis
     version: 20.4.0
     repository: https://charts.bitnami.com/bitnami
     condition: redis.enabled
-  - name: activemq-artemis
-    version: 1.0.1
-    repository: https://kahootali.github.io/activemq-artemis-helm/
-    condition: activemq-artemis.enabled
   - name: mongodb
-    version: 16.3.2
+    version: 16.4.0
     repository: https://charts.bitnami.com/bitnami
     condition: mongodb.enabled
-  - name: mongodb-sharded
-    version: 9.0.3
-    repository: https://charts.bitnami.com/bitnami
-    condition: mongodb-sharded.enabled
   - name: prometheus
     version: 1.4.0
     repository: https://charts.bitnami.com/bitnami
     condition: prometheus.enabled
-  - name: rabbitmq
-    version: 15.1.0
-    repository: https://charts.bitnami.com/bitnami
-    condition: rabbitmq.enabled
   - name: keda
     version: 2.16.1
     repository: https://kedacore.github.io/charts

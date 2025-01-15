@@ -1,3 +1,4 @@
+{{ if .Values.metricsExporter.enable }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -38,14 +39,51 @@ spec:
         - configMapRef:
             name: log-configmap
             optional: false
-        - secretRef:
-            name: activemq
-            optional: false
+        # - secretRef:
+        #     name: activemq
+        #     optional: false
         #terminationMessagePath: /dev/termination-log
         #terminationMessagePolicy: File
+        volumeMounts:
+        - name: mongodb
+          mountPath: /mongodb/certs/
+          readOnly: true
+          recursiveReadOnly: Disabled
+        - name: mongodb-ca
+          mountPath: /mongodb/certificate/
+          readOnly: true
+          recursiveReadOnly: Disabled
+        env:
+        - name: MongoDB__Password
+          valueFrom:
+            secretKeyRef:
+              key: mongodb-root-password
+              name: mongodb
+              optional: false
+        - name: MongoDB__User
+          value: "root"
+        envFrom:
+        - configMapRef:
+            name: core-configmap
+            optional: false
+        - configMapRef:
+            name: log-configmap
+            optional: false
+        # - secretRef:
+        #     name: activemq
+        #     optional: false
       dnsPolicy: ClusterFirst
       enableServiceLinks: true
-{{- if .Values.nodeSelector -}}
+      volumes:
+      - name: mongodb
+        secret:
+          secretName: mongodb-crt
+          defaultMode: 420
+      - name: mongodb-ca
+        secret:
+          secretName: mongodb-crt
+          defaultMode: 420
+  {{- if .Values.nodeSelector }}
       nodeSelector:
         service: {{ .Values.nodeSelector }}
       restartPolicy: Always
@@ -58,7 +96,7 @@ spec:
         key: service
         operator: Equal
         value: metrics
-{{- end }}
+  {{- end }}
 ---
 apiVersion: v1
 kind: Service
@@ -93,3 +131,4 @@ data:
   Host: "localhost"
   Port: "1080"
   Path: "/metrics"
+{{ end }}

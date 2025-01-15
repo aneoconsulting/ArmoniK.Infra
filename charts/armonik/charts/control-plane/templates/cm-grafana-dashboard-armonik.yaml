@@ -1,3 +1,4 @@
+{{ if .Values.grafanaDashboard.enable }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -17,3 +18,4 @@ data:
 {{ .Files.Get "grafana-dashboards/dashboard-pods.json" | indent 4 }}
   dashboard-taskhandler.json: |-
 {{ .Files.Get "grafana-dashboards/dashboard-taskhandler.json" | indent 4 }}
+{{ end }}

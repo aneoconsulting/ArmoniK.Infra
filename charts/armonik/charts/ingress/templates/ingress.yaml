@@ -64,6 +64,16 @@ spec:
           mountPropagation: None
           name: static
           readOnly: true
+##############
+        - name: mongodb
+          mountPath: /mongodb/certs/
+          readOnly: true
+          recursiveReadOnly: Disabled
+        - name: mongodb-ca
+          mountPath: /mongodb/certificate/
+          readOnly: true
+          recursiveReadOnly: Disabled
+##############
       dnsPolicy: ClusterFirst
       enableServiceLinks: true
       #nodeSelector:
@@ -83,12 +93,20 @@ spec:
         secret:
           defaultMode: 420
           optional: false
-          secretName: ingress-server-certificates
+          secretName: ingress-crt
       - name: ingress-client-secret-volume
         secret:
           defaultMode: 420
           optional: false
-          secretName: ingress-user-certificate-authority
+          secretName: ingress-crt
+      - name: mongodb
+        secret:
+          secretName: mongodb-crt
+          defaultMode: 420
+      - name: mongodb-ca
+        secret:
+          secretName: mongodb
+          defaultMode: 420
       - configMap:
           defaultMode: 420
           name: ingress-nginx

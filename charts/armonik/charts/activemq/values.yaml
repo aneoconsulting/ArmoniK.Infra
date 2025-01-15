@@ -1,0 +1,7 @@
+nameOverride: "activemq"
+replicaCount: 1
+namespace: armonik
+#image:
+# tag: ""
+#imagePullSecrets: []
+#computePlaneSelector: []

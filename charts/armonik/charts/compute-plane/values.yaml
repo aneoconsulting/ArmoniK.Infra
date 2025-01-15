@@ -1,14 +1,12 @@
-nameOverride: "armonik-compute-plane"
+nameOverride: ""
 replicaCount: 1
 namespace: armonik
-#image:
-# tag: ""
-#imagePullSecrets: []
-#computePlaneSelector: []
 shareProcessNamespace: false
 restartPolicy: Always
+
 computePlane:
   metadata:
+    name: "compute-plane"
     labels:
       app: "armonik"
       service: "compute-plane"
@@ -17,40 +15,61 @@ computePlane:
       replicas: 0
       pollingAgent:
         image: "dockerhubaneo/armonik_pollingagent"
-        tag: ""
+        tag: "0.27.2"
         imagePullPolicy: "IfNotPresent"
         limits:
-          cpu: "2000m"
-          memory: "2048Mi"
+          cpu: "2"
+          memory: "2Gi"
         requests:
           cpu: "50m"
           memory: "50Mi"
         securityContext:
-          drop: ["SYS_PTRACE"]
-        
+          capabilities:
+            drop:
+            - SYS_PTRACE  
       annotations: {}
       nodeSelector: {}
       tolerations: []
       terminationGracePeriodSeconds: 30
       ImagePullSecrets:
         - name: "IfNotPresent"
-      serviceAccountName: ""
       readinessProbe: {}
-      envFrom:
-        - secretRef: "activemq-user-credentials"
-        - secretRef: "redis-user-credentials"
-        - configMapRef: "control-plane-configmap"
-        - configMapRef: "core-configmap"
-        - configMapRef: "log-configmap"
+      livenessProbe:
+        httpGet:
+          path: "/liveness"
+          port: 1080
+          scheme: HTTP
+        initialDelaySeconds: 15
+        periodSeconds: 10
+        timeoutSeconds: 10
+        successThreshold: 1
+        failureThreshold: 3
+      startupProbe:
+        httpGet:
+          path: "/startup"
+          port: 1080
+          scheme: HTTP
+        initialDelaySeconds: 1
+        periodSeconds: 3
+        timeoutSeconds: 1
+        successThreshold: 1
+        failureThreshold: 20
+      envHardValue:
+        - name: Amqp__PartitionId
+          value: default
+        - name: PubSub__PartitionId
+          value: default
+        - name: SQS__PartitionId
+          value: default
       # ArmoniK workers
       worker:
         - name: "default-worker"
           image: "dockerhubaneo/armonik_worker_dll"
-          #tag: ""
+          tag: "0.12.9"
           imagePullPolicy: "IfNotPresent"
           limits:
-            cpu: "1000m"
-            memory: "1024Mi"
+            cpu: "2"
+            memory: "2Gi"
           requests:
             cpu: "50m"
             memory: "50Mi"
@@ -74,23 +93,62 @@ computePlane:
     stream:
       replicas: 0
       pollingAgent:
-        image: "dockerhubaneo/armonik_core_stream_test_client"
-        #tag: ""
-        image_pull_policy: "IfNotPresent"
+        image: "dockerhubaneo/armonik_pollingagent"
+        tag: "0.27.2"
+        imagePullPolicy: "IfNotPresent"
         limits:
-          cpu: "2000m"
-          memory: "2048Mi"
+          cpu: "2"
+          memory: "2Gi"
         requests:
           cpu: "50m"
           memory: "50Mi"
+        securityContext:
+          capabilities:
+            drop: 
+            - "SYS_PTRACE"  
+      annotations: {}
+      nodeSelector: {}
+      tolerations: []
+      terminationGracePeriodSeconds: 30
+      ImagePullSecrets:
+        - name: "IfNotPresent"
+      readinessProbe: {}
+      livenessProbe:
+        httpGet:
+          path: "/liveness"
+          port: 1080
+          scheme: HTTP
+        initialDelaySeconds: 15
+        periodSeconds: 10
+        timeoutSeconds: 10
+        successThreshold: 1
+        failureThreshold: 3
+      startupProbe:
+        httpGet:
+          path: "/startup"
+          port: 1080
+          scheme: HTTP
+        initialDelaySeconds: 1
+        periodSeconds: 3
+        timeoutSeconds: 1
+        successThreshold: 1
+        failureThreshold: 20
+      envHardValue:
+        - name: Amqp__PartitionId
+          value: stream
+        - name: PubSub__PartitionId
+          value: stream
+        - name: SQS__PartitionId
+          value: stream
+      # ArmoniK workers
       worker:
-        - name: "stream-worker"
+        - name: "default-worker"
           image: "dockerhubaneo/armonik_core_stream_test_worker"
-          #tag: ""
-          image_pull_policy: "IfNotPresent"
+          tag: "0.27.2"
+          imagePullPolicy: "IfNotPresent"
           limits:
-            cpu: "1000m"
-            memory: "1024Mi"
+            cpu: "2"
+            memory: "2Gi"
           requests:
             cpu: "50m"
             memory: "50Mi"
@@ -98,11 +156,11 @@ computePlane:
         type: "prometheus"
         polling_interval: 15
         cooldown_period: 300
-        minReplicaCount: 0
-        maxReplicaCount: 5
+        min_replica_count: 0
+        max_replica_count: 5
         behavior:
-          restoreToOriginalReplicaCount: true
-          stabilizationWindowSeconds: 300
+          restore_to_original_replica_count: true
+          stabilization_window_seconds: 300
           type: "Percent"
           value: 100
           period_seconds: 15
@@ -114,72 +172,153 @@ computePlane:
     htcmock:
       replicas: 0
       pollingAgent:
-        image: "dockerhubaneo/armonik_core_htcmock_test_client"
-        #tag: ""
-        image_pull_policy: "IfNotPresent"
+        image: "dockerhubaneo/armonik_pollingagent"
+        tag: "0.27.2"
+        imagePullPolicy: "IfNotPresent"
         limits:
-          cpu: "2000m"
-          memory: "2048Mi"
+          cpu: "2"
+          memory: "2Gi"
         requests:
           cpu: "50m"
           memory: "50Mi"
+        securityContext:
+          capabilities:
+            drop: 
+            - SYS_PTRACE  
+      annotations: {}
+      nodeSelector: {}
+      tolerations: []
+      terminationGracePeriodSeconds: 30
+      ImagePullSecrets:
+        - name: "IfNotPresent"
+      readinessProbe: {}
+      livenessProbe:
+        httpGet:
+          path: "/liveness"
+          port: 1080
+          scheme: HTTP
+        initialDelaySeconds: 15
+        periodSeconds: 10
+        timeoutSeconds: 10
+        successThreshold: 1
+        failureThreshold: 3
+      startupProbe:
+        httpGet:
+          path: "/startup"
+          port: 1080
+          scheme: HTTP
+        initialDelaySeconds: 1
+        periodSeconds: 3
+        timeoutSeconds: 1
+        successThreshold: 1
+        failureThreshold: 20
+      envHardValue:
+        - name: Amqp__PartitionId
+          value: htcmock
+        - name: PubSub__PartitionId
+          value: htcmock
+        - name: SQS__PartitionId
+          value: htcmock
+      # ArmoniK workers
       worker:
-        - name: "htcmock-worker"
+        - name: "worker"
           image: "dockerhubaneo/armonik_core_htcmock_test_worker"
+          tag: "0.27.2"
+          imagePullPolicy: "IfNotPresent"
           limits:
-            cpu: "1000m"
-            memory: "1024Mi"
+            cpu: "2"
+            memory: "2Gi"
           requests:
             cpu: "50m"
             memory: "50Mi"
       hpa:
         type: "prometheus"
-        pollingInterval: 15
-        cooldownPeriod: 300
-        minReplicaCount: 0
-        maxReplicaCount: 5
+        polling_interval: 15
+        cooldown_period: 300
+        min_replica_count: 0
+        max_replica_count: 5
         behavior:
-          restoreToOriginalReplicaCount: true
-          stabilizationWindowSeconds: 300
+          restore_to_original_replica_count: true
+          stabilization_window_seconds: 300
           type: "Percent"
           value: 100
-          periodSeconds: 15
+          period_seconds: 15
         triggers:
           - type: "prometheus"
             threshold: 2
-
 
     # Partition for the bench worker        
     bench:
       replicas: 0
       pollingAgent:
-        image: "dockerhubaneo/armonik_core_bench_test_client"
-        #tag: ""
-        image_pull_policy: "IfNotPresent"
+        image: "dockerhubaneo/armonik_pollingagent"
+        tag: "0.27.2"
+        imagePullPolicy: "IfNotPresent"
         limits:
-          cpu: "2000m"
-          memory: "2048Mi"
+          cpu: "2"
+          memory: "2Gi"
         requests:
           cpu: "50m"
           memory: "50Mi"
+        securityContext:
+          capabilities:
+            drop: 
+            - SYS_PTRACE  
+      annotations: {}
+      nodeSelector: {}
+      tolerations: []
+      terminationGracePeriodSeconds: 30
+      ImagePullSecrets:
+        - name: "IfNotPresent"
+      readinessProbe: {}
+      livenessProbe:
+        httpGet:
+          path: "/liveness"
+          port: 1080
+          scheme: HTTP
+        initialDelaySeconds: 15
+        periodSeconds: 10
+        timeoutSeconds: 10
+        successThreshold: 1
+        failureThreshold: 3
+      startupProbe:
+        httpGet:
+          path: "/startup"
+          port: 1080
+          scheme: HTTP
+        initialDelaySeconds: 1
+        periodSeconds: 3
+        timeoutSeconds: 1
+        successThreshold: 1
+        failureThreshold: 20
+      envHardValue:
+        - name: Amqp__PartitionId
+          value: bench
+        - name: PubSub__PartitionId
+          value: bench
+        - name: SQS__PartitionId
+          value: bench
+      # ArmoniK workers
       worker:
-        - name: "bench-worker"
+        - name: "worker"
           image: "dockerhubaneo/armonik_core_bench_test_worker"
+          tag: "0.27.2"
+          imagePullPolicy: "IfNotPresent"
           limits:
-            cpu: "1000m"
-            memory: "1024Mi"
+            cpu: "2"
+            memory: "2Gi"
           requests:
             cpu: "50m"
             memory: "50Mi"
       hpa:
         type: "prometheus"
-        pollingInterval: 15
-        cooldownPeriod: 300
-        minReplicaCount: 0
-        maxReplicaCount: 5
+        polling_interval: 15
+        cooldown_period: 300
+        min_replica_count: 0
+        max_replica_count: 5
         behavior:
-          restoreToOriginalReplicaCount: true
-          stabilizationWindowSeconds: 300
+          restore_to_original_replica_count: true
+          stabilization_window_seconds: 300
           type: "Percent"
           value: 100
           period_seconds: 15
@@ -189,15 +328,73 @@ computePlane:
 
 pollingAgent:
   name: polling-agent
-  image:
-  imagePullPolicy:
   ports:
     name: poll-agent-port
     containerPort: 1080
+  volumeMounts:
+    # - name: "cache-volume"
+    #   mountPath: "/cache"
+    #   mountPropagation: None
+    - name: "activemq"
+      mountPath: "/amqp"
+      mountPropagation: None
+      readOnly: true
+    - name: "redis"
+      mountPath: "/redis"
+      mountPropagation: None
+      readOnly: true
+    - name: "mongodb-armonik-ca"
+      mountPath: "/mongodb/certificate/"
+      mountPropagation: None
+      readOnly: true
+    - name: mongodb
+      mountPath: "/mongodb/certs/"
+      mountPropagation: None
+      readOnly: true
+  envSecretValue:
+    - name: MongoDB__Password
+      valueFrom:
+        secretKeyRef:
+          key: password
+          name: mongodb-user
+          optional: false
+    - name: MongoDB__User
+      valueFrom:
+        secretKeyRef:
+          key: username
+          name: mongodb-user
+          optional: false
+  envConfigValue: []
+  envFrom:
+    - secretRef:
+        name: activemq-user-credentials
+        optional: false
+    - secretRef:
+        name: redis-user-credentials
+        optional: false
+    - configMapRef:
+        name: compute-plane-configmap
+        optional: false
+    - configMapRef:
+        name: core-configmap
+        optional: false
+    - configMapRef:
+        name: log-configmap
+        optional: false
+    - configMapRef:
+        name: polling-configmap
+        optional: false
+
+worker:
+  name: worker
+  ports:
+    name: worker-port
+    containerPort: 1081
   livenessProbe:
     httpGet:
       path: "/liveness"
-      port: 1080
+      port: 1081
+      scheme: HTTP
     initialDelaySeconds: 15
     periodSeconds: 10
     timeoutSeconds: 10
@@ -206,96 +403,175 @@ pollingAgent:
   startupProbe:
     httpGet:
       path: "/startup"
-      port: 1080
+      port: 1081
+      scheme: HTTP
     initialDelaySeconds: 1
     periodSeconds: 3
     timeoutSeconds: 1
     successThreshold: 1
     failureThreshold: 20
-  workerCheckRetries: "10"  
-  workerCheckDelay: "00:00:10"
-  
-  envHardValue:
-    - name: Amqp__PartitionId
-      value: default
-    - name: PubSub__PartitionId
-      value: default
-    - name: SQS__PartitionId
-      value: default      
-  envSecretValue:
-    - name: MongoDB__Password
-      valueFrom:
-        secretKeyRef:
-          key: MONGO_PASSWORD
-          name: mongodb-sharded-admin
-    - name: MongoDB__User
-      valueFrom:
-        secretKeyRef:
-          key: MONGO_USERNAME
-          name: mongodb-sharded-admin
+  terminationMessagePath: "/dev/termination-log"
+  terminationMessagePolicy: "File"
+  resource:
+    limits:
+      cpu: "2"
+      memory: "2Gi"
+    requests:
+      cpu: "50m"
+      memory: "50Mi"
+  volumes:
+    - name: "shared-volume"
+      hostPath:
+        path: "/data"
+        type: Directory
+    - name: "cache-volume"
+  envHardValue: []
+  envSecretValue: []
+  envConfigValue: []
+  envFrom:
+    - configMapRef:
+        name: compute-plane-configmap
+        optional: false
+    - configMapRef:
+        name: log-configmap
+        optional: false
+    - configMapRef:
+        name: worker-configmap
+        optional: false
 
-supportedQueues:
-  - Amqp__PartitionId
-  - PubSub__PartitionId
-  - SQS__PartitionId
+fluentBit:
+  isDaemonSet: true
+  name: "fluent-bit"
+  image: "fluent/fluent-bit"
+  tag: "1.3.11"
+  imagePullPolicy: "IfNotPresent"
+  configMapRef: "fluent-bit-envvars-config"
+  volumeMounts:
+    - name: "cache-volume"
+      mountPath: "/cache"
+      readOnly: true
+  fluentVolumes:
+    - name: "fluentbitstate"
+      mountPath: "/var/fluent-bit/state"
+      readOnly: false
+      type: hostpath
+    - name: "varlog"
+      mountPath: "/var/log"
+      readOnly: true
+      type: hostpath
+    - name: "varlibdockercontainers"
+      mountPath: "/var/lib/docker/containers"
+      readOnly: true
+      type: hostpath
+    - name: runlogjournal
+      mountPath: "/run/log/journal"
+      readOnly: true
+      type: hostpath
+    - name: dmesg
+      mountPath: "/var/log/dmesg"
+      readOnly: true
+      type: hostpath
+    - name: fluentbitconfig
+      mountPath: "/fluent-bit/etc"
+      readOnly: false
+      type: hostpath
+    - name: fluentbitconfig
+      mountPath: "/fluent-bit/etc"
+      readOnly: false
+      type: configmap
 
-credentials:
-  # activemq
-  Amqp__User:
-    key: username
-    name: activemq
-  Amqp__Password:
-    key: password
-    name: activemq
-  Amqp__Host:
-    key: host
-    name: activemq
-  Amqp__Port:
-    key: port
-    name: activemq
-  # redis  
-  Redis__User:
-    key: username
-    name: redis
-  Redis__Password:
-    key: password
-    name: redis
-  Redis__EndpointUrl:
-    key: url
-    name: redis
-  # mongodb
-  MongoDB__User:
-    key: username
-    name: mongodb
-  MongoDB__Password:
-    key: password
-    name: mongodb
-  MongoDB__Host:
-    key: host
-    name: mongodb
-  MongoDB__Port:
-    key: port
-    name: mongodb
-  # s3
-  # - key: username
-  #   name: s3
-  # - key: password
-  #   name: mongodb
-  # - key: url
-  #   name: s3
-  # - key: must_force_path_style
-  #   name: s3
-  # - key: bucket_name
-  #   name: s3
-  # - key: use_chunk_encoding
-  #   name: s3
-  # - key: use_check_sum
-  #   name: s3
+volumeMounts:
+  - name: "cache-volume"
+    mountPath: "/cache"
+    mountPropagation: None
+
+computePlaneConfigmaps:
+  name: compute-plane-configmap
+  data:
+    ComputePlane__AgentChannel__Address: /cache/armonik_agent.sock
+    ComputePlane__AgentChannel__SocketType: unixdomainsocket
+    ComputePlane__WorkerChannel__Address: /cache/armonik_worker.sock
+    ComputePlane__WorkerChannel__SocketType: unixdomainsocket 
+
+pollingAgentConfigmaps:
+  name: polling-configmap
+  data:
+    Amqp__LinkCredit: "2"
+    ComputePlane__MessageBatchSize: "1"
+    InitWorker__WorkerCheckDelay: "00:00:10"
+    InitWorker__WorkerCheckRetries: "10"
+    Pollster__GraceDelay: "00:00:15"
+
+workerConfigmaps:
+  name: worker-configmap
+  data:
+    FileStorageType: FS
+    target_data_path: /data
+    target_zip_path: /tmp    
+
+coreConfigmaps:
+  name: core-configmap
+  data:
+    Amqp__AllowHostMismatch: "true"
+    Amqp__CaPath: /amqp/chain.pem
+    Amqp__Host: activemp.armonik.svc.cluster.local
+    Amqp__MaxPriority: "10"
+    Amqp__MaxRetries: "5"
+    Amqp__Port: "5672"
+    Amqp__QueueStorage__LockRefreshExtension: "00:02:00"
+    Amqp__QueueStorage__LockRefreshPeriodicity: "00:00:45"
+    Amqp__QueueStorage__PollPeriodicity: "00:00:10"
+    Amqp__Scheme: AMQPS
+    Authenticator__RequireAuthentication: "false"
+    Authenticator__RequireAuthorization: "false"
+    Components__ObjectStorage: ArmoniK.Adapters.Redis.ObjectStorage
+    Components__QueueAdaptorSettings__AdapterAbsolutePath: /adapters/queue/amqp/ArmoniK.Core.Adapters.Amqp.dll
+    Components__QueueAdaptorSettings__ClassName: ArmoniK.Core.Adapters.Amqp.QueueBuilder
+    Components__QueueStorage: ArmoniK.Adapters.Amqp.ObjectStorage
+    Components__TableStorage: ArmoniK.Adapters.MongoDB.TableStorage
+    MongoDB__AllowInsecureTls: "true"
+    MongoDB__AuthSource: database
+    MongoDB__CAFile: /mongodb/certificate/mongodb-ca-cert
+    MongoDB__DataRetention: 1.00:00:00
+    MongoDB__DatabaseName: database
+    MongoDB__DirectConnection: "false"
+    MongoDB__Host: mongodb-armonik-headless.armonik.svc.cluster.local
+    MongoDB__Port: "27017"
+    MongoDB__ReplicaSet: rs0
+    MongoDB__TableStorage__PollingDelay: "00:00:01"
+    MongoDB__TableStorage__PollingDelayMax: "00:00:10"
+    MongoDB__TableStorage__PollingDelayMin: "00:00:01"
+    MongoDB__Tls: "true"
+    Redis__CaPath: /redis/chain.pem
+    Redis__ClientName: ArmoniK.Core
+    Redis__EndpointUrl: redis-master.armonik.svc.cluster.local:6379
+    Redis__InstanceName: ArmoniKRedis
+    Redis__Ssl: "true"
+    Redis__SslHost: 127.0.0.1
+    Redis__Timeout: "30000"
+    Redis__TtlTimeSpan: 1.00:00:00
+    Submitter__DeletePayload: "true"
+
+logConfigmaps:
+  name: log-configmap
+  data: 
+    minimumLevel: Information
+    overrides:
+      ArmoniK.Core.Common.Auth.Authentication.Authenticator: Warning
+      Grpc.AspNetCore.Server.ServerCallHandler: Warning
+      Microsoft.AspNetCore.Authorization: Warning
+      Microsoft.AspNetCore.Hosting.Diagnostics: Warning
+      Microsoft.AspNetCore.Routing: Warning
+      Microsoft.AspNetCore.Routing.EndpointMiddleware: Warning
+      Microsoft.AspNetCore.Server.Kestrel: Warning
+      Microsoft.Extensions.Diagnostics.HealthChecks: Warning
+      Microsoft.Extensions.Http.DefaultHttpClientFactory: Warning
+      Serilog.AspNetCore.RequestLoggingMiddleware: Warning 
+
+
+checkFileStorageType: "FS"
+fileStorageType: "hostpath"
  
-volumeMount:  
- name: "cache-volume"
- mountPath: "/cache"
-
 certificates:
   activemq:
     name: "activemq-secret-volume"
@@ -310,21 +586,6 @@ certificates:
     mountPath: "/mongodb"
     secretName: "mongodb"
 
-
-pollingAgentConfigmaps:
-  - "log-configmap"
-  - "polling-agent-configmap" 
-  - "core-configmap"     
-  - "compute-plane-configmap" 
-
-workerConfigmaps:
-  - "worker-configmap"
-  - "compute-plane-configmap" 
-  - "log-configmap"     
-
-checkFileStorageType: "FS"
-fileStorageType: "nfs"
-
 fileStorageEndpoints: 
   s3Storage:
     ServiceURL: {}
@@ -337,25 +598,15 @@ fileStorageEndpoints:
 
 preStopWaitScript: "<<EOF while test -e /cache/armonik_agent.sock ; do   sleep 1 done EOF"
 
-
 FS: 
   name: "shared-volume"
   mountPath: "/data"
 
-nfs:
-  name: "shared-volume"
-  path: "/data"
-  server: "test"
-
 hostPath: 
   name: "shared-volume"
-  path: "/data"
+  path: "/home/mjadoui/ArmoniK/infrastructure/quick-de" # (abs(path) à voir dans .tf)
 
+env: 
+  pollingAgentAggregation:
+    
 
-extraConf:
-  compute: {}
-  control: {}
-  core: {}
-  log: {}
-  polling: {}
-  worker: {}

@@ -14,7 +14,7 @@ control-plane:
   enabled: true
   #nodeSelector: {}
 compute-plane:
-  enabled: true
+  enabled: false
   nodeSelector: {}
 
 ############################################
@@ -66,7 +66,7 @@ mongodb:
 
 ################## MONGODB-SHARDED ##################
 mongodb-sharded:
-  enabled: false
+  enabled: true
 
 ################## RABBITMQ ##################
 rabbitmq:

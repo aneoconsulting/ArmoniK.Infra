@@ -4,7 +4,7 @@ metadata:
   name: {{ .Values.config.log.name }}
   namespace: {{ .Values.namespace }}
 data:
-  Serilog__MinimumLevel: "{{ .Values.config.log.data.minimumLevel }}"
+  Serilog__MinimumLevel: {{ .Values.config.log.data.minimumLevel | quote}}
   {{- range $key, $value := .Values.config.log.data.overrides }}
-  Serilog__MinimumLevel__Override__{{ $key }}: "{{ $value }}"
+  Serilog__MinimumLevel__Override__{{ $key }}: {{ $value | quote}}
   {{- end }}

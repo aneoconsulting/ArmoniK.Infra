@@ -3,7 +3,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: compute-plane-{{ $partitionName }}
+  name: {{ $.Values.computePlane.metadata.name }}-{{ $partitionName }}
   namespace: {{ $.Values.namespace }}
   labels:
     app: {{ $.Values.computePlane.metadata.labels.app }}
@@ -24,17 +24,20 @@ spec:
         app: {{ $.Values.computePlane.metadata.labels.app }}
         service: {{ $.Values.computePlane.metadata.labels.service }}
         partition: {{ $partitionName }}
-      {{if $config.annotations}}
+      {{- if $config.annotations}}
       annotations:
         {{- range $key, $value := $config.annotations }}
         {{ $key }}: {{ $value | quote }}
         {{- end }}
       {{- end }}
     spec:
+      {{- if $config.nodeSelector}}
       nodeSelector:
         {{- range $key, $value := $config.nodeSelector }}
         {{ $key }}: {{ $value | quote }}
-        {{- end }}  
+        {{- end }}
+      {{- end }}
+      {{- if $config.tolerations}}  
       tolerations:
         {{- range $i, $toleration := $config.tolerations }}
         - key: {{ $toleration.key }}
@@ -42,24 +45,24 @@ spec:
           value: {{ $toleration.value }}
           effect: NoSchedule
         {{- end }}
+      {{- end }}
       terminationGracePeriodSeconds: {{ $config.terminationGracePeriodSeconds }}
       shareProcessNamespace: {{ $.Values.shareProcessNamespace }}
-      {{if $config.imagePullSecrets }}
+      {{- if $config.imagePullSecrets }}
       imagePullSecrets:
         {{- range $key, $value := $config.imagePullSecrets }}
         - name: {{ $value }}
         {{- end }}
       {{- end }}
       restartPolicy: {{ $.Values.restartPolicy }}
-      serviceAccountName: {{ $config.serviceAccountName }}
       containers:
       - name: {{ $.Values.pollingAgent.name }}
-      {{ if (ne $config.pollingAgent.tag "") }}
+      {{- if (ne $config.pollingAgent.tag "") }}
         image: {{ $config.pollingAgent.image }}:{{ $config.pollingAgent.tag }}
-      {{ else }}
+      {{- else }}
         image: {{ $config.pollingAgent.image }}
-      {{ end }}
-        imagePullPolicy: {{ $config.pollingAgent.imagePullPolicy }}
+      {{- end }}
+        imagePullPolicy: {{ $config.pollingAgent.imagePullPolicy | quote}}
         resources:
           limits:
             cpu: "{{ $config.pollingAgent.limits.cpu }}"
@@ -67,79 +70,57 @@ spec:
           requests:
             cpu: "{{ $config.pollingAgent.requests.cpu }}"
             memory: "{{ $config.pollingAgent.requests.memory }}"
-        {{- toYaml $config.pollingAgent.securityContext | nindent 8}}
+        securityContext:
+        {{- toYaml $config.pollingAgent.securityContext | nindent 10 }}
         ports:
-        - name: {{$.Values.pollingAgent.ports.name}}
-          containerPort: {{$.Values.pollingAgent.ports.containerPort}}
+        - name: {{ $.Values.pollingAgent.ports.name }}
+          containerPort: {{ $.Values.pollingAgent.ports.containerPort }}
           protocol: TCP
-        {{if $config.pollingAgent.readinessProbe }}
+        {{if $config.readinessProbe }}
         readinessProbe:
-          httpGet:
-           path: {{$.Values.pollingAgent.readinessProbe.httpGet.path}}
-            port: {{$.Values.pollingAgent.readinessProbe.httpGet.port}}
-          periodSeconds: {{$.Values.pollingAgent.readinessProbe.periodSeconds}}
-          timeoutSeconds: {{$.Values.pollingAgent.readinessProbe.timeoutSeconds}}
-          successThreshold: {{$.Values.pollingAgent.readinessProbe.successThreshold}}
-          failureThreshold: {{$.Values.pollingAgent.readinessProbe.failureThreshold}}
-        livenessProbe:
-          httpGet:
-            path: {{$.Values.pollingAgent.livenessProbe.httpGet.path}}
-            port: {{$.Values.pollingAgent.livenessProbe.httpGet.port}}
-          initialDelaySeconds: {{$.Values.pollingAgent.livenessProbe.initialDelaySeconds}}
-          periodSeconds: {{$.Values.pollingAgent.livenessProbe.periodSeconds}}
-          timeoutSeconds: {{$.Values.pollingAgent.livenessProbe.timeoutSeconds}}
-          successThreshold: {{$.Values.pollingAgent.livenessProbe.successThreshold}}
-          failureThreshold: {{$.Values.pollingAgent.livenessProbe.failureThreshold}}
-        startupProbe:
-          httpGet:
-            path: {{$.Values.pollingAgent.startupProbe.httpGet.path}}
-            port: {{$.Values.pollingAgent.startupProbe.httpGet.port}}
-          initialDelaySeconds: {{$.Values.pollingAgent.startupProbe.initialDelaySeconds}}
-          periodSeconds: {{$.Values.pollingAgent.startupProbe.periodSeconds}}
-          timeoutSeconds: {{$.Values.pollingAgent.startupProbe.timeoutSeconds}}
-          successThreshold: {{$.Values.pollingAgent.startupProbe.successThreshold}}
-          failureThreshold: {{$.Values.pollingAgent.startupProbe.failureThreshold}}
-        {{-if $config.envFrom }}
-        envFrom:
-          {{- range $index, $item := $config.envFrom }}
-          {{- range $key, $value := $item }}
-          - {{ $key }}:
-              name: {{ $value }}
-              optional: false
-          {{- end }}
-          {{- end }}
+        {{- toYaml $config.readinessProbe | nindent 10 }}
         {{- end }}
-        {{- if or .Values.pollingAgent.envHardValue .Values.pollingAgent.envSecretValue}}
+        {{- if $config.livenessProbe }}
+        livenessProbe:
+        {{- toYaml $config.livenessProbe | nindent 10 }}
+        {{- end }}
+        {{- if $config.startupProbe }}
+        startupProbe:
+        {{- toYaml $config.startupProbe | nindent 10 }}
+        {{- end }}
+        {{- if $.Values.pollingAgent.envFrom }}
+        envFrom:
+        {{- toYaml $.Values.pollingAgent.envFrom | nindent 10 }}
+        {{- end }}
+        {{- if or $config.envHardValue $.Values.pollingAgent.envSecretValue }}
         env:
-          {{- if .Values.pollingAgent.envHardValue }}
-          {{- range $index, $item := .Values.pollingAgent.envHardValue }}
+          {{- if $config.envHardValue }}
+          {{- range $index, $item := $config.envHardValue }}
           - name: {{ $item.name }}
             value: {{ $item.value }}
           {{- end }}
           {{- end }}
-          {{- if .Values.pollingAgent.envSecretValue }}
-          {{- range .Values.pollingAgent.envSecretValue }}
+          {{- if $.Values.pollingAgent.envSecretValue }}
+          {{- range $.Values.pollingAgent.envSecretValue }}
           - name: {{ .name }}
             valueFrom:
               {{- toYaml .valueFrom | nindent 14 }}
           {{- end }}
           {{- end }}  
         {{- end }}
-        volumeMounts: 
-          - name: {{$.Values.volumeMount.name}}
-            mountPath: {{$.Values.volumeMount.mountPath}}
-
-        volumeMounts:   
-        {{- range $i, $value := $.Values.certificates }}
-          - mountPath: {{ $value.mountPath | quote }}
-            name: {{ $value.name | quote }}
-            readOnly: true
+        {{- if $.Values.pollingAgent.volumeMounts }}
+        volumeMounts:
+          {{- with $.Values.pollingAgent.volumeMounts }}
+          {{- toYaml . | nindent 10 }}
+          {{- end }}
+          {{- toYaml $.Values.volumeMounts | nindent 10 }}
         {{- end }}
-
       {{- range $index, $worker := $config.worker }}
       - name: "{{ $worker.name }}-{{ $index }}"
         image: "{{ $worker.image }}:{{ $worker.tag | default "" }}"
-        imagePullPolicy: {{ $worker.image_pull_policy }}
+        {{- range $config.worker}}
+        imagePullPolicy: {{ .imagePullPolicy | quote }}
+        {{- end }}
         resources:
           limits:
             cpu: "{{ $worker.limits.cpu }}"
@@ -151,28 +132,51 @@ spec:
           preStop:
             exec:
               command: ["/bin/sh", "-c", {{ $.Values.preStopWaitScript }}]
+        {{- if $.Values.worker.envFrom }}
         envFrom:
-          {{- range $key, $value := $.Values.workerConfigmaps }}
-          - configMapRef:
-              name: "{{ $value }}"
+        {{- toYaml $.Values.worker.envFrom | nindent 8 }}
+        {{- end }}
+        volumeMounts:
+          {{- range $key, $value := $.Values.volumeMounts }}
+          - name: {{ $value.name | quote }}
+            mountPath: {{ $value.mountPath }}
           {{- end }}
-        volumeMounts:
-          - name: {{$.Values.volumeMount.name}}
-            mountPath: {{$.Values.volumeMount.mountPath}}
-          
-        volumeMounts:
         {{- if (eq $.Values.checkFileStorageType "FS") }}
           - name: {{ $.Values.FS.name | quote }}
             mountPath: {{ $.Values.FS.mountPath }}
             readOnly: true             
         {{- end }}
       {{- end }}
-
+      {{- if not $.Values.fluentBit.isDaemonSet }}
+      - name: {{ .Values.fluentBit.name }}
+        image: {{ .Values.fluentBit.image }}:{{ .Values.fluentBit.tag }}
+        imagePullPolicy: {{ .Values.fluentBit.imagePullPolicy }}
+        envFrom:
+        - configMapRef:
+            name: {{ .Values.fluentBit.configMapName }}
+        lifecycle:
+          preStop:
+            exec:
+              command: ["/bin/sh", "-c", {{ $.Values.preStopWaitScript }}]
+        volumeMounts:
+          {{- toYaml .Values.fluentBit.volumeMounts | nindent 10 }}
+        {{- if .Values.fluentBit.fluentVolumes }}
+          {{- toYaml .Values.fluentBit.fluentVolumes | nindent 10 }}
+        {{- end }}
+      {{- end }}
       volumes: 
-        - name: {{$.Values.volumeMount.name}} #shared
-        #emptyDir: {}
-      {{- if (eq $.Values.fileStorageType "nfs") }}
-      # volumes: 
+        {{- range $key, $value := $.Values.volumeMounts }}
+        - name: {{ $value.name }}
+        {{- end }}
+      {{- if $.Values.pollingAgent.volumeMounts }}
+        {{- range $.Values.pollingAgent.volumeMounts }}
+        - name: {{ .name | quote }}
+          secret:
+            secretName: {{ .name }}
+            defaultMode: 420
+        {{- end }}
+      {{- end }}
+      {{- if (eq $.Values.fileStorageType "nfs") }} 
         - name: {{ $.Values.nfs.name | quote }}
           nfs:
             path: {{ $.Values.nfs.path }}
@@ -180,17 +184,9 @@ spec:
             readOnly: true             
       {{- end }}
       {{- if (eq $.Values.fileStorageType "hostpath") }}
-      # volumes: 
         - name: {{ $.Values.hostPath.name | quote  }}
           hostPath:
             path: {{ $.Values.hostPath.path }}
             type: "Directory"     
-      {{- end }}
-      # volumes:   
-      {{- range $i, $value := $.Values.certificates }}
-        - name: {{ $value.name | quote }}
-          secret:
-            secretName:  {{ $value.secretName }}
-            optional: false
-      {{- end }}       
-{{- end }}
+      {{- end }}      
+  {{- end }}

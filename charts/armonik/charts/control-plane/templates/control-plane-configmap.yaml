@@ -16,6 +16,6 @@ data:
   {{- end }}
 
   {{- range $key, $value := .Values.config.controlPlane.data }}
-  {{ $key }}: "{{ $value }}"
+  {{ $key }}: {{ $value | quote }}
   {{- end }}
 

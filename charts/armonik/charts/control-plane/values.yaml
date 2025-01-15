@@ -92,7 +92,7 @@ config:
     data:
       Amqp__AllowHostMismatch: "true"
       Amqp__CaPath: /amqp/chain.pem
-      Amqp__Host: activemq.armonik.svc.cluster.local
+      Amqp__Host: activemq.{{ .Release.Namespace }}.svc.cluster.local
       Amqp__MaxPriority: "10"
       Amqp__MaxRetries: "5"
       Amqp__Port: "5672"
@@ -113,7 +113,7 @@ config:
       MongoDB__DataRetention: 1.00:00:00
       MongoDB__DatabaseName: database
       MongoDB__DirectConnection: "true"
-      MongoDB__Host: mongodb-sharded.armonik.svc.cluster.local
+      MongoDB__Host: test-mongodb-sharded.{{ .Release.Namespace }}.svc.cluster.local
       MongoDB__Port: "27017"
       MongoDB__ReplicaSet: rs0
       MongoDB__Sharding: "true"
@@ -123,7 +123,7 @@ config:
       MongoDB__Tls: "true"
       Redis__CaPath: /redis/chain.pem
       Redis__ClientName: ArmoniK.Core
-      Redis__EndpointUrl: redis.armonik.svc.cluster.local:6379
+      Redis__EndpointUrl: redis-master.{{ .Release.Namespace }}.svc.cluster.local:6379
       Redis__InstanceName: ArmoniKRedis
       Redis__Ssl: "true"
       Redis__SslHost: 127.0.0.1

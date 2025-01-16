@@ -7,5 +7,5 @@ data:
   {{- range $key, $value := .Values.computePlaneConfigmaps.data }}
   {{ $key }}: {{ $value | quote }}
   {{- end }}
-  immutable: false
+  immutable: "false"
 

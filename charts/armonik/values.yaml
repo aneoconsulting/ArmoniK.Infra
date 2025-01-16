@@ -16,7 +16,7 @@ control-plane:
   enabled: true
   #nodeSelector: {}
 compute-plane:
-  enabled: false
+  enabled: true
   nodeSelector: {}
 
 ############################################

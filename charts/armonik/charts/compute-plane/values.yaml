@@ -12,14 +12,14 @@ computePlane:
       service: "compute-plane"
   partition: 
     default:
-      replicas: 0
+      replicas: 1
       pollingAgent:
         image: "dockerhubaneo/armonik_pollingagent"
         tag: "0.27.2"
         imagePullPolicy: "IfNotPresent"
         limits:
-          cpu: "2"
-          memory: "2Gi"
+          cpu: "500Mi"
+          memory: "500Mi"
         requests:
           cpu: "50m"
           memory: "50Mi"
@@ -68,8 +68,8 @@ computePlane:
           tag: "0.12.9"
           imagePullPolicy: "IfNotPresent"
           limits:
-            cpu: "2"
-            memory: "2Gi"
+            cpu: "500Mi"
+            memory: "500Mi"
           requests:
             cpu: "50m"
             memory: "50Mi"
@@ -91,14 +91,14 @@ computePlane:
 
     # Partition for the stream worker
     stream:
-      replicas: 0
+      replicas: 1
       pollingAgent:
         image: "dockerhubaneo/armonik_pollingagent"
         tag: "0.27.2"
         imagePullPolicy: "IfNotPresent"
         limits:
-          cpu: "2"
-          memory: "2Gi"
+          cpu: "500Mi"
+          memory: "500Mi"
         requests:
           cpu: "50m"
           memory: "50Mi"
@@ -147,8 +147,8 @@ computePlane:
           tag: "0.27.2"
           imagePullPolicy: "IfNotPresent"
           limits:
-            cpu: "2"
-            memory: "2Gi"
+            cpu: "500Mi"
+            memory: "500Mi"
           requests:
             cpu: "50m"
             memory: "50Mi"
@@ -170,14 +170,14 @@ computePlane:
 
     # Partition for the htcmock worker        
     htcmock:
-      replicas: 0
+      replicas: 1
       pollingAgent:
         image: "dockerhubaneo/armonik_pollingagent"
         tag: "0.27.2"
         imagePullPolicy: "IfNotPresent"
         limits:
-          cpu: "2"
-          memory: "2Gi"
+          cpu: "500Mi"
+          memory: "500Mi"
         requests:
           cpu: "50m"
           memory: "50Mi"
@@ -226,8 +226,8 @@ computePlane:
           tag: "0.27.2"
           imagePullPolicy: "IfNotPresent"
           limits:
-            cpu: "2"
-            memory: "2Gi"
+            cpu: "500Mi"
+            memory: "500Mi"
           requests:
             cpu: "50m"
             memory: "50Mi"
@@ -249,14 +249,14 @@ computePlane:
 
     # Partition for the bench worker        
     bench:
-      replicas: 0
+      replicas: 1
       pollingAgent:
         image: "dockerhubaneo/armonik_pollingagent"
         tag: "0.27.2"
         imagePullPolicy: "IfNotPresent"
         limits:
-          cpu: "2"
-          memory: "2Gi"
+          cpu: "500Mi"
+          memory: "500Mi"
         requests:
           cpu: "50m"
           memory: "50Mi"
@@ -305,8 +305,8 @@ computePlane:
           tag: "0.27.2"
           imagePullPolicy: "IfNotPresent"
           limits:
-            cpu: "2"
-            memory: "2Gi"
+            cpu: "500Mi"
+            memory: "500Mi"
           requests:
             cpu: "50m"
             memory: "50Mi"
@@ -332,21 +332,18 @@ pollingAgent:
     name: poll-agent-port
     containerPort: 1080
   volumeMounts:
-    # - name: "cache-volume"
-    #   mountPath: "/cache"
-    #   mountPropagation: None
-    - name: "activemq"
+    - name: "activemq-crt"
       mountPath: "/amqp"
       mountPropagation: None
       readOnly: true
-    - name: "redis"
+    - name: "redis-crt"
       mountPath: "/redis"
       mountPropagation: None
       readOnly: true
-    - name: "mongodb-armonik-ca"
-      mountPath: "/mongodb/certificate/"
-      mountPropagation: None
-      readOnly: true
+    # - name: "mongodb-armonik-ca"
+    #   mountPath: "/mongodb/certificate/"
+    #   mountPropagation: None
+    #   readOnly: true
     - name: mongodb
       mountPath: "/mongodb/certs/"
       mountPropagation: None
@@ -355,22 +352,27 @@ pollingAgent:
     - name: MongoDB__Password
       valueFrom:
         secretKeyRef:
-          key: password
+          key: mongodb-root-password
           name: mongodb-user
           optional: false
-    - name: MongoDB__User
+    # - name: MongoDB__User
+    #   valueFrom:
+    #     secretKeyRef:
+    #       key: username
+    #       name: mongodb-user
+    #       optional: false
+    - name: Redis__Password
       valueFrom:
         secretKeyRef:
-          key: username
-          name: mongodb-user
-          optional: false
+          key: redis-password
+          name: redis
   envConfigValue: []
   envFrom:
     - secretRef:
-        name: activemq-user-credentials
+        name: activemq-crt
         optional: false
     - secretRef:
-        name: redis-user-credentials
+        name: redis-crt
         optional: false
     - configMapRef:
         name: compute-plane-configmap
@@ -445,7 +447,7 @@ fluentBit:
   image: "fluent/fluent-bit"
   tag: "1.3.11"
   imagePullPolicy: "IfNotPresent"
-  configMapRef: "fluent-bit-envvars-config"
+  configMapRef: "fluent-bit-config"
   volumeMounts:
     - name: "cache-volume"
       mountPath: "/cache"
@@ -488,10 +490,10 @@ volumeMounts:
 computePlaneConfigmaps:
   name: compute-plane-configmap
   data:
-    ComputePlane__AgentChannel__Address: /cache/armonik_agent.sock
-    ComputePlane__AgentChannel__SocketType: unixdomainsocket
-    ComputePlane__WorkerChannel__Address: /cache/armonik_worker.sock
-    ComputePlane__WorkerChannel__SocketType: unixdomainsocket 
+    ComputePlane__AgentChannel__Address: "/cache/armonik_agent.sock"
+    ComputePlane__AgentChannel__SocketType: "unixdomainsocket"
+    ComputePlane__WorkerChannel__Address: "/cache/armonik_worker.sock"
+    ComputePlane__WorkerChannel__SocketType: "unixdomainsocket"
 
 pollingAgentConfigmaps:
   name: polling-configmap
@@ -509,82 +511,22 @@ workerConfigmaps:
     target_data_path: /data
     target_zip_path: /tmp    
 
-coreConfigmaps:
-  name: core-configmap
-  data:
-    Amqp__AllowHostMismatch: "true"
-    Amqp__CaPath: /amqp/chain.pem
-    Amqp__Host: activemp.armonik.svc.cluster.local
-    Amqp__MaxPriority: "10"
-    Amqp__MaxRetries: "5"
-    Amqp__Port: "5672"
-    Amqp__QueueStorage__LockRefreshExtension: "00:02:00"
-    Amqp__QueueStorage__LockRefreshPeriodicity: "00:00:45"
-    Amqp__QueueStorage__PollPeriodicity: "00:00:10"
-    Amqp__Scheme: AMQPS
-    Authenticator__RequireAuthentication: "false"
-    Authenticator__RequireAuthorization: "false"
-    Components__ObjectStorage: ArmoniK.Adapters.Redis.ObjectStorage
-    Components__QueueAdaptorSettings__AdapterAbsolutePath: /adapters/queue/amqp/ArmoniK.Core.Adapters.Amqp.dll
-    Components__QueueAdaptorSettings__ClassName: ArmoniK.Core.Adapters.Amqp.QueueBuilder
-    Components__QueueStorage: ArmoniK.Adapters.Amqp.ObjectStorage
-    Components__TableStorage: ArmoniK.Adapters.MongoDB.TableStorage
-    MongoDB__AllowInsecureTls: "true"
-    MongoDB__AuthSource: database
-    MongoDB__CAFile: /mongodb/certificate/mongodb-ca-cert
-    MongoDB__DataRetention: 1.00:00:00
-    MongoDB__DatabaseName: database
-    MongoDB__DirectConnection: "false"
-    MongoDB__Host: mongodb-armonik-headless.armonik.svc.cluster.local
-    MongoDB__Port: "27017"
-    MongoDB__ReplicaSet: rs0
-    MongoDB__TableStorage__PollingDelay: "00:00:01"
-    MongoDB__TableStorage__PollingDelayMax: "00:00:10"
-    MongoDB__TableStorage__PollingDelayMin: "00:00:01"
-    MongoDB__Tls: "true"
-    Redis__CaPath: /redis/chain.pem
-    Redis__ClientName: ArmoniK.Core
-    Redis__EndpointUrl: redis-master.armonik.svc.cluster.local:6379
-    Redis__InstanceName: ArmoniKRedis
-    Redis__Ssl: "true"
-    Redis__SslHost: 127.0.0.1
-    Redis__Timeout: "30000"
-    Redis__TtlTimeSpan: 1.00:00:00
-    Submitter__DeletePayload: "true"
-
-logConfigmaps:
-  name: log-configmap
-  data: 
-    minimumLevel: Information
-    overrides:
-      ArmoniK.Core.Common.Auth.Authentication.Authenticator: Warning
-      Grpc.AspNetCore.Server.ServerCallHandler: Warning
-      Microsoft.AspNetCore.Authorization: Warning
-      Microsoft.AspNetCore.Hosting.Diagnostics: Warning
-      Microsoft.AspNetCore.Routing: Warning
-      Microsoft.AspNetCore.Routing.EndpointMiddleware: Warning
-      Microsoft.AspNetCore.Server.Kestrel: Warning
-      Microsoft.Extensions.Diagnostics.HealthChecks: Warning
-      Microsoft.Extensions.Http.DefaultHttpClientFactory: Warning
-      Serilog.AspNetCore.RequestLoggingMiddleware: Warning 
-
-
-checkFileStorageType: "FS"
-fileStorageType: "hostpath"
+# checkFileStorageType: "FS"
+# fileStorageType: "hostpath"
  
 certificates:
-  activemq:
+  activemq-crt:
     name: "activemq-secret-volume"
     mountPath: "/amqp"
-    secretName: "activemq"
-  redis:
+    secretName: "activemq-crt"
+  redis-crt:
     name: "redis-secret-volume"
     mountPath: "/redis"
-    secretName: "redis"
-  mongodb:
+    secretName: "redis-crt"
+  mongodb-crt:
     name: "mongodb-secret-volume"
     mountPath: "/mongodb"
-    secretName: "mongodb"
+    secretName: "mongodb-crt"
 
 fileStorageEndpoints: 
   s3Storage:
@@ -598,13 +540,13 @@ fileStorageEndpoints:
 
 preStopWaitScript: "<<EOF while test -e /cache/armonik_agent.sock ; do   sleep 1 done EOF"
 
-FS: 
-  name: "shared-volume"
-  mountPath: "/data"
+# FS: 
+#   name: "shared-volume"
+#   mountPath: "/data"
 
-hostPath: 
-  name: "shared-volume"
-  path: "/home/mjadoui/ArmoniK/infrastructure/quick-de" # (abs(path) à voir dans .tf)
+# hostPath: 
+#   name: "shared-volume"
+#   path: "/home/mjadoui/ArmoniK/infrastructure/quick-de" # (abs(path) à voir dans .tf)
 
 env: 
   pollingAgentAggregation:

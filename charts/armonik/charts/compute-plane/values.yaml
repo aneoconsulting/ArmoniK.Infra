@@ -18,7 +18,7 @@ computePlane:
         tag: "0.27.2"
         imagePullPolicy: "IfNotPresent"
         limits:
-          cpu: "500Mi"
+          cpu: "500m"
           memory: "500Mi"
         requests:
           cpu: "50m"
@@ -63,12 +63,12 @@ computePlane:
           value: default
       # ArmoniK workers
       worker:
-        - name: "default-worker"
+        - name: "worker"
           image: "dockerhubaneo/armonik_worker_dll"
           tag: "0.12.9"
           imagePullPolicy: "IfNotPresent"
           limits:
-            cpu: "500Mi"
+            cpu: "500m"
             memory: "500Mi"
           requests:
             cpu: "50m"
@@ -97,7 +97,7 @@ computePlane:
         tag: "0.27.2"
         imagePullPolicy: "IfNotPresent"
         limits:
-          cpu: "500Mi"
+          cpu: "500m"
           memory: "500Mi"
         requests:
           cpu: "50m"
@@ -142,12 +142,12 @@ computePlane:
           value: stream
       # ArmoniK workers
       worker:
-        - name: "default-worker"
+        - name: "worker"
           image: "dockerhubaneo/armonik_core_stream_test_worker"
           tag: "0.27.2"
           imagePullPolicy: "IfNotPresent"
           limits:
-            cpu: "500Mi"
+            cpu: "500m"
             memory: "500Mi"
           requests:
             cpu: "50m"
@@ -176,7 +176,7 @@ computePlane:
         tag: "0.27.2"
         imagePullPolicy: "IfNotPresent"
         limits:
-          cpu: "500Mi"
+          cpu: "500m"
           memory: "500Mi"
         requests:
           cpu: "50m"
@@ -226,7 +226,7 @@ computePlane:
           tag: "0.27.2"
           imagePullPolicy: "IfNotPresent"
           limits:
-            cpu: "500Mi"
+            cpu: "500m"
             memory: "500Mi"
           requests:
             cpu: "50m"
@@ -255,7 +255,7 @@ computePlane:
         tag: "0.27.2"
         imagePullPolicy: "IfNotPresent"
         limits:
-          cpu: "500Mi"
+          cpu: "500m"
           memory: "500Mi"
         requests:
           cpu: "50m"
@@ -305,7 +305,7 @@ computePlane:
           tag: "0.27.2"
           imagePullPolicy: "IfNotPresent"
           limits:
-            cpu: "500Mi"
+            cpu: "500m"
             memory: "500Mi"
           requests:
             cpu: "50m"
@@ -353,7 +353,7 @@ pollingAgent:
       valueFrom:
         secretKeyRef:
           key: mongodb-root-password
-          name: mongodb-user
+          name: mongodb
           optional: false
     # - name: MongoDB__User
     #   valueFrom:
@@ -416,8 +416,8 @@ worker:
   terminationMessagePolicy: "File"
   resource:
     limits:
-      cpu: "2"
-      memory: "2Gi"
+      cpu: "500m"
+      memory: "500Mi"
     requests:
       cpu: "50m"
       memory: "50Mi"

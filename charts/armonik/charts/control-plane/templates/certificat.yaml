@@ -32,7 +32,7 @@ spec:
     group: cert-manager.io
   additionalOutputFormats:
   - type: CombinedPEM
-  - type: DER
+#  - type: DER
 ---
 apiVersion: cert-manager.io/v1
 kind: Certificate
@@ -60,7 +60,7 @@ spec:
     group: cert-manager.io
   additionalOutputFormats:
   - type: CombinedPEM
-  - type: DER
+#  - type: DER
 ---
 apiVersion: cert-manager.io/v1
 kind: Certificate
@@ -88,5 +88,5 @@ spec:
     group: cert-manager.io
   additionalOutputFormats:
   - type: CombinedPEM
-  - type: DER
+#  - type: DER
 {{- end }}

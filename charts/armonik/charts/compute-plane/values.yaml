@@ -31,8 +31,6 @@ computePlane:
       nodeSelector: {}
       tolerations: []
       terminationGracePeriodSeconds: 30
-      ImagePullSecrets:
-        - name: "IfNotPresent"
       readinessProbe: {}
       livenessProbe:
         httpGet:
@@ -110,8 +108,6 @@ computePlane:
       nodeSelector: {}
       tolerations: []
       terminationGracePeriodSeconds: 30
-      ImagePullSecrets:
-        - name: "IfNotPresent"
       readinessProbe: {}
       livenessProbe:
         httpGet:
@@ -140,6 +136,8 @@ computePlane:
           value: stream
         - name: SQS__PartitionId
           value: stream
+        - name: MongoDB__User
+          value: root
       # ArmoniK workers
       worker:
         - name: "worker"
@@ -219,6 +217,8 @@ computePlane:
           value: htcmock
         - name: SQS__PartitionId
           value: htcmock
+        - name: MongoDB__User
+          value: root
       # ArmoniK workers
       worker:
         - name: "worker"
@@ -268,8 +268,6 @@ computePlane:
       nodeSelector: {}
       tolerations: []
       terminationGracePeriodSeconds: 30
-      ImagePullSecrets:
-        - name: "IfNotPresent"
       readinessProbe: {}
       livenessProbe:
         httpGet:
@@ -298,6 +296,8 @@ computePlane:
           value: bench
         - name: SQS__PartitionId
           value: bench
+        - name: MongoDB__User
+          value: root
       # ArmoniK workers
       worker:
         - name: "worker"
@@ -336,18 +336,18 @@ pollingAgent:
       mountPath: "/amqp"
       mountPropagation: None
       readOnly: true
-    - name: "redis-crt"
-      mountPath: "/redis"
+    - name: mongodb-crt
+      mountPath: "/mongodb/certs/"
       mountPropagation: None
       readOnly: true
+    # - name: "redis-crt"
+    #   mountPath: "/redis"
+    #   mountPropagation: None
+    #   readOnly: true
     # - name: "mongodb-armonik-ca"
     #   mountPath: "/mongodb/certificate/"
     #   mountPropagation: None
     #   readOnly: true
-    - name: mongodb
-      mountPath: "/mongodb/certs/"
-      mountPropagation: None
-      readOnly: true
   envSecretValue:
     - name: MongoDB__Password
       valueFrom:
@@ -368,6 +368,9 @@ pollingAgent:
           name: redis
   envConfigValue: []
   envFrom:
+    # - secretRef:
+    #     name: mongodb-crt
+    #     optional: false
     - secretRef:
         name: activemq-crt
         optional: false
@@ -513,30 +516,6 @@ workerConfigmaps:
 
 # checkFileStorageType: "FS"
 # fileStorageType: "hostpath"
- 
-certificates:
-  activemq-crt:
-    name: "activemq-secret-volume"
-    mountPath: "/amqp"
-    secretName: "activemq-crt"
-  redis-crt:
-    name: "redis-secret-volume"
-    mountPath: "/redis"
-    secretName: "redis-crt"
-  mongodb-crt:
-    name: "mongodb-secret-volume"
-    mountPath: "/mongodb"
-    secretName: "mongodb-crt"
-
-fileStorageEndpoints: 
-  s3Storage:
-    ServiceURL: {}
-    AccessKeyId: {}
-    SecretAccessKey: {}
-    BucketName: {}
-    MustForcePathStyle: {}
-    UseChunkEncoding: {}
-    UseChecksum: {}
 
 preStopWaitScript: "<<EOF while test -e /cache/armonik_agent.sock ; do   sleep 1 done EOF"
 
@@ -548,7 +527,7 @@ preStopWaitScript: "<<EOF while test -e /cache/armonik_agent.sock ; do   sleep 1
 #   name: "shared-volume"
 #   path: "/home/mjadoui/ArmoniK/infrastructure/quick-de" # (abs(path) à voir dans .tf)
 
-env: 
-  pollingAgentAggregation:
+# env: 
+#   pollingAgentAggregation:
     
 

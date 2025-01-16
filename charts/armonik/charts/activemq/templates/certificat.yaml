@@ -24,4 +24,4 @@ spec:
     group: cert-manager.io
   additionalOutputFormats:
   - type: CombinedPEM
-  - type: DER
+#  - type: DER

@@ -7,7 +7,7 @@ metadata:
     type: queue
   name: activemq
 spec:
-  replicas: 1
+  replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
       app: storage

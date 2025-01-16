@@ -119,7 +119,6 @@ config:
       Components__ObjectStorage: ArmoniK.Adapters.Redis.ObjectStorage
       Components__QueueAdaptorSettings__AdapterAbsolutePath: /adapters/queue/amqp/ArmoniK.Core.Adapters.Amqp.dll
       Components__QueueAdaptorSettings__ClassName: ArmoniK.Core.Adapters.Amqp.QueueBuilder
-      Components__QueueStorage: ArmoniK.Adapters.Amqp.ObjectStorage
       Components__TableStorage: ArmoniK.Adapters.MongoDB.TableStorage
       MongoDB__User: root
       MongoDB__AllowInsecureTls: "true"
@@ -160,7 +159,18 @@ config:
         Microsoft.AspNetCore.Server.Kestrel: Warning
         Microsoft.Extensions.Diagnostics.HealthChecks: Warning
         Microsoft.Extensions.Http.DefaultHttpClientFactory: Warning
-        Serilog.AspNetCore.RequestLoggingMiddleware: Warning 
+        Serilog.AspNetCore.RequestLoggingMiddleware: Warning
+  job:
+    name: jobs-configmap
+    data:
+      MongoDB__DirectConnection: "false"
+      MongoDB__Tls: "false"
+      Redis__CaPath: /redis/chain.pem
+      Redis__ClientName: ArmoniK.Core
+      Redis__EndpointUrl: redis-master:6379
+      Redis__InstanceName: ArmoniKRedis
+      Redis__Ssl: "false"
+      Redis__SslHost: 127.0.0.1
 
   controlPlane:
     name: control-plane-configmap

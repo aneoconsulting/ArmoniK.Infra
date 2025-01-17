@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: armonik
+    service: admin-gui
+  name: admin-gui
+  namespace: {{ .Values.global.namespace }}
+spec:
+  selector:
+    matchLabels:
+      app: armonik
+      service: admin-gui
+  strategy:
+    rollingUpdate:
+      maxSurge: {{ .Values.adminGui.strategy.rollingUpdate.maxSurge }}
+      maxUnavailable: {{ .Values.adminGui.strategy.rollingUpdate.maxUnavailable }}
+    type: {{ .Values.adminGui.strategy.type }}
+  template:
+    metadata:
+      labels:
+        app: armonik
+        service: admin-gui
+      name: admin-gui
+      namespace: {{ .Values.global.namespace }}
+    spec:
+      automountServiceAccountToken: true
+      containers:
+      - image: {{ .Values.global.registry }}/{{ .Values.adminGui.image }}
+        imagePullPolicy: {{ .Values.adminGui.imagePullPolicy }}
+        name: admin-app
+        ports:
+        {{- toYaml .Values.adminGui.ports | nindent 8 }}
+        resources:
+        {{- toYaml .Values.adminGui.resources | nindent 10 }}
+        terminationMessagePath: {{ .Values.adminGui.terminationMessagePath }}
+        terminationMessagePolicy: {{ .Values.adminGui.terminationMessagePolicy }}
+      dnsPolicy: ClusterFirst
+      enableServiceLinks: true
+      restartPolicy: {{ .Values.adminGui.restartPolicy }}
+      schedulerName: {{ .Values.adminGui.schedulerName }}
+      securityContext: {}
+      shareProcessNamespace: false
+      terminationGracePeriodSeconds: 30
+      tolerations:
+      {{- toYaml .Values.adminGui.tolerations | nindent 8 }}

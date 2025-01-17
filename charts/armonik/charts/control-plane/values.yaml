@@ -1,0 +1,207 @@
+replicaCount: 1
+
+image:
+  repository: dockerhubaneo/armonik_control
+  tag: 0.30.0
+  pullPolicy: IfNotPresent
+
+grafanaDashboard: 
+  enable: true
+certificates:
+  enable: true
+partitionMetricsExporter:
+  enable: false
+metricsExporter:
+  enable: true
+
+namespace: armonik
+
+name: control-plane
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 1Gi
+  requests:
+    cpu: 50m
+    memory: 50Mi
+
+# livenessProbe:
+#   httpGet:
+#     path: /liveness
+#     port: 1081
+#   initialDelaySeconds: 15
+#   periodSeconds: 5
+#   timeoutSeconds: 1
+#   successThreshold: 1
+#   failureThreshold: 1
+
+# startupProbe:
+#   httpGet:
+#     path: /startup
+#     port: 1081
+#   initialDelaySeconds: 15
+#   periodSeconds: 3
+#   timeoutSeconds: 5
+#   successThreshold: 1
+#   failureThreshold: 20
+
+nodeSelector: {}
+
+tolerations: []
+
+annotations: {}
+ 
+volumes:
+  activemq:
+    enabled: true
+    mountPath: /amqp
+    secretName: activemq-crt
+  mongodb:
+    enabled: true
+    mountPath: /mongodb/certs/
+    secretName: mongodb-crt
+  mongodb-ca:
+    enabled: true
+    mountPath: /mongodb/certificate/
+    secretName: mongodb
+  redis:
+    enabled: true
+    mountPath: /redis
+    secretName: redis-crt
+
+env:
+  - name: MongoDB__Password
+    valueFrom:
+      secretKeyRef:
+        key: mongodb-root-password
+        name: mongodb
+  - name: Redis__Password
+    valueFrom:
+      secretKeyRef:
+        key: redis-password
+        name: redis
+
+envFrom:
+  secretRef:
+    - redis
+  configMapRef:
+    - control-plane-configmap
+    - core-configmap
+    - log-configmap
+
+ports:
+  - name: control-port
+    containerPort: 1080
+    protocol: TCP
+  - name: metrics-port
+    containerPort: 1081
+    protocol: TCP
+
+config:
+  core:
+    name: core-configmap
+    data:
+      #Amqp__AllowHostMismatch: "true"
+      #Amqp__CaPath: /amqp/tls-combined.pem
+      Amqp__Host: activemq
+      Amqp__MaxPriority: "10"
+      #Amqp__MaxRetries: "5"
+      Amqp__Port: "5672"
+      Amqp__QueueStorage__LockRefreshExtension: "00:02:00"
+      Amqp__QueueStorage__LockRefreshPeriodicity: "00:00:45"
+      Amqp__QueueStorage__PollPeriodicity: "00:00:10"
+      Amqp__Scheme: AMQP
+      Amqp__Password: admin
+      Amqp__User: admin
+      Authenticator__RequireAuthentication: "false"
+      Authenticator__RequireAuthorization: "false"
+      # Components__ObjectStorageAdaptorSettings__ClassName: ArmoniK.Core.Adapters.Embed.ObjectBuilder
+      # Components__ObjectStorageAdaptorSettings__AdapterAbsolutePath: /adapters/object/embed/ArmoniK.Core.Adapters.Embed.dll
+      Components__ObjectStorageAdaptorSettings__ClassName: ArmoniK.Core.Adapters.Redis.ObjectBuilder
+      Components__ObjectStorageAdaptorSettings__AdapterAbsolutePath: /adapters/object/redis/ArmoniK.Core.Adapters.Redis.dll
+      Components__ObjectStorage: ArmoniK.Adapters.Redis.ObjectStorage
+      Components__QueueAdaptorSettings__AdapterAbsolutePath: /adapters/queue/amqp/ArmoniK.Core.Adapters.Amqp.dll
+      Components__QueueAdaptorSettings__ClassName: ArmoniK.Core.Adapters.Amqp.QueueBuilder
+      Components__TableStorage: ArmoniK.Adapters.MongoDB.TableStorage
+      MongoDB__User: root
+      MongoDB__AllowInsecureTls: "true"
+      MongoDB__AuthSource: admin
+      MongoDB__CAFile: /mongodb/certs/tls-combined.pem
+      MongoDB__DataRetention: 1.00:00:00
+      MongoDB__DatabaseName: database
+      MongoDB__DirectConnection: "true"
+      MongoDB__Host: mongodb
+      MongoDB__Port: "27017"
+      MongoDB__ReplicaSet: rs0
+      #MongoDB__Sharding: "true"
+      MongoDB__TableStorage__PollingDelay: "00:00:01"
+      MongoDB__TableStorage__PollingDelayMax: "00:00:10"
+      MongoDB__TableStorage__PollingDelayMin: "00:00:01"
+      MongoDB__Tls: "false"
+      Redis__User: ""
+      #Redis__CaPath: /redis/ca.crt
+      Redis__ClientName: ArmoniK.Core
+      Redis__EndpointUrl: redis-master:6379
+      Redis__InstanceName: ArmoniKRedis
+      #Redis__Ssl: "false"
+      #Redis__SslHost: 127.0.0.1
+      Redis__Timeout: "30000"
+      Redis__TtlTimeSpan: 1.00:00:00
+      Submitter__DeletePayload: "true"
+  log:
+    name: log-configmap
+    data: 
+      minimumLevel: Information
+      overrides:
+        ArmoniK.Core.Common.Auth.Authentication.Authenticator: Warning
+        Grpc.AspNetCore.Server.ServerCallHandler: Warning
+        Microsoft.AspNetCore.Authorization: Warning
+        Microsoft.AspNetCore.Hosting.Diagnostics: Warning
+        Microsoft.AspNetCore.Routing: Warning
+        Microsoft.AspNetCore.Routing.EndpointMiddleware: Warning
+        Microsoft.AspNetCore.Server.Kestrel: Warning
+        Microsoft.Extensions.Diagnostics.HealthChecks: Warning
+        Microsoft.Extensions.Http.DefaultHttpClientFactory: Warning
+        Serilog.AspNetCore.RequestLoggingMiddleware: Warning
+  job:
+    name: jobs-configmap
+    data:
+      MongoDB__DirectConnection: "false"
+      MongoDB__Tls: "false"
+      Redis__CaPath: /redis/chain.pem
+      Redis__ClientName: ArmoniK.Core
+      Redis__EndpointUrl: redis-master:6379
+      Redis__InstanceName: ArmoniKRedis
+      Redis__Ssl: "false"
+      Redis__SslHost: 127.0.0.1
+
+  controlPlane:
+    name: control-plane-configmap
+    defaultPartition: default
+    data:
+      Submitter__MaxErrorAllowed: "50"
+
+  computePlane:
+    partitions:
+      default: {}
+      stream: {}
+      htcmock: {}
+      bench: {}
+
+service:
+  name: control-plane
+  serviceType: ClusterIP
+  clusterIP: null
+  ipFamilies:
+    - IPv4
+  ipFamilyPolicy: SingleStack
+
+  ports:
+    - name: control-port
+      port: 5001
+      targetPort: 1080
+
+  selector:
+    app: armonik
+    service: control-plane

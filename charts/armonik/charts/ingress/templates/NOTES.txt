@@ -1,0 +1,2 @@
+1. Get the application URL by running these commands:
+kubectl port-forward -n armonik service/admin-gui 1080:1080

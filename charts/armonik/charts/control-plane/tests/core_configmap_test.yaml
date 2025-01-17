@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+suite: test core configmap
+templates:
+  - core-configmap.yaml
+tests:
+  - it: should work
+    set:
+      coreConfigmap:
+        data:
+          Components__TableStorage: "Mongo"
+    asserts:
+      - isKind:
+          of: ConfigMap
+      - equal:
+          path: data.Components__TableStorage
+          value: Mongo

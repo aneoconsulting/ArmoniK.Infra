@@ -1,0 +1,5 @@
+ArmoniK endpoint URLs
+    control_plane_url = http://control-plane.{{ .Release.Namespace }}.svc.cluster.local
+    grafana_url       = http://grafana.{{ .Release.Namespace }}.svc.cluster.local
+    seq_web_url       = http://seq.{{ .Release.Namespace }}.svc.cluster.local
+    admin_app_url     = http://admin-gui.{{ .Release.Namespace }}.svc.cluster.local

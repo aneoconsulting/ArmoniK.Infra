@@ -1,0 +1,192 @@
+{{- range $partitionName, $config := .Values.computePlane.partition }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $.Values.computePlane.metadata.name }}-{{ $partitionName }}
+  namespace: {{ $.Values.namespace }}
+  labels:
+    app: {{ $.Values.computePlane.metadata.labels.app }}
+    service: {{ $.Values.computePlane.metadata.labels.service }}
+    partition: {{ $partitionName }}
+spec:
+  replicas: {{ $config.replicas }}
+  selector:
+    matchLabels:
+      app: {{ $.Values.computePlane.metadata.labels.app }}
+      service: {{ $.Values.computePlane.metadata.labels.service }}
+      partition: {{ $partitionName }}
+  template:
+    metadata:
+      name: {{ $partitionName }}-compute-plane
+      namespace: {{ $.Values.namespace }}
+      labels:
+        app: {{ $.Values.computePlane.metadata.labels.app }}
+        service: {{ $.Values.computePlane.metadata.labels.service }}
+        partition: {{ $partitionName }}
+      {{- if $config.annotations}}
+      annotations:
+        {{- range $key, $value := $config.annotations }}
+        {{ $key }}: {{ $value | quote }}
+        {{- end }}
+      {{- end }}
+    spec:
+      {{- if $config.nodeSelector}}
+      nodeSelector:
+        {{- range $key, $value := $config.nodeSelector }}
+        {{ $key }}: {{ $value | quote }}
+        {{- end }}
+      {{- end }}
+      {{- if $config.tolerations}}  
+      tolerations:
+        {{- range $i, $toleration := $config.tolerations }}
+        - key: {{ $toleration.key }}
+          operator: Equal
+          value: {{ $toleration.value }}
+          effect: NoSchedule
+        {{- end }}
+      {{- end }}
+      terminationGracePeriodSeconds: {{ $config.terminationGracePeriodSeconds }}
+      shareProcessNamespace: {{ $.Values.shareProcessNamespace }}
+      {{- if $config.imagePullSecrets }}
+      imagePullSecrets:
+        {{- range $key, $value := $config.imagePullSecrets }}
+        - name: {{ $value }}
+        {{- end }}
+      {{- end }}
+      restartPolicy: {{ $.Values.restartPolicy }}
+      containers:
+      - name: {{ $.Values.pollingAgent.name }}
+      {{- if (ne $config.pollingAgent.tag "") }}
+        image: {{ $config.pollingAgent.image }}:{{ $config.pollingAgent.tag }}
+      {{- else }}
+        image: {{ $config.pollingAgent.image }}
+      {{- end }}
+        imagePullPolicy: {{ $config.pollingAgent.imagePullPolicy | quote}}
+        resources:
+          limits:
+            cpu: "{{ $config.pollingAgent.limits.cpu }}"
+            memory: "{{ $config.pollingAgent.limits.memory }}"
+          requests:
+            cpu: "{{ $config.pollingAgent.requests.cpu }}"
+            memory: "{{ $config.pollingAgent.requests.memory }}"
+        securityContext:
+        {{- toYaml $config.pollingAgent.securityContext | nindent 10 }}
+        ports:
+        - name: {{ $.Values.pollingAgent.ports.name }}
+          containerPort: {{ $.Values.pollingAgent.ports.containerPort }}
+          protocol: TCP
+        {{if $config.readinessProbe }}
+        readinessProbe:
+        {{- toYaml $config.readinessProbe | nindent 10 }}
+        {{- end }}
+        {{- if $config.livenessProbe }}
+        livenessProbe:
+        {{- toYaml $config.livenessProbe | nindent 10 }}
+        {{- end }}
+        {{- if $config.startupProbe }}
+        startupProbe:
+        {{- toYaml $config.startupProbe | nindent 10 }}
+        {{- end }}
+        {{- if $.Values.pollingAgent.envFrom }}
+        envFrom:
+        {{- toYaml $.Values.pollingAgent.envFrom | nindent 10 }}
+        {{- end }}
+        {{- if or $config.envHardValue $.Values.pollingAgent.envSecretValue }}
+        env:
+          {{- if $config.envHardValue }}
+          {{- range $index, $item := $config.envHardValue }}
+          - name: {{ $item.name }}
+            value: {{ $item.value }}
+          {{- end }}
+          {{- end }}
+          {{- if $.Values.pollingAgent.envSecretValue }}
+          {{- range $.Values.pollingAgent.envSecretValue }}
+          - name: {{ .name }}
+            valueFrom:
+              {{- toYaml .valueFrom | nindent 14 }}
+          {{- end }}
+          {{- end }}  
+        {{- end }}
+        {{- if $.Values.pollingAgent.volumeMounts }}
+        volumeMounts:
+          {{- with $.Values.pollingAgent.volumeMounts }}
+          {{- toYaml . | nindent 10 }}
+          {{- end }}
+          {{- toYaml $.Values.volumeMounts | nindent 10 }}
+        {{- end }}
+      {{- range $index, $worker := $config.worker }}
+      - name: "{{ $worker.name }}-{{ $index }}"
+        image: "{{ $worker.image }}:{{ $worker.tag | default "" }}"
+        {{- range $config.worker}}
+        imagePullPolicy: {{ .imagePullPolicy | quote }}
+        {{- end }}
+        resources:
+          limits:
+            cpu: "{{ $worker.limits.cpu }}"
+            memory: "{{ $worker.limits.memory }}"
+          requests:
+            cpu: "{{ $worker.requests.cpu }}"
+            memory: "{{ $worker.requests.memory }}"
+        lifecycle:
+          preStop:
+            exec:
+              command: ["/bin/sh", "-c", {{ $.Values.preStopWaitScript }}]
+        {{- if $.Values.worker.envFrom }}
+        envFrom:
+        {{- toYaml $.Values.worker.envFrom | nindent 8 }}
+        {{- end }}
+        volumeMounts:
+          {{- range $key, $value := $.Values.volumeMounts }}
+          - name: {{ $value.name | quote }}
+            mountPath: {{ $value.mountPath }}
+          {{- end }}
+        {{- if (eq $.Values.checkFileStorageType "FS") }}
+          - name: {{ $.Values.FS.name | quote }}
+            mountPath: {{ $.Values.FS.mountPath }}
+            readOnly: true             
+        {{- end }}
+      {{- end }}
+      {{- if not $.Values.fluentBit.isDaemonSet }}
+      - name: {{ .Values.fluentBit.name }}
+        image: {{ .Values.fluentBit.image }}:{{ .Values.fluentBit.tag }}
+        imagePullPolicy: {{ .Values.fluentBit.imagePullPolicy }}
+        envFrom:
+        - configMapRef:
+            name: {{ .Values.fluentBit.configMapName }}
+        lifecycle:
+          preStop:
+            exec:
+              command: ["/bin/sh", "-c", {{ $.Values.preStopWaitScript }}]
+        volumeMounts:
+          {{- toYaml .Values.fluentBit.volumeMounts | nindent 10 }}
+        {{- if .Values.fluentBit.fluentVolumes }}
+          {{- toYaml .Values.fluentBit.fluentVolumes | nindent 10 }}
+        {{- end }}
+      {{- end }}
+      volumes: 
+        {{- range $key, $value := $.Values.volumeMounts }}
+        - name: {{ $value.name }}
+        {{- end }}
+      {{- if $.Values.pollingAgent.volumeMounts }}
+        {{- range $.Values.pollingAgent.volumeMounts }}
+        - name: {{ .name | quote }}
+          secret:
+            secretName: {{ .name }}
+            defaultMode: 420
+        {{- end }}
+      {{- end }}
+      {{- if (eq $.Values.fileStorageType "nfs") }} 
+        - name: {{ $.Values.nfs.name | quote }}
+          nfs:
+            path: {{ $.Values.nfs.path }}
+            server: {{ $.Values.nfs.server}}
+            readOnly: true             
+      {{- end }}
+      {{- if (eq $.Values.fileStorageType "hostpath") }}
+        - name: {{ $.Values.hostPath.name | quote  }}
+          hostPath:
+            path: {{ $.Values.hostPath.path }}
+            type: "Directory"     
+      {{- end }}      
+  {{- end }}

@@ -1,0 +1,8 @@
+apiVersion: v1
+data:
+  environment.json: {{ .Values.ingress.staticConfigmapContent.environmentJson | quote }}
+immutable: false
+kind: ConfigMap
+metadata:
+  name: ingress-nginx-static
+  namespace: armonik

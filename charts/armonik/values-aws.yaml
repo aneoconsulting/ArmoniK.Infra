@@ -1,0 +1,93 @@
+armonik:
+  registry: dockerhubaneo # (Pourquoi dockerhub dans le nom ???)
+
+global:
+  namespace: "armonik"
+
+replicaCount: 1
+
+control-plane:
+  enabled: true
+  resources:
+    requests:
+      cpu: 200m
+      memory: 500Mi
+  nodeSelector:
+    service: control-plane
+  tolerations:
+    - key: service
+      operator: Equal
+      value: control-plane
+      effect: NoSchedule
+  envFrom:
+    - secretRef: activemq-user-credentials
+    - configMapRef: control-plane-configmap
+    - configMapRef: core-configmap
+    - configMapRef: log-configmap
+  volumes:
+    activemq:
+      enabled: false
+      mountPath: /amqp
+      secretName: activemq
+    customMongodb:
+      enabled: true
+      mountPath: /mongodb/certs/
+      secretName: custom-mongodb-sharded
+    redis:
+      enabled: false
+      mountPath: /redis
+      secretName: redis
+
+compute-plane:
+  enabled: false
+  replicaCount: 3
+  resources:
+    requests:
+      cpu: 300m
+      memory: 1Gi
+
+minio:
+  enabled: false
+redis:
+  enabled: false
+mongodb:
+  enabled: false
+mongodb-sharded:
+  enabled: false
+prometheus:
+  enabled: false
+rabbitmq:
+  enabled: false
+ ## 
+keda:
+  enabled: false
+  namespace: armonik
+  global:
+    namespace: "armonik"
+  suffix: ""
+  scaleTargetRef:
+    apiVersion: "apps/v1"
+    kind: "Deployment"
+    name: ""
+    envSourceContainerName: ".spec.template.spec.containers[0]"
+  pollingInterval: 30
+  cooldownPeriod: 300
+  idleReplicaCount: 0
+  minReplicaCount: 1
+  maxReplicaCount: 100
+  fallback:
+    failureThreshold: 3
+    replicas: 6
+  behavior:
+    restoreToOriginalReplicaCount: false
+    stabilizationWindowSeconds: 300
+    type: Percent
+    value: 100
+    periodSeconds: 15
+  triggers: []
+##
+
+metrics-server:
+  enabled: false
+cluster-autoscaler:
+  enabled: false

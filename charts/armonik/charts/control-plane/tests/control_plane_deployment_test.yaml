@@ -1,0 +1,44 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+suite: test control plane deployment
+templates:
+  - control-plane-deployment.yaml
+tests:
+  - it: should work
+    set:
+      name: control-plane
+    asserts:
+      - isKind:
+          of: Deployment
+      - hasDocuments:
+          count: 1
+      - containsDocument:
+          kind: Deployment
+          apiVersion: apps/v1
+          name: control-plane
+          namespace: armonik
+      - notEqual:
+          path: spec.template.spec.containers[0].name
+          value: control-plane-helm
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: dockerhubaneo/armonik_control:0.19.3 ## make as variable
+      - equal:
+          path: spec.template.spec.containers[0].resources
+          value: 
+            limits: # make it variable
+              cpu: 1000m
+              memory: 2048Mi
+            requests: 
+              cpu: 50m
+              memory: 50Mi
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content: # make it variable
+            name: Amqp__Host
+            valueFrom:
+              secretKeyRef:
+                key: host
+                name: activemq
+                optional: false
+            
+            

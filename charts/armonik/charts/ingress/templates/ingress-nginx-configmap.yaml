@@ -1,0 +1,9 @@
+apiVersion: v1
+data:
+  armonik.conf: |
+{{- nindent 4 .Values.ingress.configmapContent}}
+immutable: false
+kind: ConfigMap
+metadata:
+  name: ingress-nginx
+  namespace: {{ .Values.global.namespace }}

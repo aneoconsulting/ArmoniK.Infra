@@ -7,25 +7,16 @@ metadata:
   name: ingress
   namespace: {{ .Values.global.namespace }}
 spec:
-  allocateLoadBalancerNodePorts: true
-  externalTrafficPolicy: Cluster
-  internalTrafficPolicy: Cluster
+  allocateLoadBalancerNodePorts: {{ .Values.ingress.service.allocateLoadBalancerNodePorts }}
+  externalTrafficPolicy: {{ .Values.ingress.service.externalTrafficPolicy }}
+  internalTrafficPolicy: {{ .Values.ingress.service.internalTrafficPolicy }}
   ipFamilies:
   - IPv4
   ipFamilyPolicy: SingleStack
   ports:
-  - name: ingress-p-http
-    nodePort: 32689
-    port: 5000
-    protocol: TCP
-    targetPort: 8080
-  - name: ingress-p-grpc
-    nodePort: 30313
-    port: 5001
-    protocol: TCP
-    targetPort: 9080
+  {{- toYaml .Values.ingress.service.servicePorts | nindent 2 }}
   selector:
-    app: armonik
+    app: {}
     service: ingress
   sessionAffinity: None
-  type: LoadBalancer
+  type: {{ .Values.ingress.service.type }}

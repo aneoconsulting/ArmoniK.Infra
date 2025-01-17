@@ -13,9 +13,9 @@ spec:
       service: admin-gui
   strategy:
     rollingUpdate:
-      maxSurge: 25%
-      maxUnavailable: 25%
-    type: RollingUpdate
+      maxSurge: {{ .Values.adminGui.strategy.rollingUpdate.maxSurge }}
+      maxUnavailable: {{ .Values.adminGui.strategy.rollingUpdate.maxUnavailable }}
+    type: {{ .Values.adminGui.strategy.type }}
   template:
     metadata:
       labels:
@@ -26,31 +26,21 @@ spec:
     spec:
       automountServiceAccountToken: true
       containers:
-      - image: {{ .Values.global.registry }}/armonik_admin_app:0.12.4
-        imagePullPolicy: IfNotPresent
+      - image: {{ .Values.global.registry }}/{{ .Values.adminGui.image }}
+        imagePullPolicy: {{ .Values.adminGui.imagePullPolicy }}
         name: admin-app
         ports:
-        - containerPort: 1080
-          name: app-port
-          protocol: TCP
+        {{- toYaml .Values.adminGui.ports | nindent 8 }}
         resources:
-          limits:
-            cpu: "1"
-            memory: 1Gi
-          requests:
-            cpu: 100m
-            memory: 128Mi
-        terminationMessagePath: /dev/termination-log
-        terminationMessagePolicy: File
+        {{- toYaml .Values.adminGui.resources | nindent 10 }}
+        terminationMessagePath: {{ .Values.adminGui.terminationMessagePath }}
+        terminationMessagePolicy: {{ .Values.adminGui.terminationMessagePolicy }}
       dnsPolicy: ClusterFirst
       enableServiceLinks: true
-      restartPolicy: Always
-      schedulerName: default-scheduler
+      restartPolicy: {{ .Values.adminGui.restartPolicy }}
+      schedulerName: {{ .Values.adminGui.schedulerName }}
       securityContext: {}
       shareProcessNamespace: false
       terminationGracePeriodSeconds: 30
       tolerations:
-      - effect: NoSchedule
-        key: service
-        operator: Equal
-        value: monitoring
+      {{- toYaml .Values.adminGui.tolerations | nindent 8 }}

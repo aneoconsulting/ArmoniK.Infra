@@ -12,14 +12,6 @@ spec:
   - IPv4
   ipFamilyPolicy: SingleStack
   ports:
-  - name: app-port
-    port: 1080
-    protocol: TCP
-    targetPort: 1080
-  selector:
-    app: armonik
-    service: admin-gui
-  sessionAffinity: None
-  type: ClusterIP
+  {{- toYaml .Values.adminGui.service.servicePorts | nindent 2 }}
 status:
   loadBalancer: {}

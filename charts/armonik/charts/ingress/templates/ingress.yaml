@@ -7,26 +7,25 @@ metadata:
   name: ingress
   namespace: {{ .Values.global.namespace }}
 spec:
-  progressDeadlineSeconds: 600
-  replicas: 1
-  revisionHistoryLimit: 10
+  progressDeadlineSeconds: {{ .Values.ingress.progressDeadlineSeconds }}
+  replicas: {{ .Values.ingress.replicaCount }}
+  revisionHistoryLimit: {{ .Values.ingress.revisionHistoryLimit }}
   selector:
     matchLabels:
       app: armonik
       service: ingress
   strategy:
     rollingUpdate:
-      maxSurge: 25%
-      maxUnavailable: 25%
-    type: RollingUpdate
+      maxSurge: {{ .Values.ingress.strategy.rollingUpdate.maxSurge }}
+      maxUnavailable: {{ .Values.ingress.strategy.rollingUpdate.maxUnavailable }}
+    type: {{ .Values.ingress.strategy.type }}
   template:
     metadata:
-      creationTimestamp: null
       labels:
         app: armonik
         service: ingress
       name: ingress
-      namespace: armonik
+      namespace: {{ .Values.global.namespace }}
     spec:
       automountServiceAccountToken: true
       containers:
@@ -34,20 +33,20 @@ spec:
         - configMapRef:
             name: ingress-nginx
             optional: false
-        image: nginxinc/nginx-unprivileged:1.27.0-alpine-slim
-        imagePullPolicy: IfNotPresent
+        image: {{ .Values.ingress.image }}
+        imagePullPolicy: {{ .Values.ingress.imagePullPolicy }}
         name: ingress
         ports:
-        - containerPort: 8080
-          name: ingress-p-http
-          protocol: TCP
-        - containerPort: 9080
-          name: ingress-p-grpc
-          protocol: TCP
-        resources: {}
-        terminationMessagePath: /dev/termination-log
-        terminationMessagePolicy: File
+        {{- toYaml .Values.ingress.ports | nindent 8 }}
+        {{- if .Values.ingress.resources }}
+        resources:
+        {{- toYaml .Values.ingress.resources | nindent 10 }}
+        {{- end }}
+        terminationMessagePath: {{ .Values.ingress.terminationMessagePath}}
+        terminationMessagePolicy: {{ .Values.ingress.terminationMessagePolicy}}
+        {{- if .Values.ingress.volumes }}
         volumeMounts:
+        {{- if .Values.ingress.volumes.ingressSecret }}
         - mountPath: /ingress
           mountPropagation: None
           name: ingress-secret-volume
@@ -56,64 +55,82 @@ spec:
           mountPropagation: None
           name: ingress-client-secret-volume
           readOnly: true
+        {{- end }}
+        {{- if .Values.ingress.volumes.nginxConfigMap }}
         - mountPath: /etc/nginx/conf.d
           mountPropagation: None
           name: ingress-nginx
           readOnly: true
+        {{- end }}
+        {{- if .Values.ingress.volumes.nginxStaticConfigMap }}
         - mountPath: /static
           mountPropagation: None
           name: static
           readOnly: true
+        {{- end }}
 ##############
+        {{- if .Values.ingress.volumes.mongodbSecretCrt }}
         - name: mongodb
           mountPath: /mongodb/certs/
           readOnly: true
           recursiveReadOnly: Disabled
+        {{- end }}
+        {{- if .Values.ingress.volumes.mongodbSecret }}
         - name: mongodb-ca
           mountPath: /mongodb/certificate/
           readOnly: true
           recursiveReadOnly: Disabled
+        {{- end }}
+        {{- end}}
 ##############
       dnsPolicy: ClusterFirst
       enableServiceLinks: true
       #nodeSelector:
       #  service: control-plane
-      restartPolicy: Always
-      schedulerName: default-scheduler
-      securityContext: {}
-      shareProcessNamespace: false
-      terminationGracePeriodSeconds: 30
+      restartPolicy: {{ .Values.ingress.restartPolicy }}
+      schedulerName: {{ .Values.ingress.schedulerName }}
+      shareProcessNamespace: {{ .Values.ingress.shareProcessNamespace }}
+      terminationGracePeriodSeconds: {{ .Values.ingress.terminationGracePeriodSeconds }}
       tolerations:
-      - effect: NoSchedule
-        key: service
-        operator: Equal
-        value: control-plane
+      {{- toYaml .Values.ingress.tolerations | nindent 8 }}
+      {{- if .Values.ingress.volumes }}
       volumes:
+      {{- if .Values.ingress.volumes.ingressSecret }}
       - name: ingress-secret-volume
         secret:
           defaultMode: 420
           optional: false
-          secretName: ingress-crt
+          secretName: {{ .Values.ingress.volumes.ingressSecret }}
       - name: ingress-client-secret-volume
         secret:
           defaultMode: 420
           optional: false
-          secretName: ingress-crt
+          secretName: {{ .Values.ingress.volumes.ingressSecret }}
+      {{- end}}
+      {{- if .Values.ingress.volumes.mongodbSecretCrt }}
       - name: mongodb
         secret:
-          secretName: mongodb-crt
+          secretName: {{ .Values.ingress.volumes.mongodbSecretCrt }}
           defaultMode: 420
+      {{- end}}
+      {{- if .Values.ingress.volumes.mongodbSecret }}
       - name: mongodb-ca
         secret:
-          secretName: mongodb
+          secretName: {{ .Values.ingress.volumes.mongodbSecret }}
           defaultMode: 420
+      {{- end}}
+      {{- if .Values.ingress.volumes.nginxConfigMap }}
       - configMap:
           defaultMode: 420
-          name: ingress-nginx
+          name: {{ .Values.ingress.volumes.nginxConfigMap }}
           optional: false
         name: ingress-nginx
+      {{- end}}
+      {{- if .Values.ingress.volumes.nginxStaticConfigMap }}
       - configMap:
           defaultMode: 420
-          name: ingress-nginx-static
+          name: {{ .Values.ingress.volumes.nginxStaticConfigMap }}
           optional: false
         name: static
+      {{- end}}
+      {{- end}}

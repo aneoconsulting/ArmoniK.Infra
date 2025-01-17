@@ -90,12 +90,12 @@ locals {
   partitions_data = [
     for key, value in var.compute_plane : {
       _id                  = key
-      ParentPartitionIds   = value.partition_data.parent_partition_ids
-      PodReserved          = value.partition_data.reserved_pods
-      PodMax               = value.partition_data.max_pods
-      PreemptionPercentage = value.partition_data.preemption_percentage
-      Priority             = value.partition_data.priority
-      PodConfiguration     = value.partition_data.pod_configuration
+      ParentPartitionIds   = {}
+      PodReserved          = 0
+      PodMax               = 0
+      PreemptionPercentage = 0
+      Priority             = 0
+      PodConfiguration     = {}
     }
   ]
 

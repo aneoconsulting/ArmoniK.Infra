@@ -1,13 +1,9 @@
 ############################################
 ################## GLOBAL ##################
 ############################################
-armonik:
-  armonik_admin_app: 0.12.4
 global:
   namespace: "armonik"
-  registry: dockerhubaneo
-  security:
-    allowInsecureImages: true
+  registry: "dockerhubaneo"
 
 ############################################
 ### ARMONIK APPLICATION CONFIGURATION #####
@@ -92,7 +88,8 @@ chaos-mesh:
 
 ################## KEDA ##################
 keda:
-  enabled: false
+  enabled: true
+  certificates.certManager.issuer.name: armonik-selfsigned-issuer
   #nodeSelector: {monitoring}
 
 ################## NODE-EXPORTER ##################
@@ -115,9 +112,6 @@ cert-manager:
   enabled: true
   installCRDs: true
   fullnameOverride: "cert-manager"
-  #crds:
-  #  enabled: true
-  #  keep: false # Set to true to keep the CRDs after the release is deleted (TODO : remove this line)
 
 ################## GRAFANA ##################
 grafana:

@@ -41,23 +41,23 @@ dependencies:
     condition: activemq.enabled
 ### Armonik dependencies
   - name: redis
-    version: 20.4.0
+    version: 20.6.3
     repository: https://charts.bitnami.com/bitnami
     condition: redis.enabled
   - name: mongodb
-    version: 16.4.0
+    version: 16.4.1
     repository: https://charts.bitnami.com/bitnami
     condition: mongodb.enabled
   - name: prometheus
-    version: 1.4.0
+    version: 1.4.2
     repository: https://charts.bitnami.com/bitnami
     condition: prometheus.enabled
   - name: keda
-    version: 2.16.1
+    version: 2.16.0
     repository: https://kedacore.github.io/charts
     condition: keda.enabled
   - name: node-exporter
-    version: 4.5.0
+    version: 4.5.2
     repository: https://charts.bitnami.com/bitnami
     condition: node-exporter.enabled
   - name: metrics-server
@@ -65,7 +65,7 @@ dependencies:
     repository: https://kubernetes-sigs.github.io/metrics-server/
     condition: metrics-server.enabled
   - name: cluster-autoscaler
-    version: 9.43.2
+    version: 9.45.0
     repository: https://kubernetes.github.io/autoscaler
     condition: cluster-autoscaler.enabled
   - name: aws-node-termination-handler
@@ -77,11 +77,11 @@ dependencies:
     repository: https://kubernetes-sigs.github.io/aws-efs-csi-driver/
     condition: efs-csi-driver.enabled
   - name: chaos-mesh
-    version: 2.6.3
+    version: 2.7.0
     repository: https://charts.chaos-mesh.org
     condition: chaos-mesh.enabled
   - name: grafana
-    version: 8.8.2
+    version: 8.8.4
     repository: https://grafana.github.io/helm-charts
     condition: grafana.enabled
   - name: fluent-bit
@@ -93,7 +93,7 @@ dependencies:
     repository: https://cloudnativeapp.github.io/charts/curated/
     condition: seq.enabled
   - name: cert-manager
-    version: 1.16.2
+    version: 1.16.3
     repository: https://charts.jetstack.io
     condition: cert-manager.enabled
 

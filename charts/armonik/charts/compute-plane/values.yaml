@@ -15,7 +15,7 @@ computePlane:
       replicas: 1
       pollingAgent:
         image: "dockerhubaneo/armonik_pollingagent"
-        tag: "0.27.2"
+        tag: "0.30.0"
         imagePullPolicy: "IfNotPresent"
         limits:
           cpu: "500m"
@@ -63,7 +63,7 @@ computePlane:
       worker:
         - name: "worker"
           image: "dockerhubaneo/armonik_worker_dll"
-          tag: "0.12.9"
+          tag: "0.18.0"
           imagePullPolicy: "IfNotPresent"
           limits:
             cpu: "500m"
@@ -92,7 +92,7 @@ computePlane:
       replicas: 1
       pollingAgent:
         image: "dockerhubaneo/armonik_pollingagent"
-        tag: "0.27.2"
+        tag: "0.30.0"
         imagePullPolicy: "IfNotPresent"
         limits:
           cpu: "500m"
@@ -142,7 +142,7 @@ computePlane:
       worker:
         - name: "worker"
           image: "dockerhubaneo/armonik_core_stream_test_worker"
-          tag: "0.27.2"
+          tag: "0.30.0"
           imagePullPolicy: "IfNotPresent"
           limits:
             cpu: "500m"
@@ -171,7 +171,7 @@ computePlane:
       replicas: 1
       pollingAgent:
         image: "dockerhubaneo/armonik_pollingagent"
-        tag: "0.27.2"
+        tag: "0.30.0"
         imagePullPolicy: "IfNotPresent"
         limits:
           cpu: "500m"
@@ -223,7 +223,7 @@ computePlane:
       worker:
         - name: "worker"
           image: "dockerhubaneo/armonik_core_htcmock_test_worker"
-          tag: "0.27.2"
+          tag: "0.30.0"
           imagePullPolicy: "IfNotPresent"
           limits:
             cpu: "500m"
@@ -252,7 +252,7 @@ computePlane:
       replicas: 1
       pollingAgent:
         image: "dockerhubaneo/armonik_pollingagent"
-        tag: "0.27.2"
+        tag: "0.30.0"
         imagePullPolicy: "IfNotPresent"
         limits:
           cpu: "500m"
@@ -302,7 +302,7 @@ computePlane:
       worker:
         - name: "worker"
           image: "dockerhubaneo/armonik_core_bench_test_worker"
-          tag: "0.27.2"
+          tag: "0.30.0"
           imagePullPolicy: "IfNotPresent"
           limits:
             cpu: "500m"
@@ -448,7 +448,7 @@ fluentBit:
   isDaemonSet: true
   name: "fluent-bit"
   image: "fluent/fluent-bit"
-  tag: "1.3.11"
+  tag: "2.0.9"
   imagePullPolicy: "IfNotPresent"
   configMapRef: "fluent-bit-config"
   volumeMounts:

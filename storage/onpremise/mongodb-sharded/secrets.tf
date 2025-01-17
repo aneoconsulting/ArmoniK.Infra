@@ -35,6 +35,8 @@ resource "kubernetes_secret" "mongodb" {
     namespace = helm_release.mongodb.namespace
   }
   data = {
+    "ca.pem"           = tls_self_signed_cert.root_mongodb.cert_pem
+    "mongodb.pem"      = format("%s\n%s", tls_locally_signed_cert.mongodb_certificate.cert_pem, tls_private_key.mongodb_private_key.private_key_pem)
     "chain.pem"        = format("%s\n%s", tls_locally_signed_cert.mongodb_certificate.cert_pem, tls_self_signed_cert.root_mongodb.cert_pem)
     username           = random_string.mongodb_application_user.result
     password           = random_password.mongodb_application_password.result

@@ -2,15 +2,15 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app: armonik
-    service: admin-gui
+    app: "armonik"
+    service: "admin-gui"
   name: admin-gui
   namespace: {{ .Values.global.namespace }}
 spec:
   selector:
     matchLabels:
-      app: armonik
-      service: admin-gui
+      app: "armonik"
+      service: "admin-gui"
   strategy:
     rollingUpdate:
       maxSurge: {{ .Values.adminGui.strategy.rollingUpdate.maxSurge }}
@@ -19,8 +19,8 @@ spec:
   template:
     metadata:
       labels:
-        app: armonik
-        service: admin-gui
+        app: "armonik"
+        service: "admin-gui"
       name: admin-gui
       namespace: {{ .Values.global.namespace }}
     spec:

@@ -2,8 +2,8 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    app: armonik
-    service: ingress
+    app: "armonik"
+    service: "ingress"
   name: ingress
   namespace: {{ .Values.global.namespace }}
 spec:

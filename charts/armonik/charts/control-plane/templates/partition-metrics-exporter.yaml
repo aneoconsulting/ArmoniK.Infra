@@ -48,11 +48,11 @@ spec:
         - name: mongodb
           mountPath: /mongodb/certs/
           readOnly: true
-          recursiveReadOnly: Disabled
+          #recursiveReadOnly: Disabled
         - name: mongodb-ca
           mountPath: /mongodb/certificate/
           readOnly: true
-          recursiveReadOnly: Disabled
+          #recursiveReadOnly: Disabled
         env:
         - name: MongoDB__Password
           valueFrom:

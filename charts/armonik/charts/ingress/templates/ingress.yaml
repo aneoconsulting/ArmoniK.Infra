@@ -12,8 +12,8 @@ spec:
   revisionHistoryLimit: {{ .Values.ingress.revisionHistoryLimit }}
   selector:
     matchLabels:
-      app: armonik
-      service: ingress
+      app: "armonik"
+      service: "ingress"
   strategy:
     rollingUpdate:
       maxSurge: {{ .Values.ingress.strategy.rollingUpdate.maxSurge }}
@@ -22,8 +22,8 @@ spec:
   template:
     metadata:
       labels:
-        app: armonik
-        service: ingress
+        app: "armonik"
+        service: "ingress"
       name: ingress
       namespace: {{ .Values.global.namespace }}
     spec:

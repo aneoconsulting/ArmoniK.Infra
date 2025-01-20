@@ -256,10 +256,10 @@ adminGui:
   terminationMessagePolicy: File
 
   tolerations:
-  - effect: NoSchedule
-    key: service
-    operator: Equal
-    value: monitoring
+  - effect: "NoSchedule"
+    key: "service"
+    operator: "Equal"
+    value: "control-plane"
 
   restartPolicy: Always
   schedulerName: default-scheduler
@@ -276,8 +276,8 @@ adminGui:
       protocol: TCP
       targetPort: 1080
     selector:
-      app: armonik
-      service: admin-gui
+      app: "armonik"
+      service: "admin-gui"
     sessionAffinity: None
 
 

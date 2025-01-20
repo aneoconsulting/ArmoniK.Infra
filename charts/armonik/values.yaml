@@ -89,7 +89,10 @@ chaos-mesh:
 ################## KEDA ##################
 keda:
   enabled: true
-  certificates.certManager.issuer.name: armonik-selfsigned-issuer
+  certificates:
+    certManager:
+      enabled: true
+      issuer: {"generate":false,"group":"cert-manager.io ","kind":"ClusterIssuer","name":"armonik-selfsigned-issuer"}
   #nodeSelector: {monitoring}
 
 ################## NODE-EXPORTER ##################

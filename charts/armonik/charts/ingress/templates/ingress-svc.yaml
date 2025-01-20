@@ -16,7 +16,7 @@ spec:
   ports:
   {{- toYaml .Values.ingress.service.servicePorts | nindent 2 }}
   selector:
-    app: {}
+    app: armonik
     service: ingress
   sessionAffinity: None
   type: {{ .Values.ingress.service.type }}

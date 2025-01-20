@@ -7,7 +7,7 @@ metadata:
     service: metrics-exporter
     type: monitoring
   name: metrics-exporter
-  namespace: {{ .Values.global.namespace }}
+  namespace: {{ .Values.namespace }}
 spec:
   selector:
     matchLabels:
@@ -21,11 +21,11 @@ spec:
         service: metrics-exporter
         type: monitoring
       name: metrics-exporter
-      namespace: {{ .Values.global.namespace }}
+      namespace: {{ .Values.namespace }}
     spec:
       automountServiceAccountToken: true
       containers:
-      - image: {{ .Values.global.registry }}/armonik_control_metrics:{{ .Values.image.tag }}
+      - image: {{ .Values.registry }}/armonik_control_metrics:{{ .Values.image.tag }}
         imagePullPolicy: IfNotPresent
         name: metrics-exporter
         ports:
@@ -106,7 +106,7 @@ metadata:
     service: metrics-exporter
     type: monitoring
   name: metrics-exporter
-  namespace: {{ .Values.global.namespace }}
+  namespace: {{ .Values.namespace }}
 spec:
   selector:
     app: armonik
@@ -126,7 +126,7 @@ metadata:
     service: metrics-exporter
     type: monitoring
   name: metrics-exporter-configmap
-  namespace: {{ .Values.global.namespace }}
+  namespace: {{ .Values.namespace }}
 data:
   Host: "localhost"
   Port: "1080"

@@ -1,87 +1,81 @@
-apiVersion: v1
-kind: List
+apiVersion: batch/v1
+kind: Job
 metadata:
-  resourceVersion: ""
-items:
-- apiVersion: batch/v1
-  kind: Job
-  metadata:
-    labels:
-      app: armonik
-      service: partitions-in-database
-      type: monitoring
-    name: partitions-in-database
-    namespace: armonik
-  spec:
-    backoffLimit: 5
-    completionMode: NonIndexed
-    completions: 1
-    manualSelector: false
-    parallelism: 1
-    suspend: false
-    template:
-      metadata:
-        creationTimestamp: null
-        labels:
-          app: armonik
-          job-name: partitions-in-database
-          service: partitions-in-database
-          type: monitoring
-        name: partitions-in-database
-      spec:
-        automountServiceAccountToken: true
-        containers:
-        - command:
+  name: partitions-in-database
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: armonik
+    service: partitions-in-database
+    type: monitoring
+spec:
+  backoffLimit: 5
+  completionMode: NonIndexed
+  completions: 1
+  manualSelector: false
+  parallelism: 1
+  suspend: false
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: armonik
+        job-name: partitions-in-database
+        service: partitions-in-database
+        type: monitoring
+      name: partitions-in-database
+    spec:
+      automountServiceAccountToken: true
+      containers:
+      - name: job-partitions-in-database
+        image: rtsp/mongosh:2.2.15
+        imagePullPolicy: IfNotPresent
+        command:
           - /bin/bash
           - -c
           - |
             #!/bin/bash
             # Drop
             mongosh --username $MongoDB__User --password $MongoDB__Password mongodb://$MongoDB__Host:$MongoDB__Port/database?authSource=$MongoDB__AuthSource --eval 'db.PartitionData.drop()'
-
             # Insert
             mongosh --username $MongoDB__User --password $MongoDB__Password mongodb://$MongoDB__Host:$MongoDB__Port/database?authSource=$MongoDB__AuthSource --eval 'db.PartitionData.insertMany([{"ParentPartitionIds":[],"PodConfiguration":null,"PodMax":100,"PodReserved":1,"PreemptionPercentage":50,"Priority":1,"_id":"bench"},{"ParentPartitionIds":[],"PodConfiguration":null,"PodMax":100,"PodReserved":1,"PreemptionPercentage":50,"Priority":1,"_id":"default"},{"ParentPartitionIds":[],"PodConfiguration":null,"PodMax":100,"PodReserved":1,"PreemptionPercentage":50,"Priority":1,"_id":"htcmock"},{"ParentPartitionIds":[],"PodConfiguration":null,"PodMax":100,"PodReserved":1,"PreemptionPercentage":50,"Priority":1,"_id":"stream"}])'
-          env:
-          - name: MongoDB__Password
-            valueFrom:
-              secretKeyRef:
-                key: mongodb-root-password
-                name: mongodb
-                optional: false
-          - name: MongoDB__User
-            value:
-              key: MONGO_USERNAME
-              name: root
+        env:
+        - name: MongoDB__Password
+          valueFrom:
+            secretKeyRef:
+              key: mongodb-root-password
+              name: mongodb
               optional: false
-          envFrom:
-          - configMapRef:
-              name: jobs-configmap
-              optional: false
-          - secretRef:
-              name: activemq-user-credentials
-              optional: false
-          image: rtsp/mongosh:2.2.15
-          imagePullPolicy: IfNotPresent
-          name: job-partitions-in-database
-          resources: {}
-          terminationMessagePath: /dev/termination-log
-          terminationMessagePolicy: File
-          volumeMounts:
-          - mountPath: /mongodb/certs/
+        - name: MongoDB__User
+          value: root
+        envFrom:
+        - configMapRef:
+            name: jobs-configmap
+            optional: false
+        - secretRef:
+            name: activemq-crt
+            optional: false
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+          - name: mongodb-crt
             mountPropagation: None
-            name: custom-mongodb-sharded
-            readOnly: true
-        dnsPolicy: ClusterFirst
-        enableServiceLinks: true
-        nodeSelector:
-          service: control-plane
-        restartPolicy: OnFailure
-        schedulerName: default-scheduler
-        securityContext: {}
-        shareProcessNamespace: false
-        terminationGracePeriodSeconds: 30
-        tolerations:
-        - effect: NoSchedule
-          key: service
-          operator: Equal
-          value: control-plane
+            mountPath: /mongodb/certs/
+      dnsPolicy: ClusterFirst
+      shareProcessNamespace: false
+      terminationGracePeriodSeconds: 30
+      enableServiceLinks: true
+      restartPolicy: OnFailure
+      {{- if .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml .Values.nodeSelector | nindent 8 }}
+      {{- end }}
+{{- if .Values.tolerations }} 
+      tolerations:
+        {{- toYaml .Values.tolerations | nindent 8 }}
+      {{- end }}
+      volumes:
+      - name: mongodb-crt
+        secret:
+          defaultMode: 420
+          optional: false
+          secretName: mongodb-crt

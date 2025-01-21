@@ -73,7 +73,7 @@ mongodb:
   architecture: "replicaset"
   fullnameOverride: "mongodb"
   useStatefulSet: true
-  existingConfigmap: "mongodb-armonik-scripts"
+  #existingConfigmap: "mongodb-armonik-scripts"
   nodeSelector:
     service: state-database
   tolerations:
@@ -107,7 +107,10 @@ chaos-mesh:
 ################## KEDA ##################
 keda:
   enabled: true
-  certificates.certManager.issuer.name: armonik-selfsigned-issuer
+  certificates:
+    certManager:
+      enabled: true
+      issuer: {"generate":false,"group":"cert-manager.io ","kind":"ClusterIssuer","name":"armonik-selfsigned-issuer"}
   nodeSelector:
     service: monitoring
   tolerations:

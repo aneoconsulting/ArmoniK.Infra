@@ -1,5 +1,5 @@
 replicaCount: 1
-
+registry: "dockerhubaneo"
 image:
   repository: dockerhubaneo/armonik_control
   tag: 0.30.0

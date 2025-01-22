@@ -20,7 +20,7 @@ control-plane:
       operator: Equal
       value: control-plane
 compute-plane:
-  enabled: false
+  enabled: true
   nodeSelector:
     service: workers
   tolerations:
@@ -46,7 +46,8 @@ redis:
   enabled: true
   useStatefulSet: true
   replica:
-    replicaCount: 1
+    persistence:
+      enabled: false
   fullnameOverride: "redis"
   tls:
     enabled: false
@@ -64,9 +65,6 @@ redis:
       enabled: false
     containerPorts:
       redis: 6379
-  replica:
-    persistence:
-      enabled: false
 
 ################## ACTIVEMQ ##################
 activemq:
@@ -115,7 +113,7 @@ chaos-mesh:
 
 ################## KEDA ##################
 keda:
-  enabled: true
+  enabled: false
   certificates:
     certManager:
       enabled: true

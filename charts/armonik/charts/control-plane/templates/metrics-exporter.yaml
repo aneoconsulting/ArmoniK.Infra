@@ -85,7 +85,7 @@ spec:
           defaultMode: 420
   {{- if .Values.nodeSelector }}
       nodeSelector:
-        {{- toYaml .Values.nodeSelector | nindent 8 }}
+        service: metrics
       restartPolicy: Always
       schedulerName: default-scheduler
       securityContext: {}

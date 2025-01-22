@@ -4,6 +4,8 @@
 global:
   namespace: "armonik"
   registry: "dockerhubaneo"
+  security:
+    allowInsecureImages: true
 
 ############################################
 ### ARMONIK APPLICATION CONFIGURATION #####
@@ -58,8 +60,13 @@ redis:
   usernames:
     admin: admin
   master:
+    persistence:
+      enabled: false
     containerPorts:
       redis: 6379
+  replica:
+    persistence:
+      enabled: false
 
 ################## ACTIVEMQ ##################
 activemq:
@@ -73,6 +80,8 @@ mongodb:
   architecture: "replicaset"
   fullnameOverride: "mongodb"
   useStatefulSet: true
+  persistence:
+    enabled: false
   #existingConfigmap: "mongodb-armonik-scripts"
   nodeSelector:
     service: state-database
@@ -217,6 +226,8 @@ fluent-bit:
 seq:
   enabled: true
   fullnameOverride: "seq"
+  persistence:
+    enabled: false
   image:
     tag: "2024.3"
   nodeSelector:

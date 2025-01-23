@@ -39,6 +39,7 @@ resource "tls_cert_request" "mongodb_cert_request" {
     common_name = local.mongodb_dns
     # organization = "127.0.0.1"
   }
+    dns_names   = [local.mongodb_dns]
 }
 
 resource "tls_locally_signed_cert" "mongodb_certificate" {
@@ -65,14 +66,14 @@ resource "kubernetes_secret" "mongodb_certificate" {
     namespace = var.namespace
   }
   data = {
-    "mongodb.pem" = format("%s\n%s", tls_locally_signed_cert.mongodb_certificate.cert_pem, tls_private_key.mongodb_private_key.private_key_pem)
+    "ca.pem"      =  base64encode(tls_self_signed_cert.root_mongodb.cert_pem)
+    "mongodb.pem" =  base64encode(format("%s\n%s", tls_locally_signed_cert.mongodb_certificate.cert_pem, tls_private_key.mongodb_private_key.private_key_pem)) 
     "chain.pem"   = format("%s\n%s", tls_locally_signed_cert.mongodb_certificate.cert_pem, tls_self_signed_cert.root_mongodb.cert_pem)
-    "ca.pem"      = tls_self_signed_cert.root_mongodb.cert_pem
   }
 }
 
 resource "local_sensitive_file" "mongodb_client_certificate" {
   content         = format("%s\n%s", tls_locally_signed_cert.mongodb_certificate.cert_pem, tls_self_signed_cert.root_mongodb.cert_pem)
-  filename        = "${path.root}/generated/certificates/${var.name}/ca.pem"
-  file_permission = "0600"
+  filename        = "${path.root}/generated/certificates/${var.name}/chain.pem"
+  file_permission = "0644"
 }

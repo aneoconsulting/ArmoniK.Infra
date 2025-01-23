@@ -121,3 +121,56 @@ resource "aws_s3_bucket_public_access_block" "s3_bucket" {
   ignore_public_acls      = var.ignore_public_acls
   restrict_public_buckets = var.restrict_public_buckets
 }
+
+data "aws_iam_policy_document" "s3" {
+
+  statement {
+    sid = "AllowBucketAdminActions"
+    actions = [
+      "s3:ListBucket",
+      "s3:ListBucketMultipartUploads",
+    ]
+    effect    = "Allow"
+    resources = [aws_s3_bucket.s3_bucket.arn]
+  }
+
+  statement {
+    sid = "AllowObjectAdminActions"
+    actions = [
+      "s3:PutObject",
+      "s3:GetObject",
+      "s3:DeleteObject",
+      "s3:PutObjectAcl",
+      "s3:GetObjectAcl",
+      "s3:AbortMultipartUpload",
+      "s3:ListMultipartUploadParts"
+    ]
+    effect    = "Allow"
+    resources = ["${aws_s3_bucket.s3_bucket.arn}/*"]
+  }
+
+  statement {
+    sid = "AllowBucketLifecycleActions"
+    actions = [
+      "s3:PutLifecycleConfiguration",
+      "s3:GetLifecycleConfiguration",
+    ]
+    effect    = "Allow"
+    resources = [aws_s3_bucket.s3_bucket.arn]
+  }
+}
+
+resource "aws_iam_policy" "s3" {
+  count       = can(coalesce(var.role_name)) ? 1 : 0
+  name_prefix = "${var.name}-s3-admin"
+  description = "Policy for allowing S3 admin access"
+  policy      = data.aws_iam_policy_document.s3.json
+  tags        = local.tags
+}
+
+resource "aws_iam_policy_attachment" "s3" {
+  count      = can(coalesce(var.role_name)) ? 1 : 0
+  name       = "${var.name}-s3"
+  roles      = [var.role_name]
+  policy_arn = aws_iam_policy.s3[0].arn
+}

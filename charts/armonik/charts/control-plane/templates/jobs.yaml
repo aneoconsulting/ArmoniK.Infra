@@ -29,12 +29,7 @@ spec:
       - name: job-partitions-in-database
         image: rtsp/mongosh:2.3.8
         imagePullPolicy: IfNotPresent
-        command:
-          - |
-            <<EOF
-            mongosh -u $MongoDB__User -p $MongoDB__Password mongodb://$MongoDB__Host:$MongoDB__Port/database?authSource=$MongoDB__AuthSource --eval "db.PartitionData.drop()"
-            mongosh -u $MongoDB__User -p $MongoDB__Password mongodb://$MongoDB__Host:$MongoDB__Port/database?authSource=$MongoDB__AuthSource --eval "db.PartitionData.insertMany([{'ParentPartitionIds':[],'PodConfiguration':null,'PodMax':100,'PodReserved':1,'PreemptionPercentage':50,'Priority':1,'_id':'bench'},{'ParentPartitionIds':[],'PodConfiguration':null,'PodMax':100,'PodReserved':1,'PreemptionPercentage':50,'Priority':1,'_id':'default'},{'ParentPartitionIds':[],'PodConfiguration':null,'PodMax':100,'PodReserved':1,'PreemptionPercentage':50,'Priority':1,'_id':'htcmock'},{'ParentPartitionIds':[],'PodConfiguration':null,'PodMax':100,'PodReserved':1,'PreemptionPercentage':50,'Priority':1,'_id':'stream'}])"
-            EOF
+        command: ["/script/init-db.sh"]
         env:
         - name: MongoDB__Password
           valueFrom:
@@ -44,6 +39,10 @@ spec:
               optional: false
         - name: MongoDB__User
           value: root
+        - name: MongoDB__Host
+          value: "{{ .Values.config.core.data.MongoDB__Host }}"
+        - name: MongoDB__Port
+          value: "{{ .Values.config.core.data.MongoDB__Port }}"
         envFrom:
         - configMapRef:
             name: jobs-configmap
@@ -57,6 +56,8 @@ spec:
           - name: mongodb-crt
             mountPropagation: None
             mountPath: /mongodb/certs/
+          - name: script
+            mountPath: "/script"
       dnsPolicy: ClusterFirst
       shareProcessNamespace: false
       terminationGracePeriodSeconds: 30
@@ -66,7 +67,7 @@ spec:
       nodeSelector:
         {{- toYaml .Values.nodeSelector | nindent 8 }}
       {{- end }}
-  {{- if .Values.tolerations }} 
+      {{- if .Values.tolerations }} 
       tolerations:
         {{- toYaml .Values.tolerations | nindent 8 }}
       {{- end }}
@@ -76,3 +77,7 @@ spec:
           defaultMode: 420
           optional: false
           secretName: mongodb-crt
+      - name: script
+        configMap:
+          name: jobs-configmap
+          defaultMode: 0500

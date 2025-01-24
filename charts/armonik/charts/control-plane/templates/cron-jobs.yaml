@@ -2,104 +2,6 @@ apiVersion: batch/v1
 kind: CronJob
 metadata:
     labels:
-      app: armonik
-      service: partitions-in-database
-      type: monitoring
-    name: partitions-in-database
-    namespace: {{ .Values.namespace }}
-spec:
-    concurrencyPolicy: Replace
-    failedJobsHistoryLimit: 5
-    jobTemplate:
-      metadata:
-        creationTimestamp: null
-        labels:
-          app: armonik
-          service: partitions-in-database
-          type: monitoring
-        name: partitions-in-database
-      spec:
-        backoffLimit: 5
-        completions: 1
-        manualSelector: false
-        parallelism: 1
-        template:
-          metadata:
-            creationTimestamp: null
-            labels:
-              app: armonik
-              service: partitions-in-database
-              type: monitoring
-            name: partitions-in-database
-          spec:
-            automountServiceAccountToken: true
-            containers:
-            - command:
-              - /bin/bash
-              - -c
-              - |
-                #!/bin/bash
-                export nbElements=$(mongosh --username $MongoDB__User --password $MongoDB__Password mongodb://$MongoDB__Host:$MongoDB__Port/database?authSource=$MongoDB__AuthSource&directConnection=true --eval 'db.PartitionData.countDocuments()' --quiet)
-                if [[ $nbElements != 4 ]]; then
-                  mongosh --username $MongoDB__User --password $MongoDB__Password mongodb://$MongoDB__Host:$MongoDB__Port/database?authSource=$MongoDB__AuthSource&directConnection=true --eval 'db.PartitionData.insertMany([{"ParentPartitionIds":[],"PodConfiguration":null,"PodMax":100,"PodReserved":1,"PreemptionPercentage":50,"Priority":1,"_id":"bench"},{"ParentPartitionIds":[],"PodConfiguration":null,"PodMax":100,"PodReserved":1,"PreemptionPercentage":50,"Priority":1,"_id":"default"},{"ParentPartitionIds":[],"PodConfiguration":null,"PodMax":100,"PodReserved":1,"PreemptionPercentage":50,"Priority":1,"_id":"htcmock"},{"ParentPartitionIds":[],"PodConfiguration":null,"PodMax":100,"PodReserved":1,"PreemptionPercentage":50,"Priority":1,"_id":"stream"}])'
-                fi
-              env:
-              - name: MongoDB__Password
-                valueFrom:
-                  secretKeyRef:
-                    key: mongodb-root-password
-                    name: mongodb
-                    optional: false
-              - name: MongoDB__User
-                value: root
-              envFrom:
-              - configMapRef:
-                  name: jobs-configmap
-                  optional: false
-              - secretRef:
-                  name: activemq-crt
-                  optional: false
-              image: rtsp/mongosh:2.2.15
-              imagePullPolicy: IfNotPresent
-              name: job-partitions-in-database
-              resources: {}
-              terminationMessagePath: /dev/termination-log
-              terminationMessagePolicy: File
-              volumeMounts:
-              - mountPath: /mongodb/certs/
-                mountPropagation: None
-                name: mongodb-crt
-                readOnly: true
-            dnsPolicy: ClusterFirst
-            enableServiceLinks: true
-            restartPolicy: OnFailure
-            schedulerName: default-scheduler
-            securityContext: {}
-            shareProcessNamespace: false
-            terminationGracePeriodSeconds: 30
-            {{- if .Values.nodeSelector }}
-            nodeSelector:
-              {{- toYaml .Values.nodeSelector | nindent 14 }}
-            {{- end }}
-            {{- if .Values.tolerations }}
-            tolerations:
-              {{- toYaml .Values.tolerations | nindent 14 }}
-            {{- end }}
-            volumes:
-            - name: mongodb-crt
-              secret:
-                defaultMode: 420
-                optional: false
-                secretName: mongodb-crt
-    schedule: '* * * * *'
-    startingDeadlineSeconds: 20
-    successfulJobsHistoryLimit: 0
-    suspend: false
----      
-apiVersion: batch/v1
-kind: CronJob
-metadata:
-    labels:
       app: seq
       service: seq-retention-job
       type: monitoring
@@ -131,16 +33,7 @@ spec:
           spec:
             automountServiceAccountToken: true
             containers:
-            - command:
-              - /bin/bash
-              - -c
-              - |
-                #!/bin/bash
-                if [ -z "$(/bin/seqcli/seqcli retention list -s $SEQ_URL)" ]
-                then
-                  token=$(/bin/seqcli/seqcli apikey create -t "test ApiKey" --permissions=Project --connect-username=$SEQ_USER --connect-password=$SEQ_PASSWORD -s $SEQ_URL)
-                  /bin/seqcli/seqcli retention create --after 2d --delete-all-events --apikey=$token -s $SEQ_URL
-                fi
+            - command: ["/script/seq.sh"]
               env:
               - name: SEQ_URL
                 value: http://seq:8080
@@ -152,20 +45,29 @@ spec:
               resources: {}
               terminationMessagePath: /dev/termination-log
               terminationMessagePolicy: File
+              volumeMounts:
+              - name: script
+                mountPath: "/script"
             dnsPolicy: ClusterFirst
             enableServiceLinks: true
-            nodeSelector:
-              service: monitoring
             restartPolicy: OnFailure
             schedulerName: default-scheduler
             securityContext: {}
             shareProcessNamespace: false
             terminationGracePeriodSeconds: 30
+            {{- if .Values.nodeSelector }}
+            nodeSelector:
+              {{- toYaml .Values.nodeSelector | nindent 14 }}
+            {{- end }}
+            {{- if .Values.tolerations }}
             tolerations:
-            - effect: NoSchedule
-              key: service
-              operator: Equal
-              value: monitoring
+              {{- toYaml .Values.tolerations | nindent 14 }}
+            {{- end }}
+            volumes:
+            - name: script
+              configMap:
+                name: jobs-configmap
+                defaultMode: 0500
     schedule: 0 */12 * * *
     startingDeadlineSeconds: 20
     successfulJobsHistoryLimit: 0

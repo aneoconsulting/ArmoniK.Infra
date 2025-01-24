@@ -126,7 +126,7 @@ config:
       Components__TableStorage: ArmoniK.Adapters.MongoDB.TableStorage
       MongoDB__User: root
       MongoDB__AllowInsecureTls: "true"
-      #MongoDB__AuthSource: admin
+      MongoDB__AuthSource: admin
       #MongoDB__CAFile: /mongodb/certs/tls-combined.pem
       MongoDB__DataRetention: 1.00:00:00
       MongoDB__DatabaseName: database

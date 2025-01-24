@@ -37,12 +37,6 @@ spec:
               key: mongodb-root-password
               name: mongodb
               optional: false
-        - name: MongoDB__User
-          value: root
-        - name: MongoDB__Host
-          value: "{{ .Values.config.core.data.MongoDB__Host }}"
-        - name: MongoDB__Port
-          value: "{{ .Values.config.core.data.MongoDB__Port }}"
         envFrom:
         - configMapRef:
             name: jobs-configmap

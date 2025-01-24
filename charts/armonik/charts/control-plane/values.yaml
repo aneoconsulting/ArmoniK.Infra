@@ -2,7 +2,7 @@ replicaCount: 1
 registry: "dockerhubaneo"
 image:
   repository: dockerhubaneo/armonik_control
-  tag: 0.30.0
+  tag: "0.31.0-jgprovidercheck.14.32d68938"
   pullPolicy: IfNotPresent
 
 grafanaDashboard: 

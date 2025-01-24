@@ -1,9 +1,8 @@
-global:
-  registry: dockerhubaneo
-  namespace: "armonik"
-  app:
-    name: my-app
-    version: 1.0.0
+registry: dockerhubaneo
+namespace: "armonik"
+app:
+  name: my-app
+  version: 1.0.0
 
 imagePullSecrets: []
 nameOverride: ""

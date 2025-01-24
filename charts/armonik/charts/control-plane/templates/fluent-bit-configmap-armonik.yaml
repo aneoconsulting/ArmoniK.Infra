@@ -5,7 +5,7 @@ metadata:
     app: armonik
     service: fluent-bit
     type: logs
-  name: fluent-bit-config
+  name: fluent-bit-configmap-armonik
   namespace: {{ .Values.namespace }}
 data:
   filter-kubernetes.conf: |

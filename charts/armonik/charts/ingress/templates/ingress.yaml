@@ -5,7 +5,7 @@ metadata:
     app: armonik
     service: ingress
   name: ingress
-  namespace: {{ .Values.global.namespace }}
+  namespace: {{ .Values.namespace }}
 spec:
   progressDeadlineSeconds: {{ .Values.ingress.progressDeadlineSeconds }}
   replicas: {{ .Values.ingress.replicaCount }}
@@ -25,7 +25,7 @@ spec:
         app: "armonik"
         service: "ingress"
       name: ingress
-      namespace: {{ .Values.global.namespace }}
+      namespace: {{ .Values.namespace }}
     spec:
       automountServiceAccountToken: true
       containers:

@@ -29,11 +29,12 @@ spec:
       - name: job-partitions-in-database
         image: rtsp/mongosh:2.3.8
         imagePullPolicy: IfNotPresent
-        command: ["mongosh"]
-        args:
+        command:
           - |
-            -u $MongoDB__User -p $MongoDB__Password mongodb://$MongoDB__Host:$MongoDB__Port/database?authSource=$MongoDB__AuthSource --eval "db.PartitionData.drop()"
-            -u $MongoDB__User -p $MongoDB__Password mongodb://$MongoDB__Host:$MongoDB__Port/database?authSource=$MongoDB__AuthSource --eval "db.PartitionData.insertMany([{'ParentPartitionIds':[],'PodConfiguration':null,'PodMax':100,'PodReserved':1,'PreemptionPercentage':50,'Priority':1,'_id':'bench'},{'ParentPartitionIds':[],'PodConfiguration':null,'PodMax':100,'PodReserved':1,'PreemptionPercentage':50,'Priority':1,'_id':'default'},{'ParentPartitionIds':[],'PodConfiguration':null,'PodMax':100,'PodReserved':1,'PreemptionPercentage':50,'Priority':1,'_id':'htcmock'},{'ParentPartitionIds':[],'PodConfiguration':null,'PodMax':100,'PodReserved':1,'PreemptionPercentage':50,'Priority':1,'_id':'stream'}])"
+            <<EOF
+            mongosh -u $MongoDB__User -p $MongoDB__Password mongodb://$MongoDB__Host:$MongoDB__Port/database?authSource=$MongoDB__AuthSource --eval "db.PartitionData.drop()"
+            mongosh -u $MongoDB__User -p $MongoDB__Password mongodb://$MongoDB__Host:$MongoDB__Port/database?authSource=$MongoDB__AuthSource --eval "db.PartitionData.insertMany([{'ParentPartitionIds':[],'PodConfiguration':null,'PodMax':100,'PodReserved':1,'PreemptionPercentage':50,'Priority':1,'_id':'bench'},{'ParentPartitionIds':[],'PodConfiguration':null,'PodMax':100,'PodReserved':1,'PreemptionPercentage':50,'Priority':1,'_id':'default'},{'ParentPartitionIds':[],'PodConfiguration':null,'PodMax':100,'PodReserved':1,'PreemptionPercentage':50,'Priority':1,'_id':'htcmock'},{'ParentPartitionIds':[],'PodConfiguration':null,'PodMax':100,'PodReserved':1,'PreemptionPercentage':50,'Priority':1,'_id':'stream'}])"
+            EOF
         env:
         - name: MongoDB__Password
           valueFrom:

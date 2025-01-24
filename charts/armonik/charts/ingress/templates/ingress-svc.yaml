@@ -5,7 +5,7 @@ metadata:
     app: "armonik"
     service: "ingress"
   name: ingress
-  namespace: {{ .Values.global.namespace }}
+  namespace: {{ .Values.namespace }}
 spec:
   allocateLoadBalancerNodePorts: {{ .Values.ingress.service.allocateLoadBalancerNodePorts }}
   externalTrafficPolicy: {{ .Values.ingress.service.externalTrafficPolicy }}

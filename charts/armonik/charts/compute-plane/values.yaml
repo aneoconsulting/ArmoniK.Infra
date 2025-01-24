@@ -3,6 +3,7 @@ replicaCount: 1
 namespace: armonik
 shareProcessNamespace: false
 restartPolicy: Always
+registry: "dockerhubaneo"
 
 computePlane:
   metadata:
@@ -14,8 +15,8 @@ computePlane:
     default:
       replicas: 1
       pollingAgent:
-        image: "dockerhubaneo/armonik_pollingagent"
-        tag: "0.30.0"
+        image: "armonik_pollingagent"
+        tag: "0.31.0-jgprovidercheck.14.32d68938"
         imagePullPolicy: "IfNotPresent"
         limits:
           cpu: "500m"
@@ -62,7 +63,7 @@ computePlane:
       # ArmoniK workers
       worker:
         - name: "worker"
-          image: "dockerhubaneo/armonik_worker_dll"
+          image: "armonik_worker_dll"
           tag: "0.18.0"
           imagePullPolicy: "IfNotPresent"
           limits:
@@ -91,8 +92,8 @@ computePlane:
     stream:
       replicas: 1
       pollingAgent:
-        image: "dockerhubaneo/armonik_pollingagent"
-        tag: "0.30.0"
+        image: "armonik_pollingagent"
+        tag: "0.31.0-jgprovidercheck.14.32d68938"
         imagePullPolicy: "IfNotPresent"
         limits:
           cpu: "500m"
@@ -141,8 +142,8 @@ computePlane:
       # ArmoniK workers
       worker:
         - name: "worker"
-          image: "dockerhubaneo/armonik_core_stream_test_worker"
-          tag: "0.30.0"
+          image: "armonik_core_stream_test_worker"
+          tag: "0.31.0-jgprovidercheck.14.32d68938"
           imagePullPolicy: "IfNotPresent"
           limits:
             cpu: "500m"
@@ -170,8 +171,8 @@ computePlane:
     htcmock:
       replicas: 1
       pollingAgent:
-        image: "dockerhubaneo/armonik_pollingagent"
-        tag: "0.30.0"
+        image: "armonik_pollingagent"
+        tag: "0.31.0-jgprovidercheck.14.32d68938"
         imagePullPolicy: "IfNotPresent"
         limits:
           cpu: "500m"
@@ -222,8 +223,8 @@ computePlane:
       # ArmoniK workers
       worker:
         - name: "worker"
-          image: "dockerhubaneo/armonik_core_htcmock_test_worker"
-          tag: "0.30.0"
+          image: "armonik_core_htcmock_test_worker"
+          tag: "0.31.0-jgprovidercheck.14.32d68938"
           imagePullPolicy: "IfNotPresent"
           limits:
             cpu: "500m"
@@ -251,8 +252,8 @@ computePlane:
     bench:
       replicas: 1
       pollingAgent:
-        image: "dockerhubaneo/armonik_pollingagent"
-        tag: "0.30.0"
+        image: "armonik_pollingagent"
+        tag: "0.31.0-jgprovidercheck.14.32d68938"
         imagePullPolicy: "IfNotPresent"
         limits:
           cpu: "500m"
@@ -301,8 +302,8 @@ computePlane:
       # ArmoniK workers
       worker:
         - name: "worker"
-          image: "dockerhubaneo/armonik_core_bench_test_worker"
-          tag: "0.30.0"
+          image: "armonik_core_bench_test_worker"
+          tag: "0.31.0-jgprovidercheck.14.32d68938"
           imagePullPolicy: "IfNotPresent"
           limits:
             cpu: "500m"

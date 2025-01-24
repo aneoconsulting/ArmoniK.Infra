@@ -58,9 +58,9 @@ spec:
       containers:
       - name: {{ $.Values.pollingAgent.name }}
       {{- if (ne $config.pollingAgent.tag "") }}
-        image: {{ $config.pollingAgent.image }}:{{ $config.pollingAgent.tag }}
+        image: "{{ $.Values.registry }}/{{ $config.pollingAgent.image }}:{{ $config.pollingAgent.tag }}"
       {{- else }}
-        image: {{ $config.pollingAgent.image }}
+        image: {{ $.Values.registry }}/{{ $config.pollingAgent.image }}
       {{- end }}
         imagePullPolicy: {{ $config.pollingAgent.imagePullPolicy | quote}}
         resources:
@@ -117,7 +117,7 @@ spec:
         {{- end }}
       {{- range $index, $worker := $config.worker }}
       - name: "{{ $worker.name }}-{{ $index }}"
-        image: "{{ $worker.image }}:{{ $worker.tag | default "" }}"
+        image: "{{ $.Values.registry }}/{{ $worker.image }}:{{ $worker.tag | default "" }}"
         {{- range $config.worker}}
         imagePullPolicy: {{ .imagePullPolicy | quote }}
         {{- end }}

@@ -4,7 +4,7 @@ metadata:
   name: activemq-crt
   annotations:
     "helm.sh/hook": post-install,post-upgrade
-    "helm.sh/hook-weight": "5"
+    "helm.sh/hook-weight": "10"
 spec:
   isCA: false
   usages:

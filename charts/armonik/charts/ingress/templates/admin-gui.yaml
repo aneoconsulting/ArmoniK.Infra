@@ -5,7 +5,7 @@ metadata:
     app: "armonik"
     service: "admin-gui"
   name: admin-gui
-  namespace: {{ .Values.global.namespace }}
+  namespace: {{ .Values.namespace }}
 spec:
   selector:
     matchLabels:
@@ -22,11 +22,11 @@ spec:
         app: "armonik"
         service: "admin-gui"
       name: admin-gui
-      namespace: {{ .Values.global.namespace }}
+      namespace: {{ .Values.namespace }}
     spec:
       automountServiceAccountToken: true
       containers:
-      - image: {{ .Values.global.registry }}/{{ .Values.adminGui.image }}
+      - image: {{ .Values.registry }}/{{ .Values.adminGui.image }}
         imagePullPolicy: {{ .Values.adminGui.imagePullPolicy }}
         name: admin-app
         ports:

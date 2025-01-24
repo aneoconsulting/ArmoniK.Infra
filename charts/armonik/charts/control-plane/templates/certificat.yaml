@@ -5,7 +5,7 @@ metadata:
   name: armonik-selfsigned-issuer
   annotations:
     "helm.sh/hook": post-install,post-upgrade
-    "helm.sh/hook-weight": "5"
+    "helm.sh/hook-weight": "10"
 spec:
   selfSigned: {}
 ---
@@ -15,7 +15,7 @@ metadata:
   name: ingress-crt
   annotations:
     "helm.sh/hook": post-install,post-upgrade
-    "helm.sh/hook-weight": "5"
+    "helm.sh/hook-weight": "10"
 spec:
   isCA: false
   usages:
@@ -46,7 +46,7 @@ metadata:
   name: mongodb-crt
   annotations:
     "helm.sh/hook": post-install,post-upgrade
-    "helm.sh/hook-weight": "5"
+    "helm.sh/hook-weight": "10"
 spec:
   isCA: false
   usages:
@@ -77,7 +77,7 @@ metadata:
   name: redis-crt
   annotations:
     "helm.sh/hook": post-install,post-upgrade
-    "helm.sh/hook-weight": "5"
+    "helm.sh/hook-weight": "10"
 spec:
   isCA: false
   usages:

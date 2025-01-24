@@ -214,7 +214,18 @@ grafana:
 fluent-bit:
   enabled: true
   fullnameOverride: "fluent-bit"
-  metrics.enabled: true
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: false
+  aggregator:
+    enabled: true
+    configMap: "fluent-bit-configmap-armonik"
+    extraEnvVars:
+      - name: FLUENT_HTTP_SEQ_HOST
+        value: "seq"
+      - name: FLUENT_HTTP_SEQ_PORT
+        value: "5341"
   ingress:
     enabled: true
     selfSigned: true
@@ -226,8 +237,6 @@ seq:
   fullnameOverride: "seq"
   persistence:
     enabled: false
-  image:
-    tag: "2024.3"
   nodeSelector:
     service: monitoring
   tolerations:
@@ -250,7 +259,6 @@ ingress:
 ################## PROMETHEUS ##################
 prometheus:
   enabled: true
-  clusterDomain: cluster.local
   nodeSelector:
     service: metrics
   tolerations:
@@ -267,7 +275,7 @@ prometheus:
         type: prometheus
         access: proxy
         orgId: 1
-        url: https://server.prometheus.local/ 
+        url: http://prometheus-server.{{ .Release.Namespace }}.svc.cluster.local
         isDefault: true
         jsonData:
           tlsSkipVerify: true
@@ -279,6 +287,7 @@ prometheus:
   nodeExporter:
     enabled: true
   server:
+    resourcesPreset: medium
     ingress:
       enabled: true
       tls: true

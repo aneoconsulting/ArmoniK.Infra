@@ -12,11 +12,6 @@ spec:
   selector:
     matchLabels:
       {{- include "control-plane.selectorLabels" . | nindent 6 }}
-  strategy:
-    rollingUpdate:
-      maxSurge: 25%
-      maxUnavailable: 25%
-    type: RollingUpdate
   template:
     metadata:
       labels:

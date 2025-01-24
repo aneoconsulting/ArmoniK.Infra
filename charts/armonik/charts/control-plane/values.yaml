@@ -126,12 +126,12 @@ config:
       Components__TableStorage: ArmoniK.Adapters.MongoDB.TableStorage
       MongoDB__User: root
       MongoDB__AllowInsecureTls: "true"
-      MongoDB__AuthSource: admin
-      MongoDB__CAFile: /mongodb/certs/tls-combined.pem
+      #MongoDB__AuthSource: admin
+      #MongoDB__CAFile: /mongodb/certs/tls-combined.pem
       MongoDB__DataRetention: 1.00:00:00
       MongoDB__DatabaseName: database
       MongoDB__DirectConnection: "true"
-      MongoDB__Host: mongodb
+      MongoDB__Host: mongodb-headless
       MongoDB__Port: "27017"
       MongoDB__ReplicaSet: rs0
       #MongoDB__Sharding: "true"
@@ -142,7 +142,7 @@ config:
       Redis__User: ""
       #Redis__CaPath: /redis/ca.crt
       Redis__ClientName: ArmoniK.Core
-      Redis__EndpointUrl: redis-master:6379
+      Redis__EndpointUrl: redis-headless:6379
       Redis__InstanceName: ArmoniKRedis
       #Redis__Ssl: "false"
       #Redis__SslHost: 127.0.0.1
@@ -152,7 +152,7 @@ config:
   log:
     name: log-configmap
     data: 
-      minimumLevel: Information
+      minimumLevel: Debug
       overrides:
         ArmoniK.Core.Common.Auth.Authentication.Authenticator: Warning
         Grpc.AspNetCore.Server.ServerCallHandler: Warning
@@ -164,17 +164,6 @@ config:
         Microsoft.Extensions.Diagnostics.HealthChecks: Warning
         Microsoft.Extensions.Http.DefaultHttpClientFactory: Warning
         Serilog.AspNetCore.RequestLoggingMiddleware: Warning
-  job:
-    name: jobs-configmap
-    data:
-      MongoDB__DirectConnection: "false"
-      MongoDB__Tls: "false"
-      Redis__CaPath: /redis/chain.pem
-      Redis__ClientName: ArmoniK.Core
-      Redis__EndpointUrl: redis-master:6379
-      Redis__InstanceName: ArmoniKRedis
-      Redis__Ssl: "false"
-      Redis__SslHost: 127.0.0.1
 
   controlPlane:
     name: control-plane-configmap

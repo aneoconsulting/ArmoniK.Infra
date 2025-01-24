@@ -89,14 +89,10 @@ dependencies:
     repository: https://charts.bitnami.com/bitnami
     condition: fluent-bit.enabled
   - name: seq
-    version: 1.0.0
-    repository: https://cloudnativeapp.github.io/charts/curated/
+    version: 2024.3.1
+    repository: https://helm.datalust.co
     condition: seq.enabled
   - name: cert-manager
     version: 1.16.3
     repository: https://charts.jetstack.io
     condition: cert-manager.enabled
-
-    
-
-

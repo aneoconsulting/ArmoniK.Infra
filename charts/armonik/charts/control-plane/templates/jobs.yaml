@@ -27,17 +27,13 @@ spec:
       automountServiceAccountToken: true
       containers:
       - name: job-partitions-in-database
-        image: rtsp/mongosh:2.2.15
+        image: rtsp/mongosh:2.3.8
         imagePullPolicy: IfNotPresent
-        command:
-          - /bin/bash
-          - -c
+        command: ["mongosh"]
+        args:
           - |
-            #!/bin/bash
-            # Drop
-            mongosh --username $MongoDB__User --password $MongoDB__Password mongodb://$MongoDB__Host:$MongoDB__Port/database?authSource=$MongoDB__AuthSource --eval 'db.PartitionData.drop()'
-            # Insert
-            mongosh --username $MongoDB__User --password $MongoDB__Password mongodb://$MongoDB__Host:$MongoDB__Port/database?authSource=$MongoDB__AuthSource --eval 'db.PartitionData.insertMany([{"ParentPartitionIds":[],"PodConfiguration":null,"PodMax":100,"PodReserved":1,"PreemptionPercentage":50,"Priority":1,"_id":"bench"},{"ParentPartitionIds":[],"PodConfiguration":null,"PodMax":100,"PodReserved":1,"PreemptionPercentage":50,"Priority":1,"_id":"default"},{"ParentPartitionIds":[],"PodConfiguration":null,"PodMax":100,"PodReserved":1,"PreemptionPercentage":50,"Priority":1,"_id":"htcmock"},{"ParentPartitionIds":[],"PodConfiguration":null,"PodMax":100,"PodReserved":1,"PreemptionPercentage":50,"Priority":1,"_id":"stream"}])'
+            -u $MongoDB__User -p $MongoDB__Password mongodb://$MongoDB__Host:$MongoDB__Port/database?authSource=$MongoDB__AuthSource --eval "db.PartitionData.drop()"
+            -u $MongoDB__User -p $MongoDB__Password mongodb://$MongoDB__Host:$MongoDB__Port/database?authSource=$MongoDB__AuthSource --eval "db.PartitionData.insertMany([{'ParentPartitionIds':[],'PodConfiguration':null,'PodMax':100,'PodReserved':1,'PreemptionPercentage':50,'Priority':1,'_id':'bench'},{'ParentPartitionIds':[],'PodConfiguration':null,'PodMax':100,'PodReserved':1,'PreemptionPercentage':50,'Priority':1,'_id':'default'},{'ParentPartitionIds':[],'PodConfiguration':null,'PodMax':100,'PodReserved':1,'PreemptionPercentage':50,'Priority':1,'_id':'htcmock'},{'ParentPartitionIds':[],'PodConfiguration':null,'PodMax':100,'PodReserved':1,'PreemptionPercentage':50,'Priority':1,'_id':'stream'}])"
         env:
         - name: MongoDB__Password
           valueFrom:
@@ -69,7 +65,7 @@ spec:
       nodeSelector:
         {{- toYaml .Values.nodeSelector | nindent 8 }}
       {{- end }}
-{{- if .Values.tolerations }} 
+  {{- if .Values.tolerations }} 
       tolerations:
         {{- toYaml .Values.tolerations | nindent 8 }}
       {{- end }}

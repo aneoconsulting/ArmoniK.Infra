@@ -1,0 +1,170 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    app: armonik
+    service: fluent-bit
+    type: logs
+  name: fluent-bit-config
+  namespace: {{ .Values.namespace }}
+data:
+  filter-kubernetes.conf: |
+    [FILTER]
+        Name                kubernetes
+        Match               *
+        Kube_URL            https://kubernetes.default.svc:443
+        Kube_CA_File        /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        Kube_Token_File     /var/run/secrets/kubernetes.io/serviceaccount/token
+        Kube_Tag_Prefix     kube.var.log.containers.
+        Merge_Log           On
+        Merge_Log_Key       log
+        Merge_Log_Trim      On
+        Merge_Parser        json
+        Keep_Log            Off
+        Annotations         On
+        Labels              On
+        K8S-Logging.Parser  On
+        K8S-Logging.Exclude Off
+        Use_Kubelet         On
+        Kubelet_Port        10250
+        Buffer_Size         0
+
+    [FILTER]
+        Name                    nest
+        Match                   *
+        Operation               lift
+        Nested_under            kubernetes
+        Add_prefix              kubernetes_
+
+    [FILTER]
+        Name                    nest
+        Match                   *
+        Operation               lift
+        Nested_under            log
+
+    [FILTER]
+        Name                    modify
+        Match                   *
+        Condition               Key_exists log
+        Rename                  log @m
+        Add                     sourcetype renamelog
+  fluent-bit.conf: |
+    [SERVICE]
+        Flush         1
+        Log_Level     error
+        Daemon        off
+        Parsers_File  parsers.conf
+        HTTP_Server   ${HTTP_SERVER}
+        HTTP_Listen   0.0.0.0
+        HTTP_Port     ${HTTP_PORT}
+    @INCLUDE input-kubernetes.conf
+    @INCLUDE filter-kubernetes.conf
+    @INCLUDE output-cloudwatch.conf
+    @INCLUDE output-http-seq.conf
+    @INCLUDE output-s3.conf
+    @INCLUDE output-stdout.conf
+  input-kubernetes.conf: |
+    [INPUT]
+        Name               tail
+        Tag                kube.*
+        Path               /var/log/containers/control-plane*.log, /var/log/containers/compute-plane*.log
+        Parser             ${PARSER}
+        Docker_Mode        On
+        Buffer_Chunk_Size  512KB
+        Buffer_Max_Size    5M
+        Rotate_Wait        30
+        Mem_Buf_Limit      30MB
+        Skip_Long_Lines    Off
+        Refresh_Interval   10
+        READ_FROM_HEAD     ${READ_FROM_HEAD}
+
+    [INPUT]
+        Name               tail
+        Tag                application.*
+        Path               /var/log/containers/control-plane*.log, /var/log/containers/compute-plane*.log, /var/log/containers/ingress*.log, /var/log/containers/mongodb*.log, /var/log/containers/keda*.log
+        Parser             ${PARSER}
+        Docker_Mode        On
+        Buffer_Chunk_Size  512KB
+        Buffer_Max_Size    5M
+        Rotate_Wait        30
+        Mem_Buf_Limit      30MB
+        Skip_Long_Lines    Off
+        Refresh_Interval   10
+        READ_FROM_HEAD     ${READ_FROM_HEAD}
+
+    [INPUT]
+        Name               tail
+        Tag                s3-application.*
+        Path               /var/log/containers/control-plane*.log, /var/log/containers/compute-plane*.log, /var/log/containers/ingress*.log, /var/log/containers/mongodb*.log, /var/log/containers/keda*.log
+        Parser             ${PARSER}
+        Docker_Mode        On
+        Buffer_Chunk_Size  512KB
+        Buffer_Max_Size    5M
+        Rotate_Wait        30
+        Mem_Buf_Limit      30MB
+        Skip_Long_Lines    Off
+        Refresh_Interval   10
+        READ_FROM_HEAD     ${READ_FROM_HEAD}
+  output-cloudwatch.conf: ""
+  output-http-seq.conf: |
+    [OUTPUT]
+        Name                    http
+        Match                   kube.*
+        Host                    seq
+        Port                    5341
+        URI                     /api/events/raw?clef
+        Header                  ContentType application/vnd.serilog.clef
+        Format                  json_lines
+        json_date_key           @t
+        json_date_format        iso8601
+  output-s3.conf: ""
+  output-stdout.conf: ""
+  parsers.conf: |
+    [PARSER]
+        Name   apache
+        Format regex
+        Regex  ^(?<host>[^ ]*) [^ ]* (?<user>[^ ]*) \[(?<time>[^\]]*)\] "(?<method>\S+)(?: +(?<path>[^\"]*?)(?: +\S*)?)?" (?<code>[^ ]*) (?<size>[^ ]*)(?: "(?<referer>[^\"]*)" "(?<agent>[^\"]*)")?$
+        Time_Key time
+        Time_Format %d/%b/%Y:%H:%M:%S %z
+    [PARSER]
+        Name   apache2
+        Format regex
+        Regex  ^(?<host>[^ ]*) [^ ]* (?<user>[^ ]*) \[(?<time>[^\]]*)\] "(?<method>\S+)(?: +(?<path>[^ ]*) +\S*)?" (?<code>[^ ]*) (?<size>[^ ]*)(?: "(?<referer>[^\"]*)" "(?<agent>[^\"]*)")?$
+        Time_Key time
+        Time_Format %d/%b/%Y:%H:%M:%S %z
+    [PARSER]
+        Name   apache_error
+        Format regex
+        Regex  ^\[[^ ]* (?<time>[^\]]*)\] \[(?<level>[^\]]*)\](?: \[pid (?<pid>[^\]]*)\])?( \[client (?<client>[^\]]*)\])? (?<message>.*)$
+    [PARSER]
+        Name   nginx
+        Format regex
+        Regex ^(?<remote>[^ ]*) (?<host>[^ ]*) (?<user>[^ ]*) \[(?<time>[^\]]*)\] "(?<method>\S+)(?: +(?<path>[^\"]*?)(?: +\S*)?)?" (?<code>[^ ]*) (?<size>[^ ]*)(?: "(?<referer>[^\"]*)" "(?<agent>[^\"]*)")?$
+        Time_Key time
+        Time_Format %d/%b/%Y:%H:%M:%S %z
+    [PARSER]
+        Name   json
+        Format json
+        Time_Key time
+        Time_Format %d/%b/%Y:%H:%M:%S %z
+    [PARSER]
+        Name        docker
+        Format      json
+        Time_Key    time
+        Time_Format %Y-%m-%dT%H:%M:%S.%L
+        Time_Keep   On
+    [PARSER]
+        Name cri
+        Format regex
+        Regex ^(?:(?<time>[^\s]+)\s+(?<stream>\w+)\s+(?<logtag>\w+)\s+)?(?<log>\{.*\})$
+        Time_Key time
+        Time_Format %Y-%m-%dT%H:%M:%S.%L
+        Time_Keep On
+        Decode_Field_As json log
+    [PARSER]
+        Name        syslog
+        Format      regex
+        Regex       ^\<(?<pri>[0-9]+)\>(?<time>[^ ]* {1,2}[^ ]* [^ ]*) (?<host>[^ ]*) (?<ident>[a-zA-Z0-9_\/\.\-]*)(?:\[(?<pid>[0-9]+)\])?(?:[^\:]*\:)? *(?<message>.*)$
+        Time_Key    time
+        Time_Format %b %d %H:%M:%S
+

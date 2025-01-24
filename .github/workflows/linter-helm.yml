@@ -29,6 +29,12 @@ jobs:
           python-version: '3.9'
           check-latest: true
 
+      - name: "Upgrade Helm chart dependencies"
+        id: deps-update
+        uses: camptocamp/helm-dependency-update-action@v0.4.1
+        with:
+          chart-path: "charts/armonik"
+
       - name: Set up chart-testing
         uses: helm/chart-testing-action@v2.6.0
 

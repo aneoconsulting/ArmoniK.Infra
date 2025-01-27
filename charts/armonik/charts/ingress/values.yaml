@@ -158,7 +158,7 @@ ingress:
         location /admin/ {
             proxy_pass $admin_app_upstream$uri$is_args$args;
         }
-        set $armonik_upstream grpc://control-plane.armonik.svc.cluster.local:5001;
+        set $armonik_upstream grpc://control-plane.armonik.svc.cluster.local:1080;
         location ~* ^/armonik\. {
             grpc_pass $armonik_upstream;
 

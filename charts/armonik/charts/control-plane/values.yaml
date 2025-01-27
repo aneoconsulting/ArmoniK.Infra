@@ -94,9 +94,6 @@ ports:
   - name: control-port
     containerPort: 1080
     protocol: TCP
-  - name: metrics-port
-    containerPort: 1081
-    protocol: TCP
 
 config:
   core:
@@ -188,7 +185,7 @@ service:
 
   ports:
     - name: control-port
-      port: 5001
+      port: 1080
       targetPort: 1080
 
   selector:

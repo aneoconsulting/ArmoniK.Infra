@@ -4,6 +4,7 @@ locals {
   # To ensure image pull secrets are passed as an array/list with no empty string or null
   image_pull_secrets = compact(try(tolist(var.mongodb.image_pull_secrets), [tostring(var.mongodb.image_pull_secrets)]))
 }
+#test
 
 resource "helm_release" "mongodb" {
   name       = var.name

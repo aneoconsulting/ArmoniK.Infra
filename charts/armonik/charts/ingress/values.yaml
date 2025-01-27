@@ -184,7 +184,7 @@ ingress:
 
 
 
-        set $seq_upstream http://seq.armonik.svc.cluster.local:8080;
+        set $seq_upstream http://seq.armonik.svc.cluster.local:80;
         location = /seq {
             rewrite ^ $scheme://$http_host/seq/ permanent;
         }
@@ -197,7 +197,7 @@ ingress:
             sub_filter_once on;
             proxy_hide_header content-security-policy;
         }
-        set $grafana_upstream http://grafana.armonik.svc.cluster.local:3000;
+        set $grafana_upstream http://grafana.armonik.svc.cluster.local:80;
         location = /grafana {
             rewrite ^ $scheme://$http_host/grafana/ permanent;
         }
@@ -235,7 +235,7 @@ adminGui:
       maxUnavailable: 25%
     type: RollingUpdate
   
-  image: "armonik_admin_app:0.12.4"
+  image: "armonik_admin_app:0.13.3"
   imagePullPolicy: IfNotPresent
 
   ports:

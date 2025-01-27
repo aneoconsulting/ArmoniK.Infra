@@ -66,6 +66,7 @@ mongodb:
   enabled: true
   architecture: "replicaset"
   fullnameOverride: "mongodb"
+  replicaCount: 1 
   useStatefulSet: true
   persistence:
     enabled: false

@@ -154,11 +154,11 @@ ingress:
         location = /admin/en {
             rewrite ^ $scheme://$http_host/admin/en/;
         }
-        set $admin_app_upstream http://172.20.206.87:1080;
+        set $admin_app_upstream http://admin-gui.armonik.svc.cluster.local:1080;
         location /admin/ {
             proxy_pass $admin_app_upstream$uri$is_args$args;
         }
-        set $armonik_upstream grpc://172.20.171.66:5001;
+        set $armonik_upstream grpc://control-plane.armonik.svc.cluster.local:5001;
         location ~* ^/armonik\. {
             grpc_pass $armonik_upstream;
 
@@ -184,7 +184,7 @@ ingress:
 
 
 
-        set $seq_upstream http://172.20.29.109:8080;
+        set $seq_upstream http://seq.armonik.svc.cluster.local:8080;
         location = /seq {
             rewrite ^ $scheme://$http_host/seq/ permanent;
         }
@@ -197,7 +197,7 @@ ingress:
             sub_filter_once on;
             proxy_hide_header content-security-policy;
         }
-        set $grafana_upstream http://172.20.95.111:3000;
+        set $grafana_upstream http://grafana.armonik.svc.cluster.local:3000;
         location = /grafana {
             rewrite ^ $scheme://$http_host/grafana/ permanent;
         }

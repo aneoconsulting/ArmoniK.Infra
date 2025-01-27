@@ -57,7 +57,7 @@ resource "kubernetes_deployment" "activemq" {
           image_pull_policy = "IfNotPresent"
           resources {
             requests = var.activemq.requests
-            limits  = var.activemq.limits
+            limits   = var.activemq.limits
           }
           env {
             name  = "ACTIVEMQ_OPTS_MEMORY"

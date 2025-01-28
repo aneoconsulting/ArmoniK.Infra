@@ -189,7 +189,7 @@ service:
   ports:
     - name: control-port
       port: 1080
-      targetPort: 1080
+      targetPort: control-port
 
   selector:
     app: armonik

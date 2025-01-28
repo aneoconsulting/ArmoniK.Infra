@@ -88,19 +88,6 @@ mongodb:
     replicaset:
       existingSecret: mongodb-crt
 
-################## RABBITMQ ##################
-rabbitmq:
-  enabled: false
-  fullnameOverride: "rabbitmq"
-
-################## TERMINATION- ##################
-termination-handler:
-  enabled: false
-
-################## EFS-CSI ##################
-efs-csi-driver:
-  enabled: false
-
 ################## CHAOS-MASH ##################
 chaos-mesh:
   enabled: false
@@ -115,13 +102,13 @@ keda:
   #nodeSelector: {monitoring}
 
 ################## NODE-EXPORTER ##################
-node-exporter:
-  enabled: true
-  fullnameOverride: "node-exporter"
+kube-state-metrics:
+  enabled: false
+  fullnameOverride: "kube-state-metrics"
 
 ################## METRICS-SERVER ##################
 metrics-server:
-  enabled: true
+  enabled: false
   fullnameOverride: "metrics-server"
   #nodeSelector: {"monitoring"}
 
@@ -144,14 +131,14 @@ grafana:
     enabled: true
     hosts: 
     - grafana.local
+    #path: /grafana
   grafana.ini:
       server:
-        domain: localhost
+        domain: grafana.local
         root_url: http://grafana.{{ .Release.Namespace }}.svc.cluster.local
-        serve_from_sub_path: false
+        serve_from_sub_path: true
       anonymous:
         enabled: true
-  createconfigmap: true
   dashboardProviders:
     dashboardproviders.yaml:
       apiVersion: 1
@@ -262,6 +249,10 @@ prometheus:
           - targets: ["metrics-exporter.{{ .Release.Namespace }}.svc.cluster.local:9419"]
             labels:
               namespace: "armonik"
+
+      - job_name: 'kube-state-metrics'
+        static_configs:
+          - targets: ['kube-state-metrics.{{ .Release.Namespace }}.svc.cluster.local:8080']
               
       - job_name: "mongodb-metrics-exporter"
         static_configs: 

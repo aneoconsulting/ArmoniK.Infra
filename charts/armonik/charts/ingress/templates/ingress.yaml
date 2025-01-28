@@ -7,18 +7,11 @@ metadata:
   name: ingress
   namespace: {{ .Values.namespace }}
 spec:
-  progressDeadlineSeconds: {{ .Values.ingress.progressDeadlineSeconds }}
   replicas: {{ .Values.ingress.replicaCount }}
-  revisionHistoryLimit: {{ .Values.ingress.revisionHistoryLimit }}
   selector:
     matchLabels:
       app: "armonik"
       service: "ingress"
-  strategy:
-    rollingUpdate:
-      maxSurge: {{ .Values.ingress.strategy.rollingUpdate.maxSurge }}
-      maxUnavailable: {{ .Values.ingress.strategy.rollingUpdate.maxUnavailable }}
-    type: {{ .Values.ingress.strategy.type }}
   template:
     metadata:
       labels:

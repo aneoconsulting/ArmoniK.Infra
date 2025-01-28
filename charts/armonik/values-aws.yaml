@@ -94,19 +94,6 @@ mongodb:
     replicaset:
       existingSecret: mongodb-crt
 
-################## RABBITMQ ##################
-rabbitmq:
-  enabled: false
-  fullnameOverride: "rabbitmq"
-
-################## TERMINATION- ##################
-termination-handler:
-  enabled: false
-
-################## EFS-CSI ##################
-efs-csi-driver:
-  enabled: false
-
 ################## CHAOS-MASH ##################
 chaos-mesh:
   enabled: false
@@ -118,23 +105,6 @@ keda:
     certManager:
       enabled: true
       issuer: {"generate":false,"group":"cert-manager.io ","kind":"ClusterIssuer","name":"armonik-selfsigned-issuer"}
-  nodeSelector:
-    service: monitoring
-  tolerations:
-    - effect: NoSchedule
-      key: service
-      operator: Equal
-      value: monitoring
-
-################## NODE-EXPORTER ##################
-node-exporter:
-  enabled: true
-  fullnameOverride: "node-exporter"
-
-################## METRICS-SERVER ##################
-metrics-server:
-  enabled: true
-  fullnameOverride: "metrics-server"
   nodeSelector:
     service: monitoring
   tolerations:

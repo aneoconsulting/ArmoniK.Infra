@@ -11,11 +11,6 @@ spec:
     matchLabels:
       app: "armonik"
       service: "admin-gui"
-  strategy:
-    rollingUpdate:
-      maxSurge: {{ .Values.adminGui.strategy.rollingUpdate.maxSurge }}
-      maxUnavailable: {{ .Values.adminGui.strategy.rollingUpdate.maxUnavailable }}
-    type: {{ .Values.adminGui.strategy.type }}
   template:
     metadata:
       labels:

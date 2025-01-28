@@ -3,61 +3,17 @@ namespace: "armonik"
 app:
   name: my-app
   version: 1.0.0
-
-imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
-
-serviceAccount:
-  # Specifies whether a service account should be created
-  create: true
-  # Automatically mount a ServiceAccount's API credentials?
-  automount: true
-  # Annotations to add to the service account
-  annotations: {}
-  # The name of the service account to use.
-  # If not set and create is true, a name is generated using the fullname template
-  name: ""
-
-podAnnotations: {}
-podLabels: {}
-
-podSecurityContext: {}
-  # fsGroup: 2000
-
-securityContext: {}
-  # capabilities:
-  #   drop:
-  #   - ALL
-  # readOnlyRootFilesystem: true
-  # runAsNonRoot: true
-  # runAsUser: 1000
 
 ingress:
   replicaCount: 1
   className: ""
-  annotations: {}
-    # kubernetes.io/ingress.class: nginx
-    # kubernetes.io/tls-acme: "true"
-  hosts:
-    - host: chart-example.local
-      paths:
-        - path: /
-          pathType: ImplementationSpecific
   tls: []
   #  - secretName: chart-example-tls
   #    hosts:
   #      - chart-example.local
-  revisionHistoryLimit: 10
-  progressDeadlineSeconds: 600
-
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxUnavailable: 25%
-      maxSurge: 25%
-
-  image: "nginxinc/nginx-unprivileged:1.27.0-alpine-slim"
+  image: "nginxinc/nginx-unprivileged:1.27.3"
   imagePullPolicy: IfNotPresent
   ports:
   - containerPort: 8080
@@ -134,9 +90,8 @@ ingress:
 
     server {
         listen 8080;
-        listen [::]:8080;
-        listen 9080 http2;
-        listen [::]:9080 http2;
+        listen 9080;
+        http2 on;
 
         sendfile on;
         resolver kube-dns.kube-system ipv6=off;
@@ -184,7 +139,7 @@ ingress:
 
 
 
-        set $seq_upstream http://seq.armonik.svc.cluster.local:80;
+        set $seq_upstream http://seq:80;
         location = /seq {
             rewrite ^ $scheme://$http_host/seq/ permanent;
         }
@@ -199,9 +154,9 @@ ingress:
         }
         set $grafana_upstream http://grafana.armonik.svc.cluster.local:80;
         location = /grafana {
-            rewrite ^ $scheme://$http_host/grafana/ permanent;
+            rewrite ^ $scheme://$http_host/grafana/login permanent;
         }
-        location /grafana/ {
+        location /grafana {
             rewrite  ^/grafana/(.*)  /$1 break;
             proxy_set_header Host $http_host;
             proxy_pass $grafana_upstream$uri$is_args$args;
@@ -227,22 +182,12 @@ ingress:
 ###########################################################
 adminGui:
   name: admin-gui
-  replicaCount: 1
-
-  strategy:
-    rollingUpdate:
-      maxSurge: 25%
-      maxUnavailable: 25%
-    type: RollingUpdate
-  
   image: "armonik_admin_app:0.13.3"
   imagePullPolicy: IfNotPresent
-
   ports:
   - containerPort: 1080
     name: app-port
     protocol: TCP
-
   resources:
     limits:
       cpu: "1"
@@ -278,7 +223,6 @@ adminGui:
       app: "armonik"
       service: "admin-gui"
     sessionAffinity: None
-
 
 autoscaling:
   enabled: false

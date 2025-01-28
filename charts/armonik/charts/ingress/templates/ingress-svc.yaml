@@ -10,13 +10,9 @@ spec:
   allocateLoadBalancerNodePorts: {{ .Values.ingress.service.allocateLoadBalancerNodePorts }}
   externalTrafficPolicy: {{ .Values.ingress.service.externalTrafficPolicy }}
   internalTrafficPolicy: {{ .Values.ingress.service.internalTrafficPolicy }}
-  ipFamilies:
-  - IPv4
-  ipFamilyPolicy: SingleStack
   ports:
   {{- toYaml .Values.ingress.service.servicePorts | nindent 2 }}
   selector:
     app: armonik
     service: ingress
-  sessionAffinity: None
   type: {{ .Values.ingress.service.type }}

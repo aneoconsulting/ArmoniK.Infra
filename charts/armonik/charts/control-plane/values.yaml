@@ -181,10 +181,6 @@ config:
 service:
   name: control-plane
   serviceType: ClusterIP
-  clusterIP: null
-  ipFamilies:
-    - IPv4
-  ipFamilyPolicy: SingleStack
 
   ports:
     - name: control-port

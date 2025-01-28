@@ -17,7 +17,7 @@ resource "null_resource" "timestamp" {
 }
 
 data "aws_vpc" "default" {
-  default = true
+  id = "vpc-06ea74e725b5ee5e1"
 }
 
 data "aws_subnets" "subnets" {
@@ -77,6 +77,17 @@ module "eks" {
   efs_csi_external_provisioner_tag    = "v3.4.0-eks-1-22-19"
   efs_csi_repository                  = "https://kubernetes-sigs.github.io/aws-efs-csi-driver/"
   efs_csi_version                     = "2.3.0"
+
+  ebs_csi_image                       = "amazon/aws-ebs-csi-driver"
+  ebs_csi_tag                         = "v1.39.0"
+  ebs_csi_liveness_probe_image        = "public.ecr.aws/eks-distro/kubernetes-csi/livenessprobe"
+  ebs_csi_liveness_probe_tag          = "v2.14.0-eks-1-31-12"
+  ebs_csi_node_driver_registrar_image = "public.ecr.aws/eks-distro/kubernetes-csi/node-driver-registrar"
+  ebs_csi_node_driver_registrar_tag   = "v2.13.0-eks-1-31-12"
+  ebs_csi_external_provisioner_image  = "public.ecr.aws/eks-distro/kubernetes-csi/external-provisioner"
+  ebs_csi_external_provisioner_tag    = "v5.1.0-eks-1-31-12"
+  ebs_csi_repository                  = "https://kubernetes-sigs.github.io/aws-ebs-csi-driver/"
+  ebs_csi_version                     = "2.39.1"
 
   eks_managed_node_groups = {
     test = {

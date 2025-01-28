@@ -2,7 +2,7 @@
 variable "aws_profile" {
   description = "Profile of AWS credentials to deploy Terraform sources"
   type        = string
-  default     = "default"
+  default     = "tschneider"
 }
 
 # Region

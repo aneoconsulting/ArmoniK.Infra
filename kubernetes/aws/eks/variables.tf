@@ -293,6 +293,73 @@ variable "efs_csi_version" {
   type        = string
 }
 
+# EBS
+
+variable "ebs_csi_image" {
+  description = "EBS CSI image name"
+  type        = string
+}
+variable "ebs_csi_tag" {
+  description = "EBS CSI image tag"
+  type        = string
+}
+variable "ebs_csi_liveness_probe_image" {
+  description = "EBS CSI liveness probe image name"
+  type        = string
+}
+variable "ebs_csi_liveness_probe_tag" {
+  description = "EBS CSI liveness probe image tag"
+  type        = string
+}
+variable "ebs_csi_node_driver_registrar_image" {
+  description = "EBS CSI node driver registrar image name"
+  type        = string
+}
+variable "ebs_csi_node_driver_registrar_tag" {
+  description = "EBS CSI node driver registrar image tag"
+  type        = string
+}
+variable "ebs_csi_external_provisioner_image" {
+  description = "EBS CSI external provisioner image name"
+  type        = string
+}
+variable "ebs_csi_external_provisioner_tag" {
+  description = "EBS CSI external provisioner image tag"
+  type        = string
+}
+variable "ebs_csi_name" {
+  description = "EBS CSI name"
+  type        = string
+  default     = null
+}
+variable "ebs_csi_namespace" {
+  description = "EBS CSI namespace"
+  type        = string
+  default     = null
+}
+variable "ebs_csi_image_pull_secrets" {
+  description = "Image pull secret used to pull EFS CSI images"
+  type        = string
+  default     = null
+}
+variable "ebs_csi_repository" {
+  description = "EBS CSI helm repository"
+  type        = string
+}
+variable "ebs_csi_version" {
+  description = "EBS CSI helm version"
+  type        = string
+}
+variable "ebs_csi_controller_resources" {
+  description = "Resources to allocate for EBS CSI driver controller"
+  type = object({
+    limits   = optional(map(string))
+    requests = optional(map(string))
+  })
+  default = {}
+}
+
+
 # Encryption keys
 variable "cluster_log_kms_key_id" {
   description = "KMS id to encrypt/decrypt the cluster's logs"

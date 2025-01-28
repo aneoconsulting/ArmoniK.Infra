@@ -8,10 +8,13 @@ variable "namespace" {
 variable "activemq" {
   description = "Parameters of ActiveMQ"
   type = object({
-    image              = string
-    tag                = string
-    node_selector      = any
-    image_pull_secrets = string
+    image                = string
+    tag                  = string
+    node_selector        = any
+    image_pull_secrets   = string
+    limits               = optional(map(string))
+    requests             = optional(map(string))
+    activemq_opts_memory = optional(string)
   })
 }
 

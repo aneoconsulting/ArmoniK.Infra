@@ -3,7 +3,7 @@ replicaCount: 1
 namespace: armonik
 shareProcessNamespace: false
 restartPolicy: Always
-registry: "dockerhubaneo"
+registry: dockerhubaneo
 
 computePlane:
   metadata:

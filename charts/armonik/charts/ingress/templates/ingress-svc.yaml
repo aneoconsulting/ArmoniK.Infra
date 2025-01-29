@@ -2,17 +2,28 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    app: "armonik"
-    service: "ingress"
+    app: {{ .Release.Name }}
+    service: ingress
   name: ingress
   namespace: {{ .Values.namespace }}
 spec:
-  allocateLoadBalancerNodePorts: {{ .Values.ingress.service.allocateLoadBalancerNodePorts }}
-  externalTrafficPolicy: {{ .Values.ingress.service.externalTrafficPolicy }}
-  internalTrafficPolicy: {{ .Values.ingress.service.internalTrafficPolicy }}
-  ports:
-  {{- toYaml .Values.ingress.service.servicePorts | nindent 2 }}
-  selector:
-    app: armonik
-    service: ingress
+  {{ if eq .Values.ingress.type "LoadBalancer" }}
+  externalTrafficPolicy: "Cluster"
+  internalTrafficPolicy: "Cluster"
+  allocateLoadBalancerNodePorts: true
   type: {{ .Values.ingress.service.type }}
+  {{ end }}
+  ports:
+    - name: ingress-http
+      #nodePort: {{ .Values.ingress.ports.http.nodePortHttp }}
+      port: {{ .Values.ingress.ports.http.ServicePort }}
+      protocol: TCP
+      targetPort: {{ .Values.ingress.ports.http.name }}
+    - name: ingress-grpc
+      #nodePort: {{ .Values.ingress.ports.grpc.nodePortGrpc }}
+      port: {{ .Values.ingress.ports.grpc.ServicePort }}
+      protocol: TCP
+      targetPort: {{ .Values.ingress.ports.grpc.name }}
+  selector:
+    app: {{ .Release.Name }}
+    service: ingress

@@ -37,6 +37,10 @@ redis:
     replicaCount: 1
     persistence:
       enabled: false
+    autoscaling:
+      enabled: true
+      targetCPU: "80"
+      targetMemory: "80"
   fullnameOverride: "redis"
   tls:
     enabled: false

@@ -1,14 +1,11 @@
 registry: dockerhubaneo
-namespace: "armonik"
-app:
-  name: my-app
-  version: 1.0.0
+namespace: armonik
 nameOverride: ""
-fullnameOverride: ""
 
 ingress:
   replicaCount: 1
   className: ""
+  type: ClusterIP
   tls: []
   #  - secretName: chart-example-tls
   #    hosts:
@@ -16,12 +13,16 @@ ingress:
   image: "nginxinc/nginx-unprivileged:1.27.3"
   imagePullPolicy: IfNotPresent
   ports:
-  - containerPort: 8080
-    name: ingress-p-http
-    protocol: TCP
-  - containerPort: 9080
-    name: ingress-p-grpc
-    protocol: TCP
+    grpc:
+      name: ingress-grpc
+      containerPort: 9080
+      nodePortGrpc: 30313
+      ServicePort: 5001
+    http:
+      name: ingress-http
+      containerPort: 8080
+      nodePortHttp: 32689
+      ServicePort: 5000
   
   resources:
     limits:
@@ -30,15 +31,6 @@ ingress:
     requests:
       cpu: "100m"
       memory: "128Mi"
-
-  terminationMessagePath: /dev/termination-log
-  terminationMessagePolicy: File
-
-  restartPolicy: Always
-  schedulerName: default-scheduler
-  securityContext: {}
-  shareProcessNamespace: false
-  terminationGracePeriodSeconds: 30
   
   volumes:
     ingressSecret: ingress-crt
@@ -52,131 +44,7 @@ ingress:
     key: service
     operator: Equal
     value: control-plane
-
-###########################################################
-# Ingress service
-###########################################################
-
-
-  service:
-    type: "LoadBalancer"
-    externalTrafficPolicy: "Cluster"
-    internalTrafficPolicy: "Cluster"
-    allocateLoadBalancerNodePorts: true
-
-    servicePorts:
-    - name: ingress-p-http
-      nodePort: 32689
-      port: 5000
-      protocol: TCP
-      targetPort: 8080
-    - name: ingress-p-grpc
-      nodePort: 30313
-      port: 5001
-      protocol: TCP
-      targetPort: 9080
-
-  # Content of principal configmap
-  configmapContent: |-
-    map $http_accept_language $accept_language {
-        default en;
-        ~*^en en;
-    }
-
-    map $http_upgrade $connection_upgrade {
-        default upgrade;
-        '' close;
-    }
-
-    server {
-        listen 8080;
-        listen 9080;
-        http2 on;
-
-        sendfile on;
-        resolver kube-dns.kube-system ipv6=off;
-
-        location = / {
-            rewrite ^ $scheme://$http_host/admin/$accept_language/;
-        }
-
-        location = /admin {
-            rewrite ^ $scheme://$http_host/admin/$accept_language/;
-        }
-        location = /admin/ {
-            rewrite ^ $scheme://$http_host/admin/$accept_language/;
-        }
-        location = /admin/en {
-            rewrite ^ $scheme://$http_host/admin/en/;
-        }
-        set $admin_app_upstream http://admin-gui.armonik.svc.cluster.local:1080;
-        location /admin/ {
-            proxy_pass $admin_app_upstream$uri$is_args$args;
-        }
-        set $armonik_upstream grpc://control-plane.armonik.svc.cluster.local:1080;
-        location ~* ^/armonik\. {
-            grpc_pass $armonik_upstream;
-
-            # Apparently, multiple chunks in a grpc stream is counted has a single body
-            # So disable the limit
-            client_max_body_size 0;
-
-            # add a timeout of 1 month to avoid grpc exception for long task
-            # TODO: find better configuration
-            proxy_read_timeout 30d;
-            proxy_send_timeout 1d;
-            grpc_read_timeout 30d;
-            grpc_send_timeout 1d;
-        }
-
-        location /static/ {
-            alias /static/;
-        }
-
-
-      proxy_buffering off;
-      proxy_request_buffering off;
-
-
-
-        set $seq_upstream http://seq:80;
-        location = /seq {
-            rewrite ^ $scheme://$http_host/seq/ permanent;
-        }
-        location /seq/ {
-            proxy_set_header Host $http_host;
-            proxy_set_header Accept-Encoding "";
-            rewrite  ^/seq/(.*)  /$1 break;
-            proxy_pass $seq_upstream$uri$is_args$args;
-            sub_filter '<head>' '<head><base href="${scheme}://${http_host}/seq/">';
-            sub_filter_once on;
-            proxy_hide_header content-security-policy;
-        }
-        set $grafana_upstream http://grafana.armonik.svc.cluster.local:80;
-        location = /grafana {
-            rewrite ^ $scheme://$http_host/grafana/login permanent;
-        }
-        location /grafana {
-            rewrite  ^/grafana/(.*)  /$1 break;
-            proxy_set_header Host $http_host;
-            proxy_pass $grafana_upstream$uri$is_args$args;
-            sub_filter '<head>' '<head><base href="${scheme}://${http_host}/grafana/">';
-            sub_filter_once on;
-            proxy_intercept_errors on;
-            error_page 301 302 307 =302 ${scheme}://${http_host}${upstream_http_location};
-        }
-        location /grafana/api/live {
-            rewrite  ^/grafana/(.*)  /$1 break;
-            proxy_http_version 1.1;
-            proxy_set_header Host $http_host;
-            proxy_pass $grafana_upstream$uri$is_args$args;
-        }
-    }
-  
- # Content of static configmap
-  staticConfigmapContent:
-    environmentJson: '{"color": "#80ff80", "description": "AWS environment", "name": "aws-dev", "version": "0.0.0"}'
-
+    
 ###########################################################
 # Admin GUI
 ###########################################################
@@ -184,10 +52,7 @@ adminGui:
   name: admin-gui
   image: "armonik_admin_app:0.13.3"
   imagePullPolicy: IfNotPresent
-  ports:
-  - containerPort: 1080
-    name: app-port
-    protocol: TCP
+  port: 1080
   resources:
     limits:
       cpu: "1"
@@ -196,40 +61,11 @@ adminGui:
       cpu: 100m
       memory: 128Mi
 
-  terminationMessagePath: /dev/termination-log
-  terminationMessagePolicy: File
-
   tolerations:
   - effect: "NoSchedule"
     key: "service"
     operator: "Equal"
     value: "control-plane"
-
-  restartPolicy: Always
-  schedulerName: default-scheduler
-  securityContext: {}
-  shareProcessNamespace: false
-  terminationGracePeriodSeconds: 30
-
-  service:
-    type: "ClusterIP"
-
-    servicePorts:
-    - name: app-port
-      port: 1080
-      protocol: TCP
-      targetPort: 1080
-    selector:
-      app: "armonik"
-      service: "admin-gui"
-    sessionAffinity: None
-
-autoscaling:
-  enabled: false
-  minReplicas: 1
-  maxReplicas: 100
-  targetCPUUtilizationPercentage: 80
-  # targetMemoryUtilizationPercentage: 80
 
 nodeSelector: {}
 

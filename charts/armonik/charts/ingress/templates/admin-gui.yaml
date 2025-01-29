@@ -2,20 +2,20 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app: "armonik"
-    service: "admin-gui"
+    app: {{ .Release.Name }}
+    service: admin-gui
   name: admin-gui
   namespace: {{ .Values.namespace }}
 spec:
   selector:
     matchLabels:
-      app: "armonik"
-      service: "admin-gui"
+      app: {{ .Release.Name }}
+      service: admin-gui
   template:
     metadata:
       labels:
-        app: "armonik"
-        service: "admin-gui"
+        app: {{ .Release.Name }}
+        service: admin-gui
       name: admin-gui
       namespace: {{ .Values.namespace }}
     spec:
@@ -25,17 +25,10 @@ spec:
         imagePullPolicy: {{ .Values.adminGui.imagePullPolicy }}
         name: admin-app
         ports:
-        {{- toYaml .Values.adminGui.ports | nindent 8 }}
+        - name: app-port
+          containerPort: {{ .Values.adminGui.port }}
+          protocol: TCP        
         resources:
         {{- toYaml .Values.adminGui.resources | nindent 10 }}
-        terminationMessagePath: {{ .Values.adminGui.terminationMessagePath }}
-        terminationMessagePolicy: {{ .Values.adminGui.terminationMessagePolicy }}
-      dnsPolicy: ClusterFirst
-      enableServiceLinks: true
-      restartPolicy: {{ .Values.adminGui.restartPolicy }}
-      schedulerName: {{ .Values.adminGui.schedulerName }}
-      securityContext: {}
-      shareProcessNamespace: false
-      terminationGracePeriodSeconds: 30
       tolerations:
       {{- toYaml .Values.adminGui.tolerations | nindent 8 }}

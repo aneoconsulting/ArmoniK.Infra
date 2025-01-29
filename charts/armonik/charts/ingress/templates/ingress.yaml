@@ -2,22 +2,22 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app: armonik
-    service: ingress
-  name: ingress
+    app: {{ .Release.Name }}
+    service: {{ .Chart.Name }}
+  name: {{ .Chart.Name }}
   namespace: {{ .Values.namespace }}
 spec:
   replicas: {{ .Values.ingress.replicaCount }}
   selector:
     matchLabels:
-      app: "armonik"
-      service: "ingress"
+      app: {{ .Release.Name }}
+      service: {{ .Chart.Name }}
   template:
     metadata:
       labels:
-        app: "armonik"
-        service: "ingress"
-      name: ingress
+        app: {{ .Release.Name }}
+        service: {{ .Chart.Name }}
+      name: {{ .Chart.Name }}
       namespace: {{ .Values.namespace }}
     spec:
       automountServiceAccountToken: true
@@ -28,9 +28,14 @@ spec:
             optional: false
         image: {{ .Values.ingress.image }}
         imagePullPolicy: {{ .Values.ingress.imagePullPolicy }}
-        name: ingress
+        name: {{ .Chart.Name }}
         ports:
-        {{- toYaml .Values.ingress.ports | nindent 8 }}
+        - name: ingress-http
+          containerPort: {{ .Values.ingress.ports.http.containerPort }}
+          protocol: TCP
+        - name: ingress-grpc
+          containerPort: {{ .Values.ingress.ports.grpc.containerPort }}
+          protocol: TCP
         {{- if .Values.ingress.resources }}
         resources:
         {{- toYaml .Values.ingress.resources | nindent 10 }}

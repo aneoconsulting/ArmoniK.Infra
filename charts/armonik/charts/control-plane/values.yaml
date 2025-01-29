@@ -142,7 +142,8 @@ config:
       Redis__User: ""
       #Redis__CaPath: /redis/ca.crt
       Redis__ClientName: ArmoniK.Core
-      Redis__EndpointUrl: redis-headless:6379
+      Redis__EndpointUrl: redis-master:6379
+      #Redis__EndpointUrl: redis-headless:6379
       Redis__InstanceName: ArmoniKRedis
       #Redis__Ssl: "false"
       #Redis__SslHost: 127.0.0.1

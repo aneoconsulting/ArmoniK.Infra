@@ -11,16 +11,16 @@ spec:
   externalTrafficPolicy: "Cluster"
   internalTrafficPolicy: "Cluster"
   allocateLoadBalancerNodePorts: true
-  type: {{ .Values.ingress.service.type }}
+  type: {{ .Values.ingress.type }}
   {{ end }}
   ports:
     - name: ingress-http
-      #nodePort: {{ .Values.ingress.ports.http.nodePortHttp }}
+      nodePort: {{ .Values.ingress.ports.http.nodePortHttp }}
       port: {{ .Values.ingress.ports.http.ServicePort }}
       protocol: TCP
       targetPort: {{ .Values.ingress.ports.http.name }}
     - name: ingress-grpc
-      #nodePort: {{ .Values.ingress.ports.grpc.nodePortGrpc }}
+      nodePort: {{ .Values.ingress.ports.grpc.nodePortGrpc }}
       port: {{ .Values.ingress.ports.grpc.ServicePort }}
       protocol: TCP
       targetPort: {{ .Values.ingress.ports.grpc.name }}

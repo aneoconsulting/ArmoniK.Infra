@@ -9,5 +9,5 @@ metadata:
 spec:
   ports:
   - port: {{ .Values.adminGui.port }}
-    targetPort: app-port
+    targetPort: 1080
     protocol: TCP

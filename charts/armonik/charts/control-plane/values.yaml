@@ -185,8 +185,8 @@ service:
 
   ports:
     - name: control-port
-      port: 1080
-      targetPort: control-port
+      port: 5001
+      targetPort: 1080
 
   selector:
     app: armonik

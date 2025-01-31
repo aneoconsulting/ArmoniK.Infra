@@ -54,7 +54,7 @@ redis:
   usernames:
     admin: admin
   master:
-    resourcesPreset: xlarge
+    resourcesPreset: nano
     persistence:
       enabled: false
     containerPorts:
@@ -194,17 +194,145 @@ fluent-bit:
     enabled: true
     serviceMonitor:
       enabled: false
-  aggregator:
-    configMap: "fluent-bit-configmap-armonik"
-    extraEnvVars:
-      - name: FLUENT_HTTP_SEQ_HOST
-        value: "seq"
-      - name: FLUENT_HTTP_SEQ_PORT
-        value: "5341"
   ingress:
     enabled: true
     selfSigned: true
     tls: true
+  config:
+    filters: |
+      [FILTER]
+          Name                kubernetes
+          Match               *
+          Kube_URL            https://kubernetes.default.svc:443
+          Kube_CA_File        /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+          Kube_Token_File     /var/run/secrets/kubernetes.io/serviceaccount/token
+          Kube_Tag_Prefix     kube.var.log.containers.
+          Merge_Log           On
+          Merge_Log_Key       log
+          Merge_Log_Trim      On
+          Merge_Parser        json
+          Keep_Log            Off
+          Annotations         On
+          Labels              On
+          K8S-Logging.Parser  On
+          K8S-Logging.Exclude Off
+          Buffer_Size         0
+      [FILTER]
+          Name                    nest
+          Match                   *
+          Operation               lift
+          Nested_under            kubernetes
+          Add_prefix              kubernetes_
+      [FILTER]
+          Name                    nest
+          Match                   *
+          Operation               lift
+          Nested_under            log
+      [FILTER]
+          Name                    modify
+          Match                   *
+          Condition               Key_exists log
+          Rename                  log @m
+          Add                     sourcetype renamelog
+    inputs: |
+      [INPUT]
+          Name               tail
+          Tag                kube.*
+          Path               /var/log/containers/control-plane*.log, /var/log/containers/compute-plane*.log
+          Parser             cri
+          Docker_Mode        On
+          Buffer_Chunk_Size  512KB
+          Buffer_Max_Size    5M
+          Rotate_Wait        30
+          Mem_Buf_Limit      30MB
+          Skip_Long_Lines    Off
+          Refresh_Interval   10
+          READ_FROM_HEAD     On
+      [INPUT]
+          Name               tail
+          Tag                application.*
+          Path               /var/log/containers/control-plane*.log, /var/log/containers/compute-plane*.log, /var/log/containers/ingress*.log, /var/log/containers/mongodb*.log, /var/log/containers/keda*.log
+          Parser             cri
+          Docker_Mode        On
+          Buffer_Chunk_Size  512KB
+          Buffer_Max_Size    5M
+          Rotate_Wait        30
+          Mem_Buf_Limit      30MB
+          Skip_Long_Lines    Off
+          Refresh_Interval   10
+          READ_FROM_HEAD     On
+      [INPUT]
+          Name               tail
+          Tag                s3-application.*
+          Path               /var/log/containers/control-plane*.log, /var/log/containers/compute-plane*.log, /var/log/containers/ingress*.log, /var/log/containers/mongodb*.log, /var/log/containers/keda*.log
+          Parser             cri
+          Docker_Mode        On
+          Buffer_Chunk_Size  512KB
+          Buffer_Max_Size    5M
+          Rotate_Wait        30
+          Mem_Buf_Limit      30MB
+          Skip_Long_Lines    Off
+          Refresh_Interval   10
+          READ_FROM_HEAD     On
+    outputs: |
+      [OUTPUT]
+          Name                    http
+          Match                   kube.*
+          Host                    seq.armonik.svc.cluster.local
+          Port                    5341
+          URI                     /api/events/raw?clef
+          Header                  ContentType application/vnd.serilog.clef
+          Format                  json_lines
+          json_date_key           @t
+          json_date_format        iso8601
+    customParsers: |
+      [PARSER]
+          Name   apache
+          Format regex
+          Regex  ^(?<host>[^ ]*) [^ ]* (?<user>[^ ]*) \[(?<time>[^\]]*)\] "(?<method>\S+)(?: +(?<path>[^\"]*?)(?: +\S*)?)?" (?<code>[^ ]*) (?<size>[^ ]*)(?: "(?<referer>[^\"]*)" "(?<agent>[^\"]*)")?$
+          Time_Key time
+          Time_Format %d/%b/%Y:%H:%M:%S %z
+      [PARSER]
+          Name   apache2
+          Format regex
+          Regex  ^(?<host>[^ ]*) [^ ]* (?<user>[^ ]*) \[(?<time>[^\]]*)\] "(?<method>\S+)(?: +(?<path>[^ ]*) +\S*)?" (?<code>[^ ]*) (?<size>[^ ]*)(?: "(?<referer>[^\"]*)" "(?<agent>[^\"]*)")?$
+          Time_Key time
+          Time_Format %d/%b/%Y:%H:%M:%S %z
+      [PARSER]
+          Name   apache_error
+          Format regex
+          Regex  ^\[[^ ]* (?<time>[^\]]*)\] \[(?<level>[^\]]*)\](?: \[pid (?<pid>[^\]]*)\])?( \[client (?<client>[^\]]*)\])? (?<message>.*)$
+      [PARSER]
+          Name   nginx
+          Format regex
+          Regex ^(?<remote>[^ ]*) (?<host>[^ ]*) (?<user>[^ ]*) \[(?<time>[^\]]*)\] "(?<method>\S+)(?: +(?<path>[^\"]*?)(?: +\S*)?)?" (?<code>[^ ]*) (?<size>[^ ]*)(?: "(?<referer>[^\"]*)" "(?<agent>[^\"]*)")?$
+          Time_Key time
+          Time_Format %d/%b/%Y:%H:%M:%S %z
+      [PARSER]
+          Name   json
+          Format json
+          Time_Key time
+          Time_Format %d/%b/%Y:%H:%M:%S %z
+      [PARSER]
+          Name        docker
+          Format      json
+          Time_Key    time
+          Time_Format %Y-%m-%dT%H:%M:%S.%L
+          Time_Keep   On
+      [PARSER]
+          Name cri
+          Format regex
+          Regex ^(?:(?<time>[^\s]+)\s+(?<stream>\w+)\s+(?<logtag>\w+)\s+)?(?<log>\{.*\})$
+          Time_Key time
+          Time_Format %Y-%m-%dT%H:%M:%S.%L
+          Time_Keep On
+          Decode_Field_As json log
+      [PARSER]
+          Name        syslog
+          Format      regex
+          Regex       ^\<(?<pri>[0-9]+)\>(?<time>[^ ]* {1,2}[^ ]* [^ ]*) (?<host>[^ ]*) (?<ident>[a-zA-Z0-9_\/\.\-]*)(?:\[(?<pid>[0-9]+)\])?(?:[^\:]*\:)? *(?<message>.*)$
+          Time_Key    time
+          Time_Format %b %d %H:%M:%S
 
 ################## SEQ ##################
 seq:
@@ -223,186 +351,171 @@ ingress:
 
 ################## PROMETHEUS ##################
 prometheus:
-  enabled: true
-  #nodeSelector: {"metrics"}
+  enabled: false
+  nameOverride: "prometheus"
   fullnameOverride: "prometheus"
-  datasources:
-    secretDefinition:
-      apiVersion: 1
-      datasources:
-      - name: Prometheus
-        type: prometheus
-        access: proxy
-        orgId: 1
-        url: http://prometheus-server.{{ .Release.Namespace }}.svc.cluster.local
-        isDefault: true
-        jsonData:
-          tlsSkipVerify: true
-        version: 1
+  namespaceOverride: "armonik"
   alertmanager:
     enabled: false
-  kubeStateMetrics:
-    enabled: true
-  nodeExporter:
-    enabled: true
-  server:
-    resourcesPreset: medium
-    ingress:
-      enabled: true
-      tls: true
-      selfSigned: true
-    service:
-      type: ClusterIP
-      port: 9090
-    containerPorts:
-      http: 9090
+  blackboxExporter:
+    enabled: false
+  exporters:
+    node-exporter:
+      enabled: false
+    kube-state-metrics:
+      enabled: false
+  prometheus:
     scrapeInterval: 10s
     evaluationInterval: 30s
-    extraScrapeConfigs:
-      - job_name: "metrics-exporter"
-        static_configs:
-          - targets: ["metrics-exporter.{{ .Release.Namespace }}.svc.cluster.local:9419"]
-            labels:
-              namespace: "armonik"
+    additionalScrapeConfigs:
+      enabled: true
+      type: internal
+      internal:
+        jobList:
+          - job_name: "metrics-exporter"
+            static_configs:
+              - targets: ["metrics-exporter.{{ .Release.Namespace }}.svc.cluster.local:9419"]
+                labels:
+                  namespace: "armonik"
 
-      - job_name: 'kube-state-metrics'
-        static_configs:
-          - targets: ['kube-state-metrics.{{ .Release.Namespace }}.svc.cluster.local:8080']
-              
-      - job_name: "mongodb-metrics-exporter"
-        static_configs: 
-          - targets: ["mongodb.{{ .Release.Namespace }}.svc.cluster.local:27017"]
-            labels:
-              namespace: "armonik"
-        metrics_path: /metrics
-        scheme: http
+          - job_name: 'kube-state-metrics'
+            static_configs:
+              - targets: ['kube-state-metrics.{{ .Release.Namespace }}.svc.cluster.local:8080']
+                  
+          - job_name: "mongodb-metrics-exporter"
+            static_configs: 
+              - targets: ["mongodb.{{ .Release.Namespace }}.svc.cluster.local:27017"]
+                labels:
+                  namespace: "armonik"
+            metrics_path: /metrics
+            scheme: http
 
-      - job_name: "kubernetes-apiservers"
-        kubernetes_sd_configs:
-          - role: endpoints
-        scheme: https
-        tls_config:
-          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
-        relabel_configs:
-          - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
-            action: keep
-            regex: default;kubernetes;https
-          - source_labels: [__meta_kubernetes_pod_name]
-            action: replace
-            target_label: kubernetes_pod_name
-          - source_labels: [__meta_kubernetes_pod_node_name]
-            action: replace
-            target_label: kubernetes_pod_node_name
+          - job_name: "kubernetes-apiservers"
+            kubernetes_sd_configs:
+              - role: endpoints
+            scheme: https
+            tls_config:
+              ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+            bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+            relabel_configs:
+              - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
+                action: keep
+                regex: default;kubernetes;https
+              - source_labels: [__meta_kubernetes_pod_name]
+                action: replace
+                target_label: kubernetes_pod_name
+              - source_labels: [__meta_kubernetes_pod_node_name]
+                action: replace
+                target_label: kubernetes_pod_node_name
 
-      - job_name: "kubernetes-pods"
-        kubernetes_sd_configs:
-          - role: pod
-        relabel_configs:
-          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
-            action: keep
-            regex: true
-          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
-            action: replace
-            target_label: __metrics_path__
-            regex: (.+)
-          - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
-            action: replace
-            regex: ([^:]+)(?::\d+)?;(\d+)
-            replacement: $1:$2
-            target_label: __address__
-          - action: labelmap
-            regex: __meta_kubernetes_pod_label_(.+)
-          - source_labels: [__meta_kubernetes_namespace]
-            action: replace
-            target_label: kubernetes_namespace
-          - source_labels: [__meta_kubernetes_pod_name]
-            action: replace
-            target_label: kubernetes_pod_name
-          - source_labels: [__meta_kubernetes_pod_node_name]
-            action: replace
-            target_label: kubernetes_pod_node_name
+          - job_name: "kubernetes-pods"
+            kubernetes_sd_configs:
+              - role: pod
+            relabel_configs:
+              - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+                action: keep
+                regex: true
+              - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+                action: replace
+                target_label: __metrics_path__
+                regex: (.+)
+              - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+                action: replace
+                regex: ([^:]+)(?::\d+)?;(\d+)
+                replacement: $1:$2
+                target_label: __address__
+              - action: labelmap
+                regex: __meta_kubernetes_pod_label_(.+)
+              - source_labels: [__meta_kubernetes_namespace]
+                action: replace
+                target_label: kubernetes_namespace
+              - source_labels: [__meta_kubernetes_pod_name]
+                action: replace
+                target_label: kubernetes_pod_name
+              - source_labels: [__meta_kubernetes_pod_node_name]
+                action: replace
+                target_label: kubernetes_pod_node_name
 
-      - job_name: "kubernetes-cadvisor"
-        kubernetes_sd_configs:
-          - role: node
-        scheme: https
-        tls_config:
-          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
-        metrics_path: /metrics/cadvisor
-        relabel_configs:
-          - action: labelmap
-            regex: __meta_kubernetes_node_label_(.+)
+          - job_name: "kubernetes-cadvisor"
+            kubernetes_sd_configs:
+              - role: node
+            scheme: https
+            tls_config:
+              ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+            bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+            metrics_path: /metrics/cadvisor
+            relabel_configs:
+              - action: labelmap
+                regex: __meta_kubernetes_node_label_(.+)
 
-      - job_name: "kubernetes-resource"
-        kubernetes_sd_configs:
-          - role: node
-        scheme: https
-        tls_config:
-          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
-        metrics_path: /metrics/resource
-        relabel_configs:
-          - action: labelmap
-            regex: __meta_kubernetes_node_label_(.+)
+          - job_name: "kubernetes-resource"
+            kubernetes_sd_configs:
+              - role: node
+            scheme: https
+            tls_config:
+              ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+            bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+            metrics_path: /metrics/resource
+            relabel_configs:
+              - action: labelmap
+                regex: __meta_kubernetes_node_label_(.+)
 
-      - job_name: "kubernetes-probes"
-        kubernetes_sd_configs:
-          - role: node
-        scheme: https
-        tls_config:
-          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
-        metrics_path: /metrics/probes
-        relabel_configs:
-          - action: labelmap
-            regex: __meta_kubernetes_node_label_(.+)
+          - job_name: "kubernetes-probes"
+            kubernetes_sd_configs:
+              - role: node
+            scheme: https
+            tls_config:
+              ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+            bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+            metrics_path: /metrics/probes
+            relabel_configs:
+              - action: labelmap
+                regex: __meta_kubernetes_node_label_(.+)
 
-      - job_name: 'metrics-control-plane' 
-        kubernetes_sd_configs:
-          - role: pod 
-        relabel_configs:
-          - source_labels: [__meta_kubernetes_pod_container_port_number]
-            action: keep
-            regex: "1081" 
-          - source_labels: [__meta_kubernetes_pod_label_app]
-            action: keep
-            regex: "armonik"
-          - source_labels: [__meta_kubernetes_pod_label_service]
-            action: keep
-            regex: "control-plane"
-          - source_labels: [__meta_kubernetes_namespace]
-            action: replace
-            target_label: kubernetes_namespace
-          - source_labels: [__meta_kubernetes_pod_node_name]
-            action: replace
-            target_label: kubernetes_pod_node_name
-          - source_labels: [__meta_kubernetes_pod_name]
-            action: replace
-            target_label: kubernetes_pod_name
+          - job_name: 'metrics-control-plane' 
+            kubernetes_sd_configs:
+              - role: pod 
+            relabel_configs:
+              - source_labels: [__meta_kubernetes_pod_container_port_number]
+                action: keep
+                regex: "1081" 
+              - source_labels: [__meta_kubernetes_pod_label_app]
+                action: keep
+                regex: "armonik"
+              - source_labels: [__meta_kubernetes_pod_label_service]
+                action: keep
+                regex: "control-plane"
+              - source_labels: [__meta_kubernetes_namespace]
+                action: replace
+                target_label: kubernetes_namespace
+              - source_labels: [__meta_kubernetes_pod_node_name]
+                action: replace
+                target_label: kubernetes_pod_node_name
+              - source_labels: [__meta_kubernetes_pod_name]
+                action: replace
+                target_label: kubernetes_pod_name
 
-      - job_name: 'metrics-polling-agent' 
-        kubernetes_sd_configs:
-          - role: pod 
-        relabel_configs:
-          - source_labels: [__meta_kubernetes_pod_container_port_number]
-            action: keep
-            regex: "1080" 
-          - source_labels: [__meta_kubernetes_pod_label_app]
-            action: keep
-            regex: "armonik"
-          - source_labels: [__meta_kubernetes_pod_label_service]
-            action: keep
-            regex: "compute-plane"
-          - source_labels: [__meta_kubernetes_namespace]
-            action: replace
-            target_label: kubernetes_namespace
-          - source_labels: [__meta_kubernetes_pod_node_name]
-            action: replace
-            target_label: kubernetes_pod_node_name
-          - source_labels: [__meta_kubernetes_pod_name]
-            action: replace
-            target_label: kubernetes_pod_name
+          - job_name: 'metrics-polling-agent' 
+            kubernetes_sd_configs:
+              - role: pod 
+            relabel_configs:
+              - source_labels: [__meta_kubernetes_pod_container_port_number]
+                action: keep
+                regex: "1080" 
+              - source_labels: [__meta_kubernetes_pod_label_app]
+                action: keep
+                regex: "armonik"
+              - source_labels: [__meta_kubernetes_pod_label_service]
+                action: keep
+                regex: "compute-plane"
+              - source_labels: [__meta_kubernetes_namespace]
+                action: replace
+                target_label: kubernetes_namespace
+              - source_labels: [__meta_kubernetes_pod_node_name]
+                action: replace
+                target_label: kubernetes_pod_node_name
+              - source_labels: [__meta_kubernetes_pod_name]
+                action: replace
+                target_label: kubernetes_pod_name
 
 ############################################

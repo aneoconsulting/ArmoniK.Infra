@@ -18,12 +18,12 @@ spec:
       nodePort: {{ .Values.ingress.ports.http.nodePortHttp }}
       port: {{ .Values.ingress.ports.http.ServicePort }}
       protocol: TCP
-      targetPort: {{ .Values.ingress.ports.http.name }}
+      targetPort: {{ .Values.ingress.ports.http.containerPort }}
     - name: ingress-grpc
       nodePort: {{ .Values.ingress.ports.grpc.nodePortGrpc }}
       port: {{ .Values.ingress.ports.grpc.ServicePort }}
       protocol: TCP
-      targetPort: {{ .Values.ingress.ports.grpc.name }}
+      targetPort: {{ .Values.ingress.ports.grpc.containerPort }}
   selector:
     app: {{ .Release.Name }}
     service: ingress

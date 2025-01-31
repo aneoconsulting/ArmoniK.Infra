@@ -20,9 +20,9 @@ dependencies:
 - name: mongodb
   repository: https://charts.bitnami.com/bitnami
   version: 16.4.1
-- name: prometheus
+- name: kube-prometheus
   repository: https://charts.bitnami.com/bitnami
-  version: 1.4.2
+  version: 10.2.5
 - name: keda
   repository: https://kedacore.github.io/charts
   version: 2.16.0
@@ -43,12 +43,12 @@ dependencies:
   version: 8.8.4
 - name: fluent-bit
   repository: https://charts.bitnami.com/bitnami
-  version: 2.4.3
+  version: 2.4.4
 - name: seq
   repository: https://helm.datalust.co
   version: 2024.3.1
 - name: cert-manager
   repository: https://charts.jetstack.io
   version: v1.16.3
-digest: sha256:1225c90a13bd5b468170a904c07519bd2701b987448ca1959c2c74f406fb3065
-generated: "2025-01-28T11:34:29.049285+01:00"
+digest: sha256:84eb8fbf118bfcc3776368890b5dd24d61afce73920426fea8d6e6593ae14233
+generated: "2025-01-31T14:25:15.780647+01:00"

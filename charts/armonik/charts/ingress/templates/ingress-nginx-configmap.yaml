@@ -16,7 +16,9 @@ data:
     }
     server {
         listen {{ .Values.ingress.ports.http.containerPort}};
+        listen [::]:{{ .Values.ingress.ports.http.containerPort}};
         listen {{ .Values.ingress.ports.grpc.containerPort}} http2;
+        listen [::]:{{ .Values.ingress.ports.grpc.containerPort}} http2;
 
         sendfile on;
         resolver kube-dns.kube-system ipv6=off;
@@ -38,7 +40,7 @@ data:
         location /admin/ {
             proxy_pass $admin_app_upstream$uri$is_args$args;
         }
-        set $armonik_upstream grpc://control-plane.{{ .Values.namespace }}.svc.cluster.local:1080;
+        set $armonik_upstream grpc://control-plane.{{ .Values.namespace }}.svc.cluster.local:5001;
         location ~* ^/armonik\. {
             grpc_pass $armonik_upstream;
 

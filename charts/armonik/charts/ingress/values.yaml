@@ -16,12 +16,12 @@ ingress:
     grpc:
       name: ingress-grpc
       containerPort: 9080
-      nodePortGrpc: 30313
+      nodePortGrpc: 31669
       ServicePort: 5001
     http:
       name: ingress-http
       containerPort: 8080
-      nodePortHttp: 32689
+      nodePortHttp: 32315
       ServicePort: 5000
   
   resources:

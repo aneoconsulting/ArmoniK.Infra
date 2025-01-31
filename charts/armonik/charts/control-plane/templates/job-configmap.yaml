@@ -9,6 +9,7 @@ data:
   {{- end }}
   init-db.sh: |
     #!/bin/bash
+    sleep 30
     mongosh -u $MongoDB__User -p $MongoDB__Password mongodb://$MongoDB__Host:$MongoDB__Port/database?authSource=$MongoDB__AuthSource --eval "db.PartitionData.drop()"
     mongosh -u $MongoDB__User -p $MongoDB__Password mongodb://$MongoDB__Host:$MongoDB__Port/database?authSource=$MongoDB__AuthSource --eval "db.PartitionData.insertMany([{'ParentPartitionIds':[],'PodConfiguration':null,'PodMax':100,'PodReserved':1,'PreemptionPercentage':50,'Priority':1,'_id':'bench'},{'ParentPartitionIds':[],'PodConfiguration':null,'PodMax':100,'PodReserved':1,'PreemptionPercentage':50,'Priority':1,'_id':'default'},{'ParentPartitionIds':[],'PodConfiguration':null,'PodMax':100,'PodReserved':1,'PreemptionPercentage':50,'Priority':1,'_id':'htcmock'},{'ParentPartitionIds':[],'PodConfiguration':null,'PodMax':100,'PodReserved':1,'PreemptionPercentage':50,'Priority':1,'_id':'stream'}])"
   seq.sh: |

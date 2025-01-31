@@ -20,11 +20,11 @@ name: control-plane
 
 resources:
   limits:
-    cpu: 500m
+    cpu: 1000m
     memory: 1Gi
   requests:
-    cpu: 50m
-    memory: 50Mi
+    cpu: 100m
+    memory: 128Mi
 
 livenessProbe:
   httpGet:

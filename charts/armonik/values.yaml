@@ -54,10 +54,15 @@ redis:
   usernames:
     admin: admin
   master:
+    resourcesPreset: xlarge
     persistence:
       enabled: false
     containerPorts:
       redis: 6379
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
 
 ################## ACTIVEMQ ##################
 activemq:
@@ -68,6 +73,10 @@ activemq:
 ################## MONGODB ##################
 mongodb:
   enabled: true
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
   architecture: "replicaset"
   fullnameOverride: "mongodb"
   replicaCount: 1 
@@ -209,6 +218,8 @@ seq:
 ingress:
   enabled: true
   #nodeSelector: {"control-plane"}
+  ingress:
+    type: LoadBalancer
 
 ################## PROMETHEUS ##################
 prometheus:

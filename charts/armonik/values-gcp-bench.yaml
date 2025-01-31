@@ -11,7 +11,7 @@ global:
 ### ARMONIK APPLICATION CONFIGURATION #####
 ############################################
 control-plane:
-  replicaCount: 1
+  replicaCount: 12
   enabled: true
   nodeSelector:
     service: control-plane
@@ -23,7 +23,7 @@ control-plane:
 compute-plane:
   enabled: true
   computePlane.partition.default:
-    replicas: 1
+    replicas: 0
     nodeSelector:
       service: workers
     tolerations:
@@ -32,7 +32,7 @@ compute-plane:
         operator: Equal
         value: workers
   computePlane.partition.stream:
-    replicas: 1
+    replicas: 0
     nodeSelector:
       service: workers
     tolerations:
@@ -41,7 +41,7 @@ compute-plane:
         operator: Equal
         value: workers
   computePlane.partition.htcmock:
-    replicas: 1
+    replicas: 0
     nodeSelector:
       service: workers
     tolerations:
@@ -50,7 +50,7 @@ compute-plane:
         operator: Equal
         value: workers
   computePlane.partition.bench:
-    replicas: 1
+    replicas: 120
     nodeSelector:
       service: workers
     tolerations:

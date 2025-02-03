@@ -62,7 +62,7 @@ redis:
   metrics:
     enabled: true
     serviceMonitor:
-      enabled: true
+      enabled: false
 
 ################## ACTIVEMQ ##################
 activemq:
@@ -76,7 +76,7 @@ mongodb:
   metrics:
     enabled: true
     serviceMonitor:
-      enabled: true
+      enabled: false
   architecture: "replicaset"
   fullnameOverride: "mongodb"
   replicaCount: 1 

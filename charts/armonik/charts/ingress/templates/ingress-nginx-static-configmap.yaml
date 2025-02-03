@@ -6,4 +6,3 @@ immutable: false
 kind: ConfigMap
 metadata:
   name: ingress-nginx-static
-  namespace: {{ .Values.namespace }}

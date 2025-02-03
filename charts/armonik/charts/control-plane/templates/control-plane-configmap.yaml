@@ -2,7 +2,6 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: {{ .Values.config.controlPlane.name }}
-  namespace: {{ .Values.namespace }}
 data:
   {{- $defaultPartition := .Values.config.controlPlane.defaultPartition }}
   {{- $partitionNames := keys .Values.config.computePlane.partitions | default list }}

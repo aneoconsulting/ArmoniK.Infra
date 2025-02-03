@@ -42,4 +42,3 @@ immutable: false
 kind: ConfigMap
 metadata:
   name: activemq-jolokia-configs
-  namespace: armonik

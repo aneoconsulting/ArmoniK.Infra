@@ -2,7 +2,6 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: partitions-in-database
-  namespace: {{ .Values.namespace }}
   labels:
     app: armonik
     service: partitions-in-database

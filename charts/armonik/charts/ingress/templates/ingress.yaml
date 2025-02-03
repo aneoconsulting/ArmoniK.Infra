@@ -5,7 +5,6 @@ metadata:
     app: {{ .Release.Name }}
     service: {{ .Chart.Name }}
   name: {{ .Chart.Name }}
-  namespace: {{ .Values.namespace }}
 spec:
   replicas: {{ .Values.ingress.replicaCount }}
   selector:
@@ -18,7 +17,6 @@ spec:
         app: {{ .Release.Name }}
         service: {{ .Chart.Name }}
       name: {{ .Chart.Name }}
-      namespace: {{ .Values.namespace }}
     spec:
       automountServiceAccountToken: true
       containers:

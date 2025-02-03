@@ -5,7 +5,6 @@ metadata:
     app: {{ .Release.Name }}
     service: admin-gui
   name: admin-gui
-  namespace: {{ .Values.namespace }}
 spec:
   ports:
   - port: {{ .Values.adminGui.port }}

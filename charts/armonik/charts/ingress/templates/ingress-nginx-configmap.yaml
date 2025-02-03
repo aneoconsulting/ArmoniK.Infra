@@ -3,7 +3,6 @@ immutable: false
 kind: ConfigMap
 metadata:
   name: ingress-nginx
-  namespace: {{ .Values.namespace }}
 data:
   armonik.conf: |
     map $http_accept_language $accept_language {

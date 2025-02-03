@@ -394,4 +394,3 @@ immutable: false
 kind: ConfigMap
 metadata:
   name: activemq-configs
-  namespace: armonik

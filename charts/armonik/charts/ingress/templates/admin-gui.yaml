@@ -5,7 +5,6 @@ metadata:
     app: {{ .Release.Name }}
     service: admin-gui
   name: admin-gui
-  namespace: {{ .Values.namespace }}
 spec:
   selector:
     matchLabels:
@@ -17,7 +16,6 @@ spec:
         app: {{ .Release.Name }}
         service: admin-gui
       name: admin-gui
-      namespace: {{ .Values.namespace }}
     spec:
       automountServiceAccountToken: true
       containers:

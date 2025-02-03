@@ -4,7 +4,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ $.Values.computePlane.metadata.name }}-{{ $partitionName }}
-  namespace: {{ $.Values.namespace }}
   labels:
     app: {{ $.Values.computePlane.metadata.labels.app }}
     service: {{ $.Values.computePlane.metadata.labels.service }}
@@ -19,7 +18,6 @@ spec:
   template:
     metadata:
       name: {{ $partitionName }}-compute-plane
-      namespace: {{ $.Values.namespace }}
       labels:
         app: {{ $.Values.computePlane.metadata.labels.app }}
         service: {{ $.Values.computePlane.metadata.labels.service }}

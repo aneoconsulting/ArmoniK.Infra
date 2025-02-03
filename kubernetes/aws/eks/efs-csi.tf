@@ -1,9 +1,9 @@
 locals {
   # EFS CSI
-  efs_csi_name                          = coalesce(var.efs_csi_name, "${var.name}-efs-csi-driver")
+  efs_csi_name                          = coalesce(var.efs_csi.name, "${var.name}-efs-csi-driver")
   oidc_arn                              = module.eks.oidc_provider_arn
   oidc_url                              = trimprefix(module.eks.cluster_oidc_issuer_url, "https://")
-  efs_csi_namespace                     = coalesce(var.efs_csi_namespace, "kube-system")
+  efs_csi_namespace                     = coalesce(var.efs_csi.namespace, "kube-system")
   kubernetes_service_account_controller = "efs-csi-controller-sa"
   kubernetes_service_account_node       = "efs-csi-node-sa"
   efs_csi_tolerations = [
@@ -23,7 +23,7 @@ locals {
       deleteAccessPointRootDir = false
       volMetricsOptIn          = false
       podAnnotations           = {}
-      resources                = {}
+      resources                = var.efs_csi.controller_resources
       nodeSelector             = var.node_selector
       tolerations              = local.efs_csi_tolerations
       affinity                 = {}
@@ -165,43 +165,43 @@ resource "helm_release" "efs_csi" {
   name       = "efs-csi"
   namespace  = kubernetes_service_account.efs_csi_driver_controller.metadata[0].namespace
   chart      = "aws-efs-csi-driver"
-  repository = var.efs_csi_repository
-  version    = var.efs_csi_version
+  repository = var.efs_csi.repository
+  version    = var.efs_csi.version
 
   set {
     name  = "image.repository"
-    value = var.efs_csi_image
+    value = var.efs_csi.image
   }
   set {
     name  = "image.tag"
-    value = var.efs_csi_tag
+    value = var.efs_csi.tag
   }
   set {
     name  = "sidecars.livenessProbe.image.repository"
-    value = var.efs_csi_liveness_probe_image
+    value = var.csi_liveness_probe.image
   }
   set {
     name  = "sidecars.livenessProbe.image.tag"
-    value = var.efs_csi_liveness_probe_tag
+    value = var.csi_liveness_probe.tag
   }
   set {
     name  = "sidecars.nodeDriverRegistrar.image.repository"
-    value = var.efs_csi_node_driver_registrar_image
+    value = var.csi_node_driver_registrar.image
   }
   set {
     name  = "sidecars.nodeDriverRegistrar.image.tag"
-    value = var.efs_csi_node_driver_registrar_tag
+    value = var.csi_node_driver_registrar.tag
   }
   set {
     name  = "sidecars.csiProvisioner.image.repository"
-    value = var.efs_csi_external_provisioner_image
+    value = var.csi_external_provisioner.image
   }
   set {
     name  = "sidecars.csiProvisioner.image.tag"
-    value = var.efs_csi_external_provisioner_tag
+    value = var.csi_external_provisioner.tag
   }
   dynamic "set" {
-    for_each = toset(compact([var.efs_csi_image_pull_secrets]))
+    for_each = toset(compact([var.efs_csi.image_pull_secrets]))
     content {
       name  = "imagePullSecrets"
       value = each.key

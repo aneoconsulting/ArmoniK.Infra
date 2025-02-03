@@ -235,130 +235,69 @@ variable "eks_managed_node_groups" {
   default     = null
 }
 
-# EFS
-variable "efs_csi_image" {
-  description = "EFS CSI image name"
-  type        = string
-}
-variable "efs_csi_tag" {
-  description = "EFS CSI image tag"
-  type        = string
-}
-variable "efs_csi_liveness_probe_image" {
-  description = "EFS CSI liveness probe image name"
-  type        = string
-}
-variable "efs_csi_liveness_probe_tag" {
-  description = "EFS CSI liveness probe image tag"
-  type        = string
-}
-variable "efs_csi_node_driver_registrar_image" {
-  description = "EFS CSI node driver registrar image name"
-  type        = string
-}
-variable "efs_csi_node_driver_registrar_tag" {
-  description = "EFS CSI node driver registrar image tag"
-  type        = string
-}
-variable "efs_csi_external_provisioner_image" {
-  description = "EFS CSI external provisioner image name"
-  type        = string
-}
-variable "efs_csi_external_provisioner_tag" {
-  description = "EFS CSI external provisioner image tag"
-  type        = string
-}
-
-variable "efs_csi_name" {
-  description = "EFS CSI name"
-  type        = string
-  default     = null
-}
-variable "efs_csi_namespace" {
-  description = "EFS CSI namespace"
-  type        = string
-  default     = null
-}
-variable "efs_csi_image_pull_secrets" {
-  description = "Image pull secret used to pull EFS CSI images"
-  type        = string
-  default     = null
-}
-variable "efs_csi_repository" {
-  description = "EFS CSI helm repository"
-  type        = string
-}
-variable "efs_csi_version" {
-  description = "EFS CSI helm version"
-  type        = string
-}
-
-# EBS
-
-variable "ebs_csi_image" {
-  description = "EBS CSI image name"
-  type        = string
-}
-variable "ebs_csi_tag" {
-  description = "EBS CSI image tag"
-  type        = string
-}
-variable "ebs_csi_liveness_probe_image" {
-  description = "EBS CSI liveness probe image name"
-  type        = string
-}
-variable "ebs_csi_liveness_probe_tag" {
-  description = "EBS CSI liveness probe image tag"
-  type        = string
-}
-variable "ebs_csi_node_driver_registrar_image" {
-  description = "EBS CSI node driver registrar image name"
-  type        = string
-}
-variable "ebs_csi_node_driver_registrar_tag" {
-  description = "EBS CSI node driver registrar image tag"
-  type        = string
-}
-variable "ebs_csi_external_provisioner_image" {
-  description = "EBS CSI external provisioner image name"
-  type        = string
-}
-variable "ebs_csi_external_provisioner_tag" {
-  description = "EBS CSI external provisioner image tag"
-  type        = string
-}
-variable "ebs_csi_name" {
-  description = "EBS CSI name"
-  type        = string
-  default     = null
-}
-variable "ebs_csi_namespace" {
-  description = "EBS CSI namespace"
-  type        = string
-  default     = null
-}
-variable "ebs_csi_image_pull_secrets" {
-  description = "Image pull secret used to pull EFS CSI images"
-  type        = string
-  default     = null
-}
-variable "ebs_csi_repository" {
-  description = "EBS CSI helm repository"
-  type        = string
-}
-variable "ebs_csi_version" {
-  description = "EBS CSI helm version"
-  type        = string
-}
-variable "ebs_csi_controller_resources" {
-  description = "Resources to allocate for EBS CSI driver controller"
+variable "efs_csi" {
+  description = "Container Storage Interface for EFS volume provisioning on EKS"
   type = object({
-    limits   = optional(map(string))
-    requests = optional(map(string))
+    repository         = optional(string, "https://kubernetes-sigs.github.io/aws-efs-csi-driver/")
+    version            = string
+    image              = optional(string, "public.ecr.aws/efs-csi-driver/amazon/aws-efs-csi-driver")
+    tag                = string
+    name               = optional(string)
+    namespace          = optional(string)
+    image_pull_secrets = optional(string)
+    controller_resources = optional(object({
+      limits = optional(object({
+        storage = string
+      }))
+      requests = optional(object({
+        storage = string
+      }))
+    }))
   })
-  default = {}
 }
 
+variable "ebs_csi" {
+  description = "Container Storage Interface for EBS volume provisioning on EKS"
+  type = object({
+    repository         = optional(string, "https://kubernetes-sigs.github.io/aws-ebs-csi-driver/")
+    version            = string
+    image              = optional(string, "public.ecr.aws/ebs-csi-driver/aws-ebs-csi-driver")
+    tag                = string
+    name               = optional(string)
+    namespace          = optional(string)
+    image_pull_secrets = optional(string)
+    controller_resources = optional(object({
+      limits = optional(object({
+        storage = string
+      }))
+      requests = optional(object({
+        storage = string
+      }))
+    }))
+  })
+}
+
+variable "csi_liveness_probe" {
+  description = "CSI liveness probe for both EFS and EBS"
+  type = object({
+    image = optional(string, "public.ecr.aws/eks-distro/kubernetes-csi/livenessprobe")
+    tag   = string
+  })
+}
+variable "csi_node_driver_registrar" {
+  description = "CSI node driver registrar for both EFS and EBS"
+  type = object({
+    image = optional(string, "public.ecr.aws/eks-distro/kubernetes-csi/node-driver-registrar")
+    tag   = string
+  })
+}
+variable "csi_external_provisioner" {
+  description = "CSI external provisioner for both EFS and EBS"
+  type = object({
+    image = optional(string, "public.ecr.aws/eks-distro/kubernetes-csi/external-provisioner")
+    tag   = string
+  })
+}
 
 # Encryption keys
 variable "cluster_log_kms_key_id" {

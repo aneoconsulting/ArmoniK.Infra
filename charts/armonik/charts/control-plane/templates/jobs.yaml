@@ -46,9 +46,9 @@ spec:
         terminationMessagePath: /dev/termination-log
         terminationMessagePolicy: File
         volumeMounts:
-          - name: mongodb-crt
-            mountPropagation: None
-            mountPath: /mongodb/certs/
+          # - name: mongodb-crt
+          #   mountPropagation: None
+          #   mountPath: /mongodb/certs/
           - name: script
             mountPath: "/script"
       dnsPolicy: ClusterFirst

@@ -337,14 +337,14 @@ pollingAgent:
     #   mountPath: "/amqp"
     #   mountPropagation: None
     #   readOnly: true
-    - name: mongodb-ca
-      mountPath: "/mongodb/certs/"
-      mountPropagation: None
-      readOnly: true
-    - name: "redis-crt"
-      mountPath: "/redis"
-      mountPropagation: None
-      readOnly: true
+    # - name: mongodb-ca
+    #   mountPath: "/mongodb/certs/"
+    #   mountPropagation: None
+    #   readOnly: true
+    # - name: "redis-crt"
+    #   mountPath: "/redis"
+    #   mountPropagation: None
+    #   readOnly: true
   envSecretValue:
     - name: MongoDB__Password
       valueFrom:
@@ -365,15 +365,15 @@ pollingAgent:
           name: redis
   envConfigValue: []
   envFrom:
-    - secretRef:
-        name: mongodb-ca
-        optional: false
+    # - secretRef:
+    #     name: mongodb-ca
+    #     optional: false
     # - secretRef:
     #     name: activemq-crt
     #     optional: false
-    - secretRef:
-        name: redis-crt
-        optional: false
+    # - secretRef:
+    #     name: redis-crt
+    #     optional: false
     - configMapRef:
         name: compute-plane-configmap
         optional: false

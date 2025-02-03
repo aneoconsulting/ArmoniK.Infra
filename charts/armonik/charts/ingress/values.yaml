@@ -33,11 +33,11 @@ ingress:
       memory: "128Mi"
   
   volumes:
-    ingressSecret: ingress-crt
+    #ingressSecret: ingress-crt
     mongodbSecret: mongodb
-    mongodbSecretCrt: mongodb-crt
+    mongodbSecretCrt: mongodb-ca
     nginxConfigMap: ingress-nginx
-    nginxStaticConfigMap: ingress-nginx-static
+    #nginxStaticConfigMap: ingress-nginx-static
 
   tolerations:
   - effect: NoSchedule

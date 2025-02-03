@@ -64,21 +64,13 @@ spec:
           name: static
           readOnly: true
         {{- end }}
-##############
         {{- if .Values.ingress.volumes.mongodbSecretCrt }}
         - name: mongodb
           mountPath: /mongodb/certs/
           readOnly: true
           recursiveReadOnly: Disabled
         {{- end }}
-        {{- if .Values.ingress.volumes.mongodbSecret }}
-        - name: mongodb-ca
-          mountPath: /mongodb/certificate/
-          readOnly: true
-          recursiveReadOnly: Disabled
-        {{- end }}
         {{- end}}
-##############
       dnsPolicy: ClusterFirst
       enableServiceLinks: true
       #nodeSelector:
@@ -107,12 +99,6 @@ spec:
       - name: mongodb
         secret:
           secretName: {{ .Values.ingress.volumes.mongodbSecretCrt }}
-          defaultMode: 420
-      {{- end}}
-      {{- if .Values.ingress.volumes.mongodbSecret }}
-      - name: mongodb-ca
-        secret:
-          secretName: {{ .Values.ingress.volumes.mongodbSecret }}
           defaultMode: 420
       {{- end}}
       {{- if .Values.ingress.volumes.nginxConfigMap }}

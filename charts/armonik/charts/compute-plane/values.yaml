@@ -333,22 +333,18 @@ pollingAgent:
     name: poll-agent-port
     containerPort: 1080
   volumeMounts:
-    - name: "activemq-crt"
-      mountPath: "/amqp"
-      mountPropagation: None
-      readOnly: true
-    - name: mongodb-crt
+    # - name: "activemq-crt"
+    #   mountPath: "/amqp"
+    #   mountPropagation: None
+    #   readOnly: true
+    - name: mongodb-ca
       mountPath: "/mongodb/certs/"
       mountPropagation: None
       readOnly: true
-    # - name: "redis-crt"
-    #   mountPath: "/redis"
-    #   mountPropagation: None
-    #   readOnly: true
-    # - name: "mongodb-armonik-ca"
-    #   mountPath: "/mongodb/certificate/"
-    #   mountPropagation: None
-    #   readOnly: true
+    - name: "redis-crt"
+      mountPath: "/redis"
+      mountPropagation: None
+      readOnly: true
   envSecretValue:
     - name: MongoDB__Password
       valueFrom:
@@ -369,12 +365,12 @@ pollingAgent:
           name: redis
   envConfigValue: []
   envFrom:
-    # - secretRef:
-    #     name: mongodb-crt
-    #     optional: false
     - secretRef:
-        name: activemq-crt
+        name: mongodb-ca
         optional: false
+    # - secretRef:
+    #     name: activemq-crt
+    #     optional: false
     - secretRef:
         name: redis-crt
         optional: false

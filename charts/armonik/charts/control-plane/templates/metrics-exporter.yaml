@@ -46,11 +46,6 @@ spec:
         - name: mongodb
           mountPath: /mongodb/certs/
           readOnly: true
-          #recursiveReadOnly: Disabled
-        - name: mongodb-ca
-          mountPath: /mongodb/certificate/
-          readOnly: true
-          #recursiveReadOnly: Disabled
         env:
         - name: MongoDB__Password
           valueFrom:
@@ -75,11 +70,7 @@ spec:
       volumes:
       - name: mongodb
         secret:
-          secretName: mongodb-crt
-          defaultMode: 420
-      - name: mongodb-ca
-        secret:
-          secretName: mongodb-crt
+          secretName: mongodb-ca
           defaultMode: 420
   {{- if .Values.nodeSelector }}
       nodeSelector:

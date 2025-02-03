@@ -42,10 +42,10 @@ spec:
         {{- toYaml .Values.resources | nindent 10 }}
         {{- end }}
         volumeMounts:
-        - mountPath: /credentials/
-          mountPropagation: None
-          name: activemq-storage-secret-volume
-          readOnly: true
+        # - mountPath: /credentials/
+        #   mountPropagation: None
+        #   name: activemq-storage-secret-volume
+        #   readOnly: true
         - mountPath: /opt/activemq/conf/
           mountPropagation: None
           name: activemq-jetty-xml
@@ -57,11 +57,11 @@ spec:
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
       volumes:
-      - name: activemq-storage-secret-volume
-        secret:
-          defaultMode: 420
-          optional: false
-          secretName: activemq-crt
+      # - name: activemq-storage-secret-volume
+      #   secret:
+      #     defaultMode: 420
+      #     optional: false
+      #     secretName: activemq-crt
       - configMap:
           defaultMode: 420
           name: activemq-configs

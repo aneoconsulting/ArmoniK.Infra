@@ -2,6 +2,8 @@ nameOverride: "activemq"
 replicaCount: 1
 namespace: armonik
 activemqOptsMemory: "-Xms1g -Xmx1g"
+certificates:
+  enable: false
 #image:
 # tag: ""
 #imagePullSecrets: []

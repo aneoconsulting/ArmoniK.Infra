@@ -8,7 +8,7 @@ image:
 grafanaDashboard: 
   enable: true
 certificates:
-  enable: true
+  enable: false
 partitionMetricsExporter:
   enable: false
 metricsExporter:
@@ -20,7 +20,7 @@ name: control-plane
 
 resources:
   limits:
-    cpu: 1000m
+    cpu: 1
     memory: 1Gi
   requests:
     cpu: 100m
@@ -53,18 +53,14 @@ tolerations: []
 annotations: {}
  
 volumes:
-  activemq:
-    enabled: true
-    mountPath: /amqp
-    secretName: activemq-crt
+  # activemq:
+  #   enabled: true
+  #   mountPath: /amqp
+  #   secretName: activemq-crt
   mongodb:
     enabled: true
     mountPath: /mongodb/certs/
-    secretName: mongodb-crt
-  mongodb-ca:
-    enabled: true
-    mountPath: /mongodb/certificate/
-    secretName: mongodb
+    secretName: mongodb-ca
   redis:
     enabled: true
     mountPath: /redis
@@ -127,7 +123,7 @@ config:
       MongoDB__User: root
       MongoDB__AllowInsecureTls: "true"
       MongoDB__AuthSource: admin
-      #MongoDB__CAFile: /mongodb/certs/tls-combined.pem
+      MongoDB__CAFile: /mongodb/certs/mongodb-ca-cert
       MongoDB__DataRetention: 1.00:00:00
       MongoDB__DatabaseName: database
       MongoDB__DirectConnection: "true"
@@ -138,15 +134,15 @@ config:
       MongoDB__TableStorage__PollingDelay: "00:00:01"
       MongoDB__TableStorage__PollingDelayMax: "00:00:10"
       MongoDB__TableStorage__PollingDelayMin: "00:00:01"
-      MongoDB__Tls: "false"
+      MongoDB__Tls: "true"
       Redis__User: ""
-      #Redis__CaPath: /redis/ca.crt
+      Redis__CaPath: /redis/ca.crt
       Redis__ClientName: ArmoniK.Core
       Redis__EndpointUrl: redis-master:6379
       #Redis__EndpointUrl: redis-headless:6379
       Redis__InstanceName: ArmoniKRedis
-      #Redis__Ssl: "false"
-      #Redis__SslHost: 127.0.0.1
+      Redis__Ssl: "true"
+      Redis__SslHost: 127.0.0.1
       Redis__Timeout: "30000"
       Redis__TtlTimeSpan: 1.00:00:00
       Submitter__DeletePayload: "true"

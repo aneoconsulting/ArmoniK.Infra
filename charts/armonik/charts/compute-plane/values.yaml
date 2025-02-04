@@ -16,7 +16,7 @@ computePlane:
       replicas: 1
       pollingAgent:
         image: "armonik_pollingagent"
-        tag: "0.31.0-jgprovidercheck.14.32d68938"
+        tag: "0.31.0"
         imagePullPolicy: "IfNotPresent"
         limits:
           cpu: "1000m"
@@ -93,7 +93,7 @@ computePlane:
       replicas: 1
       pollingAgent:
         image: "armonik_pollingagent"
-        tag: "0.31.0-jgprovidercheck.14.32d68938"
+        tag: "0.31.0"
         imagePullPolicy: "IfNotPresent"
         limits:
           cpu: "1000m"
@@ -143,7 +143,7 @@ computePlane:
       worker:
         - name: "worker"
           image: "armonik_core_stream_test_worker"
-          tag: "0.31.0-jgprovidercheck.14.32d68938"
+          tag: "0.31.0"
           imagePullPolicy: "IfNotPresent"
           limits:
             cpu: "1000m"
@@ -172,7 +172,7 @@ computePlane:
       replicas: 1
       pollingAgent:
         image: "armonik_pollingagent"
-        tag: "0.31.0-jgprovidercheck.14.32d68938"
+        tag: "0.31.0"
         imagePullPolicy: "IfNotPresent"
         limits:
           cpu: "1000m"
@@ -224,7 +224,7 @@ computePlane:
       worker:
         - name: "worker"
           image: "armonik_core_htcmock_test_worker"
-          tag: "0.31.0-jgprovidercheck.14.32d68938"
+          tag: "0.31.0"
           imagePullPolicy: "IfNotPresent"
           limits:
             cpu: "1000m"
@@ -253,7 +253,7 @@ computePlane:
       replicas: 1
       pollingAgent:
         image: "armonik_pollingagent"
-        tag: "0.31.0-jgprovidercheck.14.32d68938"
+        tag: "0.31.0"
         imagePullPolicy: "IfNotPresent"
         limits:
           cpu: "1000m"
@@ -303,7 +303,7 @@ computePlane:
       worker:
         - name: "worker"
           image: "armonik_core_bench_test_worker"
-          tag: "0.31.0-jgprovidercheck.14.32d68938"
+          tag: "0.31.0"
           imagePullPolicy: "IfNotPresent"
           limits:
             cpu: "1000m"

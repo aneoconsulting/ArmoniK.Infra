@@ -18,4 +18,6 @@ data:
 {{ .Files.Get "grafana-dashboards/dashboard-pods.json" | indent 4 }}
   dashboard-taskhandler.json: |-
 {{ .Files.Get "grafana-dashboards/dashboard-taskhandler.json" | indent 4 }}
+  mongo.json: |-
+{{ .Files.Get "grafana-dashboards/mongo.json" | indent 4 }}
 {{ end }}

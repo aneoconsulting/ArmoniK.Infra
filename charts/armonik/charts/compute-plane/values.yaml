@@ -332,7 +332,7 @@ pollingAgent:
   ports:
     name: poll-agent-port
     containerPort: 1080
-  volumeMounts:
+  #volumeMounts:
     # - name: "activemq-crt"
     #   mountPath: "/amqp"
     #   mountPropagation: None

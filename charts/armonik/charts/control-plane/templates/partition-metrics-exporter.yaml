@@ -32,16 +32,6 @@ spec:
         - containerPort: 1080
           name: metrics
           protocol: TCP
-        envFrom:
-        - configMapRef:
-            name: core-configmap
-            optional: false
-        - configMapRef:
-            name: log-configmap
-            optional: false
-        # - secretRef:
-        #     name: activemq
-        #     optional: false
         #terminationMessagePath: /dev/termination-log
         #terminationMessagePolicy: File
         volumeMounts:
@@ -60,8 +50,6 @@ spec:
               key: mongodb-root-password
               name: mongodb
               optional: false
-        - name: MongoDB__User
-          value: "root"
         envFrom:
         - configMapRef:
             name: core-configmap

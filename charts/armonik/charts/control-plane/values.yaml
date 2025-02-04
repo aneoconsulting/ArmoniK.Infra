@@ -8,7 +8,7 @@ image:
 grafanaDashboard: 
   enable: true
 certificates:
-  enable: true
+  enable: false
 partitionMetricsExporter:
   enable: false
 metricsExporter:

@@ -106,13 +106,11 @@ spec:
           {{- end }}
           {{- end }}  
         {{- end }}
-        {{- if $.Values.pollingAgent.volumeMounts }}
         volumeMounts:
-          {{- with $.Values.pollingAgent.volumeMounts }}
-          {{- toYaml . | nindent 10 }}
+          {{- range $key, $value := $.Values.volumeMounts }}
+          - name: {{ $value.name | quote }}
+            mountPath: {{ $value.mountPath }}
           {{- end }}
-          {{- toYaml $.Values.volumeMounts | nindent 10 }}
-        {{- end }}
       {{- range $index, $worker := $config.worker }}
       - name: "{{ $worker.name }}-{{ $index }}"
         image: "{{ $.Values.registry }}/{{ $worker.image }}:{{ $worker.tag | default "" }}"

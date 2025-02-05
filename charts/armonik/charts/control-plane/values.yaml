@@ -1,7 +1,8 @@
 replicaCount: 1
 registry: "dockerhubaneo"
 image:
-  repository: dockerhubaneo/armonik_control
+  repository: dockerhubaneo
+  name: armonik_control
   tag: "0.31.0"
   pullPolicy: IfNotPresent
 imageJob:

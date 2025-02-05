@@ -332,7 +332,8 @@ seq:
   fullnameOverride: "seq"
   persistence:
     enabled: false
-  image.repository: "datalust/seq"
+  image:
+    repository: datalust/seq
 
 ################## INGRESS ##################
 ingress:

@@ -26,7 +26,7 @@ spec:
       automountServiceAccountToken: true
       containers:
       - name: job-partitions-in-database
-        image: rtsp/mongosh:2.3.8
+        image: "{{ .Values.imageJob.repository }}:{{ .Values.imageJob.tag }}"
         imagePullPolicy: IfNotPresent
         command: ["/script/init-db.sh"]
         env:

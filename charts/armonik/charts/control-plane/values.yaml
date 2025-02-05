@@ -4,6 +4,9 @@ image:
   repository: dockerhubaneo/armonik_control
   tag: "0.31.0"
   pullPolicy: IfNotPresent
+imageJob:
+  repository: rtsp/mongosh
+  tag: "2.3.8"
 serviceAccount: armonikserviceaccount
 
 grafanaDashboard: 

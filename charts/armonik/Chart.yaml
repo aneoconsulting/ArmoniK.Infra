@@ -31,10 +31,6 @@ dependencies:
     version: 0.1.0
     repository: file://charts/ingress
     condition: ingress.enabled
-  - name: eniconfig
-    version: 0.1.0
-    repository: file://charts/eniconfig
-    condition: eniconfig.enabled
   - name: activemq
     version: 1.0.0
     repository: file://charts/activemq
@@ -56,22 +52,22 @@ dependencies:
     version: 2.16.0
     repository: https://kedacore.github.io/charts
     condition: keda.enabled
-  - name: node-exporter
-    version: 4.5.2
-    repository: https://charts.bitnami.com/bitnami
-    condition: node-exporter.enabled
-  - name: kube-state-metrics
-    version: 4.3.4
-    repository: https://charts.bitnami.com/bitnami
-    condition: kube-state-metrics.enabled
-  - name: cluster-autoscaler
-    version: 9.45.0
-    repository: https://kubernetes.github.io/autoscaler
-    condition: cluster-autoscaler.enabled
-  - name: chaos-mesh
-    version: 2.7.0
-    repository: https://charts.chaos-mesh.org
-    condition: chaos-mesh.enabled
+  # - name: node-exporter
+  #   version: 4.5.2
+  #   repository: https://charts.bitnami.com/bitnami
+  #   condition: node-exporter.enabled
+  # - name: kube-state-metrics
+  #   version: 4.3.4
+  #   repository: https://charts.bitnami.com/bitnami
+  #   condition: kube-state-metrics.enabled
+  # - name: cluster-autoscaler
+  #   version: 9.45.0
+  #   repository: https://kubernetes.github.io/autoscaler
+  #   condition: cluster-autoscaler.enabled
+  # - name: chaos-mesh
+  #   version: 2.7.0
+  #   repository: https://charts.chaos-mesh.org
+  #   condition: chaos-mesh.enabled
   - name: grafana
     version: 8.8.4
     repository: https://grafana.github.io/helm-charts
@@ -84,7 +80,7 @@ dependencies:
     version: 2024.3.1
     repository: https://helm.datalust.co
     condition: seq.enabled
-  - name: cert-manager
-    version: 1.16.3
-    repository: https://charts.jetstack.io
-    condition: cert-manager.enabled
+  # - name: cert-manager
+  #   version: 1.16.3
+  #   repository: https://charts.jetstack.io
+  #   condition: cert-manager.enabled

@@ -39,7 +39,7 @@ spec:
                 value: http://seq:8080
               - name: SEQ_USER
               - name: SEQ_PASSWORD
-              image: datalust/seqcli:2024.3
+              image: "{{ .Values.imageCron.repository }}:{{ .Values.imageCron.tag }}"
               imagePullPolicy: IfNotPresent
               name: seq-retention-job
               resources: {}

@@ -8,6 +8,9 @@ image:
 imageJob:
   repository: rtsp/mongosh
   tag: "2.3.8"
+imageCron:
+  repository: datalust/seqcli
+  tag: "2024.3"
 serviceAccount: armonikserviceaccount
 
 grafanaDashboard: 

@@ -17,6 +17,9 @@ control-plane:
   imageJob:
     repository: rtsp/mongosh
     tag: "2.3.8"
+  imageCron:
+    repository: datalust/seqcli
+    tag: "2024.3"
 compute-plane:
   enabled: true
   registry: dockerhubaneo

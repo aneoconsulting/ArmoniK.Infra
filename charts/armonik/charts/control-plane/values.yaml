@@ -4,6 +4,7 @@ image:
   repository: dockerhubaneo/armonik_control
   tag: "0.31.0"
   pullPolicy: IfNotPresent
+serviceAccount: armonikserviceaccount
 
 grafanaDashboard: 
   enable: true

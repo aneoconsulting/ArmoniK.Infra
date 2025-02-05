@@ -4,7 +4,7 @@ namespace: armonik
 activemqOptsMemory: "-Xms1g -Xmx1g"
 certificates:
   enable: false
-#image:
-# tag: ""
-#imagePullSecrets: []
-#computePlaneSelector: []
+image:
+  repository: symptoma/activemq
+  tag: "5.18.4"
+

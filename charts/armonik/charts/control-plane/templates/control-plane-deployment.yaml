@@ -83,6 +83,10 @@ spec:
         {{- end }}
       {{- end }}
       {{- if .Values.nodeSelector }}
+      serviceAccountName: {{ .Values.serviceAccount }}
+      serviceAccount: {{ .Values.serviceAccount }}
+      automountServiceAccountToken: true
+      shareProcessNamespace: false
       nodeSelector:
         {{- toYaml .Values.nodeSelector | nindent 8 }}
       {{- end }}
@@ -90,3 +94,4 @@ spec:
       tolerations:
         {{- toYaml .Values.tolerations | nindent 8 }}
       {{- end }}
+      enableServiceLinks: true

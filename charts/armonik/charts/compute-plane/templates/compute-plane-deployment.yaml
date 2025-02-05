@@ -35,6 +35,9 @@ spec:
         {{ $key }}: {{ $value | quote }}
         {{- end }}
       {{- end }}
+      serviceAccountName: {{ $.Values.serviceAccount }}
+      serviceAccount: {{ $.Values.serviceAccount }}
+      automountServiceAccountToken: true
       {{- if $config.tolerations}}  
       tolerations:
         {{- range $i, $toleration := $config.tolerations }}
@@ -46,6 +49,9 @@ spec:
       {{- end }}
       terminationGracePeriodSeconds: {{ $config.terminationGracePeriodSeconds }}
       shareProcessNamespace: {{ $.Values.shareProcessNamespace }}
+      imagePullSecrets:
+        - name: IfNotPresent
+      enableServiceLinks: true
       {{- if $config.imagePullSecrets }}
       imagePullSecrets:
         {{- range $key, $value := $config.imagePullSecrets }}
@@ -107,9 +113,10 @@ spec:
           {{- end }}  
         {{- end }}
         volumeMounts:
-          {{- range $key, $value := $.Values.volumeMounts }}
+          {{- range $key, $value := $.Values.pollingAgent.volumeMounts }}
           - name: {{ $value.name | quote }}
             mountPath: {{ $value.mountPath }}
+            mountPropagation: None
           {{- end }}
       {{- range $index, $worker := $config.worker }}
       - name: "{{ $worker.name }}-{{ $index }}"
@@ -124,6 +131,14 @@ spec:
           requests:
             cpu: "{{ $worker.requests.cpu }}"
             memory: "{{ $worker.requests.memory }}"
+        {{- if $.Values.worker.livenessProbe }}
+        livenessProbe:
+        {{- toYaml $.Values.worker.livenessProbe | nindent 10 }}
+        {{- end }}
+        {{- if $.Values.worker.startupProbe }}
+        startupProbe:
+        {{- toYaml $.Values.worker.startupProbe | nindent 10 }}
+        {{- end }}
         lifecycle:
           preStop:
             exec:
@@ -132,11 +147,13 @@ spec:
         envFrom:
         {{- toYaml $.Values.worker.envFrom | nindent 8 }}
         {{- end }}
+
+        {{- if $.Values.worker.volumeMounts }}
         volumeMounts:
-          {{- range $key, $value := $.Values.volumeMounts }}
-          - name: {{ $value.name | quote }}
-            mountPath: {{ $value.mountPath }}
+          {{- with $.Values.worker.volumeMounts }}
+          {{- toYaml $.Values.worker.volumeMounts | nindent 8 }}
           {{- end }}
+        {{- end }}
         {{- if (eq $.Values.checkFileStorageType "FS") }}
           - name: {{ $.Values.FS.name | quote }}
             mountPath: {{ $.Values.FS.mountPath }}
@@ -160,16 +177,10 @@ spec:
           {{- toYaml .Values.fluentBit.fluentVolumes | nindent 10 }}
         {{- end }}
       {{- end }}
-      volumes: 
-        {{- range $key, $value := $.Values.volumeMounts }}
-        - name: {{ $value.name }}
-        {{- end }}
-      {{- if $.Values.pollingAgent.volumeMounts }}
-        {{- range $.Values.pollingAgent.volumeMounts }}
-        - name: {{ .name | quote }}
-          secret:
-            secretName: {{ .name }}
-            defaultMode: 420
+      {{- if $.Values.volumes }}
+      volumes:
+        {{- with $.Values.volumes }}
+        {{- toYaml $.Values.volumes | nindent 8 }}
         {{- end }}
       {{- end }}
       {{- if (eq $.Values.fileStorageType "nfs") }} 

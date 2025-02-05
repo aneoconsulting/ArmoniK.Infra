@@ -22,7 +22,7 @@ spec:
       name: activemq
     spec:
       containers:
-      - image: symptoma/activemq:5.18.4
+      - image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
         imagePullPolicy: IfNotPresent
         name: activemq
         ports:

@@ -117,7 +117,7 @@ grafana:
   fullnameOverride: "grafana"
   ingress:
     enabled: true
-    hosts: 
+    hosts:
     - grafana.local
     #path: /grafana
   grafana.ini:
@@ -379,9 +379,9 @@ prometheus:
           - job_name: 'kube-state-metrics'
             static_configs:
               - targets: ['kube-state-metrics.{{ .Release.Namespace }}.svc.cluster.local:8080']
-                  
+
           - job_name: "mongodb-metrics-exporter"
-            static_configs: 
+            static_configs:
               - targets: ["mongodb.{{ .Release.Namespace }}.svc.cluster.local:27017"]
                 labels:
                   namespace: "armonik"
@@ -470,13 +470,13 @@ prometheus:
               - action: labelmap
                 regex: __meta_kubernetes_node_label_(.+)
 
-          - job_name: 'metrics-control-plane' 
+          - job_name: 'metrics-control-plane'
             kubernetes_sd_configs:
-              - role: pod 
+              - role: pod
             relabel_configs:
               - source_labels: [__meta_kubernetes_pod_container_port_number]
                 action: keep
-                regex: "1081" 
+                regex: "1081"
               - source_labels: [__meta_kubernetes_pod_label_app]
                 action: keep
                 regex: "armonik"
@@ -493,13 +493,13 @@ prometheus:
                 action: replace
                 target_label: kubernetes_pod_name
 
-          - job_name: 'metrics-polling-agent' 
+          - job_name: 'metrics-polling-agent'
             kubernetes_sd_configs:
-              - role: pod 
+              - role: pod
             relabel_configs:
               - source_labels: [__meta_kubernetes_pod_container_port_number]
                 action: keep
-                regex: "1080" 
+                regex: "1080"
               - source_labels: [__meta_kubernetes_pod_label_app]
                 action: keep
                 regex: "armonik"

@@ -348,7 +348,7 @@ ingress:
     image: "nginxinc/nginx-unprivileged:1.27.3"
 
 ################## PROMETHEUS ##################
-prometheus:
+kube-prometheus:
   operator.image.registry: ""
   enabled: true
   nameOverride: "prometheus"

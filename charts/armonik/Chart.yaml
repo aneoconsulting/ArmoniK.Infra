@@ -47,7 +47,7 @@ dependencies:
   - name: kube-prometheus
     version: 10.2.5
     repository: https://charts.bitnami.com/bitnami
-    condition: prometheus.enabled
+    condition: kube-prometheus.enabled
   - name: keda
     version: 2.16.0
     repository: https://kedacore.github.io/charts

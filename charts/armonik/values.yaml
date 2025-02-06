@@ -350,7 +350,7 @@ ingress:
 ################## PROMETHEUS ##################
 prometheus:
   operator.image.registry: ""
-  enabled: false
+  enabled: true
   nameOverride: "prometheus"
   fullnameOverride: "prometheus"
   namespaceOverride: "armonik"

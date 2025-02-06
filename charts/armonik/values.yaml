@@ -82,6 +82,7 @@ mongodb:
   architecture: "replicaset"
   fullnameOverride: "mongodb"
   useStatefulSet: true
+  replicaCount: 1
   persistence:
     enabled: false
   #existingConfigmap: "mongodb-armonik-scripts"

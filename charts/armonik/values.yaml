@@ -214,6 +214,11 @@ fluent-bit:
           K8S-Logging.Exclude Off
           Buffer_Size         0
       [FILTER]
+          Name                    parser
+          Match                   *
+          key_name                message
+          Parser                  json
+      [FILTER]
           Name                    nest
           Match                   *
           Operation               lift
@@ -223,12 +228,12 @@ fluent-bit:
           Name                    nest
           Match                   *
           Operation               lift
-          Nested_under            log
+          Nested_under            message
       [FILTER]
           Name                    modify
           Match                   *
-          Condition               Key_exists log
-          Rename                  log @m
+          Condition               Key_exists message
+          Rename                  message @m
           Add                     sourcetype renamelog
     inputs: |
       [INPUT]
@@ -318,11 +323,10 @@ fluent-bit:
       [PARSER]
           Name cri
           Format regex
-          Regex ^(?:(?<time>[^\s]+)\s+(?<stream>\w+)\s+(?<logtag>\w+)\s+)?(?<log>\{.*\})$
+          Regex ^(?:(?<time>[^\s]+)\s+(?<stream>\w+)\s+(?<logtag>\w+)\s+)?(?<message>\{.*\})$
           Time_Key time
           Time_Format %Y-%m-%dT%H:%M:%S.%L
           Time_Keep On
-          Decode_Field_As json log
       [PARSER]
           Name        syslog
           Format      regex

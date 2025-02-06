@@ -77,7 +77,7 @@ data:
         }
         set $grafana_upstream http://grafana.armonik.svc.cluster.local;
         location = /grafana {
-            rewrite ^ $scheme://$http_host/grafana/ permanent;
+            rewrite ^ $scheme://$http_host/grafana/login permanent;
         }
         location /grafana/ {
             rewrite  ^/grafana/(.*)  /$1 break;

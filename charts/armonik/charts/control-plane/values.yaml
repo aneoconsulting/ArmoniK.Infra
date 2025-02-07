@@ -13,7 +13,7 @@ imageCron:
   tag: "2024.3"
 serviceAccount: armonikserviceaccount
 
-grafanaDashboard: 
+grafanaDashboard:
   enable: true
 certificates:
   enable: false
@@ -59,7 +59,7 @@ nodeSelector: {}
 tolerations: []
 
 annotations: {}
- 
+
 volumes:
   # activemq:
   #   enabled: true
@@ -156,8 +156,8 @@ config:
       Submitter__DeletePayload: "true"
   log:
     name: log-configmap
-    data: 
-      minimumLevel: Debug
+    data:
+      minimumLevel: Information
       overrides:
         ArmoniK.Core.Common.Auth.Authentication.Authenticator: Warning
         Grpc.AspNetCore.Server.ServerCallHandler: Warning

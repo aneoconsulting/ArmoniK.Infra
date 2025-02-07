@@ -96,16 +96,16 @@ mongodb:
 ################## KEDA ##################
 keda:
   enabled: true
-  crds: 
+  crds:
     install: true
   certificates:
     certManager:
-      enabled: true
+      enabled: false
       issuer: {"generate":false,"group":"cert-manager.io","kind":"ClusterIssuer","name":"armonik-selfsigned-issuer"}
 
 ################## CERT-MANAGER ##################
 cert-manager:
-  enabled: true
+  enabled: false
   installCRDs: true
   fullnameOverride: "cert-manager"
   cainjector:

@@ -10,7 +10,7 @@ global:
 ### ARMONIK APPLICATION CONFIGURATION #####
 ############################################
 control-plane:
-  enabled: true
+  enabled: false
   image:
     repository: dockerhubaneo
     tag: "0.31.0"
@@ -21,7 +21,7 @@ control-plane:
     repository: datalust/seqcli
     tag: "2024.3"
 compute-plane:
-  enabled: true
+  enabled: false
   registry: dockerhubaneo
 
 
@@ -61,7 +61,7 @@ redis:
   metrics:
     enabled: true
     serviceMonitor:
-      enabled: true
+      enabled: false
 
 ################## ACTIVEMQ ##################
 activemq:
@@ -78,7 +78,7 @@ mongodb:
   metrics:
     enabled: true
     serviceMonitor:
-      enabled: true
+      enabled: false
   architecture: "replicaset"
   fullnameOverride: "mongodb"
   useStatefulSet: true
@@ -95,25 +95,27 @@ mongodb:
 
 ################## KEDA ##################
 keda:
-  enabled: false
+  enabled: true
+  crds: 
+    install: true
   certificates:
     certManager:
       enabled: true
-      issuer: {"generate":false,"group":"cert-manager.io ","kind":"ClusterIssuer","name":"armonik-selfsigned-issuer"}
+      issuer: {"generate":false,"group":"cert-manager.io","kind":"ClusterIssuer","name":"armonik-selfsigned-issuer"}
 
 ################## CERT-MANAGER ##################
 cert-manager:
-  enabled: false
+  enabled: true
   installCRDs: true
   fullnameOverride: "cert-manager"
   cainjector:
-    enabled: false
+    enabled: true
 
 ################## GRAFANA ##################
 grafana:
   enabled: true
   serviceMonitor:
-    enabled: true
+    enabled: false
   #nodeSelector: {"monitoring"}
   fullnameOverride: "grafana"
   ingress:
@@ -171,7 +173,7 @@ fluent-bit:
   metrics:
     enabled: true
     serviceMonitor:
-      enabled: true
+      enabled: false
   extraVolumes: |
     - name: runlogjournal
       hostPath:

@@ -49,8 +49,8 @@ spec:
       {{- end }}
       terminationGracePeriodSeconds: {{ $config.terminationGracePeriodSeconds }}
       shareProcessNamespace: {{ $.Values.shareProcessNamespace }}
-      imagePullSecrets:
-        - name: IfNotPresent
+      # imagePullSecrets:
+      #   - name: IfNotPresent
       enableServiceLinks: true
       {{- if $config.imagePullSecrets }}
       imagePullSecrets:

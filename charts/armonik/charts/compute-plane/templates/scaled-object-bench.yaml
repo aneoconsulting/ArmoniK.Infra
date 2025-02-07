@@ -1,0 +1,34 @@
+{{ if .Values.triggers }}
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: {{ .Values.triggers.suffix }}-bench
+  namespace: {{ .Release.Namespace }}
+spec:
+  scaleTargetRef:
+    apiVersion: {{ .Values.triggers.scaleTargetRef.apiVersion }}  # Optional. Default: apps/v1
+    kind: {{ .Values.triggers.scaleTargetRef.kind }}         # Optional. Default: Deployment
+    name: {{ .Values.triggers.scaleTargetRef.name }}-bench       # Mandatory. Must be in the same namespace as the ScaledObject
+    envSourceContainerName: {{ .Values.triggers.scaleTargetRef.envSourceContainerName }}        # Optional. Default: .spec.template.spec.containers[0]
+  pollingInterval: {{ .Values.triggers.pollingInterval }}                               # Optional. Default: 30 seconds
+  cooldownPeriod: {{ .Values.triggers.cooldownPeriod }}                              # Optional. Default: 300 seconds
+  #  idleReplicaCount: {{ .Values.idleReplicaCount }}                               # Optional. Default: ignored, must be less than minReplicaCount
+  minReplicaCount: {{ .Values.triggers.minReplicaCount }}                                # Optional. Default: 0
+  maxReplicaCount: {{ .Values.triggers.maxReplicaCount }}                              # Optional. Default: 100
+  #  fallback:                                          # Optional. Section to specify fallback options
+  #    failureThreshold: {{ .Values.triggers.fallback.failureThreshold }}                              # Mandatory if fallback section is included
+  #    replicas: {{ .Values.triggers.fallback.replicas }}                                     # Mandatory if fallback section is included
+  advanced: # Optional. Section to specify advanced options
+    restoreToOriginalReplicaCount: {{ .Values.triggers.behavior.restoreToOriginalReplicaCount }}        # Optional. Default: false
+    horizontalPodAutoscalerConfig: # Optional. Section to specify HPA related options
+      behavior: # Optional. Use to modify HPA's scaling behavior
+        scaleDown:
+          stabilizationWindowSeconds: {{ .Values.triggers.behavior.stabilizationWindowSeconds }}
+          policies:
+            - type: {{ .Values.triggers.behavior.type }}
+              value: {{ .Values.triggers.behavior.value }}
+              periodSeconds: {{ .Values.triggers.behavior.periodSeconds }}
+  triggers:
+{{ toYaml .Values.computePlane.partition.bench.hpa.triggers | indent 4 }}
+{{ end }}

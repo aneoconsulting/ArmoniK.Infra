@@ -102,6 +102,8 @@ keda:
     certManager:
       enabled: false
       issuer: {"generate":false,"group":"cert-manager.io","kind":"ClusterIssuer","name":"armonik-selfsigned-issuer"}
+  image:
+    pullPolicy: IfNotPresent
 
 ################## CERT-MANAGER ##################
 cert-manager:

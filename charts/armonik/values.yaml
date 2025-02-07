@@ -61,7 +61,7 @@ redis:
   metrics:
     enabled: true
     serviceMonitor:
-      enabled: false
+      enabled: true
 
 ################## ACTIVEMQ ##################
 activemq:
@@ -78,7 +78,7 @@ mongodb:
   metrics:
     enabled: true
     serviceMonitor:
-      enabled: false
+      enabled: true
   architecture: "replicaset"
   fullnameOverride: "mongodb"
   useStatefulSet: true
@@ -115,7 +115,7 @@ cert-manager:
 grafana:
   enabled: true
   serviceMonitor:
-    enabled: false
+    enabled: true
   #nodeSelector: {"monitoring"}
   fullnameOverride: "grafana"
   ingress:
@@ -173,7 +173,7 @@ fluent-bit:
   metrics:
     enabled: true
     serviceMonitor:
-      enabled: false
+      enabled: true
   extraVolumes: |
     - name: runlogjournal
       hostPath:

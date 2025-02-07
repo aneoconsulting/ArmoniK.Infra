@@ -10,7 +10,7 @@ global:
 ### ARMONIK APPLICATION CONFIGURATION #####
 ############################################
 control-plane:
-  enabled: false
+  enabled: true
   image:
     repository: dockerhubaneo
     tag: "0.31.0"

@@ -38,7 +38,7 @@ spec:
       serviceAccountName: {{ $.Values.serviceAccount }}
       serviceAccount: {{ $.Values.serviceAccount }}
       automountServiceAccountToken: true
-      {{- if $config.tolerations}}  
+      {{- if $config.tolerations}}
       tolerations:
         {{- range $i, $toleration := $config.tolerations }}
         - key: {{ $toleration.key }}
@@ -60,6 +60,7 @@ spec:
       {{- end }}
       restartPolicy: {{ $.Values.restartPolicy }}
       containers:
+      # agent container
       - name: {{ $.Values.pollingAgent.name }}
       {{- if (ne $config.pollingAgent.tag "") }}
         image: "{{ $.Values.registry }}/{{ $config.pollingAgent.image }}:{{ $config.pollingAgent.tag }}"
@@ -96,10 +97,16 @@ spec:
         envFrom:
         {{- toYaml $.Values.pollingAgent.envFrom | nindent 10 }}
         {{- end }}
-        {{- if or $config.envHardValue $.Values.pollingAgent.envSecretValue }}
+        {{- if or $config.envHardValue $.Values.pollingAgent.envSecretValue $config.envCommon }}
         env:
           {{- if $config.envHardValue }}
           {{- range $index, $item := $config.envHardValue }}
+          - name: {{ $item.name }}
+            value: {{ $item.value }}
+          {{- end }}
+          {{- end }}
+          {{- if $config.envCommon }}
+          {{- range $index, $item := $config.envCommon }}
           - name: {{ $item.name }}
             value: {{ $item.value }}
           {{- end }}
@@ -110,7 +117,7 @@ spec:
             valueFrom:
               {{- toYaml .valueFrom | nindent 14 }}
           {{- end }}
-          {{- end }}  
+          {{- end }}
         {{- end }}
         volumeMounts:
           {{- range $key, $value := $.Values.pollingAgent.volumeMounts }}
@@ -118,6 +125,7 @@ spec:
             mountPath: {{ $value.mountPath }}
             mountPropagation: None
           {{- end }}
+      # worker containers
       {{- range $index, $worker := $config.worker }}
       - name: "{{ $worker.name }}-{{ $index }}"
         image: "{{ $.Values.registry }}/{{ $worker.image }}:{{ $worker.tag | default "" }}"
@@ -147,7 +155,15 @@ spec:
         envFrom:
         {{- toYaml $.Values.worker.envFrom | nindent 8 }}
         {{- end }}
-
+        {{- if $config.envCommon }}
+        env:
+          {{- if $config.envCommon }}
+          {{- range $index, $item := $config.envCommon }}
+          - name: {{ $item.name }}
+            value: {{ $item.value }}
+          {{- end }}
+          {{- end }}
+        {{- end }}
         {{- if $.Values.worker.volumeMounts }}
         volumeMounts:
           {{- with $.Values.worker.volumeMounts }}
@@ -157,7 +173,7 @@ spec:
         {{- if (eq $.Values.checkFileStorageType "FS") }}
           - name: {{ $.Values.FS.name | quote }}
             mountPath: {{ $.Values.FS.mountPath }}
-            readOnly: true             
+            readOnly: true
         {{- end }}
       {{- end }}
       {{- if not $.Values.fluentBit.isDaemonSet }}
@@ -183,17 +199,17 @@ spec:
         {{- toYaml $.Values.volumes | nindent 8 }}
         {{- end }}
       {{- end }}
-      {{- if (eq $.Values.fileStorageType "nfs") }} 
+      {{- if (eq $.Values.fileStorageType "nfs") }}
         - name: {{ $.Values.nfs.name | quote }}
           nfs:
             path: {{ $.Values.nfs.path }}
             server: {{ $.Values.nfs.server}}
-            readOnly: true             
+            readOnly: true
       {{- end }}
       {{- if (eq $.Values.fileStorageType "hostpath") }}
         - name: {{ $.Values.hostPath.name | quote  }}
           hostPath:
             path: {{ $.Values.hostPath.path }}
-            type: "Directory"     
-      {{- end }}      
+            type: "Directory"
+      {{- end }}
   {{- end }}

@@ -12,7 +12,7 @@ computePlane:
     labels:
       app: "armonik"
       service: "compute-plane"
-  partition: 
+  partition:
     default:
       replicas: 1
       pollingAgent:
@@ -33,7 +33,7 @@ computePlane:
           runAsNonRoot: false
           readOnlyRootFilesystem: false
           allowPrivilegeEscalation: true
-        enableServiceLinks: true  
+        enableServiceLinks: true
       annotations: {}
       nodeSelector: {}
       tolerations: []
@@ -109,7 +109,7 @@ computePlane:
           memory: "256Mi"
         securityContext:
           capabilities:
-            drop: 
+            drop:
             - SYS_PTRACE
           privileged: false
           runAsNonRoot: false
@@ -178,7 +178,7 @@ computePlane:
           - type: "prometheus"
             threshold: 2
 
-    # Partition for the htcmock worker        
+    # Partition for the htcmock worker
     htcmock:
       replicas: 1
       pollingAgent:
@@ -193,7 +193,7 @@ computePlane:
           memory: "256Mi"
         securityContext:
           capabilities:
-            drop: 
+            drop:
             - SYS_PTRACE
           privileged: false
           runAsNonRoot: false
@@ -236,6 +236,15 @@ computePlane:
           value: htcmock
         - name: MongoDB__User
           value: root
+      envCommon:
+        - name: ComputePlane__WorkerChannel__SocketType
+          value: tcp
+        - name: ComputePlane__WorkerChannel__Address
+          value: http://localhost:6666
+        - name: ComputePlane__AgentChannel__SocketType
+          value: tcp
+        - name: ComputePlane__AgentChannel__Address
+          value: http://localhost:6667
       # ArmoniK workers
       worker:
         - name: "worker"
@@ -264,7 +273,7 @@ computePlane:
           - type: "prometheus"
             threshold: 2
 
-    # Partition for the bench worker        
+    # Partition for the bench worker
     bench:
       replicas: 1
       pollingAgent:
@@ -279,7 +288,7 @@ computePlane:
           memory: "256Mi"
         securityContext:
           capabilities:
-            drop: 
+            drop:
             - SYS_PTRACE
           privileged: false
           runAsNonRoot: false
@@ -566,22 +575,22 @@ workerConfigmaps:
   data:
     FileStorageType: FS
     target_data_path: /data
-    target_zip_path: /tmp    
+    target_zip_path: /tmp
 
 # checkFileStorageType: "FS"
 # fileStorageType: "hostpath"
 
 preStopWaitScript: "<<EOF while test -e /cache/armonik_agent.sock ; do   sleep 1 done EOF"
 
-# FS: 
+# FS:
 #   name: "shared-volume"
 #   mountPath: "/data"
 
-# hostPath: 
+# hostPath:
 #   name: "shared-volume"
 #   path: "/home/mjadoui/ArmoniK/infrastructure/quick-de" # (abs(path) à voir dans .tf)
 
-# env: 
+# env:
 #   pollingAgentAggregation:
-    
+
 

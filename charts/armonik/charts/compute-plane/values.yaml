@@ -17,7 +17,7 @@ computePlane:
       replicas: 1
       pollingAgent:
         image: "armonik_pollingagent"
-        tag: "0.31.0"
+        tag: "0.31.2"
         imagePullPolicy: "IfNotPresent"
         limits:
           cpu: "1000m"
@@ -104,7 +104,7 @@ computePlane:
       replicas: 1
       pollingAgent:
         image: "armonik_pollingagent"
-        tag: "0.31.0"
+        tag: "0.31.2"
         imagePullPolicy: "IfNotPresent"
         limits:
           cpu: "1000m"
@@ -159,7 +159,7 @@ computePlane:
       worker:
         - name: "worker"
           image: "armonik_core_stream_test_worker"
-          tag: "0.31.0"
+          tag: "0.31.2"
           imagePullPolicy: "IfNotPresent"
           limits:
             cpu: "1000m"
@@ -193,7 +193,7 @@ computePlane:
       replicas: 1
       pollingAgent:
         image: "armonik_pollingagent"
-        tag: "0.31.0"
+        tag: "0.31.2"
         imagePullPolicy: "IfNotPresent"
         limits:
           cpu: "1000m"
@@ -259,7 +259,7 @@ computePlane:
       worker:
         - name: "worker"
           image: "armonik_core_htcmock_test_worker"
-          tag: "0.31.0"
+          tag: "0.31.2"
           imagePullPolicy: "IfNotPresent"
           limits:
             cpu: "1000m"
@@ -293,7 +293,7 @@ computePlane:
       replicas: 1
       pollingAgent:
         image: "armonik_pollingagent"
-        tag: "0.31.0"
+        tag: "0.31.2"
         imagePullPolicy: "IfNotPresent"
         limits:
           cpu: "1000m"
@@ -348,7 +348,7 @@ computePlane:
       worker:
         - name: "worker"
           image: "armonik_core_bench_test_worker"
-          tag: "0.31.0"
+          tag: "0.31.2"
           imagePullPolicy: "IfNotPresent"
           limits:
             cpu: "1000m"
@@ -398,7 +398,7 @@ triggers:
   # -- Minimum count of replicas
   minReplicaCount: 1                                           # Optional. Default: 0
   # -- Maximum count of replicas
-  maxReplicaCount: 100                                         # Optional. Default: 100  
+  maxReplicaCount: 100                                         # Optional. Default: 100
 
     # -- Fallback options
   fallback:   # Optional. Section to specify fallback options

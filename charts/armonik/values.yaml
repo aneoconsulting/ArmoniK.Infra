@@ -13,7 +13,7 @@ control-plane:
   enabled: true
   image:
     repository: dockerhubaneo
-    tag: "0.31.0"
+    tag: "0.31.2"
   imageJob:
     repository: rtsp/mongosh
     tag: "2.3.8"

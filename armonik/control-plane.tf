@@ -235,6 +235,51 @@ resource "kubernetes_deployment" "control_plane" {
             }
           }
         }
+
+        # Fluent-bit container windows
+        dynamic "container" {
+          for_each = (!var.fluent_bit.windows_is_daemonset ? [1] : [])
+          content {
+            name              = var.fluent_bit.windows_container_name
+            image             = "${var.fluent_bit.windows_image}:${var.fluent_bit.windows_tag}"
+            image_pull_policy = "IfNotPresent"
+            command           = ["powershell", "-ExecutionPolicy", "Bypass", "-File", "C:/fluent-bit/entrypoint.ps1"]
+            env_from {
+              config_map_ref {
+                name = try(var.fluent_bit.windows_configmaps.envvars, "")
+              }
+            }
+            # Please don't change below read-only permissions
+            dynamic "volume_mount" {
+              for_each = local.fluent_bit_windows_volumes
+              content {
+                name       = volume_mount.key
+                mount_path = volume_mount.value.mount_path
+                sub_path   = try(volume_mount.value.sub_path, "")
+                read_only  = volume_mount.value.read_only
+              }
+            }
+          }
+        }
+        dynamic "volume" {
+          for_each = local.fluent_bit_windows_volumes
+          content {
+            name = volume.key
+            dynamic "host_path" {
+              for_each = (volume.value.type == "host_path" ? [1] : [])
+              content {
+                path = volume.value.mount_path
+              }
+            }
+            dynamic "config_map" {
+              for_each = (volume.value.type == "config_map" ? [1] : [])
+              content {
+                name = volume.value.content
+
+              }
+            }
+          }
+        }
       }
     }
   }

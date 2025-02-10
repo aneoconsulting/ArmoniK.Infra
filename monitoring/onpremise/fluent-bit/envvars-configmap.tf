@@ -19,5 +19,11 @@ resource "kubernetes_config_map" "fluent_bit_envvars_config" {
     AWS_REGION_S3                                = local.s3_region
     S3_KEY_FORMAT                                = local.s3_key_format
     PARSER                                       = local.fluent_bit_parser
+    KUBE_CA_FILE                                 = local.fluent_bit_kube_ca_file
+    KUBE_TOKEN_FILE                              = local.fluent_bit_kube_token_file
+    INPUT_KUBE_PATH                              = local.fluent_bit_input_kube_path
+    INPUT_APPLICATION_PATH                       = local.fluent_bit_input_application_path
+    INPUT_S3_PATH                                = local.fluent_bit_input_s3_path
+    INPUT_PATH                                   = local.fluent_bit_input_path
   }
 }

@@ -1084,7 +1084,7 @@
             "executionErrorState": "keep_state",
             "frequency": "60s",
             "handler": 1,
-            "message": "A MongoDB oplog replication has been 5 minutes behind in its replication for more than 15 minutes.\nBeing able to fail over to a replica of your data is only useful if the data is up to date, so you need to know when that’s no longer the case!",
+            "message": "A MongoDB oplog replication has been 5 minutes behind in its replication for more than 15 minutes.\nBeing able to fail over to a replica of your data is only useful if the data is up to date, so you need to know when that\u2019s no longer the case!",
             "name": "MongoDB Oplog lag alert",
             "noDataState": "no_data",
             "notifications": [

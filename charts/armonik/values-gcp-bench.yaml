@@ -2,8 +2,6 @@
 ################## GLOBAL ##################
 ############################################
 global:
-  namespace: "armonik"
-  registry: "dockerhubaneo"
   security:
     allowInsecureImages: true
 
@@ -36,8 +34,6 @@ compute-plane:
             key: service
             operator: Equal
             value: workers
-  computePlane:
-    partition:
       stream:
         replicas: 0
         nodeSelector:
@@ -47,8 +43,6 @@ compute-plane:
             key: service
             operator: Equal
             value: workers
-  computePlane:
-    partition:
       htcmock:
       replicas: 0
       nodeSelector:
@@ -58,8 +52,6 @@ compute-plane:
           key: service
           operator: Equal
           value: workers
-  computePlane:
-    partition:
       bench:
         replicas: 120
         nodeSelector:

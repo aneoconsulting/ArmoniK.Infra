@@ -29,7 +29,7 @@ repos:
           - '--args=--only=terraform_module_version'
       #- id: terraform_tfsec
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v4.4.0
     hooks:
       - id: check-executables-have-shebangs
       - id: check-merge-conflict
@@ -46,6 +46,9 @@ repos:
           - "--autofix"
           - "--indent=2"
           - "--no-sort-keys"
+      - id: mixed-line-ending
+        args:
+          - "--fix=lf"
   - repo: https://github.com/norwoodj/helm-docs
     rev: v1.14.2
     hooks:

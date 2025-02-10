@@ -657,5 +657,3 @@ preStopWaitScript: "<<EOF while test -e /cache/armonik_agent.sock ; do   sleep 1
 
 # env:
 #   pollingAgentAggregation:
-
-

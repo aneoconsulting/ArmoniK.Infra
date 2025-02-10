@@ -1,92 +1,122 @@
-# Kubernetes Metrics Server
+# metrics-server
 
-[Metrics Server](https://github.com/kubernetes-sigs/metrics-server/) is a scalable, efficient source of container resource metrics for Kubernetes built-in autoscaling pipelines.
+![Version: 3.12.2](https://img.shields.io/badge/Version-3.12.2-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.7.2](https://img.shields.io/badge/AppVersion-0.7.2-informational?style=flat-square)
 
-## Installing the Chart
+Metrics Server is a scalable, efficient source of container resource metrics for Kubernetes built-in autoscaling pipelines.
 
-Before you can install the chart you will need to add the `metrics-server` repo to [Helm](https://helm.sh/).
+**Homepage:** <https://github.com/kubernetes-sigs/metrics-server>
 
-```shell
-helm repo add metrics-server https://kubernetes-sigs.github.io/metrics-server/
-```
+## Maintainers
 
-After you've installed the repo you can install the chart.
+| Name | Email | Url |
+| ---- | ------ | --- |
+| stevehipwell |  | <https://github.com/stevehipwell> |
+| krmichel |  | <https://github.com/krmichel> |
+| endrec |  | <https://github.com/endrec> |
 
-```shell
-helm upgrade --install metrics-server metrics-server/metrics-server
-```
+## Source Code
 
-## Configuration
+* <https://github.com/kubernetes-sigs/metrics-server>
 
-The following table lists the configurable parameters of the _Metrics Server_ chart and their default values.
+## Values
 
-| Parameter                            | Description                                                                                                                                                                                                                                                      | Default                                                                        |
-| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| `image.repository`                   | Image repository.                                                                                                                                                                                                                                                | `registry.k8s.io/metrics-server/metrics-server`                                |
-| `image.tag`                          | Image tag, will override the default tag derived from the chart app version.                                                                                                                                                                                     | `""`                                                                           |
-| `image.pullPolicy`                   | Image pull policy.                                                                                                                                                                                                                                               | `IfNotPresent`                                                                 |
-| `imagePullSecrets`                   | Image pull secrets.                                                                                                                                                                                                                                              | `[]`                                                                           |
-| `nameOverride`                       | Override the `name` of the chart.                                                                                                                                                                                                                                | `nil`                                                                          |
-| `fullnameOverride`                   | Override the `fullname` of the chart.                                                                                                                                                                                                                            | `nil`                                                                          |
-| `serviceAccount.create`              | If `true`, create a new service account.                                                                                                                                                                                                                         | `true`                                                                         |
-| `serviceAccount.annotations`         | Annotations to add to the service account.                                                                                                                                                                                                                       | `{}`                                                                           |
-| `serviceAccount.name`                | Service account to be used. If not set and `serviceAccount.create` is `true`, a name is generated using the full name template.                                                                                                                                  | `nil`                                                                          |
-| `serviceAccount.secrets`             | The list of secrets mountable by this service account. See <https://kubernetes.io/docs/reference/labels-annotations-taints/#enforce-mountable-secrets>                                                                                                             | `[]`                                                                           |
-| `rbac.create`                        | If `true`, create the RBAC resources.                                                                                                                                                                                                                            | `true`                                                                         |
-| `rbac.pspEnabled`                    | If `true`, create a pod security policy resource, unless Kubernetes version is 1.25 or later.                                                                                                                                                                    | `false`                                                                        |
-| `apiService.create`                  | If `true`, create the `v1beta1.metrics.k8s.io` API service. You typically want this enabled! If you disable API service creation you have to manage it outside of this chart for e.g horizontal pod autoscaling to work with this release.                       | `true`                                                                         |
-| `apiService.annotations`             | Annotations to add to the API service                                                                                                                                                                                                                            | `{}`                                                                           |
-| `apiService.insecureSkipTLSVerify`   | Specifies whether to skip TLS verification (NOTE: this setting is not a proxy for the `--kubelet-insecure-tls` metrics-server flag)                             | `true`                                          |
-| `apiService.caBundle`                | The PEM encoded CA bundle for TLS verification                                                                                                                                                                                                                   | `""`                                                                           |
-| `commonLabels`                       | Labels to add to each object of the chart.                                                                                                                                                                                                                       | `{}`                                                                           |
-| `podLabels`                          | Labels to add to the pod.                                                                                                                                                                                                                                        | `{}`                                                                           |
-| `podAnnotations`                     | Annotations to add to the pod.                                                                                                                                                                                                                                   | `{}`                                                                           |
-| `podSecurityContext`                 | Security context for the pod.                                                                                                                                                                                                                                    | `{}`                                                                           |
-| `securityContext`                    | Security context for the _metrics-server_ container.                                                                                                                                                                                                             | _See values.yaml_                                                              |
-| `priorityClassName`                  | Priority class name to use.                                                                                                                                                                                                                                      | `system-cluster-critical`                                                      |
-| `containerPort`                      | port for the _metrics-server_ container.                                                                                                                                                                                                                         | `10250`                                                                        |
-| `hostNetwork.enabled`                | If `true`, start _metric-server_ in hostNetwork mode. You would require this enabled if you use alternate overlay networking for pods and API server unable to communicate with metrics-server. As an example, this is required if you use Weave network on EKS. | `false`                                                                        |
-| `replicas`                           | Number of replicas to run.                                                                                                                                                                                                                                       | `1`                                                                            |
-| `revisionHistoryLimit`               | Number of revisions to keep.                                                                                                                                                                                                                                     | `nil`                                                                           |
-| `updateStrategy`                     | Customise the default update strategy.                                                                                                                                                                                                                           | `{}`                                                                           |
-| `podDisruptionBudget.enabled`        | If `true`, create `PodDisruptionBudget` resource.                                                                                                                                                                                                                | `{}`                                                                           |
-| `podDisruptionBudget.minAvailable`   | Set the `PodDisruptionBudget` minimum available pods.                                                                                                                                                                                                            | `nil`                                                                          |
-| `podDisruptionBudget.maxUnavailable` | Set the `PodDisruptionBudget` maximum unavailable pods.                                                                                                                                                                                                          | `nil`                                                                          |
-| `defaultArgs`                        | Default arguments to pass to the _metrics-server_ command.                                                                                                                                                                                                       | See _values.yaml_                                                              |
-| `args`                               | Additional arguments to pass to the _metrics-server_ command.                                                                                                                                                                                                    | `[]`                                                                           |
-| `livenessProbe`                      | Liveness probe.                                                                                                                                                                                                                                                  | See _values.yaml_                                                              |
-| `readinessProbe`                     | Readiness probe.                                                                                                                                                                                                                                                 | See _values.yaml_                                                              |
-| `service.type`                       | Service type.                                                                                                                                                                                                                                                    | `ClusterIP`                                                                    |
-| `service.port`                       | Service port.                                                                                                                                                                                                                                                    | `443`                                                                          |
-| `service.annotations`                | Annotations to add to the service.                                                                                                                                                                                                                               | `{}`                                                                           |
-| `service.labels`                     | Labels to add to the service.                                                                                                                                                                                                                                    | `{}`                                                                           |
-| `addonResizer.enabled`               | If `true`, run the addon-resizer as a sidecar to automatically scale resource requests with cluster size.                                                                                                                                                        | `false`                                                                        |
-| `addonResizer.securityContext`       | Security context for the _metrics_server_container.       |                                                                                                                                             _See values.yaml |
-| `addonResizer.image.repository`      | addon-resizer image repository                                                                                                                                                                                                                                   | `registry.k8s.io/autoscaling/addon-resizer`                                    |
-| `addonResizer.image.tag`             | addon-resizer image tag                                                                                                                                                                                                                                          | `1.8.21`                                                                       |
-| `addonResizer.resources`             | Resource requests and limits for the _nanny_ container.                                                                                                                                                                                                          | `{ requests: { cpu: 40m, memory: 25Mi }, limits: { cpu: 40m, memory: 25Mi } }` |
-| `addonResizer.nanny.cpu`             | The base CPU requirement.                                                                                                                                                                                                                                        | `0m`                                                                           |
-| `addonResizer.nanny.extraCPU`        | The amount of CPU to add per node.                                                                                                                                                                                                                               | `1m`                                                                           |
-| `addonResizer.nanny.memory`          | The base memory requirement.                                                                                                                                                                                                                                     | `0Mi`                                                                          |
-| `addonResizer.nanny.extraMemory`     | The amount of memory to add per node.                                                                                                                                                                                                                            | `2Mi`                                                                          |
-| `addonResizer.nanny.minClusterSize`  | Specifies the smallest number of nodes resources will be scaled to.                                                                                                                                                                                              | `100`                                                                          |
-| `addonResizer.nanny.pollPeriod`      | The time, in milliseconds, to poll the dependent container.                                                                                                                                                                                                      | `300000`                                                                       |
-| `addonResizer.nanny.threshold`       | A number between 0-100. The dependent's resources are rewritten when they deviate from expected by more than threshold.                                                                                                                                          | `5`                                                                            |
-| `metrics.enabled`                    | If `true`, allow unauthenticated access to `/metrics`.                                                                                                                                                                                                           | `false`                                                                        |
-| `serviceMonitor.enabled`             | If `true`, create a _Prometheus_ service monitor. This needs `metrics.enabled` to be `true`.                                                                                                                                                                     | `false`                                                                        |
-| `serviceMonitor.additionalLabels`    | Additional labels to be set on the ServiceMonitor.                                                                                                                                                                                                               | `{}`                                                                           |
-| `serviceMonitor.metricRelabelings`   | _Prometheus_ metric relabeling.                                                                                                                                                                                                                                  | `[]`                                                                           |
-| `serviceMonitor.relabelings`         | _Prometheus_ relabeling.                                                                                                                                                                                                                                         | `[]`                                                                           |
-| `serviceMonitor.interval`            | _Prometheus_ scrape frequency.                                                                                                                                                                                                                                   | `1m`                                                                           |
-| `serviceMonitor.scrapeTimeout`       | _Prometheus_ scrape timeout.                                                                                                                                                                                                                                     | `10s`                                                                          |
-| `resources`                          | Resource requests and limits for the _metrics-server_ container. See <https://github.com/kubernetes-sigs/metrics-server#scaling>                                                                                                                                   | `{ requests: { cpu: 100m, memory: 200Mi }}`                                    |
-| `extraVolumeMounts`                  | Additional volume mounts for the _metrics-server_ container.                                                                                                                                                                                                     | `[]`                                                                           |
-| `extraVolumes`                       | Additional volumes for the pod.                                                                                                                                                                                                                                  | `[]`                                                                           |
-| `nodeSelector`                       | Node labels for pod assignment.                                                                                                                                                                                                                                  | `{}`                                                                           |
-| `tolerations`                        | Tolerations for pod assignment.                                                                                                                                                                                                                                  | `[]`                                                                           |
-| `affinity`                           | Affinity for pod assignment.                                                                                                                                                                                                                                     | `{}`                                                                           |
-| `topologySpreadConstraints`          | Pod Topology Spread Constraints.                                                                                                                                                                                                                                 | `[]`                                                                           |
-| `deploymentAnnotations`              | Annotations to add to the deployment.                                                                                                                                                                                                                            | `{}`                                                                           |
-| `schedulerName`                      | scheduler to set to the deployment.                                                                                                                                                                                                                              | `""`                                                                           |
-| `dnsConfig`                          | Set the dns configuration options for the deployment.                                                                                                                                                                                                            | `{}`                                                                           |
-| `tmpVolume`                          | Volume to be mounted in Pods for temporary files.                                                                                                                                                                                                                | `{"emptyDir":{}}`                                                              |
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+| addonResizer.enabled | bool | `false` |  |
+| addonResizer.image.repository | string | `"registry.k8s.io/autoscaling/addon-resizer"` |  |
+| addonResizer.image.tag | string | `"1.8.21"` |  |
+| addonResizer.nanny.cpu | string | `"0m"` |  |
+| addonResizer.nanny.extraCpu | string | `"1m"` |  |
+| addonResizer.nanny.extraMemory | string | `"2Mi"` |  |
+| addonResizer.nanny.memory | string | `"0Mi"` |  |
+| addonResizer.nanny.minClusterSize | int | `100` |  |
+| addonResizer.nanny.pollPeriod | int | `300000` |  |
+| addonResizer.nanny.threshold | int | `5` |  |
+| addonResizer.resources.limits.cpu | string | `"40m"` |  |
+| addonResizer.resources.limits.memory | string | `"25Mi"` |  |
+| addonResizer.resources.requests.cpu | string | `"40m"` |  |
+| addonResizer.resources.requests.memory | string | `"25Mi"` |  |
+| addonResizer.securityContext.allowPrivilegeEscalation | bool | `false` |  |
+| addonResizer.securityContext.capabilities.drop[0] | string | `"ALL"` |  |
+| addonResizer.securityContext.readOnlyRootFilesystem | bool | `true` |  |
+| addonResizer.securityContext.runAsNonRoot | bool | `true` |  |
+| addonResizer.securityContext.runAsUser | int | `1000` |  |
+| addonResizer.securityContext.seccompProfile.type | string | `"RuntimeDefault"` |  |
+| affinity | object | `{}` |  |
+| apiService.annotations | object | `{}` |  |
+| apiService.caBundle | string | `""` |  |
+| apiService.create | bool | `true` |  |
+| apiService.insecureSkipTLSVerify | bool | `true` |  |
+| args | list | `[]` |  |
+| commonLabels | object | `{}` |  |
+| containerPort | int | `10250` |  |
+| defaultArgs[0] | string | `"--cert-dir=/tmp"` |  |
+| defaultArgs[1] | string | `"--kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname"` |  |
+| defaultArgs[2] | string | `"--kubelet-use-node-status-port"` |  |
+| defaultArgs[3] | string | `"--metric-resolution=15s"` |  |
+| deploymentAnnotations | object | `{}` |  |
+| dnsConfig | object | `{}` |  |
+| extraVolumeMounts | list | `[]` |  |
+| extraVolumes | list | `[]` |  |
+| fullnameOverride | string | `""` |  |
+| hostNetwork.enabled | bool | `false` |  |
+| image.pullPolicy | string | `"IfNotPresent"` |  |
+| image.repository | string | `"registry.k8s.io/metrics-server/metrics-server"` |  |
+| image.tag | string | `""` |  |
+| imagePullSecrets | list | `[]` |  |
+| livenessProbe.failureThreshold | int | `3` |  |
+| livenessProbe.httpGet.path | string | `"/livez"` |  |
+| livenessProbe.httpGet.port | string | `"https"` |  |
+| livenessProbe.httpGet.scheme | string | `"HTTPS"` |  |
+| livenessProbe.initialDelaySeconds | int | `0` |  |
+| livenessProbe.periodSeconds | int | `10` |  |
+| metrics.enabled | bool | `false` |  |
+| nameOverride | string | `""` |  |
+| nodeSelector | object | `{}` |  |
+| podAnnotations | object | `{}` |  |
+| podDisruptionBudget.enabled | bool | `false` |  |
+| podDisruptionBudget.maxUnavailable | string | `nil` |  |
+| podDisruptionBudget.minAvailable | string | `nil` |  |
+| podLabels | object | `{}` |  |
+| podSecurityContext | object | `{}` |  |
+| priorityClassName | string | `"system-cluster-critical"` |  |
+| rbac.create | bool | `true` |  |
+| rbac.pspEnabled | bool | `false` |  |
+| readinessProbe.failureThreshold | int | `3` |  |
+| readinessProbe.httpGet.path | string | `"/readyz"` |  |
+| readinessProbe.httpGet.port | string | `"https"` |  |
+| readinessProbe.httpGet.scheme | string | `"HTTPS"` |  |
+| readinessProbe.initialDelaySeconds | int | `20` |  |
+| readinessProbe.periodSeconds | int | `10` |  |
+| replicas | int | `1` |  |
+| resources.requests.cpu | string | `"100m"` |  |
+| resources.requests.memory | string | `"200Mi"` |  |
+| revisionHistoryLimit | string | `nil` |  |
+| schedulerName | string | `""` |  |
+| securityContext.allowPrivilegeEscalation | bool | `false` |  |
+| securityContext.capabilities.drop[0] | string | `"ALL"` |  |
+| securityContext.readOnlyRootFilesystem | bool | `true` |  |
+| securityContext.runAsNonRoot | bool | `true` |  |
+| securityContext.runAsUser | int | `1000` |  |
+| securityContext.seccompProfile.type | string | `"RuntimeDefault"` |  |
+| service.annotations | object | `{}` |  |
+| service.labels | object | `{}` |  |
+| service.port | int | `443` |  |
+| service.type | string | `"ClusterIP"` |  |
+| serviceAccount.annotations | object | `{}` |  |
+| serviceAccount.create | bool | `true` |  |
+| serviceAccount.name | string | `""` |  |
+| serviceAccount.secrets | list | `[]` |  |
+| serviceMonitor.additionalLabels | object | `{}` |  |
+| serviceMonitor.enabled | bool | `false` |  |
+| serviceMonitor.interval | string | `"1m"` |  |
+| serviceMonitor.metricRelabelings | list | `[]` |  |
+| serviceMonitor.relabelings | list | `[]` |  |
+| serviceMonitor.scrapeTimeout | string | `"10s"` |  |
+| tmpVolume.emptyDir | object | `{}` |  |
+| tolerations | list | `[]` |  |
+| topologySpreadConstraints | list | `[]` |  |
+| updateStrategy | object | `{}` |  |
+
+----------------------------------------------
+Autogenerated from chart metadata using [helm-docs v1.14.2](https://github.com/norwoodj/helm-docs/releases/v1.14.2)

@@ -6,5 +6,3 @@ data:
   {{- range $key, $value := .Values.config.core.data }}
   {{ $key }}: {{ $value | quote }}
   {{- end }}
-
-

@@ -6,4 +6,3 @@ data:
    {{- range $key, $value := .Values.workerConfigmaps.data }}
    {{ $key }}: {{ $value | quote }}
    {{- end }}
-

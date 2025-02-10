@@ -8,4 +8,3 @@ image:
   repository: symptoma
   name: activemq
   tag: "5.18.4"
-

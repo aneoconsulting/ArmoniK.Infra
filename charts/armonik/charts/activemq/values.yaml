@@ -5,6 +5,7 @@ activemqOptsMemory: "-Xms1g -Xmx1g"
 certificates:
   enable: false
 image:
-  repository: symptoma/activemq
+  registry: symptoma
+  repository: activemq
   tag: "5.18.4"
 

@@ -26,7 +26,12 @@ spec:
       automountServiceAccountToken: true
       containers:
       - name: job-partitions-in-database
-        image: "{{ .Values.imageJob.repository }}:{{ .Values.imageJob.tag }}"
+        {{- $registry := .Values.global.imageRegistry | default .Values.image.registry | default "" }}
+        {{- if $registry }}
+        image: "{{ $registry }}/{{ .Values.imageJob.repository }}/{{ .Values.imageJob.name }}:{{ .Values.imageJob.tag | default .Chart.AppVersion }}"
+        {{- else }}
+        image: "{{ .Values.imageJob.repository }}/{{ .Values.imageJob.name }}:{{ .Values.imageJob.tag | default .Chart.AppVersion }}"
+        {{- end }}
         imagePullPolicy: IfNotPresent
         command: ["/script/init-db.sh"]
         env:

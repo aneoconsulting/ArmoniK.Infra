@@ -2,7 +2,10 @@
 ################## GLOBAL ##################
 ############################################
 global:
-  imageRegistry: "" # dockerhubaneo
+  image:
+    pullPolicy: IfNotPresent # FOR KEDA IMAGES
+    registry: "" # FOR KEDA IMAGES
+  imageRegistry: "" # FOR BITNAMI IMAGES AND ARMONIK IMAGES
   security:
     allowInsecureImages: true
 
@@ -11,18 +14,8 @@ global:
 ############################################
 control-plane:
   enabled: true
-  image:
-    repository: dockerhubaneo
-    tag: "0.31.2"
-  imageJob:
-    repository: rtsp/mongosh
-    tag: "2.3.8"
-  imageCron:
-    repository: datalust/seqcli
-    tag: "2024.3"
 compute-plane:
   enabled: false
-  registry: dockerhubaneo
 
 
 ############################################
@@ -68,9 +61,6 @@ activemq:
   enabled: true
   replicas: 1
   fullnameOverride: "activemq"
-  image:
-    repository: symptoma/activemq
-    tag: "5.18.4"
 
 ################## MONGODB ##################
 mongodb:
@@ -344,16 +334,14 @@ seq:
   fullnameOverride: "seq"
   persistence:
     enabled: false
-  image:
-    repository: datalust/seq
+  # image:
+  #   repository: $REPO-NAME/datalust/seq
 
 ################## INGRESS ##################
 ingress:
   enabled: true
-  registry: "dockerhubaneo" # dockerhubaneo NO LINK to INGRESS NGINX (only for admin GUI)
   ingress:
     type: LoadBalancer
-    image: "nginxinc/nginx-unprivileged:1.27.3"
 
 ################## PROMETHEUS ##################
 kube-prometheus:

@@ -1,15 +1,16 @@
 replicaCount: 1
-registry: "dockerhubaneo"
 image:
   repository: dockerhubaneo
   name: armonik_control
   tag: "0.31.2"
   pullPolicy: IfNotPresent
 imageJob:
-  repository: rtsp/mongosh
+  repository: rtsp
+  name: mongosh
   tag: "2.3.8"
 imageCron:
-  repository: datalust/seqcli
+  repository: datalust
+  name: seqcli
   tag: "2024.3"
 serviceAccount: armonikserviceaccount
 

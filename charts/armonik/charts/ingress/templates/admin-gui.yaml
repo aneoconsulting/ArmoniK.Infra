@@ -19,9 +19,14 @@ spec:
     spec:
       automountServiceAccountToken: true
       containers:
-      - image: {{ .Values.registry }}/{{ .Values.adminGui.image }}
+      - name: admin-app
+        {{- $registry := .Values.global.imageRegistry | default .Values.image.registry | default "" }}
+        {{- if $registry }}
+        image: "{{ $registry }}/{{ .Values.adminGui.repository }}/{{ .Values.adminGui.image }}:{{ .Values.adminGui.tag | default .Chart.AppVersion }}"
+        {{- else }}
+        image: "{{ .Values.adminGui.repository }}/{{ .Values.adminGui.image }}:{{ .Values.adminGui.tag | default .Chart.AppVersion }}"
+        {{- end }}
         imagePullPolicy: {{ .Values.adminGui.imagePullPolicy }}
-        name: admin-app
         ports:
         - name: app-port
           containerPort: {{ .Values.adminGui.port }}

@@ -1,4 +1,5 @@
 {{- range $partitionName, $config := .Values.computePlane.partition }}
+{{- $registry := $.Values.global.imageRegistry | default $.Values.registry | default "" }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -62,11 +63,11 @@ spec:
       containers:
       # agent container
       - name: {{ $.Values.pollingAgent.name }}
-      {{- if (ne $config.pollingAgent.tag "") }}
-        image: "{{ $.Values.registry }}/{{ $config.pollingAgent.image }}:{{ $config.pollingAgent.tag }}"
-      {{- else }}
-        image: {{ $.Values.registry }}/{{ $config.pollingAgent.image }}
-      {{- end }}
+        {{- if $registry }}
+        image: "{{ $registry }}/{{ $.Values.repository }}/{{ $config.pollingAgent.image }}:{{ $config.pollingAgent.tag | default $.Chart.AppVersion }}"
+        {{- else }}
+        image: "{{ $.Values.repository }}/{{ $config.pollingAgent.image }}:{{ $config.pollingAgent.tag | default $.Chart.AppVersion }}"
+        {{- end }}
         imagePullPolicy: {{ $config.pollingAgent.imagePullPolicy | quote}}
         resources:
           limits:
@@ -128,8 +129,12 @@ spec:
       # worker containers
       {{- range $index, $worker := $config.worker }}
       - name: "{{ $worker.name }}-{{ $index }}"
-        image: "{{ $.Values.registry }}/{{ $worker.image }}:{{ $worker.tag | default "" }}"
         {{- range $config.worker}}
+        {{- if $registry }}
+        image: "{{ $registry }}/{{ $.Values.repository }}/{{ $worker.image }}:{{ $worker.tag | default $.Chart.AppVersion }}"
+        {{- else }}
+        image: "{{ $.Values.repository }}/{{ $worker.image }}:{{ $worker.tag | default $.Chart.AppVersion }}"
+        {{- end }}
         imagePullPolicy: {{ .imagePullPolicy | quote }}
         {{- end }}
         resources:
@@ -178,7 +183,12 @@ spec:
       {{- end }}
       {{- if not $.Values.fluentBit.isDaemonSet }}
       - name: {{ .Values.fluentBit.name }}
-        image: {{ .Values.fluentBit.image }}:{{ .Values.fluentBit.tag }}
+        {{- $registry := .Values.global.imageRegistry | default .Values.image.registry | default "" }}
+        {{- if $registry }}
+        image: "{{ $registry }}/{{ .Values.fluentBit.repository }}/{{ .Values.fluentBit.image }}:{{ .Values.fluentBit.tag | default .Chart.AppVersion }}"
+        {{- else }}
+        image: "{{ .Values.fluentBit.repository }}/{{ .Values.fluentBit.image }}:{{ .Values.fluentBit.tag | default .Chart.AppVersion }}"
+        {{- end }}
         imagePullPolicy: {{ .Values.fluentBit.imagePullPolicy }}
         envFrom:
         - configMapRef:

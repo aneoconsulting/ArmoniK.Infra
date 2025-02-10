@@ -22,9 +22,14 @@ spec:
       name: activemq
     spec:
       containers:
-      - image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+      - name: activemq
+        {{- $registry := .Values.global.imageRegistry | default .Values.image.registry | default "" }}
+        {{- if $registry }}
+        image: "{{ $registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+        {{- else }}
+        image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+        {{- end }}
         imagePullPolicy: IfNotPresent
-        name: activemq
         ports:
         - containerPort: 5672
           name: amqp

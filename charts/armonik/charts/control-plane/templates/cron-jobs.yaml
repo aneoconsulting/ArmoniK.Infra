@@ -39,7 +39,12 @@ spec:
                 value: http://seq:8080
               - name: SEQ_USER
               - name: SEQ_PASSWORD
-              image: "{{ .Values.imageCron.repository }}:{{ .Values.imageCron.tag }}"
+              {{- $registry := .Values.global.imageRegistry | default .Values.image.registry | default "" }}
+              {{- if $registry }}
+              image: "{{ $registry }}/{{ .Values.imageCron.repository }}/{{ .Values.imageCron.name }}:{{ .Values.imageCron.tag | default .Chart.AppVersion }}"
+              {{- else }}
+              image: "{{ .Values.imageCron.repository }}/{{ .Values.imageCron.name }}:{{ .Values.imageCron.tag | default .Chart.AppVersion }}"
+              {{- end }}
               imagePullPolicy: IfNotPresent
               name: seq-retention-job
               resources: {}

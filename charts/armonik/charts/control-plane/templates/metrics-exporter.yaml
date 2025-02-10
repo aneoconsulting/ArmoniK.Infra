@@ -23,9 +23,14 @@ spec:
     spec:
       automountServiceAccountToken: true
       containers:
-      - image: {{ .Values.registry }}/armonik_control_metrics:{{ .Values.image.tag }}
+      - name: metrics-exporter
+        {{- $registry := .Values.global.imageRegistry | default .Values.image.registry | default "" }}
+        {{- if $registry }}
+        image: "{{ $registry }}/{{ .Values.image.repository }}/armonik_control_metrics:{{ .Values.image.tag | default .Chart.AppVersion }}"
+        {{- else }}
+        image: "{{ .Values.image.repository }}/armonik_control_metrics:{{ .Values.image.tag | default .Chart.AppVersion }}"
+        {{- end }}
         imagePullPolicy: IfNotPresent
-        name: metrics-exporter
         ports:
         - containerPort: 1080
           name: metrics

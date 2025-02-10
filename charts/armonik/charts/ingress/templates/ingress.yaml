@@ -20,13 +20,18 @@ spec:
     spec:
       automountServiceAccountToken: true
       containers:
-      - envFrom:
+      - name: {{ .Chart.Name }}
+        envFrom:
         - configMapRef:
             name: ingress-nginx
             optional: false
-        image: {{ .Values.ingress.image }}
+        {{- $registry := .Values.global.imageRegistry | default .Values.image.registry | default "" }}
+        {{- if $registry }}
+        image: "{{ $registry }}/{{ .Values.ingress.repository }}/{{ .Values.ingress.image }}:{{ .Values.ingress.tag | default .Chart.AppVersion }}"
+        {{- else }}
+        image: "{{ .Values.ingress.repository }}/{{ .Values.ingress.image }}:{{ .Values.ingress.tag | default .Chart.AppVersion }}"
+        {{- end }}
         imagePullPolicy: {{ .Values.ingress.imagePullPolicy }}
-        name: {{ .Chart.Name }}
         ports:
         - name: ingress-http
           containerPort: {{ .Values.ingress.ports.http.containerPort }}

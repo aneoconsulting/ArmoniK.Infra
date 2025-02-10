@@ -1,6 +1,7 @@
-registry: dockerhubaneo
 namespace: armonik
 nameOverride: ""
+image: 
+  registry: ""
 
 ingress:
   replicaCount: 1
@@ -10,7 +11,9 @@ ingress:
   #  - secretName: chart-example-tls
   #    hosts:
   #      - chart-example.local
-  image: "nginxinc/nginx-unprivileged:1.27.3"
+  repository: "nginxinc"
+  image: "nginx-unprivileged"
+  tag: "1.27.3"
   imagePullPolicy: IfNotPresent
   ports:
     grpc:
@@ -50,7 +53,9 @@ ingress:
 ###########################################################
 adminGui:
   name: admin-gui
-  image: "armonik_admin_app:0.13.3"
+  repository: dockerhubaneo
+  image: "armonik_admin_app"
+  tag: "0.13.3"
   imagePullPolicy: IfNotPresent
   port: 1080
   resources:

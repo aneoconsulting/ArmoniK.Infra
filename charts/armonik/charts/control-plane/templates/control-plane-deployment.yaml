@@ -18,7 +18,12 @@ spec:
     spec:
       containers:
         - name: {{ include "control-plane.name" . }}
-          image: "{{ .Values.image.repository }}/{{ .Values.image.name }}:{{ .Values.image.tag }}"
+          {{- $registry := .Values.global.imageRegistry | default .Values.image.registry | default "" }}
+          {{- if $registry }}
+          image: "{{ $registry }}/{{ .Values.image.repository }}/{{ .Values.image.name }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          {{- else }}
+          image: "{{ .Values.image.repository }}/{{ .Values.image.name }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          {{- end }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           #command: ["/bin/bash", "-c", "sleep 3600"]
           ports:

@@ -6,6 +6,7 @@ restartPolicy: Always
 repository: dockerhubaneo
 serviceAccount: armonikserviceaccount
 registry: ""
+imagePullSecrets: []
 
 computePlane:
   metadata:

@@ -345,6 +345,7 @@ Kubernetes: `>=v1.23.0-0`
 | fluentBit.volumeMounts[0].mountPath | string | `"/cache"` |  |
 | fluentBit.volumeMounts[0].name | string | `"cache-volume"` |  |
 | fluentBit.volumeMounts[0].readOnly | bool | `true` |  |
+| imagePullSecrets | list | `[]` |  |
 | nameOverride | string | `""` |  |
 | namespace | string | `"armonik"` |  |
 | pollingAgent.envConfigValue | list | `[]` |  |

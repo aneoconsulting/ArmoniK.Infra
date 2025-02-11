@@ -6,6 +6,7 @@ global:
     pullPolicy: IfNotPresent # FOR KEDA IMAGES
     registry: "" # FOR KEDA IMAGES
   imageRegistry: "" # FOR BITNAMI IMAGES AND ARMONIK IMAGES
+  imagePullSecrets: [] #[{"name": "toto"}] # FOR BITNAMI IMAGES AND ARMONIK IMAGES
   security:
     allowInsecureImages: true
 
@@ -94,6 +95,7 @@ keda:
       issuer: {"generate":false,"group":"cert-manager.io","kind":"ClusterIssuer","name":"armonik-selfsigned-issuer"}
   image:
     pullPolicy: IfNotPresent
+  imagePullSecrets: [] #[{"name": "toto"}]
 
 ################## CERT-MANAGER ##################
 cert-manager:

@@ -88,6 +88,10 @@ spec:
         {{- end }}
       {{- end }}
       {{- if .Values.nodeSelector }}
+      {{- with .Values.global.imagePullSecrets | default .Values.imagePullSecrets | default "[]" }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       serviceAccountName: {{ .Values.serviceAccount }}
       serviceAccount: {{ .Values.serviceAccount }}
       automountServiceAccountToken: true

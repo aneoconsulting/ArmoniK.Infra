@@ -50,14 +50,10 @@ spec:
       {{- end }}
       terminationGracePeriodSeconds: {{ $config.terminationGracePeriodSeconds }}
       shareProcessNamespace: {{ $.Values.shareProcessNamespace }}
-      # imagePullSecrets:
-      #   - name: IfNotPresent
       enableServiceLinks: true
-      {{- if $config.imagePullSecrets }}
+      {{- with $.Values.global.imagePullSecrets | default $.Values.imagePullSecrets | default "[]" }}
       imagePullSecrets:
-        {{- range $key, $value := $config.imagePullSecrets }}
-        - name: {{ $value }}
-        {{- end }}
+        {{- toYaml . | nindent 8 }}
       {{- end }}
       restartPolicy: {{ $.Values.restartPolicy }}
       containers:

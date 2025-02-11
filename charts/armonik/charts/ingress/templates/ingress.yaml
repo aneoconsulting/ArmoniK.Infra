@@ -76,6 +76,10 @@ spec:
           recursiveReadOnly: Disabled
         {{- end }}
         {{- end}}
+      {{- with .Values.global.imagePullSecrets | default .Values.imagePullSecrets | default "[]" }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       dnsPolicy: ClusterFirst
       enableServiceLinks: true
       #nodeSelector:

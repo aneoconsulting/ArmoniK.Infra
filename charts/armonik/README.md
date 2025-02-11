@@ -64,6 +64,7 @@ Kubernetes: `>=v1.23.0-0`
 | fluent-bit.metrics.serviceMonitor.enabled | bool | `true` |  |
 | global.image.pullPolicy | string | `"IfNotPresent"` |  |
 | global.image.registry | string | `""` |  |
+| global.imagePullSecrets | list | `[]` |  |
 | global.imageRegistry | string | `""` |  |
 | global.security.allowInsecureImages | bool | `true` |  |
 | grafana."grafana.ini".anonymous.enabled | bool | `true` |  |
@@ -107,6 +108,7 @@ Kubernetes: `>=v1.23.0-0`
 | keda.crds.install | bool | `true` |  |
 | keda.enabled | bool | `true` |  |
 | keda.image.pullPolicy | string | `"IfNotPresent"` |  |
+| keda.imagePullSecrets | list | `[]` |  |
 | kube-prometheus."operator.image.registry" | string | `""` |  |
 | kube-prometheus.alertmanager.enabled | bool | `false` |  |
 | kube-prometheus.blackboxExporter.enabled | bool | `false` |  |

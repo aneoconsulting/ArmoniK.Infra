@@ -34,6 +34,7 @@ Kubernetes: `>=v1.25.0-0`
 | adminGui.tolerations[0].value | string | `"control-plane"` |  |
 | affinity | object | `{}` |  |
 | image.registry | string | `""` |  |
+| imagePullSecrets | list | `[]` |  |
 | ingress.className | string | `""` |  |
 | ingress.image | string | `"nginx-unprivileged"` |  |
 | ingress.imagePullPolicy | string | `"IfNotPresent"` |  |
@@ -62,7 +63,6 @@ Kubernetes: `>=v1.25.0-0`
 | ingress.volumes.nginxConfigMap | string | `"ingress-nginx"` |  |
 | ingress.volumes.nginxStaticConfigMap | string | `"ingress-nginx-static"` |  |
 | nameOverride | string | `""` |  |
-| namespace | string | `"armonik"` |  |
 | nodeSelector | object | `{}` |  |
 
 ----------------------------------------------

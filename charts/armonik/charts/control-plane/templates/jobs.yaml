@@ -32,7 +32,7 @@ spec:
         {{- else }}
         image: "{{ .Values.imageJob.repository }}/{{ .Values.imageJob.name }}:{{ .Values.imageJob.tag | default .Chart.AppVersion }}"
         {{- end }}
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
         command: ["/script/init-db.sh"]
         env:
         - name: MongoDB__Password
@@ -56,6 +56,10 @@ spec:
           #   mountPath: /mongodb/certs/
           - name: script
             mountPath: "/script"
+      {{- with .Values.global.imagePullSecrets | default .Values.imagePullSecrets | default "[]" }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       dnsPolicy: ClusterFirst
       shareProcessNamespace: false
       terminationGracePeriodSeconds: 30

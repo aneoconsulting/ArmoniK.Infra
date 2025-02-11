@@ -1,5 +1,5 @@
-namespace: armonik
 nameOverride: ""
+imagePullSecrets: []
 image: 
   registry: ""
 

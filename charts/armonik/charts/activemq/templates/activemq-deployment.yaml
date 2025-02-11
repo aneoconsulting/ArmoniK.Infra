@@ -29,7 +29,7 @@ spec:
         {{- else }}
         image: "{{ .Values.image.repository }}/{{ .Values.image.name }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
         {{- end }}
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
         ports:
         - containerPort: 5672
           name: amqp
@@ -59,6 +59,10 @@ spec:
           mountPropagation: None
           name: activemq-jolokia-xml
           readOnly: true
+      {{- with .Values.global.imagePullSecrets | default .Values.imagePullSecrets | default "[]" }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
       volumes:

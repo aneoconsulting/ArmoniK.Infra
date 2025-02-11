@@ -2,9 +2,11 @@ nameOverride: "activemq"
 replicaCount: 1
 namespace: armonik
 activemqOptsMemory: "-Xms1g -Xmx1g"
+imagePullSecrets: []
 certificates:
   enable: false
 image:
   repository: symptoma
   name: activemq
   tag: "5.18.4"
+  pullPolicy: IfNotPresent

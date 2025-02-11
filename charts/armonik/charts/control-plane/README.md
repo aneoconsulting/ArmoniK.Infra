@@ -104,6 +104,7 @@ Kubernetes: `>=v1.23.0-0`
 | imageJob.name | string | `"mongosh"` |  |
 | imageJob.repository | string | `"rtsp"` |  |
 | imageJob.tag | string | `"2.3.8"` |  |
+| imagePullSecrets | list | `[]` |  |
 | livenessProbe.failureThreshold | int | `1` |  |
 | livenessProbe.httpGet.path | string | `"/liveness"` |  |
 | livenessProbe.httpGet.port | int | `1081` |  |

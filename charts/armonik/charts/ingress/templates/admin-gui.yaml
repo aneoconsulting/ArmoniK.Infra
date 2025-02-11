@@ -33,5 +33,9 @@ spec:
           protocol: TCP        
         resources:
         {{- toYaml .Values.adminGui.resources | nindent 10 }}
+      {{- with .Values.global.imagePullSecrets | default .Values.imagePullSecrets | default "[]" }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       tolerations:
       {{- toYaml .Values.adminGui.tolerations | nindent 8 }}

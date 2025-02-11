@@ -30,7 +30,7 @@ spec:
         {{- else }}
         image: "{{ .Values.image.repository }}/armonik_control_metrics:{{ .Values.image.tag | default .Chart.AppVersion }}"
         {{- end }}
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
         ports:
         - containerPort: 1080
           name: metrics
@@ -58,6 +58,10 @@ spec:
         # - secretRef:
         #     name: activemq
         #     optional: false
+      {{- with .Values.global.imagePullSecrets | default .Values.imagePullSecrets | default "[]" }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       dnsPolicy: ClusterFirst
       enableServiceLinks: true
       volumes:

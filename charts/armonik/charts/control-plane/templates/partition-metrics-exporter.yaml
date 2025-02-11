@@ -26,7 +26,7 @@ spec:
       automountServiceAccountToken: true
       containers:
       - image: {{ .Values.registry }}/armonik_control_partition_metrics:{{ .Values.image.tag }}
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
         name: partition-metrics-exporter
         ports:
         - containerPort: 1080
@@ -60,6 +60,10 @@ spec:
         # - secretRef:
         #     name: activemq
         #     optional: false
+      {{- with .Values.global.imagePullSecrets | default .Values.imagePullSecrets | default "[]" }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       dnsPolicy: ClusterFirst
       enableServiceLinks: true
       volumes:

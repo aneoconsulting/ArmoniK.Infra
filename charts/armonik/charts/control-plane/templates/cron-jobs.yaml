@@ -45,7 +45,7 @@ spec:
               {{- else }}
               image: "{{ .Values.imageCron.repository }}/{{ .Values.imageCron.name }}:{{ .Values.imageCron.tag | default .Chart.AppVersion }}"
               {{- end }}
-              imagePullPolicy: IfNotPresent
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
               name: seq-retention-job
               resources: {}
               terminationMessagePath: /dev/termination-log
@@ -53,6 +53,10 @@ spec:
               volumeMounts:
               - name: script
                 mountPath: "/script"
+            {{- with .Values.global.imagePullSecrets | default .Values.imagePullSecrets | default "[]" }}
+            imagePullSecrets:
+              {{- toYaml . | nindent 14 }}
+            {{- end }}
             dnsPolicy: ClusterFirst
             enableServiceLinks: true
             restartPolicy: OnFailure

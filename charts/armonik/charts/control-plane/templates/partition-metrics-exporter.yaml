@@ -7,7 +7,6 @@ metadata:
     service: partition-metrics-exporter
     type: monitoring
   name: partition-metrics-exporter
-  namespace: {{ .Values.namespace }}
 spec:
   selector:
     matchLabels:
@@ -21,13 +20,17 @@ spec:
         service: partition-metrics-exporter
         type: monitoring
       name: partition-metrics-exporter
-      namespace: {{ .Values.namespace }}
     spec:
       automountServiceAccountToken: true
       containers:
-      - image: {{ .Values.registry }}/armonik_control_partition_metrics:{{ .Values.image.tag }}
+      - name: partition-metrics-exporter
+        {{- $registry := .Values.global.imageRegistry | default .Values.image.registry }}
+        {{- if $registry }}
+        image: "{{ $registry }}/{{ .Values.image.repository }}/armonik_control_partition_metrics:{{ .Values.image.tag | default .Chart.AppVersion }}"
+        {{- else }}
+        image: "{{ .Values.image.repository }}/armonik_control_partition_metrics:{{ .Values.image.tag | default .Chart.AppVersion }}"
+        {{- end }}
         imagePullPolicy: {{ .Values.image.pullPolicy }}
-        name: partition-metrics-exporter
         ports:
         - containerPort: 1080
           name: metrics
@@ -60,9 +63,12 @@ spec:
         # - secretRef:
         #     name: activemq
         #     optional: false
-      {{- with .Values.global.imagePullSecrets | default .Values.imagePullSecrets | default "[]" }}
+      {{- $imagePullSecrets := .Values.global.imagePullSecrets | default .Values.imagePullSecrets }}
+      {{- if $imagePullSecrets }}
+      {{- with $imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
+      {{- end }}
       {{- end }}
       dnsPolicy: ClusterFirst
       enableServiceLinks: true
@@ -98,7 +104,6 @@ metadata:
     service: partition-metrics-exporter
     type: monitoring
   name: partition-metrics-exporter
-  namespace: {{ .Values.global.namespace }}
 spec:
   selector:
     app: armonik
@@ -118,7 +123,6 @@ metadata:
     service: partition-metrics-exporter
     type: monitoring
   name: partition-metrics-exporter-configmap
-  namespace: {{ .Values.global.namespace }}
 data:
   Host: "localhost"
   Port: "1080"

@@ -1,8 +1,10 @@
+global:
+  imageRegistry: ""
+  imagePullSecrets: []
+  imagePullPolicy: IfNotPresent
 nameOverride: "activemq"
 replicaCount: 1
-namespace: armonik
 activemqOptsMemory: "-Xms1g -Xmx1g"
-imagePullSecrets: []
 certificates:
   enable: false
 image:
@@ -10,3 +12,5 @@ image:
   name: activemq
   tag: "5.18.4"
   pullPolicy: IfNotPresent
+  imagePullSecrets: []
+  registry: ""

@@ -1,5 +1,5 @@
 {{- range $partitionName, $config := .Values.computePlane.partition }}
-{{- $registry := $.Values.global.imageRegistry | default $.Values.registry | default "" }}
+{{- $registry := $.Values.global.imageRegistry | default $.Values.registry }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -51,9 +51,12 @@ spec:
       terminationGracePeriodSeconds: {{ $config.terminationGracePeriodSeconds }}
       shareProcessNamespace: {{ $.Values.shareProcessNamespace }}
       enableServiceLinks: true
-      {{- with $.Values.global.imagePullSecrets | default $.Values.imagePullSecrets | default "[]" }}
+      {{- $imagePullSecrets := $.Values.global.imagePullSecrets | default $.Values.imagePullSecrets }}
+      {{- if $imagePullSecrets }}
+      {{- with $imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
+      {{- end }}
       {{- end }}
       restartPolicy: {{ $.Values.restartPolicy }}
       containers:

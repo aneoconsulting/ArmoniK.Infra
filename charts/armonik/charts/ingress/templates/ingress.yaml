@@ -25,7 +25,7 @@ spec:
         - configMapRef:
             name: ingress-nginx
             optional: false
-        {{- $registry := .Values.global.imageRegistry | default .Values.image.registry | default "" }}
+        {{- $registry := .Values.global.imageRegistry | default .Values.image.registry }}
         {{- if $registry }}
         image: "{{ $registry }}/{{ .Values.ingress.repository }}/{{ .Values.ingress.image }}:{{ .Values.ingress.tag | default .Chart.AppVersion }}"
         {{- else }}
@@ -76,9 +76,12 @@ spec:
           recursiveReadOnly: Disabled
         {{- end }}
         {{- end}}
-      {{- with .Values.global.imagePullSecrets | default .Values.imagePullSecrets | default "[]" }}
+      {{- $imagePullSecrets := .Values.global.imagePullSecrets | default .Values.imagePullSecrets }}
+      {{- if $imagePullSecrets }}
+      {{- with $imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
+      {{- end }}
       {{- end }}
       dnsPolicy: ClusterFirst
       enableServiceLinks: true

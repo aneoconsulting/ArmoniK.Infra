@@ -39,7 +39,7 @@ spec:
                 value: http://seq:8080
               - name: SEQ_USER
               - name: SEQ_PASSWORD
-              {{- $registry := .Values.global.imageRegistry | default .Values.image.registry | default "" }}
+              {{- $registry := .Values.global.imageRegistry | default .Values.image.registry }}
               {{- if $registry }}
               image: "{{ $registry }}/{{ .Values.imageCron.repository }}/{{ .Values.imageCron.name }}:{{ .Values.imageCron.tag | default .Chart.AppVersion }}"
               {{- else }}
@@ -53,9 +53,12 @@ spec:
               volumeMounts:
               - name: script
                 mountPath: "/script"
-            {{- with .Values.global.imagePullSecrets | default .Values.imagePullSecrets | default "[]" }}
+            {{- $imagePullSecrets := .Values.global.imagePullSecrets | default .Values.imagePullSecrets }}
+            {{- if $imagePullSecrets }}
+            {{- with $imagePullSecrets }}
             imagePullSecrets:
               {{- toYaml . | nindent 14 }}
+            {{- end }}
             {{- end }}
             dnsPolicy: ClusterFirst
             enableServiceLinks: true

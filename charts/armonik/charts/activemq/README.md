@@ -26,13 +26,16 @@ Kubernetes: `>=v1.23.0-0`
 |-----|------|---------|-------------|
 | activemqOptsMemory | string | `"-Xms1g -Xmx1g"` |  |
 | certificates.enable | bool | `false` |  |
+| global.imagePullPolicy | string | `"IfNotPresent"` |  |
+| global.imagePullSecrets | list | `[]` |  |
+| global.imageRegistry | string | `""` |  |
+| image.imagePullSecrets | list | `[]` |  |
 | image.name | string | `"activemq"` |  |
 | image.pullPolicy | string | `"IfNotPresent"` |  |
+| image.registry | string | `""` |  |
 | image.repository | string | `"symptoma"` |  |
 | image.tag | string | `"5.18.4"` |  |
-| imagePullSecrets | list | `[]` |  |
 | nameOverride | string | `"activemq"` |  |
-| namespace | string | `"armonik"` |  |
 | replicaCount | int | `1` |  |
 
 ----------------------------------------------

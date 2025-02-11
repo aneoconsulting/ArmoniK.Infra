@@ -24,7 +24,7 @@ spec:
       automountServiceAccountToken: true
       containers:
       - name: metrics-exporter
-        {{- $registry := .Values.global.imageRegistry | default .Values.image.registry | default "" }}
+        {{- $registry := .Values.global.imageRegistry | default .Values.image.registry }}
         {{- if $registry }}
         image: "{{ $registry }}/{{ .Values.image.repository }}/armonik_control_metrics:{{ .Values.image.tag | default .Chart.AppVersion }}"
         {{- else }}
@@ -58,9 +58,12 @@ spec:
         # - secretRef:
         #     name: activemq
         #     optional: false
-      {{- with .Values.global.imagePullSecrets | default .Values.imagePullSecrets | default "[]" }}
+      {{- $imagePullSecrets := .Values.global.imagePullSecrets | default .Values.imagePullSecrets }}
+      {{- if $imagePullSecrets }}
+      {{- with $imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
+      {{- end }}
       {{- end }}
       dnsPolicy: ClusterFirst
       enableServiceLinks: true

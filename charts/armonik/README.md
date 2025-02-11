@@ -46,7 +46,7 @@ Kubernetes: `>=v1.23.0-0`
 | cert-manager.enabled | bool | `false` |  |
 | cert-manager.fullnameOverride | string | `"cert-manager"` |  |
 | cert-manager.installCRDs | bool | `true` |  |
-| compute-plane.enabled | bool | `false` |  |
+| compute-plane.enabled | bool | `true` |  |
 | control-plane.enabled | bool | `true` |  |
 | fluent-bit.config.customParsers | string | `"[PARSER]\n    Name   apache\n    Format regex\n    Regex  ^(?<host>[^ ]*) [^ ]* (?<user>[^ ]*) \\[(?<time>[^\\]]*)\\] \"(?<method>\\S+)(?: +(?<path>[^\\\"]*?)(?: +\\S*)?)?\" (?<code>[^ ]*) (?<size>[^ ]*)(?: \"(?<referer>[^\\\"]*)\" \"(?<agent>[^\\\"]*)\")?$\n    Time_Key time\n    Time_Format %d/%b/%Y:%H:%M:%S %z\n[PARSER]\n    Name   apache2\n    Format regex\n    Regex  ^(?<host>[^ ]*) [^ ]* (?<user>[^ ]*) \\[(?<time>[^\\]]*)\\] \"(?<method>\\S+)(?: +(?<path>[^ ]*) +\\S*)?\" (?<code>[^ ]*) (?<size>[^ ]*)(?: \"(?<referer>[^\\\"]*)\" \"(?<agent>[^\\\"]*)\")?$\n    Time_Key time\n    Time_Format %d/%b/%Y:%H:%M:%S %z\n[PARSER]\n    Name   apache_error\n    Format regex\n    Regex  ^\\[[^ ]* (?<time>[^\\]]*)\\] \\[(?<level>[^\\]]*)\\](?: \\[pid (?<pid>[^\\]]*)\\])?( \\[client (?<client>[^\\]]*)\\])? (?<message>.*)$\n[PARSER]\n    Name   nginx\n    Format regex\n    Regex ^(?<remote>[^ ]*) (?<host>[^ ]*) (?<user>[^ ]*) \\[(?<time>[^\\]]*)\\] \"(?<method>\\S+)(?: +(?<path>[^\\\"]*?)(?: +\\S*)?)?\" (?<code>[^ ]*) (?<size>[^ ]*)(?: \"(?<referer>[^\\\"]*)\" \"(?<agent>[^\\\"]*)\")?$\n    Time_Key time\n    Time_Format %d/%b/%Y:%H:%M:%S %z\n[PARSER]\n    Name   json\n    Format json\n    Time_Key time\n    Time_Format %d/%b/%Y:%H:%M:%S %z\n[PARSER]\n    Name        docker\n    Format      json\n    Time_Key    time\n    Time_Format %Y-%m-%dT%H:%M:%S.%L\n    Time_Keep   On\n[PARSER]\n    Name cri\n    Format regex\n    Regex ^(?:(?<time>[^\\s]+)\\s+(?<stream>\\w+)\\s+(?<logtag>\\w+)\\s+)?(?<message>\\{.*\\})$\n    Time_Key time\n    Time_Format %Y-%m-%dT%H:%M:%S.%L\n    Time_Keep On\n[PARSER]\n    Name        syslog\n    Format      regex\n    Regex       ^\\<(?<pri>[0-9]+)\\>(?<time>[^ ]* {1,2}[^ ]* [^ ]*) (?<host>[^ ]*) (?<ident>[a-zA-Z0-9_\\/\\.\\-]*)(?:\\[(?<pid>[0-9]+)\\])?(?:[^\\:]*\\:)? *(?<message>.*)$\n    Time_Key    time\n    Time_Format %b %d %H:%M:%S\n"` |  |
 | fluent-bit.config.filters | string | `"[FILTER]\n    Name                kubernetes\n    Match               *\n    Kube_URL            https://kubernetes.default.svc:443\n    Kube_CA_File        /var/run/secrets/kubernetes.io/serviceaccount/ca.crt\n    Kube_Token_File     /var/run/secrets/kubernetes.io/serviceaccount/token\n    Kube_Tag_Prefix     kube.var.log.containers.\n    Merge_Log           On\n    Merge_Log_Key       log\n    Merge_Log_Trim      On\n    Merge_Parser        json\n    Keep_Log            Off\n    Annotations         On\n    Labels              On\n    K8S-Logging.Parser  On\n    K8S-Logging.Exclude Off\n    Buffer_Size         0\n[FILTER]\n    Name                    parser\n    Match                   *\n    key_name                message\n    Parser                  json\n[FILTER]\n    Name                    nest\n    Match                   *\n    Operation               lift\n    Nested_under            kubernetes\n    Add_prefix              kubernetes_\n[FILTER]\n    Name                    nest\n    Match                   *\n    Operation               lift\n    Nested_under            message\n[FILTER]\n    Name                    modify\n    Match                   *\n    Condition               Key_exists message\n    Rename                  message @m\n    Add                     sourcetype renamelog\n"` |  |
@@ -64,7 +64,6 @@ Kubernetes: `>=v1.23.0-0`
 | fluent-bit.metrics.serviceMonitor.enabled | bool | `true` |  |
 | global.image.pullPolicy | string | `"IfNotPresent"` |  |
 | global.image.registry | string | `""` |  |
-| global.imagePullSecrets | list | `[]` |  |
 | global.imageRegistry | string | `""` |  |
 | global.security.allowInsecureImages | bool | `true` |  |
 | grafana."grafana.ini".anonymous.enabled | bool | `true` |  |
@@ -108,7 +107,6 @@ Kubernetes: `>=v1.23.0-0`
 | keda.crds.install | bool | `true` |  |
 | keda.enabled | bool | `true` |  |
 | keda.image.pullPolicy | string | `"IfNotPresent"` |  |
-| keda.imagePullSecrets | list | `[]` |  |
 | kube-prometheus."operator.image.registry" | string | `""` |  |
 | kube-prometheus.alertmanager.enabled | bool | `false` |  |
 | kube-prometheus.blackboxExporter.enabled | bool | `false` |  |

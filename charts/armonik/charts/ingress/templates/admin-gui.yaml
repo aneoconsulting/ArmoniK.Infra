@@ -20,7 +20,7 @@ spec:
       automountServiceAccountToken: true
       containers:
       - name: admin-app
-        {{- $registry := .Values.global.imageRegistry | default .Values.image.registry | default "" }}
+        {{- $registry := .Values.global.imageRegistry | default .Values.image.registry }}
         {{- if $registry }}
         image: "{{ $registry }}/{{ .Values.adminGui.repository }}/{{ .Values.adminGui.image }}:{{ .Values.adminGui.tag | default .Chart.AppVersion }}"
         {{- else }}
@@ -33,9 +33,12 @@ spec:
           protocol: TCP        
         resources:
         {{- toYaml .Values.adminGui.resources | nindent 10 }}
-      {{- with .Values.global.imagePullSecrets | default .Values.imagePullSecrets | default "[]" }}
+      {{- $imagePullSecrets := .Values.global.imagePullSecrets | default .Values.imagePullSecrets }}
+      {{- if $imagePullSecrets }}
+      {{- with $imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
+      {{- end }}
       {{- end }}
       tolerations:
       {{- toYaml .Values.adminGui.tolerations | nindent 8 }}

@@ -1,4 +1,11 @@
+{{- if .Values.extraVolumes -}}
 apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: activemq-configs
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "activemq.labels" . | nindent 4 }}
 data:
   activemq.xml: |
     <beans
@@ -99,7 +106,7 @@ data:
                 <transportConnector name="mqtt" uri="mqtt://0.0.0.0:1883?maximumConnections=1000&amp;wireFormat.maxFrameSize=104857600"/>
                 <transportConnector name="ws" uri="ws://0.0.0.0:61614?maximumConnections=1000&amp;wireFormat.maxFrameSize=104857600"/>
                 -->
-                <transportConnector name="amqp" uri="amqp://0.0.0.0:5672?maximumConnections=1000000&amp;wireFormat.maxFrameSize=1048576000"/>
+                <transportConnector name="amqp" uri="amqp://0.0.0.0:{{ .Values.containerPort.amqp }}?maximumConnections=1000000&amp;wireFormat.maxFrameSize=1048576000"/>
             </transportConnectors>
 
             <!-- destroy the spring context on shutdown to stop jetty -->
@@ -251,7 +258,7 @@ data:
         <bean id="jettyPort" class="org.apache.activemq.web.WebConsolePort" init-method="start">
                 <!-- the default port number for the web console -->
             <property name="host" value="0.0.0.0"/>
-            <property name="port" value="8161"/>
+            <property name="port" value="{{ .Values.containerPort.dashboard }}"/>
         </bean>
 
         <bean id="Server" depends-on="jettyPort" class="org.eclipse.jetty.server.Server"
@@ -390,7 +397,4 @@ data:
     log4j.appender.audit.append=true
     log4j.appender.audit.layout=org.apache.log4j.PatternLayout
     log4j.appender.audit.layout.ConversionPattern=%-5p | %m | %t%n
-immutable: false
-kind: ConfigMap
-metadata:
-  name: activemq-configs
+{{- end }}

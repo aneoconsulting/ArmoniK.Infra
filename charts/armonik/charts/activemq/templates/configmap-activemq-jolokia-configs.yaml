@@ -1,4 +1,11 @@
+{{- if .Values.extraVolumes -}}
 apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: activemq-jolokia-configs
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "activemq.labels" . | nindent 4 }}
 data:
   jolokia-access.xml: |
     <!--
@@ -38,7 +45,4 @@ data:
           </mbean>
         </deny>
       </restrict>
-immutable: false
-kind: ConfigMap
-metadata:
-  name: activemq-jolokia-configs
+{{- end -}}

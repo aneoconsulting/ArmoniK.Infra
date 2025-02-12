@@ -2,15 +2,145 @@ global:
   imageRegistry: ""
   imagePullSecrets: []
   imagePullPolicy: IfNotPresent
-nameOverride: "activemq"
-replicaCount: 1
-activemqOptsMemory: "-Xms1g -Xmx1g"
+
+nameOverride: ""
+fullnameOverride: activemq
+
 certificates:
   enable: false
+
+HorizontalPodAutoscaler:
+  enabled: false
+
 image:
   repository: symptoma
   name: activemq
-  tag: "5.18.4"
+  tag: 5.18.4
   pullPolicy: IfNotPresent
   imagePullSecrets: []
   registry: ""
+
+serviceAccount:
+  create: false
+  name: activemq-serviceaccount
+  annotations: {}
+  secrets: []
+
+activemqOptsMemory: "-Xms1g -Xmx1g"
+
+extraEnv: []
+  # - name: ACTIVEMQ_ENABLE_SCHEDULER
+  #   value: "true"
+
+rbac:
+  # Specifies whether RBAC resources should be created
+  create: true
+  # Note: PodSecurityPolicy will not be created when Kubernetes version is 1.25 or later.
+  pspEnabled: false
+
+commonLabels:
+  app: storage
+  service: activemq
+  type: queue
+podLabels: {}
+podAnnotations: {}
+
+podSecurityContext: {}
+
+securityContext: {}
+
+priorityClassName: system-cluster-critical
+
+containerPort:
+  amqp: 5672
+  dashboard: 8161
+
+hostNetwork:
+  enabled: false
+
+replicas: 1
+
+revisionHistoryLimit:
+
+updateStrategy: {}
+#   type: RollingUpdate
+#   rollingUpdate:
+#     maxSurge: 0
+#     maxUnavailable: 1
+
+podDisruptionBudget:
+  # https://kubernetes.io/docs/tasks/run-application/configure-pdb/
+  enabled: false
+  minAvailable:
+  maxUnavailable:
+
+args: []
+
+service:
+  type: ClusterIP
+  port:
+    amqp: 5672
+    dashboard: 8161
+  annotations: {}
+  labels: {}
+  #  Add these labels to have metrics-server show up in `kubectl cluster-info`
+  #  kubernetes.io/cluster-service: "true"
+  #  kubernetes.io/name: "Metrics-server"
+
+# See https://github.com/kubernetes-sigs/metrics-server#scaling
+resources:
+  requests:
+    cpu: 100m
+    memory: 200Mi
+  # limits:
+  #   cpu:
+  #   memory:
+
+extraVolumeMounts:
+  # - mountPath: /credentials/
+  #   mountPropagation: None
+  #   name: activemq-storage-secret-volume
+  #   readOnly: true
+  - mountPath: /opt/activemq/conf/
+    mountPropagation: None
+    name: activemq-jetty-xml
+    readOnly: true
+  - mountPath: /opt/activemq/webapps/api/WEB-INF/classes/
+    mountPropagation: None
+    name: activemq-jolokia-xml
+    readOnly: true
+
+extraVolumes:
+  # - name: activemq-storage-secret-volume
+  #   secret:
+  #     defaultMode: 420
+  #     optional: false
+  #     secretName: activemq-crt
+  - configMap:
+      defaultMode: 420
+      name: activemq-configs
+      optional: false
+    name: activemq-jetty-xml
+  - configMap:
+      defaultMode: 420
+      name: activemq-jolokia-configs
+      optional: false
+    name: activemq-jolokia-xml
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+topologySpreadConstraints: []
+
+dnsConfig: {}
+
+# Annotations to add to the deployment
+deploymentAnnotations: {}
+
+schedulerName: ""
+
+tmpVolume:
+  emptyDir: {}

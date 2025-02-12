@@ -1,14 +1,14 @@
-#Aggragation
+#Aggregation
 module "worker_aggregation" {
   source    = "../utils/aggregator"
   for_each  = var.compute_plane
-  conf_list = flatten([module.worker_all_aggregation, each.value.worker[0].conf])
+  conf_list = flatten([module.worker_all_aggregation[each.key], each.value.worker[0].conf])
 }
 
 module "polling_agent_aggregation" {
   source   = "../utils/aggregator"
   for_each = var.compute_plane
-  conf_list = flatten([module.polling_all_aggregation,
+  conf_list = flatten([module.polling_all_aggregation[each.key],
     {
       env = {
         for queue in tolist(local.supported_queues) : queue => each.key

@@ -149,6 +149,7 @@ variable "compute_plane" {
     node_selector                    = any
     annotations                      = any
     service_account_name             = string
+    socket_type                      = optional(string)
     polling_agent = object({
       image             = string
       tag               = string

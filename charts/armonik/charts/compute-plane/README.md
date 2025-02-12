@@ -1,6 +1,6 @@
 # compute-plane
 
-![Version: 0.1.0](https://img.shields.io/badge/Version-0.1.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.30.0](https://img.shields.io/badge/AppVersion-0.30.0-informational?style=flat-square)
+![Version: 0.1.0](https://img.shields.io/badge/Version-0.1.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.31.2](https://img.shields.io/badge/AppVersion-0.31.2-informational?style=flat-square)
 
 A Helm chart for Armonik
 
@@ -345,6 +345,7 @@ Kubernetes: `>=v1.23.0-0`
 | fluentBit.volumeMounts[0].mountPath | string | `"/cache"` |  |
 | fluentBit.volumeMounts[0].name | string | `"cache-volume"` |  |
 | fluentBit.volumeMounts[0].readOnly | bool | `true` |  |
+| global.imageRegistry | string | `""` |  |
 | imagePullSecrets | list | `[]` |  |
 | nameOverride | string | `""` |  |
 | namespace | string | `"armonik"` |  |
@@ -381,7 +382,10 @@ Kubernetes: `>=v1.23.0-0`
 | replicaCount | int | `1` |  |
 | repository | string | `"dockerhubaneo"` |  |
 | restartPolicy | string | `"Always"` |  |
-| serviceAccount | string | `"armonikserviceaccount"` |  |
+| serviceAccount.annotations | object | `{}` |  |
+| serviceAccount.create | bool | `false` |  |
+| serviceAccount.name | string | `"computePlane-serviceaccount"` |  |
+| serviceAccount.secrets | list | `[]` |  |
 | shareProcessNamespace | bool | `false` |  |
 | triggers.behavior | object | `{"periodSeconds":15,"restoreToOriginalReplicaCount":false,"stabilizationWindowSeconds":300,"type":"Percent","value":100}` | Advanced options to manage the behavior of the HPA |
 | triggers.behavior.periodSeconds | int | `15` | Period in seconds |
@@ -390,6 +394,7 @@ Kubernetes: `>=v1.23.0-0`
 | triggers.behavior.type | string | `"Percent"` | Type of the target |
 | triggers.behavior.value | int | `100` | Value of the target |
 | triggers.cooldownPeriod | int | `300` | Cooldown period in seconds |
+| triggers.enabled | bool | `true` |  |
 | triggers.fallback | object | `{"failureThreshold":3,"replicas":6}` | Fallback options |
 | triggers.fallback.failureThreshold | int | `3` | Threshold of failures |
 | triggers.fallback.replicas | int | `6` | Number of replicas |

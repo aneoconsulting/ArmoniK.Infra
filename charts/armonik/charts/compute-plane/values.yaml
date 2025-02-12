@@ -4,9 +4,17 @@ namespace: armonik
 shareProcessNamespace: false
 restartPolicy: Always
 repository: dockerhubaneo
-serviceAccount: armonikserviceaccount
 registry: ""
 imagePullSecrets: []
+
+global:
+  imageRegistry: ""
+
+serviceAccount:
+  create: false
+  name: computePlane-serviceaccount
+  annotations: {}
+  secrets: []
 
 computePlane:
   metadata:
@@ -380,6 +388,7 @@ computePlane:
               query: "armonik_bench_tasks_queued{job=\"metrics-exporter\"}"
 
 triggers:
+  enabled: true
   suffix: "armonik-scaledobject"
   scaleTargetRef:
     # -- Kubernetes API version to be used

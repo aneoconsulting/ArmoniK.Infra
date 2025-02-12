@@ -1,7 +1,8 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{.Values.pollingAgentConfigmaps.name}}
+  name: {{ .Values.pollingAgentConfigmaps.name }}
+  namespace: {{ .Release.Namespace }}
 data:
   {{- range $key, $value := .Values.pollingAgentConfigmaps.data }}
   {{ $key }}: {{ $value | quote }}

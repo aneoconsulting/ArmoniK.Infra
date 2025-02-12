@@ -40,6 +40,9 @@ helm.sh/chart: {{ include "ingress.chart" . }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- if .Values.commonLabels }}
+{{ toYaml .Values.commonLabels }}
+{{- end }}
 {{- end }}
 
 {{/*
@@ -60,3 +63,40 @@ Create the name of the service account to use
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+{{/*
+The image to use
+*/}}
+{{- define "ingress.image" -}}
+{{- printf "%s:%s" .Values.image.repository (default (printf "v%s" .Chart.AppVersion) .Values.image.tag) }}
+{{- end }}
+
+{{/*
+The image to use for the addon resizer
+*/}}
+{{- define "ingress.addonResizer.image" -}}
+{{- printf "%s:%s" .Values.addonResizer.image.repository .Values.addonResizer.image.tag }}
+{{- end }}
+
+{{/*
+ConfigMap name of addon resizer
+*/}}
+{{- define "ingress.addonResizer.configMap" -}}
+{{- printf "%s-%s" (include "ingress.fullname" .) "nanny-config" }}
+{{- end }}
+
+{{/*
+Role name of addon resizer
+*/}}
+{{- define "ingress.addonResizer.role" -}}
+{{ printf "system:%s-nanny" (include "ingress.fullname" .) }}
+{{- end }}
+
+{{/* Get PodDisruptionBudget API Version */}}
+{{- define "ingress.pdb.apiVersion" -}}
+  {{- if and (.Capabilities.APIVersions.Has "policy/v1") (semverCompare ">= 1.21-0" .Capabilities.KubeVersion.Version) -}}
+      {{- print "policy/v1" -}}
+  {{- else -}}
+    {{- print "policy/v1beta1" -}}
+  {{- end -}}
+{{- end -}}

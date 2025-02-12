@@ -3,6 +3,9 @@ immutable: false
 kind: ConfigMap
 metadata:
   name: ingress-nginx
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "ingress.labels" . | nindent 4 }}
 data:
   armonik.conf: |
     map $http_accept_language $accept_language {
@@ -35,11 +38,11 @@ data:
         location = /admin/en {
             rewrite ^ $scheme://$http_host/admin/en/;
         }
-        set $admin_app_upstream http://admin-gui.{{ .Values.namespace }}.svc.cluster.local:1080;
+        set $admin_app_upstream http://admin-gui.{{ .Release.Namespace }}.svc.cluster.local:1080;
         location /admin/ {
             proxy_pass $admin_app_upstream$uri$is_args$args;
         }
-        set $armonik_upstream grpc://control-plane.{{ .Values.namespace }}.svc.cluster.local:5001;
+        set $armonik_upstream grpc://control-plane.{{ .Release.Namespace }}.svc.cluster.local:5001;
         location ~* ^/armonik\. {
             grpc_pass $armonik_upstream;
 

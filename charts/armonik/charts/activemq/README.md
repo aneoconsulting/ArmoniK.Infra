@@ -90,6 +90,16 @@ Kubernetes: `>=v1.23.0-0`
 | serviceAccount.create | bool | `false` |  |
 | serviceAccount.name | string | `"activemq-serviceaccount"` |  |
 | serviceAccount.secrets | list | `[]` |  |
+| tls.certManager.addInjectorAnnotations | bool | `true` |  |
+| tls.certManager.annotations | object | `{}` |  |
+| tls.certManager.duration | string | `""` |  |
+| tls.certManager.existingIssuer.enabled | bool | `false` |  |
+| tls.certManager.existingIssuer.kind | string | `"Issuer"` |  |
+| tls.certManager.existingIssuer.name | string | `"my-issuer"` |  |
+| tls.certManager.labels | object | `{}` |  |
+| tls.certManager.renewBefore | string | `""` |  |
+| tls.clusterDomain | string | `"cluster.local"` |  |
+| tls.type | string | `"metrics-server"` |  |
 | tmpVolume.emptyDir | object | `{}` |  |
 | tolerations | list | `[]` |  |
 | topologySpreadConstraints | list | `[]` |  |

@@ -349,6 +349,9 @@ Kubernetes: `>=v1.23.0-0`
 | imagePullSecrets | list | `[]` |  |
 | nameOverride | string | `""` |  |
 | namespace | string | `"armonik"` |  |
+| podDisruptionBudget.enabled | bool | `false` |  |
+| podDisruptionBudget.maxUnavailable | string | `nil` |  |
+| podDisruptionBudget.minAvailable | string | `nil` |  |
 | pollingAgent.envConfigValue | list | `[]` |  |
 | pollingAgent.envFrom[0].configMapRef.name | string | `"compute-plane-configmap"` |  |
 | pollingAgent.envFrom[0].configMapRef.optional | bool | `false` |  |
@@ -378,13 +381,16 @@ Kubernetes: `>=v1.23.0-0`
 | pollingAgentConfigmaps.data.Pollster__GraceDelay | string | `"00:00:15"` |  |
 | pollingAgentConfigmaps.name | string | `"polling-configmap"` |  |
 | preStopWaitScript | string | `"<<EOF while test -e /cache/armonik_agent.sock ; do   sleep 1 done EOF"` |  |
+| rbac.create | bool | `true` |  |
+| rbac.pspEnabled | bool | `false` |  |
 | registry | string | `""` |  |
 | replicaCount | int | `1` |  |
 | repository | string | `"dockerhubaneo"` |  |
 | restartPolicy | string | `"Always"` |  |
+| service | object | `{}` |  |
 | serviceAccount.annotations | object | `{}` |  |
-| serviceAccount.create | bool | `false` |  |
-| serviceAccount.name | string | `"computePlane-serviceaccount"` |  |
+| serviceAccount.create | bool | `true` |  |
+| serviceAccount.name | string | `"compute-plane"` |  |
 | serviceAccount.secrets | list | `[]` |  |
 | shareProcessNamespace | bool | `false` |  |
 | triggers.behavior | object | `{"periodSeconds":15,"restoreToOriginalReplicaCount":false,"stabilizationWindowSeconds":300,"type":"Percent","value":100}` | Advanced options to manage the behavior of the HPA |

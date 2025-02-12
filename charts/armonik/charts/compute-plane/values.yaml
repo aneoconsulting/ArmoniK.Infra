@@ -11,10 +11,24 @@ global:
   imageRegistry: ""
 
 serviceAccount:
-  create: false
-  name: computePlane-serviceaccount
+  create: true
+  name: compute-plane
   annotations: {}
   secrets: []
+
+service: {}
+
+rbac:
+  # Specifies whether RBAC resources should be created
+  create: true
+  # Note: PodSecurityPolicy will not be created when Kubernetes version is 1.25 or later.
+  pspEnabled: false
+
+podDisruptionBudget:
+  # https://kubernetes.io/docs/tasks/run-application/configure-pdb/
+  enabled: false
+  minAvailable:
+  maxUnavailable:
 
 computePlane:
   metadata:

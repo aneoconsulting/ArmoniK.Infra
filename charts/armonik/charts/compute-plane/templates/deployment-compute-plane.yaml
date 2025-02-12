@@ -37,10 +37,12 @@ spec:
         {{ $key }}: {{ $value | quote }}
         {{- end }}
       {{- end }}
-      serviceAccountName: {{ $.Values.serviceAccount }}
-      serviceAccount: {{ $.Values.serviceAccount }}
+      {{- if $.Values.serviceAccount.create }}
+      serviceAccountName: {{ $.Values.serviceAccount.name }}
+      serviceAccount: {{ $.Values.serviceAccount.name }}
       automountServiceAccountToken: true
-      {{- if $config.tolerations}}
+      {{- end }}
+      {{- if $config.tolerations }}
       tolerations:
         {{- range $i, $toleration := $config.tolerations }}
         - key: {{ $toleration.key }}

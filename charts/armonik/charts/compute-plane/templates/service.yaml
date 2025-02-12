@@ -1,3 +1,4 @@
+{{- if .Values.service -}}
 apiVersion: v1
 kind: Service
 metadata:
@@ -25,3 +26,4 @@ spec:
       targetPort: dashboard
   selector:
     {{- include "computePlane.selectorLabels" . | nindent 4 }}
+{{- end }}

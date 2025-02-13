@@ -87,7 +87,6 @@ spec:
         {{- end }}
         {{- end }}
       {{- end }}
-      {{- if .Values.nodeSelector }}
       {{- $imagePullSecrets := .Values.global.imagePullSecrets | default .Values.imagePullSecrets }}
       {{- if $imagePullSecrets }}
       {{- with $imagePullSecrets }}
@@ -99,6 +98,7 @@ spec:
       serviceAccount: {{ .Values.serviceAccount }}
       automountServiceAccountToken: true
       shareProcessNamespace: false
+      {{- if .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml .Values.nodeSelector | nindent 8 }}
       {{- end }}

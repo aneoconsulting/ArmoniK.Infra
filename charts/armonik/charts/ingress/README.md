@@ -37,6 +37,7 @@ Kubernetes: `>=v1.25.0-0`
 | environment.name | string | `"local"` |  |
 | global.imagePullSecrets | list | `[]` |  |
 | global.imageRegistry | string | `""` |  |
+| grafanaDashboard.enable | bool | `true` |  |
 | image.registry | string | `""` |  |
 | imagePullSecrets | list | `[]` |  |
 | ingress.className | string | `""` |  |

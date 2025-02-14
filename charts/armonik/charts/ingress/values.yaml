@@ -3,6 +3,9 @@ imagePullSecrets: []
 image: 
   registry: ""
 
+grafanaDashboard:
+  enable: true
+
 global:
   imageRegistry: ""
   imagePullSecrets: []

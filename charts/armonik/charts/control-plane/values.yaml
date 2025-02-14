@@ -13,7 +13,15 @@ imageCron:
   repository: datalust
   name: seqcli
   tag: "2024.3"
-serviceAccount: armonikserviceaccount
+
+global:
+  imageRegistry: ""
+
+serviceAccount:
+  create: true
+  name: control-plane
+  annotations: {}
+  secrets: []
 
 grafanaDashboard:
   enable: true

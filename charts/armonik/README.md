@@ -27,8 +27,9 @@ Kubernetes: `>=v1.23.0-0`
 | file://charts/control-plane | control-plane | 0.1.0 |
 | file://charts/ingress | ingress | 0.1.0 |
 | https://charts.bitnami.com/bitnami | fluent-bit | 2.4.4 |
-| https://charts.bitnami.com/bitnami | kube-prometheus | 10.2.5 |
+| https://charts.bitnami.com/bitnami | kube-prometheus | 11.0.2 |
 | https://charts.bitnami.com/bitnami | mongodb | 16.4.1 |
+| https://charts.bitnami.com/bitnami | rabbitmq | 15.3.1 |
 | https://charts.bitnami.com/bitnami | redis | 20.6.3 |
 | https://charts.jetstack.io | cert-manager | 1.16.3 |
 | https://grafana.github.io/helm-charts | grafana | 8.8.4 |
@@ -47,6 +48,7 @@ Kubernetes: `>=v1.23.0-0`
 | cert-manager.fullnameOverride | string | `"cert-manager"` |  |
 | cert-manager.installCRDs | bool | `true` |  |
 | compute-plane.enabled | bool | `true` |  |
+| control-plane."config.core.data.Amqp__Host" | string | `"activemq"` |  |
 | control-plane.enabled | bool | `true` |  |
 | fluent-bit.config.customParsers | string | `"[PARSER]\n    Name   apache\n    Format regex\n    Regex  ^(?<host>[^ ]*) [^ ]* (?<user>[^ ]*) \\[(?<time>[^\\]]*)\\] \"(?<method>\\S+)(?: +(?<path>[^\\\"]*?)(?: +\\S*)?)?\" (?<code>[^ ]*) (?<size>[^ ]*)(?: \"(?<referer>[^\\\"]*)\" \"(?<agent>[^\\\"]*)\")?$\n    Time_Key time\n    Time_Format %d/%b/%Y:%H:%M:%S %z\n[PARSER]\n    Name   apache2\n    Format regex\n    Regex  ^(?<host>[^ ]*) [^ ]* (?<user>[^ ]*) \\[(?<time>[^\\]]*)\\] \"(?<method>\\S+)(?: +(?<path>[^ ]*) +\\S*)?\" (?<code>[^ ]*) (?<size>[^ ]*)(?: \"(?<referer>[^\\\"]*)\" \"(?<agent>[^\\\"]*)\")?$\n    Time_Key time\n    Time_Format %d/%b/%Y:%H:%M:%S %z\n[PARSER]\n    Name   apache_error\n    Format regex\n    Regex  ^\\[[^ ]* (?<time>[^\\]]*)\\] \\[(?<level>[^\\]]*)\\](?: \\[pid (?<pid>[^\\]]*)\\])?( \\[client (?<client>[^\\]]*)\\])? (?<message>.*)$\n[PARSER]\n    Name   nginx\n    Format regex\n    Regex ^(?<remote>[^ ]*) (?<host>[^ ]*) (?<user>[^ ]*) \\[(?<time>[^\\]]*)\\] \"(?<method>\\S+)(?: +(?<path>[^\\\"]*?)(?: +\\S*)?)?\" (?<code>[^ ]*) (?<size>[^ ]*)(?: \"(?<referer>[^\\\"]*)\" \"(?<agent>[^\\\"]*)\")?$\n    Time_Key time\n    Time_Format %d/%b/%Y:%H:%M:%S %z\n[PARSER]\n    Name   json\n    Format json\n    Time_Key time\n    Time_Format %d/%b/%Y:%H:%M:%S %z\n[PARSER]\n    Name        docker\n    Format      json\n    Time_Key    time\n    Time_Format %Y-%m-%dT%H:%M:%S.%L\n    Time_Keep   On\n[PARSER]\n    Name cri\n    Format regex\n    Regex ^(?:(?<time>[^\\s]+)\\s+(?<stream>\\w+)\\s+(?<logtag>\\w+)\\s+)?(?<message>\\{.*\\})$\n    Time_Key time\n    Time_Format %Y-%m-%dT%H:%M:%S.%L\n    Time_Keep On\n[PARSER]\n    Name        syslog\n    Format      regex\n    Regex       ^\\<(?<pri>[0-9]+)\\>(?<time>[^ ]* {1,2}[^ ]* [^ ]*) (?<host>[^ ]*) (?<ident>[a-zA-Z0-9_\\/\\.\\-]*)(?:\\[(?<pid>[0-9]+)\\])?(?:[^\\:]*\\:)? *(?<message>.*)$\n    Time_Key    time\n    Time_Format %b %d %H:%M:%S\n"` |  |
 | fluent-bit.config.filters | string | `"[FILTER]\n    Name                kubernetes\n    Match               *\n    Kube_URL            https://kubernetes.default.svc:443\n    Kube_CA_File        /var/run/secrets/kubernetes.io/serviceaccount/ca.crt\n    Kube_Token_File     /var/run/secrets/kubernetes.io/serviceaccount/token\n    Kube_Tag_Prefix     kube.var.log.containers.\n    Merge_Log           On\n    Merge_Log_Key       log\n    Merge_Log_Trim      On\n    Merge_Parser        json\n    Keep_Log            Off\n    Annotations         On\n    Labels              On\n    K8S-Logging.Parser  On\n    K8S-Logging.Exclude Off\n    Buffer_Size         0\n[FILTER]\n    Name                    parser\n    Match                   *\n    key_name                message\n    Parser                  json\n[FILTER]\n    Name                    nest\n    Match                   *\n    Operation               lift\n    Nested_under            kubernetes\n    Add_prefix              kubernetes_\n[FILTER]\n    Name                    nest\n    Match                   *\n    Operation               lift\n    Nested_under            message\n[FILTER]\n    Name                    modify\n    Match                   *\n    Condition               Key_exists message\n    Rename                  message @m\n    Add                     sourcetype renamelog\n"` |  |
@@ -111,11 +113,7 @@ Kubernetes: `>=v1.23.0-0`
 | kube-prometheus.alertmanager.enabled | bool | `false` |  |
 | kube-prometheus.blackboxExporter.enabled | bool | `false` |  |
 | kube-prometheus.enabled | bool | `true` |  |
-| kube-prometheus.exporters.kube-state-metrics.enabled | bool | `false` |  |
-| kube-prometheus.exporters.node-exporter.enabled | bool | `false` |  |
 | kube-prometheus.fullnameOverride | string | `"prometheus"` |  |
-| kube-prometheus.nameOverride | string | `"prometheus"` |  |
-| kube-prometheus.namespaceOverride | string | `"armonik"` |  |
 | kube-prometheus.prometheus.additionalScrapeConfigs.enabled | bool | `true` |  |
 | kube-prometheus.prometheus.additionalScrapeConfigs.internal.jobList[0].job_name | string | `"metrics-exporter"` |  |
 | kube-prometheus.prometheus.additionalScrapeConfigs.internal.jobList[0].static_configs[0].labels.namespace | string | `"armonik"` |  |
@@ -248,6 +246,16 @@ Kubernetes: `>=v1.23.0-0`
 | mongodb.tls.mode | string | `"allowTLS"` |  |
 | mongodb.tls.replicaset.existingSecret | string | `"mongodb-crt"` |  |
 | mongodb.useStatefulSet | bool | `true` |  |
+| rabbitmq.auth.password | string | `"admin"` |  |
+| rabbitmq.auth.tls.autoGenerated | bool | `false` |  |
+| rabbitmq.auth.tls.enabled | bool | `false` |  |
+| rabbitmq.auth.username | string | `"admin"` |  |
+| rabbitmq.enabled | bool | `false` |  |
+| rabbitmq.fullnameOverride | string | `"rabbitmq"` |  |
+| rabbitmq.metrics.enabled | bool | `true` |  |
+| rabbitmq.metrics.serviceMonitor.enabled | bool | `true` |  |
+| rabbitmq.metrics.serviceMonitor.namespace | string | `"armonik"` |  |
+| rabbitmq.persistence.enabled | bool | `false` |  |
 | redis.enabled | bool | `true` |  |
 | redis.fullnameOverride | string | `"redis"` |  |
 | redis.master.containerPorts.redis | int | `6379` |  |

@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: jobs-configmap
+data:
+  {{- range $key, $value := .Values.config.core.data }}
+  {{ $key }}: {{ $value | quote }}
+  {{- end }}
+  init-db.sh: |
+    #!/bin/bash
+    sleep 30
+    mongosh -u $MongoDB__User -p $MongoDB__Password mongodb://$MongoDB__Host:$MongoDB__Port/database?authSource=$MongoDB__AuthSource --eval "db.PartitionData.drop()"
+    mongosh -u $MongoDB__User -p $MongoDB__Password mongodb://$MongoDB__Host:$MongoDB__Port/database?authSource=$MongoDB__AuthSource --eval "db.PartitionData.insertMany([{'ParentPartitionIds':[],'PodConfiguration':null,'PodMax':100,'PodReserved':1,'PreemptionPercentage':50,'Priority':1,'_id':'bench'},{'ParentPartitionIds':[],'PodConfiguration':null,'PodMax':100,'PodReserved':1,'PreemptionPercentage':50,'Priority':1,'_id':'default'},{'ParentPartitionIds':[],'PodConfiguration':null,'PodMax':100,'PodReserved':1,'PreemptionPercentage':50,'Priority':1,'_id':'htcmock'},{'ParentPartitionIds':[],'PodConfiguration':null,'PodMax':100,'PodReserved':1,'PreemptionPercentage':50,'Priority':1,'_id':'stream'}])"
+  seq.sh: |
+    #!/bin/bash
+    if [ -z "$(/bin/seqcli/seqcli retention list -s $SEQ_URL)" ]
+    then
+      token=$(/bin/seqcli/seqcli apikey create -t "test ApiKey" --permissions=Project --connect-username=$SEQ_USER --connect-password=$SEQ_PASSWORD -s $SEQ_URL)
+      /bin/seqcli/seqcli retention create --after 2d --delete-all-events --apikey=$token -s $SEQ_URL
+    fi

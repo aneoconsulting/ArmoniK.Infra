@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.config.log.name }}
+data:
+  Serilog__MinimumLevel: {{ .Values.config.log.data.minimumLevel | quote}}
+  {{- range $key, $value := .Values.config.log.data.overrides }}
+  Serilog__MinimumLevel__Override__{{ $key }}: {{ $value | quote}}
+  {{- end }}

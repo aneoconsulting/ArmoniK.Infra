@@ -1,0 +1,8 @@
+apiVersion: v1
+data:
+  environment.json: '{"color": "#80ff80", "description": "{{ .Values.environment.description }}", "name": "{{ .Values.environment.name }}", "version": "{{ .Chart.AppVersion }}"}'
+  gui_configuration: "{}"
+immutable: false
+kind: ConfigMap
+metadata:
+  name: ingress-nginx-static

@@ -1,5 +1,7 @@
 imagePullSecrets: []
 replicaCount: 1
+namespace: armonik
+name: control-plane
 image:
   repository: dockerhubaneo
   name: armonik_control
@@ -14,27 +16,18 @@ imageCron:
   name: seqcli
   tag: "2024.3"
 
-global:
-  imageRegistry: ""
-
 serviceAccount:
   create: true
   name: control-plane
   annotations: {}
   secrets: []
 
-grafanaDashboard:
-  enable: true
 certificates:
   enable: false
 partitionMetricsExporter:
   enable: false
 metricsExporter:
   enable: true
-
-namespace: armonik
-
-name: control-plane
 
 resources:
   limits:
@@ -154,7 +147,7 @@ config:
       MongoDB__TableStorage__PollingDelayMin: "00:00:01"
       MongoDB__Tls: "false"
       Redis__User: ""
-      #Redis__CaPath: /redis/tls-combined.pem
+      #Redis__CaPath: /redis/ca.crt
       Redis__ClientName: ArmoniK.Core
       Redis__EndpointUrl: redis-master:6379
       #Redis__EndpointUrl: redis-headless:6379

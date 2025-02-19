@@ -16,7 +16,7 @@ dependencies:
   version: 20.7.1
 - name: mongodb
   repository: https://charts.bitnami.com/bitnami
-  version: 16.4.3
+  version: 16.4.4
 - name: kube-prometheus
   repository: https://charts.bitnami.com/bitnami
   version: 11.0.2
@@ -34,9 +34,9 @@ dependencies:
   version: 2.4.5
 - name: seq
   repository: https://helm.datalust.co
-  version: 2024.3.1
+  version: 2024.3.2
 - name: cert-manager
   repository: https://charts.jetstack.io
   version: v1.17.1
-digest: sha256:5bc1fc07cab9a600eaf08844661601b50df08e9bcd63742a039f59bb985def31
-generated: "2025-02-18T14:43:29.583728+01:00"
+digest: sha256:cd343306ec6b1e814d5cf26978843b9b24f9b4faee016f080a65a1075836e0dc
+generated: "2025-02-19T11:22:58.674866+01:00"

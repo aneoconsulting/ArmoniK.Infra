@@ -275,6 +275,7 @@ Kubernetes: `>=v1.25.0-0`
 | redis.usernames.admin | string | `"admin"` |  |
 | seq.enabled | bool | `true` |  |
 | seq.fullnameOverride | string | `"seq"` |  |
+| seq.image.pullPolicy | string | `"IfNotPresent"` |  |
 | seq.persistence.enabled | bool | `false` |  |
 
 ----------------------------------------------

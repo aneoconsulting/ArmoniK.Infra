@@ -4,7 +4,7 @@ version: 0.1.0
 name: armonik
 description: A Helm chart for Armonik
 icon: https://25070129.fs1.hubspotusercontent-eu1.net/hubfs/25070129/Website/Images%20-%20Website/ArmoniK/logo_armonik_by_aneo%201.svg
-kubeVersion: ">=v1.23.0-0"
+kubeVersion: ">=v1.25.0-0"
 keywords:
   - armonik
   - helm
@@ -20,71 +20,59 @@ maintainers:
 dependencies:
 ### Armonik
   - name: control-plane
-    version: 0.1.0
+    version: 0.1.x
     repository: file://charts/control-plane
     condition: control-plane.enabled
   - name: compute-plane
-    version: 0.1.0
+    version: 0.1.x
     repository: file://charts/compute-plane
     condition: compute-plane.enabled
   - name: ingress
-    version: 0.1.0
+    version: 0.1.x
     repository: file://charts/ingress
     condition: ingress.enabled
+### Armonik dependencies
   - name: activemq
-    version: 1.0.0
+    version: 1.x.x
     repository: file://charts/activemq
     condition: activemq.enabled
-### Armonik dependencies
   - name: redis
-    version: 20.6.3
+    version: 20.x.x
     repository: https://charts.bitnami.com/bitnami
     condition: redis.enabled
   - name: mongodb
-    version: 16.4.1
+    version: 16.x.x
     repository: https://charts.bitnami.com/bitnami
     condition: mongodb.enabled
   - name: kube-prometheus
-    version: 11.0.2
+    version: 11.x.x
     repository: https://charts.bitnami.com/bitnami
     condition: kube-prometheus.enabled
   - name: keda
-    version: 2.16.0
+    version: 2.x.x
     repository: https://kedacore.github.io/charts
     condition: keda.enabled
-  # - name: node-exporter
-  #   version: 4.5.2
-  #   repository: https://charts.bitnami.com/bitnami
-  #   condition: node-exporter.enabled
-  # - name: kube-state-metrics
-  #   version: 4.3.4
-  #   repository: https://charts.bitnami.com/bitnami
-  #   condition: kube-state-metrics.enabled
-  # - name: cluster-autoscaler
-  #   version: 9.45.0
-  #   repository: https://kubernetes.github.io/autoscaler
-  #   condition: cluster-autoscaler.enabled
   # - name: chaos-mesh
-  #   version: 2.7.0
+  #   version: 2.x.x
   #   repository: https://charts.chaos-mesh.org
   #   condition: chaos-mesh.enabled
   - name: rabbitmq
-    version: 15.3.1
+    version: 15.x.x
     repository: https://charts.bitnami.com/bitnami
     condition: rabbitmq.enabled
   - name: grafana
-    version: 8.8.4
+    version: 8.x.x
     repository: https://grafana.github.io/helm-charts
     condition: grafana.enabled
   - name: fluent-bit
-    version: 2.4.4
+    version: 2.x.x
     repository: https://charts.bitnami.com/bitnami
     condition: fluent-bit.enabled
   - name: seq
-    version: 2024.3.1
+    version: 2024.x.x
     repository: https://helm.datalust.co
     condition: seq.enabled
   - name: cert-manager
-    version: 1.16.3
+    version: 1.x.x
     repository: https://charts.jetstack.io
     condition: cert-manager.enabled

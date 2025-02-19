@@ -1,23 +1,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "control-plane.name" . }}
+  name: {{ include "controlPlane.name" . }}
   labels:
-    {{- include "control-plane.labels" . | nindent 4 }}
+    {{- include "controlPlane.labels" . | nindent 4 }}
 spec:
   progressDeadlineSeconds: 600
   replicas: {{ .Values.replicaCount }}
   revisionHistoryLimit: 10
   selector:
     matchLabels:
-      {{- include "control-plane.selectorLabels" . | nindent 6 }}
+      {{- include "controlPlane.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        {{- include "control-plane.selectorLabels" . | nindent 8 }}
+        {{- include "controlPlane.selectorLabels" . | nindent 8 }}
     spec:
       containers:
-        - name: {{ include "control-plane.name" . }}
+        - name: {{ include "controlPlane.name" . }}
           {{- $registry := .Values.global.imageRegistry | default .Values.image.registry }}
           {{- if $registry }}
           image: "{{ $registry }}/{{ .Values.image.repository }}/{{ .Values.image.name }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
@@ -94,9 +94,11 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       {{- end }}
+      {{- if $.Values.serviceAccount.create }}
       serviceAccountName: {{ $.Values.serviceAccount.name }}
       serviceAccount: {{ $.Values.serviceAccount.name }}
       automountServiceAccountToken: true
+      {{- end }}
       shareProcessNamespace: false
       {{- if .Values.nodeSelector }}
       nodeSelector:

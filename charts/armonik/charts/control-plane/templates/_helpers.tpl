@@ -1,17 +1,3 @@
-{{- define "control-plane.labels" -}}
-app: {{ .Values.namespace | default "armonik" }}
-service: {{ .Values.name | default "control-plane" }}
-{{- end }}
-
-{{- define "control-plane.selectorLabels" -}}
-app: {{ .Values.namespace | default "armonik" }}
-service: {{ .Values.name | default "control-plane" }}
-{{- end }}
-
-{{- define "control-plane.name" -}}
-{{ .Values.name | default "control-plane" }}
-{{- end }}
-
 {{/*
 Expand the name of the chart.
 */}}
@@ -114,4 +100,3 @@ Role name of addon resizer
     {{- print "policy/v1beta1" -}}
   {{- end -}}
 {{- end -}}
-

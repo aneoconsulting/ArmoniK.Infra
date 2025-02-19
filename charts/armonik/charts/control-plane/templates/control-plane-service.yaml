@@ -1,9 +1,9 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "control-plane.name" . }}
+  name: {{ include "controlPlane.name" . }}
   labels:
-    {{- include "control-plane.labels" . | nindent 4 }}
+    {{- include "controlPlane.labels" . | nindent 4 }}
   {{- if .Values.annotations}}
   annotations:
   {{- range $key, $value := .Values.annotations }}
@@ -19,7 +19,7 @@ spec:
   clusterIP: null
 {{- end }}
   selector:
-    {{- include "control-plane.selectorLabels" . | nindent 4 }}
+    {{- include "controlPlane.selectorLabels" . | nindent 4 }}
   ports:
     - name: {{ .Values.service.name }}
     {{- if (eq .Values.service.serviceType "HeadLess") -}}

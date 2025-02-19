@@ -93,6 +93,7 @@ Kubernetes: `>=v1.23.0-0`
 | env[1].name | string | `"Redis__Password"` |  |
 | env[1].valueFrom.secretKeyRef.key | string | `"redis-password"` |  |
 | env[1].valueFrom.secretKeyRef.name | string | `"redis"` |  |
+| global.imageRegistry | string | `""` |  |
 | grafanaDashboard.enable | bool | `true` |  |
 | image.name | string | `"armonik_control"` |  |
 | image.pullPolicy | string | `"IfNotPresent"` |  |
@@ -135,7 +136,10 @@ Kubernetes: `>=v1.23.0-0`
 | service.selector.app | string | `"armonik"` |  |
 | service.selector.service | string | `"control-plane"` |  |
 | service.serviceType | string | `"ClusterIP"` |  |
-| serviceAccount | string | `"armonikserviceaccount"` |  |
+| serviceAccount.annotations | object | `{}` |  |
+| serviceAccount.create | bool | `true` |  |
+| serviceAccount.name | string | `"control-plane"` |  |
+| serviceAccount.secrets | list | `[]` |  |
 | startupProbe.failureThreshold | int | `20` |  |
 | startupProbe.httpGet.path | string | `"/startup"` |  |
 | startupProbe.httpGet.port | int | `1081` |  |

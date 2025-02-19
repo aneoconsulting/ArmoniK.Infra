@@ -18,23 +18,23 @@ A Helm chart for Armonik
 
 ## Requirements
 
-Kubernetes: `>=v1.23.0-0`
+Kubernetes: `>=v1.25.0-0`
 
 | Repository | Name | Version |
 |------------|------|---------|
-| file://charts/activemq | activemq | 1.0.0 |
-| file://charts/compute-plane | compute-plane | 0.1.0 |
-| file://charts/control-plane | control-plane | 0.1.0 |
-| file://charts/ingress | ingress | 0.1.0 |
-| https://charts.bitnami.com/bitnami | fluent-bit | 2.4.4 |
-| https://charts.bitnami.com/bitnami | kube-prometheus | 11.0.2 |
-| https://charts.bitnami.com/bitnami | mongodb | 16.4.1 |
-| https://charts.bitnami.com/bitnami | rabbitmq | 15.3.1 |
-| https://charts.bitnami.com/bitnami | redis | 20.6.3 |
-| https://charts.jetstack.io | cert-manager | 1.16.3 |
-| https://grafana.github.io/helm-charts | grafana | 8.8.4 |
-| https://helm.datalust.co | seq | 2024.3.1 |
-| https://kedacore.github.io/charts | keda | 2.16.0 |
+| file://charts/activemq | activemq | 1.x.x |
+| file://charts/compute-plane | compute-plane | 0.1.x |
+| file://charts/control-plane | control-plane | 0.1.x |
+| file://charts/ingress | ingress | 0.1.x |
+| https://charts.bitnami.com/bitnami | fluent-bit | 2.x.x |
+| https://charts.bitnami.com/bitnami | kube-prometheus | 11.x.x |
+| https://charts.bitnami.com/bitnami | mongodb | 16.x.x |
+| https://charts.bitnami.com/bitnami | rabbitmq | 15.x.x |
+| https://charts.bitnami.com/bitnami | redis | 20.x.x |
+| https://charts.jetstack.io | cert-manager | 1.x.x |
+| https://grafana.github.io/helm-charts | grafana | 8.x.x |
+| https://helm.datalust.co | seq | 2024.x.x |
+| https://kedacore.github.io/charts | keda | 2.x.x |
 
 ## Values
 

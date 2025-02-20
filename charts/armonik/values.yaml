@@ -16,17 +16,17 @@ global:
   dependencies:
     controlPlane: true
     computePlane: true
-    ingress: false
-    activemq: false
-    redis: false
-    mongodb: false
+    ingress: true
+    activemq: true
+    redis: true
+    mongodb: true
     kubePrometheus: true
     keda: false
-    rabbitmq: true
-    grafana: false
-    fluentBit: false
-    seq: false
-    certManager: false
+    rabbitmq: false
+    grafana: true
+    fluentBit: true
+    seq: true
+    certManager: true
   environment:
     name: "local"
     description: "Armonik environment"
@@ -57,7 +57,6 @@ rabbitmq:
     enabled: true
     serviceMonitor:
       enabled: true
-      namespace: "armonik"
 
 ################## REDIS ##################
 redis:
@@ -121,6 +120,11 @@ mongodb:
 keda:
   crds:
     install: true
+  prometheus:
+    metricServer:
+      enabled: true
+      serviceMonitor:
+        enabled: true
   certificates:
     certManager:
       enabled: false
@@ -133,14 +137,14 @@ keda:
 cert-manager:
   installCRDs: true
   fullnameOverride: "cert-manager"
-  cainjector:
-    enabled: true
+  prometheus:
+    servicemonitor:
+      enabled : true
 
 ################## GRAFANA ##################
 grafana:
   serviceMonitor:
     enabled: true
-  #nodeSelector: {"monitoring"}
   fullnameOverride: "grafana"
   ingress:
     enabled: true
@@ -215,10 +219,6 @@ fluent-bit:
       readOnly: true
       mountPath: /var/log/dmesg
       mountPropagation: None
-  ingress:
-    enabled: true
-    selfSigned: true
-    tls: true
   config:
     filters: |
       [FILTER]
@@ -377,18 +377,11 @@ ingress:
 ################## PROMETHEUS ##################
 kube-prometheus:
   operator.image.registry: ""
-  #nameOverride: "prometheus"
   fullnameOverride: "prometheus"
-  #namespaceOverride: "armonik"
   alertmanager:
     enabled: false
   blackboxExporter:
     enabled: false
-  # exporters:
-  #   node-exporter:
-  #     enabled: false
-  #   kube-state-metrics:
-  #     enabled: false
   prometheus:
     scrapeInterval: 10s
     evaluationInterval: 30s

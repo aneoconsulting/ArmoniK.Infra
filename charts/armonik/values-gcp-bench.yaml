@@ -120,7 +120,7 @@ mongodb:
         key: service
         operator: Equal
         value: state-database
-  resourcesPreset: large
+  resourcesPreset: none  ### FULL RESOURCES FOR DEDICATED NODE
 
 ################## KEDA ##################
 keda:
@@ -150,7 +150,7 @@ grafana:
       value: monitoring
 
 ################## FLUENT-BIT ##################
-fluent-bit:
+#fluent-bit:
 
 ################## SEQ ##################
 seq:

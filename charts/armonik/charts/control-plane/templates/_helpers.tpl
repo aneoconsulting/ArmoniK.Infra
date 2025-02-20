@@ -105,7 +105,7 @@ Role name of addon resizer
   {{- if .Values.global.dependencies.rabbitmq }}
   Amqp__Host: rabbitmq
   {{- else if .Values.global.dependencies.activemq }}
-  mqp__Host: activemq
+  Amqp__Host: activemq
   {{- else }}
   Amqp__Host: localhost
   {{- end }}

@@ -22,11 +22,11 @@ dependencies:
   - name: control-plane
     version: 0.1.x
     repository: file://charts/control-plane
-    condition: global.dependencies.control-plane
+    condition: global.dependencies.controlPlane
   - name: compute-plane
     version: 0.1.x
     repository: file://charts/compute-plane
-    condition: global.dependencies.compute-plane
+    condition: global.dependencies.computePlane
   - name: ingress
     version: 0.1.x
     repository: file://charts/ingress
@@ -47,7 +47,7 @@ dependencies:
   - name: kube-prometheus
     version: 11.x.x
     repository: https://charts.bitnami.com/bitnami
-    condition: global.dependencies.kube-prometheus
+    condition: global.dependencies.kubePrometheus
   - name: keda
     version: 2.x.x
     repository: https://kedacore.github.io/charts
@@ -67,7 +67,7 @@ dependencies:
   - name: fluent-bit
     version: 2.x.x
     repository: https://charts.bitnami.com/bitnami
-    condition: global.dependencies.fluent-bit
+    condition: global.dependencies.fluentBit
   - name: seq
     version: 2024.x.x
     repository: https://helm.datalust.co
@@ -75,4 +75,4 @@ dependencies:
   - name: cert-manager
     version: 1.x.x
     repository: https://charts.jetstack.io
-    condition: global.dependencies.cert-manager
+    condition: global.dependencies.certManager

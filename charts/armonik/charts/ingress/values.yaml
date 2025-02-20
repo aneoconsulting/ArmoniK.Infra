@@ -3,16 +3,12 @@ imagePullSecrets: []
 image: 
   registry: ""
 
-grafanaDashboard:
-  enable: true
-
 global:
   imageRegistry: ""
   imagePullSecrets: []
-
-environment:
-  name: "local"
-  description: "Armonik environment"
+  environment:
+    name: "local"
+    description: "Armonik environment"
 
 tls:
   type: "metrics-server"

@@ -3,6 +3,7 @@ kind: ConfigMap
 metadata:
   name: {{ .Values.config.core.name }}
 data:
+  {{ include "controlPlane.queue" . }}
   {{- range $key, $value := .Values.config.core.data }}
   {{ $key }}: {{ $value | quote }}
   {{- end }}

@@ -345,10 +345,10 @@ Kubernetes: `>=v1.23.0-0`
 | fluentBit.volumeMounts[0].mountPath | string | `"/cache"` |  |
 | fluentBit.volumeMounts[0].name | string | `"cache-volume"` |  |
 | fluentBit.volumeMounts[0].readOnly | bool | `true` |  |
+| global."dependencies.keda" | bool | `false` |  |
 | global.imageRegistry | string | `""` |  |
 | imagePullSecrets | list | `[]` |  |
 | nameOverride | string | `""` |  |
-| namespace | string | `"armonik"` |  |
 | podDisruptionBudget.enabled | bool | `false` |  |
 | podDisruptionBudget.maxUnavailable | string | `nil` |  |
 | podDisruptionBudget.minAvailable | string | `nil` |  |
@@ -400,7 +400,6 @@ Kubernetes: `>=v1.23.0-0`
 | triggers.behavior.type | string | `"Percent"` | Type of the target |
 | triggers.behavior.value | int | `100` | Value of the target |
 | triggers.cooldownPeriod | int | `300` | Cooldown period in seconds |
-| triggers.enabled | bool | `true` |  |
 | triggers.fallback | object | `{"failureThreshold":3,"replicas":6}` | Fallback options |
 | triggers.fallback.failureThreshold | int | `3` | Threshold of failures |
 | triggers.fallback.replicas | int | `6` | Number of replicas |

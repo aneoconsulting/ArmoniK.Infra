@@ -2,31 +2,47 @@
 ################## GLOBAL ##################
 ############################################
 global:
+  version:
+    armonik-image: "0.1.0"
+    armonik_control: "0.31.2"
+    compute-plane-image: "0.31.2"
+    armonik_pollingagent: "0.31.2"
+    armonik_admin_app: "0.31.2"
   image:
     pullPolicy: IfNotPresent # FOR KEDA IMAGES
     registry: "" # FOR KEDA IMAGES
   imageRegistry: "" # FOR BITNAMI IMAGES AND ARMONIK IMAGES
   #imagePullSecrets: [{"name": "secret"}] # FOR BITNAMI IMAGES AND ARMONIK IMAGES
-  security:
-    allowInsecureImages: true
+  dependencies:
+    control-plane: true
+    compute-plane: true
+    ingress: false
+    activemq: false
+    redis: false
+    mongodb: false
+    kube-prometheus: false
+    keda: false
+    rabbitmq: true
+    grafana: false
+    fluent-bit: false
+    seq: false
+    cert-manager: false
+  environment:
+    name: "local"
+    description: "Armonik environment"
 
 ############################################
 ### ARMONIK APPLICATION CONFIGURATION #####
 ############################################
-control-plane:
-  enabled: true
-  config.core.data.Amqp__Host: activemq #rabbitmq
-compute-plane:
-  enabled: true
+# control-plane: []
+# compute-plane: []
 
 ############################################
 ############### DEPENDENCIES ###############
 ############################################
 
 ################# RABBITMQ #################
-
 rabbitmq:
-  enabled: false
   fullnameOverride: "rabbitmq"
   auth:
     username: "admin"
@@ -45,7 +61,6 @@ rabbitmq:
 
 ################## REDIS ##################
 redis:
-  enabled: true
   useStatefulSet: true
   replica:
     replicaCount: 1
@@ -79,13 +94,11 @@ redis:
 
 ################## ACTIVEMQ ##################
 activemq:
-  enabled: true
   replicas: 1
   fullnameOverride: "activemq"
 
 ################## MONGODB ##################
 mongodb:
-  enabled: true
   metrics:
     enabled: true
     serviceMonitor:
@@ -106,7 +119,6 @@ mongodb:
 
 ################## KEDA ##################
 keda:
-  enabled: true
   crds:
     install: true
   certificates:
@@ -119,7 +131,6 @@ keda:
 
 ################## CERT-MANAGER ##################
 cert-manager:
-  enabled: false
   installCRDs: true
   fullnameOverride: "cert-manager"
   cainjector:
@@ -127,7 +138,6 @@ cert-manager:
 
 ################## GRAFANA ##################
 grafana:
-  enabled: true
   serviceMonitor:
     enabled: true
   #nodeSelector: {"monitoring"}
@@ -180,7 +190,6 @@ grafana:
 
 ################## FLUENT-BIT ##################
 fluent-bit:
-  enabled: true
   fullnameOverride: "fluent-bit"
   daemonset:
     enabled: true
@@ -352,7 +361,6 @@ fluent-bit:
 
 ################## SEQ ##################
 seq:
-  enabled: true
   fullnameOverride: "seq"
   persistence:
     enabled: false
@@ -363,13 +371,11 @@ seq:
 
 ################## INGRESS ##################
 ingress:
-  enabled: true
   ingress:
     type: LoadBalancer
 
 ################## PROMETHEUS ##################
 kube-prometheus:
-  enabled: true
   operator.image.registry: ""
   #nameOverride: "prometheus"
   fullnameOverride: "prometheus"

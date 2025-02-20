@@ -1,4 +1,4 @@
-{{ if .Values.triggers.enabled }}
+{{ if .Values.global.dependencies.keda }}
 {{- range $partitionName, $config := .Values.computePlane.partition }}
 ---
 apiVersion: keda.sh/v1alpha1

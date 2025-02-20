@@ -100,3 +100,13 @@ Role name of addon resizer
     {{- print "policy/v1beta1" -}}
   {{- end -}}
 {{- end -}}
+
+{{- define "controlPlane.queue" -}}
+  {{- if .Values.global.dependencies.rabbitmq }}
+  Amqp__Host: rabbitmq
+  {{- else if .Values.global.dependencies.activemq }}
+  mqp__Host: activemq
+  {{- else }}
+  Amqp__Host: localhost
+  {{- end }}
+{{- end }}

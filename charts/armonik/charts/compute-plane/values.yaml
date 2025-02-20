@@ -1,6 +1,5 @@
 nameOverride: ""
 replicaCount: 1
-namespace: armonik
 shareProcessNamespace: false
 restartPolicy: Always
 repository: dockerhubaneo
@@ -9,6 +8,7 @@ imagePullSecrets: []
 
 global:
   imageRegistry: ""
+  dependencies.keda: false
 
 serviceAccount:
   create: true
@@ -402,7 +402,6 @@ computePlane:
               query: "armonik_bench_tasks_queued{job=\"metrics-exporter\"}"
 
 triggers:
-  enabled: true
   suffix: "armonik-scaledobject"
   scaleTargetRef:
     # -- Kubernetes API version to be used

@@ -33,7 +33,6 @@ Kubernetes: `>=v1.23.0-0`
 | config.controlPlane.data.Submitter__MaxErrorAllowed | string | `"50"` |  |
 | config.controlPlane.defaultPartition | string | `"default"` |  |
 | config.controlPlane.name | string | `"control-plane-configmap"` |  |
-| config.core.data.Amqp__Host | string | `"activemq"` |  |
 | config.core.data.Amqp__MaxPriority | string | `"10"` |  |
 | config.core.data.Amqp__Password | string | `"admin"` |  |
 | config.core.data.Amqp__Port | string | `"5672"` |  |
@@ -134,10 +133,6 @@ Kubernetes: `>=v1.23.0-0`
 | service.selector.app | string | `"armonik"` |  |
 | service.selector.service | string | `"control-plane"` |  |
 | service.serviceType | string | `"ClusterIP"` |  |
-| serviceAccount.annotations | object | `{}` |  |
-| serviceAccount.create | bool | `true` |  |
-| serviceAccount.name | string | `"control-plane"` |  |
-| serviceAccount.secrets | list | `[]` |  |
 | serviceAccount.annotations | object | `{}` |  |
 | serviceAccount.create | bool | `true` |  |
 | serviceAccount.name | string | `"control-plane"` |  |

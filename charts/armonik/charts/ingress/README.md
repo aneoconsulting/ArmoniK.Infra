@@ -33,11 +33,10 @@ Kubernetes: `>=v1.25.0-0`
 | adminGui.tolerations[0].operator | string | `"Equal"` |  |
 | adminGui.tolerations[0].value | string | `"control-plane"` |  |
 | affinity | object | `{}` |  |
-| environment.description | string | `"Armonik environment"` |  |
-| environment.name | string | `"local"` |  |
+| global.environment.description | string | `"Armonik environment"` |  |
+| global.environment.name | string | `"local"` |  |
 | global.imagePullSecrets | list | `[]` |  |
 | global.imageRegistry | string | `""` |  |
-| grafanaDashboard.enable | bool | `true` |  |
 | image.registry | string | `""` |  |
 | imagePullSecrets | list | `[]` |  |
 | ingress.className | string | `""` |  |

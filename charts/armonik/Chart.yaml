@@ -22,57 +22,57 @@ dependencies:
   - name: control-plane
     version: 0.1.x
     repository: file://charts/control-plane
-    condition: control-plane.enabled
+    condition: global.dependencies.control-plane
   - name: compute-plane
     version: 0.1.x
     repository: file://charts/compute-plane
-    condition: compute-plane.enabled
+    condition: global.dependencies.compute-plane
   - name: ingress
     version: 0.1.x
     repository: file://charts/ingress
-    condition: ingress.enabled
+    condition: global.dependencies.ingress
 ### Armonik dependencies
   - name: activemq
     version: 1.x.x
     repository: file://charts/activemq
-    condition: activemq.enabled
+    condition: global.dependencies.activemq
   - name: redis
     version: 20.x.x
     repository: https://charts.bitnami.com/bitnami
-    condition: redis.enabled
+    condition: global.dependencies.redis
   - name: mongodb
     version: 16.x.x
     repository: https://charts.bitnami.com/bitnami
-    condition: mongodb.enabled
+    condition: global.dependencies.mongodb
   - name: kube-prometheus
     version: 11.x.x
     repository: https://charts.bitnami.com/bitnami
-    condition: kube-prometheus.enabled
+    condition: global.dependencies.kube-prometheus
   - name: keda
     version: 2.x.x
     repository: https://kedacore.github.io/charts
-    condition: keda.enabled
+    condition: global.dependencies.keda
   # - name: chaos-mesh
   #   version: 2.x.x
   #   repository: https://charts.chaos-mesh.org
-  #   condition: chaos-mesh.enabled
+  #   condition: global.dependencies.chaos-mesh
   - name: rabbitmq
     version: 15.x.x
     repository: https://charts.bitnami.com/bitnami
-    condition: rabbitmq.enabled
+    condition: global.dependencies.rabbitmq
   - name: grafana
     version: 8.x.x
     repository: https://grafana.github.io/helm-charts
-    condition: grafana.enabled
+    condition: global.dependencies.grafana
   - name: fluent-bit
     version: 2.x.x
     repository: https://charts.bitnami.com/bitnami
-    condition: fluent-bit.enabled
+    condition: global.dependencies.fluent-bit
   - name: seq
     version: 2024.x.x
     repository: https://helm.datalust.co
-    condition: seq.enabled
+    condition: global.dependencies.seq
   - name: cert-manager
     version: 1.x.x
     repository: https://charts.jetstack.io
-    condition: cert-manager.enabled
+    condition: global.dependencies.cert-manager

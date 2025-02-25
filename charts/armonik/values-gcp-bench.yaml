@@ -1,35 +1,18 @@
+# Use values file: values-gcp-bench.yaml with values.yaml and value-gcp.yaml
+# EX : helm upgrade --install --create-namespace -n armonik armonik ./ -f values-gcp.yaml -f values-gcp-bench.yaml
 ############################################
 ################## GLOBAL ##################
 ############################################
 global:
-  version:
-    armonik-image: "0.1.0"
-    armonik_control: "0.31.2"
-    compute-plane-image: "0.31.2"
-    armonik_pollingagent: "0.31.2"
-    armonik_admin_app: "0.31.2"
-  image:
-    pullPolicy: IfNotPresent # FOR KEDA IMAGES
-    registry: "" # FOR KEDA IMAGES
-  imageRegistry: "" # FOR BITNAMI IMAGES AND ARMONIK IMAGES
-  #imagePullSecrets: [{"name": "secret"}] # FOR BITNAMI IMAGES AND ARMONIK IMAGES
   environment:
-    name: "GCP"
-    description: "Armonik GCP environment"
+    name: "GCP-BENCH"
+    description: "Armonik GCP environment bench"
 
 ############################################
 ### ARMONIK APPLICATION CONFIGURATION #####
 ############################################
-
 control-plane:
-  replicaCount: 1
-  nodeSelector:
-    service: control-plane
-  tolerations:
-    - effect: NoSchedule
-      key: service
-      operator: Equal
-      value: control-plane
+  replicaCount: 10
   config:
     controlPlane:
       defaultPartition: bench
@@ -37,41 +20,13 @@ compute-plane:
   computePlane:
     partition:
       default:
-        replicas: 1
-        nodeSelector:
-          service: workers
-        tolerations:
-          - effect: NoSchedule
-            key: service
-            operator: Equal
-            value: workers
+        replicas: 0
       stream:
-        replicas: 1
-        nodeSelector:
-          service: workers
-        tolerations:
-          - effect: NoSchedule
-            key: service
-            operator: Equal
-            value: workers
+        replicas: 0
       htcmock:
-        replicas: 1
-        nodeSelector:
-          service: workers
-        tolerations:
-          - effect: NoSchedule
-            key: service
-            operator: Equal
-            value: workers
+        replicas: 0
       bench:
-        replicas: 1
-        nodeSelector:
-          service: workers
-        tolerations:
-          - effect: NoSchedule
-            key: service
-            operator: Equal
-            value: workers
+        replicas: 120
 
 ############################################
 ############### DEPENDENCIES ###############
@@ -90,54 +45,15 @@ rabbitmq:
 ################## REDIS ##################
 redis:
   master:
-    resourcesPreset: nano
+    resourcesPreset: medium
 
 ################## ACTIVEMQ ##################
 activemq:
   activemqOptsMemory: "-Xms1g -Xmx3g"
-  nodeSelector:
-    service: control-plane
-  tolerations:
-    - effect: NoSchedule
-      key: service
-      operator: Equal
-      value: control-plane
 
 ################## MONGODB ##################
 mongodb:
-  nodeSelector:
-    service: state-database
-  tolerations:
-    - effect: NoSchedule
-      key: service
-      operator: Equal
-      value: state-database
-  arbiter:
-    nodeSelector:
-      service: state-database
-    tolerations:
-      - effect: NoSchedule
-        key: service
-        operator: Equal
-        value: state-database
   resourcesPreset: none  ### FULL RESOURCES FOR DEDICATED NODE
-
-################## KEDA ##################
-keda:
-  nodeSelector:
-    service: monitoring
-  tolerations:
-    - effect: NoSchedule
-      key: service
-      operator: Equal
-      value: monitoring
-
-################## CERT-MANAGER ##################
-cert-manager:
-  installCRDs: true
-  fullnameOverride: "cert-manager"
-  cainjector:
-    enabled: true
 
 ################## GRAFANA ##################
 grafana:
@@ -149,48 +65,8 @@ grafana:
       operator: Equal
       value: monitoring
 
-################## FLUENT-BIT ##################
-#fluent-bit:
-
-################## SEQ ##################
-seq:
-  nodeSelector:
-    service: monitoring
-  tolerations:
-    - effect: NoSchedule
-      key: service
-      operator: Equal
-      value: monitoring
-
-################## INGRESS ##################
-ingress:
-  nodeSelector:
-    service: control-plane
-  tolerations:
-    - effect: NoSchedule
-      key: service
-      operator: Equal
-      value: control-plane
-  ingress:
-    type: LoadBalancer
-
 ################## PROMETHEUS ##################
 kube-prometheus:
-  operator:
-    nodeSelector:
-      service: monitoring
-    tolerations:
-      - effect: NoSchedule
-        key: service
-        operator: Equal
-        value: monitoring
   prometheus:
-    nodeSelector:
-      service: monitoring
-    tolerations:
-      - effect: NoSchedule
-        key: service
-        operator: Equal
-        value: monitoring
-    resourcesPreset: medium
+    resourcesPreset: large
 ############################################

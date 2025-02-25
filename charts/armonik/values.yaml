@@ -173,6 +173,7 @@ fluent-bit:
     enabled: true
     serviceMonitor:
       enabled: true
+  #existingConfigMap: "fluent-bit-config-armonik" # Bug chart Bitnami
   extraVolumes: |
     - name: runlogjournal
       hostPath:

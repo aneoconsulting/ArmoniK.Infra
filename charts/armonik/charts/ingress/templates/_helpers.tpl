@@ -98,5 +98,19 @@ Role name of addon resizer
       {{- print "policy/v1" -}}
   {{- else -}}
     {{- print "policy/v1beta1" -}}
-  {{- end -}}
-{{- end -}}
+  {{- end }}
+{{- end }}
+
+{{/* Get Image Version Ingress */}}
+{{- define "ingress.tag" -}}
+  {{- if or .Values.ingress.tag .Values.global.version.nginx }}
+    {{ default .Values.ingress.tag }}
+  {{- end }}
+{{- end }}
+
+{{/* Get Image Version Gui */}}
+{{- define "adminGui.tag" -}}
+  {{- if or .Values.adminGui.tag .Values.global.version.armonikGui }}
+    {{ default .Values.adminGui.tag }}
+  {{- end }}
+{{- end }}

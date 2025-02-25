@@ -56,7 +56,7 @@ Kubernetes: `>=v1.25.0-0`
 | ingress.resources.limits.memory | string | `"128Mi"` |  |
 | ingress.resources.requests.cpu | string | `"100m"` |  |
 | ingress.resources.requests.memory | string | `"128Mi"` |  |
-| ingress.tag | string | `"1.27.3"` |  |
+| ingress.tag | string | `"1.27.4-alpine-slim"` |  |
 | ingress.tls | list | `[]` |  |
 | ingress.tolerations[0].effect | string | `"NoSchedule"` |  |
 | ingress.tolerations[0].key | string | `"service"` |  |

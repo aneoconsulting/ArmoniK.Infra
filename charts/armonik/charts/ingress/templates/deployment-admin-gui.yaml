@@ -21,10 +21,11 @@ spec:
       containers:
       - name: admin-app
         {{- $registry := .Values.global.imageRegistry | default .Values.image.registry }}
+        {{- $tag := .Values.global.version.armonikGui | default .Values.adminGui.tag }}
         {{- if $registry }}
-        image: "{{ $registry }}/{{ .Values.adminGui.repository }}/{{ .Values.adminGui.image }}:{{ .Values.adminGui.tag | default .Chart.AppVersion }}"
+        image: "{{ $registry }}/{{ .Values.adminGui.repository }}/{{ .Values.adminGui.image }}:{{ $tag | default .Chart.AppVersion }}"
         {{- else }}
-        image: "{{ .Values.adminGui.repository }}/{{ .Values.adminGui.image }}:{{ .Values.adminGui.tag | default .Chart.AppVersion }}"
+        image: "{{ .Values.adminGui.repository }}/{{ .Values.adminGui.image }}:{{ $tag | default .Chart.AppVersion }}"
         {{- end }}
         imagePullPolicy: {{ .Values.adminGui.imagePullPolicy }}
         ports:

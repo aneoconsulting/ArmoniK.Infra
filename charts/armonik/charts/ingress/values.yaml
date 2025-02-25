@@ -43,7 +43,7 @@ ingress:
   #      - chart-example.local
   repository: "nginxinc"
   image: "nginx-unprivileged"
-  tag: "1.27.3"
+  tag: "1.27.4-alpine-slim"
   imagePullPolicy: IfNotPresent
   ports:
     grpc:

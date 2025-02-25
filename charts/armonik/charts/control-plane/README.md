@@ -100,8 +100,8 @@ Kubernetes: `>=v1.23.0-0`
 | imageCron.repository | string | `"datalust"` |  |
 | imageCron.tag | string | `"2024.3"` |  |
 | imageJob.name | string | `"mongosh"` |  |
-| imageJob.repository | string | `"rtsp"` |  |
-| imageJob.tag | string | `"2.3.8"` |  |
+| imageJob.repository | string | `"alpine"` |  |
+| imageJob.tag | string | `"2.0.2"` |  |
 | imagePullSecrets | list | `[]` |  |
 | livenessProbe.failureThreshold | int | `1` |  |
 | livenessProbe.httpGet.path | string | `"/liveness"` |  |

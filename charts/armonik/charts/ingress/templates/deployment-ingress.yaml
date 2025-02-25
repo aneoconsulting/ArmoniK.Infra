@@ -26,10 +26,11 @@ spec:
             name: ingress-nginx
             optional: false
         {{- $registry := .Values.global.imageRegistry | default .Values.image.registry }}
+        {{- $tag := .Values.global.version.nginx }}
         {{- if $registry }}
-        image: "{{ $registry }}/{{ .Values.ingress.repository }}/{{ .Values.ingress.image }}:{{ .Values.ingress.tag | default .Chart.AppVersion }}"
+        image: "{{ $registry }}/{{ .Values.ingress.repository }}/{{ .Values.ingress.image }}:{{ $registry | default .Values.ingress.tag }}"
         {{- else }}
-        image: "{{ .Values.ingress.repository }}/{{ .Values.ingress.image }}:{{ .Values.ingress.tag | default .Chart.AppVersion }}"
+        image: "{{ .Values.ingress.repository }}/{{ .Values.ingress.image }}:{{ $registry | default .Values.ingress.tag }}"
         {{- end }}
         imagePullPolicy: {{ .Values.ingress.imagePullPolicy }}
         ports:

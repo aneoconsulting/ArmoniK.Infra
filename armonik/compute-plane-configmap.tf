@@ -1,5 +1,5 @@
 # configmap with all the variables
-module "compute_aggregation" {
+module "compute_all_aggregation" {
   source    = "../utils/aggregator"
   conf_list = flatten([module.log_aggregation, var.configurations.compute])
   materialize_configmap = {

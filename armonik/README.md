@@ -28,6 +28,7 @@
 |------|--------|---------|
 | <a name="module_admin_gui_endpoint"></a> [admin\_gui\_endpoint](#module\_admin\_gui\_endpoint) | ../utils/service-ip | n/a |
 | <a name="module_compute_aggregation"></a> [compute\_aggregation](#module\_compute\_aggregation) | ../utils/aggregator | n/a |
+| <a name="module_compute_all_aggregation"></a> [compute\_all\_aggregation](#module\_compute\_all\_aggregation) | ../utils/aggregator | n/a |
 | <a name="module_control_plane_aggregation"></a> [control\_plane\_aggregation](#module\_control\_plane\_aggregation) | ../utils/aggregator | n/a |
 | <a name="module_control_plane_endpoint"></a> [control\_plane\_endpoint](#module\_control\_plane\_endpoint) | ../utils/service-ip | n/a |
 | <a name="module_core_aggregation"></a> [core\_aggregation](#module\_core\_aggregation) | ../utils/aggregator | n/a |

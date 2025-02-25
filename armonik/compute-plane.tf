@@ -1,5 +1,5 @@
 #Aggregation
-module "compute_partition_channel_aggregation" {
+module "compute_aggregation" {
   source   = "../utils/aggregator"
   for_each = var.compute_plane
   conf_list = flatten([
@@ -17,8 +17,8 @@ module "worker_aggregation" {
   source   = "../utils/aggregator"
   for_each = var.compute_plane
   conf_list = flatten(
-    [module.worker_all_aggregation, each.value.worker[0].conf,
-  module.compute_partition_channel_aggregation[each.key]])
+    [module.worker_all_aggregation,
+  module.compute_aggregation[each.key], each.value.worker[0].conf])
 }
 
 module "polling_agent_aggregation" {
@@ -29,7 +29,7 @@ module "polling_agent_aggregation" {
       env = {
         for queue in tolist(local.supported_queues) : queue => each.key
       }
-  }, each.value.polling_agent.conf, module.compute_partition_channel_aggregation[each.key]])
+  }, module.compute_aggregation[each.key], each.value.polling_agent.conf])
 }
 
 # Agent deployment

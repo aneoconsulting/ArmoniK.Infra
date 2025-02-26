@@ -1,16 +1,7 @@
 # configmap with all the variables
-module "compute_aggregation" {
-  source = "../utils/aggregator"
-  conf_list = flatten([
-    {
-      env = {
-        ComputePlane__WorkerChannel__Address    = "/cache/armonik_worker.sock"
-        ComputePlane__WorkerChannel__SocketType = "unixdomainsocket"
-        ComputePlane__AgentChannel__Address     = "/cache/armonik_agent.sock"
-        ComputePlane__AgentChannel__SocketType  = "unixdomainsocket"
-      }
-    },
-  module.log_aggregation, var.configurations.compute])
+module "compute_all_aggregation" {
+  source    = "../utils/aggregator"
+  conf_list = flatten([module.log_aggregation, var.configurations.compute])
   materialize_configmap = {
     name      = "compute-plane-configmap"
     namespace = var.namespace

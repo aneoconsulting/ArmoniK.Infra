@@ -15,6 +15,6 @@ variable "tags" {
 }
 
 variable "service_account_role_name" {
-  description = "Name of the IAM role to give the SQS permissions to"
+  description = "Name of the IAM role associated to the AWS service account. This role will be given SQS permissions."
   type        = string
 }

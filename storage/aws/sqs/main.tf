@@ -1,9 +1,11 @@
-locals {
-  prefix = var.prefix
-  region = var.region
-  tags   = merge(var.tags, { module = "amazon-sqs" })
-}
+data "aws_caller_identity" "current" {}
 
+locals {
+  prefix     = var.prefix
+  region     = var.region
+  account_id = data.aws_caller_identity.current.account_id
+  tags       = merge(var.tags, { module = "amazon-sqs" })
+}
 
 data "aws_iam_policy_document" "sqs" {
   statement {
@@ -21,7 +23,7 @@ data "aws_iam_policy_document" "sqs" {
       "sqs:ChangeMessageVisibility"
     ]
     effect    = "Allow"
-    resources = ["arn:aws:sqs:::${local.prefix}*"]
+    resources = ["arn:aws:sqs:${local.region}:${local.account_id}:${local.prefix}*"]
   }
 }
 

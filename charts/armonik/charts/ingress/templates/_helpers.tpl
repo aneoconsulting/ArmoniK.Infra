@@ -103,14 +103,14 @@ Role name of addon resizer
 
 {{/* Get Image Version Ingress */}}
 {{- define "ingress.tag" -}}
-  {{- if or .Values.ingress.tag .Values.global.version.nginx }}
-    {{ default .Values.ingress.tag }}
-  {{- end }}
+{{- if $.Values.global.version.nginx }}{{ $.Values.global.version.nginx }}
+{{- else if .Values.ingress.tag }}{{ .Values.ingress.tag }}
+{{- end }}
 {{- end }}
 
 {{/* Get Image Version Gui */}}
-{{- define "adminGui.tag" -}}
-  {{- if or .Values.adminGui.tag .Values.global.version.armonikGui }}
-    {{ default .Values.adminGui.tag }}
-  {{- end }}
+{{- define "adminGui.tag" }}
+{{- if .Values.global.version.armonikGui }}{{ .Values.global.version.armonikGui }}
+{{- else if .Values.adminGui.tag }}{{ .Values.adminGui.tag }}
+{{- end }}
 {{- end }}

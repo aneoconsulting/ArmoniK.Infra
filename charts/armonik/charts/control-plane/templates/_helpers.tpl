@@ -101,12 +101,8 @@ Role name of addon resizer
   {{- end -}}
 {{- end -}}
 
-{{- define "controlPlane.queue" -}}
-  {{- if .Values.global.dependencies.rabbitmq }}
-  Amqp__Host: rabbitmq
-  {{- else if .Values.global.dependencies.activemq }}
-  Amqp__Host: activemq
-  {{- else }}
-  Amqp__Host: localhost
-  {{- end }}
+{{- define "armonikCore.tag" }}
+{{- if .Values.global.version.armonikCore }}{{ .Values.global.version.armonikCore }}
+{{- else if .Values.image.tag }}{{ .Values.image.tag }}
+{{- end }}
 {{- end }}

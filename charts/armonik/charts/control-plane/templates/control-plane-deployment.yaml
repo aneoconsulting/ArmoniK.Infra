@@ -19,11 +19,10 @@ spec:
       containers:
         - name: {{ include "controlPlane.name" . }}
           {{- $registry := .Values.global.imageRegistry | default .Values.image.registry }}
-          {{- $tag := .Values.global.version.armonikCore | default .Values.image.tag }}
           {{- if $registry }}
-          image: "{{ $registry }}/{{ .Values.image.repository }}/{{ .Values.image.name }}:{{ $tag | default .Chart.AppVersion }}"
+          image: "{{ $registry }}/{{ .Values.image.repository }}/{{ .Values.image.name }}:{{ include "armonikCore.tag" . }}"
           {{- else }}
-          image: "{{ .Values.image.repository }}/{{ .Values.image.name }}:{{ $tag | default .Chart.AppVersion }}"
+          image: "{{ .Values.image.repository }}/{{ .Values.image.name }}:{{ include "armonikCore.tag" . }}"
           {{- end }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           #command: ["/bin/bash", "-c", "sleep 3600"]

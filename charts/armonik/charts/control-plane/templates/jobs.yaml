@@ -42,12 +42,20 @@ spec:
               name: mongodb
               optional: false
         envFrom:
-        - configMapRef:
-            name: jobs-configmap
-            optional: false
-        # - secretRef:
-        #     name: activemq-crt
-        #     optional: false
+          {{- if .Values.envFrom.secretRef }}
+          {{- range .Values.envFrom.secretRef }}
+          - secretRef:
+              name: {{ . }}
+              optional: false
+          {{- end }}
+          {{- end }}
+          {{- if .Values.envFrom.configMapRef }}
+          {{- range .Values.envFrom.configMapRef }}
+          - configMapRef:
+              name: {{ . }}
+              optional: false
+          {{- end }}
+          {{- end }}
         terminationMessagePath: /dev/termination-log
         terminationMessagePolicy: File
         volumeMounts:

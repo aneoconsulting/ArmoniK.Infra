@@ -3,9 +3,6 @@ kind: ConfigMap
 metadata:
   name: jobs-configmap
 data:
-  {{- range $key, $value := .Values.config.core.data }}
-  {{ $key }}: {{ $value | quote }}
-  {{- end }}
   init-db.sh: |
     #!/bin/bash
     sleep 30

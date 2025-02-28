@@ -1,6 +1,5 @@
 {{- range $partitionName, $config := .Values.computePlane.partition }}
 {{- $registry := $.Values.global.imageRegistry | default $.Values.registry }}
-{{- $tagagent := $.Values.global.version.armonikPollingagent | default $config.pollingAgent.tag }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -67,9 +66,9 @@ spec:
       # agent container
       - name: {{ $.Values.pollingAgent.name }}
         {{- if $registry }}
-        image: "{{ $registry }}/{{ $.Values.repository }}/{{ $config.pollingAgent.image }}:{{ $tagagent | default $.Chart.AppVersion }}"
+        image: "{{ $registry }}/{{ $.Values.repository }}/{{ $config.pollingAgent.image }}:{{- include "armonikPollingagent.tag" $ | default $config.pollingAgent.tag }}"
         {{- else }}
-        image: "{{ $.Values.repository }}/{{ $config.pollingAgent.image }}:{{ $tagagent | default $.Chart.AppVersion }}"
+        image: "{{ $.Values.repository }}/{{ $config.pollingAgent.image }}:{{- include "armonikPollingagent.tag" $ | default $config.pollingAgent.tag }}"
         {{- end }}
         imagePullPolicy: {{ $config.pollingAgent.imagePullPolicy | quote}}
         resources:
@@ -131,14 +130,12 @@ spec:
           {{- end }}
       # worker containers
       {{- range $index, $worker := $config.worker }}
-      {{- $tagcore := $.Values.global.version.armonikCore | default $worker.tag  }}
       - name: "{{ $worker.name }}-{{ $index }}"
         {{- range $config.worker}}
         {{- if $registry }}
-        {{- $tagc := .Values.global.version.armonikCore | default $worker.tag }}
-        image: "{{ $registry }}/{{ $.Values.repository }}/{{ $worker.image }}:{{ $tagcore | default $.Chart.AppVersion }}"
+        image: "{{ $registry }}/{{ $.Values.repository }}/{{ $worker.image }}:{{- include "armonikCore.tag" $ | default $worker.tag }}"
         {{- else }}
-        image: "{{ $.Values.repository }}/{{ $worker.image }}:{{ $tagcore| default $.Chart.AppVersion }}"
+        image: "{{ $.Values.repository }}/{{ $worker.image }}:{{- include "armonikCore.tag" $ | default $worker.tag }}"
         {{- end }}
         imagePullPolicy: {{ .imagePullPolicy | quote }}
         {{- end }}

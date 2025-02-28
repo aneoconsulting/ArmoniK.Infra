@@ -2,17 +2,6 @@
 ################## GLOBAL ##################
 ############################################
 global:
-  version:
-    armonik-image: "0.1.0"
-    armonik_control: "0.31.2"
-    compute-plane-image: "0.31.2"
-    armonik_pollingagent: "0.31.2"
-    armonik_admin_app: "0.31.2"
-  image:
-    pullPolicy: IfNotPresent # FOR KEDA IMAGES
-    registry: "" # FOR KEDA IMAGES
-  imageRegistry: "" # FOR BITNAMI IMAGES AND ARMONIK IMAGES
-  #imagePullSecrets: [{"name": "secret"}] # FOR BITNAMI IMAGES AND ARMONIK IMAGES
   environment:
     name: "AWS"
     description: "Armonik AWS environment"

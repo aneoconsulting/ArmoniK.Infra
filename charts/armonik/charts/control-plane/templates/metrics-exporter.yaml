@@ -26,9 +26,9 @@ spec:
       - name: metrics-exporter
         {{- $registry := .Values.global.imageRegistry | default .Values.image.registry }}
         {{- if $registry }}
-        image: "{{ $registry }}/{{ .Values.image.repository }}/armonik_control_metrics:{{ .Values.image.tag | default .Chart.AppVersion }}"
+        image: "{{ $registry }}/{{ .Values.image.repository }}/armonik_control_metrics:{{ include "armonikCore.tag" . }}"
         {{- else }}
-        image: "{{ .Values.image.repository }}/armonik_control_metrics:{{ .Values.image.tag | default .Chart.AppVersion }}"
+        image: "{{ .Values.image.repository }}/armonik_control_metrics:{{ include "armonikCore.tag" . }}"
         {{- end }}
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         ports:

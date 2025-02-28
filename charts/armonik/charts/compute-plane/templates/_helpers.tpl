@@ -100,3 +100,11 @@ Role name of addon resizer
     {{- print "policy/v1beta1" -}}
   {{- end -}}
 {{- end -}}
+
+{{- define "armonikCore.tag" }}
+{{- if .Values.global.version.armonikCore }}{{ .Values.global.version.armonikCore }}{{- end }}
+{{- end }}
+
+{{- define "armonikPollingagent.tag" }}
+{{- if .Values.global.version.armonikPollingagent }}{{ .Values.global.version.armonikPollingagent }}{{- end }}
+{{- end }}

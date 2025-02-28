@@ -1,0 +1,36 @@
+# -------------------------------------------------------------------
+#  ENVIRONMENTS DEFINITION
+# -------------------------------------------------------------------
+environments: 
+  local:
+    values:
+      - values.yaml
+  
+  aws:
+    values:
+      - values-aws.yaml
+  
+  gcp:
+    values:
+      - values-gcp-bench.yaml
+---
+# --------------------------------------------------------------------
+# DEFAULT HELM CONFIGURATION (OPTIONAL)
+# --------------------------------------------------------------------
+helmDefaults:
+  cleanupOnFail: false
+  verify: false
+  wait: false
+  atomic: false
+  skipDeps: true
+  timeout: 120
+  createNamespace: true
+
+---
+# --------------------------------------------------------------------
+# RELEASES CONFIGURATION
+# --------------------------------------------------------------------
+releases:
+  - name: armonik
+    chart: "."
+    namespace: armonik

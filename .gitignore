@@ -43,3 +43,4 @@ terraform-plugins
 kubeconfig_*
 generated
 .external_modules
+**.tgz

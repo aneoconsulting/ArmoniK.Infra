@@ -1,0 +1,9 @@
+{{ if .Values.global.dependencies.kubePrometheus }}
+apiVersion: v1
+kind: Secret
+metadata:
+  creationTimestamp: null
+  name: additional-scrape-configs
+data:
+  prometheus-additional.yaml: {{ .Files.Get "prometheus-conf/config.yaml" | b64enc }}
+{{ end }}

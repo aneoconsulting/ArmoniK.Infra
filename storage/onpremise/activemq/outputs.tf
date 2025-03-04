@@ -68,7 +68,7 @@ output "env" {
     "Amqp__Host"                                            = local.activemq_endpoints.ip
     "Amqp__Port"                                            = local.activemq_endpoints.port
     "Amqp__Scheme"                                          = var.scheme
-    "Amqp__CaPath"                                          = "${var.path}/chain.pem"
+    "Amqp__CaPath"                                          = "${var.path}/ca.pem"
   })
 
 }

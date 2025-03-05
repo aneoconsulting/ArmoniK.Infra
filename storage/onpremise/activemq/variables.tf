@@ -3,7 +3,11 @@ variable "namespace" {
   description = "Namespace of ArmoniK storage resources"
   type        = string
 }
-
+variable "name" {
+  description = "Name of the queue storage"
+  type        = string
+  default     = "activemq"
+}
 # Parameters for ActiveMQ
 variable "activemq" {
   description = "Parameters of ActiveMQ"
@@ -40,6 +44,10 @@ variable "scheme" {
   description = "The scheme for the AMQP"
   type        = string
   default     = "AMQPS"
+  validation {
+    condition     = var.scheme == "AMQPS"
+    error_message = "The scheme must be AMQPS"
+  }
 }
 
 variable "path" {

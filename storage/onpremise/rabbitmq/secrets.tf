@@ -4,6 +4,8 @@ resource "kubernetes_secret" "rabbitmq" {
     namespace = var.namespace
   }
   data = {
+    "ca.pem"              = local.ca_cert
+    "cert.pem"            = local.client_cert
     "chain.pem"           = format("%s\n%s", local.client_cert, local.ca_cert)
     username              = random_string.mq_application_user.result
     password              = random_password.mq_application_password.result

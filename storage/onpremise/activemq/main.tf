@@ -3,7 +3,7 @@
 # Kubernetes ActiveMQ deployment
 resource "kubernetes_deployment" "activemq" {
   metadata {
-    name      = "activemq"
+    name      = var.name
     namespace = var.namespace
     labels = {
       app     = "storage"

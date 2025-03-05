@@ -23,7 +23,7 @@ resource "aws_efs_file_system" "efs" {
   dynamic "lifecycle_policy" {
     for_each = toset(compact([var.transition_to_ia]))
     content {
-      transition_to_ia = each.key
+      transition_to_ia = lifecycle_policy.key
     }
   }
 

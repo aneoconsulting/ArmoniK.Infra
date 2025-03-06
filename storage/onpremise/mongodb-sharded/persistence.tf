@@ -1,5 +1,5 @@
 resource "kubernetes_storage_class" "shards" {
-  count = can(coalesce(var.persistence.shards)) ? 1 : 0
+  count = can(coalesce(var.persistence.shards.storage_provisioner)) ? 1 : 0
   metadata {
     name = "${var.name}-shards"
     labels = {
@@ -16,7 +16,7 @@ resource "kubernetes_storage_class" "shards" {
 }
 
 resource "kubernetes_storage_class" "configsvr" {
-  count = can(coalesce(var.persistence.configsvr)) ? 1 : 0
+  count = can(coalesce(var.persistence.configsvr.storage_provisioner)) ? 1 : 0
   metadata {
     name = "${var.name}-configsvr"
     labels = {

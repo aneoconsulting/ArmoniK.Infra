@@ -211,7 +211,7 @@ resource "helm_release" "mongodb" {
     }
   }
   dynamic "set" {
-    for_each = can(coalesce(var.persistence.configsvr)) ? [1] : []
+    for_each = can(coalesce(var.persistence.configsvr.storage_provisioner)) ? [1] : []
     content {
       name  = "configsvr.persistence.storageClass"
       value = kubernetes_storage_class.configsvr[0].metadata[0].name

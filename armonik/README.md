@@ -68,6 +68,7 @@
 | [kubernetes_service.control_plane](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/service) | resource |
 | [kubernetes_service.ingress](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/service) | resource |
 | [kubernetes_service_account.pod_deletion_cost](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/service_account) | resource |
+| [local_file.armonik_config](https://registry.terraform.io/providers/hashicorp/local/latest/docs/resources/file) | resource |
 | [local_file.ingress_conf_file](https://registry.terraform.io/providers/hashicorp/local/latest/docs/resources/file) | resource |
 | [local_sensitive_file.ingress_ca](https://registry.terraform.io/providers/hashicorp/local/latest/docs/resources/sensitive_file) | resource |
 | [local_sensitive_file.ingress_client_ca](https://registry.terraform.io/providers/hashicorp/local/latest/docs/resources/sensitive_file) | resource |
@@ -123,5 +124,6 @@
 
 | Name | Description |
 |------|-------------|
+| <a name="output_armonik_config_file"></a> [armonik\_config\_file](#output\_armonik\_config\_file) | Path to the generated ArmoniK configuration file |
 | <a name="output_endpoint_urls"></a> [endpoint\_urls](#output\_endpoint\_urls) | List of URL endpoints for: control-plane, Seq, Grafana and Admin GUI |
 <!-- END_TF_DOCS -->

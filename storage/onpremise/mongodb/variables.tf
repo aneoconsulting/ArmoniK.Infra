@@ -61,10 +61,10 @@ variable "arbiter_resources" {
 variable "persistent_volume" {
   description = "Persistent Volume parameters for MongoDB pods"
   type = object({
-    access_mode         = optional(list(string), ["ReadWriteMany"])
+    access_mode         = optional(list(string), ["ReadWriteOnce"])
     reclaim_policy      = optional(string, "Delete")
-    storage_provisioner = optional(string, "")
-    volume_binding_mode = optional(string, "")
+    storage_provisioner = optional(string)
+    volume_binding_mode = optional(string, "WaitForFirstConsumer")
     parameters          = optional(map(string), {})
 
     # Resources for PVC

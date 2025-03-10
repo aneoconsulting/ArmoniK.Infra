@@ -1,5 +1,4 @@
 resource "kubernetes_storage_class" "shards" {
-  # enable if var.persistence.shards is not null and var.persistence.shards.storage_provisioner is neither null nor empty
   count = can(coalesce(var.persistence.shards.storage_provisioner)) ? 1 : 0
   metadata {
     name = "${var.name}-shards"
@@ -17,7 +16,6 @@ resource "kubernetes_storage_class" "shards" {
 }
 
 resource "kubernetes_storage_class" "configsvr" {
-  # enable if var.persistence.configsvr.storage_provisioner is neither null nor empty
   count = can(coalesce(var.persistence.configsvr.storage_provisioner)) ? 1 : 0
   metadata {
     name = "${var.name}-configsvr"

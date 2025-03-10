@@ -84,7 +84,7 @@ resource "helm_release" "mongodb" {
   ]
 
   dynamic "set" {
-    for_each = var.persistent_volume == null ? [1] : []
+    for_each = !can(coalesce(var.persistent_volume)) ? [1] : []
     content {
       name  = "persistence.enabled"
       value = false

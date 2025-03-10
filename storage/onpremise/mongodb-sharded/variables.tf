@@ -121,7 +121,7 @@ variable "persistence" {
     shards = optional(object({
       access_mode         = optional(list(string), ["ReadWriteOnce"])
       reclaim_policy      = optional(string, "Delete")
-      storage_provisioner = optional(string, "")
+      storage_provisioner = optional(string)
       volume_binding_mode = optional(string, "WaitForFirstConsumer")
       parameters          = optional(map(string), {})
 

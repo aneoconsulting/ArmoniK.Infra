@@ -4,6 +4,8 @@ resource "kubernetes_secret" "activemq" {
     namespace = var.namespace
   }
   data = {
+    "ca.pem"              = tls_self_signed_cert.root_activemq.cert_pem
+    "cert.pem"            = format("%s\n%s", tls_locally_signed_cert.activemq_certificate.cert_pem, tls_private_key.activemq_private_key.private_key_pem)
     "chain.pem"           = format("%s\n%s", tls_locally_signed_cert.activemq_certificate.cert_pem, tls_self_signed_cert.root_activemq.cert_pem)
     username              = random_string.mq_application_user.result
     password              = random_password.mq_application_password.result

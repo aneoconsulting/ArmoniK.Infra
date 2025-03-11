@@ -26,6 +26,8 @@ resource "kubernetes_secret" "rabbitmq_client_certificate" {
     namespace = var.namespace
   }
   data = {
+    "ca.pem"    = local.ca_cert
+    "cert.pem"  = local.client_cert
     "chain.pem" = format("%s\n%s", local.client_cert, local.ca_cert)
   }
 }

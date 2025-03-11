@@ -3,7 +3,11 @@ variable "namespace" {
   description = "Namespace for rabbitmq"
   type        = string
 }
-
+variable "name" {
+  description = "Name of the queue storage"
+  type        = string
+  default     = "rabbitmq"
+}
 variable "image" {
   description = "image for the rabbirmq to be used"
   type        = string
@@ -43,6 +47,10 @@ variable "scheme" {
   description = "The scheme for the AMQP"
   type        = string
   default     = "AMQPS"
+  validation {
+    condition     = var.scheme == "AMQPS"
+    error_message = "The scheme must be AMQPS"
+  }
 }
 
 variable "path" {

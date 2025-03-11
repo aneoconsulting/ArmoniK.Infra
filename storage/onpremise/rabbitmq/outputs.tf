@@ -1,7 +1,7 @@
 #RabbitMQ
 output "host" {
   description = "Host of RabbitMQ"
-  value       = local.rabbitmq_endpoints.ip
+  value       = local.rabbitmq_dns
 }
 
 output "port" {
@@ -65,10 +65,11 @@ output "env" {
     "Components__QueueStorage"                              = var.queue_storage_adapter
     "Components__QueueAdaptorSettings__ClassName"           = local.adapter_class_name
     "Components__QueueAdaptorSettings__AdapterAbsolutePath" = local.adapter_absolute_path
-    "Amqp__Host"                                            = local.rabbitmq_endpoints.ip
+    "Amqp__Host"                                            = local.rabbitmq_dns
     "Amqp__Port"                                            = local.rabbitmq_endpoints.port
     "Amqp__Scheme"                                          = var.scheme
-    "Amqp__CaPath"                                          = "${var.path}/chain.pem"
+    "Amqp__CaPath"                                          = "${var.path}/ca.pem"
+    "Amqp__Ssl"                                             = "true"
   })
 
 }

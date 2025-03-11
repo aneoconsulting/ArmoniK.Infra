@@ -5,13 +5,13 @@ variable "vpc_id" {
 
 variable "security_group_ids" {
   description = "The IDs of security groups to associate with the network interfaces"
-  type        = set(string)
+  type        = list(string)
   default     = []
 }
 
 variable "subnet_ids" {
   description = "The IDs of subnets in which to create the network interfaces for the endpoints"
-  type        = set(string)
+  type        = list(string)
   default     = []
 }
 

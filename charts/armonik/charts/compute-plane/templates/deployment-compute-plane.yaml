@@ -1,0 +1,227 @@
+{{- range $partitionName, $config := .Values.computePlane.partition }}
+{{- $registry := $.Values.global.imageRegistry | default $.Values.registry }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $.Values.computePlane.metadata.name }}-{{ $partitionName }}
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    app: {{ $.Values.computePlane.metadata.labels.app }}
+    service: {{ $.Values.computePlane.metadata.labels.service }}
+    partition: {{ $partitionName }}
+spec:
+  replicas: {{ $config.replicas }}
+  selector:
+    matchLabels:
+      app: {{ $.Values.computePlane.metadata.labels.app }}
+      service: {{ $.Values.computePlane.metadata.labels.service }}
+      partition: {{ $partitionName }}
+  template:
+    metadata:
+      name: {{ $partitionName }}-compute-plane
+      labels:
+        app: {{ $.Values.computePlane.metadata.labels.app }}
+        service: {{ $.Values.computePlane.metadata.labels.service }}
+        partition: {{ $partitionName }}
+      {{- if $config.annotations}}
+      annotations:
+        {{- range $key, $value := $config.annotations }}
+        {{ $key }}: {{ $value | quote }}
+        {{- end }}
+      {{- end }}
+    spec:
+      {{- if $config.nodeSelector}}
+      nodeSelector:
+        {{- range $key, $value := $config.nodeSelector }}
+        {{ $key }}: {{ $value | quote }}
+        {{- end }}
+      {{- end }}
+      {{- if $.Values.serviceAccount.create }}
+      serviceAccountName: {{ $.Values.serviceAccount.name }}
+      serviceAccount: {{ $.Values.serviceAccount.name }}
+      automountServiceAccountToken: true
+      {{- end }}
+      {{- if $config.tolerations }}
+      tolerations:
+        {{- range $i, $toleration := $config.tolerations }}
+        - key: {{ $toleration.key }}
+          operator: Equal
+          value: {{ $toleration.value }}
+          effect: NoSchedule
+        {{- end }}
+      {{- end }}
+      terminationGracePeriodSeconds: {{ $config.terminationGracePeriodSeconds }}
+      shareProcessNamespace: {{ $.Values.shareProcessNamespace }}
+      enableServiceLinks: true
+      {{- $imagePullSecrets := $.Values.global.imagePullSecrets | default $.Values.imagePullSecrets }}
+      {{- if $imagePullSecrets }}
+      {{- with $imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- end }}
+      restartPolicy: {{ $.Values.restartPolicy }}
+      containers:
+      # agent container
+      - name: {{ $.Values.pollingAgent.name }}
+        {{- if $registry }}
+        image: "{{ $registry }}/{{ $.Values.repository }}/{{ $config.pollingAgent.image }}:{{- include "armonikPollingagent.tag" $ | default $config.pollingAgent.tag }}"
+        {{- else }}
+        image: "{{ $.Values.repository }}/{{ $config.pollingAgent.image }}:{{- include "armonikPollingagent.tag" $ | default $config.pollingAgent.tag }}"
+        {{- end }}
+        imagePullPolicy: {{ $config.pollingAgent.imagePullPolicy | quote}}
+        resources:
+          limits:
+            cpu: "{{ $config.pollingAgent.limits.cpu }}"
+            memory: "{{ $config.pollingAgent.limits.memory }}"
+          requests:
+            cpu: "{{ $config.pollingAgent.requests.cpu }}"
+            memory: "{{ $config.pollingAgent.requests.memory }}"
+        securityContext:
+        {{- toYaml $config.pollingAgent.securityContext | nindent 10 }}
+        ports:
+        - name: {{ $.Values.pollingAgent.ports.name }}
+          containerPort: {{ $.Values.pollingAgent.ports.containerPort }}
+          protocol: TCP
+        {{if $config.readinessProbe }}
+        readinessProbe:
+        {{- toYaml $config.readinessProbe | nindent 10 }}
+        {{- end }}
+        {{- if $config.livenessProbe }}
+        livenessProbe:
+        {{- toYaml $config.livenessProbe | nindent 10 }}
+        {{- end }}
+        {{- if $config.startupProbe }}
+        startupProbe:
+        {{- toYaml $config.startupProbe | nindent 10 }}
+        {{- end }}
+        {{- if $.Values.pollingAgent.envFrom }}
+        envFrom:
+        {{- toYaml $.Values.pollingAgent.envFrom | nindent 10 }}
+        {{- end }}
+        {{- if or $config.envHardValue $.Values.pollingAgent.envSecretValue $config.envCommon }}
+        env:
+          {{- if $config.envHardValue }}
+          {{- range $index, $item := $config.envHardValue }}
+          - name: {{ $item.name }}
+            value: {{ $item.value }}
+          {{- end }}
+          {{- end }}
+          {{- if $config.envCommon }}
+          {{- range $index, $item := $config.envCommon }}
+          - name: {{ $item.name }}
+            value: {{ $item.value }}
+          {{- end }}
+          {{- end }}
+          {{- if $.Values.pollingAgent.envSecretValue }}
+          {{- range $.Values.pollingAgent.envSecretValue }}
+          - name: {{ .name }}
+            valueFrom:
+              {{- toYaml .valueFrom | nindent 14 }}
+          {{- end }}
+          {{- end }}
+        {{- end }}
+        volumeMounts:
+          {{- range $key, $value := $.Values.pollingAgent.volumeMounts }}
+          - name: {{ $value.name | quote }}
+            mountPath: {{ $value.mountPath }}
+            mountPropagation: None
+          {{- end }}
+      # worker containers
+      {{- range $index, $worker := $config.worker }}
+      - name: "{{ $worker.name }}-{{ $index }}"
+        {{- range $config.worker}}
+        {{- if $registry }}
+        image: "{{ $registry }}/{{ $.Values.repository }}/{{ $worker.image }}:{{- include "armonikCore.tag" $ | default $worker.tag }}"
+        {{- else }}
+        image: "{{ $.Values.repository }}/{{ $worker.image }}:{{- include "armonikCore.tag" $ | default $worker.tag }}"
+        {{- end }}
+        imagePullPolicy: {{ .imagePullPolicy | quote }}
+        {{- end }}
+        resources:
+          limits:
+            cpu: "{{ $worker.limits.cpu }}"
+            memory: "{{ $worker.limits.memory }}"
+          requests:
+            cpu: "{{ $worker.requests.cpu }}"
+            memory: "{{ $worker.requests.memory }}"
+        {{- if $.Values.worker.livenessProbe }}
+        livenessProbe:
+        {{- toYaml $.Values.worker.livenessProbe | nindent 10 }}
+        {{- end }}
+        {{- if $.Values.worker.startupProbe }}
+        startupProbe:
+        {{- toYaml $.Values.worker.startupProbe | nindent 10 }}
+        {{- end }}
+        lifecycle:
+          preStop:
+            exec:
+              command: ["/bin/sh", "-c", {{ $.Values.preStopWaitScript }}]
+        {{- if $.Values.worker.envFrom }}
+        envFrom:
+        {{- toYaml $.Values.worker.envFrom | nindent 8 }}
+        {{- end }}
+        {{- if $config.envCommon }}
+        env:
+          {{- if $config.envCommon }}
+          {{- range $index, $item := $config.envCommon }}
+          - name: {{ $item.name }}
+            value: {{ $item.value }}
+          {{- end }}
+          {{- end }}
+        {{- end }}
+        {{- if $.Values.worker.volumeMounts }}
+        volumeMounts:
+          {{- with $.Values.worker.volumeMounts }}
+          {{- toYaml $.Values.worker.volumeMounts | nindent 8 }}
+          {{- end }}
+        {{- end }}
+        {{- if (eq $.Values.checkFileStorageType "FS") }}
+          - name: {{ $.Values.FS.name | quote }}
+            mountPath: {{ $.Values.FS.mountPath }}
+            readOnly: true
+        {{- end }}
+      {{- end }}
+      {{- if not $.Values.fluentBit.isDaemonSet }}
+      - name: {{ .Values.fluentBit.name }}
+        {{- $registry := .Values.global.imageRegistry | default .Values.image.registry | default "" }}
+        {{- if $registry }}
+        image: "{{ $registry }}/{{ .Values.fluentBit.repository }}/{{ .Values.fluentBit.image }}:{{ .Values.fluentBit.tag | default .Chart.AppVersion }}"
+        {{- else }}
+        image: "{{ .Values.fluentBit.repository }}/{{ .Values.fluentBit.image }}:{{ .Values.fluentBit.tag | default .Chart.AppVersion }}"
+        {{- end }}
+        imagePullPolicy: {{ .Values.fluentBit.imagePullPolicy }}
+        envFrom:
+        - configMapRef:
+            name: {{ .Values.fluentBit.configMapName }}
+        lifecycle:
+          preStop:
+            exec:
+              command: ["/bin/sh", "-c", {{ $.Values.preStopWaitScript }}]
+        volumeMounts:
+          {{- toYaml .Values.fluentBit.volumeMounts | nindent 10 }}
+        {{- if .Values.fluentBit.fluentVolumes }}
+          {{- toYaml .Values.fluentBit.fluentVolumes | nindent 10 }}
+        {{- end }}
+      {{- end }}
+      {{- if $.Values.volumes }}
+      volumes:
+        {{- with $.Values.volumes }}
+        {{- toYaml $.Values.volumes | nindent 8 }}
+        {{- end }}
+      {{- end }}
+      {{- if (eq $.Values.fileStorageType "nfs") }}
+        - name: {{ $.Values.nfs.name | quote }}
+          nfs:
+            path: {{ $.Values.nfs.path }}
+            server: {{ $.Values.nfs.server}}
+            readOnly: true
+      {{- end }}
+      {{- if (eq $.Values.fileStorageType "hostpath") }}
+        - name: {{ $.Values.hostPath.name | quote  }}
+          hostPath:
+            path: {{ $.Values.hostPath.path }}
+            type: "Directory"
+      {{- end }}
+  {{- end }}

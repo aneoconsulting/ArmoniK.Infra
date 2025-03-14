@@ -23,7 +23,7 @@ resource "aws_vpc_endpoint" "endpoints" {
   ip_address_type     = try(each.value["ip_address_type"], null)
   route_table_ids     = try(each.value["vpc_endpoint_type"], "") == "Gateway" ? try(each.value["route_table_ids"], null) : null
   subnet_ids          = contains(["GatewayLoadBalancer", "Interface"], try(each.value["vpc_endpoint_type"], each.value["service_type"], "")) ? (distinct(compact(concat(var.subnet_ids, try(each.value["subnet_ids"], []))))) : null
-  security_group_ids  = try(each.value["vpc_endpoint_type"], "") == "Interface" ? (distinct(compact(concat(var.security_group_ids, try(each.value["security_group_ids"], []))))) : null
+  security_group_ids  = try(each.value["vpc_endpoint_type"], each.value["service_type"], "") == "Interface" ? (distinct(compact(concat(var.security_group_ids, try(each.value["security_group_ids"], []))))) : null
   vpc_endpoint_type   = try(each.value["vpc_endpoint_type"], "Interface")
   tags                = merge(try(each.value["tags"], null), local.tags)
   timeouts {

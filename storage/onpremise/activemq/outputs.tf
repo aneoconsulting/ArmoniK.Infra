@@ -67,11 +67,9 @@ output "env" {
     "Components__QueueAdaptorSettings__AdapterAbsolutePath" = local.adapter_absolute_path
     "Amqp__Host"                                            = local.activemq_dns
     "Amqp__Port"                                            = local.activemq_endpoints.port
-    "Amqp__Scheme"                                          = var.scheme
+    "Amqp__Scheme"                                          = var.scheme # Indicates also whether we use TLS or not
     "Amqp__CaPath"                                          = "${var.path}/ca.pem"
-    "Amqp__Ssl"                                             = "true"
   })
-
 }
 
 output "env_secret" {

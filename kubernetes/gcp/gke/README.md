@@ -32,10 +32,10 @@ This module deploy:
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_autopilot"></a> [autopilot](#module\_autopilot) | terraform-google-modules/kubernetes-engine/google//modules/beta-autopilot-public-cluster | 27.0.0 |
-| <a name="module_gke"></a> [gke](#module\_gke) | terraform-google-modules/kubernetes-engine/google//modules/beta-public-cluster | 27.0.0 |
-| <a name="module_private_autopilot"></a> [private\_autopilot](#module\_private\_autopilot) | terraform-google-modules/kubernetes-engine/google//modules/beta-autopilot-private-cluster | 27.0.0 |
-| <a name="module_private_gke"></a> [private\_gke](#module\_private\_gke) | terraform-google-modules/kubernetes-engine/google//modules/beta-private-cluster | 27.0.0 |
+| <a name="module_autopilot"></a> [autopilot](#module\_autopilot) | terraform-google-modules/kubernetes-engine/google//modules/beta-autopilot-public-cluster | 36.1.0 |
+| <a name="module_gke"></a> [gke](#module\_gke) | terraform-google-modules/kubernetes-engine/google//modules/beta-public-cluster | 36.1.0 |
+| <a name="module_private_autopilot"></a> [private\_autopilot](#module\_private\_autopilot) | terraform-google-modules/kubernetes-engine/google//modules/beta-autopilot-private-cluster | 36.1.0 |
+| <a name="module_private_gke"></a> [private\_gke](#module\_private\_gke) | terraform-google-modules/kubernetes-engine/google//modules/beta-private-cluster | 36.1.0 |
 
 ## Resources
 
@@ -151,11 +151,11 @@ This module deploy:
 | <a name="input_service_external_ips"></a> [service\_external\_ips](#input\_service\_external\_ips) | Whether external ips specified by a service will be allowed in this cluster. | `bool` | `false` | no |
 | <a name="input_shadow_firewall_rules_log_config"></a> [shadow\_firewall\_rules\_log\_config](#input\_shadow\_firewall\_rules\_log\_config) | The log\_config for shadow firewall rules. You can set this variable to `null` to disable logging. | <pre>object({<br/>    metadata = string<br/>  })</pre> | <pre>{<br/>  "metadata": "INCLUDE_ALL_METADATA"<br/>}</pre> | no |
 | <a name="input_shadow_firewall_rules_priority"></a> [shadow\_firewall\_rules\_priority](#input\_shadow\_firewall\_rules\_priority) | The firewall priority of GKE shadow firewall rules. The priority should be less than default firewall, which is 1000. | `number` | `999` | no |
-| <a name="input_stub_domains"></a> [stub\_domains](#input\_stub\_domains) | Map of stub domains and their resolvers to forward DNS queries for a certain domain to an external DNS server. | `map(list(string))` | `{}` | no |
+| <a name="input_stub_domains"></a> [stub\_domains](#input\_stub\_domains) | Map of stub domains and their resolvers to forward DNS queries for a certain domain to an external DNS server. Not used for Autopilot GKE. | `map(list(string))` | `{}` | no |
 | <a name="input_subnetwork"></a> [subnetwork](#input\_subnetwork) | The subnetwork to host the GKE cluster in. | `string` | n/a | yes |
 | <a name="input_subnetwork_cidr"></a> [subnetwork\_cidr](#input\_subnetwork\_cidr) | CIDR of the subnetwork of nodes in GKE cluster. | `string` | n/a | yes |
 | <a name="input_timeouts"></a> [timeouts](#input\_timeouts) | Timeout for cluster operations. | `map(string)` | `{}` | no |
-| <a name="input_upstream_nameservers"></a> [upstream\_nameservers](#input\_upstream\_nameservers) | If specified, the values replace the nameservers taken by default from the node’s /etc/resolv.conf. | `list(string)` | `[]` | no |
+| <a name="input_upstream_nameservers"></a> [upstream\_nameservers](#input\_upstream\_nameservers) | If specified, the values replace the nameservers taken by default from the node’s /etc/resolv.conf. Not used for Autopilot GKE. | `list(string)` | `[]` | no |
 | <a name="input_windows_node_pools"></a> [windows\_node\_pools](#input\_windows\_node\_pools) | List of maps containing Windows node pools. | `list(map(string))` | `[]` | no |
 | <a name="input_workload_config_audit_mode"></a> [workload\_config\_audit\_mode](#input\_workload\_config\_audit\_mode) | (beta) Worload config audit mode. | `string` | `"DISABLED"` | no |
 | <a name="input_workload_vulnerability_mode"></a> [workload\_vulnerability\_mode](#input\_workload\_vulnerability\_mode) | (beta) Vulnerability mode. | `string` | `""` | no |

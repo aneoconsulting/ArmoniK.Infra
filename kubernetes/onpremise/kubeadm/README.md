@@ -47,7 +47,7 @@ No modules.
 | <a name="input_master_public_ip"></a> [master\_public\_ip](#input\_master\_public\_ip) | The public ip of the master node. | `string` | n/a | yes |
 | <a name="input_tls_private_key_pem_content"></a> [tls\_private\_key\_pem\_content](#input\_tls\_private\_key\_pem\_content) | The private key content of the master node. | `string` | n/a | yes |
 | <a name="input_user"></a> [user](#input\_user) | user used to execute docker + kubernetes scripts. must be updated accordingly with the linux image used | `string` | n/a | yes |
-| <a name="input_workers"></a> [workers](#input\_workers) | The worker nodes to be deployed. | <pre>map(object({<br>    instance_count = optional(number, 1)<br>    label          = optional(list(string), [])<br>    name           = string<br>    public_dns     = string<br>    taints         = optional(list(string), [])<br>  }))</pre> | n/a | yes |
+| <a name="input_workers"></a> [workers](#input\_workers) | The worker nodes to be deployed. | <pre>map(object({<br/>    instance_count = optional(number, 1)<br/>    label          = optional(list(string), [])<br/>    name           = string<br/>    public_dns     = string<br/>    taints         = optional(list(string), [])<br/>  }))</pre> | n/a | yes |
 
 ## Outputs
 

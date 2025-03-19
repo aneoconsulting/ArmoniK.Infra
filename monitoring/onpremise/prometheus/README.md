@@ -39,13 +39,13 @@ No modules.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_docker_image"></a> [docker\_image](#input\_docker\_image) | Docker image for Prometheus | <pre>object({<br>    image              = string<br>    tag                = string<br>    image_pull_secrets = string<br>  })</pre> | n/a | yes |
+| <a name="input_docker_image"></a> [docker\_image](#input\_docker\_image) | Docker image for Prometheus | <pre>object({<br/>    image              = string<br/>    tag                = string<br/>    image_pull_secrets = string<br/>  })</pre> | n/a | yes |
 | <a name="input_metrics_exporter_url"></a> [metrics\_exporter\_url](#input\_metrics\_exporter\_url) | URL of metrics exporter | `string` | n/a | yes |
 | <a name="input_mongo_metrics_exporter_url"></a> [mongo\_metrics\_exporter\_url](#input\_mongo\_metrics\_exporter\_url) | URL of the MongoDB metrics exporter | `string` | `""` | no |
 | <a name="input_namespace"></a> [namespace](#input\_namespace) | Namespace of ArmoniK monitoring | `string` | n/a | yes |
 | <a name="input_node_selector"></a> [node\_selector](#input\_node\_selector) | Node selector for Prometheus | `any` | `{}` | no |
-| <a name="input_persistent_volume"></a> [persistent\_volume](#input\_persistent\_volume) | Persistent volume info | <pre>object({<br>    storage_provisioner = string<br>    volume_binding_mode = string<br>    parameters          = map(string)<br>    # Resources for PVC<br>    resources = object({<br>      limits = object({<br>        storage = string<br>      })<br>      requests = object({<br>        storage = string<br>      })<br>    })<br>  })</pre> | `null` | no |
-| <a name="input_security_context"></a> [security\_context](#input\_security\_context) | security context for Prometheus pods | <pre>object({<br>    run_as_user = number<br>    fs_group    = number<br>  })</pre> | <pre>{<br>  "fs_group": 65534,<br>  "run_as_user": 65534<br>}</pre> | no |
+| <a name="input_persistent_volume"></a> [persistent\_volume](#input\_persistent\_volume) | Persistent volume info | <pre>object({<br/>    storage_provisioner = string<br/>    volume_binding_mode = string<br/>    parameters          = map(string)<br/>    # Resources for PVC<br/>    resources = object({<br/>      limits = object({<br/>        storage = string<br/>      })<br/>      requests = object({<br/>        storage = string<br/>      })<br/>    })<br/>  })</pre> | `null` | no |
+| <a name="input_security_context"></a> [security\_context](#input\_security\_context) | security context for Prometheus pods | <pre>object({<br/>    run_as_user = number<br/>    fs_group    = number<br/>  })</pre> | <pre>{<br/>  "fs_group": 65534,<br/>  "run_as_user": 65534<br/>}</pre> | no |
 | <a name="input_service_type"></a> [service\_type](#input\_service\_type) | Service type which can be: ClusterIP, NodePort or LoadBalancer | `string` | n/a | yes |
 
 ## Outputs

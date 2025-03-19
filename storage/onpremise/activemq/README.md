@@ -58,7 +58,7 @@ No modules.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_activemq"></a> [activemq](#input\_activemq) | Parameters of ActiveMQ | <pre>object({<br>    image                = string<br>    tag                  = string<br>    node_selector        = any<br>    image_pull_secrets   = string<br>    limits               = optional(map(string))<br>    requests             = optional(map(string))<br>    activemq_opts_memory = optional(string)<br>  })</pre> | n/a | yes |
+| <a name="input_activemq"></a> [activemq](#input\_activemq) | Parameters of ActiveMQ | <pre>object({<br/>    image                = string<br/>    tag                  = string<br/>    node_selector        = any<br/>    image_pull_secrets   = string<br/>    limits               = optional(map(string))<br/>    requests             = optional(map(string))<br/>    activemq_opts_memory = optional(string)<br/>  })</pre> | n/a | yes |
 | <a name="input_adapter_absolute_path"></a> [adapter\_absolute\_path](#input\_adapter\_absolute\_path) | The adapter's absolut path | `string` | `"/adapters/queue/amqp/ArmoniK.Core.Adapters.Amqp.dll"` | no |
 | <a name="input_adapter_class_name"></a> [adapter\_class\_name](#input\_adapter\_class\_name) | Name of the adapter's class | `string` | `"ArmoniK.Core.Adapters.Amqp.QueueBuilder"` | no |
 | <a name="input_name"></a> [name](#input\_name) | Name of the queue storage | `string` | `"activemq"` | no |

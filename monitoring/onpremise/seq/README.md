@@ -30,8 +30,8 @@ No modules.
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_authentication"></a> [authentication](#input\_authentication) | Enables the authentication form | `bool` | `false` | no |
-| <a name="input_docker_image"></a> [docker\_image](#input\_docker\_image) | Docker image for Seq | <pre>object({<br>    image              = string<br>    tag                = string<br>    image_pull_secrets = string<br>  })</pre> | n/a | yes |
-| <a name="input_docker_image_cron"></a> [docker\_image\_cron](#input\_docker\_image\_cron) | Docker image cron for Seq | <pre>object({<br>    image              = string<br>    tag                = string<br>    image_pull_secrets = string<br>  })</pre> | n/a | yes |
+| <a name="input_docker_image"></a> [docker\_image](#input\_docker\_image) | Docker image for Seq | <pre>object({<br/>    image              = string<br/>    tag                = string<br/>    image_pull_secrets = string<br/>  })</pre> | n/a | yes |
+| <a name="input_docker_image_cron"></a> [docker\_image\_cron](#input\_docker\_image\_cron) | Docker image cron for Seq | <pre>object({<br/>    image              = string<br/>    tag                = string<br/>    image_pull_secrets = string<br/>  })</pre> | n/a | yes |
 | <a name="input_namespace"></a> [namespace](#input\_namespace) | Namespace of ArmoniK monitoring | `string` | n/a | yes |
 | <a name="input_node_selector"></a> [node\_selector](#input\_node\_selector) | Node selector for Seq | `any` | `{}` | no |
 | <a name="input_port"></a> [port](#input\_port) | Port for Seq service | `string` | n/a | yes |

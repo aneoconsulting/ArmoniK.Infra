@@ -170,6 +170,12 @@ variable "ssl_option" {
   default     = "true"
 }
 
+variable "path" {
+  description = "Path for mounting secrets"
+  type        = string
+  default     = "/redis"
+}
+
 variable "namespace" {
   description = "Namespace of ArmoniK storage resources"
   type        = string

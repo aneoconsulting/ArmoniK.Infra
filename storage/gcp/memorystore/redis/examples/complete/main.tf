@@ -101,4 +101,6 @@ module "complete_memorystore_for_redis" {
   read_replicas_mode      = "READ_REPLICAS_ENABLED"
   secondary_ip_range      = "10.0.0.0/29"
   customer_managed_key    = null
+  namespace               = "default"
+  path                    = "/redis"
 }

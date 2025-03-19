@@ -18,7 +18,8 @@ resource "google_kms_crypto_key_iam_member" "kms" {
 }
 
 resource "google_redis_instance" "cache" {
-  name                    = var.name
+  # Ensures the redis instance is create after the PSA has been created
+  name                    = var.private_service_access_peering != null ? var.name : var.name
   memory_size_gb          = var.memory_size_gb
   alternative_location_id = local.alternative_location_id
   auth_enabled            = var.auth_enabled

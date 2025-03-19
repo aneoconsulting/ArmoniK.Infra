@@ -3,9 +3,60 @@
   "extends": [
     "config:base",
     "group:allNonMajor",
-    ":semanticCommits"
+    ":semanticCommitTypeAll(chore)",
+    "helpers:pinGitHubActionDigests"
   ],
+  "configMigration": true,
+  "rangeStrategy": "bump",
   "packageRules": [
+    {
+      "groupName": "docker images",
+      "groupSlug": "docker",
+      "matchDatasources": [
+        "docker"
+      ]
+    },
+    {
+      "groupName": "terraform modules",
+      "groupSlug": "terraform-module",
+      "matchDatasources": [
+        "terraform-module"
+      ]
+    },
+    {
+      "groupName": "terraform provider",
+      "groupSlug": "terraform-provider",
+      "matchFileNames": [
+        "!**/examples/**"
+      ],
+      "matchDatasources": [
+        "terraform-provider"
+      ]
+    },
+    {
+      "groupName": "terraform provider examples",
+      "groupSlug": "terraform-provider examples",
+      "matchFileNames": [
+        "**/examples/**"
+      ],
+      "matchDatasources": [
+        "terraform-provider"
+      ]
+    },
+    {
+      "groupName": "helm charts",
+      "groupSlug": "helm-charts",
+      "matchDatasources": [
+        "helm"
+      ]
+    },
+    {
+      "groupName": "github actions",
+      "groupSlug": "github-actions",
+      "matchDatasources": [
+        "github-tags"
+      ]
+    },
     {
       "matchPackagePrefixes": [
         "ArmoniK"

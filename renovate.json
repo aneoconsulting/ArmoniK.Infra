@@ -8,12 +8,33 @@
   ],
   "configMigration": true,
   "rangeStrategy": "bump",
+  "ignorePaths": [],
   "packageRules": [
+    {
+      "groupName": "other dependencies",
+      "matchPackageNames": [
+        "*"
+      ]
+    },
+    {
+      "groupName": "github actions",
+      "groupSlug": "github-actions",
+      "matchDatasources": [
+        "github-tags"
+      ]
+    },
     {
       "groupName": "docker images",
       "groupSlug": "docker",
       "matchDatasources": [
         "docker"
+      ]
+    },
+    {
+      "groupName": "helm charts",
+      "groupSlug": "helm-charts",
+      "matchDatasources": [
+        "helm"
       ]
     },
     {
@@ -26,9 +47,6 @@
     {
       "groupName": "terraform provider",
       "groupSlug": "terraform-provider",
-      "matchFileNames": [
-        "!**/examples/**"
-      ],
       "matchDatasources": [
         "terraform-provider"
       ]
@@ -44,30 +62,9 @@
       ]
     },
     {
-      "groupName": "helm charts",
-      "groupSlug": "helm-charts",
-      "matchDatasources": [
-        "helm"
-      ]
-    },
-    {
-      "groupName": "github actions",
-      "groupSlug": "github-actions",
-      "matchDatasources": [
-        "github-tags"
-      ]
-    },
-    {
       "groupName": "release packages Armonik",
       "matchPackageNames": [
         "ArmoniK{/,}**"
-      ]
-    },
-    {
-      "groupName": "other dependencies",
-      "matchPackageNames": [
-        "*",
-        "!ArmoniK{/,}**"
       ]
     }
   ]

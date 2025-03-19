@@ -6,7 +6,12 @@ variable "namespace" {
 
 # Node selector
 variable "node_selector" {
-  description = "Node selector for Seq"
+  description = "Node selector for fluent-bit on linux"
+  type        = any
+  default     = {}
+}
+variable "node_selector_windows" {
+  description = "Node selector for fluent-bit on windows"
   type        = any
   default     = {}
 }
@@ -64,4 +69,24 @@ variable "fluent_bit" {
     condition     = contains(["apache", "apache2", "apache_error", "nginx", "json", "docker", "cri", "syslog"], var.fluent_bit.parser)
     error_message = "Valid values for Fluent-bit parsers are: \"apache\" | \"apache2\" | \"apache_error\" | \"nginx\" | \"json\" | \"docker\" | \"cri\" | \"syslog\"."
   }
+}
+
+variable "fluent_bit_windows" {
+  description = "Parameters of Fluent bit for windows"
+  type = object({
+    container_name                     = optional(string)
+    image                              = optional(string)
+    tag                                = optional(string)
+    is_daemonset                       = optional(bool)
+    http_server                        = optional(string)
+    http_port                          = optional(string)
+    read_from_head                     = optional(string)
+    read_from_tail                     = optional(string)
+    image_pull_secrets                 = optional(string)
+    parser                             = optional(string)
+    fluent_bit_state_hostpath          = optional(string)
+    var_lib_docker_containers_hostpath = optional(string)
+    run_log_journal_hostpath           = optional(string)
+  })
+  default = null
 }

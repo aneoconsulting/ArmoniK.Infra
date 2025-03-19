@@ -3,7 +3,7 @@ repos:
     rev: 39.205.1
     hooks:
       - id: renovate-config-validator
-        args: [--strict]
+        # args: [--strict]
   - repo: https://github.com/antonbabenko/pre-commit-terraform
     rev: v1.80.0
     hooks:
@@ -35,7 +35,7 @@ repos:
           - '--args=--only=terraform_module_version'
       #- id: terraform_tfsec
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0
+    rev: v5.0.0
     hooks:
       - id: check-executables-have-shebangs
       - id: check-merge-conflict

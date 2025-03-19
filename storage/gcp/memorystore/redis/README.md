@@ -37,6 +37,7 @@ No modules.
 |------|------|
 | [google_kms_crypto_key_iam_member.kms](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/kms_crypto_key_iam_member) | resource |
 | [google_redis_instance.cache](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/redis_instance) | resource |
+| [kubernetes_secret.redis_ca](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
 | [kubernetes_secret.redis_user_credentials](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
 | [google_client_config.current](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/client_config) | data source |
 | [google_project.project](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/project) | data source |
@@ -61,6 +62,7 @@ No modules.
 | <a name="input_name"></a> [name](#input\_name) | The ID of the instance or a fully qualified identifier for the instance. | `string` | n/a | yes |
 | <a name="input_namespace"></a> [namespace](#input\_namespace) | Namespace of ArmoniK storage resources | `string` | `"armonik"` | no |
 | <a name="input_object_storage_adapter"></a> [object\_storage\_adapter](#input\_object\_storage\_adapter) | Name of the adapter's | `string` | `"ArmoniK.Adapters.Redis.ObjectStorage"` | no |
+| <a name="input_path"></a> [path](#input\_path) | Path for mounting secrets | `string` | `"/redis"` | no |
 | <a name="input_persistence_config"></a> [persistence\_config](#input\_persistence\_config) | The Redis persistence configuration parameters. For more information see [persistence\_config](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/redis_instance). | <pre>object({<br/>    persistence_mode        = string<br/>    rdb_snapshot_period     = string<br/>    rdb_snapshot_start_time = string<br/>  })</pre> | `null` | no |
 | <a name="input_read_replicas_mode"></a> [read\_replicas\_mode](#input\_read\_replicas\_mode) | Read replicas mode. | `string` | `"READ_REPLICAS_DISABLED"` | no |
 | <a name="input_redis_configs"></a> [redis\_configs](#input\_redis\_configs) | The Redis configuration parameters. See documentation in [Supported Redis configuration](https://cloud.google.com/memorystore/docs/redis/supported-redis-configurations). | `map(any)` | `{}` | no |
@@ -82,6 +84,7 @@ No modules.
 | <a name="output_env_secret"></a> [env\_secret](#output\_env\_secret) | Secrets to be set as environment variables |
 | <a name="output_host"></a> [host](#output\_host) | The IP address of the instance. |
 | <a name="output_id"></a> [id](#output\_id) | The Memorystore instance ID. |
+| <a name="output_mount_secret"></a> [mount\_secret](#output\_mount\_secret) | Secrets to be mounted as volumes |
 | <a name="output_nodes"></a> [nodes](#output\_nodes) | Info per node. The parameters are: "id" and "zone". |
 | <a name="output_persistence_iam_identity"></a> [persistence\_iam\_identity](#output\_persistence\_iam\_identity) | Cloud IAM identity used by import/export operations. Format is 'serviceAccount:'. May change over time |
 | <a name="output_port"></a> [port](#output\_port) | The port number of the exposed Redis endpoint. |

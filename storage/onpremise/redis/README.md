@@ -52,7 +52,7 @@ No modules.
 | <a name="input_namespace"></a> [namespace](#input\_namespace) | Namespace of ArmoniK storage resources | `string` | n/a | yes |
 | <a name="input_object_storage_adapter"></a> [object\_storage\_adapter](#input\_object\_storage\_adapter) | Name of the adapter's | `string` | `"ArmoniK.Adapters.Redis.ObjectStorage"` | no |
 | <a name="input_path"></a> [path](#input\_path) | Path for mounting secrets | `string` | `"/redis"` | no |
-| <a name="input_redis"></a> [redis](#input\_redis) | Parameters of Redis | <pre>object({<br>    image              = string<br>    tag                = string<br>    node_selector      = any<br>    image_pull_secrets = string<br>    max_memory         = string<br>    max_memory_samples = number<br>  })</pre> | n/a | yes |
+| <a name="input_redis"></a> [redis](#input\_redis) | Parameters of Redis | <pre>object({<br/>    image              = string<br/>    tag                = string<br/>    node_selector      = any<br/>    image_pull_secrets = string<br/>    max_memory         = string<br/>    max_memory_samples = number<br/>  })</pre> | n/a | yes |
 | <a name="input_ssl_option"></a> [ssl\_option](#input\_ssl\_option) | Ssl option | `string` | `"true"` | no |
 | <a name="input_validity_period_hours"></a> [validity\_period\_hours](#input\_validity\_period\_hours) | Validity period of the certificate in hours | `string` | `"8760"` | no |
 

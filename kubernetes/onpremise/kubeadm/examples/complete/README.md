@@ -39,9 +39,9 @@ First, you should have a list of barre metal ou virtual machines, and then you h
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_master"></a> [master](#input\_master) | The master node to be deployed. | <pre>object({<br>    name                     = string<br>    public_dns               = string # it can be private if you are inside the destination network<br>    private_dns              = string<br>    tls_private_key_pem_file = string<br>  })</pre> | n/a | yes |
+| <a name="input_master"></a> [master](#input\_master) | The master node to be deployed. | <pre>object({<br/>    name                     = string<br/>    public_dns               = string # it can be private if you are inside the destination network<br/>    private_dns              = string<br/>    tls_private_key_pem_file = string<br/>  })</pre> | n/a | yes |
 | <a name="input_user"></a> [user](#input\_user) | user used to execute docker + kubernetes scripts. must be updated accordingly with the linux image used | `string` | n/a | yes |
-| <a name="input_workers"></a> [workers](#input\_workers) | The worker nodes to be deployed. | <pre>map(object({<br>    instance_count = optional(number, 1)<br>    label          = optional(list(string), [])<br>    name           = string<br>    public_dns     = string<br>    taints         = optional(list(string), [])<br>  }))</pre> | n/a | yes |
+| <a name="input_workers"></a> [workers](#input\_workers) | The worker nodes to be deployed. | <pre>map(object({<br/>    instance_count = optional(number, 1)<br/>    label          = optional(list(string), [])<br/>    name           = string<br/>    public_dns     = string<br/>    taints         = optional(list(string), [])<br/>  }))</pre> | n/a | yes |
 
 ## Outputs
 

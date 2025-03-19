@@ -26,7 +26,7 @@ No modules.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_docker_image"></a> [docker\_image](#input\_docker\_image) | Docker image for Keda | <pre>object({<br>    keda = object({<br>      image = string<br>      tag   = string<br>    })<br>    metricsApiServer = object({<br>      image = string<br>      tag   = string<br>    })<br>  })</pre> | n/a | yes |
+| <a name="input_docker_image"></a> [docker\_image](#input\_docker\_image) | Docker image for Keda | <pre>object({<br/>    keda = object({<br/>      image = string<br/>      tag   = string<br/>    })<br/>    metricsApiServer = object({<br/>      image = string<br/>      tag   = string<br/>    })<br/>  })</pre> | n/a | yes |
 | <a name="input_helm_chart_repository"></a> [helm\_chart\_repository](#input\_helm\_chart\_repository) | Path to helm chart repository for keda | `string` | n/a | yes |
 | <a name="input_helm_chart_version"></a> [helm\_chart\_version](#input\_helm\_chart\_version) | Version of chart helm for keda | `string` | n/a | yes |
 | <a name="input_image_pull_secrets"></a> [image\_pull\_secrets](#input\_image\_pull\_secrets) | image\_pull\_secrets for keda | `string` | n/a | yes |

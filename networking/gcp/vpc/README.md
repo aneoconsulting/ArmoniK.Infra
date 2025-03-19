@@ -54,13 +54,13 @@ No modules.
 | <a name="input_enable_google_access"></a> [enable\_google\_access](#input\_enable\_google\_access) | Access Google APIs and services by using Private Google Access | `bool` | `true` | no |
 | <a name="input_enable_ula_internal_ipv6"></a> [enable\_ula\_internal\_ipv6](#input\_enable\_ula\_internal\_ipv6) | Enable ULA internal ipv6 on this network | `bool` | `null` | no |
 | <a name="input_flow_log_max_aggregation_interval"></a> [flow\_log\_max\_aggregation\_interval](#input\_flow\_log\_max\_aggregation\_interval) | The maximum interval of time during which a flow of packets is captured and aggregated into a flow log | `string` | `"INTERVAL_5_SEC"` | no |
-| <a name="input_gke_subnet"></a> [gke\_subnet](#input\_gke\_subnet) | The GKE subnet. The subnet contains a name, a CIDR block for nodes, a CIDR block for Pods, a CIDR block for services and a region | <pre>object({<br>    name                = string<br>    nodes_cidr_block    = string<br>    pods_cidr_block     = string<br>    services_cidr_block = string<br>    region              = string<br>  })</pre> | `null` | no |
+| <a name="input_gke_subnet"></a> [gke\_subnet](#input\_gke\_subnet) | The GKE subnet. The subnet contains a name, a CIDR block for nodes, a CIDR block for Pods, a CIDR block for services and a region | <pre>object({<br/>    name                = string<br/>    nodes_cidr_block    = string<br/>    pods_cidr_block     = string<br/>    services_cidr_block = string<br/>    region              = string<br/>  })</pre> | `null` | no |
 | <a name="input_internal_ipv6_range"></a> [internal\_ipv6\_range](#input\_internal\_ipv6\_range) | Specify the /48 range they want from the google defined ULA prefix fd20::/20 | `string` | `null` | no |
 | <a name="input_mtu"></a> [mtu](#input\_mtu) | Maximum Transmission Unit in bytes | `number` | `1460` | no |
 | <a name="input_name"></a> [name](#input\_name) | Name of the VPC | `string` | n/a | yes |
 | <a name="input_network_firewall_policy_enforcement_order"></a> [network\_firewall\_policy\_enforcement\_order](#input\_network\_firewall\_policy\_enforcement\_order) | Set the order that Firewall Rules and Firewall Policies are evaluated | `string` | `"AFTER_CLASSIC_FIREWALL"` | no |
 | <a name="input_routing_mode"></a> [routing\_mode](#input\_routing\_mode) | The network-wide routing mode to use | `string` | `"GLOBAL"` | no |
-| <a name="input_subnets"></a> [subnets](#input\_subnets) | A map of subnets inside the VPC. Each subnet object has a CIDR block, a region, and a boolean set to true if the subnet is public, or false if the subnet is private | <pre>map(object({<br>    cidr_block    = string<br>    region        = string<br>    public_access = bool<br>  }))</pre> | `{}` | no |
+| <a name="input_subnets"></a> [subnets](#input\_subnets) | A map of subnets inside the VPC. Each subnet object has a CIDR block, a region, and a boolean set to true if the subnet is public, or false if the subnet is private | <pre>map(object({<br/>    cidr_block    = string<br/>    region        = string<br/>    public_access = bool<br/>  }))</pre> | `{}` | no |
 
 ## Outputs
 

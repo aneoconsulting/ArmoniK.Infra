@@ -67,7 +67,7 @@ No modules.
 | <a name="input_mutability"></a> [mutability](#input\_mutability) | The tag mutability setting for the repository | `string` | `"MUTABLE"` | no |
 | <a name="input_only_pull_accounts"></a> [only\_pull\_accounts](#input\_only\_pull\_accounts) | List of accounts having pull permission | `list(string)` | `[]` | no |
 | <a name="input_push_and_pull_accounts"></a> [push\_and\_pull\_accounts](#input\_push\_and\_pull\_accounts) | List of accounts having push and pull permissions | `list(string)` | `[]` | no |
-| <a name="input_repositories"></a> [repositories](#input\_repositories) | Map of ECR repositories to create. Each repository is an object of "image" and "tag" parameters | <pre>map(object({<br>    image = string<br>    tag   = string<br>  }))</pre> | `{}` | no |
+| <a name="input_repositories"></a> [repositories](#input\_repositories) | Map of ECR repositories to create. Each repository is an object of "image" and "tag" parameters | <pre>map(object({<br/>    image = string<br/>    tag   = string<br/>  }))</pre> | `{}` | no |
 | <a name="input_scan_on_push"></a> [scan\_on\_push](#input\_scan\_on\_push) | Indicates whether images are scanned after being pushed to the repository or not scanned | `bool` | `null` | no |
 | <a name="input_tags"></a> [tags](#input\_tags) | Tags for resource | `any` | `{}` | no |
 

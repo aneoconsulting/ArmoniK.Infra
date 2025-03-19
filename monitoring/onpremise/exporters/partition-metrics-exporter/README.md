@@ -31,7 +31,7 @@
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_conf"></a> [conf](#input\_conf) | external module configuration | `any` | `{}` | no |
-| <a name="input_docker_image"></a> [docker\_image](#input\_docker\_image) | Docker image for partition metrics exporter | <pre>object({<br>    image              = string<br>    tag                = string<br>    image_pull_secrets = string<br>  })</pre> | n/a | yes |
+| <a name="input_docker_image"></a> [docker\_image](#input\_docker\_image) | Docker image for partition metrics exporter | <pre>object({<br/>    image              = string<br/>    tag                = string<br/>    image_pull_secrets = string<br/>  })</pre> | n/a | yes |
 | <a name="input_extra_conf"></a> [extra\_conf](#input\_extra\_conf) | Add extra configuration in the configmaps | `map(string)` | `{}` | no |
 | <a name="input_metrics_exporter_url"></a> [metrics\_exporter\_url](#input\_metrics\_exporter\_url) | URL of metrics exporter | `string` | n/a | yes |
 | <a name="input_namespace"></a> [namespace](#input\_namespace) | Namespace of ArmoniK resources | `string` | n/a | yes |

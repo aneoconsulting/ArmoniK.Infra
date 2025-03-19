@@ -27,7 +27,7 @@ No modules.
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_default_args"></a> [default\_args](#input\_default\_args) | Default args for metrics server | `list(string)` | n/a | yes |
-| <a name="input_docker_image"></a> [docker\_image](#input\_docker\_image) | Docker image for metrics server | <pre>object({<br>    image = string<br>    tag   = string<br>  })</pre> | n/a | yes |
+| <a name="input_docker_image"></a> [docker\_image](#input\_docker\_image) | Docker image for metrics server | <pre>object({<br/>    image = string<br/>    tag   = string<br/>  })</pre> | n/a | yes |
 | <a name="input_helm_chart_repository"></a> [helm\_chart\_repository](#input\_helm\_chart\_repository) | Path to helm chart repository for metrics server | `string` | n/a | yes |
 | <a name="input_helm_chart_version"></a> [helm\_chart\_version](#input\_helm\_chart\_version) | Version of chart helm for metrics server | `string` | n/a | yes |
 | <a name="input_host_network"></a> [host\_network](#input\_host\_network) | Host network for metrics server | `bool` | n/a | yes |

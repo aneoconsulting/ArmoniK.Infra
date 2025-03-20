@@ -5,5 +5,6 @@ output "env" {
     "Components__QueueAdaptorSettings__AdapterAbsolutePath" = "/adapters/queue/pubsub/ArmoniK.Core.Adapters.PubSub.dll"
     "PubSub__ProjectId"                                     = var.project_id
     "PubSub__KmsKeyName"                                    = var.kms_key_id
+    "PubSub__Prefix"                                        = var.prefix
   })
 }

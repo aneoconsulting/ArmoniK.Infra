@@ -209,7 +209,7 @@ resource "kubernetes_daemonset" "fluent_bit_windows" {
           name              = local.fluent_bit_windows_container_name
           image             = "${local.fluent_bit_windows_image}:${local.fluent_bit_windows_tag}"
           image_pull_policy = "IfNotPresent"
-          command           = ["powershell", "-ExecutionPolicy", "Bypass", "-File", "C:/fluent-bit/entrypoint.ps1"]
+          # command           = ["powershell", "-ExecutionPolicy", "Bypass", "-File", "C:/fluent-bit/entrypoint.ps1"]
           env {
             name = "HOSTNAME"
             value_from {

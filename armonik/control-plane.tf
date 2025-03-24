@@ -243,7 +243,7 @@ resource "kubernetes_deployment" "control_plane" {
             name              = var.fluent_bit.windows_container_name
             image             = "${var.fluent_bit.windows_image}:${var.fluent_bit.windows_tag}"
             image_pull_policy = "IfNotPresent"
-            command           = ["powershell", "-ExecutionPolicy", "Bypass", "-File", "C:/fluent-bit/entrypoint.ps1"]
+            # command           = ["powershell", "-ExecutionPolicy", "Bypass", "-File", "C:/fluent-bit/entrypoint.ps1"]
             env_from {
               config_map_ref {
                 name = try(var.fluent_bit.windows_configmaps.envvars, "")

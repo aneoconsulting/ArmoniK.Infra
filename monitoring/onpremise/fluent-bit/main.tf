@@ -58,11 +58,6 @@ resource "kubernetes_daemonset" "fluent_bit" {
               name = kubernetes_config_map.fluent_bit_envvars_config.metadata[0].name
             }
           }
-          # FIXME: use PVC instead
-          # volume_mount {
-          #   name       = "fluentbitstate"
-          #   mount_path = "/var/fluent-bit/state"
-          # }
           # Please don't change below read-only permissions
           volume_mount {
             name       = "varlog"
@@ -95,12 +90,6 @@ resource "kubernetes_daemonset" "fluent_bit" {
             read_only  = true
           }
         }
-        # volume {
-        #   name = "fluentbitstate"
-        #   host_path {
-        #     path = local.fluent_bit_state_hostpath
-        #   }
-        # }
         volume {
           name = "varlog"
           host_path {
@@ -272,7 +261,7 @@ resource "kubernetes_daemonset" "fluent_bit_windows" {
         host_network                     = false
         dns_policy                       = "ClusterFirstWithHostNet"
         termination_grace_period_seconds = 10
-        service_account_name             = kubernetes_service_account.fluent_bit_windows[0].metadata[0].name
+        service_account_name             = kubernetes_service_account.fluent_bit[0].metadata[0].name
         toleration {
           key      = "node-role.kubernetes.io/master"
           operator = "Exists"

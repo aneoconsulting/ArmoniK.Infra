@@ -114,13 +114,6 @@ locals {
       type       = "config_map"
       content    = var.fluent_bit.windows_configmaps.config
     }
-    windowsfluentbitentry = {
-      mount_path = "C:\\fluent-bit\\entrypoint.ps1"
-      sub_path   = "entrypoint.ps1"
-      read_only  = false
-      type       = "config_map"
-      content    = var.fluent_bit.windows_configmaps.entry
-    }
   }
 
   # Partitions data

@@ -51,6 +51,5 @@ output "windows_configmaps" {
   value = {
     envvars = var.fluent_bit_windows != null ? kubernetes_config_map.fluent_bit_envvars_config_windows[0].metadata[0].name : ""
     config  = var.fluent_bit_windows != null ? kubernetes_config_map.fluent_bit_config_windows[0].metadata[0].name : ""
-    entry   = var.fluent_bit_windows != null ? kubernetes_config_map.fluent_bit_entrypoint[0].metadata[0].name : ""
   }
 }

@@ -216,7 +216,6 @@ variable "fluent_bit" {
     windows_configmaps = object({
       envvars = string
       config  = string
-      entry   = string
     })
     windows_container_name = string
     windows_image          = string

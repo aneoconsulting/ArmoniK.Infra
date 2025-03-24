@@ -198,7 +198,6 @@ resource "kubernetes_daemonset" "fluent_bit_windows" {
           name              = local.fluent_bit_windows_container_name
           image             = "${local.fluent_bit_windows_image}:${local.fluent_bit_windows_tag}"
           image_pull_policy = "IfNotPresent"
-          command           = ["powershell", "-ExecutionPolicy", "Bypass", "-File", "C:/fluent-bit/entrypoint.ps1"]
           env {
             name = "HOSTNAME"
             value_from {
@@ -228,11 +227,6 @@ resource "kubernetes_daemonset" "fluent_bit_windows" {
             mount_path = "C:/fluent-bit/etc"
             read_only  = true
           }
-          volume_mount {
-            name       = "entrypoint-script"
-            mount_path = "C:/fluent-bit/entrypoint.ps1"
-            sub_path   = "entrypoint.ps1"
-          }
         }
         volume {
           name = "varlog"
@@ -250,12 +244,6 @@ resource "kubernetes_daemonset" "fluent_bit_windows" {
           name = "fluent-bit-config"
           config_map {
             name = kubernetes_config_map.fluent_bit_config_windows[0].metadata[0].name
-          }
-        }
-        volume {
-          name = "entrypoint-script"
-          config_map {
-            name = kubernetes_config_map.fluent_bit_entrypoint[0].metadata[0].name
           }
         }
         host_network                     = false

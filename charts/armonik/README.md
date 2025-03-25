@@ -10,7 +10,7 @@ A Helm chart for Armonik
 
 | Name | Email | Url |
 | ---- | ------ | --- |
-| Aneo | <armonik-support@aneo.fr> | <armonik.fr> |
+| Aneo | <armonik@aneo.fr> | <armonik.fr> |
 
 ## Source Code
 
@@ -132,7 +132,6 @@ Kubernetes: `>=v1.25.0-0`
 | grafana.sidecar.dashboards.enabled | bool | `true` |  |
 | grafana.sidecar.dashboards.folderAnnotation | string | `"grafana_dashboard_folder"` |  |
 | grafana.sidecar.dashboards.label | string | `"grafana_dashboard"` |  |
-| grafana.sidecar.dashboards.searchNamespace | string | `"armonik"` |  |
 | grafana.sidecar.datasources.enabled | bool | `true` |  |
 | ingress.ingress.type | string | `"LoadBalancer"` |  |
 | keda.certificates.certManager.enabled | bool | `false` |  |

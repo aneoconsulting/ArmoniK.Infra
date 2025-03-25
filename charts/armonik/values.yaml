@@ -225,7 +225,6 @@ grafana:
     dashboards:
       enabled: true
       folderAnnotation: "grafana_dashboard_folder"
-      searchNamespace: "armonik"
       label: "grafana_dashboard"
     datasources:
       enabled: true

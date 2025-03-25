@@ -14,7 +14,7 @@ sources:
   - https://aneoconsulting.github.io/
 maintainers:
   - name: Aneo
-    email: armonik-support@aneo.fr
+    email: armonik@aneo.fr
     url: armonik.fr
 
 dependencies:

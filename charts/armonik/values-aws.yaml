@@ -1,0 +1,182 @@
+############################################
+################## GLOBAL ##################
+############################################
+global:
+  environment:
+    name: "AWS"
+    description: "Armonik AWS environment"
+
+############################################
+### ARMONIK APPLICATION CONFIGURATION #####
+############################################
+
+control-plane:
+  replicaCount: 1
+  nodeSelector:
+    service: control-plane
+  tolerations:
+    - effect: NoSchedule
+      key: service
+      operator: Equal
+      value: control-plane
+compute-plane:
+  computePlane:
+    partition:
+      default:
+        replicas: 1
+        nodeSelector:
+          service: workers
+        tolerations:
+          - effect: NoSchedule
+            key: service
+            operator: Equal
+            value: workers
+      stream:
+        replicas: 1
+        nodeSelector:
+          service: workers
+        tolerations:
+          - effect: NoSchedule
+            key: service
+            operator: Equal
+            value: workers
+      htcmock:
+        replicas: 1
+        nodeSelector:
+          service: workers
+        tolerations:
+          - effect: NoSchedule
+            key: service
+            operator: Equal
+            value: workers
+      bench:
+        replicas: 1
+        nodeSelector:
+          service: workers
+        tolerations:
+          - effect: NoSchedule
+            key: service
+            operator: Equal
+            value: workers
+
+############################################
+############### DEPENDENCIES ###############
+############################################
+
+################# RABBITMQ #################
+rabbitmq:
+  nodeSelector:
+    service: control-plane
+  tolerations:
+    - effect: NoSchedule
+      key: service
+      operator: Equal
+      value: control-plane
+
+################## REDIS ##################
+redis:
+  master:
+    resourcesPreset: nano
+
+################## ACTIVEMQ ##################
+activemq:
+  activemqOptsMemory: "-Xms1g -Xmx3g"
+  nodeSelector:
+    service: control-plane
+  tolerations:
+    - effect: NoSchedule
+      key: service
+      operator: Equal
+      value: control-plane
+
+################## MONGODB ##################
+mongodb:
+  nodeSelector:
+    service: state-database
+  tolerations:
+    - effect: NoSchedule
+      key: service
+      operator: Equal
+      value: state-database
+  arbiter:
+    nodeSelector:
+      service: state-database
+    tolerations:
+      - effect: NoSchedule
+        key: service
+        operator: Equal
+        value: state-database
+  resourcesPreset: large
+
+################## KEDA ##################
+keda:
+  nodeSelector:
+    service: monitoring
+  tolerations:
+    - effect: NoSchedule
+      key: service
+      operator: Equal
+      value: monitoring
+
+################## CERT-MANAGER ##################
+cert-manager:
+  installCRDs: true
+  fullnameOverride: "cert-manager"
+  cainjector:
+    enabled: true
+
+################## GRAFANA ##################
+grafana:
+  nodeSelector:
+    service: monitoring
+  tolerations:
+    - effect: NoSchedule
+      key: service
+      operator: Equal
+      value: monitoring
+
+################## FLUENT-BIT ##################
+fluent-bit:
+
+################## SEQ ##################
+seq:
+  nodeSelector:
+    service: monitoring
+  tolerations:
+    - effect: NoSchedule
+      key: service
+      operator: Equal
+      value: monitoring
+
+################## INGRESS ##################
+ingress:
+  nodeSelector:
+    service: control-plane
+  tolerations:
+    - effect: NoSchedule
+      key: service
+      operator: Equal
+      value: control-plane
+  ingress:
+    type: LoadBalancer
+
+################## PROMETHEUS ##################
+kube-prometheus:
+  operator:
+    nodeSelector:
+      service: monitoring
+    tolerations:
+      - effect: NoSchedule
+        key: service
+        operator: Equal
+        value: monitoring
+  prometheus:
+    nodeSelector:
+      service: monitoring
+    tolerations:
+      - effect: NoSchedule
+        key: service
+        operator: Equal
+        value: monitoring
+    resourcesPreset: medium
+############################################

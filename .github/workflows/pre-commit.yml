@@ -31,7 +31,7 @@ jobs:
       - name: Install helm-docs
         uses: envoy/install-helm-docs@05313083ef2cfaea27c4c3d7cb725242d22ea88b # v1.0.0
         with:
-          version: 1.7.0
+          version: 1.14.2
       
       - name: Install terraform-docs
         uses: jaxxstorm/action-install-gh-release@4304621e8c48d66093a8a214af5d5b5bc3b3d943 # v2.0.0

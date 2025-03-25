@@ -1,0 +1,130 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: {{ .Release.Name }}
+    service: {{ .Chart.Name }}
+  name: {{ .Chart.Name }}
+spec:
+  replicas: {{ .Values.ingress.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}
+      service: {{ .Chart.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}
+        service: {{ .Chart.Name }}
+      name: {{ .Chart.Name }}
+    spec:
+      automountServiceAccountToken: true
+      containers:
+      - name: {{ .Chart.Name }}
+        envFrom:
+        - configMapRef:
+            name: ingress-nginx
+            optional: false
+        {{- $registry := .Values.global.imageRegistry | default .Values.image.registry }}
+        {{- if $registry }}
+        image: "{{ $registry }}/{{ .Values.ingress.repository }}/{{ .Values.ingress.image }}:{{ include "ingress.tag" . }}"
+        {{- else }}
+        image: "{{ .Values.ingress.repository }}/{{ .Values.ingress.image }}:{{ include "ingress.tag" . }}"
+        {{- end }}
+        imagePullPolicy: {{ .Values.ingress.imagePullPolicy }}
+        ports:
+        - name: ingress-http
+          containerPort: {{ .Values.ingress.ports.http.containerPort }}
+          protocol: TCP
+        - name: ingress-grpc
+          containerPort: {{ .Values.ingress.ports.grpc.containerPort }}
+          protocol: TCP
+        {{- if .Values.ingress.resources }}
+        resources:
+        {{- toYaml .Values.ingress.resources | nindent 10 }}
+        {{- end }}
+        terminationMessagePath: {{ .Values.ingress.terminationMessagePath}}
+        terminationMessagePolicy: {{ .Values.ingress.terminationMessagePolicy}}
+        {{- if .Values.ingress.volumes }}
+        volumeMounts:
+        {{- if .Values.ingress.volumes.ingressSecret }}
+        - mountPath: /ingress
+          mountPropagation: None
+          name: ingress-secret-volume
+          readOnly: true
+        - mountPath: /ingressclient
+          mountPropagation: None
+          name: ingress-client-secret-volume
+          readOnly: true
+        {{- end }}
+        {{- if .Values.ingress.volumes.nginxConfigMap }}
+        - mountPath: /etc/nginx/conf.d
+          mountPropagation: None
+          name: ingress-nginx
+          readOnly: true
+        {{- end }}
+        {{- if .Values.ingress.volumes.nginxStaticConfigMap }}
+        - mountPath: /static
+          mountPropagation: None
+          name: static
+          readOnly: true
+        {{- end }}
+        {{- if .Values.ingress.volumes.mongodbSecretCrt }}
+        - name: mongodb
+          mountPath: /mongodb/certs/
+          readOnly: true
+          recursiveReadOnly: Disabled
+        {{- end }}
+        {{- end}}
+      {{- $imagePullSecrets := .Values.global.imagePullSecrets | default .Values.imagePullSecrets }}
+      {{- if $imagePullSecrets }}
+      {{- with $imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- end }}
+      dnsPolicy: ClusterFirst
+      enableServiceLinks: true
+      #nodeSelector:
+      #  service: control-plane
+      restartPolicy: {{ .Values.ingress.restartPolicy }}
+      schedulerName: {{ .Values.ingress.schedulerName }}
+      shareProcessNamespace: {{ .Values.ingress.shareProcessNamespace }}
+      terminationGracePeriodSeconds: {{ .Values.ingress.terminationGracePeriodSeconds }}
+      tolerations:
+      {{- toYaml .Values.ingress.tolerations | nindent 8 }}
+      {{- if .Values.ingress.volumes }}
+      volumes:
+      {{- if .Values.ingress.volumes.ingressSecret }}
+      - name: ingress-secret-volume
+        secret:
+          defaultMode: 420
+          optional: false
+          secretName: {{ .Values.ingress.volumes.ingressSecret }}
+      - name: ingress-client-secret-volume
+        secret:
+          defaultMode: 420
+          optional: false
+          secretName: {{ .Values.ingress.volumes.ingressSecret }}
+      {{- end}}
+      {{- if .Values.ingress.volumes.mongodbSecretCrt }}
+      - name: mongodb
+        secret:
+          secretName: {{ .Values.ingress.volumes.mongodbSecretCrt }}
+          defaultMode: 420
+      {{- end}}
+      {{- if .Values.ingress.volumes.nginxConfigMap }}
+      - configMap:
+          defaultMode: 420
+          name: {{ .Values.ingress.volumes.nginxConfigMap }}
+          optional: false
+        name: ingress-nginx
+      {{- end}}
+      {{- if .Values.ingress.volumes.nginxStaticConfigMap }}
+      - configMap:
+          defaultMode: 420
+          name: {{ .Values.ingress.volumes.nginxStaticConfigMap }}
+          optional: false
+        name: static
+      {{- end}}
+      {{- end}}

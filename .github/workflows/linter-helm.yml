@@ -21,13 +21,20 @@ jobs:
       - name: Set up Helm
         uses: azure/setup-helm@b9e51907a09c216f16ebe8536097933489208112 # v4
         with:
-          version: v3.12.1
+          version: v3.17.0
 
       - name: Set up Python
         uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5
         with:
-          python-version: '3.9'
+          python-version: '3.x'
           check-latest: true
+
+      # - name: "Upgrade Helm chart dependencies"
+      #   id: deps-update
+      #   uses: camptocamp/helm-dependency-update-action@v0.4.1
+      #   with:
+      #     chart-path: "charts/armonik"
+      #     excluded-dependencies: "control-plane,compute-plane,ingress,activemq"
 
       - name: Set up chart-testing
         uses: helm/chart-testing-action@0d28d3144d3a25ea2cc349d6e59901c4ff469b3b # v2.7.0
@@ -35,14 +42,14 @@ jobs:
       - name: Run chart-testing (list-changed)
         id: list-changed
         run: |
-          changed=$(ct list-changed --target-branch ${{ github.event.repository.default_branch }})
+          changed=$(ct list-changed --chart-dirs charts/armonik --target-branch ${{ github.event.repository.default_branch }})
           if [[ -n "$changed" ]]; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Run chart-testing (lint)
         if: steps.list-changed.outputs.changed == 'true'
-        run: ct lint --target-branch ${{ github.event.repository.default_branch }}
+        run: ct lint --chart-dirs charts/armonik --target-branch ${{ github.event.repository.default_branch }} --chart-repos "bitnami=https://charts.bitnami.com/bitnami,cert-manager=https://charts.jetstack.io,seq=https://helm.datalust.co,grafana=https://grafana.github.io/helm-charts,keda=https://kedacore.github.io/charts"
 
       - name: Create kind cluster
         if: steps.list-changed.outputs.changed == 'true'
@@ -50,4 +57,4 @@ jobs:
 
       - name: Run chart-testing (install)
         if: steps.list-changed.outputs.changed == 'true'
-        run: ct install --target-branch ${{ github.event.repository.default_branch }}
+        run: ct install --chart-dirs charts/armonik --target-branch ${{ github.event.repository.default_branch }} --chart-repos "bitnami=https://charts.bitnami.com/bitnami,cert-manager=https://charts.jetstack.io,seq=https://helm.datalust.co,grafana=https://grafana.github.io/helm-charts,keda=https://kedacore.github.io/charts"

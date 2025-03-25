@@ -215,7 +215,7 @@ grafana:
   grafana.ini:
     server:
       domain: grafana.local
-      root_url: http://grafana.{{ .Release.Namespace }}.svc.cluster.local
+      root_url: http://grafana
       serve_from_sub_path: true
     anonymous:
       enabled: true
@@ -343,7 +343,7 @@ fluent-bit:
       [OUTPUT]
           Name                    http
           Match                   kube.*
-          Host                    seq.armonik.svc.cluster.local
+          Host                    seq
           Port                    5341
           URI                     /api/events/raw?clef
           Header                  ContentType application/vnd.serilog.clef

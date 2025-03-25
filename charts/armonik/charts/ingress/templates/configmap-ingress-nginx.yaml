@@ -65,7 +65,7 @@ data:
     proxy_buffering off;
     proxy_request_buffering off;
 
-        set $seq_upstream http://seq.armonik.svc.cluster.local;
+        set $seq_upstream http://seq.{{ .Release.Namespace }}.svc.cluster.local;
         location = /seq {
             rewrite ^ $scheme://$http_host/seq/ permanent;
         }
@@ -78,7 +78,7 @@ data:
             sub_filter_once on;
             proxy_hide_header content-security-policy;
         }
-        set $grafana_upstream http://grafana.armonik.svc.cluster.local;
+        set $grafana_upstream http://grafana.{{ .Release.Namespace }}.svc.cluster.local;
         location = /grafana {
             rewrite ^ $scheme://$http_host/grafana/ permanent;
         }

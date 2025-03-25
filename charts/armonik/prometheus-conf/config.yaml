@@ -1,16 +1,16 @@
 - job_name: "metrics-exporter"
   static_configs:
-    - targets: ["metrics-exporter.{{ .Release.Namespace }}.svc.cluster.local:9419"]
+    - targets: ["metrics-exporter:9419"]
       labels:
         namespace: "armonik"
 
 - job_name: 'kube-state-metrics'
   static_configs:
-    - targets: ['kube-state-metrics.{{ .Release.Namespace }}.svc.cluster.local:8080']
+    - targets: ['kube-state-metrics:8080']
 
 - job_name: "mongodb-metrics-exporter"
   static_configs:
-    - targets: ["mongodb.{{ .Release.Namespace }}.svc.cluster.local:27017"]
+    - targets: ["mongodb:27017"]
       labels:
         namespace: "armonik"
   metrics_path: /metrics

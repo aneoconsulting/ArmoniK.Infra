@@ -48,7 +48,7 @@ Kubernetes: `>=v1.23.0-0`
 | computePlane.partition.bench.hpa.triggers[0].metadata.metricName | string | `"armonik_bench_tasks_queued"` |  |
 | computePlane.partition.bench.hpa.triggers[0].metadata.namespace | string | `"armonik"` |  |
 | computePlane.partition.bench.hpa.triggers[0].metadata.query | string | `"armonik_bench_tasks_queued{job=\"metrics-exporter\"}"` |  |
-| computePlane.partition.bench.hpa.triggers[0].metadata.serverAddress | string | `"http://prometheus-prometheus.{{ .Release.Namespace }}.svc.cluster.local:9090"` |  |
+| computePlane.partition.bench.hpa.triggers[0].metadata.serverAddress | string | `"http://prometheus-prometheus:9090"` |  |
 | computePlane.partition.bench.hpa.triggers[0].metadata.threshold | string | `"2"` |  |
 | computePlane.partition.bench.hpa.triggers[0].type | string | `"prometheus"` |  |
 | computePlane.partition.bench.hpa.type | string | `"prometheus"` |  |
@@ -113,7 +113,7 @@ Kubernetes: `>=v1.23.0-0`
 | computePlane.partition.default.hpa.triggers[0].metadata.metricName | string | `"armonik_default_tasks_queued"` |  |
 | computePlane.partition.default.hpa.triggers[0].metadata.namespace | string | `"armonik"` |  |
 | computePlane.partition.default.hpa.triggers[0].metadata.query | string | `"armonik_default_tasks_queued{job=\"metrics-exporter\"}"` |  |
-| computePlane.partition.default.hpa.triggers[0].metadata.serverAddress | string | `"http://prometheus-prometheus.{{ .Release.Namespace }}.svc.cluster.local:9090"` |  |
+| computePlane.partition.default.hpa.triggers[0].metadata.serverAddress | string | `"http://prometheus-prometheus:9090"` |  |
 | computePlane.partition.default.hpa.triggers[0].metadata.threshold | string | `"2"` |  |
 | computePlane.partition.default.hpa.triggers[0].type | string | `"prometheus"` |  |
 | computePlane.partition.default.hpa.type | string | `"prometheus"` |  |
@@ -189,7 +189,7 @@ Kubernetes: `>=v1.23.0-0`
 | computePlane.partition.htcmock.hpa.triggers[0].metadata.metricName | string | `"armonik_htcmock_tasks_queued"` |  |
 | computePlane.partition.htcmock.hpa.triggers[0].metadata.namespace | string | `"armonik"` |  |
 | computePlane.partition.htcmock.hpa.triggers[0].metadata.query | string | `"armonik_htcmock_tasks_queued{job=\"metrics-exporter\"}"` |  |
-| computePlane.partition.htcmock.hpa.triggers[0].metadata.serverAddress | string | `"http://prometheus-prometheus.{{ .Release.Namespace }}.svc.cluster.local:9090"` |  |
+| computePlane.partition.htcmock.hpa.triggers[0].metadata.serverAddress | string | `"http://prometheus-prometheus:9090"` |  |
 | computePlane.partition.htcmock.hpa.triggers[0].metadata.threshold | string | `"2"` |  |
 | computePlane.partition.htcmock.hpa.triggers[0].type | string | `"prometheus"` |  |
 | computePlane.partition.htcmock.hpa.type | string | `"prometheus"` |  |
@@ -256,7 +256,7 @@ Kubernetes: `>=v1.23.0-0`
 | computePlane.partition.stream.hpa.triggers[0].metadata.metricName | string | `"armonik_stream_tasks_queued"` |  |
 | computePlane.partition.stream.hpa.triggers[0].metadata.namespace | string | `"armonik"` |  |
 | computePlane.partition.stream.hpa.triggers[0].metadata.query | string | `"armonik_stream_tasks_queued{job=\"metrics-exporter\"}"` |  |
-| computePlane.partition.stream.hpa.triggers[0].metadata.serverAddress | string | `"http://prometheus-prometheus.{{ .Release.Namespace }}.svc.cluster.local:9090"` |  |
+| computePlane.partition.stream.hpa.triggers[0].metadata.serverAddress | string | `"http://prometheus-prometheus:9090"` |  |
 | computePlane.partition.stream.hpa.triggers[0].metadata.threshold | string | `"2"` |  |
 | computePlane.partition.stream.hpa.triggers[0].type | string | `"prometheus"` |  |
 | computePlane.partition.stream.hpa.type | string | `"prometheus"` |  |
@@ -404,7 +404,7 @@ Kubernetes: `>=v1.23.0-0`
 | triggers.fallback.failureThreshold | int | `3` | Threshold of failures |
 | triggers.fallback.replicas | int | `6` | Number of replicas |
 | triggers.idleReplicaCount | int | `0` | Count of idle replicas |
-| triggers.maxReplicaCount | int | `100` | Maximum count of replicas |
+| triggers.maxReplicaCount | int | `5` | Maximum count of replicas |
 | triggers.minReplicaCount | int | `1` | Minimum count of replicas |
 | triggers.pollingInterval | int | `30` | Polling interval in seconds |
 | triggers.scaleTargetRef.apiVersion | string | `"apps/v1"` | Kubernetes API version to be used |

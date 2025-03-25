@@ -117,7 +117,7 @@ computePlane:
         triggers:
           - type: "prometheus"
             metadata:
-              serverAddress: http://prometheus-prometheus.{{ .Release.Namespace }}.svc.cluster.local:9090
+              serverAddress: http://prometheus-prometheus:9090
               metricName: "armonik_default_tasks_queued"
               threshold: "2"
               namespace: "armonik"
@@ -206,7 +206,7 @@ computePlane:
         triggers:
           - type: "prometheus"
             metadata:
-              serverAddress: http://prometheus-prometheus.{{ .Release.Namespace }}.svc.cluster.local:9090
+              serverAddress: http://prometheus-prometheus:9090
               metricName: "armonik_stream_tasks_queued"
               threshold: "2"
               namespace: "armonik"
@@ -306,7 +306,7 @@ computePlane:
         triggers:
           - type: "prometheus"
             metadata:
-              serverAddress: http://prometheus-prometheus.{{ .Release.Namespace }}.svc.cluster.local:9090
+              serverAddress: http://prometheus-prometheus:9090
               metricName: "armonik_htcmock_tasks_queued"
               threshold: "2"
               namespace: "armonik"
@@ -395,7 +395,7 @@ computePlane:
         triggers:
           - type: "prometheus"
             metadata:
-              serverAddress: http://prometheus-prometheus.{{ .Release.Namespace }}.svc.cluster.local:9090
+              serverAddress: http://prometheus-prometheus:9090
               metricName: "armonik_bench_tasks_queued"
               threshold: "2"
               namespace: "armonik"
@@ -422,7 +422,7 @@ triggers:
   # -- Minimum count of replicas
   minReplicaCount: 1                                           # Optional. Default: 0
   # -- Maximum count of replicas
-  maxReplicaCount: 100                                         # Optional. Default: 100
+  maxReplicaCount: 5                                         # Optional. Default: 100
 
     # -- Fallback options
   fallback:   # Optional. Section to specify fallback options

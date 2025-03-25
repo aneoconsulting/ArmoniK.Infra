@@ -212,6 +212,15 @@ variable "fluent_bit" {
     image          = string
     is_daemonset   = bool
     tag            = string
+
+    windows_configmaps = object({
+      envvars = string
+      config  = string
+    })
+    windows_container_name = string
+    windows_image          = string
+    windows_is_daemonset   = bool
+    windows_tag            = string
   })
   default = null
 }

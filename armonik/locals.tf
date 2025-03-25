@@ -85,6 +85,36 @@ locals {
       type       = "config_map"
     }
   }
+  # Fluent-bit volumes windows
+  fluent_bit_windows_volumes = !var.fluent_bit.windows_is_daemonset ? local.volumes_info : {}
+  volumes_info = {
+    windowsvarlog = {
+      mount_path = "C:\\var\\log"
+      read_only  = true
+      type       = "host_path"
+    }
+    windowsvarlibdockercontainers = {
+      mount_path = "C:\\ProgramData\\docker\\containers"
+      read_only  = true
+      type       = "host_path"
+    }
+    windowsrunlogjournal = {
+      mount_path = "C:\\run\\log\\journal"
+      read_only  = true
+      type       = "host_path"
+    }
+    windowsdmesg = {
+      mount_path = "C:\\var\\log\\dmesg"
+      read_only  = true
+      type       = "host_path"
+    }
+    windowsfluentbitconfig = {
+      mount_path = "C:\\fluent-bit\\etc"
+      read_only  = false
+      type       = "config_map"
+      content    = var.fluent_bit.windows_configmaps.config
+    }
+  }
 
   # Partitions data
   partitions_data = [

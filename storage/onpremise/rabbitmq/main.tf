@@ -1,5 +1,5 @@
 resource "helm_release" "rabbitmq" {
-  name       = "rabbitmq"
+  name       = var.name
   namespace  = var.namespace
   chart      = "rabbitmq"
   repository = var.helm_chart_repository

@@ -67,16 +67,34 @@ module "eks" {
   vpc_pods_subnet_ids                                      = data.aws_subnets.subnets.ids
   vpc_private_subnet_ids                                   = data.aws_subnets.subnets.ids
 
-  efs_csi_image                       = "amazon/aws-efs-csi-driver"
-  efs_csi_tag                         = "v1.5.1"
-  efs_csi_liveness_probe_image        = "public.ecr.aws/eks-distro/kubernetes-csi/livenessprobe"
-  efs_csi_liveness_probe_tag          = "v2.9.0-eks-1-22-19"
-  efs_csi_node_driver_registrar_image = "public.ecr.aws/eks-distro/kubernetes-csi/node-driver-registrar"
-  efs_csi_node_driver_registrar_tag   = "v2.7.0-eks-1-22-19"
-  efs_csi_external_provisioner_image  = "public.ecr.aws/eks-distro/kubernetes-csi/external-provisioner"
-  efs_csi_external_provisioner_tag    = "v3.4.0-eks-1-22-19"
-  efs_csi_repository                  = "https://kubernetes-sigs.github.io/aws-efs-csi-driver/"
-  efs_csi_version                     = "2.3.0"
+  efs_csi = {
+    image      = "amazon/aws-efs-csi-driver"
+    tag        = "v1.5.1"
+    repository = "https://kubernetes-sigs.github.io/aws-efs-csi-driver/"
+    version    = "2.3.0"
+  }
+
+  ebs_csi = {
+    image      = "amazon/aws-ebs-csi-driver"
+    tag        = "v1.39.0"
+    repository = "https://kubernetes-sigs.github.io/aws-ebs-csi-driver/"
+    version    = "2.39.1"
+  }
+
+  csi_liveness_probe = {
+    image = "public.ecr.aws/eks-distro/kubernetes-csi/livenessprobe"
+    tag   = "v2.9.0-eks-1-22-19"
+  }
+
+  csi_node_driver_registrar = {
+    image = "public.ecr.aws/eks-distro/kubernetes-csi/node-driver-registrar"
+    tag   = "v2.7.0-eks-1-22-19"
+  }
+
+  csi_external_provisioner = {
+    image = "public.ecr.aws/eks-distro/kubernetes-csi/external-provisioner"
+    tag   = "v1.39.0"
+  }
 
   eks_managed_node_groups = {
     test = {

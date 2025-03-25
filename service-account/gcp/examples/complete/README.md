@@ -21,7 +21,7 @@ terraform destroy
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0 |
 | <a name="requirement_external"></a> [external](#requirement\_external) | ~> 2.3.1 |
-| <a name="requirement_google"></a> [google](#requirement\_google) | ~> 4.75.0 |
+| <a name="requirement_google"></a> [google](#requirement\_google) | ~> 6.16.0 |
 | <a name="requirement_kubernetes"></a> [kubernetes](#requirement\_kubernetes) | ~> 2.21.1 |
 | <a name="requirement_local"></a> [local](#requirement\_local) | ~> 2.4.0 |
 | <a name="requirement_null"></a> [null](#requirement\_null) | ~> 3.2.1 |
@@ -31,7 +31,7 @@ terraform destroy
 | Name | Version |
 |------|---------|
 | <a name="provider_external"></a> [external](#provider\_external) | ~> 2.3.1 |
-| <a name="provider_google"></a> [google](#provider\_google) | ~> 4.75.0 |
+| <a name="provider_google"></a> [google](#provider\_google) | ~> 6.16.0 |
 | <a name="provider_kubernetes"></a> [kubernetes](#provider\_kubernetes) | ~> 2.21.1 |
 | <a name="provider_local"></a> [local](#provider\_local) | ~> 2.4.0 |
 | <a name="provider_null"></a> [null](#provider\_null) | ~> 3.2.1 |
@@ -40,7 +40,7 @@ terraform destroy
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_gke"></a> [gke](#module\_gke) | terraform-google-modules/kubernetes-engine/google | 27.0.0 |
+| <a name="module_gke"></a> [gke](#module\_gke) | terraform-google-modules/kubernetes-engine/google | 36.1.0 |
 | <a name="module_service_account"></a> [service\_account](#module\_service\_account) | ../../../../service-account/gcp | n/a |
 | <a name="module_vpc"></a> [vpc](#module\_vpc) | ../../../../networking/gcp/vpc | n/a |
 

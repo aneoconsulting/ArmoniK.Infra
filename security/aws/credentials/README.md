@@ -34,7 +34,7 @@ No modules.
 | <a name="input_kms_key_id"></a> [kms\_key\_id](#input\_kms\_key\_id) | KMS to encrypt the file of credentials | `string` | n/a | yes |
 | <a name="input_region"></a> [region](#input\_region) | Region | `string` | n/a | yes |
 | <a name="input_resource_name"></a> [resource\_name](#input\_resource\_name) | Resource name for which the credentials are created | `string` | n/a | yes |
-| <a name="input_user"></a> [user](#input\_user) | User credentials | <pre>object({<br>    username = string<br>    password = string<br>  })</pre> | n/a | yes |
+| <a name="input_user"></a> [user](#input\_user) | User credentials | <pre>object({<br/>    username = string<br/>    password = string<br/>  })</pre> | n/a | yes |
 
 ## Outputs
 

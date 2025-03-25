@@ -35,9 +35,9 @@ resource "tls_private_key" "activemq_private_key" {
 resource "tls_cert_request" "activemq_cert_request" {
   private_key_pem = tls_private_key.activemq_private_key.private_key_pem
   subject {
-    country     = "France"
-    common_name = "127.0.0.1"
-    # organization = "127.0.0.1"
+    country      = "France"
+    common_name  = local.activemq_dns
+    organization = "ArmoniK Activemq Root (NonTrusted)"
   }
 }
 
@@ -70,9 +70,9 @@ resource "kubernetes_secret" "activemq_certificate" {
     namespace = var.namespace
   }
   data = {
-    "root.pem" = tls_self_signed_cert.root_activemq.cert_pem
     "cert.pem" = tls_locally_signed_cert.activemq_certificate.cert_pem
     "key.pem"  = tls_private_key.activemq_private_key.private_key_pem
+    "ca.pem"   = tls_self_signed_cert.root_activemq.cert_pem
   }
   binary_data = {
     "certificate.pfx" = pkcs12_from_pem.activemq_certificate.result
@@ -85,6 +85,8 @@ resource "kubernetes_secret" "activemq_client_certificate" {
     namespace = var.namespace
   }
   data = {
+    "ca.pem"    = tls_self_signed_cert.root_activemq.cert_pem
+    "cert.pem"  = tls_locally_signed_cert.activemq_certificate.cert_pem
     "chain.pem" = format("%s\n%s", tls_locally_signed_cert.activemq_certificate.cert_pem, tls_self_signed_cert.root_activemq.cert_pem)
   }
 }

@@ -3,7 +3,7 @@
 # Kubernetes ActiveMQ deployment
 resource "kubernetes_deployment" "activemq" {
   metadata {
-    name      = "activemq"
+    name      = var.name
     namespace = var.namespace
     labels = {
       app     = "storage"
@@ -55,6 +55,14 @@ resource "kubernetes_deployment" "activemq" {
           name              = "activemq"
           image             = "${var.activemq.image}:${var.activemq.tag}"
           image_pull_policy = "IfNotPresent"
+          resources {
+            requests = var.activemq.requests
+            limits   = var.activemq.limits
+          }
+          env {
+            name  = "ACTIVEMQ_OPTS_MEMORY"
+            value = var.activemq.activemq_opts_memory
+          }
           volume_mount {
             name       = "activemq-storage-secret-volume"
             mount_path = "/credentials/"

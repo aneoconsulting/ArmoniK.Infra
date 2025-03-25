@@ -1,25 +1,71 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:base",
+    "config:recommended",
     "group:allNonMajor",
-    ":semanticCommits"
+    ":semanticCommitTypeAll(chore)",
+    "helpers:pinGitHubActionDigests"
   ],
+  "configMigration": true,
+  "rangeStrategy": "bump",
+  "ignorePaths": [],
   "packageRules": [
     {
-      "matchPackagePrefixes": [
-        "ArmoniK"
-      ],
-      "groupName": "release packages Armonik"
+      "groupName": "other dependencies",
+      "matchPackageNames": [
+        "*"
+      ]
     },
     {
-      "matchPackagePatterns": [
-        "*"
+      "groupName": "github actions",
+      "groupSlug": "github-actions",
+      "matchDatasources": [
+        "github-tags"
+      ]
+    },
+    {
+      "groupName": "docker images",
+      "groupSlug": "docker",
+      "matchDatasources": [
+        "docker"
+      ]
+    },
+    {
+      "groupName": "helm charts",
+      "groupSlug": "helm-charts",
+      "matchDatasources": [
+        "helm"
+      ]
+    },
+    {
+      "groupName": "terraform modules",
+      "groupSlug": "terraform-module",
+      "matchDatasources": [
+        "terraform-module"
+      ]
+    },
+    {
+      "groupName": "terraform provider",
+      "groupSlug": "terraform-provider",
+      "matchDatasources": [
+        "terraform-provider"
+      ]
+    },
+    {
+      "groupName": "terraform provider examples",
+      "groupSlug": "terraform-provider examples",
+      "matchFileNames": [
+        "**/examples/**"
       ],
-      "excludePackagePrefixes": [
-        "ArmoniK"
-      ],
-      "groupName": "other dependencies"
+      "matchDatasources": [
+        "terraform-provider"
+      ]
+    },
+    {
+      "groupName": "release packages Armonik",
+      "matchPackageNames": [
+        "ArmoniK{/,}**"
+      ]
     }
   ]
 }

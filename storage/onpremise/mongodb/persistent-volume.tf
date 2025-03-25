@@ -9,7 +9,7 @@ resource "kubernetes_storage_class" "mongodb" {
       service = "persistent-volume"
     }
   }
-  mount_options       = ["tls"]
+  mount_options       = var.persistent_volume.storage_provisioner == "ebs.csi.aws.com" ? null : ["tls"]
   storage_provisioner = var.persistent_volume.storage_provisioner
   reclaim_policy      = var.persistent_volume.reclaim_policy
   volume_binding_mode = var.persistent_volume.volume_binding_mode

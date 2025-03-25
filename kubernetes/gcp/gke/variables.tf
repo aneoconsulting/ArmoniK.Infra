@@ -658,7 +658,7 @@ variable "shadow_firewall_rules_priority" {
 }
 
 variable "stub_domains" {
-  description = "Map of stub domains and their resolvers to forward DNS queries for a certain domain to an external DNS server."
+  description = "Map of stub domains and their resolvers to forward DNS queries for a certain domain to an external DNS server. Not used for Autopilot GKE."
   type        = map(list(string))
   default     = {}
 }
@@ -674,7 +674,7 @@ variable "timeouts" {
 }
 
 variable "upstream_nameservers" {
-  description = "If specified, the values replace the nameservers taken by default from the node’s /etc/resolv.conf."
+  description = "If specified, the values replace the nameservers taken by default from the node’s /etc/resolv.conf. Not used for Autopilot GKE."
   type        = list(string)
   default     = []
 }

@@ -140,6 +140,12 @@ variable "secondary_ip_range" {
   default     = null
 }
 
+variable "private_service_access_peering" {
+  description = "Name of the peering. Ensures the Redis cluster is created after the peering is in place."
+  type        = string
+  default     = null
+}
+
 variable "customer_managed_key" {
   description = "Default encryption key to apply to the Redis instance. Defaults to null (Google-managed)."
   type        = string
@@ -168,6 +174,12 @@ variable "ssl_option" {
   description = "Ssl option"
   type        = string
   default     = "true"
+}
+
+variable "path" {
+  description = "Path for mounting secrets"
+  type        = string
+  default     = "/redis"
 }
 
 variable "namespace" {

@@ -1,8 +1,24 @@
-#Aggragation
+#Aggregation
+module "compute_aggregation" {
+  source   = "../utils/aggregator"
+  for_each = var.compute_plane
+  conf_list = flatten([
+    {
+      env = {
+        ComputePlane__WorkerChannel__Address    = each.value.socket_type == "tcp" ? "http://localhost:10667" : "/cache/armonik_worker.sock"
+        ComputePlane__WorkerChannel__SocketType = each.value.socket_type
+        ComputePlane__AgentChannel__Address     = each.value.socket_type == "tcp" ? "http://localhost:10666" : "/cache/armonik_agent.sock"
+        ComputePlane__AgentChannel__SocketType  = each.value.socket_type
+      }
+  }])
+}
+
 module "worker_aggregation" {
-  source    = "../utils/aggregator"
-  for_each  = var.compute_plane
-  conf_list = flatten([module.worker_all_aggregation, each.value.worker[0].conf])
+  source   = "../utils/aggregator"
+  for_each = var.compute_plane
+  conf_list = flatten(
+    [module.worker_all_aggregation,
+  module.compute_aggregation[each.key], each.value.worker[0].conf])
 }
 
 module "polling_agent_aggregation" {
@@ -13,7 +29,7 @@ module "polling_agent_aggregation" {
       env = {
         for queue in tolist(local.supported_queues) : queue => each.key
       }
-  }, each.value.polling_agent.conf])
+  }, module.compute_aggregation[each.key], each.value.polling_agent.conf])
 }
 
 # Agent deployment

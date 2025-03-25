@@ -175,7 +175,6 @@ resource "helm_release" "mongodb" {
   ### PERSISTENCE FOR DATABASE
   dynamic "set" {
     for_each = !can(coalesce(var.persistence.shards)) ? [1] : []
-
     content {
       name  = "shardsvr.persistence.enabled"
       value = "false"

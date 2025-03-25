@@ -58,15 +58,16 @@ resource "google_kms_crypto_key_iam_member" "kms" {
 module "gke" {
   count       = local.public_gke ? 1 : 0
   source      = "terraform-google-modules/kubernetes-engine/google//modules/beta-public-cluster"
-  version     = "27.0.0"
+  version     = "36.1.0"
   description = local.description
   # Required
-  ip_range_pods     = var.ip_range_pods
-  ip_range_services = var.ip_range_services
-  name              = var.name
-  network           = var.network
-  project_id        = data.google_client_config.current.project
-  subnetwork        = var.subnetwork
+  ip_range_pods       = var.ip_range_pods
+  ip_range_services   = var.ip_range_services
+  name                = var.name
+  network             = var.network
+  project_id          = data.google_client_config.current.project
+  subnetwork          = var.subnetwork
+  deletion_protection = false
   # Optional
   cloudrun                           = var.cloudrun
   cloudrun_load_balancer_type        = var.cloudrun_load_balancer_type
@@ -170,10 +171,11 @@ module "gke" {
 
 # Private GKE with beta functionalities
 module "private_gke" {
-  count       = local.private_gke ? 1 : 0
-  source      = "terraform-google-modules/kubernetes-engine/google//modules/beta-private-cluster"
-  version     = "27.0.0"
-  description = local.description
+  count               = local.private_gke ? 1 : 0
+  source              = "terraform-google-modules/kubernetes-engine/google//modules/beta-private-cluster"
+  version             = "36.1.0"
+  description         = local.description
+  deletion_protection = false
   # Required
   ip_range_pods     = var.ip_range_pods
   ip_range_services = var.ip_range_services
@@ -290,10 +292,11 @@ module "private_gke" {
 
 # Public autopilot with beta functionalities
 module "autopilot" {
-  count       = local.public_autopilot ? 1 : 0
-  source      = "terraform-google-modules/kubernetes-engine/google//modules/beta-autopilot-public-cluster"
-  version     = "27.0.0"
-  description = local.description
+  count               = local.public_autopilot ? 1 : 0
+  source              = "terraform-google-modules/kubernetes-engine/google//modules/beta-autopilot-public-cluster"
+  version             = "36.1.0"
+  description         = local.description
+  deletion_protection = false
   # Required
   ip_range_pods     = var.ip_range_pods
   ip_range_services = var.ip_range_services
@@ -350,18 +353,17 @@ module "autopilot" {
   service_external_ips              = var.service_external_ips
   shadow_firewall_rules_log_config  = var.shadow_firewall_rules_log_config
   shadow_firewall_rules_priority    = var.shadow_firewall_rules_priority
-  stub_domains                      = var.stub_domains
   timeouts                          = var.timeouts
-  upstream_nameservers              = var.upstream_nameservers
   depends_on                        = [google_kms_crypto_key_iam_member.kms]
 }
 
 # Private autopilot with beta functionalities
 module "private_autopilot" {
-  count       = local.private_autopilot ? 1 : 0
-  source      = "terraform-google-modules/kubernetes-engine/google//modules/beta-autopilot-private-cluster"
-  version     = "27.0.0"
-  description = local.description
+  count               = local.private_autopilot ? 1 : 0
+  source              = "terraform-google-modules/kubernetes-engine/google//modules/beta-autopilot-private-cluster"
+  version             = "36.1.0"
+  description         = local.description
+  deletion_protection = false
   # Required
   ip_range_pods     = var.ip_range_pods
   ip_range_services = var.ip_range_services
@@ -425,9 +427,7 @@ module "private_autopilot" {
   service_external_ips              = var.service_external_ips
   shadow_firewall_rules_log_config  = var.shadow_firewall_rules_log_config
   shadow_firewall_rules_priority    = var.shadow_firewall_rules_priority
-  stub_domains                      = var.stub_domains
   timeouts                          = var.timeouts
-  upstream_nameservers              = var.upstream_nameservers
   depends_on                        = [google_kms_crypto_key_iam_member.kms]
 }
 

@@ -72,10 +72,11 @@ output "env" {
     "Components__ObjectStorage"                                     = var.object_storage_adapter
     "Components__ObjectStorageAdaptorSettings__ClassName"           = var.adapter_class_name
     "Components__ObjectStorageAdaptorSettings__AdapterAbsolutePath" = var.adapter_absolute_path
-    "Redis__EndpointUrl"                                            = "${google_redis_instance.cache.read_endpoint}:${google_redis_instance.cache.read_endpoint_port}"
+    "Redis__EndpointUrl"                                            = "${google_redis_instance.cache.host}:${google_redis_instance.cache.port}"
     "Redis__Ssl"                                                    = var.ssl_option
     "Redis__ClientName"                                             = var.client_name
     "Redis__InstanceName"                                           = var.instance_name
+    "Redis__CaPath"                                                 = "${var.path}/chain.pem"
   })
 }
 
@@ -84,4 +85,15 @@ output "env_secret" {
   value = [
     kubernetes_secret.redis_user_credentials.metadata[0].name
   ]
+}
+
+output "mount_secret" {
+  description = "Secrets to be mounted as volumes"
+  value = {
+    "redis-secret1" = {
+      secret = kubernetes_secret.redis_ca.metadata[0].name
+      path   = var.path
+      mode   = "0644"
+    }
+  }
 }

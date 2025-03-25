@@ -24,8 +24,8 @@
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_aws_node_termination_handler_role"></a> [aws\_node\_termination\_handler\_role](#module\_aws\_node\_termination\_handler\_role) | terraform-aws-modules/iam/aws//modules/iam-assumable-role-with-oidc | 4.1.0 |
-| <a name="module_eks"></a> [eks](#module\_eks) | terraform-aws-modules/eks/aws | 20.29.0 |
+| <a name="module_aws_node_termination_handler_role"></a> [aws\_node\_termination\_handler\_role](#module\_aws\_node\_termination\_handler\_role) | terraform-aws-modules/iam/aws//modules/iam-assumable-role-with-oidc | 5.54.0 |
+| <a name="module_eks"></a> [eks](#module\_eks) | terraform-aws-modules/eks/aws | 20.34.0 |
 
 ## Resources
 
@@ -36,15 +36,21 @@
 | [aws_cloudwatch_event_rule.aws_node_termination_handler_asg](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_event_rule) | resource |
 | [aws_cloudwatch_event_rule.aws_node_termination_handler_spot](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_event_rule) | resource |
 | [aws_iam_policy.aws_node_termination_handler](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy) | resource |
+| [aws_iam_policy.ebs_csi_driver](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy) | resource |
 | [aws_iam_policy.efs_csi_driver](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy) | resource |
 | [aws_iam_policy.worker_autoscaling](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy) | resource |
 | [aws_iam_policy_attachment.workers_autoscaling](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy_attachment) | resource |
+| [aws_iam_role.ebs_csi_driver](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
 | [aws_iam_role.efs_csi_driver](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
+| [aws_iam_role_policy_attachment.ebs_csi_driver](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment) | resource |
 | [aws_iam_role_policy_attachment.efs_csi_driver](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment) | resource |
 | [helm_release.aws_node_termination_handler](https://registry.terraform.io/providers/hashicorp/helm/latest/docs/resources/release) | resource |
 | [helm_release.cluster_autoscaler](https://registry.terraform.io/providers/hashicorp/helm/latest/docs/resources/release) | resource |
+| [helm_release.ebs_csi](https://registry.terraform.io/providers/hashicorp/helm/latest/docs/resources/release) | resource |
 | [helm_release.efs_csi](https://registry.terraform.io/providers/hashicorp/helm/latest/docs/resources/release) | resource |
 | [helm_release.eni_config](https://registry.terraform.io/providers/hashicorp/helm/latest/docs/resources/release) | resource |
+| [kubernetes_service_account.ebs_csi_driver_controller](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/service_account) | resource |
+| [kubernetes_service_account.ebs_csi_driver_node](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/service_account) | resource |
 | [kubernetes_service_account.efs_csi_driver_controller](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/service_account) | resource |
 | [kubernetes_service_account.efs_csi_driver_node](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/service_account) | resource |
 | [null_resource.change_cni_label](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
@@ -54,6 +60,7 @@
 | [aws_autoscaling_groups.groups](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/autoscaling_groups) | data source |
 | [aws_availability_zones.available](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/availability_zones) | data source |
 | [aws_iam_policy_document.aws_node_termination_handler](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.ebs_csi_driver](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.efs_csi_driver](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.worker_autoscaling](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_region.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/region) | data source |
@@ -90,20 +97,12 @@
 | <a name="input_cluster_log_kms_key_id"></a> [cluster\_log\_kms\_key\_id](#input\_cluster\_log\_kms\_key\_id) | KMS id to encrypt/decrypt the cluster's logs | `string` | n/a | yes |
 | <a name="input_cluster_log_retention_in_days"></a> [cluster\_log\_retention\_in\_days](#input\_cluster\_log\_retention\_in\_days) | Logs retention in days | `number` | n/a | yes |
 | <a name="input_cluster_version"></a> [cluster\_version](#input\_cluster\_version) | Kubernetes version to use for the EKS cluster | `string` | n/a | yes |
+| <a name="input_csi_external_provisioner"></a> [csi\_external\_provisioner](#input\_csi\_external\_provisioner) | CSI external provisioner for both EFS and EBS | <pre>object({<br/>    image = optional(string, "public.ecr.aws/eks-distro/kubernetes-csi/external-provisioner")<br/>    tag   = string<br/>  })</pre> | n/a | yes |
+| <a name="input_csi_liveness_probe"></a> [csi\_liveness\_probe](#input\_csi\_liveness\_probe) | CSI liveness probe for both EFS and EBS | <pre>object({<br/>    image = optional(string, "public.ecr.aws/eks-distro/kubernetes-csi/livenessprobe")<br/>    tag   = string<br/>  })</pre> | n/a | yes |
+| <a name="input_csi_node_driver_registrar"></a> [csi\_node\_driver\_registrar](#input\_csi\_node\_driver\_registrar) | CSI node driver registrar for both EFS and EBS | <pre>object({<br/>    image = optional(string, "public.ecr.aws/eks-distro/kubernetes-csi/node-driver-registrar")<br/>    tag   = string<br/>  })</pre> | n/a | yes |
+| <a name="input_ebs_csi"></a> [ebs\_csi](#input\_ebs\_csi) | Container Storage Interface for EBS volume provisioning on EKS | <pre>object({<br/>    repository         = optional(string, "https://kubernetes-sigs.github.io/aws-ebs-csi-driver/")<br/>    version            = string<br/>    image              = optional(string, "public.ecr.aws/ebs-csi-driver/aws-ebs-csi-driver")<br/>    tag                = string<br/>    name               = optional(string)<br/>    namespace          = optional(string)<br/>    image_pull_secrets = optional(string)<br/>    controller_resources = optional(object({<br/>      limits = optional(object({<br/>        storage = string<br/>      }))<br/>      requests = optional(object({<br/>        storage = string<br/>      }))<br/>    }))<br/>  })</pre> | n/a | yes |
 | <a name="input_ebs_kms_key_id"></a> [ebs\_kms\_key\_id](#input\_ebs\_kms\_key\_id) | KMS key id to encrypt/decrypt EBS | `string` | n/a | yes |
-| <a name="input_efs_csi_external_provisioner_image"></a> [efs\_csi\_external\_provisioner\_image](#input\_efs\_csi\_external\_provisioner\_image) | EFS CSI external provisioner image name | `string` | n/a | yes |
-| <a name="input_efs_csi_external_provisioner_tag"></a> [efs\_csi\_external\_provisioner\_tag](#input\_efs\_csi\_external\_provisioner\_tag) | EFS CSI external provisioner image tag | `string` | n/a | yes |
-| <a name="input_efs_csi_image"></a> [efs\_csi\_image](#input\_efs\_csi\_image) | EFS CSI image name | `string` | n/a | yes |
-| <a name="input_efs_csi_image_pull_secrets"></a> [efs\_csi\_image\_pull\_secrets](#input\_efs\_csi\_image\_pull\_secrets) | Image pull secret used to pull EFS CSI images | `string` | `null` | no |
-| <a name="input_efs_csi_liveness_probe_image"></a> [efs\_csi\_liveness\_probe\_image](#input\_efs\_csi\_liveness\_probe\_image) | EFS CSI liveness probe image name | `string` | n/a | yes |
-| <a name="input_efs_csi_liveness_probe_tag"></a> [efs\_csi\_liveness\_probe\_tag](#input\_efs\_csi\_liveness\_probe\_tag) | EFS CSI liveness probe image tag | `string` | n/a | yes |
-| <a name="input_efs_csi_name"></a> [efs\_csi\_name](#input\_efs\_csi\_name) | EFS CSI name | `string` | `null` | no |
-| <a name="input_efs_csi_namespace"></a> [efs\_csi\_namespace](#input\_efs\_csi\_namespace) | EFS CSI namespace | `string` | `null` | no |
-| <a name="input_efs_csi_node_driver_registrar_image"></a> [efs\_csi\_node\_driver\_registrar\_image](#input\_efs\_csi\_node\_driver\_registrar\_image) | EFS CSI node driver registrar image name | `string` | n/a | yes |
-| <a name="input_efs_csi_node_driver_registrar_tag"></a> [efs\_csi\_node\_driver\_registrar\_tag](#input\_efs\_csi\_node\_driver\_registrar\_tag) | EFS CSI node driver registrar image tag | `string` | n/a | yes |
-| <a name="input_efs_csi_repository"></a> [efs\_csi\_repository](#input\_efs\_csi\_repository) | EFS CSI helm repository | `string` | n/a | yes |
-| <a name="input_efs_csi_tag"></a> [efs\_csi\_tag](#input\_efs\_csi\_tag) | EFS CSI image tag | `string` | n/a | yes |
-| <a name="input_efs_csi_version"></a> [efs\_csi\_version](#input\_efs\_csi\_version) | EFS CSI helm version | `string` | n/a | yes |
+| <a name="input_efs_csi"></a> [efs\_csi](#input\_efs\_csi) | Container Storage Interface for EFS volume provisioning on EKS | <pre>object({<br/>    repository         = optional(string, "https://kubernetes-sigs.github.io/aws-efs-csi-driver/")<br/>    version            = string<br/>    image              = optional(string, "public.ecr.aws/efs-csi-driver/amazon/aws-efs-csi-driver")<br/>    tag                = string<br/>    name               = optional(string)<br/>    namespace          = optional(string)<br/>    image_pull_secrets = optional(string)<br/>    controller_resources = optional(object({<br/>      limits = optional(object({<br/>        storage = string<br/>      }))<br/>      requests = optional(object({<br/>        storage = string<br/>      }))<br/>    }))<br/>  })</pre> | n/a | yes |
 | <a name="input_eks_managed_node_groups"></a> [eks\_managed\_node\_groups](#input\_eks\_managed\_node\_groups) | List of EKS managed node groups | `any` | `null` | no |
 | <a name="input_fargate_profiles"></a> [fargate\_profiles](#input\_fargate\_profiles) | List of fargate profiles | `any` | `null` | no |
 | <a name="input_instance_refresh_image"></a> [instance\_refresh\_image](#input\_instance\_refresh\_image) | Instance refresh image name | `string` | n/a | yes |

@@ -20,6 +20,10 @@ A Helm chart for Armonik
 
 Kubernetes: `>=v1.23.0-0`
 
+| Repository | Name | Version |
+|------------|------|---------|
+| file://../armonik-common | armonik-common | 0.1.x |
+
 ## Values
 
 | Key | Type | Default | Description |

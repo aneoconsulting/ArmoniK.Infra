@@ -13,3 +13,8 @@ maintainers:
   - name: Aneo
     email: armonik@aneo.fr
     url: armonik.fr
+
+dependencies:
+  - name: armonik-common
+    version: 0.1.x
+    repository: file://../armonik-common

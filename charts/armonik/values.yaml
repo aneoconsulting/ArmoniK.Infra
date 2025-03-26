@@ -12,20 +12,6 @@ global:
     registry: "" # FOR KEDA IMAGES
   imageRegistry: "" # FOR BITNAMI IMAGES AND ARMONIK IMAGES
   #imagePullSecrets: [{"name": "secret"}] # FOR BITNAMI IMAGES AND ARMONIK IMAGES
-  dependencies:
-    controlPlane: true
-    computePlane: true
-    ingress: true
-    activemq: false
-    redis: true
-    mongodb: true
-    kubePrometheus: true
-    keda: true
-    rabbitmq: true
-    grafana: true
-    fluentBit: true
-    seq: true
-    certManager: true
   environment:
     name: "local"
     description: "Armonik environment"
@@ -33,8 +19,10 @@ global:
 ############################################
 ### ARMONIK APPLICATION CONFIGURATION #####
 ############################################
-# control-plane: {}
-# compute-plane: {}
+control-plane:
+  enabled: true
+compute-plane:
+  enabled: true
 
 ### TODO FIX CONFIG CORE AND LOG IF NULL USE DEFAULT IN CM TEMPLATES
 config:
@@ -104,6 +92,7 @@ config:
         
 ################## INGRESS ##################
 ingress:
+  enabled: true
   ingress:
     type: LoadBalancer
 
@@ -114,6 +103,7 @@ ingress:
 dependencies:
   ################# RABBITMQ #################
   rabbitmq:
+    enabled: true
     fullnameOverride: "rabbitmq"
     auth:
       username: "admin"
@@ -131,6 +121,7 @@ dependencies:
 
   ################## REDIS ##################
   redis:
+    enabled: true
     useStatefulSet: true
     replica:
       replicaCount: 1
@@ -164,11 +155,13 @@ dependencies:
 
   ################## ACTIVEMQ ##################
   activemq:
+    enabled: false
     replicas: 1
     fullnameOverride: "activemq"
 
   ################## MONGODB ##################
   mongodb:
+    enabled: true
     replicas: 2
     metrics:
       enabled: true
@@ -190,6 +183,7 @@ dependencies:
 
   ################## KEDA ##################
   keda:
+    enabled: true
     crds:
       install: true
     prometheus:
@@ -207,6 +201,7 @@ dependencies:
 
   ################## CERT-MANAGER ##################
   cert-manager:
+    enabled: true
     installCRDs: true
     fullnameOverride: "cert-manager"
     prometheus:
@@ -215,6 +210,7 @@ dependencies:
 
   ################## GRAFANA ##################
   grafana:
+    enabled: true
     serviceMonitor:
       enabled: true
     fullnameOverride: "grafana"
@@ -237,6 +233,7 @@ dependencies:
 
   ################## FLUENT-BIT ##################
   fluent-bit:
+    enabled: true
     fullnameOverride: "fluent-bit"
     daemonset:
       enabled: true
@@ -405,6 +402,7 @@ dependencies:
 
   ################## SEQ ##################
   seq:
+    enabled: true
     fullnameOverride: "seq"
     persistence:
       enabled: false
@@ -415,6 +413,7 @@ dependencies:
 
   ################## PROMETHEUS ##################
   kube-prometheus:
+    enabled: true
     operator.image.registry: ""
     fullnameOverride: "prometheus"
     alertmanager:

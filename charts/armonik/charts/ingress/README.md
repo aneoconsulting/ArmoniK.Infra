@@ -8,7 +8,7 @@ A Helm chart for Ingress
 
 | Name | Email | Url |
 | ---- | ------ | --- |
-| Aneo | <armonik-support@aneo.fr> | <armonik.fr> |
+| Aneo | <armonik@aneo.fr> | <armonik.fr> |
 
 ## Requirements
 

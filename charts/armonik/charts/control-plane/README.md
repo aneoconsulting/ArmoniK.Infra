@@ -10,7 +10,7 @@ A Helm chart for Armonik
 
 | Name | Email | Url |
 | ---- | ------ | --- |
-| Aneo | <armonik-support@aneo.fr> | <armonik.fr> |
+| Aneo | <armonik@aneo.fr> | <armonik.fr> |
 
 ## Source Code
 

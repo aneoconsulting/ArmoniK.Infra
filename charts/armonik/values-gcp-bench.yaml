@@ -32,41 +32,42 @@ compute-plane:
 ############### DEPENDENCIES ###############
 ############################################
 
-################# RABBITMQ #################
-rabbitmq:
-  nodeSelector:
-    service: control-plane
-  tolerations:
-    - effect: NoSchedule
-      key: service
-      operator: Equal
-      value: control-plane
+dependencies:
+  ################# RABBITMQ #################
+  rabbitmq:
+    nodeSelector:
+      service: control-plane
+    tolerations:
+      - effect: NoSchedule
+        key: service
+        operator: Equal
+        value: control-plane
 
-################## REDIS ##################
-redis:
-  master:
-    resourcesPreset: medium
+  ################## REDIS ##################
+  redis:
+    master:
+      resourcesPreset: medium
 
-################## ACTIVEMQ ##################
-activemq:
-  activemqOptsMemory: "-Xms1g -Xmx3g"
+  ################## ACTIVEMQ ##################
+  activemq:
+    activemqOptsMemory: "-Xms1g -Xmx3g"
 
-################## MONGODB ##################
-mongodb:
-  resourcesPreset: none  ### FULL RESOURCES FOR DEDICATED NODE
+  ################## MONGODB ##################
+  mongodb:
+    resourcesPreset: none  ### FULL RESOURCES FOR DEDICATED NODE
 
-################## GRAFANA ##################
-grafana:
-  nodeSelector:
-    service: monitoring
-  tolerations:
-    - effect: NoSchedule
-      key: service
-      operator: Equal
-      value: monitoring
+  ################## GRAFANA ##################
+  grafana:
+    nodeSelector:
+      service: monitoring
+    tolerations:
+      - effect: NoSchedule
+        key: service
+        operator: Equal
+        value: monitoring
 
-################## PROMETHEUS ##################
-kube-prometheus:
-  prometheus:
-    resourcesPreset: large
-############################################
+  ################## PROMETHEUS ##################
+  kube-prometheus:
+    prometheus:
+      resourcesPreset: large
+  ############################################

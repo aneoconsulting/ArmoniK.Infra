@@ -1,0 +1,33 @@
+dependencies:
+- name: activemq
+  repository: file://../activemq
+  version: 1.0.0
+- name: redis
+  repository: https://charts.bitnami.com/bitnami
+  version: 20.11.4
+- name: mongodb
+  repository: https://charts.bitnami.com/bitnami
+  version: 16.4.10
+- name: kube-prometheus
+  repository: https://charts.bitnami.com/bitnami
+  version: 11.1.3
+- name: keda
+  repository: https://kedacore.github.io/charts
+  version: 2.16.1
+- name: rabbitmq
+  repository: https://charts.bitnami.com/bitnami
+  version: 15.4.0
+- name: grafana
+  repository: https://grafana.github.io/helm-charts
+  version: 8.10.4
+- name: fluent-bit
+  repository: https://charts.bitnami.com/bitnami
+  version: 2.5.7
+- name: seq
+  repository: https://helm.datalust.co
+  version: 2024.3.2
+- name: cert-manager
+  repository: https://charts.jetstack.io
+  version: v1.17.1
+digest: sha256:05051e93f5c520e03c20a97d217affecf22e83bce3fdb660f78f5001a013af99
+generated: "2025-03-26T11:32:10.409843721+01:00"

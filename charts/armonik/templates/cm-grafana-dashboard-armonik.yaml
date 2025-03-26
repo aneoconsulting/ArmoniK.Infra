@@ -1,4 +1,4 @@
-{{ if .Values.global.dependencies.grafana }}
+{{ if (include "armonik.dependencies" $ | fromYaml).grafana }}
 apiVersion: v1
 kind: ConfigMap
 metadata:

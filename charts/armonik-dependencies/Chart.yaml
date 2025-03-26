@@ -17,23 +17,23 @@ dependencies:
   - name: activemq
     version: 1.x.x
     repository: file://../activemq
-    condition: global.dependencies.activemq
+    condition: activemq.enabled
   - name: redis
     version: 20.x.x
     repository: https://charts.bitnami.com/bitnami
-    condition: global.dependencies.redis
+    condition: redis.enabled
   - name: mongodb
     version: 16.x.x
     repository: https://charts.bitnami.com/bitnami
-    condition: global.dependencies.mongodb
+    condition: mongodb.enabled
   - name: kube-prometheus
     version: 11.x.x
     repository: https://charts.bitnami.com/bitnami
-    condition: global.dependencies.kubePrometheus
+    condition: kube-prometheus.enabled
   - name: keda
     version: 2.x.x
     repository: https://kedacore.github.io/charts
-    condition: global.dependencies.keda
+    condition: keda.enabled
   # - name: chaos-mesh
   #   version: 2.x.x
   #   repository: https://charts.chaos-mesh.org
@@ -42,20 +42,20 @@ dependencies:
   - name: rabbitmq
     version: 15.x.x
     repository: https://charts.bitnami.com/bitnami
-    condition: global.dependencies.rabbitmq
+    condition: rabbitmq.enabled
   - name: grafana
     version: 8.x.x
     repository: https://grafana.github.io/helm-charts
-    condition: global.dependencies.grafana
+    condition: grafana.enabled
   - name: fluent-bit
     version: 2.x.x
     repository: https://charts.bitnami.com/bitnami
-    condition: global.dependencies.fluentBit
+    condition: fluent-bit.enabled
   - name: seq
     version: 2024.x.x
     repository: https://helm.datalust.co
-    condition: global.dependencies.seq
+    condition: seq.enabled
   - name: cert-manager
     version: 1.x.x
     repository: https://charts.jetstack.io
-    condition: global.dependencies.certManager
+    condition: cert-manager.enabled

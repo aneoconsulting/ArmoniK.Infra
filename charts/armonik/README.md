@@ -22,6 +22,7 @@ Kubernetes: `>=v1.25.0-0`
 
 | Repository | Name | Version |
 |------------|------|---------|
+| file://../armonik-common | armonik-common | 0.1.x |
 | file://../armonik-compute-plane | compute-plane(armonik-compute-plane) | 0.1.x |
 | file://../armonik-control-plane | control-plane(armonik-control-plane) | 0.1.x |
 | file://../armonik-dependencies | dependencies(armonik-dependencies) | 0.1.x |
@@ -31,6 +32,7 @@ Kubernetes: `>=v1.25.0-0`
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
+| compute-plane.enabled | bool | `true` |  |
 | config.core.data.Amqp__MaxPriority | string | `"10"` |  |
 | config.core.data.Amqp__Password | string | `"admin"` |  |
 | config.core.data.Amqp__Port | string | `"5672"` |  |
@@ -79,8 +81,11 @@ Kubernetes: `>=v1.25.0-0`
 | config.log.data.overrides."Microsoft.Extensions.Http.DefaultHttpClientFactory" | string | `"Warning"` |  |
 | config.log.data.overrides."Serilog.AspNetCore.RequestLoggingMiddleware" | string | `"Warning"` |  |
 | config.log.name | string | `"log-configmap"` |  |
+| control-plane.enabled | bool | `true` |  |
+| dependencies.activemq.enabled | bool | `false` |  |
 | dependencies.activemq.fullnameOverride | string | `"activemq"` |  |
 | dependencies.activemq.replicas | int | `1` |  |
+| dependencies.cert-manager.enabled | bool | `true` |  |
 | dependencies.cert-manager.fullnameOverride | string | `"cert-manager"` |  |
 | dependencies.cert-manager.installCRDs | bool | `true` |  |
 | dependencies.cert-manager.prometheus.servicemonitor.enabled | bool | `true` |  |
@@ -89,6 +94,7 @@ Kubernetes: `>=v1.25.0-0`
 | dependencies.fluent-bit.config.inputs | string | `"[INPUT]\n    Name               tail\n    Tag                kube.*\n    Path               /var/log/containers/control-plane*.log, /var/log/containers/compute-plane*.log\n    Parser             cri\n    Docker_Mode        On\n    Buffer_Chunk_Size  512KB\n    Buffer_Max_Size    5M\n    Rotate_Wait        30\n    Mem_Buf_Limit      30MB\n    Skip_Long_Lines    Off\n    Refresh_Interval   10\n    READ_FROM_HEAD     On\n[INPUT]\n    Name               tail\n    Tag                application.*\n    Path               /var/log/containers/control-plane*.log, /var/log/containers/compute-plane*.log, /var/log/containers/ingress*.log, /var/log/containers/mongodb*.log, /var/log/containers/keda*.log\n    Parser             cri\n    Docker_Mode        On\n    Buffer_Chunk_Size  512KB\n    Buffer_Max_Size    5M\n    Rotate_Wait        30\n    Mem_Buf_Limit      30MB\n    Skip_Long_Lines    Off\n    Refresh_Interval   10\n    READ_FROM_HEAD     On\n[INPUT]\n    Name               tail\n    Tag                s3-application.*\n    Path               /var/log/containers/control-plane*.log, /var/log/containers/compute-plane*.log, /var/log/containers/ingress*.log, /var/log/containers/mongodb*.log, /var/log/containers/keda*.log\n    Parser             cri\n    Docker_Mode        On\n    Buffer_Chunk_Size  512KB\n    Buffer_Max_Size    5M\n    Rotate_Wait        30\n    Mem_Buf_Limit      30MB\n    Skip_Long_Lines    Off\n    Refresh_Interval   10\n    READ_FROM_HEAD     On\n"` |  |
 | dependencies.fluent-bit.config.outputs | string | `"[OUTPUT]\n    Name                    http\n    Match                   kube.*\n    Host                    seq\n    Port                    5341\n    URI                     /api/events/raw?clef\n    Header                  ContentType application/vnd.serilog.clef\n    Format                  json_lines\n    json_date_key           @t\n    json_date_format        iso8601\n"` |  |
 | dependencies.fluent-bit.daemonset.enabled | bool | `true` |  |
+| dependencies.fluent-bit.enabled | bool | `true` |  |
 | dependencies.fluent-bit.extraVolumeMounts | string | `"- name: runlogjournal\n  readOnly: true\n  mountPath: /run/log/journal\n  mountPropagation: None\n- name: dmesg\n  readOnly: true\n  mountPath: /var/log/dmesg\n  mountPropagation: None\n"` |  |
 | dependencies.fluent-bit.extraVolumes | string | `"- name: runlogjournal\n  hostPath:\n    path: /run/log/journal\n    type: ''\n- name: dmesg\n  hostPath:\n    path: /var/log/dmesg\n    type: ''\n"` |  |
 | dependencies.fluent-bit.fullnameOverride | string | `"fluent-bit"` |  |
@@ -99,6 +105,7 @@ Kubernetes: `>=v1.25.0-0`
 | dependencies.grafana."grafana.ini".server.domain | string | `"grafana.local"` |  |
 | dependencies.grafana."grafana.ini".server.root_url | string | `"http://grafana"` |  |
 | dependencies.grafana."grafana.ini".server.serve_from_sub_path | bool | `true` |  |
+| dependencies.grafana.enabled | bool | `true` |  |
 | dependencies.grafana.fullnameOverride | string | `"grafana"` |  |
 | dependencies.grafana.serviceMonitor.enabled | bool | `true` |  |
 | dependencies.grafana.sidecar.dashboards.enabled | bool | `true` |  |
@@ -111,12 +118,14 @@ Kubernetes: `>=v1.25.0-0`
 | dependencies.keda.certificates.certManager.issuer.kind | string | `"ClusterIssuer"` |  |
 | dependencies.keda.certificates.certManager.issuer.name | string | `"armonik-selfsigned-issuer"` |  |
 | dependencies.keda.crds.install | bool | `true` |  |
+| dependencies.keda.enabled | bool | `true` |  |
 | dependencies.keda.image.pullPolicy | string | `"IfNotPresent"` |  |
 | dependencies.keda.prometheus.metricServer.enabled | bool | `true` |  |
 | dependencies.keda.prometheus.metricServer.serviceMonitor.enabled | bool | `true` |  |
 | dependencies.kube-prometheus."operator.image.registry" | string | `""` |  |
 | dependencies.kube-prometheus.alertmanager.enabled | bool | `false` |  |
 | dependencies.kube-prometheus.blackboxExporter.enabled | bool | `false` |  |
+| dependencies.kube-prometheus.enabled | bool | `true` |  |
 | dependencies.kube-prometheus.fullnameOverride | string | `"prometheus"` |  |
 | dependencies.kube-prometheus.prometheus.additionalScrapeConfigs.enabled | bool | `true` |  |
 | dependencies.kube-prometheus.prometheus.additionalScrapeConfigs.external.key | string | `"prometheus-additional.yaml"` |  |
@@ -125,6 +134,7 @@ Kubernetes: `>=v1.25.0-0`
 | dependencies.kube-prometheus.prometheus.evaluationInterval | string | `"30s"` |  |
 | dependencies.kube-prometheus.prometheus.scrapeInterval | string | `"10s"` |  |
 | dependencies.mongodb.architecture | string | `"replicaset"` |  |
+| dependencies.mongodb.enabled | bool | `true` |  |
 | dependencies.mongodb.fullnameOverride | string | `"mongodb"` |  |
 | dependencies.mongodb.metrics.enabled | bool | `true` |  |
 | dependencies.mongodb.metrics.serviceMonitor.enabled | bool | `true` |  |
@@ -138,10 +148,12 @@ Kubernetes: `>=v1.25.0-0`
 | dependencies.mongodb.useStatefulSet | bool | `true` |  |
 | dependencies.rabbitmq.auth.password | string | `"admin"` |  |
 | dependencies.rabbitmq.auth.username | string | `"admin"` |  |
+| dependencies.rabbitmq.enabled | bool | `true` |  |
 | dependencies.rabbitmq.fullnameOverride | string | `"rabbitmq"` |  |
 | dependencies.rabbitmq.metrics.enabled | bool | `true` |  |
 | dependencies.rabbitmq.metrics.serviceMonitor.enabled | bool | `true` |  |
 | dependencies.rabbitmq.persistence.enabled | bool | `false` |  |
+| dependencies.redis.enabled | bool | `true` |  |
 | dependencies.redis.fullnameOverride | string | `"redis"` |  |
 | dependencies.redis.master.containerPorts.redis | int | `6379` |  |
 | dependencies.redis.master.persistence.enabled | bool | `false` |  |
@@ -158,28 +170,17 @@ Kubernetes: `>=v1.25.0-0`
 | dependencies.redis.tls.enabled | bool | `false` |  |
 | dependencies.redis.useStatefulSet | bool | `true` |  |
 | dependencies.redis.usernames.admin | string | `"admin"` |  |
+| dependencies.seq.enabled | bool | `true` |  |
 | dependencies.seq.fullnameOverride | string | `"seq"` |  |
 | dependencies.seq.image.pullPolicy | string | `"IfNotPresent"` |  |
 | dependencies.seq.persistence.enabled | bool | `false` |  |
-| global.dependencies.activemq | bool | `false` |  |
-| global.dependencies.certManager | bool | `true` |  |
-| global.dependencies.computePlane | bool | `true` |  |
-| global.dependencies.controlPlane | bool | `true` |  |
-| global.dependencies.fluentBit | bool | `true` |  |
-| global.dependencies.grafana | bool | `true` |  |
-| global.dependencies.ingress | bool | `true` |  |
-| global.dependencies.keda | bool | `true` |  |
-| global.dependencies.kubePrometheus | bool | `true` |  |
-| global.dependencies.mongodb | bool | `true` |  |
-| global.dependencies.rabbitmq | bool | `true` |  |
-| global.dependencies.redis | bool | `true` |  |
-| global.dependencies.seq | bool | `true` |  |
 | global.environment.description | string | `"Armonik environment"` |  |
 | global.environment.name | string | `"local"` |  |
 | global.image.pullPolicy | string | `"IfNotPresent"` |  |
 | global.image.registry | string | `""` |  |
 | global.imageRegistry | string | `""` |  |
 | global.version.armonikCore | string | `"0.31.2"` |  |
+| ingress.enabled | bool | `true` |  |
 | ingress.ingress.type | string | `"LoadBalancer"` |  |
 
 ----------------------------------------------

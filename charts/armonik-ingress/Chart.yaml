@@ -1,17 +1,14 @@
 apiVersion: v2
-appVersion: 0.31.2
-version: 0.1.0
-name: compute-plane
-description: A Helm chart for Armonik
+name: armonik-ingress
+description: A Helm chart for Ingress
 icon: https://25070129.fs1.hubspotusercontent-eu1.net/hubfs/25070129/Website/Images%20-%20Website/ArmoniK/logo_armonik_by_aneo%201.svg
-kubeVersion: ">=v1.23.0-0"
+kubeVersion: ">=v1.25.0-0"
 keywords:
   - armonik
   - helm
 type: application
-home: https://github.com/aneoconsulting/ArmoniK
-sources:
-  - https://aneoconsulting.github.io/
+version: 0.1.0
+appVersion: "0.13.3"
 maintainers:
   - name: Aneo
     email: armonik@aneo.fr

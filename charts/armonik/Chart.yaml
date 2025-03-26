@@ -18,23 +18,46 @@ maintainers:
     url: armonik.fr
 
 dependencies:
-### Armonik
+  - name: armonik-common
+    version: 0.1.x
+    repository: file://../armonik-common
   - name: armonik-control-plane
     version: 0.1.x
     repository: file://../armonik-control-plane
-    condition: global.dependencies.controlPlane
+    condition: control-plane.enabled
     alias: control-plane
   - name: armonik-compute-plane
     version: 0.1.x
     repository: file://../armonik-compute-plane
-    condition: global.dependencies.computePlane
+    condition: compute-plane.enabled
     alias: compute-plane
   - name: armonik-ingress
     version: 0.1.x
     repository: file://../armonik-ingress
-    condition: global.dependencies.ingress
+    condition: ingress.enabled
     alias: ingress
   - name: armonik-dependencies
     version: 0.1.x
     repository: file://../armonik-dependencies
     alias: dependencies
+    import-values:
+      - child: activemq
+        parent: global.armonik-dependencies.activemq
+      - child: redis
+        parent: global.armonik-dependencies.redis
+      - child: mongodb
+        parent: global.armonik-dependencies.mongodb
+      - child: kube-prometheus
+        parent: global.armonik-dependencies.kube-prometheus
+      - child: keda
+        parent: global.armonik-dependencies.keda
+      - child: rabbitmq
+        parent: global.armonik-dependencies.rabbitmq
+      - child: grafana
+        parent: global.armonik-dependencies.grafana
+      - child: fluent-bit
+        parent: global.armonik-dependencies.fluent-bit
+      - child: seq
+        parent: global.armonik-dependencies.seq
+      - child: cert-manager
+        parent: global.armonik-dependencies.cert-manager

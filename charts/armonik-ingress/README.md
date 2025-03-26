@@ -14,6 +14,10 @@ A Helm chart for Ingress
 
 Kubernetes: `>=v1.25.0-0`
 
+| Repository | Name | Version |
+|------------|------|---------|
+| file://../armonik-common | armonik-common | 0.1.x |
+
 ## Values
 
 | Key | Type | Default | Description |

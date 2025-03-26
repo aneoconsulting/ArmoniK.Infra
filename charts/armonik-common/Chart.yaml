@@ -1,0 +1,14 @@
+apiVersion: v2
+name: armonik-common
+description: Library chart used by ArmoniK charts
+icon: https://25070129.fs1.hubspotusercontent-eu1.net/hubfs/25070129/Website/Images%20-%20Website/ArmoniK/logo_armonik_by_aneo%201.svg
+kubeVersion: ">=v1.25.0-0"
+keywords:
+  - armonik
+  - helm
+type: library
+version: 0.1.0
+maintainers:
+  - name: Aneo
+    email: armonik@aneo.fr
+    url: armonik.fr

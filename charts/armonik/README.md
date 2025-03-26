@@ -22,10 +22,10 @@ Kubernetes: `>=v1.25.0-0`
 
 | Repository | Name | Version |
 |------------|------|---------|
-| file://charts/activemq | activemq | 1.x.x |
-| file://charts/compute-plane | compute-plane | 0.1.x |
-| file://charts/control-plane | control-plane | 0.1.x |
-| file://charts/ingress | ingress | 0.1.x |
+| file://../activemq | activemq | 1.x.x |
+| file://../armonik-compute-plane | compute-plane(armonik-compute-plane) | 0.1.x |
+| file://../armonik-control-plane | control-plane(armonik-control-plane) | 0.1.x |
+| file://../armonik-ingress | ingress(armonik-ingress) | 0.1.x |
 | https://charts.bitnami.com/bitnami | fluent-bit | 2.x.x |
 | https://charts.bitnami.com/bitnami | kube-prometheus | 11.x.x |
 | https://charts.bitnami.com/bitnami | mongodb | 16.x.x |

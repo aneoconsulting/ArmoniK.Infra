@@ -1,42 +1,42 @@
 dependencies:
-- name: control-plane
-  repository: file://charts/control-plane
+- name: armonik-control-plane
+  repository: file://../armonik-control-plane
   version: 0.1.0
-- name: compute-plane
-  repository: file://charts/compute-plane
+- name: armonik-compute-plane
+  repository: file://../armonik-compute-plane
   version: 0.1.0
-- name: ingress
-  repository: file://charts/ingress
+- name: armonik-ingress
+  repository: file://../armonik-ingress
   version: 0.1.0
 - name: activemq
-  repository: file://charts/activemq
+  repository: file://../activemq
   version: 1.0.0
 - name: redis
   repository: https://charts.bitnami.com/bitnami
-  version: 20.9.0
+  version: 20.11.4
 - name: mongodb
   repository: https://charts.bitnami.com/bitnami
-  version: 16.4.5
+  version: 16.4.10
 - name: kube-prometheus
   repository: https://charts.bitnami.com/bitnami
-  version: 11.1.1
+  version: 11.1.3
 - name: keda
   repository: https://kedacore.github.io/charts
   version: 2.16.1
 - name: rabbitmq
   repository: https://charts.bitnami.com/bitnami
-  version: 15.3.2
+  version: 15.4.0
 - name: grafana
   repository: https://grafana.github.io/helm-charts
-  version: 8.10.1
+  version: 8.10.4
 - name: fluent-bit
   repository: https://charts.bitnami.com/bitnami
-  version: 2.5.1
+  version: 2.5.7
 - name: seq
   repository: https://helm.datalust.co
   version: 2024.3.2
 - name: cert-manager
   repository: https://charts.jetstack.io
   version: v1.17.1
-digest: sha256:d071f8ebc279c2645119321372cea89647a833ab66faf2226e6929043a8482a2
-generated: "2025-02-25T09:25:25.773248+01:00"
+digest: sha256:f434ea8908511e2dc3ddf98717a6de37be42af85b0db7d9c464d457121028b57
+generated: "2025-03-26T10:47:36.662630163+01:00"

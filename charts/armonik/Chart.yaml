@@ -19,22 +19,25 @@ maintainers:
 
 dependencies:
 ### Armonik
-  - name: control-plane
+  - name: armonik-control-plane
     version: 0.1.x
-    repository: file://charts/control-plane
+    repository: file://../armonik-control-plane
     condition: global.dependencies.controlPlane
-  - name: compute-plane
+    alias: control-plane
+  - name: armonik-compute-plane
     version: 0.1.x
-    repository: file://charts/compute-plane
+    repository: file://../armonik-compute-plane
     condition: global.dependencies.computePlane
-  - name: ingress
+    alias: compute-plane
+  - name: armonik-ingress
     version: 0.1.x
-    repository: file://charts/ingress
+    repository: file://../armonik-ingress
     condition: global.dependencies.ingress
+    alias: ingress
 ### Armonik dependencies
   - name: activemq
     version: 1.x.x
-    repository: file://charts/activemq
+    repository: file://../activemq
     condition: global.dependencies.activemq
   - name: redis
     version: 20.x.x

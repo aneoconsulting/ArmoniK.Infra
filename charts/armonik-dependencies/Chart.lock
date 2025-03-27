@@ -19,7 +19,7 @@ dependencies:
   version: 15.4.0
 - name: grafana
   repository: https://grafana.github.io/helm-charts
-  version: 8.10.4
+  version: 8.11.0
 - name: fluent-bit
   repository: https://charts.bitnami.com/bitnami
   version: 2.5.7
@@ -29,5 +29,5 @@ dependencies:
 - name: cert-manager
   repository: https://charts.jetstack.io
   version: v1.17.1
-digest: sha256:251d6d4901f5fd34b5ccc0cc02d217417bc43c1d0a229785d0aa07746ed46a33
-generated: "2025-03-26T22:11:30.600662754+01:00"
+digest: sha256:a245c59041e3868981727309b622c73669c7d232b259ea49b2bebad4197c607d
+generated: "2025-03-27T22:59:03.487656656+01:00"

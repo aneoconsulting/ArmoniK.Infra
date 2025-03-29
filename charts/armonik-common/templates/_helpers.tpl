@@ -19,3 +19,29 @@ To get the result as a value other than a string you would need to convert it ba
     {{- $value.value | toYaml -}}
   {{- end -}}
 {{- end -}}
+
+{{/*
+Gets the context of a dependency to execute named templates from this dependency
+
+# Usage
+
+{{ $ctx := list $ "mongodb" | include "armonik.dependencyContext" $ | fromYaml }}
+*/}}
+{{- define "armonik.dependencyContext" -}}
+  {{- $root := index . 0 -}}
+  {{- $dependency := index . 1 -}}
+  {{-
+    $context := dict
+      "Values" (list $root.Values "global" "armonik-dependencies" $dependency | include "armonik.index" | fromYaml)
+      "Chart" (dict
+        "IsRoot" $root.Chart.IsRoot
+        "name" "mongodb"
+        "type" "application")
+      "Capabilities" $root.Capabilities
+      "Files" dict
+      "Release" $root.Release
+      "Subcharts" dict
+      "Template" $root.Template
+  -}}
+  {{- $context | toYaml -}}
+{{- end -}}

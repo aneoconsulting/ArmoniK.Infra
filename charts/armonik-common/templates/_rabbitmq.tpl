@@ -6,17 +6,7 @@ Gets the context to execute rabbitmq named templates
 {{ $ctx := include "armonik.rabbitmq.context" $ | fromYaml }}
 */}}
 {{- define "armonik.rabbitmq.context" -}}
-  {{- $context := . | deepCopy -}}
-  {{/* Fetch rabbitmq Values from the global scope if it has been exported by the parent chart */}}
-  {{- $_ := list .Values "global" "armonik-dependencies" "rabbitmq" | include "armonik.index" | fromYaml | set $context "Values" -}}
-  {{/* Fake the content of `.Chart` to have the correct behavior when calling rabbitmq named template from outside mongo chart */}}
-  {{- $_ := dict
-      "IsRoot" .Chart.IsRoot
-      "name" "rabbitmq"
-      "type" "application"
-    | set $context "Chart"
-  -}}
-  {{- $context | toYaml -}}
+  {{- list . "rabbitmq" | include "armonik.dependencyContext" -}}
 {{- end -}}
 
 {{/*

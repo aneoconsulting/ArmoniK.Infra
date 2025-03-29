@@ -6,17 +6,7 @@ Gets the context to execute redis named templates
 {{ $ctx := include "armonik.redis.context" $ | fromYaml }}
 */}}
 {{- define "armonik.redis.context" -}}
-  {{- $context := . | deepCopy -}}
-  {{/* Fetch redis Values from the global scope if it has been exported by the parent chart */}}
-  {{- $_ := list .Values "global" "armonik-dependencies" "redis" | include "armonik.index" | fromYaml | set $context "Values" -}}
-  {{/* Fake the content of `.Chart` to have the correct behavior when calling redis named template from outside mongo chart */}}
-  {{- $_ := dict
-      "IsRoot" .Chart.IsRoot
-      "name" "redis"
-      "type" "application"
-    | set $context "Chart"
-  -}}
-  {{- $context | toYaml -}}
+  {{- list . "redis" | include "armonik.dependencyContext" -}}
 {{- end -}}
 
 {{/*

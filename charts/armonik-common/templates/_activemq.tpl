@@ -6,17 +6,7 @@ Gets the context to execute activemq named templates
 {{ $ctx := include "armonik.activemq.context" $ | fromYaml }}
 */}}
 {{- define "armonik.activemq.context" -}}
-  {{- $context := . | deepCopy -}}
-  {{/* Fetch activemq Values from the global scope if it has been exported by the parent chart */}}
-  {{- $_ := list .Values "global" "armonik-dependencies" "activemq" | include "armonik.index" | fromYaml | set $context "Values" -}}
-  {{/* Fake the content of `.Chart` to have the correct behavior when calling activemq named template from outside mongo chart */}}
-  {{- $_ := dict
-      "IsRoot" .Chart.IsRoot
-      "name" "activemq"
-      "type" "application"
-    | set $context "Chart"
-  -}}
-  {{- $context | toYaml -}}
+  {{- list . "activemq" | include "armonik.dependencyContext" -}}
 {{- end -}}
 
 {{/*

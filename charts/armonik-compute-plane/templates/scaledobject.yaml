@@ -1,4 +1,4 @@
-{{ if include "armonik.index" (list .Values "global" "armonik-dependencies" "keda" "enabled") }}
+{{ if (include "armonik.keda.context" $ | fromYaml).Values.enabled }}
 {{- range $partitionName, $config := .Values.computePlane.partition }}
 ---
 apiVersion: keda.sh/v1alpha1

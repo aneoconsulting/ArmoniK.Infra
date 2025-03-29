@@ -6,17 +6,7 @@ Gets the context to execute mongodb named templates
 {{ $ctx := include "armonik.mongodb.context" $ | fromYaml }}
 */}}
 {{- define "armonik.mongodb.context" -}}
-  {{- $context := . | deepCopy -}}
-  {{/* Fetch mongodb Values from the global scope if it has been exported by the parent chart */}}
-  {{- $_ := list .Values "global" "armonik-dependencies" "mongodb" | include "armonik.index" | fromYaml | set $context "Values" -}}
-  {{/* Fake the content of `.Chart` to have the correct behavior when calling mongodb named template from outside mongo chart */}}
-  {{- $_ := dict
-      "IsRoot" .Chart.IsRoot
-      "name" "mongodb"
-      "type" "application"
-    | set $context "Chart"
-  -}}
-  {{- $context | toYaml -}}
+  {{- list . "mongodb" | include "armonik.dependencyContext" -}}
 {{- end -}}
 
 {{/*

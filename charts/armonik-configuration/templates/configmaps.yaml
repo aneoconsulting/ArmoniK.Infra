@@ -1,0 +1,11 @@
+{{- range $component := list "core" "log" "control" "compute" "worker" "polling" "metrics" "jobs" }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ list $component $ | include "armonik.conf.configmap" }}
+  namespace: {{ $.Release.Namespace }}
+  annotations:
+    component: {{ $component }}
+data: {{ include (printf "armonik.conf.%sRaw" $component) $ | fromYaml | include "armonik.conf.materialize" | nindent 2 }}
+{{- end }}

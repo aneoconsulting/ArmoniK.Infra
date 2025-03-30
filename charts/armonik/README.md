@@ -24,6 +24,7 @@ Kubernetes: `>=v1.25.0-0`
 |------------|------|---------|
 | file://../armonik-common | armonik-common | 0.1.x |
 | file://../armonik-compute-plane | compute-plane(armonik-compute-plane) | 0.1.x |
+| file://../armonik-configuration | conf(armonik-configuration) | 0.1.x |
 | file://../armonik-control-plane | control-plane(armonik-control-plane) | 0.1.x |
 | file://../armonik-dependencies | dependencies(armonik-dependencies) | 0.1.x |
 | file://../armonik-ingress | ingress(armonik-ingress) | 0.1.x |

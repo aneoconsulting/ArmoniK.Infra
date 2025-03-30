@@ -21,6 +21,27 @@ dependencies:
   - name: armonik-common
     version: 0.1.x
     repository: file://../armonik-common
+  - name: armonik-configuration
+    version: 0.1.x
+    repository: file://../armonik-configuration
+    alias: conf
+    import-values:
+      - child: core
+        parent: global.armonik-dependencies.conf.core
+      - child: control
+        parent: global.armonik-dependencies.conf.control
+      - child: compute
+        parent: global.armonik-dependencies.conf.compute
+      - child: worker
+        parent: global.armonik-dependencies.conf.worker
+      - child: polling
+        parent: global.armonik-dependencies.conf.polling
+      - child: log
+        parent: global.armonik-dependencies.conf.log
+      - child: metrics
+        parent: global.armonik-dependencies.conf.metrics
+      - child: jobs
+        parent: global.armonik-dependencies.conf.jobs
   - name: armonik-control-plane
     version: 0.1.x
     repository: file://../armonik-control-plane

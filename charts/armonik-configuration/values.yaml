@@ -1,0 +1,67 @@
+# All the configuration is done in the parent chart
+
+core:
+  env: {}
+  envConfigmap: []
+  envFromConfigmap: {}
+  envSecret: []
+  envFromSecret: {}
+  mountConfigmap: {}
+  mountSecret: {}
+log:
+  minimumLevel: Debug
+  env: {}
+  envConfigmap: []
+  envFromConfigmap: {}
+  envSecret: []
+  envFromSecret: {}
+  mountConfigmap: {}
+  mountSecret: {}
+control:
+  env: {}
+  envConfigmap: []
+  envFromConfigmap: {}
+  envSecret: []
+  envFromSecret: {}
+  mountConfigmap: {}
+  mountSecret: {}
+compute:
+  env: {}
+  envConfigmap: []
+  envFromConfigmap: {}
+  envSecret: []
+  envFromSecret: {}
+  mountConfigmap: {}
+  mountSecret: {}
+worker:
+  env: {}
+  envConfigmap: []
+  envFromConfigmap: {}
+  envSecret: []
+  envFromSecret: {}
+  mountConfigmap: {}
+  mountSecret: {}
+polling:
+  env: {}
+  envConfigmap: []
+  envFromConfigmap: {}
+  envSecret: []
+  envFromSecret: {}
+  mountConfigmap: {}
+  mountSecret: {}
+metrics:
+  env: {}
+  envConfigmap: []
+  envFromConfigmap: {}
+  envSecret: []
+  envFromSecret: {}
+  mountConfigmap: {}
+  mountSecret: {}
+jobs:
+  env: {}
+  envConfigmap: []
+  envFromConfigmap: {}
+  envSecret: []
+  envFromSecret: {}
+  mountConfigmap: {}
+  mountSecret: {}

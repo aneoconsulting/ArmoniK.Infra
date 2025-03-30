@@ -1,0 +1,191 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "type": "object",
+  "properties": {
+    "core": {
+      "$ref": "#/$defs/config"
+    },
+    "control": {
+      "$ref": "#/$defs/config"
+    },
+    "compute": {
+      "$ref": "#/$defs/config"
+    },
+    "worker": {
+      "$ref": "#/$defs/config"
+    },
+    "polling": {
+      "$ref": "#/$defs/config"
+    },
+    "log": {
+      "$ref": "#/$defs/config",
+      "properties": {
+        "minimumLevel": {
+          "type": "string",
+          "enum": [
+            "Verbose",
+            "Debug",
+            "Information",
+            "Warning",
+            "Error",
+            "Fatal"
+          ]
+        }
+      }
+    },
+    "metrics": {
+      "$ref": "#/$defs/config"
+    },
+    "jobs": {
+      "$ref": "#/$defs/config"
+    }
+  },
+  "$defs": {
+    "config": {
+      "type": "object",
+      "properties": {
+        "env": {
+          "description": "Static environment variables",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "envConfigmap": {
+          "description": "Environment variables from Configmap (import all data from cm)",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "envFromConfigmap": {
+          "description": "Environment variables from Configmap",
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "required": [
+              "configmap",
+              "field"
+            ],
+            "properties": {
+              "configmap": {
+                "description": "Name of the configmap",
+                "type": "string"
+              },
+              "field": {
+                "description": "Data field where the variable is read from",
+                "type": "string"
+              }
+            }
+          }
+        },
+        "envSecret": {
+          "description": "Environment variables from Secret (import all data from secret)",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "envFromSecret": {
+          "description": "Environment variables from secret",
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "required": [
+              "secret",
+              "field"
+            ],
+            "properties": {
+              "secret": {
+                "description": "Name of the secret",
+                "type": "string"
+              },
+              "field": {
+                "description": "Data field where the variable is read from",
+                "type": "string"
+              }
+            }
+          }
+        },
+        "mountConfigmap": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "required": [
+              "configmap",
+              "path"
+            ],
+            "properties": {
+              "configmap": {
+                "type": "string"
+              },
+              "path": {
+                "type": "string"
+              },
+              "subpath": {
+                "type": "string"
+              },
+              "mode": {
+                "type": "string"
+              },
+              "items": {
+                "type": "object",
+                "required": [
+                  "field"
+                ],
+                "properties": {
+                  "field": {
+                    "type": "string"
+                  },
+                  "mode": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "mountSecret": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "required": [
+              "secret",
+              "path"
+            ],
+            "properties": {
+              "secret": {
+                "type": "string"
+              },
+              "path": {
+                "type": "string"
+              },
+              "subpath": {
+                "type": "string"
+              },
+              "mode": {
+                "type": "string"
+              },
+              "items": {
+                "type": "object",
+                "required": [
+                  "field"
+                ],
+                "properties": {
+                  "field": {
+                    "type": "string"
+                  },
+                  "mode": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

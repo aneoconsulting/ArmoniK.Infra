@@ -14,11 +14,11 @@
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 5.61 |
-| <a name="provider_helm"></a> [helm](#provider\_helm) | >= 2.10.1 |
-| <a name="provider_kubernetes"></a> [kubernetes](#provider\_kubernetes) | >= 2.13.0 |
-| <a name="provider_null"></a> [null](#provider\_null) | >= 3.2.1 |
-| <a name="provider_random"></a> [random](#provider\_random) | >= 3.5.1 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.84.0 |
+| <a name="provider_helm"></a> [helm](#provider\_helm) | 2.17.0 |
+| <a name="provider_kubernetes"></a> [kubernetes](#provider\_kubernetes) | 2.35.1 |
+| <a name="provider_null"></a> [null](#provider\_null) | 3.2.3 |
+| <a name="provider_random"></a> [random](#provider\_random) | 3.6.3 |
 
 ## Modules
 
@@ -139,6 +139,7 @@
 | <a name="output_issuer"></a> [issuer](#output\_issuer) | EKS Identity issuer |
 | <a name="output_kms_key_id"></a> [kms\_key\_id](#output\_kms\_key\_id) | ARN of KMS used for EKS |
 | <a name="output_kubeconfig_file"></a> [kubeconfig\_file](#output\_kubeconfig\_file) | Path of kubeconfig file |
+| <a name="output_node_security_group_id"></a> [node\_security\_group\_id](#output\_node\_security\_group\_id) | ID of the node shared security group |
 | <a name="output_self_managed_node_groups"></a> [self\_managed\_node\_groups](#output\_self\_managed\_node\_groups) | List of self managed node groups |
 | <a name="output_self_managed_worker_iam_role_names"></a> [self\_managed\_worker\_iam\_role\_names](#output\_self\_managed\_worker\_iam\_role\_names) | list of the self managed workers IAM role names |
 | <a name="output_worker_iam_role_names"></a> [worker\_iam\_role\_names](#output\_worker\_iam\_role\_names) | list of the workers IAM role names |

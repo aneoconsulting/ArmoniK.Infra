@@ -4,7 +4,7 @@ locals {
 
 # Get the service name of each the VPC endpoints
 data "aws_vpc_endpoint_service" "endpoints" {
-  for_each = {for endpoint, values in var.endpoints : endpoint => values if endpoint != "mongodb_atlas"}
+  for_each = { for endpoint, values in var.endpoints : endpoint => values if endpoint != "mongodb_atlas" }
   service  = try(each.value["service"], null)
   filter {
     name   = "service-type"

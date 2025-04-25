@@ -57,3 +57,19 @@ output "certificate_secret" {
     key       = "mongodb-ca-cert"
   } : null
 }
+
+output "private_connection_string" {
+  description = "MongoDB Atlas private connection string (if private endpoint is enabled)"
+  value       = local.private_connection_string
+  sensitive   = true
+}
+
+output "private_link_id" {
+  description = "MongoDB Atlas private link ID (if private endpoint is enabled)"
+  value       = var.enable_private_endpoint ? mongodbatlas_privatelink_endpoint.pe[0].id : null
+}
+
+output "private_endpoint_service_name" {
+  description = "MongoDB Atlas private endpoint service name (if private endpoint is enabled)"
+  value       = var.enable_private_endpoint && var.aws_endpoint_id != "" ? mongodbatlas_privatelink_endpoint_service.pe_service[0].endpoint_service_id : null
+}

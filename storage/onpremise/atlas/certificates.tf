@@ -1,1 +1,0 @@
-# No certificate-specific resources in this module currently.

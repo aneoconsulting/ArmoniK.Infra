@@ -89,8 +89,3 @@ output "kubeconfig_file" {
   description = "Path of kubeconfig file"
   value       = local.kubeconfig_output_path
 }
-
-output "node_security_group_id" {
-  description = "ID of the node shared security group"
-  value       = module.eks.node_security_group_id
-}

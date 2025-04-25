@@ -31,8 +31,5 @@ resource "kubernetes_secret" "mongodb" {
   data = {
     username = random_string.mongodb_admin_user.result
     password = random_password.mongodb_admin_password.result
-    # host               = local.mongodb_url.dns # Use connection string instead
-    # port               = 27017                 # Use connection string instead
-    # url                = local.connection_string # Use connection string secret
   }
 }

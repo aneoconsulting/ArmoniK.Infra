@@ -6,16 +6,7 @@ provider "mongodbatlas" {
   private_key = var.mongodb_atlas_private_key
 }
 
-# Ensure certificate is downloaded before creating users
-resource "null_resource" "certificate_dependency" {
-  depends_on = [
-    null_resource.download_atlas_certificate
-  ]
-
-  # Only create this resource if we're supposed to download the certificate
-  count = var.download_atlas_certificate ? 1 : 0
-}
-
+# Core MongoDB Atlas resources
 resource "mongodbatlas_database_user" "admin" {
   username           = random_string.mongodb_admin_user.result
   password           = random_password.mongodb_admin_password.result
@@ -24,7 +15,7 @@ resource "mongodbatlas_database_user" "admin" {
 
   roles {
     role_name     = "readWrite"
-    database_name = local.mongodb_database_name
+    database_name = "database"
   }
 
   roles {
@@ -36,17 +27,20 @@ resource "mongodbatlas_database_user" "admin" {
     name = var.atlas.cluster_name
     type = "CLUSTER"
   }
-
-  # If certificate download is enabled, depend on the certificate being downloaded
-  depends_on = [
-    null_resource.certificate_dependency
-  ]
 }
 
 data "mongodbatlas_advanced_cluster" "aklocal" {
   project_id = var.atlas.project_id
   name       = var.atlas.cluster_name
   depends_on = [mongodbatlas_database_user.admin]
+}
+
+# Add the second data source for when using private endpoints
+data "mongodbatlas_advanced_cluster" "akaws" {
+  count      = var.enable_private_endpoint && var.aws_endpoint_id != "" ? 1 : 0
+  project_id = var.atlas.project_id
+  name       = var.atlas.cluster_name
+  depends_on = [mongodbatlas_privatelink_endpoint_service.pe_service]
 }
 
 # Private endpoint creation - only created if AWS integration is enabled
@@ -65,24 +59,5 @@ resource "mongodbatlas_privatelink_endpoint_service" "pe_service" {
   endpoint_service_id = var.aws_endpoint_id
   provider_name       = "AWS"
   
-  # Make sure the private endpoint exists before trying to connect to it
   depends_on = [mongodbatlas_privatelink_endpoint.pe]
-}
-
-# If using AWS private endpoints, get the connection info
-locals {
-  # Get private endpoints if they exist
-  private_endpoints = var.enable_private_endpoint && var.aws_endpoint_id != "" ? flatten([
-      for cs in try(data.mongodbatlas_advanced_cluster.aklocal.connection_strings, []) : 
-      try(cs.private_endpoint, [])
-    ]) : []
-  
-  # Extract the SRV connection strings that match our endpoint ID
-  connection_strings = var.enable_private_endpoint && var.aws_endpoint_id != "" ? [
-    for pe in local.private_endpoints : pe.srv_connection_string
-    if contains([for e in try(pe.endpoints, []) : e.endpoint_id], var.aws_endpoint_id)
-  ] : []
-  
-  # Use the first connection string if available
-  private_connection_string = length(local.connection_strings) > 0 ? local.connection_strings[0] : ""
 }

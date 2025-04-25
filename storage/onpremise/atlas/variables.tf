@@ -24,7 +24,7 @@ variable "mongodb_atlas_private_key" {
 }
 
 variable "download_atlas_certificate" {
-  description = "Whether to automatically download the MongoDB Atlas CA certificate"
+  description = "Whether to download the MongoDB Atlas certificate"
   type        = bool
   default     = false
 }

@@ -1,11 +1,6 @@
 # Environment variables "MONGODB_ATLAS_PUBLIC_KEY" and "MONGODB_ATLAS_PRIVATE_KEY" must be 
 # set and exported for the provider to access your MongoDB Atlas cluster
 
-provider "mongodbatlas" {
-  public_key  = var.mongodb_atlas_public_key
-  private_key = var.mongodb_atlas_private_key
-}
-
 # Core MongoDB Atlas resources
 resource "mongodbatlas_database_user" "admin" {
   username           = random_string.mongodb_admin_user.result

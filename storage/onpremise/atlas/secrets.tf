@@ -1,20 +1,38 @@
+# Kubernetes secrets for MongoDB credentials and connection string
+resource "kubernetes_secret" "mongodb_admin" {
+  metadata {
+    name      = "mongodb-admin"
+    namespace = var.namespace
+  }
+  data = {
+    username = random_string.mongodb_admin_user.result
+    password = random_password.mongodb_admin_password.result
+  }
+  type = "kubernetes.io/basic-auth"
+}
+
+resource "kubernetes_secret" "mongodbatlas_connection_string" {
+  metadata {
+    name      = "mongodbatlas-connection-string"
+    namespace = var.namespace
+  }
+  data = {
+    # Construct the connection string using the generated credentials and the DNS from locals
+    string = "mongodb+srv://${random_string.mongodb_admin_user.result}:${random_password.mongodb_admin_password.result}@${local.mongodb_url.dns}/database"
+  }
+}
+
+# This secret seems partially redundant, keeping as requested.
 resource "kubernetes_secret" "mongodb" {
   metadata {
     name      = "mongodb"
     namespace = var.namespace
   }
   data = {
-    username   = random_string.mongodb_application_user.result
-    password   = random_password.mongodb_application_password.result
-  }
-}
-
-resource "kubernetes_secret" "mongodbatlas_connection_string" {
-  metadata {
-    name      = "mongodb-connection-string"
-    namespace = var.namespace
-  }
-  data = {
-    string = local.private_connection_string != "" ? local.private_connection_string : local.public_connection_string
+    username = random_string.mongodb_admin_user.result
+    password = random_password.mongodb_admin_password.result
+    # host               = local.mongodb_url.dns # Use connection string instead
+    # port               = 27017                 # Use connection string instead
+    # url                = local.connection_string # Use connection string secret
   }
 }

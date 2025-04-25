@@ -1,48 +1,24 @@
-variable "atlas" {
-  description = "Atlas project parameters"
-  type = object({
-    cluster_name = string
-    project_id   = string
-  })
+variable "atlas_project_id" {
+  description = "MongoDB Atlas Project ID."
+  type        = string
+}
+
+variable "atlas_cluster_name" {
+  description = "MongoDB Atlas Cluster Name."
+  type        = string
 }
 
 variable "namespace" {
-  description = "Kubernetes namespace where secrets will be created"
+  description = "Kubernetes namespace for secrets."
   type        = string
 }
 
-variable "mongodb_atlas_public_key" {
+variable "region" {
+  description = "AWS region for the private endpoint."
   type        = string
-  description = "MongoDB Atlas public API key"
-  sensitive   = true
 }
 
-variable "mongodb_atlas_private_key" {
+variable "vpce_mongodb_atlas_endpoint_id" {
+  description = "The VPC Endpoint ID for the MongoDB Atlas connection."
   type        = string
-  description = "MongoDB Atlas private API key"
-  sensitive   = true
-}
-
-variable "download_atlas_certificate" {
-  description = "Whether to download the MongoDB Atlas certificate"
-  type        = bool
-  default     = false
-}
-
-variable "enable_private_endpoint" {
-  description = "Whether to create a private endpoint for MongoDB Atlas"
-  type        = bool
-  default     = false
-}
-
-variable "aws_region" {
-  description = "AWS region where the private endpoint should be created"
-  type        = string
-  default     = ""
-}
-
-variable "aws_endpoint_id" {
-  description = "AWS VPC endpoint ID to connect to MongoDB Atlas"
-  type        = string
-  default     = ""
 }

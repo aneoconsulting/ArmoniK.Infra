@@ -22,3 +22,13 @@ variable "vpce_mongodb_atlas_endpoint_id" {
   description = "The VPC Endpoint ID for the MongoDB Atlas connection."
   type        = string
 }
+
+variable "public_key" {
+  description = "MongoDB Atlas public API key."
+  type        = string
+}
+
+variable "private_key" {
+  description = "MongoDB Atlas private API key."
+  type        = string
+}

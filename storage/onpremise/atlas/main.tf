@@ -1,3 +1,8 @@
+provider "mongodbatlas" {
+  public_key  = var.public_key
+  private_key = var.private_key
+}
+
 # Resources for generating random credentials
 resource "random_string" "mongodb_admin_user" {
   length  = 8

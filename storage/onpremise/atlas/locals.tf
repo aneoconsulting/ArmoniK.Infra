@@ -26,16 +26,16 @@ locals {
     }
 
     env = {
-      "Components__TableStorage" = "ArmoniK.Adapters.MongoDB.TableStorage"
-      "MongoDB__Host"            = local.mongodb_url.dns
-      #"MongoDB__Port"             = "27017" # Port is usually included in SRV string
+      "Components__TableStorage"  = "ArmoniK.Adapters.MongoDB.TableStorage"
+      "MongoDB__Host"             = local.mongodb_url.dns
       "MongoDB__Tls"              = "true"
-      #"MongoDB__ReplicaSet"       = "rs0" # Replica set name might be in SRV string or specific to cluster
       "MongoDB__DatabaseName"     = "database"
       "MongoDB__DirectConnection" = "false"
-      #"MongoDB__CAFile"           = "/mongodb/certificate/mongodb-ca-cert" # CA file handling depends on deployment
       "MongoDB__AuthSource"       = "admin"
       "MongoDB__Sharding"         = "true" # Assuming sharding based on original config
+      #"MongoDB__Port"             = "27017" # Port is usually included in SRV string
+      #"MongoDB__ReplicaSet"       = "rs0" # Replica set name might be in SRV string or specific to cluster
+      #"MongoDB__CAFile"           = "/mongodb/certificate/mongodb-ca-cert" # CA file handling depends on deployment
     }
   }
 }

@@ -11,5 +11,7 @@ locals {
 }
 
 output "connection_string" {
-  value = length(local.connection_strings) > 0 ? local.connection_strings[0] : ""
+  description = "MongoDB Atlas connection string using the private endpoint." # Add description
+  value       = local.connection_string
+  sensitive   = true
 }

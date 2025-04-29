@@ -2,7 +2,7 @@
 # Create Kubernetes secrets for MongoDB access
 resource "kubernetes_secret" "mongodb_admin" {
   metadata {
-    name      = "mongodb-admin"
+    name      = "mongodb-atlas-admin"
     namespace = var.namespace
   }
   data = {
@@ -24,7 +24,7 @@ resource "kubernetes_secret" "mongodbatlas_connection_string" {
 
 resource "kubernetes_secret" "mongodb" {
   metadata {
-    name      = "mongodb"
+    name      = "mongodb-atlas"
     namespace = var.namespace
   }
   data = {

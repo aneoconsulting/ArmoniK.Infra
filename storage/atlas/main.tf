@@ -20,13 +20,6 @@ resource "mongodbatlas_database_user" "admin" {
   }
 }
 
-data "mongodbatlas_advanced_cluster" "akaws" {
-  project_id = var.atlas.project_id
-  name       = var.atlas.cluster_name
-  depends_on = [mongodbatlas_privatelink_endpoint_service.pe_service]
-}
-
-## Private endpoint creation
 
 resource "mongodbatlas_privatelink_endpoint" "pe" {
   project_id    = var.atlas.project_id
@@ -35,10 +28,27 @@ resource "mongodbatlas_privatelink_endpoint" "pe" {
 }
 
 
-# Connect AWS VPC endpoint to MongoDB Atlas privatelink
+
+data "mongodbatlas_advanced_cluster" "akaws" {
+  project_id = var.atlas.project_id
+  name       = var.atlas.cluster_name
+}
+
 resource "mongodbatlas_privatelink_endpoint_service" "pe_service" {
-  project_id          = mongodbatlas_privatelink_endpoint.pe.project_id
-  private_link_id     = mongodbatlas_privatelink_endpoint.pe.id
-  endpoint_service_id = var.vpce_id
+  project_id          = var.atlas.project_id
+  private_link_id     = mongodbatlas_privatelink_endpoint.pe.private_link_id
+  endpoint_service_id = local.effective_endpoint_id
   provider_name       = "AWS"
+
+  depends_on = [aws_vpc_endpoint.mongodb_atlas]
+}
+
+resource "null_resource" "wait_for_privatelink" {
+  depends_on = [mongodbatlas_privatelink_endpoint_service.pe_service]
+
+  triggers = {
+    pe_service_id          = mongodbatlas_privatelink_endpoint_service.pe_service.id
+    private_link_id        = mongodbatlas_privatelink_endpoint.pe.private_link_id
+    connection_string_sha1 = sha1(local.connection_string)
+  }
 }

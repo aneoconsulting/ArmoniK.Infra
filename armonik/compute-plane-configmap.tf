@@ -18,7 +18,7 @@ module "polling_all_aggregation" {
       Amqp__LinkCredit               = "2"
       Pollster__GraceDelay           = "00:00:15"
     }
-  }, module.core_aggregation, module.compute_aggregation, var.configurations.polling])
+  }, module.core_aggregation, module.compute_all_aggregation, var.configurations.polling])
   materialize_configmap = {
     name      = "polling-configmap"
     namespace = var.namespace
@@ -34,7 +34,7 @@ module "worker_all_aggregation" {
     }
     }, {
     env = local.file_storage_endpoints
-  }, module.compute_aggregation, var.configurations.worker])
+  }, module.compute_all_aggregation, var.configurations.worker])
   materialize_configmap = {
     name      = "worker-configmap"
     namespace = var.namespace

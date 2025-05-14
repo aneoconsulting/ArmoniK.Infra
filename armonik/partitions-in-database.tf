@@ -172,11 +172,11 @@ locals {
   # EOF
 
   script = <<EOF
-#!/bin/bash
-# Drop
-mongosh --tlsCAFile $MongoDB__CAFile --tlsAllowInvalidCertificates --tlsAllowInvalidHostnames --tls --username $MongoDB__User --password $MongoDB__Password mongodb+srv://$MongoDB__Host/$MongoDB__DatabaseName --eval 'db.PartitionData.drop()'
-# Insert
+  #!/bin/bash
+  # Drop
+  mongosh --tlsCAFile $MongoDB__CAFile --tlsAllowInvalidCertificates --tlsAllowInvalidHostnames --tls --username $MongoDB__User --password $MongoDB__Password mongodb+srv://$MongoDB__Host/$MongoDB__DatabaseName --eval 'db.PartitionData.drop()'
+  # Insert
 
-mongosh --tlsCAFile $MongoDB__CAFile --tlsAllowInvalidCertificates --tlsAllowInvalidHostnames --tls --username $MongoDB__User --password $MongoDB__Password mongodb+srv://$MongoDB__Host/$MongoDB__DatabaseName --eval 'db.PartitionData.insertMany(${jsonencode(local.partitions_data)})'
-EOF
+  mongosh --tlsCAFile $MongoDB__CAFile --tlsAllowInvalidCertificates --tlsAllowInvalidHostnames --tls --username $MongoDB__User --password $MongoDB__Password mongodb+srv://$MongoDB__Host/$MongoDB__DatabaseName --eval 'db.PartitionData.insertMany(${jsonencode(local.partitions_data)})'
+  EOF
 }

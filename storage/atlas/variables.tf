@@ -1,10 +1,13 @@
-variable "atlas" {
-  description = "Atlas project parameters"
-  type = object({
-    cluster_name = string
-    project_id   = string
-  })
+variable "cluster_name" {
+  description = "Name of the MongoDB Atlas cluster"
+  type        = string
 }
+
+variable "project_id" {
+  description = "ID of the MongoDB Atlas project"
+  type        = string
+}
+
 
 variable "namespace" {
   description = "Kubernetes namespace for secrets."
@@ -16,12 +19,25 @@ variable "region" {
 }
 
 variable "vpc_id" {
-  description = "VPC ID to use for creating a VPC endpoint for MongoDB Atlas"
+  description = "ID of the VPC to create the VPC endpoint in"
   type        = string
 }
 
-variable "endpoint_id" {
-  description = "Existing VPC Endpoint ID for MongoDB Atlas PrivateLink (starting with vpce-)"
-  type        = string
-  default     = null
+
+variable "tags" {
+  description = "Tags to apply to the resources"
+  type        = map(string)
+  default     = {}
+}
+
+variable "security_group_ids" {
+  description = "Security group IDs to attach to the VPC endpoint"
+  type        = list(string)
+  default     = []
+}
+
+variable "subnet_ids" {
+  description = "Subnet IDs to attach to the VPC endpoint"
+  type        = list(string)
+  default     = []
 }

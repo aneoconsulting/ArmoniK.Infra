@@ -23,3 +23,13 @@ output "endpoint_service_name" {
   description = "MongoDB Atlas privatelink endpoint service name"
   value       = mongodbatlas_privatelink_endpoint.pe.endpoint_service_name
 }
+
+output "env_from_secret" {
+  description = "MongoDB Atlas env from secret"
+  value       = local.atlas_outputs.env_from_secret
+}
+
+output "env" {
+  description = "MongoDB Atlas env"
+  value       = local.atlas_outputs.env
+}

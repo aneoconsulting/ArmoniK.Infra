@@ -1,38 +1,54 @@
-# Create a VPC endpoint for MongoDB Atlas
 resource "aws_vpc_endpoint" "mongodb_atlas" {
-  count              = var.endpoint_id == null ? 1 : 0
-  vpc_id             = var.vpc_id
-  service_name       = mongodbatlas_privatelink_endpoint.pe.endpoint_service_name
-  vpc_endpoint_type  = "Interface"
-  subnet_ids         = data.aws_subnets.private.ids
-  security_group_ids = [data.aws_security_group.default.id]
+  vpc_id              = var.vpc_id
+  service_name        = mongodbatlas_privatelink_endpoint.pe.endpoint_service_name
+  vpc_endpoint_type   = "Interface"
+  subnet_ids          = var.subnet_ids
+  security_group_ids  = var.security_group_ids
+  private_dns_enabled = false
 
-  tags = {
-    Name = "atlas-mongodb-endpoint"
+
+  tags = merge(
+    var.tags,
+    { Name = "${local.tags["Name"]}-mongodb-atlas" }
+  )
+  depends_on = [mongodbatlas_privatelink_endpoint.pe]
+}
+
+## Private endpoint creation
+resource "mongodbatlas_privatelink_endpoint" "pe" {
+  project_id    = var.project_id
+  provider_name = "AWS"
+  region        = var.region
+
+  lifecycle {
+    create_before_destroy = true
+    ignore_changes = [
+      provider_name,
+      region,
+      id
+    ]
   }
 }
 
+# Update service connection - this will work whether the endpoint was created now or already existed
+resource "mongodbatlas_privatelink_endpoint_service" "pe_service" {
+  project_id          = mongodbatlas_privatelink_endpoint.pe.project_id
+  private_link_id     = mongodbatlas_privatelink_endpoint.pe.id
+  endpoint_service_id = aws_vpc_endpoint.mongodb_atlas.id
+  provider_name       = "AWS"
 
-# Get the default security group
-data "aws_security_group" "default" {
-  vpc_id = var.vpc_id
-  name   = "default"
+  depends_on = [
+    mongodbatlas_privatelink_endpoint.pe,
+    aws_vpc_endpoint.mongodb_atlas
+  ]
 }
 
-# Get private subnets
-data "aws_subnets" "private" {
-  filter {
-    name   = "vpc-id"
-    values = [var.vpc_id]
-  }
+resource "null_resource" "wait_for_privatelink" {
+  depends_on = [mongodbatlas_privatelink_endpoint_service.pe_service]
 
-  # Optional filter for private subnets
-  filter {
-    name   = "tag:Name"
-    values = ["*private*"]
+  triggers = {
+    pe_service_id          = mongodbatlas_privatelink_endpoint_service.pe_service.id
+    private_link_id        = mongodbatlas_privatelink_endpoint.pe.private_link_id
+    connection_string_sha1 = sha1(local.connection_string)
   }
-}
-
-locals {
-  effective_endpoint_id = coalesce(var.endpoint_id, try(aws_vpc_endpoint.mongodb_atlas[0].id, null))
 }

@@ -40,7 +40,6 @@ module "atlas" {
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.0 |
 | <a name="requirement_kubernetes"></a> [kubernetes](#requirement\_kubernetes) | >= 2.21.1 |
 | <a name="requirement_mongodbatlas"></a> [mongodbatlas](#requirement\_mongodbatlas) | >= 1.12.0 |
-| <a name="requirement_null"></a> [null](#requirement\_null) | >= 3.2.1 |
 | <a name="requirement_random"></a> [random](#requirement\_random) | >= 3.5.1 |
 
 ## Providers
@@ -50,7 +49,6 @@ module "atlas" {
 | <a name="provider_aws"></a> [aws](#provider\_aws) | >= 5.0 |
 | <a name="provider_kubernetes"></a> [kubernetes](#provider\_kubernetes) | >= 2.21.1 |
 | <a name="provider_mongodbatlas"></a> [mongodbatlas](#provider\_mongodbatlas) | >= 1.12.0 |
-| <a name="provider_null"></a> [null](#provider\_null) | >= 3.2.1 |
 | <a name="provider_random"></a> [random](#provider\_random) | >= 3.5.1 |
 
 ## Modules
@@ -68,7 +66,6 @@ No modules.
 | [mongodbatlas_database_user.admin](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs/resources/database_user) | resource |
 | [mongodbatlas_privatelink_endpoint.pe](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs/resources/privatelink_endpoint) | resource |
 | [mongodbatlas_privatelink_endpoint_service.pe_service](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs/resources/privatelink_endpoint_service) | resource |
-| [null_resource.wait_for_privatelink](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
 | [random_password.mongodb_admin_password](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/password) | resource |
 | [random_string.mongodb_admin_user](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/string) | resource |
 | [mongodbatlas_advanced_cluster.akaws](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs/data-sources/advanced_cluster) | data source |
@@ -90,9 +87,6 @@ No modules.
 
 | Name | Description |
 |------|-------------|
-| <a name="output_atlas_outputs"></a> [atlas\_outputs](#output\_atlas\_outputs) | Atlas configuration outputs for ArmoniK |
-| <a name="output_config"></a> [config](#output\_config) | MongoDB configuration for ArmoniK |
-| <a name="output_connection_string"></a> [connection\_string](#output\_connection\_string) | MongoDB Atlas connection string |
 | <a name="output_endpoint_service_name"></a> [endpoint\_service\_name](#output\_endpoint\_service\_name) | MongoDB Atlas privatelink endpoint service name |
 | <a name="output_env"></a> [env](#output\_env) | MongoDB Atlas env |
 | <a name="output_env_from_secret"></a> [env\_from\_secret](#output\_env\_from\_secret) | MongoDB Atlas env from secret |

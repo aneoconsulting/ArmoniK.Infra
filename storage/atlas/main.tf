@@ -14,10 +14,6 @@ resource "mongodbatlas_database_user" "admin" {
     database_name = "admin"
   }
 
-  # roles {
-  #   role_name     = "enableSharding"
-  #   database_name = "admin"
-  # }
 
   scopes {
     name = var.cluster_name

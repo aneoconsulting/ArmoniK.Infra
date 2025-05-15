@@ -172,20 +172,11 @@ resource "kubernetes_cron_job_v1" "partitions_in_database" {
 }
 
 locals {
-  #   script_cron = <<EOF
-  # #!/bin/bash
-  # export nbElements=$(mongosh --tlsCAFile $MongoDB__CAFile --tlsAllowInvalidCertificates --tlsAllowInvalidHostnames --tls --username $MongoDB__User --password $MongoDB__Password "mongodb://$MongoDB__Host:$MongoDB__Port/database?authSource=$MongoDB__AuthSource&directConnection=true" --eval 'db.PartitionData.countDocuments()' --quiet)
-  # if [[ $nbElements != ${length(local.partition_names)} ]]; then
-  #   mongosh --tlsCAFile $MongoDB__CAFile --tlsAllowInvalidCertificates --tlsAllowInvalidHostnames --tls --username $MongoDB__User --password $MongoDB__Password "mongodb://$MongoDB__Host:$MongoDB__Port/database?authSource=$MongoDB__AuthSource&directConnection=true" --eval 'db.PartitionData.insertMany(${jsonencode(local.partitions_data)})'
-  # fi
-  # EOF
-
-
   script_cron = <<EOF
   #!/bin/bash
-  export nbElements=$(mongosh --tlsCAFile $MongoDB__CAFile --tlsAllowInvalidCertificates --tlsAllowInvalidHostnames --tls --username $MongoDB__User --password $MongoDB__Password "mongodb+srv://$MongoDB__Host/$MongoDB__DatabaseName" --eval 'db.PartitionData.countDocuments()' --quiet)
+  export nbElements=$(mongosh --tlsCAFile "$MongoDB__CAFile" --tlsAllowInvalidCertificates --tlsAllowInvalidHostnames --tls --username "$MongoDB__User" --password "$MongoDB__Password" "mongodb+srv://$MongoDB__Host/$MongoDB__DatabaseName" --eval 'db.PartitionData.countDocuments()' --quiet)
   if [[ $nbElements != ${length(local.partition_names)} ]]; then
-    mongosh --tlsCAFile $MongoDB__CAFile --tlsAllowInvalidCertificates --tlsAllowInvalidHostnames --tls --username $MongoDB__User --password $MongoDB__Password "mongodb+srv://$MongoDB__Host/$MongoDB__DatabaseName" --eval 'db.PartitionData.insertMany(${jsonencode(local.partitions_data)})'
+    mongosh --tlsCAFile "$MongoDB__CAFile" --tlsAllowInvalidCertificates --tlsAllowInvalidHostnames --tls --username "$MongoDB__User" --password "$MongoDB__Password" "mongodb+srv://$MongoDB__Host/$MongoDB__DatabaseName" --eval 'db.PartitionData.insertMany(${jsonencode(local.partitions_data)})'
   fi
   EOF
 }

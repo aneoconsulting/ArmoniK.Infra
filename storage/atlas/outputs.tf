@@ -1,23 +1,8 @@
-output "atlas_outputs" {
-  description = "Atlas configuration outputs for ArmoniK"
-  value       = local.atlas_outputs
-}
-
-output "connection_string" {
-  description = "MongoDB Atlas connection string"
-  value       = local.connection_string
-  sensitive   = true
-}
-
 output "mongodb_url" {
   description = "MongoDB URL information"
   value       = local.mongodb_url
 }
 
-output "config" {
-  description = "MongoDB configuration for ArmoniK"
-  value       = local.atlas_outputs
-}
 
 output "endpoint_service_name" {
   description = "MongoDB Atlas privatelink endpoint service name"
@@ -26,10 +11,31 @@ output "endpoint_service_name" {
 
 output "env_from_secret" {
   description = "MongoDB Atlas env from secret"
-  value       = local.atlas_outputs.env_from_secret
+  value = {
+    "MongoDB__User" = {
+      secret = kubernetes_secret.mongodb_admin.metadata[0].name
+      field  = "username"
+    }
+    "MongoDB__Password" = {
+      secret = kubernetes_secret.mongodb_admin.metadata[0].name
+      field  = "password"
+    }
+    "MongoDB__ConnectionString" = {
+      secret = kubernetes_secret.mongodbatlas_connection_string.metadata[0].name
+      field  = "string"
+    }
+  }
 }
 
 output "env" {
   description = "MongoDB Atlas env"
-  value       = local.atlas_outputs.env
+  value = {
+    "Components__TableStorage"  = "ArmoniK.Adapters.MongoDB.TableStorage"
+    "MongoDB__Host"             = local.mongodb_url.dns
+    "MongoDB__Tls"              = "true"
+    "MongoDB__DatabaseName"     = "database"
+    "MongoDB__DirectConnection" = "false"
+    "MongoDB__AuthSource"       = "admin"
+    "MongoDB__Sharding"         = "false" # Depending on the sharding strategy, this may need to be set to true
+  }
 }

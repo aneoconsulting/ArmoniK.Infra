@@ -14,7 +14,6 @@ resource "aws_vpc_endpoint" "mongodb_atlas" {
   depends_on = [mongodbatlas_privatelink_endpoint.pe]
 }
 
-## Private endpoint creation
 resource "mongodbatlas_privatelink_endpoint" "pe" {
   project_id    = var.project_id
   provider_name = "AWS"
@@ -30,7 +29,6 @@ resource "mongodbatlas_privatelink_endpoint" "pe" {
   }
 }
 
-# Update service connection - this will work whether the endpoint was created now or already existed
 resource "mongodbatlas_privatelink_endpoint_service" "pe_service" {
   project_id          = mongodbatlas_privatelink_endpoint.pe.project_id
   private_link_id     = mongodbatlas_privatelink_endpoint.pe.id
@@ -41,14 +39,4 @@ resource "mongodbatlas_privatelink_endpoint_service" "pe_service" {
     mongodbatlas_privatelink_endpoint.pe,
     aws_vpc_endpoint.mongodb_atlas
   ]
-}
-
-resource "null_resource" "wait_for_privatelink" {
-  depends_on = [mongodbatlas_privatelink_endpoint_service.pe_service]
-
-  triggers = {
-    pe_service_id          = mongodbatlas_privatelink_endpoint_service.pe_service.id
-    private_link_id        = mongodbatlas_privatelink_endpoint.pe.private_link_id
-    connection_string_sha1 = sha1(local.connection_string)
-  }
 }

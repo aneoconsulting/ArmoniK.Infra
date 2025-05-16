@@ -10,15 +10,15 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = ">= 5.61"
+      version = ">= 5.98.0"
     }
     skopeo2 = {
       source  = "bsquare-corp/skopeo2"
-      version = ">= 1.1.1"
+      version = ">= 1.1.2"
     }
     generic = {
       source  = "aneoconsulting.github.io/aneoconsulting/generic"
-      version = ">= 0.1.1"
+      version = ">= 0.1.2"
     }
   }
 }

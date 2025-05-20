@@ -22,12 +22,6 @@ module "atlas" {
 }
 ```
 
-## Outputs
-
-- `private_connection_string`: Private SRV connection string for the Atlas cluster
-- `atlas_project_id`: Atlas project ID
-- `atlas_cluster_id`: Atlas cluster ID
-- `aws_vpc_endpoint_id`: AWS VPC endpoint ID
 
 ---
 

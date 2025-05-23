@@ -23,6 +23,22 @@ output "private_subnets" {
   value       = module.vpc.private_subnets
 }
 
+output "private_subnets_details" {
+  description = "Map of private subnet IDs to availability zones"
+  value = {
+    for i, subnet_id in module.vpc.private_subnets : subnet_id => {
+      availability_zone = element(
+        data.aws_availability_zones.available.names,
+        i % length(data.aws_availability_zones.available.names)
+      )
+      cidr_block = element(
+        module.vpc.private_subnets_cidr_blocks,
+        i
+      )
+    }
+  }
+}
+
 output "private_subnets_cidr_blocks" {
   description = "List of cidr_blocks of private subnets"
   value       = module.vpc.private_subnets_cidr_blocks

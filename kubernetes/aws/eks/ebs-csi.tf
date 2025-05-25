@@ -281,6 +281,7 @@ resource "kubernetes_service_account" "ebs_csi_driver_controller" {
     }
     namespace = local.ebs_csi.namespace
   }
+  depends_on = [null_resource.update_kubeconfig]
 }
 
 resource "kubernetes_service_account" "ebs_csi_driver_node" {
@@ -291,6 +292,7 @@ resource "kubernetes_service_account" "ebs_csi_driver_node" {
     }
     namespace = local.ebs_csi.namespace
   }
+  depends_on = [null_resource.update_kubeconfig]
 }
 
 resource "helm_release" "ebs_csi" {
@@ -348,7 +350,7 @@ resource "helm_release" "ebs_csi" {
     value = kubernetes_service_account.ebs_csi_driver_node.metadata[0].name
   }
   values = [
-    yamlencode(local.ebs_csi_controller.controller)
+    yamlencode(local.ebs_csi_controller)
   ]
   depends_on = [
     kubernetes_service_account.ebs_csi_driver_controller,

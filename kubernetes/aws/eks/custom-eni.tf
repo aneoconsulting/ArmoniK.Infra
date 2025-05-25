@@ -35,6 +35,6 @@ resource "kubernetes_config_map_v1_data" "amazon_vpc_cni" {
   }
   depends_on = [
     module.eks,
-    null_resource.update_kubeconfig
+    null_resource.change_cni_label
   ]
 }

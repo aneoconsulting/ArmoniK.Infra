@@ -47,53 +47,53 @@ module "eks" {
   cluster_autoscaler_scale_down_utilization_threshold      = 0.5
   cluster_autoscaler_scan_interval                         = "10s"
   cluster_autoscaler_skip_nodes_with_system_pods           = true
-  cluster_autoscaler_tag                                   = "v1.28.0"
-  cluster_autoscaler_version                               = "9.29.3"
+  cluster_autoscaler_tag                                   = "v1.32.0"
+  cluster_autoscaler_version                               = "9.46.6"
   cluster_encryption_config                                = ""
   cluster_endpoint_private_access                          = false
   cluster_endpoint_public_access                           = true
   cluster_endpoint_public_access_cidrs                     = ["0.0.0.0/0"]
   cluster_log_kms_key_id                                   = ""
   cluster_log_retention_in_days                            = 30
-  cluster_version                                          = "1.25"
+  cluster_version                                          = "1.32"
   ebs_kms_key_id                                           = ""
   instance_refresh_image                                   = "public.ecr.aws/aws-ec2/aws-node-termination-handler"
   instance_refresh_namespace                               = "kube-system"
-  instance_refresh_repository                              = "https://aws.github.io/eks-charts"
-  instance_refresh_tag                                     = "v1.19.0"
-  instance_refresh_version                                 = "0.21.0"
+  instance_refresh_repository                              = "oci://public.ecr.aws/aws-ec2/helm"
+  instance_refresh_tag                                     = "v1.25.1"
+  instance_refresh_version                                 = "0.27.1"
   kubeconfig_file                                          = "generated/kubeconfig"
   vpc_id                                                   = data.aws_vpc.default.id
   vpc_pods_subnet_ids                                      = data.aws_subnets.subnets.ids
   vpc_private_subnet_ids                                   = data.aws_subnets.subnets.ids
 
   efs_csi = {
-    image      = "amazon/aws-efs-csi-driver"
-    tag        = "v1.5.1"
+    image      = "public.ecr.aws/efs-csi-driver/amazon/aws-efs-csi-driver"
+    tag        = "v2.1.8"
     repository = "https://kubernetes-sigs.github.io/aws-efs-csi-driver/"
-    version    = "2.3.0"
+    version    = "3.1.9"
   }
 
   ebs_csi = {
-    image      = "amazon/aws-ebs-csi-driver"
-    tag        = "v1.39.0"
+    image      = "public.ecr.aws/ebs-csi-driver/aws-ebs-csi-driver"
+    tag        = "v1.44.0"
     repository = "https://kubernetes-sigs.github.io/aws-ebs-csi-driver/"
-    version    = "2.39.1"
+    version    = "2.44.0"
   }
 
   csi_liveness_probe = {
     image = "public.ecr.aws/eks-distro/kubernetes-csi/livenessprobe"
-    tag   = "v2.9.0-eks-1-22-19"
+    tag   = "v2.15.0-eks-1-32-14"
   }
 
   csi_node_driver_registrar = {
     image = "public.ecr.aws/eks-distro/kubernetes-csi/node-driver-registrar"
-    tag   = "v2.7.0-eks-1-22-19"
+    tag   = "v2.13.0-eks-1-32-14"
   }
 
   csi_external_provisioner = {
     image = "public.ecr.aws/eks-distro/kubernetes-csi/external-provisioner"
-    tag   = "v1.39.0"
+    tag   = "v5.2.0-eks-1-32-14"
   }
 
   eks_managed_node_groups = {

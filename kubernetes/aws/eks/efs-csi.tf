@@ -149,6 +149,7 @@ resource "kubernetes_service_account" "efs_csi_driver_controller" {
     }
     namespace = local.efs_csi_namespace
   }
+  depends_on = [null_resource.update_kubeconfig]
 }
 
 resource "kubernetes_service_account" "efs_csi_driver_node" {
@@ -159,6 +160,7 @@ resource "kubernetes_service_account" "efs_csi_driver_node" {
     }
     namespace = local.efs_csi_namespace
   }
+  depends_on = [null_resource.update_kubeconfig]
 }
 
 resource "helm_release" "efs_csi" {

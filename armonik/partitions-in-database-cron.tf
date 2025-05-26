@@ -126,9 +126,9 @@ resource "kubernetes_cron_job_v1" "partitions_in_database" {
               dynamic "volume_mount" {
                 for_each = module.job_aggregation.mount_configmap
                 content {
-                  name       = volume.value.configmap
-                  mount_path = volume.value.path
-                  sub_path   = lookup(volume.value, "subpath", null)
+                  name       = volume_mount.value.configmap
+                  mount_path = volume_mount.value.path
+                  sub_path   = lookup(volume_mount.value, "subpath", null)
                   read_only  = true
                 }
               }
@@ -153,7 +153,7 @@ resource "kubernetes_cron_job_v1" "partitions_in_database" {
                   name         = volume.value.configmap
                   default_mode = volume.value.mode
                   dynamic "items" {
-                    for_each = lookup(volume.value, "items", {})
+                    for_each = try(coalesce(volume.value.items), {})
                     content {
                       key  = items.key
                       path = items.value.field

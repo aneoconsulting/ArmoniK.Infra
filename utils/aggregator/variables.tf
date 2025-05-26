@@ -16,7 +16,7 @@ variable "conf_list" {
       configmap = string
       path      = string
       subpath   = optional(string)
-      mode      = optional(string, "644")
+      mode      = optional(string, "0644")
       items = optional(map(object({
         field = string
         mode  = optional(string)
@@ -26,7 +26,7 @@ variable "conf_list" {
       secret  = string
       path    = string
       subpath = optional(string)
-      mode    = optional(string, "644")
+      mode    = optional(string, "0644")
       items = optional(map(object({
         field = string
         mode  = optional(string)

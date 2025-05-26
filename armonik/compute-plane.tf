@@ -110,7 +110,7 @@ resource "kubernetes_deployment" "compute_plane" {
               name         = volume.value.configmap
               default_mode = volume.value.mode
               dynamic "items" {
-                for_each = lookup(volume.value, "items", {})
+                for_each = try(coalesce(volume.value.items), {})
                 content {
                   key  = items.key
                   path = items.value.field

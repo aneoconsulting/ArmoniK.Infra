@@ -245,7 +245,7 @@ var aggregation_certs = [
   }, {
     '$project': {
       '_id': 0,
-      'CN': 1,
+      'Cn': 1,
       'Fingerprint': 1,
       'UserId': {
         '$arrayElemAt': [

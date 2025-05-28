@@ -179,7 +179,7 @@ locals {
     certificates_list = [
       for name, cert in data.tls_certificate.certificate_data : {
         Fingerprint = cert.certificates[length(cert.certificates) - 1].sha1_fingerprint,
-        CN          = tls_cert_request.ingress_client_cert_request[name].subject[0].common_name,
+        Cn          = tls_cert_request.ingress_client_cert_request[name].subject[0].common_name,
         Username    = name
       }
     ]

@@ -37,7 +37,7 @@ dependencies:
     repository: file://charts/activemq
     condition: global.dependencies.activemq
   - name: redis
-    version: 20.x.x
+    version: 21.2.0
     repository: https://charts.bitnami.com/bitnami
     condition: global.dependencies.redis
   - name: mongodb
@@ -57,19 +57,19 @@ dependencies:
   #   repository: https://charts.chaos-mesh.org
   #   condition: global.dependencies.chaos-mesh
   - name: rabbitmq
-    version: 15.x.x
+    version: 16.0.6
     repository: https://charts.bitnami.com/bitnami
     condition: global.dependencies.rabbitmq
   - name: grafana
-    version: 8.x.x
+    version: 9.2.2
     repository: https://grafana.github.io/helm-charts
     condition: global.dependencies.grafana
   - name: fluent-bit
-    version: 2.x.x
+    version: 3.1.5
     repository: https://charts.bitnami.com/bitnami
     condition: global.dependencies.fluentBit
   - name: seq
-    version: 2024.x.x
+    version: 2025.1.1
     repository: https://helm.datalust.co
     condition: global.dependencies.seq
   - name: cert-manager

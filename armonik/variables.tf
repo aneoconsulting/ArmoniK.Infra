@@ -176,6 +176,47 @@ variable "compute_plane" {
   }))
 }
 
+# Parameters of the compute plane for GCE
+variable "compute_plane_gce" {
+  description = "Parameters of the compute plane for GCE"
+  type = map(object({
+    partition_data = optional(object({
+      parent_partition_ids  = optional(list(string), [])
+      reserved_pods         = optional(number, 1)
+      max_pods              = optional(number, 100)
+      preemption_percentage = optional(number, 50)
+      priority              = optional(number, 1)
+      pod_configuration     = optional(any, null)
+    }), {})
+    scaling = optional(object({
+      enabled                              = optional(bool, false)
+      min_replicas                         = optional(number, 0)
+      max_replicas                         = optional(number, 10)
+      target_cpu_utilization_percentage    = optional(number, 80)
+      target_memory_utilization_percentage = optional(number, 80)
+    }), {})
+    polling_agent = optional(object({
+      image             = optional(string, "")
+      tag               = optional(string, "")
+      image_pull_policy = optional(string, "IfNotPresent")
+      limits            = optional(map(string), {})
+      requests          = optional(map(string), {})
+      conf              = optional(any, {})
+    }), {})
+    worker = optional(list(object({
+      name              = optional(string, "")
+      image             = optional(string, "")
+      tag               = optional(string, "")
+      image_pull_policy = optional(string, "IfNotPresent")
+      limits            = optional(map(string), {})
+      requests          = optional(map(string), {})
+      conf              = optional(any, {})
+    })), [])
+  }))
+  default = null
+}
+
+
 # Authentication behavior
 variable "authentication" {
   description = "Authentication behavior"

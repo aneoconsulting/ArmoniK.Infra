@@ -3,8 +3,10 @@ locals {
   supported_queues = toset(["Amqp__PartitionId", "PubSub__PartitionId", "SQS__PartitionId"])
 
   # list of partitions
-  partition_names   = keys(try(var.compute_plane, {}))
-  default_partition = try(contains(local.partition_names, coalesce(var.control_plane.default_partition)), false) ? var.control_plane.default_partition : try(local.partition_names[0], "")
+  compute_plane_names     = keys(var.compute_plane)
+  compute_plane_gce_names = keys(coalesce(var.compute_plane_gce, {}))
+  partition_names         = toset(concat(local.compute_plane_names, local.compute_plane_gce_names))
+  default_partition       = try(contains(local.partition_names, coalesce(var.control_plane.default_partition)), false) ? var.control_plane.default_partition : try(local.partition_names[0], "")
 
   # Node selector for control plane
   control_plane_node_selector        = try(var.control_plane.node_selector, {})
@@ -23,8 +25,8 @@ locals {
 
   # Node selector for compute plane
   compute_plane_node_selector        = { for partition, compute_plane in var.compute_plane : partition => try(compute_plane.node_selector, {}) }
-  compute_plane_node_selector_keys   = { for partition in local.partition_names : partition => keys(local.compute_plane_node_selector[partition]) }
-  compute_plane_node_selector_values = { for partition in local.partition_names : partition => values(local.compute_plane_node_selector[partition]) }
+  compute_plane_node_selector_keys   = { for partition in local.compute_plane_names : partition => keys(local.compute_plane_node_selector[partition]) }
+  compute_plane_node_selector_values = { for partition in local.compute_plane_names : partition => values(local.compute_plane_node_selector[partition]) }
 
   # Node selector for pod to insert partitions IDs in database
   job_partitions_in_database_node_selector        = try(var.job_partitions_in_database.node_selector, {})
@@ -42,7 +44,7 @@ locals {
 
   # Annotations
   control_plane_annotations = try(var.control_plane.annotations, {})
-  compute_plane_annotations = { for partition in local.partition_names : partition => try(var.compute_plane[partition].annotations, {}) }
+  compute_plane_annotations = { for partition in local.compute_plane_names : partition => try(var.compute_plane[partition].annotations, {}) }
   ingress_annotations       = try(var.ingress.annotations, {})
 
   # Shared storage
@@ -117,17 +119,32 @@ locals {
   }
 
   # Partitions data
-  partitions_data = [
-    for key, value in var.compute_plane : {
-      _id                  = key
-      ParentPartitionIds   = value.partition_data.parent_partition_ids
-      PodReserved          = value.partition_data.reserved_pods
-      PodMax               = value.partition_data.max_pods
-      PreemptionPercentage = value.partition_data.preemption_percentage
-      Priority             = value.partition_data.priority
-      PodConfiguration     = value.partition_data.pod_configuration
-    }
-  ]
+  partitions_data = concat(
+    # Partitions from compute_plane (Kubernetes-based)
+    [
+      for key, value in var.compute_plane : {
+        _id                  = key
+        ParentPartitionIds   = value.partition_data.parent_partition_ids
+        PodReserved          = value.partition_data.reserved_pods
+        PodMax               = value.partition_data.max_pods
+        PreemptionPercentage = value.partition_data.preemption_percentage
+        Priority             = value.partition_data.priority
+        PodConfiguration     = value.partition_data.pod_configuration
+      }
+    ],
+    # Partitions from compute_plane_gce (GCE VM-based)
+    [
+      for key, value in try(var.compute_plane_gce, {}) : {
+        _id                  = key
+        ParentPartitionIds   = try(value.partition_data.parent_partition_ids, [])
+        PodReserved          = try(value.partition_data.reserved_pods, 1)
+        PodMax               = try(value.partition_data.max_pods, 100)
+        PreemptionPercentage = try(value.partition_data.preemption_percentage, 50)
+        Priority             = try(value.partition_data.priority, 1)
+        PodConfiguration     = try(value.partition_data.pod_configuration, null)
+      }
+    ]
+  )
 
   # HPA scalers
   # Compute plane
@@ -157,7 +174,7 @@ locals {
   }
 
   compute_plane_triggers = {
-    for partition in local.partition_names : partition => {
+    for partition in local.compute_plane_names : partition => {
       triggers = [for trigger in local.hpa_compute_plane_triggers[partition].triggers : trigger if trigger != {}]
     }
   }

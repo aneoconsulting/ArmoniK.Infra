@@ -14,13 +14,13 @@ resource "mongodbatlas_database_user" "admin" {
     database_name = "admin"
   }
 
-
   scopes {
     name = var.cluster_name
     type = "CLUSTER"
   }
 }
-data "mongodbatlas_advanced_cluster" "akaws" {
+
+data "mongodbatlas_advanced_cluster" "atlas" {
   project_id = var.project_id
   name       = var.cluster_name
   depends_on = [mongodbatlas_privatelink_endpoint_service.pe_service]

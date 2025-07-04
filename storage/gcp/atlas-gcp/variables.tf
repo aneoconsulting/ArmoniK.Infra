@@ -18,13 +18,13 @@ variable "region" {
   type        = string
 }
 
-variable "network_id" {
-  description = "The ID of the GCP network to use for Private Service Connect"
+variable "vpc_network" {
+  description = "The GCP VPC network for Private Service Connect"
   type        = string
 }
 
-variable "subnetwork_id" {
-  description = "The ID of the GCP subnetwork to use for Private Service Connect"
+variable "gke_subnet" {
+  description = "The GKE subnet for Private Service Connect"
   type        = string
 }
 

@@ -9,6 +9,11 @@ output "mongodb_url" {
   value       = local.mongodb_url
 }
 
+output "forwarding_rule_ip" {
+  description = "IP address of the GCP forwarding rule"
+  value       = google_compute_forwarding_rule.mongodb_atlas.ip_address
+}
+
 output "endpoint_service_name" {
   description = "MongoDB Atlas privatelink endpoint service name"
   value       = mongodbatlas_privatelink_endpoint.pe.endpoint_service_name

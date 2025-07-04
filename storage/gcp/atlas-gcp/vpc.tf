@@ -5,26 +5,19 @@ resource "mongodbatlas_privatelink_endpoint" "pe" {
 
   lifecycle {
     create_before_destroy = true
-    ignore_changes = [
-      provider_name,
-      region,
-      id
-    ]
   }
 }
 
-# GCP Private Service Connect for MongoDB Atlas
 resource "google_compute_forwarding_rule" "mongodb_atlas" {
   name                  = "${local.tags["name"]}-mongodb-atlas"
   project               = local.gcp_project_id
   region                = var.region
-  network               = var.network_id
+  network               = var.vpc_network
   load_balancing_scheme = "INTERNAL"
-  subnetwork            = var.subnetwork_id
+  subnetwork            = var.gke_subnet
   ip_address            = var.ip_address
   target                = mongodbatlas_privatelink_endpoint.pe.endpoint_service_name
-
-  labels = local.tags
+  labels                = local.tags
 
   depends_on = [mongodbatlas_privatelink_endpoint.pe]
 }

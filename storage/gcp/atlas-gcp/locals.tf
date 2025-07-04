@@ -5,12 +5,22 @@ locals {
   # Use provided project ID or fall back to current project
   gcp_project_id = coalesce(var.gcp_project_id, data.google_client_config.current.project)
 
-  private_endpoints = flatten([for cs in data.mongodbatlas_advanced_cluster.atlas.connection_strings : cs.private_endpoint])
+  # For GCP PSC, we get connection strings from the cluster's private endpoints
+  private_endpoints = flatten([
+    for cs in data.mongodbatlas_advanced_cluster.atlas.connection_strings : cs.private_endpoint
+  ])
 
+  # Find connection strings that match our endpoint
   connection_strings = [
     for pe in local.private_endpoints : pe.srv_connection_string
     if contains([for e in pe.endpoints : e.endpoint_id], google_compute_forwarding_rule.mongodb_atlas.id)
   ]
+
+  # Extract the primary connection string (first one available)
+  connection_string = length(local.connection_strings) > 0 ? local.connection_strings[0] : ""
+
+  # Parse MongoDB URL components
+  mongodb_url = local.connection_string != "" ? regex("^(?:(?P<scheme>[^:/?#]+):)?(?://(?P<dns>[^/?#]*))", local.connection_string) : { scheme = "", dns = "" }
 
   # GCP-compliant tags (lowercase, no special characters, max 63 chars)
   gcp_tags = {
@@ -29,7 +39,4 @@ locals {
       managed_by = "terraform"
     }
   )
-
-  connection_string = length(local.connection_strings) > 0 ? local.connection_strings[0] : ""
-  mongodb_url       = regex("^(?:(?P<scheme>[^:/?#]+):)?(?://(?P<dns>[^/?#]*))", local.connection_string)
 }

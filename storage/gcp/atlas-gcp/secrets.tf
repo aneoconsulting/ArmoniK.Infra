@@ -28,7 +28,7 @@ resource "kubernetes_secret" "mongodbatlas_connection_string" {
     namespace = var.namespace
   }
   data = {
-    string = "mongodb+srv://${random_string.mongodb_admin_user.result}:${random_password.mongodb_admin_password.result}@${local.mongodb_url.dns}/${var.cluster_name}"
+    string = local.connection_string
   }
 }
 

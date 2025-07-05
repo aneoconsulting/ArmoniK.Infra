@@ -18,6 +18,11 @@ resource "mongodbatlas_database_user" "admin" {
     name = var.cluster_name
     type = "CLUSTER"
   }
+
+  # Add this lifecycle block to ignore password changes
+  lifecycle {
+    ignore_changes = [password]
+  }
 }
 
 data "mongodbatlas_advanced_cluster" "atlas" {

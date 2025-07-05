@@ -28,12 +28,6 @@ variable "gke_subnet" {
   type        = string
 }
 
-variable "ip_address" {
-  description = "Optional static IP address for the forwarding rule"
-  type        = string
-  default     = null
-}
-
 variable "tags" {
   description = "Tags to apply to the resources"
   type        = map(string)
@@ -42,6 +36,25 @@ variable "tags" {
 
 variable "gcp_project_id" {
   description = "The GCP project ID where resources will be created. If not provided, uses the default project from the provider."
+  type        = string
+  default     = null
+}
+
+# New variables for multi-PSC support
+variable "nb_psc" {
+  description = "Number of PSC endpoints to deploy. If null, only one PSC is created"
+  type        = number
+  default     = null
+}
+
+variable "addresses" {
+  description = "List of IP addresses that should be allocated for the endpoints"
+  type        = list(string)
+  default     = []
+}
+
+variable "override_endpoint_name" {
+  description = "Base name of the endpoint. If null, it will be computed from namespace and cluster name"
   type        = string
   default     = null
 }

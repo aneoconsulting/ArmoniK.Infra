@@ -78,5 +78,9 @@ output "env_from_secret" {
       secret = kubernetes_secret.mongodb_admin.metadata[0].name
       field  = "MONGO_PASSWORD"
     }
+    "MongoDB__MonitoringConnectionString" = {
+      secret = kubernetes_secret.mongodb_monitoring_connection_string.metadata[0].name
+      field  = "uri"
+    }
   }
 }

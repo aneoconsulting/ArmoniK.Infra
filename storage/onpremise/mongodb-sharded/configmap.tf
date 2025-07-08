@@ -13,6 +13,16 @@ locals {
         ]
     }
     );
+    db.createUser(
+    {
+        user: "${random_string.mongodb_monitoring_user.result}",
+        pwd: "${random_password.mongodb_monitoring_password.result}",
+        roles: [ 
+          {role: "read", db: "local" }, 
+          { role: "clusterMonitor", db: "admin" }
+        ]
+    }
+    );
     db.sample.drop()
     db.adminCommand(
     {

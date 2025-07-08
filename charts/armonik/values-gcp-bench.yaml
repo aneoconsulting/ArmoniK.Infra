@@ -1,0 +1,72 @@
+# Use values file: values-gcp-bench.yaml with values.yaml and value-gcp.yaml
+# EX : helm upgrade --install --create-namespace -n armonik armonik ./ -f values-gcp.yaml -f values-gcp-bench.yaml
+############################################
+################## GLOBAL ##################
+############################################
+global:
+  environment:
+    name: "GCP-BENCH"
+    description: "Armonik GCP environment bench"
+
+############################################
+### ARMONIK APPLICATION CONFIGURATION #####
+############################################
+control-plane:
+  replicaCount: 10
+  config:
+    controlPlane:
+      defaultPartition: bench
+compute-plane:
+  computePlane:
+    partition:
+      default:
+        replicas: 0
+      stream:
+        replicas: 0
+      htcmock:
+        replicas: 0
+      bench:
+        replicas: 120
+
+############################################
+############### DEPENDENCIES ###############
+############################################
+
+################# RABBITMQ #################
+rabbitmq:
+  nodeSelector:
+    service: control-plane
+  tolerations:
+    - effect: NoSchedule
+      key: service
+      operator: Equal
+      value: control-plane
+
+################## REDIS ##################
+redis:
+  master:
+    resourcesPreset: medium
+
+################## ACTIVEMQ ##################
+activemq:
+  activemqOptsMemory: "-Xms1g -Xmx3g"
+
+################## MONGODB ##################
+mongodb:
+  resourcesPreset: none  ### FULL RESOURCES FOR DEDICATED NODE
+
+################## GRAFANA ##################
+grafana:
+  nodeSelector:
+    service: monitoring
+  tolerations:
+    - effect: NoSchedule
+      key: service
+      operator: Equal
+      value: monitoring
+
+################## PROMETHEUS ##################
+kube-prometheus:
+  prometheus:
+    resourcesPreset: large
+############################################

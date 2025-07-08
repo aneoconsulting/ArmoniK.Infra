@@ -1,0 +1,42 @@
+{{- if .Values.HorizontalPodAutoscaler.enabled -}}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "activemq.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "activemq.labels" . | nindent 4 }}
+  {{- with .Values.service.labels -}}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  scaleTargetRef:
+    name: {{ include "activemq.fullname" . }}
+    kind: Deployment
+    apiVersion: apps/v1
+  minReplicas: 1
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 50
+#   metrics:
+#   - type: Object
+#     object:
+#       metric:
+#         name: requests_per_second
+#       describedObject:
+#         apiVersion: v1
+#         kind: Service
+#         name: {{ include "activemq.fullname" . }}
+#       target:
+#         type: Value
+#         value: 1000
+{{- end -}}

@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: {{ .Release.Name }}
+    service: admin-gui
+  name: admin-gui
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}
+      service: admin-gui
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}
+        service: admin-gui
+      name: admin-gui
+    spec:
+      automountServiceAccountToken: true
+      containers:
+      - name: admin-app
+        {{- $registry := .Values.global.imageRegistry | default .Values.image.registry }}
+        {{- if $registry }}
+        image: "{{ $registry }}/{{ .Values.adminGui.repository }}/{{ .Values.adminGui.image }}:{{ include "adminGui.tag" .}}"
+        {{- else }}
+        image: "{{ .Values.adminGui.repository }}/{{ .Values.adminGui.image }}:{{ include "adminGui.tag" . }}"
+        {{- end }}
+        imagePullPolicy: {{ .Values.adminGui.imagePullPolicy }}
+        ports:
+        - name: app-port
+          containerPort: {{ .Values.adminGui.port }}
+          protocol: TCP        
+        resources:
+        {{- toYaml .Values.adminGui.resources | nindent 10 }}
+      {{- $imagePullSecrets := .Values.global.imagePullSecrets | default .Values.imagePullSecrets }}
+      {{- if $imagePullSecrets }}
+      {{- with $imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- end }}
+      tolerations:
+      {{- toYaml .Values.adminGui.tolerations | nindent 8 }}

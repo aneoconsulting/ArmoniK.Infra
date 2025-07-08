@@ -1,0 +1,78 @@
+apiVersion: v2
+appVersion: 0.31.2
+version: 0.1.0
+name: armonik
+description: A Helm chart for Armonik
+icon: https://25070129.fs1.hubspotusercontent-eu1.net/hubfs/25070129/Website/Images%20-%20Website/ArmoniK/logo_armonik_by_aneo%201.svg
+kubeVersion: ">=v1.25.0-0"
+keywords:
+  - armonik
+  - helm
+type: application
+home: https://github.com/aneoconsulting/ArmoniK
+sources:
+  - https://aneoconsulting.github.io/
+maintainers:
+  - name: Aneo
+    email: armonik@aneo.fr
+    url: armonik.fr
+
+dependencies:
+### Armonik
+  - name: control-plane
+    version: 0.1.x
+    repository: file://charts/control-plane
+    condition: global.dependencies.controlPlane
+  - name: compute-plane
+    version: 0.1.x
+    repository: file://charts/compute-plane
+    condition: global.dependencies.computePlane
+  - name: ingress
+    version: 0.1.x
+    repository: file://charts/ingress
+    condition: global.dependencies.ingress
+### Armonik dependencies
+  - name: activemq
+    version: 1.x.x
+    repository: file://charts/activemq
+    condition: global.dependencies.activemq
+  - name: redis
+    version: 20.x.x
+    repository: https://charts.bitnami.com/bitnami
+    condition: global.dependencies.redis
+  - name: mongodb
+    version: 16.x.x
+    repository: https://charts.bitnami.com/bitnami
+    condition: global.dependencies.mongodb
+  - name: kube-prometheus
+    version: 11.x.x
+    repository: https://charts.bitnami.com/bitnami
+    condition: global.dependencies.kubePrometheus
+  - name: keda
+    version: 2.x.x
+    repository: https://kedacore.github.io/charts
+    condition: global.dependencies.keda
+  # - name: chaos-mesh
+  #   version: 2.x.x
+  #   repository: https://charts.chaos-mesh.org
+  #   condition: global.dependencies.chaos-mesh
+  - name: rabbitmq
+    version: 15.x.x
+    repository: https://charts.bitnami.com/bitnami
+    condition: global.dependencies.rabbitmq
+  - name: grafana
+    version: 8.x.x
+    repository: https://grafana.github.io/helm-charts
+    condition: global.dependencies.grafana
+  - name: fluent-bit
+    version: 2.x.x
+    repository: https://charts.bitnami.com/bitnami
+    condition: global.dependencies.fluentBit
+  - name: seq
+    version: 2024.x.x
+    repository: https://helm.datalust.co
+    condition: global.dependencies.seq
+  - name: cert-manager
+    version: 1.x.x
+    repository: https://charts.jetstack.io
+    condition: global.dependencies.certManager

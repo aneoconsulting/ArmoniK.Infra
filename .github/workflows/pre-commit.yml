@@ -1,0 +1,72 @@
+name: Pre-commit
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches: 
+      - main
+jobs:
+  pre-commit:
+    name: Pre-commit checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3
+        with:
+          terraform_version: latest
+          
+      - name: Configure Terraform cache dir
+        run: |
+          mkdir -p "$HOME/.terraform.d/plugin-cache"
+          echo 'plugin_cache_dir = "$HOME/.terraform.d/plugin-cache"' > "$HOME/.terraformrc"
+
+      - name: Install tfsec for static analysis of Terraform code to spot potential misconfigurations
+        run: |
+          curl -s https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash
+      
+      - name: Install Terraform Linter
+        uses: terraform-linters/setup-tflint@90f302c255ef959cbfb4bd10581afecdb7ece3e6 # v4
+      
+      - name: Install helm-docs
+        uses: envoy/install-helm-docs@05313083ef2cfaea27c4c3d7cb725242d22ea88b # v1.0.0
+        with:
+          version: 1.14.2
+      
+      - name: Install terraform-docs
+        uses: jaxxstorm/action-install-gh-release@4304621e8c48d66093a8a214af5d5b5bc3b3d943 # v2.0.0
+        with: # Grab the latest version
+          repo: terraform-docs/terraform-docs
+          tag: v0.19.0
+      
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        with:
+          fetch-depth: 0
+      
+      - name: Setup Python
+        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5
+      
+      - id: pre-commit
+        name: Pre Commit
+        uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd # v3.0.1
+
+      - name: Generate patch
+        if: ${{ failure() && steps.pre-commit.conclusion == 'failure' }}
+        run: |
+          git diff > patch.diff
+
+      - name: Upload Patch
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: ${{ failure() && steps.pre-commit.conclusion == 'failure' }}
+        with:
+          name: patch
+          path: ./patch.diff
+
+      - name: Apply Patch Instruction
+        if: ${{ failure() && steps.pre-commit.conclusion == 'failure' }}
+        run: |
+          echo 'Run the command `pre-commit` or download the patch file at the following URL:'
+          echo "https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}${PR:+?pr=$PR}#artifacts"
+        env:
+          PR: ${{ github.event.pull_request.number }}

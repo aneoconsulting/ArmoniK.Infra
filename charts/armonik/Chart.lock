@@ -1,0 +1,42 @@
+dependencies:
+- name: control-plane
+  repository: file://charts/control-plane
+  version: 0.1.0
+- name: compute-plane
+  repository: file://charts/compute-plane
+  version: 0.1.0
+- name: ingress
+  repository: file://charts/ingress
+  version: 0.1.0
+- name: activemq
+  repository: file://charts/activemq
+  version: 1.0.0
+- name: redis
+  repository: https://charts.bitnami.com/bitnami
+  version: 20.9.0
+- name: mongodb
+  repository: https://charts.bitnami.com/bitnami
+  version: 16.4.5
+- name: kube-prometheus
+  repository: https://charts.bitnami.com/bitnami
+  version: 11.1.1
+- name: keda
+  repository: https://kedacore.github.io/charts
+  version: 2.16.1
+- name: rabbitmq
+  repository: https://charts.bitnami.com/bitnami
+  version: 15.3.2
+- name: grafana
+  repository: https://grafana.github.io/helm-charts
+  version: 8.10.1
+- name: fluent-bit
+  repository: https://charts.bitnami.com/bitnami
+  version: 2.5.1
+- name: seq
+  repository: https://helm.datalust.co
+  version: 2024.3.2
+- name: cert-manager
+  repository: https://charts.jetstack.io
+  version: v1.17.1
+digest: sha256:d071f8ebc279c2645119321372cea89647a833ab66faf2226e6929043a8482a2
+generated: "2025-02-25T09:25:25.773248+01:00"

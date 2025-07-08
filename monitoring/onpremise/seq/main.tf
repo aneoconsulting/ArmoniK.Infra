@@ -69,6 +69,10 @@ resource "kubernetes_deployment" "seq" {
               value = "FMB0CwtRt8CwkiSDebSmdJszUzK9B52DV19CKdpFyGtrGRkBrQ=="
             }
           }
+          env {
+            name  = "SEQ_FIRSTRUN_NOAUTHENTICATION"
+            value = !var.authentication
+          }
           port {
             name           = "ingestion"
             container_port = 5341

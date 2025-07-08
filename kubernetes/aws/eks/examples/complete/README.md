@@ -22,7 +22,7 @@ terraform destroy
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0 |
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.61 |
 | <a name="requirement_external"></a> [external](#requirement\_external) | ~> 2.3.1 |
-| <a name="requirement_helm"></a> [helm](#requirement\_helm) | ~> 2.10.1 |
+| <a name="requirement_helm"></a> [helm](#requirement\_helm) | ~> 2.10.1, < 3.0.0 |
 | <a name="requirement_kubernetes"></a> [kubernetes](#requirement\_kubernetes) | ~> 2.21.1 |
 | <a name="requirement_null"></a> [null](#requirement\_null) | >= 3.2.1 |
 

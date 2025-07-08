@@ -1,5 +1,21 @@
-# Ingress deployment
-resource "kubernetes_deployment" "ingress" {
+locals {
+  http_port = var.ingress.tls ? 8443 : 8080
+  grpc_port  = var.ingress.tls ? 9443 : 9080
+
+  ports = [
+    {
+      name           = "ingress-p-http"
+      container_port = local.http_port
+    },
+    {
+      name           = "ingress-p-grpc"
+      container_port = local.grpc_port
+    }
+  ]
+}
+
+# Control plane service
+resource "kubernetes_service" "ingress" {
   count = var.ingress != null ? 1 : 0
 
   metadata {
@@ -11,20 +27,51 @@ resource "kubernetes_deployment" "ingress" {
     }
   }
   spec {
+    type       = var.ingress.service_type == "HeadLess" ? "ClusterIP" : var.ingress.service_type
+    cluster_ip = var.ingress.service_type == "HeadLess" ? "None" : null
+    selector = {
+      app     = "armonik"
+      service = "ingress"
+    }
+    dynamic "port" {
+      for_each = var.ingress.http_port == var.ingress.grpc_port ? [var.ingress.http_port]  : [var.ingress.http_port, var.ingress.grpc_port]
+      content {
+        name        = "ingress-port-${port.key}"
+        target_port = local.ports[port.key].container_port
+        port        = var.ingress.service_type == "HeadLess" ? local.ports[port.key].container_port : port.value
+        protocol    = "TCP"
+      }
+    }
+  }
+}
+
+# Ingress deployment
+resource "kubernetes_deployment" "ingress" {
+  count = var.ingress != null ? 1 : 0
+
+  metadata {
+    name      = kubernetes_service.ingress[0].metadata[0].name
+    namespace = kubernetes_service.ingress[0].metadata[0].namespace
+    labels = {
+      app     = kubernetes_service.ingress[0].metadata[0].labels.app
+      service = kubernetes_service.ingress[0].metadata[0].labels.service
+    }
+  }
+  spec {
     replicas = var.ingress.replicas
     selector {
       match_labels = {
-        app     = "armonik"
-        service = "ingress"
+        app     = kubernetes_service.ingress[0].metadata[0].labels.app
+        service = kubernetes_service.ingress[0].metadata[0].labels.service
       }
     }
     template {
       metadata {
-        name      = "ingress"
+        name      = kubernetes_service.ingress[0].metadata[0].name
         namespace = var.namespace
         labels = {
-          app     = "armonik"
-          service = "ingress"
+          app     = kubernetes_service.ingress[0].metadata[0].labels.app
+          service = kubernetes_service.ingress[0].metadata[0].labels.service
         }
         annotations = local.ingress_annotations
       }
@@ -60,13 +107,12 @@ resource "kubernetes_deployment" "ingress" {
             limits   = var.ingress.limits
             requests = var.ingress.requests
           }
-          port {
-            name           = "ingress-p-http"
-            container_port = var.ingress.tls ? 8443 : 8080
-          }
-          port {
-            name           = "ingress-p-grpc"
-            container_port = var.ingress.tls ? 9443 : 9080
+          dynamic "port" {
+            for_each = local.ports
+            content {
+              name = port.value.name
+              container_port = port.value.container_port
+            }
           }
           env_from {
             config_map_ref {
@@ -122,42 +168,6 @@ resource "kubernetes_deployment" "ingress" {
             optional = false
           }
         }
-      }
-    }
-  }
-}
-
-# Control plane service
-resource "kubernetes_service" "ingress" {
-  count = var.ingress != null ? 1 : 0
-
-  metadata {
-    name      = kubernetes_deployment.ingress[0].metadata[0].name
-    namespace = kubernetes_deployment.ingress[0].metadata[0].namespace
-    labels = {
-      app     = kubernetes_deployment.ingress[0].metadata[0].labels.app
-      service = kubernetes_deployment.ingress[0].metadata[0].labels.service
-    }
-  }
-  spec {
-    type       = var.ingress.service_type == "HeadLess" ? "ClusterIP" : var.ingress.service_type
-    cluster_ip = var.ingress.service_type == "HeadLess" ? "None" : null
-    selector = {
-      app     = kubernetes_deployment.ingress[0].metadata[0].labels.app
-      service = kubernetes_deployment.ingress[0].metadata[0].labels.service
-    }
-    dynamic "port" {
-      for_each = var.ingress.http_port == var.ingress.grpc_port ? {
-        "0" : var.ingress.http_port
-        } : {
-        "0" : var.ingress.http_port
-        "1" : var.ingress.grpc_port
-      }
-      content {
-        name        = kubernetes_deployment.ingress[0].spec[0].template[0].spec[0].container[0].port[port.key].name
-        target_port = kubernetes_deployment.ingress[0].spec[0].template[0].spec[0].container[0].port[port.key].container_port
-        port        = var.ingress.service_type == "HeadLess" ? kubernetes_deployment.ingress[0].spec[0].template[0].spec[0].container[0].port[port.key].container_port : port.value
-        protocol    = "TCP"
       }
     }
   }

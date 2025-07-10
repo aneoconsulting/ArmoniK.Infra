@@ -1,6 +1,6 @@
 locals {
   http_port = var.ingress.tls ? 8443 : 8080
-  grpc_port  = var.ingress.tls ? 9443 : 9080
+  grpc_port = var.ingress.tls ? 9443 : 9080
 
   ports = [
     {
@@ -34,7 +34,7 @@ resource "kubernetes_service" "ingress" {
       service = "ingress"
     }
     dynamic "port" {
-      for_each = var.ingress.http_port == var.ingress.grpc_port ? [var.ingress.http_port]  : [var.ingress.http_port, var.ingress.grpc_port]
+      for_each = var.ingress.http_port == var.ingress.grpc_port ? [var.ingress.http_port] : [var.ingress.http_port, var.ingress.grpc_port]
       content {
         name        = "ingress-port-${port.key}"
         target_port = local.ports[port.key].container_port
@@ -110,7 +110,7 @@ resource "kubernetes_deployment" "ingress" {
           dynamic "port" {
             for_each = local.ports
             content {
-              name = port.value.name
+              name           = port.value.name
               container_port = port.value.container_port
             }
           }

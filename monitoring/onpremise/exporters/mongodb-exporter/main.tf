@@ -1,3 +1,32 @@
+locals {
+  mongodb_uri = var.mongo_url != "" ? var.mongo_url : try(data.kubernetes_secret.mongodb_monitoring_connection_string.data["uri"], "")
+  should_split_cluster = var.force_split_cluster ? true : startswith(local.mongodb_uri, "mongodb+srv")
+  args = concat(
+    [
+      "--log.level=error",
+      "--collector.diagnosticdata",
+      "--collector.replicasetstatus",
+      "--collector.dbstats",
+      "--collector.dbstatsfreestorage",
+      "--collector.topmetrics",
+      "--collector.currentopmetrics",
+      "--collector.indexstats",
+      "--collector.collstats",
+      "--discovering-mode",
+      "--mongodb.uri=${local.mongodb_uri}"
+    ],
+    local.should_split_cluster ? ["--split-cluster"] : []
+  )
+}
+
+data "kubernetes_secret" "mongodb_monitoring_connection_string" {
+  metadata {
+    name      = "mongodb-monitoring-connection-string"
+    namespace = var.namespace
+  }
+}
+
+
 resource "kubernetes_deployment" "mongodb_exporter" {
   metadata {
     name      = "mongodb-metrics-exporter"
@@ -36,7 +65,7 @@ resource "kubernetes_deployment" "mongodb_exporter" {
 
           env {
             name  = "MONGODB_URI"
-            value = var.mongo_url
+            value = local.mongodb_uri
           }
 
           dynamic "volume_mount" {
@@ -48,7 +77,7 @@ resource "kubernetes_deployment" "mongodb_exporter" {
             }
           }
 
-          args = ["--log.level=error", "--collector.diagnosticdata", "--collector.replicasetstatus", "--collector.dbstats", "--collector.dbstatsfreestorage", "--collector.topmetrics", "--collector.currentopmetrics", "--collector.indexstats", "--collector.collstats", "--discovering-mode", "--mongodb.uri=$(MONGODB_URI)"]
+          args = local.args
         }
 
         dynamic "volume" {

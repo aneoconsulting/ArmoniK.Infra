@@ -14,37 +14,6 @@ locals {
   ]
 }
 
-# Control plane service
-resource "kubernetes_service" "ingress" {
-  count = var.ingress != null ? 1 : 0
-
-  metadata {
-    name      = "ingress"
-    namespace = var.namespace
-    labels = {
-      app     = "armonik"
-      service = "ingress"
-    }
-  }
-  spec {
-    type       = var.ingress.service_type == "HeadLess" ? "ClusterIP" : var.ingress.service_type
-    cluster_ip = var.ingress.service_type == "HeadLess" ? "None" : null
-    selector = {
-      app     = "armonik"
-      service = "ingress"
-    }
-    dynamic "port" {
-      for_each = var.ingress.http_port == var.ingress.grpc_port ? [var.ingress.http_port] : [var.ingress.http_port, var.ingress.grpc_port]
-      content {
-        name        = "ingress-port-${port.key}"
-        target_port = local.ports[port.key].container_port
-        port        = var.ingress.service_type == "HeadLess" ? local.ports[port.key].container_port : port.value
-        protocol    = "TCP"
-      }
-    }
-  }
-}
-
 # Ingress deployment
 resource "kubernetes_deployment" "ingress" {
   count = var.ingress != null ? 1 : 0
@@ -168,6 +137,37 @@ resource "kubernetes_deployment" "ingress" {
             optional = false
           }
         }
+      }
+    }
+  }
+}
+
+# Control plane service
+resource "kubernetes_service" "ingress" {
+  count = var.ingress != null ? 1 : 0
+
+  metadata {
+    name      = "ingress"
+    namespace = var.namespace
+    labels = {
+      app     = "armonik"
+      service = "ingress"
+    }
+  }
+  spec {
+    type       = var.ingress.service_type == "HeadLess" ? "ClusterIP" : var.ingress.service_type
+    cluster_ip = var.ingress.service_type == "HeadLess" ? "None" : null
+    selector = {
+      app     = "armonik"
+      service = "ingress"
+    }
+    dynamic "port" {
+      for_each = var.ingress.http_port == var.ingress.grpc_port ? [var.ingress.http_port] : [var.ingress.http_port, var.ingress.grpc_port]
+      content {
+        name        = "ingress-port-${port.key}"
+        target_port = local.ports[port.key].container_port
+        port        = var.ingress.service_type == "HeadLess" ? local.ports[port.key].container_port : port.value
+        protocol    = "TCP"
       }
     }
   }

@@ -69,10 +69,10 @@ resource "tls_cert_request" "ingress_cert_request" {
     country     = "France"
     common_name = "armonik.local"
   }
-  ip_addresses = [
-    kubernetes_service.ingress[0].spec[0].cluster_ip,
-    kubernetes_service.ingress[0].status[0].load_balancer[0].ingress[0].ip
-  ]
+  ip_addresses = compact([
+    try(kubernetes_service.ingress[0].spec[0].cluster_ip, null),
+    try(kubernetes_service.ingress[0].status[0].load_balancer[0].ingress[0].ip, null)
+  ])
 }
 
 resource "tls_locally_signed_cert" "ingress_certificate" {

@@ -1,6 +1,6 @@
 locals {
   # Supported message queues by ArmoniK
-  supported_queues = toset(["Amqp__PartitionId", "PubSub__PartitionId", "SQS__PartitionId"])
+  supported_queues = toset(["Pollster__PartitionId", "Amqp__PartitionId", "PubSub__PartitionId", "SQS__PartitionId"])
 
   # list of partitions
   partition_names   = keys(try(var.compute_plane, {}))

@@ -1,4 +1,4 @@
-{{ if .Values.global.dependencies.kubePrometheus }}
+{{ if (include "armonik.dependencies" $ | fromYaml).kubePrometheus }}
 apiVersion: v1
 kind: Secret
 metadata:

@@ -1,0 +1,61 @@
+apiVersion: v2
+name: armonik-dependencies
+description: Umbrella chart for all dependencies
+icon: https://25070129.fs1.hubspotusercontent-eu1.net/hubfs/25070129/Website/Images%20-%20Website/ArmoniK/logo_armonik_by_aneo%201.svg
+kubeVersion: ">=v1.25.0-0"
+keywords:
+  - armonik
+  - helm
+type: application
+version: 0.1.0
+maintainers:
+  - name: Aneo
+    email: armonik@aneo.fr
+    url: armonik.fr
+
+dependencies:
+  - name: activemq
+    version: 1.x.x
+    repository: file://../activemq
+    condition: activemq.enabled
+  - name: redis
+    version: 20.x.x
+    repository: https://charts.bitnami.com/bitnami
+    condition: redis.enabled
+  - name: mongodb
+    version: 16.x.x
+    repository: https://charts.bitnami.com/bitnami
+    condition: mongodb.enabled
+  - name: kube-prometheus
+    version: 11.x.x
+    repository: https://charts.bitnami.com/bitnami
+    condition: kube-prometheus.enabled
+  - name: keda
+    version: 2.x.x
+    repository: https://kedacore.github.io/charts
+    condition: keda.enabled
+  # - name: chaos-mesh
+  #   version: 2.x.x
+  #   repository: https://charts.chaos-mesh.org
+  #   condition: global.dependencies.chaos-mesh
+  #   alias: chaosMesh
+  - name: rabbitmq
+    version: 15.x.x
+    repository: https://charts.bitnami.com/bitnami
+    condition: rabbitmq.enabled
+  - name: grafana
+    version: 8.x.x
+    repository: https://grafana.github.io/helm-charts
+    condition: grafana.enabled
+  - name: fluent-bit
+    version: 2.x.x
+    repository: https://charts.bitnami.com/bitnami
+    condition: fluent-bit.enabled
+  - name: seq
+    version: 2024.x.x
+    repository: https://helm.datalust.co
+    condition: seq.enabled
+  - name: cert-manager
+    version: 1.x.x
+    repository: https://charts.jetstack.io
+    condition: cert-manager.enabled

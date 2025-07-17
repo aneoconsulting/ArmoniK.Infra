@@ -2,28 +2,41 @@
 
 This module creates a MongoDB Atlas cluster with AWS PrivateLink integration.
 
+## Prerequisites
+
+- AWS credentials configured (via AWS CLI, environment variables, or IAM roles)
+- VPC with private subnets
+- Security groups allowing MongoDB Atlas traffic (port 27017/27016)
+- MongoDB Atlas account with organization access
+- Atlas project created
+- Atlas cluster deployed and configured
+- Atlas API keys with PrivateLink permissions
+
 ## Usage
 
 ```hcl
-module "atlas" {
-  source              = "../atlas"
-  atlas_public_key    = "<ATLAS_PUBLIC_KEY>"
-  atlas_private_key   = "<ATLAS_PRIVATE_KEY>"
-  atlas_org_id        = "<ATLAS_ORG_ID>"
-  project_name        = "my-project"
+module "atlas_aws" {
+  source              = "../atlas-aws"
+  project_id          = "<ATLAS_PROJECT_ID>"
   cluster_name        = "my-cluster"
-  atlas_region        = "EU_WEST_1"
-  instance_size       = "M10"
-  aws_region          = "eu-west-1"
-  aws_profile         = "default"
+  region              = "eu-west-1"
+  namespace           = "armonik"
   vpc_id              = "<VPC_ID>"
   subnet_ids          = ["<SUBNET_ID1>", "<SUBNET_ID2>"]
   security_group_ids  = ["<SG_ID>"]
+  
+  tags = {
+    Environment = "production"
+    Project     = "armonik"
+  }
 }
 ```
 
+## Important Notes
 
----
+1. **Region Consistency**: Ensure the region specified matches your Atlas cluster's region
+2. **Cluster Dependencies**: The Atlas cluster must exist before running this module
+3. **Network Requirements**: VPC and subnets must allow traffic to MongoDB Atlas
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
@@ -62,7 +75,7 @@ No modules.
 | [mongodbatlas_privatelink_endpoint_service.pe_service](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs/resources/privatelink_endpoint_service) | resource |
 | [random_password.mongodb_admin_password](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/password) | resource |
 | [random_string.mongodb_admin_user](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/string) | resource |
-| [mongodbatlas_advanced_cluster.akaws](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs/data-sources/advanced_cluster) | data source |
+| [mongodbatlas_advanced_cluster.atlas](https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs/data-sources/advanced_cluster) | data source |
 
 ## Inputs
 
@@ -73,7 +86,7 @@ No modules.
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | ID of the MongoDB Atlas project | `string` | n/a | yes |
 | <a name="input_region"></a> [region](#input\_region) | AWS region for the private endpoint. | `string` | n/a | yes |
 | <a name="input_security_group_ids"></a> [security\_group\_ids](#input\_security\_group\_ids) | Security group IDs to attach to the VPC endpoint | `list(string)` | `[]` | no |
-| <a name="input_subnet_ids"></a> [subnet\_ids](#input\_subnet\_ids) | Subnet IDs to attach to the VPC endpoint | `list(string)` | `[]` | no |
+| <a name="input_subnet_ids"></a> [subnet\_ids](#input\_subnet\_ids) | Subnet IDs to attach to the VPC endpoint | `list(string)` | n/a | yes |
 | <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to the resources | `map(string)` | `{}` | no |
 | <a name="input_vpc_id"></a> [vpc\_id](#input\_vpc\_id) | ID of the VPC to create the VPC endpoint in | `string` | n/a | yes |
 
@@ -81,6 +94,7 @@ No modules.
 
 | Name | Description |
 |------|-------------|
+| <a name="output_connection_string"></a> [connection\_string](#output\_connection\_string) | MongoDB Atlas connection string |
 | <a name="output_endpoint_service_name"></a> [endpoint\_service\_name](#output\_endpoint\_service\_name) | MongoDB Atlas privatelink endpoint service name |
 | <a name="output_env"></a> [env](#output\_env) | MongoDB Atlas env |
 | <a name="output_env_from_secret"></a> [env\_from\_secret](#output\_env\_from\_secret) | MongoDB Atlas env from secret |

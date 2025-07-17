@@ -8,11 +8,11 @@ variable "project_id" {
   type        = string
 }
 
-
 variable "namespace" {
   description = "Kubernetes namespace for secrets."
   type        = string
 }
+
 variable "region" {
   description = "AWS region for the private endpoint."
   type        = string
@@ -21,13 +21,6 @@ variable "region" {
 variable "vpc_id" {
   description = "ID of the VPC to create the VPC endpoint in"
   type        = string
-}
-
-
-variable "tags" {
-  description = "Tags to apply to the resources"
-  type        = map(string)
-  default     = {}
 }
 
 variable "security_group_ids" {
@@ -39,5 +32,10 @@ variable "security_group_ids" {
 variable "subnet_ids" {
   description = "Subnet IDs to attach to the VPC endpoint"
   type        = list(string)
-  default     = []
+}
+
+variable "tags" {
+  description = "Tags to apply to the resources"
+  type        = map(string)
+  default     = {}
 }

@@ -1,3 +1,4 @@
+# AWS VPC Endpoint for MongoDB Atlas
 resource "aws_vpc_endpoint" "mongodb_atlas" {
   vpc_id              = var.vpc_id
   service_name        = mongodbatlas_privatelink_endpoint.pe.endpoint_service_name
@@ -5,7 +6,6 @@ resource "aws_vpc_endpoint" "mongodb_atlas" {
   subnet_ids          = var.subnet_ids
   security_group_ids  = var.security_group_ids
   private_dns_enabled = false
-
 
   tags = merge(
     var.tags,

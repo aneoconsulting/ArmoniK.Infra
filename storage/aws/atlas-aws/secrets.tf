@@ -1,3 +1,15 @@
+resource "random_string" "mongodb_admin_user" {
+  length  = 8
+  special = false
+  numeric = false
+  upper   = false
+}
+
+resource "random_password" "mongodb_admin_password" {
+  length  = 16
+  special = true
+}
+
 resource "kubernetes_secret" "mongodb_admin" {
   metadata {
     name      = "${var.cluster_name}-mongodb-admin"
@@ -16,7 +28,7 @@ resource "kubernetes_secret" "mongodbatlas_connection_string" {
     namespace = var.namespace
   }
   data = {
-    string = "mongodb+srv://${random_string.mongodb_admin_user.result}:${random_password.mongodb_admin_password.result}@${local.mongodb_url.dns}/database"
+    string = "mongodb+srv://${random_string.mongodb_admin_user.result}:${random_password.mongodb_admin_password.result}@${local.mongodb_url.dns}/${var.cluster_name}"
   }
 }
 

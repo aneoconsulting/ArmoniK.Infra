@@ -172,11 +172,22 @@ resource "kubernetes_cron_job_v1" "partitions_in_database" {
 }
 
 locals {
+  # Cconnection string based on MongoDB__Source environment variable
+  # - ONPREM with MongoDB__Port: uses mongodb://host:port/database?authSource=admin (for sharded MongoDB)
+  # - ATLAS or ONPREM without port: uses mongodb+srv://host/database (for Atlas or non-sharded MongoDB)
   script_cron = <<EOF
   #!/bin/bash
-  export nbElements=$(mongosh --tlsCAFile "$MongoDB__CAFile" --tlsAllowInvalidCertificates --tlsAllowInvalidHostnames --tls --username "$MongoDB__User" --password "$MongoDB__Password" "mongodb+srv://$MongoDB__Host/$MongoDB__DatabaseName" --eval 'db.PartitionData.countDocuments()' --quiet)
+  if [ -n "$MongoDB__Port" ]; then
+    # On-premise with explicit port (sharded MongoDB)
+    CONNECTION_STRING="mongodb://$MongoDB__Host:$MongoDB__Port/$MongoDB__DatabaseName?authSource=admin"
+  else
+    # Atlas or on-premise without explicit port (uses SRV records)
+    CONNECTION_STRING="mongodb+srv://$MongoDB__Host/$MongoDB__DatabaseName"
+  fi
+  
+  export nbElements=$(mongosh --tlsCAFile "$MongoDB__CAFile" --tlsAllowInvalidCertificates --tlsAllowInvalidHostnames --tls --username "$MongoDB__User" --password "$MongoDB__Password" "$CONNECTION_STRING" --eval 'db.PartitionData.countDocuments()' --quiet)
   if [[ $nbElements != ${length(local.partition_names)} ]]; then
-    mongosh --tlsCAFile "$MongoDB__CAFile" --tlsAllowInvalidCertificates --tlsAllowInvalidHostnames --tls --username "$MongoDB__User" --password "$MongoDB__Password" "mongodb+srv://$MongoDB__Host/$MongoDB__DatabaseName" --eval 'db.PartitionData.insertMany(${jsonencode(local.partitions_data)})'
+    mongosh --tlsCAFile "$MongoDB__CAFile" --tlsAllowInvalidCertificates --tlsAllowInvalidHostnames --tls --username "$MongoDB__User" --password "$MongoDB__Password" "$CONNECTION_STRING" --eval 'db.PartitionData.insertMany(${jsonencode(local.partitions_data)})'
   fi
   EOF
 }

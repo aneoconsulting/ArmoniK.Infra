@@ -24,6 +24,10 @@ output "env_from_secret" {
       secret = kubernetes_secret.mongodbatlas_connection_string.metadata[0].name
       field  = "string"
     }
+    "MongoDB__MonitoringConnectionString" = {
+      secret = kubernetes_secret.mongodbatlas_monitoring_connection_string.metadata[0].name
+      field  = "uri"
+    }
   }
 }
 

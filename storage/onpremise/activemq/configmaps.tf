@@ -95,10 +95,7 @@ EOF
     </bean>
     <bean id="securityConstraintMapping" class="org.eclipse.jetty.security.ConstraintMapping">
         <property name="constraint" ref="securityConstraint" />
-        <!--
-        <property name="pathSpec" value="/,*.jsp,*.html,*.js,*.css,*.png,*.gif,*.ico" />
-        -->
-        <property name="pathSpec" value="/*,/api/*,/admin/*,*.jsp" />
+        <property name="pathSpec" value="/" />
     </bean>
     <bean id="adminSecurityConstraintMapping" class="org.eclipse.jetty.security.ConstraintMapping">
         <property name="constraint" ref="adminSecurityConstraint" />

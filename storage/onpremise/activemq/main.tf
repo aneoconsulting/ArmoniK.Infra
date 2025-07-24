@@ -68,6 +68,8 @@ resource "kubernetes_deployment" "activemq" {
             mount_path = "/credentials/"
             read_only  = true
           }
+
+          # Configuration for Symptoma images
           volume_mount {
             name       = "activemq-jetty-xml"
             mount_path = "/opt/activemq/conf/"
@@ -78,6 +80,19 @@ resource "kubernetes_deployment" "activemq" {
             mount_path = "/opt/activemq/webapps/api/WEB-INF/classes/"
             read_only  = true
           }
+
+          # Configuration for Apache images
+          volume_mount {
+            name       = "activemq-jetty-xml"
+            mount_path = "/opt/apache-activemq/conf/"
+            read_only  = true
+          }
+          volume_mount {
+            name       = "activemq-jolokia-xml"
+            mount_path = "/opt/apache-activemq/webapps/api/WEB-INF/classes/"
+            read_only  = true
+          }
+
           port {
             name           = "amqp"
             container_port = 5672

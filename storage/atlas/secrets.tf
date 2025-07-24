@@ -20,6 +20,16 @@ resource "kubernetes_secret" "mongodbatlas_connection_string" {
   }
 }
 
+resource "kubernetes_secret" "mongodbatlas_monitoring_connection_string" {
+  metadata {
+    name      = "mongodb-monitoring-connection-string"
+    namespace = var.namespace
+  }
+  data = {
+    uri = "mongodb+srv://${random_string.mongodb_monitoring_user.result}:${random_password.mongodb_monitoring_password.result}@${local.mongodb_url.dns}/admin"
+  }
+}
+
 resource "kubernetes_secret" "mongodb" {
   metadata {
     name      = "${var.cluster_name}-mongodb"

@@ -39,6 +39,15 @@ resource "tls_cert_request" "mongodb_cert_request" {
     common_name = local.mongodb_dns
     # organization = "127.0.0.1"
   }
+
+  dns_names = [
+    local.mongodb_dns,
+    var.name,
+    "${var.name}.${var.namespace}",
+    "${var.name}.${var.namespace}.svc",
+    "${var.name}.${var.namespace}.svc.cluster.local",
+    "localhost"
+  ]
 }
 
 resource "tls_locally_signed_cert" "mongodb_certificate" {

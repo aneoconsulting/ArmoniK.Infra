@@ -280,8 +280,10 @@ db.Temp_AuthData.drop();
   EOF
 
   authentication_script = <<EOF
-#!/bin/bash
-mongosh --tlsCAFile $MongoDB__CAFile --tlsAllowInvalidCertificates --tlsAllowInvalidHostnames --tls --username $MongoDB__User --password $MongoDB__Password mongodb://$MongoDB__Host:$MongoDB__Port/database /mongodb/script/initauth.js
+if [ -z "$MongoDB__ConnectionString" ]; then
+  MongoDB__ConnectionString="mongodb+srv://$MongoDB__User:$MongoDB__Password@$MongoDB__Host:$MongoDB__Port/$MongoDB__DatabaseName"
+fi
+mongosh --tlsCAFile $MongoDB__CAFile --tlsAllowInvalidCertificates --tlsAllowInvalidHostnames --tls "$MONGODB_ConnectionString" /mongodb/script/initauth.js
 EOF
 }
 

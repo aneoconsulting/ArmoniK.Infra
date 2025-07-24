@@ -14,7 +14,9 @@
 
 ## Modules
 
-No modules.
+| Name | Source | Version |
+|------|--------|---------|
+| <a name="module_mongodb_aggregator"></a> [mongodb\_aggregator](#module\_mongodb\_aggregator) | ../../../../utils/aggregator | n/a |
 
 ## Resources
 
@@ -27,10 +29,11 @@ No modules.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_certif_mount"></a> [certif\_mount](#input\_certif\_mount) | MongoDB certificate mount secret | <pre>map(object({<br/>    secret = string<br/>    path   = string<br/>    mode   = string<br/>  }))</pre> | n/a | yes |
-| <a name="input_docker_image"></a> [docker\_image](#input\_docker\_image) | Docker image for partition metrics exporter | <pre>object({<br/>    image              = string<br/>    tag                = string<br/>    image_pull_secrets = string<br/>  })</pre> | n/a | yes |
-| <a name="input_mongo_url"></a> [mongo\_url](#input\_mongo\_url) | Full MongoDB URI with credentials and tls options included | `string` | n/a | yes |
-| <a name="input_namespace"></a> [namespace](#input\_namespace) | Namespace of ArmoniK resources | `string` | n/a | yes |
+| <a name="input_disable_diagnostic_data"></a> [disable\_diagnostic\_data](#input\_disable\_diagnostic\_data) | When working with a sharded on-premise MongoDB deployment, this flag works around the exporter crashing (but exports less metrics) | `bool` | `false` | no |
+| <a name="input_docker_image"></a> [docker\_image](#input\_docker\_image) | Docker image for MongoDB metrics exporter | <pre>object({<br/>    image              = string<br/>    tag                = string<br/>    image_pull_secrets = string<br/>  })</pre> | n/a | yes |
+| <a name="input_force_split_cluster"></a> [force\_split\_cluster](#input\_force\_split\_cluster) | Used when working with mongodb+srv URIs (this is typically the case with Atlas-managed MongoDB), it adds the '--split-cluster' flag to the exporter flags. You can force this to be on. | `bool` | `false` | no |
+| <a name="input_mongodb_modules"></a> [mongodb\_modules](#input\_mongodb\_modules) | MongoDB modules to use when building the exporter (assumes only one is actually active) | `any` | n/a | yes |
+| <a name="input_namespace"></a> [namespace](#input\_namespace) | Kubernetes namespace to use for this resource | `string` | n/a | yes |
 
 ## Outputs
 

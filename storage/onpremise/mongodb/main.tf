@@ -49,8 +49,7 @@ resource "helm_release" "mongodb" {
         "databases" = ["database"]
       }
       "initdbScripts" = {
-        "createClusterMonitor.js" = file("${path.module}/createClusterMonitor.js")
-      }
+      "createClusterMonitor.js" = templatefile("${path.module}/createClusterMonitor.tftpl", { username = random_string.mongodb_monitoring_user.result, password = random_password.mongodb_monitoring_password.result }) }
       "podSecurityContext" = {
         "fsGroup" = var.security_context.fs_group
       }

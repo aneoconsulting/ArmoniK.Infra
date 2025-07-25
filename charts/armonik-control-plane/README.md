@@ -30,6 +30,13 @@ Kubernetes: `>=v1.23.0-0`
 |-----|------|---------|-------------|
 | annotations | object | `{}` |  |
 | certificates.enable | bool | `false` |  |
+| conf.env | object | `{}` |  |
+| conf.envConfigmap | list | `[]` |  |
+| conf.envFromConfigmap | object | `{}` |  |
+| conf.envFromSecret | object | `{}` |  |
+| conf.envSecret | list | `[]` |  |
+| conf.mountConfigmap | object | `{}` |  |
+| conf.mountSecret | object | `{}` |  |
 | config.computePlane.partitions.bench | object | `{}` |  |
 | config.computePlane.partitions.default | object | `{}` |  |
 | config.computePlane.partitions.htcmock | object | `{}` |  |

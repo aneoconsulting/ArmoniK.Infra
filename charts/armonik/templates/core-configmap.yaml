@@ -2,6 +2,9 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: {{ default "core-configmap" .Values.config.core.name }}
+  namespace: {{ $.Release.Namespace }}
+  annotations:
+    component: "core"
 data:
   {{ include "armonik.queue" . }}
   {{ if .Values.config.core.data }}

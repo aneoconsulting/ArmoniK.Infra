@@ -1,3 +1,7 @@
+{{- $conf := list
+    (include "armonik.conf.control" $ | fromYaml)
+    .Values.conf
+  | include "armonik.conf.merge" | fromYaml -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -23,7 +27,7 @@ spec:
           image: "{{ $registry }}/{{ .Values.image.repository }}/{{ .Values.image.name }}:{{ include "armonikCore.tag" . }}"
           {{- else }}
           image: "{{ .Values.image.repository }}/{{ .Values.image.name }}:{{ include "armonikCore.tag" . }}"
-          {{- end }}
+          {{- end }}{{/* if $registry */}}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           #command: ["/bin/bash", "-c", "sleep 3600"]
           ports:
@@ -31,81 +35,42 @@ spec:
             - name: {{ .name }}
               containerPort: {{ .containerPort }}
               protocol: {{ .protocol }}
-            {{- end }}
-          {{- if .Values.env }}
-          env:
-            {{- range .Values.env }}
-            - name: {{ .name }}
-              valueFrom:
-                {{- toYaml .valueFrom | nindent 16 }}
-            {{- end }}
-          {{- end }}
-          {{- if .Values.envFrom }}
-          envFrom:
-            {{- if .Values.envFrom.secretRef }}
-            {{- range .Values.envFrom.secretRef }}
-            - secretRef:
-                name: {{ . }}
-                optional: false
-            {{- end }}
-            {{- end }}
-            {{- if .Values.envFrom.configMapRef }}
-            {{- range .Values.envFrom.configMapRef }}
-            - configMapRef:
-                name: {{ . }}
-                optional: false
-            {{- end }}
-            {{- end }}
-          {{- end }}
+            {{- end }}{{/* range .Values.ports */}}
+          env: {{- include "armonik.conf.generateEnv" $conf | nindent 12 }}
+          envFrom: {{- include "armonik.conf.generateEnvFrom" $conf | nindent 12 }}
           {{- if .Values.resources }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-          {{- end }}
+          {{- end }}{{/* if .Values.resources */}}
           {{- if .Values.livenessProbe }}
           livenessProbe:
           {{- toYaml .Values.livenessProbe | nindent 12 }}
-          {{- end }}
+          {{- end }}{{/* if .Values.livenessProbe */}}
           {{- if .Values.startupProbe }}
           startupProbe:
           {{- toYaml .Values.startupProbe | nindent 12 }}
-          {{- end }}
-          {{- if .Values.volumes }}
-          volumeMounts:
-          {{- range $key, $volume := .Values.volumes }}
-            - name: {{ $key }}
-              mountPath: {{ $volume.mountPath }}
-              readOnly: true
-          {{- end }}
-          {{- end }}
-      {{- if .Values.volumes }}
-      volumes:
-        {{- range $key, $volume := .Values.volumes }}
-        {{- if $volume.enabled }}
-        - name: {{ $key }}
-          secret:
-            secretName: {{ $volume.secretName }}
-        {{- end }}
-        {{- end }}
-      {{- end }}
+          {{- end }}{{/* if .Values.startupProbe */}}
+          volumeMounts: {{- include "armonik.conf.generateVolumeMounts" $conf | nindent 12 }}
+      volumes: {{- include "armonik.conf.generateVolumes" $conf | nindent 8 }}
       {{- $imagePullSecrets := .Values.global.imagePullSecrets | default .Values.imagePullSecrets }}
       {{- if $imagePullSecrets }}
       {{- with $imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- end }}
+      {{- end }}{{/* with $imagePullSecrets */}}
+      {{- end }}{{/* if $imagePullSecrets */}}
       {{- if $.Values.serviceAccount.create }}
       serviceAccountName: {{ $.Values.serviceAccount.name }}
       serviceAccount: {{ $.Values.serviceAccount.name }}
       automountServiceAccountToken: true
-      {{- end }}
+      {{- end }}{{/* if .Values.serviceAccount.create */}}
       shareProcessNamespace: false
       {{- if .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml .Values.nodeSelector | nindent 8 }}
-      {{- end }}
+      {{- end }}{{/* if .Values.nodeSelector */}}
       {{- if .Values.tolerations }}
       tolerations:
         {{- toYaml .Values.tolerations | nindent 8 }}
-      {{- end }}
+      {{- end }}{{/* if .Values.tolerations */}}
       enableServiceLinks: true

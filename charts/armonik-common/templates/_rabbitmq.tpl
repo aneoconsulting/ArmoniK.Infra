@@ -37,6 +37,7 @@ env:
   Amqp__Host: {{ include "armonik.rabbitmq.host" $ctx | quote }}
   Amqp__Port: {{ include "armonik.rabbitmq.port" $ctx | quote }}
   Amqp__User: {{ $ctx.Values.auth.username | quote }}
+  Amqp__MaxPriority: "10"
 {{- if $ctx.Values.auth.tls.enabled }}
   Amqp__CaPath: /rabbitmq/certificate/ca.crt
   Amqp__Scheme: AMQPS

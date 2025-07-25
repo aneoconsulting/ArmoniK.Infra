@@ -146,5 +146,91 @@ Gets the context to execute conf named templates
 {{- define "armonik.conf.configmap" -}}
   {{- $configmap := index . 0 -}}
   {{- $conf := index . 1 | deepCopy -}}
-  pouet-{{- $configmap -}}
-{{- end -}}
+  {{- $configmap -}}
+{{- end -}}{{/* define "armonik.conf.configmap" */}}
+
+{{- define "armonik.conf.generateEnv" }}
+{{- range $name, $value := .env }}
+- name: {{ $name }}
+  value: {{ $value }}
+{{- end }}{{/* range $name, $value := .env */}}
+{{- range $name, $value := .envFromConfigmap }}
+- name: {{ $name }}
+  valueFrom:
+    configMapKeyRef:
+      name: {{ $value.configmap }}
+      key: {{ $value.field }}
+{{- end }}{{/* range $name, $value := .envFromConfigmap */}}
+{{- range $name, $value := .envFromSecret }}
+- name: {{ $name }}
+  valueFrom:
+    secretKeyRef:
+      name: {{ $value.secret }}
+      key: {{ $value.field }}
+{{- end }}{{/* range $name, $value := .envFromSecret */}}
+{{- end -}}{{/* define "armonik.conf.{{- define "armonik.conf.generateEnv" */}}
+ 
+{{- define "armonik.conf.generateEnvFrom" }}
+{{- range $name := .envConfigmap }}
+- configMapRef:
+    name: {{ $name }}
+    optional: false
+{{- end }}{{/* range $name := .envConfigmap */}}
+{{- range $name := .envSecret }}
+- secretRef:
+    name: {{ $name }}
+    optional: false
+{{- end }}{{/* range $name := .envSecret */}}
+{{- end -}}{{/* define "armonik.conf.generateEnvFrom" */}}
+
+{{- define "armonik.conf.generateVolumeMounts" }}
+{{- range $name, $mount := .mountConfigmap }}
+- name: {{ $name }}
+  mountPath: {{ $mount.path }}
+  readOnly: {{ or (eq (toString $mount.mode) "0444") true }}
+{{- end }}{{/* range $name, $mount := .mountConfigmap */}}
+{{- range $name, $mount := .mountSecret }}
+- name: {{ $name }}
+  mountPath: {{ $mount.path }}
+  readOnly: {{ or (eq (toString $mount.mode) "0444") true }}
+{{- end }}{{/* range $name, $mount := .mountSecret */}}
+{{- end -}}{{/* define "armonik.conf.generateVolumeMounts" */}}
+
+{{- define "armonik.conf.generateVolumes" }}
+{{- range $name, $mount := .mountConfigmap }}
+- name: {{ $name }}
+  configMap:
+    name: {{ $mount.configmap }}
+    {{- if $mount.items }}
+    items:
+      {{- range $itemName, $item := $mount.items }}
+      - key: {{ $item.field }}
+        path: {{ $itemName }}
+        {{- if $item.mode }}
+        mode: {{ $item.mode }}
+        {{- end }}{{/* if $item.mode */}}
+      {{- end }}{{/* range $itemName, $item := $mount.items */}}
+    {{- end }}{{/* if $mount.items */}}
+    {{- if $mount.mode }}
+    defaultMode: {{ $mount.mode | replace "0" "" }}
+    {{- end }}{{/* if $mount.mode */}}
+{{- end }}{{/* range $name, $mount := .mountConfigmap */}}
+{{- range $name, $mount := .mountSecret }}
+- name: {{ $name }}
+  secret:
+    secretName: {{ $mount.secret }}
+    {{- if $mount.items }}
+    items:
+      {{- range $itemName, $item := $mount.items }}
+      - key: {{ $item.field }}
+        path: {{ $itemName }}
+        {{- if $item.mode }}
+        mode: {{ $item.mode }}
+        {{- end }}{{/* if $item.mode" */}}
+      {{- end }}{{/* $itemName, $item := $mount.items */}}
+    {{- end }}{{/* if $mount.items */}}
+    {{- if $mount.mode }}
+    defaultMode: {{ $mount.mode | replace "0" "" }}
+    {{- end }}{{/* if $mount.mode */}}
+{{- end }}{{/* range $name, $mount := .mountSecret */}}
+{{- end -}}{{/* define "armonik.conf.generateVolumes" */}}

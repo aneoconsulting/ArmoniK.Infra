@@ -173,10 +173,12 @@ resource "kubernetes_cron_job_v1" "partitions_in_database" {
 
 locals {
   script_cron = <<EOF
-  #!/bin/bash
-  export nbElements=$(mongosh --tlsCAFile "$MongoDB__CAFile" --tlsAllowInvalidCertificates --tlsAllowInvalidHostnames --tls --username "$MongoDB__User" --password "$MongoDB__Password" "mongodb+srv://$MongoDB__Host/$MongoDB__DatabaseName" --eval 'db.PartitionData.countDocuments()' --quiet)
+  if [ -z "$MongoDB__ConnectionString" ]; then
+    MongoDB__ConnectionString="mongodb+srv://$MongoDB__User:$MongoDB__Password@$MongoDB__Host/$MongoDB__DatabaseName" # Note: This will only work if the 'MongoDB__User' is created in the db 'MongoDB__DatabaseName'
+  fi
+  export nbElements=$(mongosh --tlsCAFile "$MongoDB__CAFile" --tlsAllowInvalidCertificates --tlsAllowInvalidHostnames --tls "$MongoDB__ConnectionString" --eval 'db.PartitionData.countDocuments()' --quiet)
   if [[ $nbElements != ${length(local.partition_names)} ]]; then
-    mongosh --tlsCAFile "$MongoDB__CAFile" --tlsAllowInvalidCertificates --tlsAllowInvalidHostnames --tls --username "$MongoDB__User" --password "$MongoDB__Password" "mongodb+srv://$MongoDB__Host/$MongoDB__DatabaseName" --eval 'db.PartitionData.insertMany(${jsonencode(local.partitions_data)})'
+    mongosh --tlsCAFile "$MongoDB__CAFile" --tlsAllowInvalidCertificates --tlsAllowInvalidHostnames --tls "$MongoDB__ConnectionString" --eval 'db.PartitionData.insertMany(${jsonencode(local.partitions_data)})'
   fi
   EOF
 }

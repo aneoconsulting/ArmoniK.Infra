@@ -164,10 +164,13 @@ resource "kubernetes_job" "partitions_in_database" {
 locals {
   script = <<EOF
   #!/bin/bash
+  if [ -z "$MongoDB__ConnectionString" ]; then
+    # Note: We can use 'mongodb://' when working with mongosh, it just fails in when trying to connect from the control plane (MongoDB client scuffed?) 
+    MongoDB__ConnectionString="mongodb+srv://$MongoDB__User:$MongoDB__Password@$MongoDB__Host/$MongoDB__DatabaseName" # Note: This will only work if the 'MongoDB__User' is created in the db 'MongoDB__DatabaseName' 
+  fi
   # Drop
-  mongosh --tlsCAFile "$MongoDB__CAFile" --tlsAllowInvalidCertificates --tlsAllowInvalidHostnames --tls --username "$MongoDB__User" --password "$MongoDB__Password" "mongodb+srv://$MongoDB__Host/$MongoDB__DatabaseName" --eval 'db.PartitionData.drop()'
+  mongosh --tlsCAFile "$MongoDB__CAFile" --tlsAllowInvalidCertificates --tlsAllowInvalidHostnames --tls "$MongoDB__ConnectionString" --eval 'db.PartitionData.drop()'  
   # Insert
-
-  mongosh --tlsCAFile "$MongoDB__CAFile" --tlsAllowInvalidCertificates --tlsAllowInvalidHostnames --tls --username "$MongoDB__User" --password "$MongoDB__Password" "mongodb+srv://$MongoDB__Host/$MongoDB__DatabaseName" --eval 'db.PartitionData.insertMany(${jsonencode(local.partitions_data)})'
+  mongosh --tlsCAFile "$MongoDB__CAFile" --tlsAllowInvalidCertificates --tlsAllowInvalidHostnames --tls "$MongoDB__ConnectionString" --eval 'db.PartitionData.insertMany(${jsonencode(local.partitions_data)})'  
   EOF
 }

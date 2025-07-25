@@ -1,5 +1,22 @@
 locals {
   database_init_script = <<EOF
+    // Create users in admin database
+    db = db.getSiblingDB("admin");
+    
+    // Create monitoring user in admin database
+    db.createUser(
+    {
+        user: "${random_string.mongodb_monitoring_user.result}",
+        pwd: "${random_password.mongodb_monitoring_password.result}",
+        roles: [ 
+          { role: "read", db: "local" }, 
+          { role: "read", db: "database" },
+          { role: "clusterMonitor", db: "admin" },
+          { role: "read", db: "config" }
+        ]
+    }
+    );
+    
     db = db.getSiblingDB("${var.mongodb.database_name}");
     db.createCollection("sample")
     db.sample.insertOne({test:1})

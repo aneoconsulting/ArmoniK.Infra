@@ -29,6 +29,26 @@ resource "kubernetes_secret" "mongodb_user" {
   }
 }
 
+resource "kubernetes_secret" "mongodb_monitoring_connection_string" {
+  metadata {
+    name      = "mongodb-monitoring-connection-string"
+    namespace = var.namespace
+  }
+  data = {
+    uri = "mongodb://${random_string.mongodb_monitoring_user.result}:${random_password.mongodb_monitoring_password.result}@${local.mongodb_dns}:27017/admin?tls=true&tlsAllowInvalidCertificates=true&tlsAllowInvalidHostnames=true&tlsCAFile=/mongodb/certs/ca.pem&authSource=admin"
+  }
+}
+
+resource "kubernetes_secret" "mongodb_connection_string" {
+  metadata {
+    name      = "mongodb-connection-string"
+    namespace = var.namespace
+  }
+  data = {
+    uri = "mongodb+srv://root:${local.mongodb_root_password}@${local.mongodb_dns}/${var.mongodb.database_name}?authSource=admin"
+  }
+}
+
 resource "kubernetes_secret" "mongodb" {
   metadata {
     name      = "custom-${var.name}"

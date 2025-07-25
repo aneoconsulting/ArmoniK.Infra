@@ -5,6 +5,17 @@ data "kubernetes_secret" "mongodb_certificates" {
   }
 }
 
+resource "kubernetes_secret" "mongodb_connection_string" {
+
+  metadata {
+    name      = "mongodb-connection-string"
+    namespace = var.namespace
+  }
+  data = {
+    uri = "mongodb+srv://${random_string.mongodb_application_user.result}:${random_password.mongodb_application_password.result}@${local.mongodb_dns}/database"
+  }
+}
+
 resource "kubernetes_secret" "mongodb" {
   metadata {
     name      = "mongodb"

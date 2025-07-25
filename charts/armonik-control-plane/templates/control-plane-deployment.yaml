@@ -1,0 +1,76 @@
+{{- $conf := list
+    (include "armonik.conf.control" $ | fromYaml)
+    .Values.conf
+  | include "armonik.conf.merge" | fromYaml -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "controlPlane.name" . }}
+  labels:
+    {{- include "controlPlane.labels" . | nindent 4 }}
+spec:
+  progressDeadlineSeconds: 600
+  replicas: {{ .Values.replicaCount }}
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      {{- include "controlPlane.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "controlPlane.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: {{ include "controlPlane.name" . }}
+          {{- $registry := .Values.global.imageRegistry | default .Values.image.registry }}
+          {{- if $registry }}
+          image: "{{ $registry }}/{{ .Values.image.repository }}/{{ .Values.image.name }}:{{ include "armonikCore.tag" . }}"
+          {{- else }}
+          image: "{{ .Values.image.repository }}/{{ .Values.image.name }}:{{ include "armonikCore.tag" . }}"
+          {{- end }}{{/* if $registry */}}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          #command: ["/bin/bash", "-c", "sleep 3600"]
+          ports:
+            {{- range .Values.ports }}
+            - name: {{ .name }}
+              containerPort: {{ .containerPort }}
+              protocol: {{ .protocol }}
+            {{- end }}{{/* range .Values.ports */}}
+          env: {{- include "armonik.conf.generateEnv" $conf | nindent 12 }}
+          envFrom: {{- include "armonik.conf.generateEnvFrom" $conf | nindent 12 }}
+          {{- if .Values.resources }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          {{- end }}{{/* if .Values.resources */}}
+          {{- if .Values.livenessProbe }}
+          livenessProbe:
+          {{- toYaml .Values.livenessProbe | nindent 12 }}
+          {{- end }}{{/* if .Values.livenessProbe */}}
+          {{- if .Values.startupProbe }}
+          startupProbe:
+          {{- toYaml .Values.startupProbe | nindent 12 }}
+          {{- end }}{{/* if .Values.startupProbe */}}
+          volumeMounts: {{- include "armonik.conf.generateVolumeMounts" $conf | nindent 12 }}
+      volumes: {{- include "armonik.conf.generateVolumes" $conf | nindent 8 }}
+      {{- $imagePullSecrets := .Values.global.imagePullSecrets | default .Values.imagePullSecrets }}
+      {{- if $imagePullSecrets }}
+      {{- with $imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}{{/* with $imagePullSecrets */}}
+      {{- end }}{{/* if $imagePullSecrets */}}
+      {{- if $.Values.serviceAccount.create }}
+      serviceAccountName: {{ $.Values.serviceAccount.name }}
+      serviceAccount: {{ $.Values.serviceAccount.name }}
+      automountServiceAccountToken: true
+      {{- end }}{{/* if .Values.serviceAccount.create */}}
+      shareProcessNamespace: false
+      {{- if .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml .Values.nodeSelector | nindent 8 }}
+      {{- end }}{{/* if .Values.nodeSelector */}}
+      {{- if .Values.tolerations }}
+      tolerations:
+        {{- toYaml .Values.tolerations | nindent 8 }}
+      {{- end }}{{/* if .Values.tolerations */}}
+      enableServiceLinks: true

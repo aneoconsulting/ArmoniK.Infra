@@ -2,6 +2,9 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: {{ default "log-configmap" .Values.config.log.name }}
+  namespace: {{ $.Release.Namespace }}
+  annotations:
+    component: "log"
 data:
   {{ if .Values.config.log.data }}
   Serilog__MinimumLevel: {{ .Values.config.log.data.minimumLevel | quote }}

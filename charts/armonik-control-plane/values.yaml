@@ -63,6 +63,15 @@ tolerations: []
 
 annotations: {}
 
+conf:
+  env: {}
+  envConfigmap: []
+  envFromConfigmap: {}
+  envSecret: []
+  envFromSecret: {}
+  mountConfigmap: {}
+  mountSecret: {}
+
 volumes:
   # activemq:
   #   enabled: true

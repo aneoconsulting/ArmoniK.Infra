@@ -35,7 +35,7 @@ Gets the context of a dependency to execute named templates from this dependency
       "Values" (list $root.Values "global" "armonik-dependencies" $dependency | include "armonik.index" | fromYaml)
       "Chart" (dict
         "IsRoot" $root.Chart.IsRoot
-        "name" "mongodb"
+        "name" $dependency
         "type" "application")
       "Capabilities" $root.Capabilities
       "Files" dict

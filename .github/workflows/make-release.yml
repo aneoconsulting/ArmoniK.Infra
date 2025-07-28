@@ -35,7 +35,7 @@ jobs:
 
     - name: Generate Snapshot Version
       id: snapshot
-      uses: codacy/git-version@80c816f11db8dea5e3a81025f598193015b51832 # 2.8.0
+      uses: codacy/git-version@995fc074f2c83b27b8fdcfcbc6ed8825fb12d61c # 2.8.3
       with:
         minor-identifier: "feat:"
         release-branch: ${{ github.ref_name }}-pre
@@ -43,7 +43,7 @@ jobs:
 
     - name: Generate Release Version
       id: release
-      uses: codacy/git-version@80c816f11db8dea5e3a81025f598193015b51832 # 2.8.0
+      uses: codacy/git-version@995fc074f2c83b27b8fdcfcbc6ed8825fb12d61c # 2.8.3
       with:
         minor-identifier: "feat:"
         release-branch: ${{ steps.rev.outputs.current-branch }}
@@ -70,7 +70,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 18
 

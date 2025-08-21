@@ -81,6 +81,9 @@ resource "kubernetes_deployment" "compute_plane" {
             effect   = "NoSchedule"
           }
         }
+        security_context {
+          run_as_user = each.value.security.user >= 0 ? each.value.security.user : null
+        }
         termination_grace_period_seconds = each.value.termination_grace_period_seconds
         share_process_namespace          = false
         dynamic "image_pull_secrets" {

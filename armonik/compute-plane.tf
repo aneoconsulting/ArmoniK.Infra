@@ -34,7 +34,8 @@ module "polling_agent_aggregation" {
 
 # Agent deployment
 resource "kubernetes_deployment" "compute_plane" {
-  for_each = var.compute_plane
+  for_each   = var.compute_plane
+  depends_on = [kubernetes_job.init]
   metadata {
     name      = "compute-plane-${each.key}"
     namespace = var.namespace
@@ -247,9 +248,9 @@ resource "kubernetes_deployment" "compute_plane" {
           dynamic "volume_mount" {
             for_each = module.polling_agent_aggregation[each.key].mount_configmap
             content {
-              name       = volume.value.configmap
-              mount_path = volume.value.path
-              sub_path   = lookup(volume.value, "subpath", null)
+              name       = volume_mount.value.configmap
+              mount_path = volume_mount.value.path
+              sub_path   = lookup(volume_mount.value, "subpath", null)
               read_only  = true
             }
           }
@@ -330,9 +331,9 @@ resource "kubernetes_deployment" "compute_plane" {
             dynamic "volume_mount" {
               for_each = module.worker_aggregation[each.key].mount_configmap
               content {
-                name       = volume.value.configmap
-                mount_path = volume.value.path
-                sub_path   = lookup(volume.value, "subpath", null)
+                name       = volume_mount.value.configmap
+                mount_path = volume_mount.value.path
+                sub_path   = lookup(volume_mount.value, "subpath", null)
                 read_only  = true
               }
             }

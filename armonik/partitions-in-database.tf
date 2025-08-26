@@ -1,4 +1,5 @@
 resource "kubernetes_job" "partitions_in_database" {
+  count = local.job_partitions ? 1 : 0
   metadata {
     name      = "partitions-in-database"
     namespace = var.namespace

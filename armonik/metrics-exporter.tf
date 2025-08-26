@@ -5,6 +5,7 @@ module "metrics_aggregation" {
 }
 # Metrics exporter deployment
 resource "kubernetes_deployment" "metrics_exporter" {
+  depends_on = [kubernetes_job.init]
   metadata {
     name      = var.metrics_exporter.name
     namespace = var.namespace
@@ -158,9 +159,9 @@ resource "kubernetes_deployment" "metrics_exporter" {
           dynamic "volume_mount" {
             for_each = module.metrics_aggregation.mount_configmap
             content {
-              name       = volume.value.configmap
-              mount_path = volume.value.path
-              sub_path   = lookup(volume.value, "subpath", null)
+              name       = volume_mount.value.configmap
+              mount_path = volume_mount.value.path
+              sub_path   = lookup(volume_mount.value, "subpath", null)
               read_only  = true
             }
           }

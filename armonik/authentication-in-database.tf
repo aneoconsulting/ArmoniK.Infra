@@ -2,7 +2,7 @@ resource "kubernetes_job" "authentication_in_database" {
   depends_on = [
     kubernetes_service.ingress
   ]
-  count = local.authentication_require_authentication ? 1 : 0
+  count = local.job_authentication ? 1 : 0
   metadata {
     name      = "authentication-in-database"
     namespace = var.namespace
@@ -175,32 +175,11 @@ data "tls_certificate" "certificate_data" {
 }
 
 locals {
-  authentication_data_default = jsonencode({
-    certificates_list = [
-      for name, cert in data.tls_certificate.certificate_data : {
-        Fingerprint = cert.certificates[length(cert.certificates) - 1].sha1_fingerprint,
-        Cn          = tls_cert_request.ingress_client_cert_request[name].subject[0].common_name,
-        Username    = name
-      }
-    ]
-    users_list = [
-      for name, cert in data.tls_certificate.certificate_data : {
-        Username = name,
-        Roles    = [name]
-      }
-    ]
-    roles_list = [
-      for name, cert in data.tls_certificate.certificate_data : {
-        RoleName    = name,
-        Permissions = local.ingress_generated_cert.permissions[name]
-      }
-    ]
+  authentication_data = jsonencode({
+    certificates_list = local.init_authentication_certs
+    users_list        = local.init_authentication_users
+    roles_list        = local.init_authentication_roles
   })
-  authentication_data = (
-    length(tls_locally_signed_cert.ingress_client_certificate) > 0 ? local.authentication_data_default :
-    var.authentication.require_authentication ? file(var.authentication.authentication_datafile) :
-    ""
-  )
 
   auth_js = <<EOF
 var auth_data = ${local.authentication_data};
@@ -281,14 +260,15 @@ db.Temp_AuthData.drop();
 
   authentication_script = <<EOF
 if [ -z "$MongoDB__ConnectionString" ]; then
-  MongoDB__ConnectionString="mongodb+srv://$MongoDB__User:$MongoDB__Password@$MongoDB__Host:$MongoDB__Port/$MongoDB__DatabaseName"
+    # Note: We can use 'mongodb://' when working with mongosh, it just fails in when trying to connect from the control plane (MongoDB client scuffed?) 
+    MongoDB__ConnectionString="mongodb+srv://$MongoDB__User:$MongoDB__Password@$MongoDB__Host/$MongoDB__DatabaseName" # Note: This will only work if the 'MongoDB__User' is created in the db 'MongoDB__DatabaseName'
 fi
-mongosh --tlsCAFile $MongoDB__CAFile --tlsAllowInvalidCertificates --tlsAllowInvalidHostnames --tls "$MONGODB_ConnectionString" /mongodb/script/initauth.js
+mongosh --tlsCAFile "$MongoDB__CAFile" --tlsAllowInvalidCertificates --tlsAllowInvalidHostnames --tls "$MongoDB__ConnectionString" /mongodb/script/initauth.js
 EOF
 }
 
 resource "kubernetes_config_map" "authmongo" {
-  count = local.authentication_require_authentication ? 1 : 0
+  count = local.job_authentication ? 1 : 0
   metadata {
     name      = "mongodb-script"
     namespace = var.namespace

@@ -78,7 +78,7 @@ variable "ingress" {
 
 # Job to insert partitions in the database
 variable "job_partitions_in_database" {
-  description = "Job to insert partitions IDs in the database"
+  description = "LEGACY: Job to insert partitions IDs in the database"
   type = object({
     name               = string
     image              = string
@@ -88,6 +88,8 @@ variable "job_partitions_in_database" {
     node_selector      = any
     annotations        = any
   })
+
+  default = null
 }
 
 # Parameters of control plane
@@ -110,6 +112,25 @@ variable "control_plane" {
     default_partition    = string
     service_account_name = string
   })
+}
+
+variable "init" {
+  description = "Parameters of the init job"
+  type = object({
+    name               = optional(string, "init")
+    image              = string
+    tag                = string
+    image_pull_policy  = string
+    image_pull_secrets = string
+    node_selector      = map(string)
+    annotations        = map(string)
+    populate = optional(object({
+      partitions     = optional(bool, true)
+      authentication = optional(bool, true)
+    }), {})
+  })
+
+  default = null
 }
 
 # Parameters of admin gui
@@ -136,12 +157,12 @@ variable "compute_plane" {
   description = "Parameters of the compute plane"
   type = map(object({
     partition_data = object({
-      priority              = number
-      reserved_pods         = number
-      max_pods              = number
-      preemption_percentage = number
-      parent_partition_ids  = list(string)
-      pod_configuration     = any
+      priority              = optional(number, 1)
+      reserved_pods         = optional(number, 0)
+      max_pods              = optional(number, 1)
+      preemption_percentage = optional(number, 0)
+      parent_partition_ids  = optional(set(string), [])
+      pod_configuration     = optional(map(string), {})
     })
     replicas                         = number
     termination_grace_period_seconds = number
@@ -180,12 +201,12 @@ variable "compute_plane" {
 variable "authentication" {
   description = "Authentication behavior"
   type = object({
-    name                    = string
-    image                   = string
-    tag                     = string
-    image_pull_policy       = string
-    image_pull_secrets      = string
-    node_selector           = any
+    name                    = optional(string)
+    image                   = optional(string)
+    tag                     = optional(string)
+    image_pull_policy       = optional(string)
+    image_pull_secrets      = optional(string)
+    node_selector           = optional(any)
     authentication_datafile = string
     require_authentication  = bool
     require_authorization   = bool

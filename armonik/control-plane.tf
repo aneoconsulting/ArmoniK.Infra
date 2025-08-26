@@ -1,5 +1,6 @@
 # Control plane deployment
 resource "kubernetes_deployment" "control_plane" {
+  depends_on = [kubernetes_job.init]
   metadata {
     name      = "control-plane"
     namespace = var.namespace
@@ -186,9 +187,9 @@ resource "kubernetes_deployment" "control_plane" {
           dynamic "volume_mount" {
             for_each = module.control_plane_aggregation.mount_configmap
             content {
-              name       = volume.value.configmap
-              mount_path = volume.value.path
-              sub_path   = lookup(volume.value, "subpath", null)
+              name       = volume_mount.value.configmap
+              mount_path = volume_mount.value.path
+              sub_path   = lookup(volume_mount.value, "subpath", null)
               read_only  = true
             }
           }

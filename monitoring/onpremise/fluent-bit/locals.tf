@@ -47,18 +47,18 @@ locals {
   #windows
   fluent_bit_kube_ca_file_windows           = "C:\\var\\run\\secrets\\kubernetes.io\\serviceaccount\\ca.crt"
   fluent_bit_kube_token_file_windows        = "C:\\var\\run\\secrets\\kubernetes.io\\serviceaccount\\token"
-  fluent_bit_input_kube_path_windows        = "C:\\var\\log\\containers\\control-plane*.log, C:\\var\\log\\containers\\compute-plane*.log"
-  fluent_bit_input_application_path_windows = "C:\\var\\log\\containers\\control-plane*.log, C:\\var\\log\\containers\\compute-plane*.log, C:\\var\\log\\containers\\ingress*.log, C:\\var\\log\\containers\\mongodb*.log, C:\\var\\log\\containers\\keda*.log"
-  fluent_bit_input_s3_path_windows          = "C:\\var\\log\\containers\\control-plane*.log, C:\\var\\log\\containers\\compute-plane*.log, C:\\var\\log\\containers\\ingress*.log, C:\\var\\log\\containers\\mongodb*.log, C:\\var\\log\\containers\\keda*.log"
+  fluent_bit_input_kube_path_windows        = "C:\\var\\log\\containers\\control-plane*.log, C:\\var\\log\\containers\\compute-plane*.log, C:\\var\\log\\containers\\init*.log"
+  fluent_bit_input_application_path_windows = "C:\\var\\log\\containers\\control-plane*.log, C:\\var\\log\\containers\\compute-plane*.log, C:\\var\\log\\containers\\init*.log, C:\\var\\log\\containers\\ingress*.log, C:\\var\\log\\containers\\mongodb*.log, C:\\var\\log\\containers\\keda*.log"
+  fluent_bit_input_s3_path_windows          = "C:\\var\\log\\containers\\control-plane*.log, C:\\var\\log\\containers\\compute-plane*.log, C:\\var\\log\\containers\\init*.log, C:\\var\\log\\containers\\ingress*.log, C:\\var\\log\\containers\\mongodb*.log, C:\\var\\log\\containers\\keda*.log"
   fluent_bit_input_path_windows             = "C:\\var\\log\\containers\\"
   windows_and_daemonset                     = (local.fluent_bit_windows_is_daemonset && length(var.node_selector_windows) > 0)
 
   #linux
   fluent_bit_kube_ca_file           = "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
   fluent_bit_kube_token_file        = "/var/run/secrets/kubernetes.io/serviceaccount/token"
-  fluent_bit_input_kube_path        = "/var/log/containers/control-plane*.log, /var/log/containers/compute-plane*.log"
-  fluent_bit_input_application_path = "/var/log/containers/control-plane*.log, /var/log/containers/compute-plane*.log, /var/log/containers/ingress*.log, /var/log/containers/mongodb*.log, /var/log/containers/keda*.log"
-  fluent_bit_input_s3_path          = "/var/log/containers/control-plane*.log, /var/log/containers/compute-plane*.log, /var/log/containers/ingress*.log, /var/log/containers/mongodb*.log, /var/log/containers/keda*.log"
+  fluent_bit_input_kube_path        = "/var/log/containers/control-plane*.log, /var/log/containers/compute-plane*.log, /var/log/containers/init*.log"
+  fluent_bit_input_application_path = "/var/log/containers/control-plane*.log, /var/log/containers/compute-plane*.log, /var/log/containers/init*.log, /var/log/containers/ingress*.log, /var/log/containers/mongodb*.log, /var/log/containers/keda*.log"
+  fluent_bit_input_s3_path          = "/var/log/containers/control-plane*.log, /var/log/containers/compute-plane*.log, /var/log/containers/init*.log, /var/log/containers/ingress*.log, /var/log/containers/mongodb*.log, /var/log/containers/keda*.log"
   fluent_bit_input_path             = "/var/log/containers/"
 
   # Seq

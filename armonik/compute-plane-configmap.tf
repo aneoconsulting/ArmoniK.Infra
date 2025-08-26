@@ -10,15 +10,24 @@ module "compute_all_aggregation" {
 
 module "polling_all_aggregation" {
   source = "../utils/aggregator"
-  conf_list = flatten([{
-    env = {
-      ComputePlane__MessageBatchSize = "1"
-      InitWorker__WorkerCheckRetries = "10"       # TODO: make it a variable
-      InitWorker__WorkerCheckDelay   = "00:00:10" # TODO: make it a variable
-      Amqp__LinkCredit               = "2"
-      Pollster__GraceDelay           = "00:00:15"
-    }
-  }, module.core_aggregation, module.compute_all_aggregation, var.configurations.polling])
+  conf_list = flatten([
+    {
+      env = {
+        ComputePlane__MessageBatchSize  = "1"
+        InitWorker__WorkerCheckRetries  = "10"       # TODO: make it a variable
+        InitWorker__WorkerCheckDelay    = "00:00:10" # TODO: make it a variable
+        Amqp__LinkCredit                = "2"
+        Pollster__GraceDelay            = "00:00:15"
+        InitServices__InitDatabase      = !local.job_init,
+        InitServices__InitObjectStorage = !local.job_init,
+        InitServices__InitQueue         = !local.job_init,
+        InitServices__StopAfterInit     = false,
+      }
+    },
+    module.core_aggregation,
+    module.compute_all_aggregation,
+    var.configurations.polling,
+  ])
   materialize_configmap = {
     name      = "polling-configmap"
     namespace = var.namespace

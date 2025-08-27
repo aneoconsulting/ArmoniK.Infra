@@ -50,7 +50,7 @@ No modules.
 | <a name="input_adapter_class_name"></a> [adapter\_class\_name](#input\_adapter\_class\_name) | Name of the adapter's class | `string` | `"ArmoniK.Core.Adapters.Amqp.QueueBuilder"` | no |
 | <a name="input_helm_chart_repository"></a> [helm\_chart\_repository](#input\_helm\_chart\_repository) | Path to helm chart repository for RabbitMQ | `string` | n/a | yes |
 | <a name="input_helm_chart_version"></a> [helm\_chart\_version](#input\_helm\_chart\_version) | Version of chart helm for RabbitMQ | `string` | n/a | yes |
-| <a name="input_image"></a> [image](#input\_image) | image for the rabbirmq to be used | `string` | `"bitnami/rabbitmq"` | no |
+| <a name="input_image"></a> [image](#input\_image) | image for the rabbirmq to be used | `string` | `"bitnamilegacy/rabbitmq"` | no |
 | <a name="input_name"></a> [name](#input\_name) | Name of the queue storage | `string` | `"rabbitmq"` | no |
 | <a name="input_namespace"></a> [namespace](#input\_namespace) | Namespace for rabbitmq | `string` | n/a | yes |
 | <a name="input_path"></a> [path](#input\_path) | Path for mounting secrets | `string` | `"/amqp"` | no |

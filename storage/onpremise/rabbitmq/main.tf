@@ -6,6 +6,11 @@ resource "helm_release" "rabbitmq" {
   version    = var.helm_chart_version
   values = [
     yamlencode({
+      global = {
+        security = {
+          allowInsecureImages = true
+        }
+      }
       customStartupProbe = {
         exec = {
           command = [
@@ -63,8 +68,14 @@ resource "helm_release" "rabbitmq" {
       }
 
       image = {
-        repository = var.image
+        repository = coalesce(var.image, "bitnamilegacy/rabbitmq")
         tag        = var.tag
+      }
+
+      volumePermissions = {
+        image = {
+          repository = "bitnamilegacy/os-shell"
+        }
       }
 
       extraPlugins = "rabbitmq_amqp1_0"

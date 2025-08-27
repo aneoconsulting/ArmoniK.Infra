@@ -125,7 +125,7 @@ locals {
       PodMax               = value.partition_data.max_pods
       PreemptionPercentage = value.partition_data.preemption_percentage
       Priority             = value.partition_data.priority
-      PodConfiguration     = value.partition_data.pod_configuration
+      PodConfiguration     = { Configuration = value.partition_data.pod_configuration }
     }
   ]
 
@@ -185,4 +185,8 @@ locals {
     node_selector_keys   = keys(var.metrics_exporter.node_selector)
     node_selector_values = values(var.metrics_exporter.node_selector)
   }
+
+  job_init           = var.init != null
+  job_partitions     = var.job_partitions_in_database != null
+  job_authentication = local.authentication_require_authentication && can(coalesce(var.authentication.name)) && can(coalesce(var.authentication.image)) && can(coalesce(var.authentication.tag))
 }

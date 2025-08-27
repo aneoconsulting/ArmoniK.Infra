@@ -171,6 +171,9 @@ variable "compute_plane" {
     annotations                      = any
     service_account_name             = string
     socket_type                      = optional(string, "unixdomainsocket")
+    security = optional(object({
+      user = optional(number, 5000) # keep default user if set to -1
+    }), {})
     polling_agent = object({
       image             = string
       tag               = string

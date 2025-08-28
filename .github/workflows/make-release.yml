@@ -16,7 +16,7 @@ jobs:
       release: ${{ steps.release.outputs.version }}
     steps:
     - name: Checkout
-      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
       with:
         ref: ${{ github.ref }}
         fetch-depth: 0
@@ -35,7 +35,7 @@ jobs:
 
     - name: Generate Snapshot Version
       id: snapshot
-      uses: codacy/git-version@80c816f11db8dea5e3a81025f598193015b51832 # 2.8.0
+      uses: codacy/git-version@877bb11b7a2ee44dcd7c0a03882c7037356e64e9 # 2.8.6
       with:
         minor-identifier: "feat:"
         release-branch: ${{ github.ref_name }}-pre
@@ -43,7 +43,7 @@ jobs:
 
     - name: Generate Release Version
       id: release
-      uses: codacy/git-version@80c816f11db8dea5e3a81025f598193015b51832 # 2.8.0
+      uses: codacy/git-version@877bb11b7a2ee44dcd7c0a03882c7037356e64e9 # 2.8.6
       with:
         minor-identifier: "feat:"
         release-branch: ${{ steps.rev.outputs.current-branch }}
@@ -66,11 +66,11 @@ jobs:
     needs:
       - versionning
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 18
 

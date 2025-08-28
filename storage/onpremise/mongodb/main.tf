@@ -15,6 +15,11 @@ resource "helm_release" "mongodb" {
 
   values = [
     yamlencode({
+      "global" = {
+        "security" = {
+          "allowInsecureImages" = true
+        }
+      }
       "labels"       = var.labels
       "replicaCount" = local.replicas
       "nodeSelector" = var.mongodb.node_selector
@@ -29,7 +34,7 @@ resource "helm_release" "mongodb" {
       "podLabels" = var.labels
       "image" = {
         "registry"    = var.mongodb.registry
-        "repository"  = var.mongodb.image
+        "repository"  = coalesce(var.mongodb.image, "bitnamilegacy/mongodb")
         "tag"         = var.mongodb.tag
         "pullSecrets" = local.image_pull_secrets
       }
@@ -43,6 +48,9 @@ resource "helm_release" "mongodb" {
           "runAsGroup"          = var.security_context.fs_group
           "fsGroup"             = var.security_context.fs_group
           "fsGroupChangePolicy" = "OnRootMismatch"
+        }
+        "image" = {
+          "repository" = "bitnamilegacy/nginx"
         }
       }
       "auth" = {
@@ -79,6 +87,29 @@ resource "helm_release" "mongodb" {
       } : {}
 
       "resources" = var.mongodb_resources
+
+      "externalAccess" = {
+        "autoDiscovery" = {
+          "image" = {
+            "repository" = "bitnamilegacy/kubectl"
+          }
+        }
+        "dnsCheck" = {
+          "image" = {
+            "repository" = "bitnamilegacy/os-shell"
+          }
+        }
+      }
+      "volumePermissions" = {
+        "image" = {
+          "repository" = "bitnamilegacy/os-shell"
+        }
+      }
+      "metrics" = {
+        "image" = {
+          "repository" = "bitnamilegacy/mongodb-exporter"
+        }
+      }
     })
   ]
 

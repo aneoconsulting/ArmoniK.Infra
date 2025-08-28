@@ -13,7 +13,7 @@ module "complete_mongodb_instance" {
     helm_chart_repository = "oci://registry-1.docker.io/bitnamicharts"
     helm_chart_name       = "mongodb"
     helm_chart_version    = "15.6.12"
-    image                 = "bitnami/mongodb"
+    image                 = "bitnamilegacy/mongodb"
     image_pull_secrets    = [""]
     node_selector         = {}
     registry              = "docker.io"

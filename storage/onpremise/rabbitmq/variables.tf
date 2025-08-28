@@ -11,7 +11,7 @@ variable "name" {
 variable "image" {
   description = "image for the rabbirmq to be used"
   type        = string
-  default     = "bitnami/rabbitmq"
+  default     = "bitnamilegacy/rabbitmq"
 }
 variable "tag" {
   description = "tag for the image"

@@ -39,7 +39,7 @@ variable "mongodb" {
     helm_chart_repository = optional(string, "oci://registry-1.docker.io/bitnamicharts")
     helm_chart_name       = optional(string, "mongodb-sharded")
     helm_chart_version    = string
-    image                 = optional(string, "bitnami/mongodb-sharded")
+    image                 = optional(string, "bitnamilegacy/mongodb-sharded")
     image_pull_secrets    = optional(any, [""]) # can be a string or a list of strings
     node_selector         = optional(map(string), {})
     registry              = optional(string)

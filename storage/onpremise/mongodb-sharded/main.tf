@@ -26,12 +26,17 @@ resource "helm_release" "mongodb" {
 
   values = [
     yamlencode({
+      "global" = {
+        "security" = {
+          "allowInsecureImages" = true
+        }
+      }
       "commonLabels" = var.default_labels
       "shards"       = var.sharding.shards.quantity
 
       "image" = {
         "registry"    = var.mongodb.registry
-        "repository"  = var.mongodb.image
+        "repository"  = coalesce(var.mongodb.image, "bitnamilegacy/mongodb-sharded")
         "tag"         = var.mongodb.tag
         "pullSecrets" = local.image_pull_secrets
       }
@@ -59,6 +64,9 @@ resource "helm_release" "mongodb" {
 
       "volumePermissions" = {
         "resourcesPreset" = "micro"
+        "image" = {
+          "repository" = "bitnamilegacy/os-shell"
+        }
       }
 
       "service" = {
@@ -166,8 +174,15 @@ resource "helm_release" "mongodb" {
           "resources" = var.resources.arbiter
         }
 
+
         # "metrics" = {
         # }
+      }
+
+      "metrics" = {
+        "image" = {
+          "repository" = "bitnamilegacy/mongodb-exporter"
+        }
       }
     })
   ]

@@ -2,7 +2,7 @@
 apiVersion: policy/v1beta1
 kind: PodSecurityPolicy
 metadata:
-  name: {{ printf "privileged-%s" (include "activemq.fullname" .) }}
+  name: privileged-{{ include "activemq.fullname" . }}
   labels:
     {{- include "activemq.labels" . | nindent 4 }}
 spec:

@@ -17,5 +17,5 @@ dependencies:
 - name: armonik-dependencies
   repository: file://../armonik-dependencies
   version: 0.1.0
-digest: sha256:ff9b7ee4e657f90c8ce2b89324bdd6ab933119f1e8311270501a93e80854fa08
-generated: "2025-03-30T22:46:06.161249732+02:00"
+digest: sha256:7a9c181ee8218667c67c11b8d22b86df21c415516330d5b69dfbdd0559c63f13
+generated: "2025-09-23T17:08:20.326242814+02:00"

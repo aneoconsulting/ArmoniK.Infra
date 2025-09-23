@@ -5,7 +5,7 @@ metadata:
   name: worker-configmap
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "computePlane.labels" . | nindent 4 }}
+    {{- include "armonik.compute.labels" . | nindent 4 }}
 data:
    {{- range $key, $value := .Values.workerConfigmaps.data }}
    {{ $key }}: {{ $value | quote }}

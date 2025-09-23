@@ -52,6 +52,9 @@ dependencies:
     repository: file://../armonik-compute-plane
     condition: compute-plane.enabled
     alias: compute-plane
+    import-values:
+      - child: computePlane.partition
+        parent: global.armonik-dependencies.compute.partition
   - name: armonik-ingress
     version: 0.1.x
     repository: file://../armonik-ingress

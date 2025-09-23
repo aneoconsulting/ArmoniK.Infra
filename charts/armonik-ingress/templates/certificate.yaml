@@ -5,7 +5,7 @@ kind: Issuer
 metadata:
   annotations:
     {{- toYaml .Values.additionalAnnotations | nindent 4 }}
-  name: {{ include "ingress.fullname" . }}-issuer
+  name: {{ include "armonik.ingress.fullname" . }}-issuer
   namespace: {{ .Release.Namespace }}
 spec:
   selfSigned: {}
@@ -14,18 +14,18 @@ spec:
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: {{ include "ingress.fullname" . }}
+  name: {{ include "armonik.ingress.fullname" . }}
   namespace: {{ .Release.Namespace }}
   annotations:
     "helm.sh/hook": post-install,post-upgrade
     "helm.sh/hook-weight": "10"
 spec:
-  commonName: {{ include "ingress.fullname" . }}
+  commonName: {{ include "armonik.ingress.fullname" . }}
   dnsNames:
-  - {{ include "ingress.fullname" . }}.{{ .Release.Namespace }}
-  - {{ include "ingress.fullname" . }}.{{ .Release.Namespace }}.svc
-  - {{ include "ingress.fullname" . }}.{{ .Release.Namespace }}.svc.{{ .Values.tls.clusterDomain }}
-  secretName: {{ include "ingress.fullname" . }}
+  - {{ include "armonik.ingress.fullname" . }}.{{ .Release.Namespace }}
+  - {{ include "armonik.ingress.fullname" . }}.{{ .Release.Namespace }}.svc
+  - {{ include "armonik.ingress.fullname" . }}.{{ .Release.Namespace }}.svc.{{ .Values.tls.clusterDomain }}
+  secretName: {{ include "armonik.ingress.fullname" . }}
   usages:
     - server auth
     - client auth
@@ -43,7 +43,7 @@ spec:
     name: {{ .Values.tls.certManager.existingIssuer.name }}
     kind: {{ .Values.tls.certManager.existingIssuer.kind }}
     {{- else }}
-    name: {{ include "ingress.fullname" . }}-issuer
+    name: {{ include "armonik.ingress.fullname" . }}-issuer
     kind: Issuer
     {{- end }}
     group: cert-manager.io

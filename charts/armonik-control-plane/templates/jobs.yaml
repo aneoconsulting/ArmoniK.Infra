@@ -1,10 +1,11 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: partitions-in-database
+  name: {{ include "armonik.control.fullname" . }}-init
+  namespace: {{ .Release.Namespace }}
   labels:
     app: armonik
-    service: partitions-in-database
+    service: init
     type: monitoring
 spec:
   backoffLimit: 5
@@ -18,14 +19,14 @@ spec:
       creationTimestamp: null
       labels:
         app: armonik
-        job-name: partitions-in-database
-        service: partitions-in-database
+        job-name: {{ include "armonik.control.fullname" . }}-init
+        service: init
         type: monitoring
-      name: partitions-in-database
+      name: init
     spec:
       automountServiceAccountToken: true
       containers:
-      - name: job-partitions-in-database
+      - name: init
         {{- $registry := .Values.global.imageRegistry | default .Values.image.registry }}
         {{- if $registry }}
         image: "{{ $registry }}/{{ .Values.imageJob.repository }}/{{ .Values.imageJob.name }}:{{ .Values.imageJob.tag | default .Chart.AppVersion }}"

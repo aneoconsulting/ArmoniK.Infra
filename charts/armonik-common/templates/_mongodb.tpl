@@ -44,10 +44,11 @@ env:
   MongoDB__ReplicaSet:       {{ $ctx.Values.replicaSetName | quote }}
   MongoDB__DatabaseName:     {{ include "armonik.mongodb.database" $ctx | quote }}
   MongoDB__DirectConnection: {{ $ctx.Values.architecture | eq "standalone" | quote }}
-  MongoDB__AuthSource:       {{ include "armonik.mongodb.database" $ctx | quote }}
+  MongoDB__AuthSource:       {{ include "armonik.mongodb.authSource" $ctx | quote }}
   MongoDB__User:             {{ $ctx.Values.auth.rootUser | quote }}
 {{- if $ctx.Values.tls.enabled }}
-  MongoDB__CAFile:           "/mongodb/certificate/mongodb-ca-cert"
+  #MongoDB__CAFile:           "/mongodb/certificate/mongodb-ca-cert"
+  MongoDB__AllowInsecureTls: "true"
 {{- end }}
 envFromSecret:
   MongoDB__Password:

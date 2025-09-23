@@ -6,7 +6,8 @@ metadata:
     app: armonik
     service: metrics-exporter
     type: monitoring
-  name: metrics-exporter
+  name: {{ include "armonik.control.fullname" . }}-metrics-exporter
+  namespace: {{ .Release.Namespace }}
 spec:
   selector:
     matchLabels:

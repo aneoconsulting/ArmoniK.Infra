@@ -1,11 +1,11 @@
 {{- if .Values.podDisruptionBudget.enabled -}}
-apiVersion: {{ include "computePlane.pdb.apiVersion" . }}
+apiVersion: {{ include "armonik.compute.pdb.apiVersion" . }}
 kind: PodDisruptionBudget
 metadata:
-  name: {{ include "computePlane.fullname" . }}
+  name: {{ include "armonik.compute.fullname" . }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "computePlane.labels" . | nindent 4 }}
+    {{- include "armonik.compute.labels" . | nindent 4 }}
 spec:
   {{- if .Values.podDisruptionBudget.minAvailable }}
   minAvailable: {{ .Values.podDisruptionBudget.minAvailable }}
@@ -15,5 +15,5 @@ spec:
   {{- end  }}
   selector:
     matchLabels:
-      {{- include "computePlane.selectorLabels" . | nindent 6 }}
+      {{- include "armonik.compute.selectorLabels" . | nindent 6 }}
 {{- end -}}

@@ -4,7 +4,8 @@ metadata:
   labels:
     app: {{ .Release.Name }}
     service: {{ .Chart.Name }}
-  name: {{ .Chart.Name }}
+  name: {{ include "armonik.ingress.fullname" . }}
+  namespace: {{ .Release.Namespace }}
 spec:
   replicas: {{ .Values.ingress.replicaCount }}
   selector:
@@ -23,13 +24,13 @@ spec:
       - name: {{ .Chart.Name }}
         envFrom:
         - configMapRef:
-            name: ingress-nginx
+            name: armonik-ingress-conf
             optional: false
         {{- $registry := .Values.global.imageRegistry | default .Values.image.registry }}
         {{- if $registry }}
-        image: "{{ $registry }}/{{ .Values.ingress.repository }}/{{ .Values.ingress.image }}:{{ include "ingress.tag" . }}"
+        image: "{{ $registry }}/{{ .Values.ingress.repository }}/{{ .Values.ingress.image }}:{{ include "armonik.ingress.tag" . }}"
         {{- else }}
-        image: "{{ .Values.ingress.repository }}/{{ .Values.ingress.image }}:{{ include "ingress.tag" . }}"
+        image: "{{ .Values.ingress.repository }}/{{ .Values.ingress.image }}:{{ include "armonik.ingress.tag" . }}"
         {{- end }}
         imagePullPolicy: {{ .Values.ingress.imagePullPolicy }}
         ports:

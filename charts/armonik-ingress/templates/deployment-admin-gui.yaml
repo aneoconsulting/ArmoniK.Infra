@@ -4,7 +4,8 @@ metadata:
   labels:
     app: {{ .Release.Name }}
     service: admin-gui
-  name: admin-gui
+  name: {{ include "armonik.ingress.fullname" . }}-gui
+  namespace: {{ .Release.Namespace }}
 spec:
   selector:
     matchLabels:
@@ -22,9 +23,9 @@ spec:
       - name: admin-app
         {{- $registry := .Values.global.imageRegistry | default .Values.image.registry }}
         {{- if $registry }}
-        image: "{{ $registry }}/{{ .Values.adminGui.repository }}/{{ .Values.adminGui.image }}:{{ include "adminGui.tag" .}}"
+        image: "{{ $registry }}/{{ .Values.adminGui.repository }}/{{ .Values.adminGui.image }}:{{ include "armonik.adminGui.tag" .}}"
         {{- else }}
-        image: "{{ .Values.adminGui.repository }}/{{ .Values.adminGui.image }}:{{ include "adminGui.tag" . }}"
+        image: "{{ .Values.adminGui.repository }}/{{ .Values.adminGui.image }}:{{ include "armonik.adminGui.tag" . }}"
         {{- end }}
         imagePullPolicy: {{ .Values.adminGui.imagePullPolicy }}
         ports:

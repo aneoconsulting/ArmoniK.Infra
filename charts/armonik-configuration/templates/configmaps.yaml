@@ -1,4 +1,4 @@
-{{- range $component := list "core" "log" "compute" "worker" "polling" "metrics" "jobs" }}
+{{- range $component := list "core" "log" "control" "compute" "worker" "polling" "metrics" "jobs" }}
 ---
 apiVersion: v1
 kind: ConfigMap

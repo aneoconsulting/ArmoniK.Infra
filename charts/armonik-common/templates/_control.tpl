@@ -14,6 +14,6 @@
 {{- end -}}
 
 {{- define "armonik.conf.control" -}}
-  {{- $configmap := list .Values.config.controlPlane.name . | include "armonik.conf.configmap" -}}
+  {{- $configmap := list "control" . | include "armonik.conf.configmap" -}}
   {{- include "armonik.conf.controlRaw" . | fromYaml | list $configmap | include "armonik.conf.materialized" -}}
 {{- end -}}

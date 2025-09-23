@@ -136,6 +136,7 @@ Kubernetes: `>=v1.25.0-0`
 | dependencies.kube-prometheus.prometheus.scrapeInterval | string | `"10s"` |  |
 | dependencies.mongodb.architecture | string | `"replicaset"` |  |
 | dependencies.mongodb.enabled | bool | `true` |  |
+| dependencies.mongodb.extraFlags | string | `"--tlsAllowConnectionsWithoutCertificates"` |  |
 | dependencies.mongodb.fullnameOverride | string | `"mongodb"` |  |
 | dependencies.mongodb.metrics.enabled | bool | `true` |  |
 | dependencies.mongodb.metrics.serviceMonitor.enabled | bool | `true` |  |

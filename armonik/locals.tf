@@ -188,5 +188,5 @@ locals {
 
   job_init           = var.init != null
   job_partitions     = var.job_partitions_in_database != null
-  job_authentication = local.authentication_require_authentication && can(coalesce(var.authentication.name)) && can(coalesce(var.authentication.image)) && can(coalesce(var.authentication.tag))
+  job_authentication = local.authentication_require_authentication && can(coalesce(var.authentication.name))
 }

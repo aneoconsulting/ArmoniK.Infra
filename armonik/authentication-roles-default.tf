@@ -50,7 +50,8 @@ locals {
         "General:Impersonate",
         "Partitions:GetPartition",
         "Partitions:ListPartitions",
-        "Versions:ListVersions"
+        "Versions:ListVersions",
+        "HealthChecks:CheckHealth"
       ]
       "Monitoring" = [
         "Submitter:GetServiceConfiguration",
@@ -74,7 +75,8 @@ locals {
         "Events:GetEvents",
         "Partitions:GetPartition",
         "Partitions:ListPartitions",
-        "Versions:ListVersions"
+        "Versions:ListVersions",
+        "HealthChecks:CheckHealth"
       ]
     })
   }

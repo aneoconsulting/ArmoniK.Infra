@@ -2,10 +2,10 @@ apiVersion: v1
 immutable: false
 kind: ConfigMap
 metadata:
-  name: ingress-nginx
+  name: {{ include "armonik.ingress.fullname" . }}-conf
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "ingress.labels" . | nindent 4 }}
+    {{- include "armonik.ingress.labels" . | nindent 4 }}
 data:
   armonik.conf: |
     map $http_accept_language $accept_language {

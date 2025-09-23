@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: activemq-configs
+  name: {{ include "activemq.fullname" . }}-configs
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "activemq.labels" . | nindent 4 }}

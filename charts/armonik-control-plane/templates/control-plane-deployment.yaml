@@ -1,27 +1,29 @@
 {{- $conf := list
     (include "armonik.conf.control" $ | fromYaml)
+    (include "armonik.control.extraConf" $ | fromYaml)
     .Values.conf
   | include "armonik.conf.merge" | fromYaml -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "controlPlane.name" . }}
+  name: {{ include "armonik.control.fullname" . }}
+  namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "controlPlane.labels" . | nindent 4 }}
+    {{- include "armonik.control.labels" . | nindent 4 }}
 spec:
   progressDeadlineSeconds: 600
   replicas: {{ .Values.replicaCount }}
   revisionHistoryLimit: 10
   selector:
     matchLabels:
-      {{- include "controlPlane.selectorLabels" . | nindent 6 }}
+      {{- include "armonik.control.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        {{- include "controlPlane.selectorLabels" . | nindent 8 }}
+        {{- include "armonik.control.selectorLabels" . | nindent 8 }}
     spec:
       containers:
-        - name: {{ include "controlPlane.name" . }}
+        - name: {{ include "armonik.control.name" . }}
           {{- $registry := .Values.global.imageRegistry | default .Values.image.registry }}
           {{- if $registry }}
           image: "{{ $registry }}/{{ .Values.image.repository }}/{{ .Values.image.name }}:{{ include "armonikCore.tag" . }}"

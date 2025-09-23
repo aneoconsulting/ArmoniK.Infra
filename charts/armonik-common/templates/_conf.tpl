@@ -145,8 +145,17 @@ Gets the context to execute conf named templates
 
 {{- define "armonik.conf.configmap" -}}
   {{- $configmap := index . 0 -}}
-  {{- $conf := index . 1 | deepCopy -}}
-  {{- $configmap -}}
+  {{- $ctx := index . 1 | include "armonik.conf.context" | fromYaml -}}
+  {{- if $ctx.Values.fullnameOverride }}
+    {{- printf "%s-%s" $ctx.Values.fullnameOverride $configmap | trunc 63 | trimSuffix "-" }}
+  {{- else }}
+    {{- $name := default $ctx.Chart.Name $ctx.Values.nameOverride }}
+    {{- if contains $name $ctx.Release.Name }}
+      {{- printf "%s-%s" $ctx.Release.Name $configmap | trunc 63 | trimSuffix "-" }}
+    {{- else }}
+      {{- printf "%s-%s-%s" $ctx.Release.Name $name $configmap | trunc 63 | trimSuffix "-" }}
+    {{- end }}
+  {{- end }}
 {{- end -}}{{/* define "armonik.conf.configmap" */}}
 
 {{- define "armonik.conf.generateEnv" }}

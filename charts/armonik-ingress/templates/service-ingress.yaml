@@ -4,7 +4,8 @@ metadata:
   labels:
     app: {{ .Release.Name }}
     service: ingress
-  name: ingress-armonik
+  name: {{ include "armonik.ingress.fullname" . }}
+  namespace: {{ .Release.Namespace }}
 spec:
   {{ if eq .Values.ingress.type "LoadBalancer" }}
   externalTrafficPolicy: "Cluster"

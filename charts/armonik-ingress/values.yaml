@@ -1,6 +1,6 @@
 nameOverride: ""
 imagePullSecrets: []
-image: 
+image:
   registry: ""
 
 global:
@@ -56,7 +56,7 @@ ingress:
       containerPort: 8080
       nodePortHttp: 32315
       ServicePort: 5000
-  
+
   resources:
     limits:
       cpu: 100m
@@ -64,20 +64,20 @@ ingress:
     requests:
       cpu: 100m
       memory: 128Mi
-  
+
   volumes:
     #ingressSecret: ingress-crt
     mongodbSecret: mongodb
     #mongodbSecretCrt: mongodb-ca
-    nginxConfigMap: ingress-nginx
-    nginxStaticConfigMap: ingress-nginx-static
+    nginxConfigMap: armonik-ingress-conf
+    nginxStaticConfigMap: armonik-ingress-static
 
   tolerations:
-  - effect: NoSchedule
-    key: service
-    operator: Equal
-    value: control-plane
-    
+    - effect: NoSchedule
+      key: service
+      operator: Equal
+      value: control-plane
+
 ###########################################################
 # Admin GUI
 ###########################################################
@@ -97,10 +97,10 @@ adminGui:
       memory: 128Mi
 
   tolerations:
-  - effect: "NoSchedule"
-    key: "service"
-    operator: "Equal"
-    value: "control-plane"
+    - effect: "NoSchedule"
+      key: "service"
+      operator: "Equal"
+      value: "control-plane"
 
 nodeSelector: {}
 

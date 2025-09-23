@@ -9,7 +9,7 @@ core:
   mountConfigmap: {}
   mountSecret: {}
 log:
-  minimumLevel: Debug
+  minimumLevel: Information
   env: {}
   envConfigmap: []
   envFromConfigmap: {}

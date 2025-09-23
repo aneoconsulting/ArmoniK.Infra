@@ -103,7 +103,7 @@ ingress:
 dependencies:
   ################# RABBITMQ #################
   rabbitmq:
-    enabled: true
+    enabled: false
     fullnameOverride: "rabbitmq"
     auth:
       username: "admin"
@@ -155,7 +155,7 @@ dependencies:
 
   ################## ACTIVEMQ ##################
   activemq:
-    enabled: false
+    enabled: true
     replicas: 1
     fullnameOverride: "activemq"
 
@@ -173,6 +173,7 @@ dependencies:
     replicaCount: 1
     persistence:
       enabled: false
+    extraFlags: --tlsAllowConnectionsWithoutCertificates
     #existingConfigmap: "mongodb-armonik-scripts"
     tls:
       enabled: true

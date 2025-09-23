@@ -5,7 +5,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ $.Values.computePlane.metadata.name }}-{{ $partitionName }}
+  name: {{ include "armonik.compute.fullname" $ }}-{{ $partitionName }}
   namespace: {{ $.Release.Namespace }}
   labels:
     app: {{ $.Values.computePlane.metadata.labels.app }}

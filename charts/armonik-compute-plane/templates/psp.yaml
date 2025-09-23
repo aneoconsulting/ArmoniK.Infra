@@ -2,9 +2,9 @@
 apiVersion: policy/v1beta1
 kind: PodSecurityPolicy
 metadata:
-  name: {{ printf "privileged-%s" (include "computePlane.fullname" .) }}
+  name: privileged-{{ include "armonik.compute.fullname" . }}
   labels:
-    {{- include "computePlane.labels" . | nindent 4 }}
+    {{- include "armonik.compute.labels" . | nindent 4 }}
 spec:
   allowedCapabilities:
     - '*'

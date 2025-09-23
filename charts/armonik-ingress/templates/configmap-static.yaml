@@ -5,4 +5,5 @@ data:
 immutable: false
 kind: ConfigMap
 metadata:
-  name: ingress-nginx-static
+  name: {{ include "armonik.ingress.fullname" . }}-static
+  namespace: {{ .Release.Namespace }}

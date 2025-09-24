@@ -83,7 +83,7 @@ Kubernetes: `>=v1.25.0-0`
 | config.log.data.overrides."Serilog.AspNetCore.RequestLoggingMiddleware" | string | `"Warning"` |  |
 | config.log.name | string | `"log-configmap"` |  |
 | control-plane.enabled | bool | `true` |  |
-| dependencies.activemq.enabled | bool | `false` |  |
+| dependencies.activemq.enabled | bool | `true` |  |
 | dependencies.activemq.fullnameOverride | string | `"activemq"` |  |
 | dependencies.activemq.replicas | int | `1` |  |
 | dependencies.cert-manager.enabled | bool | `true` |  |
@@ -150,7 +150,7 @@ Kubernetes: `>=v1.25.0-0`
 | dependencies.mongodb.useStatefulSet | bool | `true` |  |
 | dependencies.rabbitmq.auth.password | string | `"admin"` |  |
 | dependencies.rabbitmq.auth.username | string | `"admin"` |  |
-| dependencies.rabbitmq.enabled | bool | `true` |  |
+| dependencies.rabbitmq.enabled | bool | `false` |  |
 | dependencies.rabbitmq.fullnameOverride | string | `"rabbitmq"` |  |
 | dependencies.rabbitmq.metrics.enabled | bool | `true` |  |
 | dependencies.rabbitmq.metrics.serviceMonitor.enabled | bool | `true` |  |

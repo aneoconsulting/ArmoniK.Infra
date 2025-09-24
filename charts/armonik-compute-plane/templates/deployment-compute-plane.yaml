@@ -1,6 +1,29 @@
-{{- range $partitionName, $config := .Values.computePlane.partition }}
-  {{- $merged := mergeOverwrite (deepCopy $.Values.computePlane.partitionCommon) $config }}
-{{- $registry := $.Values.global.imageRegistry | default $.Values.registry }}
+{{- range $partitionName, $config := .Values.partitions }}
+{{- $partition := merge (deepCopy $config) (deepCopy $.Values.partitionCommon) -}}
+{{- $registry := $.Values.global.imageRegistry | default $.Values.registry -}}
+{{- $agent := $partition.pollingAgent -}}
+{{- $worker := $partition.worker -}}
+{{- $commonConf := list
+    (include "armonik.conf.compute" $ | fromYaml)
+    (list $partitionName $partition | include "armonik.compute.CommonConfHelper" | fromYaml)
+    $partition.conf
+  | include "armonik.conf.merge" | fromYaml -}}
+{{- $agentConf := list
+  (include "armonik.conf.polling" $ | fromYaml)
+  (list $partitionName $partition | include "armonik.compute.AgentConfHelper" | fromYaml)
+  $agent.conf
+  $commonConf
+| include "armonik.conf.merge" | fromYaml -}}
+{{- $workerConf := list
+  (include "armonik.conf.worker" $ | fromYaml)
+  (list $partitionName $partition | include "armonik.compute.WorkerConfHelper" | fromYaml)
+  $worker.conf
+  $commonConf
+| include "armonik.conf.merge" | fromYaml -}}
+{{- $volumeConf := list
+  $agentConf
+  $workerConf
+| include "armonik.conf.merge" | fromYaml }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -8,33 +31,33 @@ metadata:
   name: {{ include "armonik.compute.fullname" $ }}-{{ $partitionName }}
   namespace: {{ $.Release.Namespace }}
   labels:
-    app: {{ $.Values.computePlane.metadata.labels.app }}
-    service: {{ $.Values.computePlane.metadata.labels.service }}
+    app: {{ $partition.labels.app }}
+    service: {{ $partition.labels.service }}
     partition: {{ $partitionName }}
 spec:
-  replicas: {{ $merged.replicas }}
+  replicas: {{ $partition.replicas }}
   selector:
     matchLabels:
-      app: {{ $.Values.computePlane.metadata.labels.app }}
-      service: {{ $.Values.computePlane.metadata.labels.service }}
+      app: {{ $partition.labels.app }}
+      service: {{ $partition.labels.service }}
       partition: {{ $partitionName }}
   template:
     metadata:
       name: {{ $partitionName }}-compute-plane
       labels:
-        app: {{ $.Values.computePlane.metadata.labels.app }}
-        service: {{ $.Values.computePlane.metadata.labels.service }}
+        app: {{ $partition.labels.app }}
+        service: {{ $partition.labels.service }}
         partition: {{ $partitionName }}
-      {{- if $merged.annotations}}
+      {{- if $partition.annotations}}
       annotations:
-        {{- range $key, $value := $merged.annotations }}
+        {{- range $key, $value := $partition.annotations }}
         {{ $key }}: {{ $value | quote }}
         {{- end }}
       {{- end }}
     spec:
-      {{- if $merged.nodeSelector}}
+      {{- if $partition.nodeSelector}}
       nodeSelector:
-        {{- range $key, $value := $merged.nodeSelector }}
+        {{- range $key, $value := $partition.nodeSelector }}
         {{ $key }}: {{ $value | quote }}
         {{- end }}
       {{- end }}
@@ -43,16 +66,16 @@ spec:
       serviceAccount: {{ $.Values.serviceAccount.name }}
       automountServiceAccountToken: true
       {{- end }}
-      {{- if $merged.tolerations }}
+      {{- if $partition.tolerations }}
       tolerations:
-        {{- range $i, $toleration := $merged.tolerations }}
+        {{- range $i, $toleration := $partition.tolerations }}
         - key: {{ $toleration.key }}
           operator: Equal
           value: {{ $toleration.value }}
           effect: NoSchedule
         {{- end }}
       {{- end }}
-      terminationGracePeriodSeconds: {{ $merged.terminationGracePeriodSeconds }}
+      terminationGracePeriodSeconds: {{ $partition.terminationGracePeriodSeconds }}
       shareProcessNamespace: {{ $.Values.shareProcessNamespace }}
       enableServiceLinks: true
       {{- $imagePullSecrets := $.Values.global.imagePullSecrets | default $.Values.imagePullSecrets }}
@@ -65,81 +88,53 @@ spec:
       restartPolicy: {{ $.Values.restartPolicy }}
       containers:
       # agent container
-      - name: {{ $.Values.pollingAgent.name }}
+      - name: {{ $agent.name }}
         {{- if $registry }}
-        image: "{{ $registry }}/{{ $.Values.repository }}/{{ $merged.pollingAgent.image }}:{{- include "armonikPollingagent.tag" $ | default $merged.pollingAgent.tag }}"
+        image: "{{ $registry }}/{{ $.Values.repository }}/{{ $agent.image }}:{{- $agent.tag | default (include "armonikPollingagent.tag" $) | default $.Chart.AppVersion }}"
         {{- else }}
-        image: "{{ $.Values.repository }}/{{ $merged.pollingAgent.image }}:{{- include "armonikPollingagent.tag" $ | default $merged.pollingAgent.tag }}"
+        image: "{{ $.Values.repository }}/{{ $agent.image }}:{{- $agent.tag | default (include "armonikPollingagent.tag" $) | default $.Chart.AppVersion }}"
         {{- end }}
-        imagePullPolicy: {{ $merged.pollingAgent.imagePullPolicy | quote}}
+        imagePullPolicy: {{ $agent.imagePullPolicy | quote}}
         resources:
           limits:
-            cpu: "{{ $merged.pollingAgent.limits.cpu }}"
-            memory: "{{ $merged.pollingAgent.limits.memory }}"
+            cpu: "{{ $agent.limits.cpu }}"
+            memory: "{{ $agent.limits.memory }}"
           requests:
-            cpu: "{{ $merged.pollingAgent.requests.cpu }}"
-            memory: "{{ $merged.pollingAgent.requests.memory }}"
+            cpu: "{{ $agent.requests.cpu }}"
+            memory: "{{ $agent.requests.memory }}"
         securityContext:
-        {{- toYaml $merged.pollingAgent.securityContext | nindent 10 }}
+        {{- toYaml $agent.securityContext | nindent 10 }}
         ports:
-        - name: {{ $.Values.pollingAgent.ports.name }}
-          containerPort: {{ $.Values.pollingAgent.ports.containerPort }}
+        - name: {{ $agent.ports.name }}
+          containerPort: {{ $agent.ports.containerPort }}
           protocol: TCP
-        {{if $merged.readinessProbe }}
+        {{if $agent.readinessProbe }}
         readinessProbe:
-        {{- toYaml $merged.readinessProbe | nindent 10 }}
+        {{- toYaml $agent.readinessProbe | nindent 10 }}
         {{- end }}
-        {{- if $merged.livenessProbe }}
+        {{- if $agent.livenessProbe }}
         livenessProbe:
-        {{- toYaml $merged.livenessProbe | nindent 10 }}
+        {{- toYaml $agent.livenessProbe | nindent 10 }}
         {{- end }}
-        {{- if $merged.startupProbe }}
+        {{- if $agent.startupProbe }}
         startupProbe:
-        {{- toYaml $merged.startupProbe | nindent 10 }}
+        {{- toYaml $agent.startupProbe | nindent 10 }}
         {{- end }}
-        {{- if $.Values.pollingAgent.envFrom }}
-        envFrom:
-        {{- toYaml $.Values.pollingAgent.envFrom | nindent 10 }}
-        {{- end }}
-        {{- if or $merged.envHardValue $.Values.pollingAgent.envSecretValue $merged.envCommon }}
-        env:
-          {{- if $merged.envHardValue }}
-          {{- range $index, $item := $merged.envHardValue }}
-          - name: {{ $item.name }}
-            value: {{ $item.value }}
-          {{- end }}
-          {{- end }}
-          {{- if $merged.envCommon }}
-          {{- range $index, $item := $merged.envCommon }}
-          - name: {{ $item.name }}
-            value: {{ $item.value }}
-          {{- end }}
-          {{- end }}
-          {{- if $.Values.pollingAgent.envSecretValue }}
-          {{- range $.Values.pollingAgent.envSecretValue }}
-          - name: {{ .name }}
-            valueFrom:
-              {{- toYaml .valueFrom | nindent 14 }}
-          {{- end }}
-          {{- end }}
-        {{- end }}
+        env: {{- include "armonik.conf.generateEnv" $agentConf | nindent 10 }}
+        envFrom: {{- include "armonik.conf.generateEnvFrom" $agentConf | nindent 10 }}
         volumeMounts:
-          {{- range $key, $value := $.Values.pollingAgent.volumeMounts }}
-          - name: {{ $value.name | quote }}
-            mountPath: {{ $value.mountPath }}
+          {{- include "armonik.conf.generateVolumeMounts" $agentConf | nindent 10 }}
+          - name: cache-volume
+            mountPath: /cache
             mountPropagation: None
-          {{- end }}
       # worker containers
-      {{- range $index, $worker := $merged.worker }}
-      - name: "{{ $worker.name }}-{{ $index }}"
-        {{- range $merged.worker}}
+      - name: "{{ $worker.name }}"
         {{- if $registry }}
-        image: "{{ $registry }}/{{ $.Values.repository }}/{{ $worker.image }}:{{- include "armonikCore.tag" $ | default $worker.tag }}"
+        image: "{{ $registry }}/{{ $.Values.repository }}/{{ $worker.image }}:{{- $worker.tag | default (include "armonikCore.tag" $) | default $.Chart.AppVersion }}"
         {{- else }}
-        image: "{{ $.Values.repository }}/{{ $worker.image }}:{{- include "armonikCore.tag" $ | default $worker.tag }}"
+        image: "{{ $.Values.repository }}/{{ $worker.image }}:{{- $worker.tag | default (include "armonikCore.tag" $) | default $.Chart.AppVersion }}"
         {{- end }}
-        imagePullPolicy: {{ .imagePullPolicy | quote }}
-        {{- end }}
+        imagePullPolicy: {{ $worker.imagePullPolicy | quote }}
         resources:
           limits:
             cpu: "{{ $worker.limits.cpu }}"
@@ -147,43 +142,25 @@ spec:
           requests:
             cpu: "{{ $worker.requests.cpu }}"
             memory: "{{ $worker.requests.memory }}"
-        {{- if $.Values.worker.livenessProbe }}
+        {{- if $worker.livenessProbe }}
         livenessProbe:
-        {{- toYaml $.Values.worker.livenessProbe | nindent 10 }}
+        {{- toYaml $worker.livenessProbe | nindent 10 }}
         {{- end }}
-        {{- if $.Values.worker.startupProbe }}
+        {{- if $worker.startupProbe }}
         startupProbe:
-        {{- toYaml $.Values.worker.startupProbe | nindent 10 }}
+        {{- toYaml $worker.startupProbe | nindent 10 }}
         {{- end }}
         lifecycle:
           preStop:
             exec:
               command: ["/bin/sh", "-c", {{ $.Values.preStopWaitScript }}]
-        {{- if $.Values.worker.envFrom }}
-        envFrom:
-        {{- toYaml $.Values.worker.envFrom | nindent 8 }}
-        {{- end }}
-        {{- if $merged.envCommon }}
-        env:
-          {{- if $merged.envCommon }}
-          {{- range $index, $item := $merged.envCommon }}
-          - name: {{ $item.name }}
-            value: {{ $item.value }}
-          {{- end }}
-          {{- end }}
-        {{- end }}
-        {{- if $.Values.worker.volumeMounts }}
+        env: {{- include "armonik.conf.generateEnv" $workerConf | nindent 10 }}
+        envFrom: {{- include "armonik.conf.generateEnvFrom" $workerConf | nindent 10 }}
         volumeMounts:
-          {{- with $.Values.worker.volumeMounts }}
-          {{- toYaml $.Values.worker.volumeMounts | nindent 8 }}
-          {{- end }}
-        {{- end }}
-        {{- if (eq $.Values.checkFileStorageType "FS") }}
-          - name: {{ $.Values.FS.name | quote }}
-            mountPath: {{ $.Values.FS.mountPath }}
-            readOnly: true
-        {{- end }}
-      {{- end }}
+          {{- include "armonik.conf.generateVolumeMounts" $workerConf | nindent 10 }}
+          - name: cache-volume
+            mountPath: /cache
+            mountPropagation: None
       {{- if not $.Values.fluentBit.isDaemonSet }}
       - name: {{ .Values.fluentBit.name }}
         {{- $registry := .Values.global.imageRegistry | default .Values.image.registry | default "" }}
@@ -201,28 +178,50 @@ spec:
             exec:
               command: ["/bin/sh", "-c", {{ $.Values.preStopWaitScript }}]
         volumeMounts:
-          {{- toYaml .Values.fluentBit.volumeMounts | nindent 10 }}
-        {{- if .Values.fluentBit.fluentVolumes }}
-          {{- toYaml .Values.fluentBit.fluentVolumes | nindent 10 }}
-        {{- end }}
+        - name: cache-volume
+          mountPath: /cache
+          mountPropagation: None
+        - name: "varlog"
+          mountPath: "/var/log"
+          readOnly: true
+        - name: "varlibdockercontainers"
+          mountPath: "/var/lib/docker/containers"
+          readOnly: true
+        - name: runlogjournal
+          mountPath: "/run/log/journal"
+          readOnly: true
+        - name: dmesg
+          mountPath: "/var/log/dmesg"
+          readOnly: true
+        - name: fluentbitconfig
+          mountPath: "/fluent-bit/etc"
+          readOnly: false
       {{- end }}
-      {{- if $.Values.volumes }}
       volumes:
-        {{- with $.Values.volumes }}
-        {{- toYaml $.Values.volumes | nindent 8 }}
-        {{- end }}
-      {{- end }}
-      {{- if (eq $.Values.fileStorageType "nfs") }}
-        - name: {{ $.Values.nfs.name | quote }}
-          nfs:
-            path: {{ $.Values.nfs.path }}
-            server: {{ $.Values.nfs.server}}
-            readOnly: true
-      {{- end }}
-      {{- if (eq $.Values.fileStorageType "hostpath") }}
-        - name: {{ $.Values.hostPath.name | quote  }}
+        {{- include "armonik.conf.generateVolumes" $volumeConf | nindent 8 }}
+        - name: cache-volume
+          emptyDir: {}
+        {{- if not $.Values.fluentBit.isDaemonSet }}
+        - name: dmesg
           hostPath:
-            path: {{ $.Values.hostPath.path }}
-            type: "Directory"
-      {{- end }}
-  {{- end }}
+            path: /var/log/dmesg
+            type: ""
+        - name: fluentbitconfig
+          configMap:
+            name: {{ .Values.fluentBit.configMapName }}
+            defaultMode: 420
+            optional: false
+        - name: runlogjournal
+          hostPath:
+            path: /run/log/journal
+            type: ""
+        - name: varlibdockercontainers
+          hostPath:
+            path: /var/lib/docker/containers
+            type: ""
+        - name: varlog
+          hostPath:
+            path: /var/log
+            type: ""
+        {{- end }}
+{{- end }}

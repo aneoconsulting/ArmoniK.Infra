@@ -55,7 +55,7 @@ Kubernetes: `>=v1.25.0-0`
 | log.envFromConfigmap | object | `{}` |  |
 | log.envFromSecret | object | `{}` |  |
 | log.envSecret | list | `[]` |  |
-| log.minimumLevel | string | `"Debug"` |  |
+| log.minimumLevel | string | `"Information"` |  |
 | log.mountConfigmap | object | `{}` |  |
 | log.mountSecret | object | `{}` |  |
 | metrics.env | object | `{}` |  |

@@ -68,8 +68,8 @@ Kubernetes: `>=v1.25.0-0`
 | ingress.tolerations[0].value | string | `"control-plane"` |  |
 | ingress.type | string | `"ClusterIP"` |  |
 | ingress.volumes.mongodbSecret | string | `"mongodb"` |  |
-| ingress.volumes.nginxConfigMap | string | `"ingress-nginx"` |  |
-| ingress.volumes.nginxStaticConfigMap | string | `"ingress-nginx-static"` |  |
+| ingress.volumes.nginxConfigMap | string | `"armonik-ingress-conf"` |  |
+| ingress.volumes.nginxStaticConfigMap | string | `"armonik-ingress-static"` |  |
 | nameOverride | string | `""` |  |
 | nodeSelector | object | `{}` |  |
 | tls.certManager.addInjectorAnnotations | bool | `true` |  |

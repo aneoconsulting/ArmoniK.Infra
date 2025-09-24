@@ -160,61 +160,61 @@ Gets the context to execute conf named templates
 
 {{- define "armonik.conf.generateEnv" }}
 {{- range $name, $value := .env }}
-- name: {{ $name }}
-  value: {{ $value }}
+- name: {{ $name | quote }}
+  value: {{ $value | quote }}
 {{- end }}{{/* range $name, $value := .env */}}
 {{- range $name, $value := .envFromConfigmap }}
-- name: {{ $name }}
+- name: {{ $name | quote }}
   valueFrom:
     configMapKeyRef:
-      name: {{ $value.configmap }}
-      key: {{ $value.field }}
+      name: {{ $value.configmap | quote }}
+      key: {{ $value.field | quote }}
 {{- end }}{{/* range $name, $value := .envFromConfigmap */}}
 {{- range $name, $value := .envFromSecret }}
-- name: {{ $name }}
+- name: {{ $name | quote }}
   valueFrom:
     secretKeyRef:
-      name: {{ $value.secret }}
-      key: {{ $value.field }}
+      name: {{ $value.secret | quote }}
+      key: {{ $value.field | quote }}
 {{- end }}{{/* range $name, $value := .envFromSecret */}}
 {{- end -}}{{/* define "armonik.conf.{{- define "armonik.conf.generateEnv" */}}
  
 {{- define "armonik.conf.generateEnvFrom" }}
 {{- range $name := .envConfigmap }}
 - configMapRef:
-    name: {{ $name }}
+    name: {{ $name | quote }}
     optional: false
 {{- end }}{{/* range $name := .envConfigmap */}}
 {{- range $name := .envSecret }}
 - secretRef:
-    name: {{ $name }}
+    name: {{ $name | quote }}
     optional: false
 {{- end }}{{/* range $name := .envSecret */}}
 {{- end -}}{{/* define "armonik.conf.generateEnvFrom" */}}
 
 {{- define "armonik.conf.generateVolumeMounts" }}
 {{- range $name, $mount := .mountConfigmap }}
-- name: {{ $name }}
-  mountPath: {{ $mount.path }}
+- name: {{ $name | quote }}
+  mountPath: {{ $mount.path | quote }}
   readOnly: {{ or (eq (toString $mount.mode) "0444") true }}
 {{- end }}{{/* range $name, $mount := .mountConfigmap */}}
 {{- range $name, $mount := .mountSecret }}
-- name: {{ $name }}
-  mountPath: {{ $mount.path }}
+- name: {{ $name | quote }}
+  mountPath: {{ $mount.path | quote }}
   readOnly: {{ or (eq (toString $mount.mode) "0444") true }}
 {{- end }}{{/* range $name, $mount := .mountSecret */}}
 {{- end -}}{{/* define "armonik.conf.generateVolumeMounts" */}}
 
 {{- define "armonik.conf.generateVolumes" }}
 {{- range $name, $mount := .mountConfigmap }}
-- name: {{ $name }}
+- name: {{ $name | quote }}
   configMap:
-    name: {{ $mount.configmap }}
+    name: {{ $mount.configmap | quote }}
     {{- if $mount.items }}
     items:
       {{- range $itemName, $item := $mount.items }}
-      - key: {{ $item.field }}
-        path: {{ $itemName }}
+      - key: {{ $item.field | quote }}
+        path: {{ $itemName | quote }}
         {{- if $item.mode }}
         mode: {{ $item.mode }}
         {{- end }}{{/* if $item.mode */}}
@@ -225,14 +225,14 @@ Gets the context to execute conf named templates
     {{- end }}{{/* if $mount.mode */}}
 {{- end }}{{/* range $name, $mount := .mountConfigmap */}}
 {{- range $name, $mount := .mountSecret }}
-- name: {{ $name }}
+- name: {{ $name | quote }}
   secret:
-    secretName: {{ $mount.secret }}
+    secretName: {{ $mount.secret | quote }}
     {{- if $mount.items }}
     items:
       {{- range $itemName, $item := $mount.items }}
-      - key: {{ $item.field }}
-        path: {{ $itemName }}
+      - key: {{ $item.field | quote }}
+        path: {{ $itemName | quote }}
         {{- if $item.mode }}
         mode: {{ $item.mode }}
         {{- end }}{{/* if $item.mode" */}}

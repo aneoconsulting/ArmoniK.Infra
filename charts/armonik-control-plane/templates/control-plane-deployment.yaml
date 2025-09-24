@@ -1,6 +1,6 @@
 {{- $conf := list
     (include "armonik.conf.control" $ | fromYaml)
-    (include "armonik.control.extraConf" $ | fromYaml)
+    (include "armonik.control.confHelper" $ | fromYaml)
     .Values.conf
   | include "armonik.conf.merge" | fromYaml -}}
 apiVersion: apps/v1

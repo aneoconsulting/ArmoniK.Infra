@@ -108,7 +108,7 @@ Role name of addon resizer
 {{- end }}
 
 
-{{- define "armonik.control.extraConf" }}
+{{- define "armonik.control.confHelper" }}
 {{- $defaultPartition := .Values.config.controlPlane.defaultPartition }}
 {{- $partitionNames := keys .Values.config.computePlane.partitions | default list }}
 env:

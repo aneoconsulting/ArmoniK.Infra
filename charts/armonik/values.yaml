@@ -3,9 +3,9 @@
 ############################################
 global:
   version:
-    armonikCore: "0.31.2" ### TODO FIX VERSIONS GLOBAL IF NULL USE DEFAULT IN SUB CHARTS COMPUTE-PLANE
-    #armonikPollingagent: "0.31.2"
-    #armonikGui: "0.13.40"
+    armonikCore: "0.35.0" ### TODO FIX VERSIONS GLOBAL IF NULL USE DEFAULT IN SUB CHARTS COMPUTE-PLANE
+    #armonikPollingagent: "0.35.0"
+    #armonikGui: "0.14.5"
     #nginx: "1.27.4-alpine-slim"
   image:
     pullPolicy: IfNotPresent # FOR KEDA IMAGES

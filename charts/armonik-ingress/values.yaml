@@ -85,7 +85,7 @@ adminGui:
   name: admin-gui
   repository: dockerhubaneo
   image: "armonik_admin_app"
-  tag: "0.13.3"
+  tag: "0.14.5"
   imagePullPolicy: IfNotPresent
   port: 1080
   resources:

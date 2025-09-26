@@ -1,6 +1,6 @@
 # armonik-control-plane
 
-![Version: 0.1.0](https://img.shields.io/badge/Version-0.1.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.31.2](https://img.shields.io/badge/AppVersion-0.31.2-informational?style=flat-square)
+![Version: 0.1.0](https://img.shields.io/badge/Version-0.1.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.35.0](https://img.shields.io/badge/AppVersion-0.35.0-informational?style=flat-square)
 
 A Helm chart for Armonik
 
@@ -57,7 +57,7 @@ Kubernetes: `>=v1.23.0-0`
 | image.name | string | `"armonik_control"` |  |
 | image.pullPolicy | string | `"IfNotPresent"` |  |
 | image.repository | string | `"dockerhubaneo"` |  |
-| image.tag | string | `"0.31.2"` |  |
+| image.tag | string | `"0.35.0"` |  |
 | imageCron.name | string | `"seqcli"` |  |
 | imageCron.repository | string | `"datalust"` |  |
 | imageCron.tag | string | `"2024.3"` |  |

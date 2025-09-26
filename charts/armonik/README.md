@@ -28,6 +28,7 @@ Kubernetes: `>=v1.25.0-0`
 | file://../armonik-control-plane | control-plane(armonik-control-plane) | 0.1.x |
 | file://../armonik-dependencies | dependencies(armonik-dependencies) | 0.1.x |
 | file://../armonik-ingress | ingress(armonik-ingress) | 0.1.x |
+| file://../armonik-metrics-exporter | metrics-exporter(armonik-metrics-exporter) | 0.1.x |
 
 ## Values
 

@@ -45,3 +45,34 @@ Gets the context of a dependency to execute named templates from this dependency
   -}}
   {{- $context | toYaml -}}
 {{- end -}}
+
+{{/*
+
+*/}}
+{{- define "armonik.image" -}}
+  {{- $ctx := first . -}}
+  {{- $imageConfs := rest . -}}
+  {{- $image := dict
+    "registry" ""
+    "repository" ""
+    "name" ""
+    "tag" ""
+    "pullPolicy" ""
+  -}}
+  {{- range $imageConf := $imageConfs -}}
+    {{- $_ := coalesce $image.registry $imageConf.registry | set $image "registry" -}}
+    {{- $_ := coalesce $image.repository $imageConf.repository | set $image "repository" -}}
+    {{- $_ := coalesce $image.name $imageConf.name | set $image "name" -}}
+    {{- $_ := coalesce $image.tag $imageConf.tag | set $image "tag" -}}
+    {{- $_ := coalesce $image.pullPolicy $imageConf.pullPolicy | set $image "pullPolicy" -}}
+  {{- end -}}
+  {{- $_ := coalesce $image.tag $ctx.Chart.AppVersion "latest" | set $image "tag" -}}
+  {{- if $image.registry -}}
+    {{- $_ := printf "%s/%s/%s:%s" $image.registry $image.repository $image.name $image.tag | set $image "fullname" -}}
+  {{- else if $image.repository -}}
+    {{- $_ := printf "%s/%s:%s" $image.repository $image.name $image.tag | set $image "fullname" -}}
+  {{- else -}}
+    {{- $_ := printf "%s:%s" $image.name $image.tag | set $image "fullname" -}}
+  {{- end -}}
+  {{- $image | toYaml -}}
+{{- end -}}

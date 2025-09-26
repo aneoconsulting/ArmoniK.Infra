@@ -54,6 +54,29 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*
+Common labels
+*/}}
+{{- define "armonik.control.metricsLabels" -}}
+helm.sh/chart: {{ include "armonik.control.chart" . }}
+{{ include "armonik.control.metricsSelectorLabels" . }}
+{{- if .Chart.AppVersion }}
+app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+{{- end }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- if .Values.commonLabels }}
+{{ toYaml .Values.commonLabels }}
+{{- end }}
+{{- end }}
+
+{{/*
+Selector labels
+*/}}
+{{- define "armonik.control.metricsSelectorLabels" -}}
+app.kubernetes.io/name: {{ include "armonik.control.name" . }}-metrics
+app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}
+
+{{/*
 Create the name of the service account to use
 */}}
 {{- define "armonik.control.serviceAccountName" -}}
@@ -109,8 +132,8 @@ Role name of addon resizer
 
 
 {{- define "armonik.control.confHelper" }}
-{{- $defaultPartition := .Values.config.controlPlane.defaultPartition }}
-{{- $partitionNames := keys .Values.config.computePlane.partitions | default list }}
+{{- $defaultPartition := .Values.defaultPartition }}
+{{- $partitionNames := .Values.extraPartitions }}
 env:
   {{- if and $defaultPartition (has $defaultPartition $partitionNames) }}
   Submitter__DefaultPartition: {{ $defaultPartition }}
@@ -119,4 +142,30 @@ env:
   {{- else }}
   Submitter__DefaultPartition: ""
   {{- end }}
+  InitServices__InitDatabase: {{ not .Values.init.enabled | quote }}
+  InitServices__InitObjectStorage: {{ not .Values.init.enabled | quote }}
+  InitServices__InitQueue: {{ not .Values.init.enabled | quote }}
+  InitServices__StopAfterInit: "false"
+{{- end }}
+
+{{- define "armonik.control.initConfHelper" }}
+{{- $defaultPartition := .Values.defaultPartition }}
+{{- $partitionNames := .Values.extraPartitions }}
+env:
+  Submitter__DefaultPartition: ""
+  InitServices__InitDatabase: "true"
+  InitServices__InitObjectStorage: "true"
+  InitServices__InitQueue: "true"
+  InitServices__StopAfterInit: "true"
+{{- end }}
+
+{{- define "armonik.control.metricsConfHelper" }}
+{{- $defaultPartition := .Values.defaultPartition }}
+{{- $partitionNames := .Values.extraPartitions }}
+env:
+  Submitter__DefaultPartition: ""
+  InitServices__InitDatabase: "false"
+  InitServices__InitObjectStorage: "false"
+  InitServices__InitQueue: "false"
+  InitServices__StopAfterInit: "false"
 {{- end }}

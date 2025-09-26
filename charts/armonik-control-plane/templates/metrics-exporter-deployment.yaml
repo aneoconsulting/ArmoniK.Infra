@@ -1,0 +1,80 @@
+{{- if .Values.metricsExporter.enabled }}
+{{- $conf := list
+    (include "armonik.conf.jobs" $ | fromYaml)
+    (include "armonik.control.metricsConfHelper" $ | fromYaml)
+    .Values.metricsExporter.conf
+    .Values.conf
+  | include "armonik.conf.merge" | fromYaml }}
+{{- $image := list $ .Values.metricsExporter.image .Values.image | include "armonik.image" | fromYaml }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "armonik.control.fullname" . }}-{{ .Values.metricsExporter.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "armonik.control.metricsLabels" . | nindent 4 }}
+  {{- with coalesce .Values.metricsExporter.annotations .Values.annotations}}
+  annotations:
+  {{- range $key, $value := . }}
+    {{ $key }}: {{ $value }}
+  {{- end }}
+  {{- end }}
+spec:
+  progressDeadlineSeconds: 600
+  replicas: {{ .Values.metricsExporter.replicas }}
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      {{- include "armonik.control.metricsSelectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "armonik.control.metricsSelectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: {{ .Values.metricsExporter.name }}
+          image: {{ $image.fullname }}
+          imagePullPolicy: {{ $image.pullPolicy }}
+          #command: ["/bin/bash", "-c", "sleep 3600"]
+          ports:
+            {{- range .Values.metricsExporter.ports }}
+            - name: {{ .name }}
+              containerPort: {{ .containerPort }}
+              protocol: {{ .protocol }}
+            {{- end }}{{/* range .Values.metricsExporter.ports */}}
+          env: {{- include "armonik.conf.generateEnv" $conf | nindent 12 }}
+          envFrom: {{- include "armonik.conf.generateEnvFrom" $conf | nindent 12 }}
+          {{- with coalesce .Values.metricsExporter.resources .Values.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}{{/* with .Values.resources */}}
+          {{- with coalesce .Values.metricsExporter.livenessProbe .Values.livenessProbe }}
+          livenessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}{{/* with .Values.livenessProbe */}}
+          {{- with coalesce .Values.metricsExporter.startupProbe .Values.startupProbe }}
+          startupProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}{{/* with .Values.startupProbe */}}
+          volumeMounts: {{- include "armonik.conf.generateVolumeMounts" $conf | nindent 12 }}
+      volumes: {{- include "armonik.conf.generateVolumes" $conf | nindent 8 }}
+      {{- with .Values.global.imagePullSecrets | default .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}{{/* with $imagePullSecrets */}}
+      {{- if $.Values.serviceAccount.create }}
+      serviceAccountName: {{ $.Values.serviceAccount.name }}
+      serviceAccount: {{ $.Values.serviceAccount.name }}
+      automountServiceAccountToken: true
+      {{- end }}{{/* if .Values.serviceAccount.create */}}
+      shareProcessNamespace: false
+      {{- with coalesce .Values.metricsExporter.nodeSelector .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}{{/* with .Values.nodeSelector */}}
+      {{- with coalesce .Values.metricsExporter.tolerations .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}{{/* with .Values.tolerations */}}
+      enableServiceLinks: true
+{{- end }}

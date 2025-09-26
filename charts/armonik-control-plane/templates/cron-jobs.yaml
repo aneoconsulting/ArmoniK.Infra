@@ -1,3 +1,4 @@
+{{ if false }}
 apiVersion: batch/v1
 kind: CronJob
 metadata:
@@ -84,3 +85,4 @@ spec:
     startingDeadlineSeconds: 20
     successfulJobsHistoryLimit: 0
     suspend: false
+{{ end }}

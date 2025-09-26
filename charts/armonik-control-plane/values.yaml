@@ -1,33 +1,22 @@
 imagePullSecrets: []
-replicaCount: 1
-namespace: armonik
 name: control-plane
 image:
+  registry:
   repository: dockerhubaneo
   name: armonik_control
-  tag: "0.35.0"
+  tag:
   pullPolicy: IfNotPresent
-imageJob:
-  repository: alpine
-  name: mongosh
-  tag: "2.0.2"
-imageCron:
-  repository: datalust
-  name: seqcli
-  tag: "2024.3"
+
+replicas: 1
+maxErrorAllowed: 50
+defaultPartition: default
+extraPartitions: []
 
 serviceAccount:
   create: true
   name: control-plane
   annotations: {}
   secrets: []
-
-certificates:
-  enable: false
-partitionMetricsExporter:
-  enable: false
-metricsExporter:
-  enable: true
 
 resources:
   limits:
@@ -58,10 +47,9 @@ startupProbe:
   failureThreshold: 20
 
 nodeSelector: {}
-
 tolerations: []
-
 annotations: {}
+affinity: {}
 
 conf:
   env: {}
@@ -72,40 +60,6 @@ conf:
   mountConfigmap: {}
   mountSecret: {}
 
-volumes:
-  # activemq:
-  #   enabled: true
-  #   mountPath: /amqp
-  #   secretName: activemq-crt
-  # mongodb:
-  #   enabled: true
-  #   mountPath: /mongodb/certs/
-  #   secretName: mongodb-ca
-  # redis:
-  #   enabled: true
-  #   mountPath: /redis
-  #   secretName: redis-crt
-
-env:
-  - name: MongoDB__Password
-    valueFrom:
-      secretKeyRef:
-        key: mongodb-root-password
-        name: mongodb
-  - name: Redis__Password
-    valueFrom:
-      secretKeyRef:
-        key: redis-password
-        name: redis
-
-envFrom:
-  secretRef:
-    - redis
-  configMapRef:
-    - control-plane-configmap
-    - core-configmap
-    - log-configmap
-
 ports:
   - name: control-port
     containerPort: 1080
@@ -114,29 +68,77 @@ ports:
     containerPort: 1081
     protocol: TCP
 
-config:
-  controlPlane:
-    name: control-plane-configmap
-    defaultPartition: default
-    data:
-      Submitter__MaxErrorAllowed: "50"
-
-  computePlane:
-    partitions:
-      default: {}
-      stream: {}
-      htcmock: {}
-      bench: {}
-
 service:
   name: control-plane
   serviceType: ClusterIP
+  annotations:
 
   ports:
     - name: control-port
       port: 5001
       targetPort: 1080
 
-  selector:
-    app: armonik
-    service: control-plane
+metricsExporter:
+  enabled: true
+  name: metrics-exporter
+  replicas: 1
+  image:
+    registry:
+    repository:
+    name: armonik_control_metrics
+    tag:
+    pullPolicy:
+  imagePullSecrets:
+  resources:
+  nodeSelector:
+  tolerations:
+  annotations:
+  affinity:
+  livenessProbe:
+    httpGet:
+      path: /liveness
+      port: 1080
+    initialDelaySeconds: 15
+    periodSeconds: 5
+    timeoutSeconds: 1
+    successThreshold: 1
+    failureThreshold: 1
+  startupProbe:
+    httpGet:
+      path: /startup
+      port: 1080
+    initialDelaySeconds: 15
+    periodSeconds: 3
+    timeoutSeconds: 5
+    successThreshold: 1
+    failureThreshold: 20
+  ports:
+    - name: metrics-port
+      containerPort: 1080
+      protocol: TCP
+  service:
+    name: metrics-exporter
+    serviceType: ClusterIP
+    annotations:
+    ports:
+      - name: metrics-port
+        port: 9419
+        targetPort: 1080
+  conf:
+
+init:
+  enabled: true
+  name: init
+  image:
+    registry:
+    repository:
+    name:
+    tag:
+    pullPolicy:
+  imagePullSecrets:
+  resources:
+  nodeSelector:
+  tolerations:
+  annotations:
+  affinity:
+  conf:

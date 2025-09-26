@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pouet
+data:
+  mongodb: |-
+    {{- include "armonik.mongodb.conf" $ | nindent 4 }}
+  activemq: |-
+    {{- include "armonik.activemq.conf" $ | nindent 4 }}

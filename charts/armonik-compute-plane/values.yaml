@@ -163,7 +163,7 @@ partitions:
   default:
     worker:
       image: "armonik_worker_dll"
-      tag: "0.18.0"
+      tag: "0.19.1"
     hpa:
       triggers:
         - type: "prometheus"

@@ -10,9 +10,15 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "armonik.control.labels" . | nindent 4 }}
+  {{- with .Values.annotations}}
+  annotations:
+  {{- range $key, $value := . }}
+    {{ $key }}: {{ $value }}
+  {{- end }}
+  {{- end }}
 spec:
   progressDeadlineSeconds: 600
-  replicas: {{ .Values.replicaCount }}
+  replicas: {{ .Values.replicas }}
   revisionHistoryLimit: 10
   selector:
     matchLabels:
@@ -40,39 +46,36 @@ spec:
             {{- end }}{{/* range .Values.ports */}}
           env: {{- include "armonik.conf.generateEnv" $conf | nindent 12 }}
           envFrom: {{- include "armonik.conf.generateEnvFrom" $conf | nindent 12 }}
-          {{- if .Values.resources }}
+          {{- with .Values.resources }}
           resources:
-            {{- toYaml .Values.resources | nindent 12 }}
-          {{- end }}{{/* if .Values.resources */}}
-          {{- if .Values.livenessProbe }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}{{/* with .Values.resources */}}
+          {{- with .Values.livenessProbe }}
           livenessProbe:
-          {{- toYaml .Values.livenessProbe | nindent 12 }}
-          {{- end }}{{/* if .Values.livenessProbe */}}
-          {{- if .Values.startupProbe }}
+          {{- toYaml . | nindent 12 }}
+          {{- end }}{{/* with .Values.livenessProbe */}}
+          {{- with .Values.startupProbe }}
           startupProbe:
-          {{- toYaml .Values.startupProbe | nindent 12 }}
-          {{- end }}{{/* if .Values.startupProbe */}}
+          {{- toYaml . | nindent 12 }}
+          {{- end }}{{/* with .Values.startupProbe */}}
           volumeMounts: {{- include "armonik.conf.generateVolumeMounts" $conf | nindent 12 }}
       volumes: {{- include "armonik.conf.generateVolumes" $conf | nindent 8 }}
-      {{- $imagePullSecrets := .Values.global.imagePullSecrets | default .Values.imagePullSecrets }}
-      {{- if $imagePullSecrets }}
-      {{- with $imagePullSecrets }}
+      {{- with .Values.global.imagePullSecrets | default .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}{{/* with $imagePullSecrets */}}
-      {{- end }}{{/* if $imagePullSecrets */}}
       {{- if $.Values.serviceAccount.create }}
       serviceAccountName: {{ $.Values.serviceAccount.name }}
       serviceAccount: {{ $.Values.serviceAccount.name }}
       automountServiceAccountToken: true
       {{- end }}{{/* if .Values.serviceAccount.create */}}
       shareProcessNamespace: false
-      {{- if .Values.nodeSelector }}
+      {{- with .Values.nodeSelector }}
       nodeSelector:
-        {{- toYaml .Values.nodeSelector | nindent 8 }}
-      {{- end }}{{/* if .Values.nodeSelector */}}
-      {{- if .Values.tolerations }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}{{/* with .Values.nodeSelector */}}
+      {{- with .Values.tolerations }}
       tolerations:
-        {{- toYaml .Values.tolerations | nindent 8 }}
-      {{- end }}{{/* if .Values.tolerations */}}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}{{/* with .Values.tolerations */}}
       enableServiceLinks: true

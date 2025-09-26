@@ -5,9 +5,9 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "armonik.control.labels" . | nindent 4 }}
-  {{- if .Values.annotations}}
+  {{- with coalesce .Values.service.annotations .Values.annotations}}
   annotations:
-  {{- range $key, $value := .Values.annotations }}
+  {{- range $key, $value := . }}
     {{ $key }}: {{ $value }}
   {{- end }}
   {{- end }}

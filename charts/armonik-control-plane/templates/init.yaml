@@ -1,0 +1,71 @@
+{{- if .Values.init.enabled }}
+{{- $conf := list
+    (include "armonik.conf.jobs" $ | fromYaml)
+    (include "armonik.control.initConfHelper" $ | fromYaml)
+    .Values.conf
+    .Values.init.conf
+  | include "armonik.conf.merge" | fromYaml -}}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "armonik.control.fullname" . }}-{{ .Values.init.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: armonik
+    service: init
+    type: monitoring
+spec:
+  backoffLimit: 5
+  completionMode: NonIndexed
+  completions: 1
+  manualSelector: false
+  parallelism: 1
+  suspend: false
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: armonik
+        job-name: {{ include "armonik.control.fullname" . }}-{{ .Values.init.name }}
+        service: init
+        type: monitoring
+      name: init
+    spec:
+      automountServiceAccountToken: true
+      containers:
+      - name: init
+        {{- $registry := .Values.init.image.registry | default .Values.image.registry | default .Values.global.imageRegistry }}
+        {{- $repository := .Values.init.image.repository | default .Values.image.repository | default .Values.global.imageRepository }}
+        {{- $name := .Values.init.image.name | default .Values.image.name }}
+        {{- $tag := .Values.init.image.tag | default .Values.image.tag | default .Chart.AppVersion }}
+        {{- if $registry }}
+        image: "{{ $registry }}/{{ $repository }}/{{ $name }}:{{ $tag }}"
+        {{- else }}
+        image: "{{ $repository }}/{{ $name }}:{{ $tag }}"
+        {{- end }}
+        imagePullPolicy: {{ .Values.init.image.pullPolicy | default .Values.image.pullPolicy }}
+        
+        env: {{- include "armonik.conf.generateEnv" $conf | nindent 10 }}
+        envFrom: {{- include "armonik.conf.generateEnvFrom" $conf | nindent 10 }}
+        volumeMounts: {{- include "armonik.conf.generateVolumeMounts" $conf | nindent 10 }}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      {{- with .Values.imagePullSecrets | default .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      dnsPolicy: ClusterFirst
+      shareProcessNamespace: false
+      terminationGracePeriodSeconds: 30
+      enableServiceLinks: true
+      restartPolicy: OnFailure
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }} 
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes: {{- include "armonik.conf.generateVolumes" $conf | nindent 8 }}
+{{- end }}

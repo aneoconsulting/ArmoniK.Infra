@@ -3,13 +3,15 @@
     (include "armonik.control.confHelper" $ | fromYaml)
     .Values.conf
   | include "armonik.conf.merge" | fromYaml -}}
+{{- $image := list $ .Values.image | include "armonik.image" | fromYaml }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "armonik.control.fullname" . }}
-  namespace: {{ .Release.Namespace }}
+  name: {{ include "armonik.fullname" . }}
+  namespace: {{ include "armonik.namespace" . }}
   labels:
-    {{- include "armonik.control.labels" . | nindent 4 }}
+    app.kubernetes.io/component: control-plane
+    {{- include "armonik.labels" . | nindent 4 }}
   {{- with .Values.annotations}}
   annotations:
   {{- range $key, $value := . }}
@@ -22,21 +24,18 @@ spec:
   revisionHistoryLimit: 10
   selector:
     matchLabels:
-      {{- include "armonik.control.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: control-plane
+      {{- include "armonik.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        {{- include "armonik.control.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: control-plane
+        {{- include "armonik.selectorLabels" . | nindent 8 }}
     spec:
       containers:
-        - name: {{ include "armonik.control.name" . }}
-          {{- $registry := .Values.global.imageRegistry | default .Values.image.registry }}
-          {{- if $registry }}
-          image: "{{ $registry }}/{{ .Values.image.repository }}/{{ .Values.image.name }}:{{ include "armonikCore.tag" . }}"
-          {{- else }}
-          image: "{{ .Values.image.repository }}/{{ .Values.image.name }}:{{ include "armonikCore.tag" . }}"
-          {{- end }}{{/* if $registry */}}
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+        - name: control-plane
+          image: {{ $image.fullname }}
+          imagePullPolicy: {{ $image.pullPolicy }}
           #command: ["/bin/bash", "-c", "sleep 3600"]
           ports:
             {{- range .Values.ports }}
@@ -65,8 +64,8 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}{{/* with $imagePullSecrets */}}
       {{- if $.Values.serviceAccount.create }}
-      serviceAccountName: {{ $.Values.serviceAccount.name }}
-      serviceAccount: {{ $.Values.serviceAccount.name }}
+      serviceAccountName: {{ include "armonik.serviceAccountName" $ }}
+      serviceAccount: {{ include "armonik.serviceAccountName" $ }}
       automountServiceAccountToken: true
       {{- end }}{{/* if .Values.serviceAccount.create */}}
       shareProcessNamespace: false

@@ -1,7 +1,7 @@
 {{- range $partitionName, $config := .Values.partitions }}
 {{- $partition := merge (deepCopy $config) (deepCopy $.Values.partitionCommon) -}}
 {{- $registry := $.Values.global.imageRegistry | default $.Values.registry -}}
-{{- $agent := $partition.pollingAgent -}}
+{{- $agent := $partition.agent -}}
 {{- $worker := $partition.worker -}}
 {{- $commonConf := list
     (include "armonik.conf.compute" $ | fromYaml)
@@ -24,101 +24,88 @@
   $agentConf
   $workerConf
 | include "armonik.conf.merge" | fromYaml }}
+{{- $agentImage := list $ $agent.image $.Values.partitionCommon.agent.image | include "armonik.image" | fromYaml }}
+{{- $workerImage := list $ $worker.image $.Values.partitionCommon.worker.image | include "armonik.image" | fromYaml }}
+{{- $fluentBitImage := list $ $.Values.fluentBit.image | include "armonik.image" | fromYaml }}
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "armonik.compute.fullname" $ }}-{{ $partitionName }}
-  namespace: {{ $.Release.Namespace }}
+  name: {{ printf "%s-%s" (include "armonik.fullname" $) $partitionName | trunc 63 | trimSuffix "-" | quote }}
+  namespace: {{ include "armonik.namespace" $ }}
   labels:
-    app: {{ $partition.labels.app }}
-    service: {{ $partition.labels.service }}
-    partition: {{ $partitionName }}
+    app.kubernetes.io/component: {{ printf "compute-plane-%s" $partitionName | quote }}
+    app.kubernetes.io/part-of: compute-plane
+    armonik.fr/partition: {{ $partitionName | quote }}
+    {{- include "armonik.labels" $ | nindent 4 }}
 spec:
   replicas: {{ $partition.replicas }}
   selector:
     matchLabels:
-      app: {{ $partition.labels.app }}
-      service: {{ $partition.labels.service }}
-      partition: {{ $partitionName }}
+      app.kubernetes.io/component: {{ printf "compute-plane-%s" $partitionName | quote }}
+      app.kubernetes.io/part-of: compute-plane
+      armonik.fr/partition: {{ $partitionName | quote }}
+      {{- include "armonik.selectorLabels" $ | nindent 6 }}
   template:
     metadata:
-      name: {{ $partitionName }}-compute-plane
+      name: {{ $partitionName | quote }}
       labels:
-        app: {{ $partition.labels.app }}
-        service: {{ $partition.labels.service }}
-        partition: {{ $partitionName }}
-      {{- if $partition.annotations}}
+        app.kubernetes.io/component: {{ printf "compute-plane-%s" $partitionName | quote }}
+        app.kubernetes.io/part-of: compute-plane
+        armonik.fr/partition: {{ $partitionName | quote }}
+        {{- include "armonik.selectorLabels" $ | nindent 8 }}
+      {{- with $partition.annotations}}
       annotations:
-        {{- range $key, $value := $partition.annotations }}
-        {{ $key }}: {{ $value | quote }}
-        {{- end }}
+        {{- toYaml . | nindent 8 }}
       {{- end }}
     spec:
-      {{- if $partition.nodeSelector}}
+      {{- with $partition.nodeSelector}}
       nodeSelector:
-        {{- range $key, $value := $partition.nodeSelector }}
-        {{ $key }}: {{ $value | quote }}
-        {{- end }}
+        {{- toYaml . | nindent 8 }}
       {{- end }}
       {{- if $.Values.serviceAccount.create }}
-      serviceAccountName: {{ $.Values.serviceAccount.name }}
-      serviceAccount: {{ $.Values.serviceAccount.name }}
+      serviceAccountName: {{ include "armonik.serviceAccountName" $ }}
+      serviceAccount: {{ include "armonik.serviceAccountName" $ }}
       automountServiceAccountToken: true
       {{- end }}
-      {{- if $partition.tolerations }}
+      {{- with $partition.tolerations }}
       tolerations:
-        {{- range $i, $toleration := $partition.tolerations }}
-        - key: {{ $toleration.key }}
-          operator: Equal
-          value: {{ $toleration.value }}
-          effect: NoSchedule
-        {{- end }}
+        {{- toYaml . | nindent 8 }}
       {{- end }}
       terminationGracePeriodSeconds: {{ $partition.terminationGracePeriodSeconds }}
       shareProcessNamespace: {{ $.Values.shareProcessNamespace }}
       enableServiceLinks: true
-      {{- $imagePullSecrets := $.Values.global.imagePullSecrets | default $.Values.imagePullSecrets }}
-      {{- if $imagePullSecrets }}
-      {{- with $imagePullSecrets }}
+      {{- with $.Values.imagePullSecrets | default $.Values.global.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
-      {{- end }}
       {{- end }}
       restartPolicy: {{ $.Values.restartPolicy }}
       containers:
       # agent container
-      - name: {{ $agent.name }}
-        {{- if $registry }}
-        image: "{{ $registry }}/{{ $.Values.repository }}/{{ $agent.image }}:{{- $agent.tag | default (include "armonikPollingagent.tag" $) | default $.Chart.AppVersion }}"
-        {{- else }}
-        image: "{{ $.Values.repository }}/{{ $agent.image }}:{{- $agent.tag | default (include "armonikPollingagent.tag" $) | default $.Chart.AppVersion }}"
-        {{- end }}
-        imagePullPolicy: {{ $agent.imagePullPolicy | quote}}
+      - name: agent
+        image: {{ $agentImage.fullname }}
+        imagePullPolicy: {{ $agentImage.pullPolicy }}
+        {{- with $agent.resources }}
         resources:
-          limits:
-            cpu: "{{ $agent.limits.cpu }}"
-            memory: "{{ $agent.limits.memory }}"
-          requests:
-            cpu: "{{ $agent.requests.cpu }}"
-            memory: "{{ $agent.requests.memory }}"
+          {{- toYaml . | nindent 12 }}
+        {{- end }}{{/* with $agent.resources */}}
         securityContext:
-        {{- toYaml $agent.securityContext | nindent 10 }}
+          {{- toYaml $agent.securityContext | nindent 10 }}
         ports:
         - name: {{ $agent.ports.name }}
           containerPort: {{ $agent.ports.containerPort }}
           protocol: TCP
-        {{if $agent.readinessProbe }}
+        {{- with $agent.readinessProbe }}
         readinessProbe:
-        {{- toYaml $agent.readinessProbe | nindent 10 }}
+          {{- . toYaml | nindent 10 }}
         {{- end }}
-        {{- if $agent.livenessProbe }}
+        {{- with $agent.livenessProbe }}
         livenessProbe:
-        {{- toYaml $agent.livenessProbe | nindent 10 }}
+          {{- . | toYaml | nindent 10 }}
         {{- end }}
-        {{- if $agent.startupProbe }}
+        {{- with $agent.startupProbe }}
         startupProbe:
-        {{- toYaml $agent.startupProbe | nindent 10 }}
+          {{- . | toYaml | nindent 10 }}
         {{- end }}
         env: {{- include "armonik.conf.generateEnv" $agentConf | nindent 10 }}
         envFrom: {{- include "armonik.conf.generateEnvFrom" $agentConf | nindent 10 }}
@@ -128,27 +115,20 @@ spec:
             mountPath: /cache
             mountPropagation: None
       # worker containers
-      - name: "{{ $worker.name }}"
-        {{- if $registry }}
-        image: "{{ $registry }}/{{ $.Values.repository }}/{{ $worker.image }}:{{- $worker.tag | default (include "armonikCore.tag" $) | default $.Chart.AppVersion }}"
-        {{- else }}
-        image: "{{ $.Values.repository }}/{{ $worker.image }}:{{- $worker.tag | default (include "armonikCore.tag" $) | default $.Chart.AppVersion }}"
-        {{- end }}
-        imagePullPolicy: {{ $worker.imagePullPolicy | quote }}
+      - name: worker
+        image: {{ $workerImage.fullname }}
+        imagePullPolicy: {{ $workerImage.pullPolicy }}
+        {{- with $worker.resources }}
         resources:
-          limits:
-            cpu: "{{ $worker.limits.cpu }}"
-            memory: "{{ $worker.limits.memory }}"
-          requests:
-            cpu: "{{ $worker.requests.cpu }}"
-            memory: "{{ $worker.requests.memory }}"
-        {{- if $worker.livenessProbe }}
+          {{- toYaml . | nindent 12 }}
+        {{- end }}{{/* with $worker.resources */}}
+        {{- with $worker.livenessProbe }}
         livenessProbe:
-        {{- toYaml $worker.livenessProbe | nindent 10 }}
+          {{- . | toYaml | nindent 10 }}
         {{- end }}
-        {{- if $worker.startupProbe }}
+        {{- with $worker.startupProbe }}
         startupProbe:
-        {{- toYaml $worker.startupProbe | nindent 10 }}
+          {{- . | toYaml | nindent 10 }}
         {{- end }}
         lifecycle:
           preStop:
@@ -162,14 +142,9 @@ spec:
             mountPath: /cache
             mountPropagation: None
       {{- if not $.Values.fluentBit.isDaemonSet }}
-      - name: {{ .Values.fluentBit.name }}
-        {{- $registry := .Values.global.imageRegistry | default .Values.image.registry | default "" }}
-        {{- if $registry }}
-        image: "{{ $registry }}/{{ .Values.fluentBit.repository }}/{{ .Values.fluentBit.image }}:{{ .Values.fluentBit.tag | default .Chart.AppVersion }}"
-        {{- else }}
-        image: "{{ .Values.fluentBit.repository }}/{{ .Values.fluentBit.image }}:{{ .Values.fluentBit.tag | default .Chart.AppVersion }}"
-        {{- end }}
-        imagePullPolicy: {{ .Values.fluentBit.imagePullPolicy }}
+      - name: fluent-bit
+        image: {{ $fluentBitImage.fullname }}
+        imagePullPolicy: {{ $fluentBitImage.pullPolicy }}
         envFrom:
         - configMapRef:
             name: {{ .Values.fluentBit.configMapName }}

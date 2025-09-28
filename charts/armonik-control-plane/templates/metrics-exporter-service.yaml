@@ -2,10 +2,11 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "armonik.control.fullname" . }}-{{ .Values.metricsExporter.name }}
-  namespace: {{ .Release.Namespace }}
+  name: {{ include "armonik.fullname" . | printf "%s-metrics-exporter" | trunc 63 | trimSuffix "-" | quote }}
+  namespace: {{ include "armonik.namespace" . }}
   labels:
-    {{- include "armonik.control.metricsLabels" . | nindent 4 }}
+    app.kubernetes.io/component: metrics-exporter
+    {{- include "armonik.labels" . | nindent 4 }}
   {{- with coalesce .Values.metricsExporter.service.annotations .Values.metricsExporter.annotations .Values.annotations}}
   annotations:
   {{- range $key, $value := . }}
@@ -21,7 +22,8 @@ spec:
   clusterIP: null
 {{- end }}
   selector:
-    {{- include "armonik.control.metricsSelectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: metrics-exporter
+    {{- include "armonik.selectorLabels" . | nindent 4 }}
   ports:
     - name: {{ .Values.metricsExporter.service.name }}
     {{- if (eq .Values.metricsExporter.service.serviceType "HeadLess") -}}

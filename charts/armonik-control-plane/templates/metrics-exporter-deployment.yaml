@@ -9,10 +9,11 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "armonik.control.fullname" . }}-{{ .Values.metricsExporter.name }}
-  namespace: {{ .Release.Namespace }}
+  name: {{ include "armonik.fullname" . | printf "%s-metrics-exporter" | trunc 63 | trimSuffix "-" | quote }}
+  namespace: {{ include "armonik.namespace" . }}
   labels:
-    {{- include "armonik.control.metricsLabels" . | nindent 4 }}
+    app.kubernetes.io/component: metrics-exporter
+    {{- include "armonik.labels" . | nindent 4 }}
   {{- with coalesce .Values.metricsExporter.annotations .Values.annotations}}
   annotations:
   {{- range $key, $value := . }}
@@ -25,14 +26,16 @@ spec:
   revisionHistoryLimit: 10
   selector:
     matchLabels:
-      {{- include "armonik.control.metricsSelectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: metrics-exporter
+      {{- include "armonik.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        {{- include "armonik.control.metricsSelectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: metrics-exporter
+        {{- include "armonik.selectorLabels" . | nindent 8 }}
     spec:
       containers:
-        - name: {{ .Values.metricsExporter.name }}
+        - name: metrics-exporter
           image: {{ $image.fullname }}
           imagePullPolicy: {{ $image.pullPolicy }}
           #command: ["/bin/bash", "-c", "sleep 3600"]
@@ -63,8 +66,8 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}{{/* with $imagePullSecrets */}}
       {{- if $.Values.serviceAccount.create }}
-      serviceAccountName: {{ $.Values.serviceAccount.name }}
-      serviceAccount: {{ $.Values.serviceAccount.name }}
+      serviceAccountName: {{ include "armonik.serviceAccountName" $ }}
+      serviceAccount: {{ include "armonik.serviceAccountName" $ }}
       automountServiceAccountToken: true
       {{- end }}{{/* if .Values.serviceAccount.create */}}
       shareProcessNamespace: false
@@ -77,4 +80,5 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}{{/* with .Values.tolerations */}}
       enableServiceLinks: true
+      dnsPolicy: ClusterFirst
 {{- end }}

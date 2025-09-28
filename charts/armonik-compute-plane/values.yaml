@@ -1,4 +1,5 @@
 nameOverride: ""
+fullnameOverride: ""
 replicaCount: 1
 shareProcessNamespace: false
 restartPolicy: Always
@@ -21,8 +22,6 @@ service: {}
 rbac:
   # Specifies whether RBAC resources should be created
   create: true
-  # Note: PodSecurityPolicy will not be created when Kubernetes version is 1.25 or later.
-  pspEnabled: false
 
 podDisruptionBudget:
   # https://kubernetes.io/docs/tasks/run-application/configure-pdb/
@@ -35,13 +34,17 @@ partitionCommon:
     app: "armonik"
     service: "compute-plane"
   socketType: "unixdomainsocket"
-  pollingAgent:
+  agent:
     name: polling-agent
+    image:
+      registry:
+      repository: dockerhubaneo
+      name: armonik_pollingagent
+      tag:
+      pullPolicy: IfNotPresent
     ports:
       name: poll-agent-port
       containerPort: 1080
-    image: "armonik_pollingagent"
-    imagePullPolicy: "IfNotPresent"
     readinessProbe: {}
     livenessProbe:
       httpGet:
@@ -88,6 +91,12 @@ partitionCommon:
   # Default worker, will be overridden per partition
   worker:
     name: "worker"
+    image:
+      registry:
+      repository: dockerhubaneo
+      name:
+      tag:
+      pullPolicy: IfNotPresent
     ports:
       name: worker-port
       containerPort: 1081
@@ -130,9 +139,9 @@ partitionCommon:
     # -- Cooldown period in seconds
     cooldownPeriod: 300 # Optional. Default: 300 seconds
     # -- Count of idle replicas
-    idleReplicaCount: 0 # Optional. Default: ignored, must be less than minReplicaCount
+    idleReplicaCount: 1 # Optional. Default: ignored, must be less than minReplicaCount
     # -- Minimum count of replicas
-    minReplicaCount: 0 # Optional. Default: 0
+    minReplicaCount: 1 # Optional. Default: 0
     # -- Maximum count of replicas
     maxReplicaCount: 5 # Optional. Default: 100
 
@@ -162,8 +171,9 @@ partitionCommon:
 partitions:
   default:
     worker:
-      image: "armonik_worker_dll"
-      tag: "0.19.1"
+      image:
+        name: "armonik_worker_dll"
+        tag: "0.19.1"
     hpa:
       triggers:
         - type: "prometheus"
@@ -171,12 +181,13 @@ partitions:
             serverAddress: http://prometheus-prometheus:9090
             metricName: "armonik_default_tasks_queued"
             threshold: "2"
-            namespace: "armonik"
+            namespace: "default"
             query: 'armonik_default_tasks_queued{job="metrics-exporter"}'
 
   stream:
     worker:
-      image: "armonik_core_stream_test_worker"
+      image:
+        name: "armonik_core_stream_test_worker"
     hpa:
       triggers:
         - type: "prometheus"
@@ -184,13 +195,14 @@ partitions:
             serverAddress: http://prometheus-prometheus:9090
             metricName: "armonik_stream_tasks_queued"
             threshold: "2"
-            namespace: "armonik"
+            namespace: "default"
             query: 'armonik_stream_tasks_queued{job="metrics-exporter"}'
 
   htcmock:
     socketType: "tcp"
     worker:
-      image: "armonik_core_htcmock_test_worker"
+      image:
+        name: "armonik_core_htcmock_test_worker"
     hpa:
       triggers:
         - type: "prometheus"
@@ -198,12 +210,13 @@ partitions:
             serverAddress: http://prometheus-prometheus:9090
             metricName: "armonik_htcmock_tasks_queued"
             threshold: "2"
-            namespace: "armonik"
+            namespace: "default"
             query: 'armonik_htcmock_tasks_queued{job="metrics-exporter"}'
 
   bench:
     worker:
-      image: "armonik_core_bench_test_worker"
+      image:
+        name: "armonik_core_bench_test_worker"
     hpa:
       triggers:
         - type: "prometheus"
@@ -211,16 +224,17 @@ partitions:
             serverAddress: http://prometheus-prometheus:9090
             metricName: "armonik_bench_tasks_queued"
             threshold: "2"
-            namespace: "armonik"
+            namespace: "default"
             query: 'armonik_bench_tasks_queued{job="metrics-exporter"}'
 
 fluentBit:
   isDaemonSet: true
-  name: "fluent-bit"
-  repository: "fluent"
-  image: "fluent-bit"
-  tag: "2.0.9"
-  imagePullPolicy: "IfNotPresent"
+  image:
+    registry:
+    repository: fluent
+    name: fluent-bit
+    tag: "2.0.9"
+    pullPolicy: IfNotPresent
   configMapRef: "fluent-bit-config"
 
 # checkFileStorageType: "FS"

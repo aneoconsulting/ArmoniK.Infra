@@ -5,16 +5,21 @@
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
-  name: {{ include "armonik.compute.fullname" $ }}-{{ $partitionName }}
-  namespace: {{ $.Release.Namespace }}
+  name: {{ printf "%s-%s" (include "armonik.fullname" $) $partitionName | trunc 63 | trimSuffix "-" | quote }}
+  namespace: {{ include "armonik.namespace" $ }}
   annotations:
     "helm.sh/hook": post-install,post-upgrade
     "helm.sh/hook-weight": "10"
+  labels:
+    app.kubernetes.io/component: {{ printf "compute-plane-%s" $partitionName | quote }}
+    app.kubernetes.io/part-of: compute-plane
+    armonik.fr/partition: {{ $partitionName | quote }}
+    {{- include "armonik.labels" $ | nindent 4 }}
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: {{ include "armonik.compute.fullname" $ }}-{{ $partitionName }}
+    name: {{ printf "%s-%s" (include "armonik.fullname" $) $partitionName | trunc 63 | trimSuffix "-" | quote }}
     #envSourceContainerName: ".spec.template.spec.containers[0].name" # Optional. Default: .spec.template.spec.containers[0]
   pollingInterval: {{ $partition.hpa.pollingInterval }}                               # Optional. Default: 30 seconds
   cooldownPeriod: {{ $partition.hpa.cooldownPeriod }}                              # Optional. Default: 300 seconds

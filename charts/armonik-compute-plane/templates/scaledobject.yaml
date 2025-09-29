@@ -1,6 +1,9 @@
 {{ if (include "armonik.keda.context" $ | fromYaml).Values.enabled }}
 {{- range $partitionName, $config := .Values.partitions }}
-{{- $partition := merge (deepCopy $config) (deepCopy $.Values.partitionCommon) }}
+{{- $partition := dict -}}
+{{- dict "dst" $partition "srcs" (list $config $.Values.partitionCommon) "print" false "render" true "context" (
+  merge (dict "Values" (dict "partitionName" $partitionName)) (omit $ "Values")
+  ) | include "armonik.merge" -}}
 ---
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject

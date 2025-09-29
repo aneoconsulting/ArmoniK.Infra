@@ -164,7 +164,14 @@ partitionCommon:
       value: 100
       # -- Period in seconds
       periodSeconds: 15
-    triggers: []
+    triggers:
+      - type: "prometheus"
+        metadata:
+          serverAddress: http://prometheus-prometheus:9090
+          metricName: "armonik_{{ .Values.partitionName }}_tasks_queued"
+          threshold: "2"
+          namespace: "{{ .Release.Namespace }}"
+          query: 'armonik_{{ .Values.partitionName }}_tasks_queued{job="metrics-exporter"}'
   replicas: 1
   conf:
 
@@ -174,58 +181,22 @@ partitions:
       image:
         name: "armonik_worker_dll"
         tag: "0.19.1"
-    hpa:
-      triggers:
-        - type: "prometheus"
-          metadata:
-            serverAddress: http://prometheus-prometheus:9090
-            metricName: "armonik_default_tasks_queued"
-            threshold: "2"
-            namespace: "default"
-            query: 'armonik_default_tasks_queued{job="metrics-exporter"}'
 
   stream:
     worker:
       image:
         name: "armonik_core_stream_test_worker"
-    hpa:
-      triggers:
-        - type: "prometheus"
-          metadata:
-            serverAddress: http://prometheus-prometheus:9090
-            metricName: "armonik_stream_tasks_queued"
-            threshold: "2"
-            namespace: "default"
-            query: 'armonik_stream_tasks_queued{job="metrics-exporter"}'
 
   htcmock:
     socketType: "tcp"
     worker:
       image:
         name: "armonik_core_htcmock_test_worker"
-    hpa:
-      triggers:
-        - type: "prometheus"
-          metadata:
-            serverAddress: http://prometheus-prometheus:9090
-            metricName: "armonik_htcmock_tasks_queued"
-            threshold: "2"
-            namespace: "default"
-            query: 'armonik_htcmock_tasks_queued{job="metrics-exporter"}'
 
   bench:
     worker:
       image:
         name: "armonik_core_bench_test_worker"
-    hpa:
-      triggers:
-        - type: "prometheus"
-          metadata:
-            serverAddress: http://prometheus-prometheus:9090
-            metricName: "armonik_bench_tasks_queued"
-            threshold: "2"
-            namespace: "default"
-            query: 'armonik_bench_tasks_queued{job="metrics-exporter"}'
 
 fluentBit:
   isDaemonSet: true

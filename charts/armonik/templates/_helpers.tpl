@@ -1,13 +1,3 @@
-{{- define "armonik.queue" -}}
-  {{- if (include "armonik.dependencies" $ | fromYaml).rabbitmq }}
-  Amqp__Host: rabbitmq
-  {{- else if (include "armonik.dependencies" $ | fromYaml).activemq }}
-  Amqp__Host: activemq
-  {{- else }}
-  Amqp__Host: localhost
-  {{- end }}
-{{- end }}
-
 {{- define "armonik.dependencies" }}
 controlPlane: {{ include "armonik.index" (list .Values "control-plane" "enabled") | empty | not }}
 computePlane: {{ include "armonik.index" (list .Values "compute-plane" "enabled") | empty | not }}

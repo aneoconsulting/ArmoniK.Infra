@@ -31,8 +31,6 @@ config:
 ################## INGRESS ##################
 ingress:
   enabled: true
-  ingress:
-    type: LoadBalancer
 
 ############################################
 ############### DEPENDENCIES ###############

@@ -1,17 +1,41 @@
 nameOverride: ""
 imagePullSecrets: []
 image:
-  registry: ""
+  registry:
+  repository: nginxinc
+  name: nginx-unprivileged
+  tag: 1.27.4-alpine-slim
+  pullPolicy: IfNotPresent
 
-global:
-  imageRegistry: ""
-  imagePullSecrets: []
-  environment:
-    name: "local"
-    description: "Armonik environment"
+replicas: 1
+
+nodeSelector: {}
+tolerations: []
+annotations: {}
+affinity: {}
+
+resources:
+  limits:
+    cpu: 1
+    memory: 1Gi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+ports:
+  - name: ingress-grpc
+    containerPort: 9080
+    servicePort: 5001
+    http2: true
+  - name: ingress-http
+    containerPort: 8080
+    servicePort: 5000
+
+service:
+  type: LoadBalancer
+  annotations:
 
 tls:
-  type: "metrics-server"
   clusterDomain: cluster.local
   certManager:
     addInjectorAnnotations: true
@@ -33,61 +57,30 @@ tls:
     # Add extra labels to the Certificate resource
     labels: {}
 
-ingress:
-  replicaCount: 1
-  className: ""
-  type: ClusterIP # LoadBalancer
-  tls: []
-  #  - secretName: chart-example-tls
-  #    hosts:
-  #      - chart-example.local
-  repository: "nginxinc"
-  image: "nginx-unprivileged"
-  tag: "1.27.4-alpine-slim"
-  imagePullPolicy: IfNotPresent
-  ports:
-    grpc:
-      name: ingress-grpc
-      containerPort: 9080
-      nodePortGrpc: 31669
-      ServicePort: 5001
-    http:
-      name: ingress-http
-      containerPort: 8080
-      nodePortHttp: 32315
-      ServicePort: 5000
-
-  resources:
-    limits:
-      cpu: 100m
-      memory: 128Mi
-    requests:
-      cpu: 100m
-      memory: 128Mi
-
-  volumes:
-    #ingressSecret: ingress-crt
-    mongodbSecret: mongodb
-    #mongodbSecretCrt: mongodb-ca
-    nginxConfigMap: armonik-ingress-conf
-    nginxStaticConfigMap: armonik-ingress-static
-
-  tolerations:
-    - effect: NoSchedule
-      key: service
-      operator: Equal
-      value: control-plane
+volumes:
+  #ingressSecret: ingress-crt
+  mongodbSecret: mongodb
+  #mongodbSecretCrt: mongodb-ca
+  nginxConfigMap: armonik-ingress-conf
+  nginxStaticConfigMap: armonik-ingress-static
 
 ###########################################################
 # Admin GUI
 ###########################################################
-adminGui:
-  name: admin-gui
-  repository: dockerhubaneo
-  image: "armonik_admin_app"
-  tag: "0.14.5"
-  imagePullPolicy: IfNotPresent
-  port: 1080
+gui:
+  image:
+    registry:
+    repository: dockerhubaneo
+    name: armonik_admin_app
+    tag:
+    pullPolicy: IfNotPresent
+  ports:
+    - name: gui
+      containerPort: 1080
+      servicePort: 1080
+  service:
+    type: ClusterIP
+    annotations:
   resources:
     limits:
       cpu: 100m
@@ -96,12 +89,15 @@ adminGui:
       cpu: 100m
       memory: 128Mi
 
+  nodeSelector:
   tolerations:
-    - effect: "NoSchedule"
-      key: "service"
-      operator: "Equal"
-      value: "control-plane"
+  annotations:
+  affinity:
 
-nodeSelector: {}
-
-affinity: {}
+static:
+  environment.json:
+    color: "#80ff80"
+    description: "{{ .Values.global.environment.description }}"
+    name: "{{ .Values.global.environment.name }}"
+    version: "{{ .Chart.AppVersion }}"
+  gui_configuration: {}

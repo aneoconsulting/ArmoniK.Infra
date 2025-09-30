@@ -1,15 +1,31 @@
 apiVersion: v1
 kind: Service
 metadata:
+  name: {{ include "armonik.fullname" . | printf "%s-gui" | trunc 63 | trimSuffix "-" }}
+  namespace: {{ include "armonik.namespace" . }}
   labels:
-    app: {{ include "armonik.ingress.fullname" . }}-gui
-    service: admin-gui
-  name: admin-gui
+    app.kubernetes.io/component: gui
+    {{- include "armonik.labels" . | nindent 4 }}
+  {{- with coalesce .Values.gui.service.annotations .Values.annotations}}
+  annotations:
+  {{- range $key, $value := . }}
+    {{ $key }}: {{ $value }}
+  {{- end }}
+  {{- end }}
 spec:
-  ports:
-  - port: {{ .Values.adminGui.port }}
-    targetPort: 1080
-    protocol: TCP
+{{- if eq .Values.gui.service.type "HeadLess" }}
+  type: "ClusterIP"
+  clusterIP: "None"
+{{ else }}
+  type: {{ .Values.gui.service.type | quote}}
+{{- end }}
   selector:
-    app: {{ .Release.Name }}
-    service: admin-gui
+    app.kubernetes.io/component: gui
+    {{- include "armonik.selectorLabels" . | nindent 4 }}
+  ports:
+    {{- range .Values.gui.ports }}
+    - name: {{ .name }}
+      port: {{ eq $.Values.gui.service.type "HeadLess" | ternary .containerPort .servicePort }}
+      targetPort: {{ .containerPort }}
+      protocol: TCP
+    {{- end }}

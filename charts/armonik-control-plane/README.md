@@ -28,6 +28,7 @@ Kubernetes: `>=v1.23.0-0`
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
+| affinity | object | `{}` |  |
 | annotations | object | `{}` |  |
 | conf.env | object | `{}` |  |
 | conf.envConfigmap | list | `[]` |  |
@@ -44,6 +45,8 @@ Kubernetes: `>=v1.23.0-0`
 | image.repository | string | `"dockerhubaneo"` |  |
 | image.tag | string | `nil` |  |
 | imagePullSecrets | list | `[]` |  |
+| init.affinity | string | `nil` |  |
+| init.annotations | string | `nil` |  |
 | init.conf | string | `nil` |  |
 | init.enabled | bool | `true` |  |
 | init.image.name | string | `nil` |  |
@@ -51,7 +54,11 @@ Kubernetes: `>=v1.23.0-0`
 | init.image.registry | string | `nil` |  |
 | init.image.repository | string | `nil` |  |
 | init.image.tag | string | `nil` |  |
+| init.imagePullSecrets | string | `nil` |  |
 | init.name | string | `"init"` |  |
+| init.nodeSelector | string | `nil` |  |
+| init.resources | string | `nil` |  |
+| init.tolerations | string | `nil` |  |
 | livenessProbe.failureThreshold | int | `1` |  |
 | livenessProbe.httpGet.path | string | `"/liveness"` |  |
 | livenessProbe.httpGet.port | int | `1081` |  |
@@ -59,9 +66,45 @@ Kubernetes: `>=v1.23.0-0`
 | livenessProbe.periodSeconds | int | `5` |  |
 | livenessProbe.successThreshold | int | `1` |  |
 | livenessProbe.timeoutSeconds | int | `1` |  |
+| maxErrorAllowed | int | `50` |  |
+| metricsExporter.affinity | string | `nil` |  |
+| metricsExporter.annotations | string | `nil` |  |
 | metricsExporter.conf | string | `nil` |  |
-| metricsExporter.enable | bool | `true` |  |
+| metricsExporter.enabled | bool | `true` |  |
+| metricsExporter.image.name | string | `"armonik_control_metrics"` |  |
+| metricsExporter.image.pullPolicy | string | `nil` |  |
+| metricsExporter.image.registry | string | `nil` |  |
+| metricsExporter.image.repository | string | `nil` |  |
+| metricsExporter.image.tag | string | `nil` |  |
+| metricsExporter.imagePullSecrets | string | `nil` |  |
+| metricsExporter.livenessProbe.failureThreshold | int | `1` |  |
+| metricsExporter.livenessProbe.httpGet.path | string | `"/liveness"` |  |
+| metricsExporter.livenessProbe.httpGet.port | int | `1080` |  |
+| metricsExporter.livenessProbe.initialDelaySeconds | int | `15` |  |
+| metricsExporter.livenessProbe.periodSeconds | int | `5` |  |
+| metricsExporter.livenessProbe.successThreshold | int | `1` |  |
+| metricsExporter.livenessProbe.timeoutSeconds | int | `1` |  |
 | metricsExporter.name | string | `"metrics-exporter"` |  |
+| metricsExporter.nodeSelector | string | `nil` |  |
+| metricsExporter.ports[0].containerPort | int | `1080` |  |
+| metricsExporter.ports[0].name | string | `"metrics-port"` |  |
+| metricsExporter.ports[0].protocol | string | `"TCP"` |  |
+| metricsExporter.replicas | int | `1` |  |
+| metricsExporter.resources | string | `nil` |  |
+| metricsExporter.service.annotations | string | `nil` |  |
+| metricsExporter.service.name | string | `"metrics-exporter"` |  |
+| metricsExporter.service.ports[0].name | string | `"metrics-port"` |  |
+| metricsExporter.service.ports[0].port | int | `9419` |  |
+| metricsExporter.service.ports[0].targetPort | int | `1080` |  |
+| metricsExporter.service.serviceType | string | `"ClusterIP"` |  |
+| metricsExporter.startupProbe.failureThreshold | int | `20` |  |
+| metricsExporter.startupProbe.httpGet.path | string | `"/startup"` |  |
+| metricsExporter.startupProbe.httpGet.port | int | `1080` |  |
+| metricsExporter.startupProbe.initialDelaySeconds | int | `15` |  |
+| metricsExporter.startupProbe.periodSeconds | int | `3` |  |
+| metricsExporter.startupProbe.successThreshold | int | `1` |  |
+| metricsExporter.startupProbe.timeoutSeconds | int | `5` |  |
+| metricsExporter.tolerations | string | `nil` |  |
 | name | string | `"control-plane"` |  |
 | nodeSelector | object | `{}` |  |
 | ports[0].containerPort | int | `1080` |  |
@@ -70,16 +113,16 @@ Kubernetes: `>=v1.23.0-0`
 | ports[1].containerPort | int | `1081` |  |
 | ports[1].name | string | `"metrics-port"` |  |
 | ports[1].protocol | string | `"TCP"` |  |
+| replicas | int | `1` |  |
 | resources.limits.cpu | int | `1` |  |
 | resources.limits.memory | string | `"1Gi"` |  |
 | resources.requests.cpu | string | `"100m"` |  |
 | resources.requests.memory | string | `"128Mi"` |  |
+| service.annotations | string | `nil` |  |
 | service.name | string | `"control-plane"` |  |
 | service.ports[0].name | string | `"control-port"` |  |
 | service.ports[0].port | int | `5001` |  |
 | service.ports[0].targetPort | int | `1080` |  |
-| service.selector.app | string | `"armonik"` |  |
-| service.selector.service | string | `"control-plane"` |  |
 | service.serviceType | string | `"ClusterIP"` |  |
 | serviceAccount.annotations | object | `{}` |  |
 | serviceAccount.create | bool | `true` |  |
@@ -92,10 +135,6 @@ Kubernetes: `>=v1.23.0-0`
 | startupProbe.periodSeconds | int | `3` |  |
 | startupProbe.successThreshold | int | `1` |  |
 | startupProbe.timeoutSeconds | int | `5` |  |
-| submitter.conf | string | `nil` |  |
-| submitter.maxErrorAllowed | int | `50` |  |
-| submitter.name | string | `"submitter"` |  |
-| submitter.replicas | int | `1` |  |
 | tolerations | list | `[]` |  |
 
 ----------------------------------------------

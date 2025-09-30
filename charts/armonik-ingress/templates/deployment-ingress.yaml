@@ -1,131 +1,127 @@
+{{- $image := list $ .Values.image | include "armonik.image" | fromYaml }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  name: {{ include "armonik.fullname" . }}
+  namespace: {{ include "armonik.namespace" . }}
   labels:
-    app: {{ .Release.Name }}
-    service: {{ .Chart.Name }}
-  name: {{ include "armonik.ingress.fullname" . }}
-  namespace: {{ .Release.Namespace }}
+    app.kubernetes.io/component: ingress
+    {{- include "armonik.labels" . | nindent 4 }}
+  {{- with .Values.annotations}}
+  annotations:
+  {{- range $key, $value := . }}
+    {{ $key }}: {{ $value }}
+  {{- end }}
+  {{- end }}
 spec:
-  replicas: {{ .Values.ingress.replicaCount }}
+  replicas: {{ .Values.replicas }}
   selector:
     matchLabels:
-      app: {{ .Release.Name }}
-      service: {{ .Chart.Name }}
+      app.kubernetes.io/component: ingress
+      {{- include "armonik.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        app: {{ .Release.Name }}
-        service: {{ .Chart.Name }}
-      name: {{ .Chart.Name }}
+        app.kubernetes.io/component: ingress
+        {{- include "armonik.selectorLabels" . | nindent 8 }}
     spec:
       automountServiceAccountToken: true
       containers:
-      - name: {{ .Chart.Name }}
-        envFrom:
-        - configMapRef:
-            name: armonik-ingress-conf
-            optional: false
-        {{- $registry := .Values.global.imageRegistry | default .Values.image.registry }}
-        {{- if $registry }}
-        image: "{{ $registry }}/{{ .Values.ingress.repository }}/{{ .Values.ingress.image }}:{{ include "armonik.ingress.tag" . }}"
-        {{- else }}
-        image: "{{ .Values.ingress.repository }}/{{ .Values.ingress.image }}:{{ include "armonik.ingress.tag" . }}"
-        {{- end }}
-        imagePullPolicy: {{ .Values.ingress.imagePullPolicy }}
+      - name: ingress
+        image: {{ $image.fullname }}
+        imagePullPolicy: {{ $image.pullPolicy }}
         ports:
-        - name: ingress-http
-          containerPort: {{ .Values.ingress.ports.http.containerPort }}
-          protocol: TCP
-        - name: ingress-grpc
-          containerPort: {{ .Values.ingress.ports.grpc.containerPort }}
-          protocol: TCP
-        {{- if .Values.ingress.resources }}
+          {{- range .Values.ports }}
+          - name: {{ .name }}
+            containerPort: {{ .containerPort }}
+            protocol: TCP
+          {{- end }}{{/* range .Values.ports */}}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        {{- with .Values.resources }}
         resources:
-        {{- toYaml .Values.ingress.resources | nindent 10 }}
+          {{- toYaml . | nindent 10 }}
+        {{- end }}{{/* with .Values.resources */}}
+        {{- with .Values.livenessProbe }}
+        livenessProbe:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}{{/* with .Values.livenessProbe */}}
+        {{- with .Values.startupProbe }}
+        startupProbe:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}{{/* with .Values.startupProbe */}}
+        {{- with .Values.readinessProbe }}
+        readinessProbe:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}{{/* with .Values.readinessProbe */}}
+        {{- with .extraEnv }}
+        env:
+          {{- .extraEnv | toYaml | nindent 10 }}
         {{- end }}
-        terminationMessagePath: {{ .Values.ingress.terminationMessagePath}}
-        terminationMessagePolicy: {{ .Values.ingress.terminationMessagePolicy}}
-        {{- if .Values.ingress.volumes }}
+        {{- with .extraEnvFrom }}
+        envFrom:
+          {{- .extraEnvFrom | toYaml | nindent 10 }}
+        {{- end }}
         volumeMounts:
-        {{- if .Values.ingress.volumes.ingressSecret }}
-        - mountPath: /ingress
+        {{- if list .Values "tls" "enabled" | include "armonik.index" }}
+        - name: server-cert
+          mountPath: /ingress
           mountPropagation: None
-          name: ingress-secret-volume
-          readOnly: true
-        - mountPath: /ingressclient
-          mountPropagation: None
-          name: ingress-client-secret-volume
           readOnly: true
         {{- end }}
-        {{- if .Values.ingress.volumes.nginxConfigMap }}
+        {{- if list .Values "mtls" "enabled" | include "armonik.index" }}
+        - name: client-cert
+          mountPath: /ingressclient
+          mountPropagation: None
+          readOnly: true
+        {{- end }}
         - mountPath: /etc/nginx/conf.d
           mountPropagation: None
-          name: ingress-nginx
+          name: conf
           readOnly: true
-        {{- end }}
-        {{- if .Values.ingress.volumes.nginxStaticConfigMap }}
         - mountPath: /static
           mountPropagation: None
           name: static
           readOnly: true
+        {{- with .extraVolumeMounts }}
+        {{ . | toYaml | nindent 8 }}
         {{- end }}
-        {{- if .Values.ingress.volumes.mongodbSecretCrt }}
-        - name: mongodb
-          mountPath: /mongodb/certs/
-          readOnly: true
-          recursiveReadOnly: Disabled
-        {{- end }}
-        {{- end}}
-      {{- $imagePullSecrets := .Values.global.imagePullSecrets | default .Values.imagePullSecrets }}
-      {{- if $imagePullSecrets }}
-      {{- with $imagePullSecrets }}
-      imagePullSecrets:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- end }}
       dnsPolicy: ClusterFirst
-      enableServiceLinks: true
-      #nodeSelector:
-      #  service: control-plane
-      restartPolicy: {{ .Values.ingress.restartPolicy }}
-      schedulerName: {{ .Values.ingress.schedulerName }}
-      shareProcessNamespace: {{ .Values.ingress.shareProcessNamespace }}
-      terminationGracePeriodSeconds: {{ .Values.ingress.terminationGracePeriodSeconds }}
+      shareProcessNamespace: false
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}{{/* with .Values.nodeSelector */}}
+      {{- with .Values.tolerations }}
       tolerations:
-      {{- toYaml .Values.ingress.tolerations | nindent 8 }}
-      {{- if .Values.ingress.volumes }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}{{/* with .Values.tolerations */}}
+      enableServiceLinks: true
       volumes:
-      {{- if .Values.ingress.volumes.ingressSecret }}
-      - name: ingress-secret-volume
+      {{- if list .Values "tls" "enabled" | include "armonik.index" }}
+      - name: server-cert
         secret:
           defaultMode: 420
           optional: false
-          secretName: {{ .Values.ingress.volumes.ingressSecret }}
-      - name: ingress-client-secret-volume
+          secretName: {{ include "armonik.fullname" . }}-cert
+      {{- end }}
+      {{- if list .Values "mtls" "enabled" | include "armonik.index" }}
+      - name: client-cert
         secret:
           defaultMode: 420
           optional: false
-          secretName: {{ .Values.ingress.volumes.ingressSecret }}
+          secretName: {{ include "armonik.fullname" . }}-cert
       {{- end}}
-      {{- if .Values.ingress.volumes.mongodbSecretCrt }}
-      - name: mongodb
-        secret:
-          secretName: {{ .Values.ingress.volumes.mongodbSecretCrt }}
+      - name: conf
+        configMap:
+          name: {{ include "armonik.fullname" . }}-conf
           defaultMode: 420
-      {{- end}}
-      {{- if .Values.ingress.volumes.nginxConfigMap }}
-      - configMap:
-          defaultMode: 420
-          name: {{ .Values.ingress.volumes.nginxConfigMap }}
           optional: false
-        name: ingress-nginx
-      {{- end}}
-      {{- if .Values.ingress.volumes.nginxStaticConfigMap }}
-      - configMap:
+      - name: static
+        configMap:
+          name: {{ include "armonik.fullname" . }}-static
           defaultMode: 420
-          name: {{ .Values.ingress.volumes.nginxStaticConfigMap }}
           optional: false
-        name: static
-      {{- end}}
-      {{- end}}
+      {{- with .extraVolumeMounts }}
+      {{ . | toYaml | nindent 6 }}
+      {{- end }}

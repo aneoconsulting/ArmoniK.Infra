@@ -29,16 +29,55 @@ Kubernetes: `>=v1.23.0-0`
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | fluentBit.configMapRef | string | `"fluent-bit-config"` |  |
-| fluentBit.image | string | `"fluent-bit"` |  |
-| fluentBit.imagePullPolicy | string | `"IfNotPresent"` |  |
+| fluentBit.image.name | string | `"fluent-bit"` |  |
+| fluentBit.image.pullPolicy | string | `"IfNotPresent"` |  |
+| fluentBit.image.registry | string | `nil` |  |
+| fluentBit.image.repository | string | `"fluent"` |  |
+| fluentBit.image.tag | string | `"2.0.9"` |  |
 | fluentBit.isDaemonSet | bool | `true` |  |
-| fluentBit.name | string | `"fluent-bit"` |  |
-| fluentBit.repository | string | `"fluent"` |  |
-| fluentBit.tag | string | `"2.0.9"` |  |
+| fullnameOverride | string | `""` |  |
 | global."dependencies.keda" | bool | `false` |  |
 | global.imageRegistry | string | `""` |  |
 | imagePullSecrets | list | `[]` |  |
 | nameOverride | string | `""` |  |
+| partitionCommon.agent.conf | string | `nil` |  |
+| partitionCommon.agent.enableServiceLinks | bool | `true` |  |
+| partitionCommon.agent.graceDelay | string | `"00:00:15"` |  |
+| partitionCommon.agent.image.name | string | `"armonik_pollingagent"` |  |
+| partitionCommon.agent.image.pullPolicy | string | `"IfNotPresent"` |  |
+| partitionCommon.agent.image.registry | string | `nil` |  |
+| partitionCommon.agent.image.repository | string | `"dockerhubaneo"` |  |
+| partitionCommon.agent.image.tag | string | `nil` |  |
+| partitionCommon.agent.limits.cpu | string | `"1000m"` |  |
+| partitionCommon.agent.limits.memory | string | `"1024Mi"` |  |
+| partitionCommon.agent.livenessProbe.failureThreshold | int | `3` |  |
+| partitionCommon.agent.livenessProbe.httpGet.path | string | `"/liveness"` |  |
+| partitionCommon.agent.livenessProbe.httpGet.port | int | `1080` |  |
+| partitionCommon.agent.livenessProbe.httpGet.scheme | string | `"HTTP"` |  |
+| partitionCommon.agent.livenessProbe.initialDelaySeconds | int | `15` |  |
+| partitionCommon.agent.livenessProbe.periodSeconds | int | `10` |  |
+| partitionCommon.agent.livenessProbe.successThreshold | int | `1` |  |
+| partitionCommon.agent.livenessProbe.timeoutSeconds | int | `10` |  |
+| partitionCommon.agent.messageBatchSize | int | `1` |  |
+| partitionCommon.agent.name | string | `"polling-agent"` |  |
+| partitionCommon.agent.ports.containerPort | int | `1080` |  |
+| partitionCommon.agent.ports.name | string | `"poll-agent-port"` |  |
+| partitionCommon.agent.readinessProbe | object | `{}` |  |
+| partitionCommon.agent.requests.cpu | string | `"500m"` |  |
+| partitionCommon.agent.requests.memory | string | `"256Mi"` |  |
+| partitionCommon.agent.securityContext.allowPrivilegeEscalation | bool | `true` |  |
+| partitionCommon.agent.securityContext.capabilities.drop[0] | string | `"SYS_PTRACE"` |  |
+| partitionCommon.agent.securityContext.privileged | bool | `false` |  |
+| partitionCommon.agent.securityContext.readOnlyRootFilesystem | bool | `false` |  |
+| partitionCommon.agent.securityContext.runAsNonRoot | bool | `false` |  |
+| partitionCommon.agent.startupProbe.failureThreshold | int | `20` |  |
+| partitionCommon.agent.startupProbe.httpGet.path | string | `"/startup"` |  |
+| partitionCommon.agent.startupProbe.httpGet.port | int | `1080` |  |
+| partitionCommon.agent.startupProbe.httpGet.scheme | string | `"HTTP"` |  |
+| partitionCommon.agent.startupProbe.initialDelaySeconds | int | `1` |  |
+| partitionCommon.agent.startupProbe.periodSeconds | int | `3` |  |
+| partitionCommon.agent.startupProbe.successThreshold | int | `1` |  |
+| partitionCommon.agent.startupProbe.timeoutSeconds | int | `1` |  |
 | partitionCommon.annotations | object | `{}` |  |
 | partitionCommon.conf | string | `nil` |  |
 | partitionCommon.hpa.behavior | object | `{"periodSeconds":15,"restoreToOriginalReplicaCount":false,"stabilizationWindowSeconds":300,"type":"Percent","value":100}` | Advanced options to manage the behavior of the HPA |
@@ -48,50 +87,20 @@ Kubernetes: `>=v1.23.0-0`
 | partitionCommon.hpa.behavior.type | string | `"Percent"` | Type of the target |
 | partitionCommon.hpa.behavior.value | int | `100` | Value of the target |
 | partitionCommon.hpa.cooldownPeriod | int | `300` | Cooldown period in seconds |
-| partitionCommon.hpa.idleReplicaCount | int | `0` | Count of idle replicas |
+| partitionCommon.hpa.idleReplicaCount | int | `1` | Count of idle replicas |
 | partitionCommon.hpa.maxReplicaCount | int | `5` | Maximum count of replicas |
-| partitionCommon.hpa.minReplicaCount | int | `0` | Minimum count of replicas |
+| partitionCommon.hpa.minReplicaCount | int | `1` | Minimum count of replicas |
 | partitionCommon.hpa.pollingInterval | int | `15` | Polling interval in seconds |
-| partitionCommon.hpa.triggers | list | `[]` |  |
+| partitionCommon.hpa.triggers[0].metadata.metricName | string | `"armonik_{{ .Values.partitionName }}_tasks_queued"` |  |
+| partitionCommon.hpa.triggers[0].metadata.namespace | string | `"{{ .Release.Namespace }}"` |  |
+| partitionCommon.hpa.triggers[0].metadata.query | string | `"armonik_{{ .Values.partitionName }}_tasks_queued{job=\"metrics-exporter\"}"` |  |
+| partitionCommon.hpa.triggers[0].metadata.serverAddress | string | `"http://prometheus-prometheus:9090"` |  |
+| partitionCommon.hpa.triggers[0].metadata.threshold | string | `"2"` |  |
+| partitionCommon.hpa.triggers[0].type | string | `"prometheus"` |  |
 | partitionCommon.hpa.type | string | `"prometheus"` |  |
 | partitionCommon.labels.app | string | `"armonik"` |  |
 | partitionCommon.labels.service | string | `"compute-plane"` |  |
 | partitionCommon.nodeSelector | object | `{}` |  |
-| partitionCommon.pollingAgent.conf | string | `nil` |  |
-| partitionCommon.pollingAgent.enableServiceLinks | bool | `true` |  |
-| partitionCommon.pollingAgent.graceDelay | string | `"00:00:15"` |  |
-| partitionCommon.pollingAgent.image | string | `"armonik_pollingagent"` |  |
-| partitionCommon.pollingAgent.imagePullPolicy | string | `"IfNotPresent"` |  |
-| partitionCommon.pollingAgent.limits.cpu | string | `"1000m"` |  |
-| partitionCommon.pollingAgent.limits.memory | string | `"1024Mi"` |  |
-| partitionCommon.pollingAgent.livenessProbe.failureThreshold | int | `3` |  |
-| partitionCommon.pollingAgent.livenessProbe.httpGet.path | string | `"/liveness"` |  |
-| partitionCommon.pollingAgent.livenessProbe.httpGet.port | int | `1080` |  |
-| partitionCommon.pollingAgent.livenessProbe.httpGet.scheme | string | `"HTTP"` |  |
-| partitionCommon.pollingAgent.livenessProbe.initialDelaySeconds | int | `15` |  |
-| partitionCommon.pollingAgent.livenessProbe.periodSeconds | int | `10` |  |
-| partitionCommon.pollingAgent.livenessProbe.successThreshold | int | `1` |  |
-| partitionCommon.pollingAgent.livenessProbe.timeoutSeconds | int | `10` |  |
-| partitionCommon.pollingAgent.messageBatchSize | int | `1` |  |
-| partitionCommon.pollingAgent.name | string | `"polling-agent"` |  |
-| partitionCommon.pollingAgent.ports.containerPort | int | `1080` |  |
-| partitionCommon.pollingAgent.ports.name | string | `"poll-agent-port"` |  |
-| partitionCommon.pollingAgent.readinessProbe | object | `{}` |  |
-| partitionCommon.pollingAgent.requests.cpu | string | `"500m"` |  |
-| partitionCommon.pollingAgent.requests.memory | string | `"256Mi"` |  |
-| partitionCommon.pollingAgent.securityContext.allowPrivilegeEscalation | bool | `true` |  |
-| partitionCommon.pollingAgent.securityContext.capabilities.drop[0] | string | `"SYS_PTRACE"` |  |
-| partitionCommon.pollingAgent.securityContext.privileged | bool | `false` |  |
-| partitionCommon.pollingAgent.securityContext.readOnlyRootFilesystem | bool | `false` |  |
-| partitionCommon.pollingAgent.securityContext.runAsNonRoot | bool | `false` |  |
-| partitionCommon.pollingAgent.startupProbe.failureThreshold | int | `20` |  |
-| partitionCommon.pollingAgent.startupProbe.httpGet.path | string | `"/startup"` |  |
-| partitionCommon.pollingAgent.startupProbe.httpGet.port | int | `1080` |  |
-| partitionCommon.pollingAgent.startupProbe.httpGet.scheme | string | `"HTTP"` |  |
-| partitionCommon.pollingAgent.startupProbe.initialDelaySeconds | int | `1` |  |
-| partitionCommon.pollingAgent.startupProbe.periodSeconds | int | `3` |  |
-| partitionCommon.pollingAgent.startupProbe.successThreshold | int | `1` |  |
-| partitionCommon.pollingAgent.startupProbe.timeoutSeconds | int | `1` |  |
 | partitionCommon.replicas | int | `1` |  |
 | partitionCommon.socketType | string | `"unixdomainsocket"` |  |
 | partitionCommon.terminationGracePeriodSeconds | int | `30` |  |
@@ -99,6 +108,11 @@ Kubernetes: `>=v1.23.0-0`
 | partitionCommon.worker.checkDelay | string | `"00:00:10"` |  |
 | partitionCommon.worker.checkRetries | int | `10` |  |
 | partitionCommon.worker.conf | string | `nil` |  |
+| partitionCommon.worker.image.name | string | `nil` |  |
+| partitionCommon.worker.image.pullPolicy | string | `"IfNotPresent"` |  |
+| partitionCommon.worker.image.registry | string | `nil` |  |
+| partitionCommon.worker.image.repository | string | `"dockerhubaneo"` |  |
+| partitionCommon.worker.image.tag | string | `nil` |  |
 | partitionCommon.worker.imagePullPolicy | string | `"IfNotPresent"` |  |
 | partitionCommon.worker.limits.cpu | string | `"1000m"` |  |
 | partitionCommon.worker.limits.memory | string | `"1024Mi"` |  |
@@ -125,42 +139,17 @@ Kubernetes: `>=v1.23.0-0`
 | partitionCommon.worker.startupProbe.timeoutSeconds | int | `1` |  |
 | partitionCommon.worker.terminationMessagePath | string | `"/dev/termination-log"` |  |
 | partitionCommon.worker.terminationMessagePolicy | string | `"File"` |  |
-| partitions.bench.hpa.triggers[0].metadata.metricName | string | `"armonik_bench_tasks_queued"` |  |
-| partitions.bench.hpa.triggers[0].metadata.namespace | string | `"armonik"` |  |
-| partitions.bench.hpa.triggers[0].metadata.query | string | `"armonik_bench_tasks_queued{job=\"metrics-exporter\"}"` |  |
-| partitions.bench.hpa.triggers[0].metadata.serverAddress | string | `"http://prometheus-prometheus:9090"` |  |
-| partitions.bench.hpa.triggers[0].metadata.threshold | string | `"2"` |  |
-| partitions.bench.hpa.triggers[0].type | string | `"prometheus"` |  |
-| partitions.bench.worker.image | string | `"armonik_core_bench_test_worker"` |  |
-| partitions.default.hpa.triggers[0].metadata.metricName | string | `"armonik_default_tasks_queued"` |  |
-| partitions.default.hpa.triggers[0].metadata.namespace | string | `"armonik"` |  |
-| partitions.default.hpa.triggers[0].metadata.query | string | `"armonik_default_tasks_queued{job=\"metrics-exporter\"}"` |  |
-| partitions.default.hpa.triggers[0].metadata.serverAddress | string | `"http://prometheus-prometheus:9090"` |  |
-| partitions.default.hpa.triggers[0].metadata.threshold | string | `"2"` |  |
-| partitions.default.hpa.triggers[0].type | string | `"prometheus"` |  |
-| partitions.default.worker.image | string | `"armonik_worker_dll"` |  |
-| partitions.default.worker.tag | string | `"0.19.1"` |  |
-| partitions.htcmock.hpa.triggers[0].metadata.metricName | string | `"armonik_htcmock_tasks_queued"` |  |
-| partitions.htcmock.hpa.triggers[0].metadata.namespace | string | `"armonik"` |  |
-| partitions.htcmock.hpa.triggers[0].metadata.query | string | `"armonik_htcmock_tasks_queued{job=\"metrics-exporter\"}"` |  |
-| partitions.htcmock.hpa.triggers[0].metadata.serverAddress | string | `"http://prometheus-prometheus:9090"` |  |
-| partitions.htcmock.hpa.triggers[0].metadata.threshold | string | `"2"` |  |
-| partitions.htcmock.hpa.triggers[0].type | string | `"prometheus"` |  |
+| partitions.bench.worker.image.name | string | `"armonik_core_bench_test_worker"` |  |
+| partitions.default.worker.image.name | string | `"armonik_worker_dll"` |  |
+| partitions.default.worker.image.tag | string | `"0.19.1"` |  |
 | partitions.htcmock.socketType | string | `"tcp"` |  |
-| partitions.htcmock.worker.image | string | `"armonik_core_htcmock_test_worker"` |  |
-| partitions.stream.hpa.triggers[0].metadata.metricName | string | `"armonik_stream_tasks_queued"` |  |
-| partitions.stream.hpa.triggers[0].metadata.namespace | string | `"armonik"` |  |
-| partitions.stream.hpa.triggers[0].metadata.query | string | `"armonik_stream_tasks_queued{job=\"metrics-exporter\"}"` |  |
-| partitions.stream.hpa.triggers[0].metadata.serverAddress | string | `"http://prometheus-prometheus:9090"` |  |
-| partitions.stream.hpa.triggers[0].metadata.threshold | string | `"2"` |  |
-| partitions.stream.hpa.triggers[0].type | string | `"prometheus"` |  |
-| partitions.stream.worker.image | string | `"armonik_core_stream_test_worker"` |  |
+| partitions.htcmock.worker.image.name | string | `"armonik_core_htcmock_test_worker"` |  |
+| partitions.stream.worker.image.name | string | `"armonik_core_stream_test_worker"` |  |
 | podDisruptionBudget.enabled | bool | `false` |  |
 | podDisruptionBudget.maxUnavailable | string | `nil` |  |
 | podDisruptionBudget.minAvailable | string | `nil` |  |
 | preStopWaitScript | string | `"<<EOF while test -e /cache/armonik_agent.sock ; do   sleep 1 done EOF"` |  |
 | rbac.create | bool | `true` |  |
-| rbac.pspEnabled | bool | `false` |  |
 | registry | string | `""` |  |
 | replicaCount | int | `1` |  |
 | repository | string | `"dockerhubaneo"` |  |

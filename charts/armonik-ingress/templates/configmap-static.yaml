@@ -1,9 +1,15 @@
 apiVersion: v1
-data:
-  environment.json: '{"color": "#80ff80", "description": "{{ .Values.global.environment.description }}", "name": "{{ .Values.global.environment.name }}", "version": "{{ .Chart.AppVersion }}"}'
-  gui_configuration: "{}"
-immutable: false
 kind: ConfigMap
 metadata:
-  name: {{ include "armonik.ingress.fullname" . }}-static
-  namespace: {{ .Release.Namespace }}
+  name: {{ include "armonik.fullname" . }}-static
+  namespace: {{ include "armonik.namespace" . }}
+  labels:
+    app.kubernetes.io/component: ingress
+    {{- include "armonik.labels" . | nindent 4 }}
+immutable: false
+data:
+{{- $call := dict "src" .Values.static "render" true "context" $ "print" false -}}
+{{- include "armonik.merge" $call }}
+{{- range $k, $v := $call.dst }}
+  {{ $k | quote }}: {{ $v | toJson | quote }}
+{{- end }}

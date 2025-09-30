@@ -1,29 +1,31 @@
 apiVersion: v1
 kind: Service
 metadata:
+  name: {{ include "armonik.fullname" . }}
+  namespace: {{ include "armonik.namespace" . }}
   labels:
-    app: {{ .Release.Name }}
-    service: ingress
-  name: {{ include "armonik.ingress.fullname" . }}
-  namespace: {{ .Release.Namespace }}
+    app.kubernetes.io/component: ingress
+    {{- include "armonik.labels" . | nindent 4 }}
+  {{- with coalesce .Values.service.annotations .Values.annotations}}
+  annotations:
+  {{- range $key, $value := . }}
+    {{ $key }}: {{ $value }}
+  {{- end }}
+  {{- end }}
 spec:
-  {{ if eq .Values.ingress.type "LoadBalancer" }}
-  externalTrafficPolicy: "Cluster"
-  internalTrafficPolicy: "Cluster"
-  allocateLoadBalancerNodePorts: true
-  type: {{ .Values.ingress.type }}
-  {{ end }}
-  ports:
-    - name: ingress-http
-      nodePort: {{ .Values.ingress.ports.http.nodePortHttp }}
-      port: {{ .Values.ingress.ports.http.ServicePort }}
-      protocol: TCP
-      targetPort: {{ .Values.ingress.ports.http.containerPort }}
-    - name: ingress-grpc
-      nodePort: {{ .Values.ingress.ports.grpc.nodePortGrpc }}
-      port: {{ .Values.ingress.ports.grpc.ServicePort }}
-      protocol: TCP
-      targetPort: {{ .Values.ingress.ports.grpc.containerPort }}
+{{- if eq .Values.service.type "HeadLess" }}
+  type: "ClusterIP"
+  clusterIP: "None"
+{{ else }}
+  type: {{ .Values.service.type | quote}}
+{{- end }}
   selector:
-    app: {{ .Release.Name }}
-    service: ingress
+    app.kubernetes.io/component: ingress
+    {{- include "armonik.selectorLabels" . | nindent 4 }}
+  ports:
+    {{- range .Values.ports }}
+    - name: {{ .name }}
+      port: {{ eq $.Values.service.type "HeadLess" | ternary .containerPort .servicePort }}
+      targetPort: {{ .containerPort }}
+      protocol: TCP
+    {{- end }}

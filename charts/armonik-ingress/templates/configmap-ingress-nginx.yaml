@@ -2,10 +2,11 @@ apiVersion: v1
 immutable: false
 kind: ConfigMap
 metadata:
-  name: {{ include "armonik.ingress.fullname" . }}-conf
-  namespace: {{ .Release.Namespace }}
+  name: {{ include "armonik.fullname" . }}-conf
+  namespace: {{ include "armonik.namespace" . }}
   labels:
-    {{- include "armonik.ingress.labels" . | nindent 4 }}
+    app.kubernetes.io/component: ingress
+    {{- include "armonik.labels" . | nindent 4 }}
 data:
   armonik.conf: |
     map $http_accept_language $accept_language {
@@ -17,10 +18,15 @@ data:
         '' close;
     }
     server {
-        listen {{ .Values.ingress.ports.http.containerPort}};
-        listen [::]:{{ .Values.ingress.ports.http.containerPort}};
-        listen {{ .Values.ingress.ports.grpc.containerPort}} http2;
-        listen [::]:{{ .Values.ingress.ports.grpc.containerPort}} http2;
+        {{- range .Values.ports }}
+        {{- if .http2 }}
+        listen {{ .containerPort }} http2;
+        listen [::]:{{ .containerPort }} http2;
+        {{- else }}
+        listen {{ .containerPort }};
+        listen [::]:{{ .containerPort }};
+        {{- end }}
+        {{- end }}
 
         sendfile on;
         resolver kube-dns.kube-system ipv6=off;
@@ -38,11 +44,11 @@ data:
         location = /admin/en {
             rewrite ^ $scheme://$http_host/admin/en/;
         }
-        set $admin_app_upstream http://admin-gui.{{ .Release.Namespace }}.svc.cluster.local:1080;
+        set $admin_app_upstream http://{{ include "armonik.fullname" . | printf "%s-gui" | trunc 63 | trimSuffix "-" }}.{{ include "armonik.namespace" . }}.svc.cluster.local:1080;
         location /admin/ {
             proxy_pass $admin_app_upstream$uri$is_args$args;
         }
-        set $armonik_upstream grpc://control-plane.{{ .Release.Namespace }}.svc.cluster.local:5001;
+        set $armonik_upstream grpc://armonik-control-plane.{{ include "armonik.namespace" . }}.svc.cluster.local:5001;
         location ~* ^/armonik\. {
             grpc_pass $armonik_upstream;
 
@@ -62,10 +68,10 @@ data:
             alias /static/;
         }
 
-    proxy_buffering off;
-    proxy_request_buffering off;
+        proxy_buffering off;
+        proxy_request_buffering off;
 
-        set $seq_upstream http://seq.{{ .Release.Namespace }}.svc.cluster.local;
+        set $seq_upstream http://seq.{{ include "armonik.namespace" . }}.svc.cluster.local;
         location = /seq {
             rewrite ^ $scheme://$http_host/seq/ permanent;
         }
@@ -78,7 +84,7 @@ data:
             sub_filter_once on;
             proxy_hide_header content-security-policy;
         }
-        set $grafana_upstream http://grafana.{{ .Release.Namespace }}.svc.cluster.local;
+        set $grafana_upstream http://grafana.{{ include "armonik.namespace" . }}.svc.cluster.local;
         location = /grafana {
             rewrite ^ $scheme://$http_host/grafana/ permanent;
         }

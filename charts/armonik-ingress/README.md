@@ -22,56 +22,53 @@ Kubernetes: `>=v1.25.0-0`
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| adminGui.image | string | `"armonik_admin_app"` |  |
-| adminGui.imagePullPolicy | string | `"IfNotPresent"` |  |
-| adminGui.name | string | `"admin-gui"` |  |
-| adminGui.port | int | `1080` |  |
-| adminGui.repository | string | `"dockerhubaneo"` |  |
-| adminGui.resources.limits.cpu | string | `"100m"` |  |
-| adminGui.resources.limits.memory | string | `"128Mi"` |  |
-| adminGui.resources.requests.cpu | string | `"100m"` |  |
-| adminGui.resources.requests.memory | string | `"128Mi"` |  |
-| adminGui.tag | string | `"0.14.5"` |  |
-| adminGui.tolerations[0].effect | string | `"NoSchedule"` |  |
-| adminGui.tolerations[0].key | string | `"service"` |  |
-| adminGui.tolerations[0].operator | string | `"Equal"` |  |
-| adminGui.tolerations[0].value | string | `"control-plane"` |  |
 | affinity | object | `{}` |  |
-| global.environment.description | string | `"Armonik environment"` |  |
-| global.environment.name | string | `"local"` |  |
-| global.imagePullSecrets | list | `[]` |  |
-| global.imageRegistry | string | `""` |  |
-| image.registry | string | `""` |  |
+| annotations | object | `{}` |  |
+| gui.affinity | string | `nil` |  |
+| gui.annotations | string | `nil` |  |
+| gui.image.name | string | `"armonik_admin_app"` |  |
+| gui.image.pullPolicy | string | `"IfNotPresent"` |  |
+| gui.image.registry | string | `nil` |  |
+| gui.image.repository | string | `"dockerhubaneo"` |  |
+| gui.image.tag | string | `nil` |  |
+| gui.nodeSelector | string | `nil` |  |
+| gui.ports[0].containerPort | int | `1080` |  |
+| gui.ports[0].name | string | `"gui"` |  |
+| gui.ports[0].servicePort | int | `1080` |  |
+| gui.resources.limits.cpu | string | `"100m"` |  |
+| gui.resources.limits.memory | string | `"128Mi"` |  |
+| gui.resources.requests.cpu | string | `"100m"` |  |
+| gui.resources.requests.memory | string | `"128Mi"` |  |
+| gui.service.annotations | string | `nil` |  |
+| gui.service.type | string | `"ClusterIP"` |  |
+| gui.tolerations | string | `nil` |  |
+| image.name | string | `"nginx-unprivileged"` |  |
+| image.pullPolicy | string | `"IfNotPresent"` |  |
+| image.registry | string | `nil` |  |
+| image.repository | string | `"nginxinc"` |  |
+| image.tag | string | `"1.27.4-alpine-slim"` |  |
 | imagePullSecrets | list | `[]` |  |
-| ingress.className | string | `""` |  |
-| ingress.image | string | `"nginx-unprivileged"` |  |
-| ingress.imagePullPolicy | string | `"IfNotPresent"` |  |
-| ingress.ports.grpc.ServicePort | int | `5001` |  |
-| ingress.ports.grpc.containerPort | int | `9080` |  |
-| ingress.ports.grpc.name | string | `"ingress-grpc"` |  |
-| ingress.ports.grpc.nodePortGrpc | int | `31669` |  |
-| ingress.ports.http.ServicePort | int | `5000` |  |
-| ingress.ports.http.containerPort | int | `8080` |  |
-| ingress.ports.http.name | string | `"ingress-http"` |  |
-| ingress.ports.http.nodePortHttp | int | `32315` |  |
-| ingress.replicaCount | int | `1` |  |
-| ingress.repository | string | `"nginxinc"` |  |
-| ingress.resources.limits.cpu | string | `"100m"` |  |
-| ingress.resources.limits.memory | string | `"128Mi"` |  |
-| ingress.resources.requests.cpu | string | `"100m"` |  |
-| ingress.resources.requests.memory | string | `"128Mi"` |  |
-| ingress.tag | string | `"1.27.4-alpine-slim"` |  |
-| ingress.tls | list | `[]` |  |
-| ingress.tolerations[0].effect | string | `"NoSchedule"` |  |
-| ingress.tolerations[0].key | string | `"service"` |  |
-| ingress.tolerations[0].operator | string | `"Equal"` |  |
-| ingress.tolerations[0].value | string | `"control-plane"` |  |
-| ingress.type | string | `"ClusterIP"` |  |
-| ingress.volumes.mongodbSecret | string | `"mongodb"` |  |
-| ingress.volumes.nginxConfigMap | string | `"armonik-ingress-conf"` |  |
-| ingress.volumes.nginxStaticConfigMap | string | `"armonik-ingress-static"` |  |
 | nameOverride | string | `""` |  |
 | nodeSelector | object | `{}` |  |
+| ports[0].containerPort | int | `9080` |  |
+| ports[0].http2 | bool | `true` |  |
+| ports[0].name | string | `"ingress-grpc"` |  |
+| ports[0].servicePort | int | `5001` |  |
+| ports[1].containerPort | int | `8080` |  |
+| ports[1].name | string | `"ingress-http"` |  |
+| ports[1].servicePort | int | `5000` |  |
+| replicas | int | `1` |  |
+| resources.limits.cpu | int | `1` |  |
+| resources.limits.memory | string | `"1Gi"` |  |
+| resources.requests.cpu | string | `"100m"` |  |
+| resources.requests.memory | string | `"128Mi"` |  |
+| service.annotations | string | `nil` |  |
+| service.type | string | `"LoadBalancer"` |  |
+| static."environment.json".color | string | `"#80ff80"` |  |
+| static."environment.json".description | string | `"{{ .Values.global.environment.description }}"` |  |
+| static."environment.json".name | string | `"{{ .Values.global.environment.name }}"` |  |
+| static."environment.json".version | string | `"{{ .Chart.AppVersion }}"` |  |
+| static.gui_configuration | object | `{}` |  |
 | tls.certManager.addInjectorAnnotations | bool | `true` |  |
 | tls.certManager.annotations | object | `{}` |  |
 | tls.certManager.duration | string | `""` |  |
@@ -81,7 +78,10 @@ Kubernetes: `>=v1.25.0-0`
 | tls.certManager.labels | object | `{}` |  |
 | tls.certManager.renewBefore | string | `""` |  |
 | tls.clusterDomain | string | `"cluster.local"` |  |
-| tls.type | string | `"metrics-server"` |  |
+| tolerations | list | `[]` |  |
+| volumes.mongodbSecret | string | `"mongodb"` |  |
+| volumes.nginxConfigMap | string | `"armonik-ingress-conf"` |  |
+| volumes.nginxStaticConfigMap | string | `"armonik-ingress-static"` |  |
 
 ----------------------------------------------
 Autogenerated from chart metadata using [helm-docs v1.14.2](https://github.com/norwoodj/helm-docs/releases/v1.14.2)

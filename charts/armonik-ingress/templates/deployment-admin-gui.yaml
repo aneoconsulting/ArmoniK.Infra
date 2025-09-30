@@ -1,45 +1,82 @@
+{{- $image := list $ .Values.gui.image | include "armonik.image" | fromYaml }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  name: {{ include "armonik.fullname" . | printf "%s-gui" | trunc 63 | trimSuffix "-" }}
+  namespace: {{ include "armonik.namespace" . }}
   labels:
-    app: {{ .Release.Name }}
-    service: admin-gui
-  name: {{ include "armonik.ingress.fullname" . }}-gui
-  namespace: {{ .Release.Namespace }}
+    app.kubernetes.io/component: gui
+    {{- include "armonik.labels" . | nindent 4 }}
+  {{- with .Values.annotations}}
+  annotations:
+  {{- range $key, $value := . }}
+    {{ $key }}: {{ $value }}
+  {{- end }}
+  {{- end }}
 spec:
   selector:
     matchLabels:
-      app: {{ .Release.Name }}
-      service: admin-gui
+      app.kubernetes.io/component: gui
+      {{- include "armonik.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        app: {{ .Release.Name }}
-        service: admin-gui
-      name: admin-gui
+        app.kubernetes.io/component: gui
+        {{- include "armonik.selectorLabels" . | nindent 8 }}
     spec:
       automountServiceAccountToken: true
       containers:
-      - name: admin-app
-        {{- $registry := .Values.global.imageRegistry | default .Values.image.registry }}
-        {{- if $registry }}
-        image: "{{ $registry }}/{{ .Values.adminGui.repository }}/{{ .Values.adminGui.image }}:{{ include "armonik.adminGui.tag" .}}"
-        {{- else }}
-        image: "{{ .Values.adminGui.repository }}/{{ .Values.adminGui.image }}:{{ include "armonik.adminGui.tag" . }}"
-        {{- end }}
-        imagePullPolicy: {{ .Values.adminGui.imagePullPolicy }}
+      - name: gui
+        image: {{ $image.fullname }}
+        imagePullPolicy: {{ $image.pullPolicy }}
         ports:
-        - name: app-port
-          containerPort: {{ .Values.adminGui.port }}
-          protocol: TCP        
+          {{- range .Values.gui.ports }}
+          - name: {{ .name }}
+            containerPort: {{ .containerPort }}
+            protocol: TCP
+          {{- end }}{{/* range .Values.ports */}}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        {{- with coalesce .Values.gui.resources .Values.resources }}
         resources:
-        {{- toYaml .Values.adminGui.resources | nindent 10 }}
-      {{- $imagePullSecrets := .Values.global.imagePullSecrets | default .Values.imagePullSecrets }}
-      {{- if $imagePullSecrets }}
-      {{- with $imagePullSecrets }}
-      imagePullSecrets:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}{{/* with .Values.resources */}}
+        {{- with coalesce .Values.gui.livenessProbe .Values.livenessProbe }}
+        livenessProbe:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}{{/* with .Values.livenessProbe */}}
+        {{- with coalesce .Values.gui.startupProbe .Values.startupProbe }}
+        startupProbe:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}{{/* with .Values.startupProbe */}}
+        {{- with coalesce .Values.gui.readinessProbe .Values.readinessProbe }}
+        readinessProbe:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}{{/* with .Values.readinessProbe */}}
+        {{- with .extraEnv }}
+        env:
+          {{- .extraEnv | toYaml | nindent 10 }}
+        {{- end }}
+        {{- with .extraEnvFrom }}
+        envFrom:
+          {{- .extraEnvFrom | toYaml | nindent 10 }}
+        {{- end }}
+        {{- with .extraVolumeMounts }}
+        volumeMounts:
+          {{ . | toYaml | nindent 10 }}
+        {{- end }}
+      dnsPolicy: ClusterFirst
+      shareProcessNamespace: false
+      {{- with coalesce .Values.gui.nodeSelector .Values.nodeSelector }}
+      nodeSelector:
         {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- end }}
+      {{- end }}{{/* with .Values.nodeSelector */}}
+      {{- with coalesce .Values.gui.tolerations .Values.tolerations }}
       tolerations:
-      {{- toYaml .Values.adminGui.tolerations | nindent 8 }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}{{/* with .Values.tolerations */}}
+      enableServiceLinks: true
+      {{- with coalesce .Values.gui.extraVolumeMounts .Values.extraVolumeMounts }}
+      volumes:
+        {{ . | toYaml | nindent 8 }}
+      {{- end }}

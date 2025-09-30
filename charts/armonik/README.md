@@ -28,61 +28,13 @@ Kubernetes: `>=v1.25.0-0`
 | file://../armonik-control-plane | control-plane(armonik-control-plane) | 0.1.x |
 | file://../armonik-dependencies | dependencies(armonik-dependencies) | 0.1.x |
 | file://../armonik-ingress | ingress(armonik-ingress) | 0.1.x |
-| file://../armonik-metrics-exporter | metrics-exporter(armonik-metrics-exporter) | 0.1.x |
 
 ## Values
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | compute-plane.enabled | bool | `true` |  |
-| config.core.data.Amqp__MaxPriority | string | `"10"` |  |
-| config.core.data.Amqp__Password | string | `"admin"` |  |
-| config.core.data.Amqp__Port | string | `"5672"` |  |
-| config.core.data.Amqp__QueueStorage__LockRefreshExtension | string | `"00:02:00"` |  |
-| config.core.data.Amqp__QueueStorage__LockRefreshPeriodicity | string | `"00:00:45"` |  |
-| config.core.data.Amqp__QueueStorage__PollPeriodicity | string | `"00:00:10"` |  |
-| config.core.data.Amqp__Scheme | string | `"AMQP"` |  |
-| config.core.data.Amqp__User | string | `"admin"` |  |
-| config.core.data.Authenticator__RequireAuthentication | string | `"false"` |  |
-| config.core.data.Authenticator__RequireAuthorization | string | `"false"` |  |
-| config.core.data.Components__ObjectStorage | string | `"ArmoniK.Adapters.Redis.ObjectStorage"` |  |
-| config.core.data.Components__ObjectStorageAdaptorSettings__AdapterAbsolutePath | string | `"/adapters/object/redis/ArmoniK.Core.Adapters.Redis.dll"` |  |
-| config.core.data.Components__ObjectStorageAdaptorSettings__ClassName | string | `"ArmoniK.Core.Adapters.Redis.ObjectBuilder"` |  |
-| config.core.data.Components__QueueAdaptorSettings__AdapterAbsolutePath | string | `"/adapters/queue/amqp/ArmoniK.Core.Adapters.Amqp.dll"` |  |
-| config.core.data.Components__QueueAdaptorSettings__ClassName | string | `"ArmoniK.Core.Adapters.Amqp.QueueBuilder"` |  |
-| config.core.data.Components__TableStorage | string | `"ArmoniK.Adapters.MongoDB.TableStorage"` |  |
-| config.core.data.MongoDB__AllowInsecureTls | string | `"true"` |  |
-| config.core.data.MongoDB__AuthSource | string | `"admin"` |  |
-| config.core.data.MongoDB__DataRetention | string | `"1.00:00:00"` |  |
-| config.core.data.MongoDB__DatabaseName | string | `"database"` |  |
-| config.core.data.MongoDB__DirectConnection | string | `"true"` |  |
-| config.core.data.MongoDB__Host | string | `"mongodb-headless"` |  |
-| config.core.data.MongoDB__Port | string | `"27017"` |  |
-| config.core.data.MongoDB__ReplicaSet | string | `"rs0"` |  |
-| config.core.data.MongoDB__TableStorage__PollingDelay | string | `"00:00:01"` |  |
-| config.core.data.MongoDB__TableStorage__PollingDelayMax | string | `"00:00:10"` |  |
-| config.core.data.MongoDB__TableStorage__PollingDelayMin | string | `"00:00:01"` |  |
-| config.core.data.MongoDB__Tls | string | `"false"` |  |
-| config.core.data.MongoDB__User | string | `"root"` |  |
-| config.core.data.Redis__ClientName | string | `"ArmoniK.Core"` |  |
-| config.core.data.Redis__EndpointUrl | string | `"redis-master:6379"` |  |
-| config.core.data.Redis__InstanceName | string | `"ArmoniKRedis"` |  |
-| config.core.data.Redis__Ssl | string | `"false"` |  |
-| config.core.data.Redis__Timeout | string | `"30000"` |  |
-| config.core.data.Redis__TtlTimeSpan | string | `"1.00:00:00"` |  |
-| config.core.data.Redis__User | string | `""` |  |
-| config.log.data.minimumLevel | string | `"Information"` |  |
-| config.log.data.overrides."ArmoniK.Core.Common.Auth.Authentication.Authenticator" | string | `"Warning"` |  |
-| config.log.data.overrides."Grpc.AspNetCore.Server.ServerCallHandler" | string | `"Warning"` |  |
-| config.log.data.overrides."Microsoft.AspNetCore.Authorization" | string | `"Warning"` |  |
-| config.log.data.overrides."Microsoft.AspNetCore.Hosting.Diagnostics" | string | `"Warning"` |  |
-| config.log.data.overrides."Microsoft.AspNetCore.Routing" | string | `"Warning"` |  |
-| config.log.data.overrides."Microsoft.AspNetCore.Routing.EndpointMiddleware" | string | `"Warning"` |  |
-| config.log.data.overrides."Microsoft.AspNetCore.Server.Kestrel" | string | `"Warning"` |  |
-| config.log.data.overrides."Microsoft.Extensions.Diagnostics.HealthChecks" | string | `"Warning"` |  |
-| config.log.data.overrides."Microsoft.Extensions.Http.DefaultHttpClientFactory" | string | `"Warning"` |  |
-| config.log.data.overrides."Serilog.AspNetCore.RequestLoggingMiddleware" | string | `"Warning"` |  |
-| config.log.name | string | `"log-configmap"` |  |
+| config.log.minimumLevel | string | `"Information"` |  |
 | control-plane.enabled | bool | `true` |  |
 | dependencies.activemq.enabled | bool | `true` |  |
 | dependencies.activemq.fullnameOverride | string | `"activemq"` |  |
@@ -184,7 +136,6 @@ Kubernetes: `>=v1.25.0-0`
 | global.imageRegistry | string | `""` |  |
 | global.version.armonikCore | string | `"0.35.0"` |  |
 | ingress.enabled | bool | `true` |  |
-| ingress.ingress.type | string | `"LoadBalancer"` |  |
 
 ----------------------------------------------
 Autogenerated from chart metadata using [helm-docs v1.14.2](https://github.com/norwoodj/helm-docs/releases/v1.14.2)

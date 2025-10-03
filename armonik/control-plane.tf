@@ -305,7 +305,7 @@ resource "kubernetes_service" "control_plane" {
     }
     port {
       name        = local.control_plane_port.name
-      port        = var.control_plane.service_type == "HeadLess" ? local.control_plane_port.container_port: var.control_plane.port
+      port        = var.control_plane.service_type == "HeadLess" ? local.control_plane_port.container_port : var.control_plane.port
       target_port = local.control_plane_port.container_port
       protocol    = "TCP"
     }

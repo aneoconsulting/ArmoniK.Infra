@@ -4,27 +4,18 @@ resource "kubernetes_deployment" "control_plane" {
   metadata {
     name      = local.control_plane_name
     namespace = local.control_plane_namespace
-    labels = {
-      app     = local.control_plane_labels.app
-      service = local.control_plane_labels.service
-    }
+    labels = local.control_plane_labels
   }
   spec {
     replicas = var.control_plane.replicas
     selector {
-      match_labels = {
-        app     = "armonik"
-        service = "control-plane"
-      }
+      match_labels = local.control_plane_labels
     }
     template {
       metadata {
         name      = local.control_plane_name
         namespace = local.control_plane_namespace
-        labels = {
-          app     = local.control_plane_labels.app
-          service = local.control_plane_labels.service
-        }
+        labels = local.control_plane_labels
         annotations = local.control_plane_annotations
       }
       spec {
@@ -290,19 +281,13 @@ resource "kubernetes_service" "control_plane" {
   metadata {
     name      = local.control_plane_name
     namespace = local.control_plane_namespace
-    labels = {
-      app     = local.control_plane_labels.app
-      service = local.control_plane_labels.service
-    }
+    labels = local.control_plane_labels
     annotations = var.control_plane.annotations
   }
   spec {
     type       = var.control_plane.service_type == "HeadLess" ? "ClusterIP" : var.control_plane.service_type
     cluster_ip = var.control_plane.service_type == "HeadLess" ? "None" : null
-    selector = {
-      app     = local.control_plane_labels.app
-      service = local.control_plane_labels.service
-    }
+    selector = local.control_plane_labels
     port {
       name        = local.control_plane_port.name
       port        = var.control_plane.service_type == "HeadLess" ? local.control_plane_port.container_port : var.control_plane.port

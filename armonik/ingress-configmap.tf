@@ -75,6 +75,20 @@ server {
         grpc_set_header X-Certificate-Client-CN $ssl_client_s_dn_cn;
         grpc_set_header X-Certificate-Client-Fingerprint $ssl_client_fingerprint;
 %{endif~}
+%{if var.ingress != null && length(var.ingress.cors_allowed_hosts) != 0~}
+        add_header Access-Control-Allow-Origin ${join(",", var.ingress.cors_allowed_hosts)} always;
+        add_header Access-Control-Allow-Methods ${join(",", var.ingress.cors_allowed_methods)} always;
+        if ($request_method = 'OPTIONS') {
+            add_header Access-Control-Allow-Origin ${join(",", var.ingress.cors_allowed_hosts)};
+            add_header Access-Control-Allow-Methods ${join(",", var.ingress.cors_allowed_methods)};
+            add_header 'Access-Control-Allow-Credentials' 'true';
+            add_header 'Access-Control-Allow-Headers' ${join(",", concat(local.cors_default_grpc_headers, local.cors_all_headers))};
+            add_header 'Access-Control-Max-Age' ${var.ingress.cors_preflight_max_age};
+            add_header 'Content-Type' 'text/plain charset=UTF-8';
+            add_header 'Content-Length' 0;
+            return 204;
+        }
+%{endif~}
         grpc_pass $armonik_upstream;
 
         # Apparently, multiple chunks in a grpc stream is counted has a single body
@@ -90,6 +104,20 @@ server {
     }
 
     location /static/ {
+%{if var.ingress != null && length(var.ingress.cors_allowed_hosts) != 0~}
+        add_header Access-Control-Allow-Origin ${join(",", var.ingress.cors_allowed_hosts)} always;
+        add_header Access-Control-Allow-Methods ${join(",", var.ingress.cors_allowed_methods)} always;
+        if ($request_method = 'OPTIONS') {
+            add_header Access-Control-Allow-Origin ${join(",", var.ingress.cors_allowed_hosts)};
+            add_header Access-Control-Allow-Methods ${join(",", var.ingress.cors_allowed_methods)};
+            add_header 'Access-Control-Allow-Credentials' 'true';
+            add_header 'Access-Control-Allow-Headers' ${join(",", local.cors_all_headers)};
+            add_header 'Access-Control-Max-Age' ${var.ingress.cors_preflight_max_age};
+            add_header 'Content-Type' 'text/plain charset=UTF-8';
+            add_header 'Content-Length' 0;
+            return 204;
+        }
+%{endif~}
         alias /static/;
     }
 

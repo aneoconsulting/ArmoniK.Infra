@@ -35,24 +35,28 @@ variable "logging_level" {
 variable "ingress" {
   description = "Parameters of the ingress controller"
   type = object({
-    name                  = string
-    service_type          = string
-    replicas              = number
-    image                 = string
-    tag                   = string
-    image_pull_policy     = string
-    http_port             = number
-    grpc_port             = number
-    limits                = optional(map(string))
-    requests              = optional(map(string))
-    image_pull_secrets    = string
-    node_selector         = any
-    annotations           = any
-    tls                   = bool
-    mtls                  = bool
-    generate_client_cert  = bool
-    custom_client_ca_file = string
-    langs                 = optional(set(string), ["en"])
+    name                   = string
+    service_type           = string
+    replicas               = number
+    image                  = string
+    tag                    = string
+    image_pull_policy      = string
+    http_port              = number
+    grpc_port              = number
+    limits                 = optional(map(string))
+    requests               = optional(map(string))
+    image_pull_secrets     = string
+    node_selector          = any
+    annotations            = any
+    tls                    = bool
+    mtls                   = bool
+    generate_client_cert   = bool
+    custom_client_ca_file  = string
+    langs                  = optional(set(string), ["en"])
+    cors_allowed_hosts     = optional(set(string), [])
+    cors_allowed_headers   = optional(list(string), []) # Will be added to the default cors headers.
+    cors_allowed_methods   = optional(set(string), ["GET", "POST", "OPTIONS"])
+    cors_preflight_max_age = optional(number, 1728000)
   })
   validation {
     error_message = "Ingress mTLS requires TLS to be enabled."

@@ -163,6 +163,20 @@ locals {
   }
 
   # Control plane
+  control_plane_name      = "control-plane"
+  control_plane_namespace = var.namespace
+  control_plane_labels = {
+    app     = "armonik"
+    service = "control-plane"
+  }
+  control_plane_port = {
+    name           = "control-port"
+    container_port = 1080
+  }
+  control_plane_port_metrics = {
+    name           = "metrics-port"
+    container_port = 1081
+  }
   hpa_control_plane_triggers = {
     triggers = [
       for trigger in try(var.control_plane.hpa.triggers, []) :

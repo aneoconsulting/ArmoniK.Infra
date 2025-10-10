@@ -75,11 +75,11 @@ server {
         grpc_set_header X-Certificate-Client-CN $ssl_client_s_dn_cn;
         grpc_set_header X-Certificate-Client-Fingerprint $ssl_client_fingerprint;
 %{endif~}
-%{if var.ingress != null && length(var.ingress.cors_allowed_hosts) != 0~}
-        add_header Access-Control-Allow-Origin ${join(",", var.ingress.cors_allowed_hosts)} always;
+%{if var.ingress != null && length(var.ingress.cors_allowed_host) != 0~}
+        add_header Access-Control-Allow-Origin ${var.ingress.cors_allowed_host} always;
         add_header Access-Control-Allow-Methods ${join(",", var.ingress.cors_allowed_methods)} always;
         if ($request_method = 'OPTIONS') {
-            add_header Access-Control-Allow-Origin ${join(",", var.ingress.cors_allowed_hosts)};
+            add_header Access-Control-Allow-Origin ${var.ingress.cors_allowed_host} always;
             add_header Access-Control-Allow-Methods ${join(",", var.ingress.cors_allowed_methods)};
             add_header 'Access-Control-Allow-Credentials' 'true';
             add_header 'Access-Control-Allow-Headers' ${join(",", concat(local.cors_default_grpc_headers, local.cors_all_headers))};
@@ -104,11 +104,11 @@ server {
     }
 
     location /static/ {
-%{if var.ingress != null && length(var.ingress.cors_allowed_hosts) != 0~}
-        add_header Access-Control-Allow-Origin ${join(",", var.ingress.cors_allowed_hosts)} always;
+%{if var.ingress != null && length(var.ingress.cors_allowed_host) != 0~}
+        add_header Access-Control-Allow-Origin ${var.ingress.cors_allowed_host} always;
         add_header Access-Control-Allow-Methods ${join(",", var.ingress.cors_allowed_methods)} always;
         if ($request_method = 'OPTIONS') {
-            add_header Access-Control-Allow-Origin ${join(",", var.ingress.cors_allowed_hosts)};
+            add_header Access-Control-Allow-Origin ${var.ingress.cors_allowed_host} always;
             add_header Access-Control-Allow-Methods ${join(",", var.ingress.cors_allowed_methods)};
             add_header 'Access-Control-Allow-Credentials' 'true';
             add_header 'Access-Control-Allow-Headers' ${join(",", local.cors_all_headers)};

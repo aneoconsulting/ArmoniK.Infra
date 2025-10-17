@@ -206,6 +206,6 @@ locals {
 
   #Ingress CORS
   cors_default_headers      = ["DNT", "X-CustomHeader", "Keep-Alive,User-Agent", "X-Requested-With", "If-Modified-Since", "Cache-Control", "Content-Type", "Access-Control-Allow-Origin", "Access-Control-Allow-Methods"]
-  cors_all_headers          = concat(local.cors_default_headers, var.ingress.cors_allowed_headers)
+  cors_all_headers          = setunion(local.cors_default_headers, var.ingress.cors_allowed_headers)
   cors_default_grpc_headers = ["x-grpc-web,x-user-agent"]
 }

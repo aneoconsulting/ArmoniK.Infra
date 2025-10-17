@@ -82,7 +82,7 @@ server {
             add_header Access-Control-Allow-Origin ${var.ingress.cors_allowed_host} always;
             add_header Access-Control-Allow-Methods ${join(",", var.ingress.cors_allowed_methods)};
             add_header 'Access-Control-Allow-Credentials' 'true';
-            add_header 'Access-Control-Allow-Headers' ${join(",", concat(local.cors_default_grpc_headers, local.cors_all_headers))};
+            add_header 'Access-Control-Allow-Headers' ${join(",", setunion(local.cors_default_grpc_headers, local.cors_all_headers))};
             add_header 'Access-Control-Max-Age' ${var.ingress.cors_preflight_max_age};
             add_header 'Content-Type' 'text/plain charset=UTF-8';
             add_header 'Content-Length' 0;

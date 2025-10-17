@@ -54,7 +54,7 @@ variable "ingress" {
     custom_client_ca_file  = string
     langs                  = optional(set(string), ["en"])
     cors_allowed_host      = optional(string, "*")
-    cors_allowed_headers   = optional(list(string), []) # Will be added to the default cors headers.
+    cors_allowed_headers   = optional(set(string), []) # Will be added to the default cors headers.
     cors_allowed_methods   = optional(set(string), ["GET", "POST", "OPTIONS"])
     cors_preflight_max_age = optional(number, 1728000)
   })

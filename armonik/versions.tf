@@ -7,7 +7,7 @@ terraform {
     }
     helm = {
       source  = "hashicorp/helm"
-      version = ">= 2.10.1, < 3.0.0"
+      version = ">= 3.1.1, < 4.0.0"
     }
     pkcs12 = {
       source  = "chilicat/pkcs12"

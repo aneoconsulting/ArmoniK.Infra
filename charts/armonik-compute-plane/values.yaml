@@ -1,0 +1,224 @@
+nameOverride: ""
+fullnameOverride: ""
+replicaCount: 1
+shareProcessNamespace: false
+restartPolicy: Always
+repository: dockerhubaneo
+registry: ""
+imagePullSecrets: []
+
+global:
+  imageRegistry: ""
+  dependencies.keda: false
+
+serviceAccount:
+  create: true
+  name: compute-plane
+  annotations: {}
+  secrets: []
+
+service: {}
+
+rbac:
+  # Specifies whether RBAC resources should be created
+  create: true
+
+podDisruptionBudget:
+  # https://kubernetes.io/docs/tasks/run-application/configure-pdb/
+  enabled: false
+  minAvailable:
+  maxUnavailable:
+
+partitionCommon:
+  labels:
+    app: "armonik"
+    service: "compute-plane"
+  socketType: "unixdomainsocket"
+  agent:
+    name: polling-agent
+    image:
+      registry:
+      repository: dockerhubaneo
+      name: armonik_pollingagent
+      tag:
+      pullPolicy: IfNotPresent
+    ports:
+      name: poll-agent-port
+      containerPort: 1080
+    readinessProbe: {}
+    livenessProbe:
+      httpGet:
+        path: "/liveness"
+        port: 1080
+        scheme: HTTP
+      initialDelaySeconds: 15
+      periodSeconds: 10
+      timeoutSeconds: 10
+      successThreshold: 1
+      failureThreshold: 3
+    startupProbe:
+      httpGet:
+        path: "/startup"
+        port: 1080
+        scheme: HTTP
+      initialDelaySeconds: 1
+      periodSeconds: 3
+      timeoutSeconds: 1
+      successThreshold: 1
+      failureThreshold: 20
+    limits:
+      cpu: "1000m"
+      memory: "1024Mi"
+    requests:
+      cpu: "500m"
+      memory: "256Mi"
+    securityContext:
+      capabilities:
+        drop:
+          - SYS_PTRACE
+      privileged: false
+      runAsNonRoot: false
+      readOnlyRootFilesystem: false
+      allowPrivilegeEscalation: true
+    enableServiceLinks: true
+    messageBatchSize: 1
+    graceDelay: "00:00:15"
+    conf:
+  annotations: {}
+  nodeSelector: {}
+  tolerations: []
+  terminationGracePeriodSeconds: 30
+  # Default worker, will be overridden per partition
+  worker:
+    name: "worker"
+    image:
+      registry:
+      repository: dockerhubaneo
+      name:
+      tag:
+      pullPolicy: IfNotPresent
+    ports:
+      name: worker-port
+      containerPort: 1081
+    livenessProbe:
+      httpGet:
+        path: "/liveness"
+        port: 1080
+        scheme: HTTP
+      initialDelaySeconds: 15
+      periodSeconds: 10
+      timeoutSeconds: 10
+      successThreshold: 1
+      failureThreshold: 3
+    startupProbe:
+      httpGet:
+        path: "/startup"
+        port: 1080
+        scheme: HTTP
+      initialDelaySeconds: 1
+      periodSeconds: 3
+      timeoutSeconds: 1
+      successThreshold: 1
+      failureThreshold: 20
+    terminationMessagePath: "/dev/termination-log"
+    terminationMessagePolicy: "File"
+    imagePullPolicy: "IfNotPresent"
+    limits:
+      cpu: "1000m"
+      memory: "1024Mi"
+    requests:
+      cpu: "500m"
+      memory: "512Mi"
+    checkRetries: 10
+    checkDelay: "00:00:10"
+    conf:
+  hpa:
+    type: "prometheus"
+    # -- Polling interval in seconds
+    pollingInterval: 15 # Optional. Default: 30 seconds
+    # -- Cooldown period in seconds
+    cooldownPeriod: 300 # Optional. Default: 300 seconds
+    # -- Count of idle replicas
+    idleReplicaCount: 1 # Optional. Default: ignored, must be less than minReplicaCount
+    # -- Minimum count of replicas
+    minReplicaCount: 1 # Optional. Default: 0
+    # -- Maximum count of replicas
+    maxReplicaCount: 5 # Optional. Default: 100
+
+    # -- Fallback options
+    #fallback: # Optional. Section to specify fallback options
+    #  # -- Threshold of failures
+    #  failureThreshold: 3 # Mandatory if fallback section is included
+    #  # -- Number of replicas
+    #  replicas: 6 # Mandatory if fallback section is included
+
+    # -- Advanced options to manage the behavior of the HPA
+    behavior:
+      # -- Restore to the original replicas count
+      restoreToOriginalReplicaCount: false # Optional. Default: false
+      # -- Stabilization window in seconds
+      stabilizationWindowSeconds: 300
+      # -- Type of the target
+      type: Percent
+      # -- Value of the target
+      value: 100
+      # -- Period in seconds
+      periodSeconds: 15
+    triggers:
+      - type: "prometheus"
+        metadata:
+          serverAddress: http://prometheus-prometheus:9090
+          metricName: "armonik_{{ .Values.partitionName }}_tasks_queued"
+          threshold: "2"
+          namespace: "{{ .Release.Namespace }}"
+          query: 'armonik_{{ .Values.partitionName }}_tasks_queued{job="metrics-exporter"}'
+  replicas: 1
+  conf:
+
+partitions:
+  default:
+    worker:
+      image:
+        name: "armonik_worker_dll"
+        tag: "0.19.1"
+
+  stream:
+    worker:
+      image:
+        name: "armonik_core_stream_test_worker"
+
+  htcmock:
+    socketType: "tcp"
+    worker:
+      image:
+        name: "armonik_core_htcmock_test_worker"
+
+  bench:
+    worker:
+      image:
+        name: "armonik_core_bench_test_worker"
+
+fluentBit:
+  isDaemonSet: true
+  image:
+    registry:
+    repository: fluent
+    name: fluent-bit
+    tag: "2.0.9"
+    pullPolicy: IfNotPresent
+  configMapRef: "fluent-bit-config"
+
+# checkFileStorageType: "FS"
+# fileStorageType: "hostpath"
+
+preStopWaitScript: "<<EOF while test -e /cache/armonik_agent.sock ; do   sleep 1 done EOF"
+# FS:
+#   name: "shared-volume"
+#   mountPath: "/data"
+
+# hostPath:
+#   name: "shared-volume"
+#   path: "/home/mjadoui/ArmoniK/infrastructure/quick-de" # (abs(path) à voir dans .tf)
+
+# env:
+#   pollingAgentAggregation:

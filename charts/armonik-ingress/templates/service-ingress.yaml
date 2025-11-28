@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "armonik.fullname" . }}
+  namespace: {{ include "armonik.namespace" . }}
+  labels:
+    app.kubernetes.io/component: ingress
+    {{- include "armonik.labels" . | nindent 4 }}
+  {{- with coalesce .Values.service.annotations .Values.annotations}}
+  annotations:
+  {{- range $key, $value := . }}
+    {{ $key }}: {{ $value }}
+  {{- end }}
+  {{- end }}
+spec:
+{{- if eq .Values.service.type "HeadLess" }}
+  type: "ClusterIP"
+  clusterIP: "None"
+{{ else }}
+  type: {{ .Values.service.type | quote}}
+{{- end }}
+  selector:
+    app.kubernetes.io/component: ingress
+    {{- include "armonik.selectorLabels" . | nindent 4 }}
+  ports:
+    {{- range .Values.ports }}
+    - name: {{ .name }}
+      port: {{ eq $.Values.service.type "HeadLess" | ternary .containerPort .servicePort }}
+      targetPort: {{ .containerPort }}
+      protocol: TCP
+    {{- end }}

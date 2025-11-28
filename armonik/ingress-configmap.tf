@@ -1,6 +1,8 @@
 # Envvars
 locals {
   armonik_conf = <<EOF
+resolver kube-dns.kube-system ipv6=off;
+
 map $http_accept_language $accept_language {
     default en;
 %{for lang in var.ingress.langs~}
@@ -14,11 +16,19 @@ map $http_upgrade $connection_upgrade {
 }
 
 %{if var.ingress != null ? var.ingress.mtls : false~}
-    map $ssl_client_s_dn $ssl_client_s_dn_cn {
-        default "";
-        ~CN=(?<CN>[^,/]+) $CN;
-    }
+map $ssl_client_s_dn $ssl_client_s_dn_cn {
+    default "";
+    ~CN=(?<CN>[^,/]+) $CN;
+}
 %{endif~}
+
+upstream armonik {
+    server ${local.control_plane_endpoints.ip}:${local.control_plane_endpoints.port} resolve;
+    keepalive 128;
+    keepalive_time 8h;
+    keepalive_timeout 1h;
+}
+
 server {
 %{if var.ingress != null ? var.ingress.tls : false~}
     listen 8443 ssl http2;
@@ -46,7 +56,7 @@ server {
 %{endif~}
 
     sendfile on;
-    resolver kube-dns.kube-system ipv6=off;
+    tcp_nopush on;
 
     location = / {
         rewrite ^ $scheme://$http_host/admin/$accept_language/;
@@ -69,7 +79,6 @@ server {
         proxy_pass $admin_app_upstream$uri$is_args$args;
     }
 %{endif~}
-    set $armonik_upstream grpc://${local.control_plane_endpoints.ip}:${local.control_plane_endpoints.port};
     location ~* ^/armonik\. {
 %{if var.ingress != null ? var.ingress.mtls : false~}
         grpc_set_header X-Certificate-Client-CN $ssl_client_s_dn_cn;
@@ -89,7 +98,7 @@ server {
             return 204;
         }
 %{endif~}
-        grpc_pass $armonik_upstream;
+        grpc_pass grpc://armonik;
 
         # Apparently, multiple chunks in a grpc stream is counted has a single body
         # So disable the limit
@@ -97,6 +106,7 @@ server {
 
         # add a timeout of 1 month to avoid grpc exception for long task
         # TODO: find better configuration
+        client_body_timeout 1d;
         proxy_read_timeout 30d;
         proxy_send_timeout 1d;
         grpc_read_timeout 30d;
@@ -122,8 +132,8 @@ server {
     }
 
 
-  proxy_buffering off;
-  proxy_request_buffering off;
+    proxy_buffering off;
+    proxy_request_buffering off;
 
 %{if var.shared_storage_settings.file_storage_type == "s3"~}
  set $minio_upstream ${var.shared_storage_settings.service_url};

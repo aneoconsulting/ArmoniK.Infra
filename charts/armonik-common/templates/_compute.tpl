@@ -15,3 +15,14 @@
   {{- $configmap := list "compute" . | include "armonik.conf.configmap" -}}
   {{- include "armonik.conf.computeRaw" . | fromYaml | list $configmap | include "armonik.conf.materialized" -}}
 {{- end -}}
+
+{{- define "armonik.conf.partitions" -}}
+{{- $idx := 0 -}}
+env:
+  {{- range $partitionName, $partition := . }}
+    {{- if hasKey $partition "name" | not }}
+      {{- $_ := set $partition "name" $partitionName }}
+    {{- end }}
+    InitServices__Partitioning__Partitions__{{ $idx }}
+  {{- end }}
+{{- end -}}

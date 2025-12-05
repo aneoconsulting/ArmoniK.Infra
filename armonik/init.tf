@@ -23,7 +23,7 @@ locals {
       RoleName    = name,
       Permissions = local.ingress_generated_cert.permissions[name]
     }
-  ] : local.init_authentication_provided.users_list
+  ] : local.init_authentication_provided.roles_list
 
   init_authentication_certs = local.init_authentication_provided == null ? [
     for name, cert in data.tls_certificate.certificate_data : {

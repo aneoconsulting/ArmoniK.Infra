@@ -22,6 +22,20 @@ map $ssl_client_s_dn $ssl_client_s_dn_cn {
 }
 %{endif~}
 
+%{if var.ingress != null ? var.ingress.mtls : false~}
+map $http_x_certificate_client_cn $client_cn {
+    default $ssl_client_s_dn_cn;  # Use CN from the SSL certificate if header is not present
+    ""      $ssl_client_s_dn_cn;  # Treat empty header as absence
+    ~.+     $http_x_certificate_client_cn; # Use the forwarded header if present
+}
+
+map $http_x_certificate_client_fingerprint $client_fingerprint {
+    default $ssl_client_fingerprint;
+    ""      $ssl_client_fingerprint;
+    ~.+     $http_x_certificate_client_fingerprint;
+}
+%{endif~}
+
 upstream armonik {
     server ${local.control_plane_endpoints.ip}:${local.control_plane_endpoints.port} resolve;
     keepalive 128;
@@ -81,8 +95,8 @@ server {
 %{endif~}
     location ~* ^/armonik\. {
 %{if var.ingress != null ? var.ingress.mtls : false~}
-        grpc_set_header X-Certificate-Client-CN $ssl_client_s_dn_cn;
-        grpc_set_header X-Certificate-Client-Fingerprint $ssl_client_fingerprint;
+        grpc_set_header X-Certificate-Client-CN $client_cn ;
+        grpc_set_header X-Certificate-Client-Fingerprint $client_fingerprint;
 %{endif~}
 %{if var.ingress != null && length(var.ingress.cors_allowed_host) != 0~}
         add_header Access-Control-Allow-Origin ${var.ingress.cors_allowed_host} always;

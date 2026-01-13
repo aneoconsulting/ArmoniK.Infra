@@ -208,4 +208,7 @@ locals {
   cors_default_headers      = ["DNT", "X-CustomHeader", "Keep-Alive,User-Agent", "X-Requested-With", "If-Modified-Since", "Cache-Control", "Content-Type", "Access-Control-Allow-Origin", "Access-Control-Allow-Methods"]
   cors_all_headers          = setunion(local.cors_default_headers, var.ingress.cors_allowed_headers)
   cors_default_grpc_headers = ["x-grpc-web,x-user-agent"]
+
+  # Regex pattern to match only trusted common names
+  cn_regex_pattern = join("|", [for cn in var.authentication.trusted_common_names : "${cn}"])
 }

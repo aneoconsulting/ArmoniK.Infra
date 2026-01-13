@@ -23,16 +23,18 @@ map $ssl_client_s_dn $ssl_client_s_dn_cn {
 %{endif~}
 
 %{if var.ingress != null ? var.ingress.mtls : false~}
-map $http_x_certificate_client_cn $client_cn {
-    default $ssl_client_s_dn_cn;  # Use CN from the SSL certificate if header is not present
-    ""      $ssl_client_s_dn_cn;  # Treat empty header as absence
-    ~.+     $http_x_certificate_client_cn; # Use the forwarded header if present
+# Use CN from the SSL certificate if header is not present or if the header
+# is present but the certificate's cn is not in the list of trusted cns
+map "$http_x_certificate_client_cn|$ssl_client_s_dn_cn" $client_cn {
+    default                             $ssl_client_s_dn_cn;
+    ~^(.+)\|${local.cn_regex_pattern}   $http_x_certificate_client_cn;
 }
 
-map $http_x_certificate_client_fingerprint $client_fingerprint {
-    default $ssl_client_fingerprint;
-    ""      $ssl_client_fingerprint;
-    ~.+     $http_x_certificate_client_fingerprint;
+# Use fingerprint from the SSL certificate if header is not present or if the header
+# is present but the certificate's cn is not in the list of trusted cns
+map "$http_x_certificate_client_fingerprint|$ssl_client_s_dn_cn" $client_fingerprint {
+    default                             $ssl_client_fingerprint;
+    ~^(.+)\|${local.cn_regex_pattern}   $http_x_certificate_fingerprint;
 }
 %{endif~}
 

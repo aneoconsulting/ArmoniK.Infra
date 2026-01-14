@@ -26,15 +26,15 @@ map $ssl_client_s_dn $ssl_client_s_dn_cn {
 # Use CN from the SSL certificate if header is not present or if the header
 # is present but the certificate's cn is not in the list of trusted cns
 map "$http_x_certificate_client_cn|$ssl_client_s_dn_cn" $client_cn {
-    default                             $ssl_client_s_dn_cn;
-    ~^(.+)\|${local.cn_regex_pattern}   $http_x_certificate_client_cn;
+    default                                $ssl_client_s_dn_cn;
+    ~^(.+)\|(${local.cn_regex_pattern})$   $http_x_certificate_client_cn;
 }
 
 # Use fingerprint from the SSL certificate if header is not present or if the header
 # is present but the certificate's cn is not in the list of trusted cns
 map "$http_x_certificate_client_fingerprint|$ssl_client_s_dn_cn" $client_fingerprint {
-    default                             $ssl_client_fingerprint;
-    ~^(.+)\|${local.cn_regex_pattern}   $http_x_certificate_fingerprint;
+    default                                $ssl_client_fingerprint;
+    ~^(.+)\|(${local.cn_regex_pattern})$   $http_x_certificate_client_fingerprint;
 }
 %{endif~}
 

@@ -217,7 +217,7 @@ variable "authentication" {
     authentication_datafile = string
     require_authentication  = bool
     require_authorization   = bool
-    trusted_common_names    = list(string)
+    trusted_common_names    = optional(set(string),[])
   })
   validation {
     error_message = "Authorization requires authentication to be activated."

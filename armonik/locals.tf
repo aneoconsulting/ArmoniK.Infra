@@ -208,4 +208,33 @@ locals {
   cors_default_headers      = ["DNT", "X-CustomHeader", "Keep-Alive,User-Agent", "X-Requested-With", "If-Modified-Since", "Cache-Control", "Content-Type", "Access-Control-Allow-Origin", "Access-Control-Allow-Methods"]
   cors_all_headers          = setunion(local.cors_default_headers, var.ingress.cors_allowed_headers)
   cors_default_grpc_headers = ["x-grpc-web,x-user-agent"]
+
+  special_regex_characters = {
+    "."  = "\\."
+    "*"  = "\\*"
+    "+"  = "\\+"
+    "?"  = "\\?"
+    "^"  = "\\^"
+    "$"  = "\\$"
+    "("  = "\\("
+    ")"  = "\\)"
+    "["  = "\\["
+    "]"  = "\\]"
+    "{"  = "\\{"
+    "}"  = "\\}"
+    "|"  = "\\|"
+    "\\" = "\\\\"
+  }
+
+  # Escape common names to be matched as a literal
+  escaped_common_names = [
+    for str in var.authentication.trusted_common_names : join("", [
+      for char in split("", str) : (
+        lookup(local.special_regex_characters, char, char)
+      )
+    ])
+  ]
+
+  # Regex pattern to match only trusted common names
+  cn_regex_pattern = join("|", local.escaped_common_names)
 }

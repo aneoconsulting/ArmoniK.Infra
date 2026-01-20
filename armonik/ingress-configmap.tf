@@ -75,6 +75,27 @@ server {
     listen [::]:9080 http2;
 %{endif~}
 
+%{if var.oauth_configuration != null}
+    location = /auth {
+      internal;
+      proxy_pass ${var.oauth_configuration.provider_root_URI}${var.oauth_configuration.provider_user_info_endpoint};
+      proxy_set_header Cookie $http_cookie;
+      proxy_pass_request_body off;
+      proxy_set_header Content-Length "";
+      proxy_set_header X-Original-URI $request_uri;
+    }
+
+    error_page 401 = @errorAuth;
+    error_page 403 = @errorAuth;
+
+    location @errorAuth {
+      return 302 ${var.oauth_configuration.provider_root_URI}/${var.oauth_configuration.provider_authorization_endpoint}?client_id=${var.oauth_configuration.client_id}&response_type=${var.oauth_configuration.response_type}&redirect_uri=${local.ingress_http_url}/admin/en/;
+    }
+    
+    auth_request /auth;
+    auth_request_set $auth_status $upstream_status;
+%{endif~}
+
     sendfile on;
     tcp_nopush on;
 
@@ -96,6 +117,7 @@ server {
 %{if local.admin_app_url != null~}
     set $admin_app_upstream ${local.admin_app_url};
     location /admin/ {
+        auth_request off;
         proxy_pass $admin_app_upstream$uri$is_args$args;
     }
 %{endif~}

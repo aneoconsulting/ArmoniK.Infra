@@ -1,0 +1,144 @@
+imagePullSecrets: []
+name: control-plane
+image:
+  registry:
+  repository: dockerhubaneo
+  name: armonik_control
+  tag:
+  pullPolicy: IfNotPresent
+
+replicas: 1
+maxErrorAllowed: 50
+defaultPartition: default
+extraPartitions: []
+
+serviceAccount:
+  create: true
+  name: control-plane
+  annotations: {}
+  secrets: []
+
+resources:
+  limits:
+    cpu: 1
+    memory: 1Gi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+livenessProbe:
+  httpGet:
+    path: /liveness
+    port: 1081
+  initialDelaySeconds: 15
+  periodSeconds: 5
+  timeoutSeconds: 1
+  successThreshold: 1
+  failureThreshold: 1
+
+startupProbe:
+  httpGet:
+    path: /startup
+    port: 1081
+  initialDelaySeconds: 15
+  periodSeconds: 3
+  timeoutSeconds: 5
+  successThreshold: 1
+  failureThreshold: 20
+
+nodeSelector: {}
+tolerations: []
+annotations: {}
+affinity: {}
+
+conf:
+  env: {}
+  envConfigmap: []
+  envFromConfigmap: {}
+  envSecret: []
+  envFromSecret: {}
+  mountConfigmap: {}
+  mountSecret: {}
+
+ports:
+  - name: control-port
+    containerPort: 1080
+    protocol: TCP
+  - name: metrics-port
+    containerPort: 1081
+    protocol: TCP
+
+service:
+  name: control-plane
+  serviceType: ClusterIP
+  annotations:
+
+  ports:
+    - name: control-port
+      port: 5001
+      targetPort: 1080
+
+metricsExporter:
+  enabled: true
+  name: metrics-exporter
+  replicas: 1
+  image:
+    registry:
+    repository:
+    name: armonik_control_metrics
+    tag:
+    pullPolicy:
+  imagePullSecrets:
+  resources:
+  nodeSelector:
+  tolerations:
+  annotations:
+  affinity:
+  livenessProbe:
+    httpGet:
+      path: /liveness
+      port: 1080
+    initialDelaySeconds: 15
+    periodSeconds: 5
+    timeoutSeconds: 1
+    successThreshold: 1
+    failureThreshold: 1
+  startupProbe:
+    httpGet:
+      path: /startup
+      port: 1080
+    initialDelaySeconds: 15
+    periodSeconds: 3
+    timeoutSeconds: 5
+    successThreshold: 1
+    failureThreshold: 20
+  ports:
+    - name: metrics-port
+      containerPort: 1080
+      protocol: TCP
+  service:
+    name: metrics-exporter
+    serviceType: ClusterIP
+    annotations:
+    ports:
+      - name: metrics-port
+        port: 9419
+        targetPort: 1080
+  conf:
+
+init:
+  enabled: true
+  name: init
+  image:
+    registry:
+    repository:
+    name:
+    tag:
+    pullPolicy:
+  imagePullSecrets:
+  resources:
+  nodeSelector:
+  tolerations:
+  annotations:
+  affinity:
+  conf:

@@ -1,5 +1,5 @@
 apiVersion: v2
-appVersion: 0.31.2
+appVersion: 0.35.0
 version: 0.1.0
 name: armonik
 description: A Helm chart for Armonik
@@ -18,61 +18,70 @@ maintainers:
     url: armonik.fr
 
 dependencies:
-### Armonik
-  - name: control-plane
+  - name: armonik-common
     version: 0.1.x
-    repository: file://charts/control-plane
-    condition: global.dependencies.controlPlane
-  - name: compute-plane
+    repository: file://../armonik-common
+  - name: armonik-configuration
     version: 0.1.x
-    repository: file://charts/compute-plane
-    condition: global.dependencies.computePlane
-  - name: ingress
+    repository: file://../armonik-configuration
+    alias: conf
+    import-values:
+      - child: core
+        parent: global.armonik-dependencies.conf.core
+      - child: control
+        parent: global.armonik-dependencies.conf.control
+      - child: compute
+        parent: global.armonik-dependencies.conf.compute
+      - child: worker
+        parent: global.armonik-dependencies.conf.worker
+      - child: polling
+        parent: global.armonik-dependencies.conf.polling
+      - child: log
+        parent: global.armonik-dependencies.conf.log
+      - child: metrics
+        parent: global.armonik-dependencies.conf.metrics
+      - child: jobs
+        parent: global.armonik-dependencies.conf.jobs
+  - name: armonik-control-plane
     version: 0.1.x
-    repository: file://charts/ingress
-    condition: global.dependencies.ingress
-### Armonik dependencies
-  - name: activemq
-    version: 1.x.x
-    repository: file://charts/activemq
-    condition: global.dependencies.activemq
-  - name: redis
-    version: 20.x.x
-    repository: https://charts.bitnami.com/bitnami
-    condition: global.dependencies.redis
-  - name: mongodb
-    version: 16.x.x
-    repository: https://charts.bitnami.com/bitnami
-    condition: global.dependencies.mongodb
-  - name: kube-prometheus
-    version: 11.x.x
-    repository: https://charts.bitnami.com/bitnami
-    condition: global.dependencies.kubePrometheus
-  - name: keda
-    version: 2.x.x
-    repository: https://kedacore.github.io/charts
-    condition: global.dependencies.keda
-  # - name: chaos-mesh
-  #   version: 2.x.x
-  #   repository: https://charts.chaos-mesh.org
-  #   condition: global.dependencies.chaos-mesh
-  - name: rabbitmq
-    version: 15.x.x
-    repository: https://charts.bitnami.com/bitnami
-    condition: global.dependencies.rabbitmq
-  - name: grafana
-    version: 8.x.x
-    repository: https://grafana.github.io/helm-charts
-    condition: global.dependencies.grafana
-  - name: fluent-bit
-    version: 2.x.x
-    repository: https://charts.bitnami.com/bitnami
-    condition: global.dependencies.fluentBit
-  - name: seq
-    version: 2024.x.x
-    repository: https://helm.datalust.co
-    condition: global.dependencies.seq
-  - name: cert-manager
-    version: 1.x.x
-    repository: https://charts.jetstack.io
-    condition: global.dependencies.certManager
+    repository: file://../armonik-control-plane
+    condition: control-plane.enabled
+    alias: control-plane
+  - name: armonik-compute-plane
+    version: 0.1.x
+    repository: file://../armonik-compute-plane
+    condition: compute-plane.enabled
+    alias: compute-plane
+    import-values:
+      - child: computePlane.partition
+        parent: global.armonik-dependencies.compute.partition
+  - name: armonik-ingress
+    version: 0.1.x
+    repository: file://../armonik-ingress
+    condition: ingress.enabled
+    alias: ingress
+  - name: armonik-dependencies
+    version: 0.1.x
+    repository: file://../armonik-dependencies
+    alias: dependencies
+    import-values:
+      - child: activemq
+        parent: global.armonik-dependencies.activemq
+      - child: redis
+        parent: global.armonik-dependencies.redis
+      - child: mongodb
+        parent: global.armonik-dependencies.mongodb
+      - child: kube-prometheus
+        parent: global.armonik-dependencies.kube-prometheus
+      - child: keda
+        parent: global.armonik-dependencies.keda
+      - child: rabbitmq
+        parent: global.armonik-dependencies.rabbitmq
+      - child: grafana
+        parent: global.armonik-dependencies.grafana
+      - child: fluent-bit
+        parent: global.armonik-dependencies.fluent-bit
+      - child: seq
+        parent: global.armonik-dependencies.seq
+      - child: cert-manager
+        parent: global.armonik-dependencies.cert-manager

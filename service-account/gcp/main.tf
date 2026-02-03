@@ -1,9 +1,10 @@
 data "google_client_config" "current" {}
 
-resource "google_service_account" "pods" {
-  account_id  = var.name
-  description = "A GCP service account with the workloadIdentityUser role for ${var.name}."
-  project     = data.google_client_config.current.project
+# Service account hardcodé pour test : test-iam-policies@pr-13958-armonik-natixis.iam.gserviceaccount.com
+locals {
+  existing_gcp_sa_email   = "test-iam-policies@pr-13958-armonik-natixis.iam.gserviceaccount.com"
+  existing_gcp_sa_project = "pr-13958-armonik-natixis"
+  gke_project             = data.google_client_config.current.project
 }
 
 resource "kubernetes_service_account" "pods" {
@@ -12,20 +13,13 @@ resource "kubernetes_service_account" "pods" {
     name      = var.name
     namespace = var.kubernetes_namespace
     annotations = {
-      "iam.gke.io/gcp-service-account" = google_service_account.pods.email
+      "iam.gke.io/gcp-service-account" = local.existing_gcp_sa_email
     }
   }
 }
 
-resource "google_service_account_iam_member" "pods" {
-  service_account_id = google_service_account.pods.name
+resource "google_service_account_iam_member" "workload_identity_binding" {
+  service_account_id = "projects/${local.existing_gcp_sa_project}/serviceAccounts/${local.existing_gcp_sa_email}"
   role               = "roles/iam.workloadIdentityUser"
-  member             = "serviceAccount:${google_service_account.pods.project}.svc.id.goog[${kubernetes_service_account.pods.metadata[0].namespace}/${kubernetes_service_account.pods.metadata[0].name}]"
-}
-
-resource "google_project_iam_member" "workload_identity_sa_bindings" {
-  for_each = var.roles
-  project  = google_service_account.pods.project
-  role     = each.value
-  member   = google_service_account.pods.member
+  member             = "serviceAccount:${local.gke_project}.svc.id.goog[${var.kubernetes_namespace}/${var.name}]"
 }

@@ -60,6 +60,8 @@ resource "kubernetes_deployment" "redis" {
             "--tls-cert-file /certificates/cert.pem",
             "--tls-key-file /certificates/key.pem",
             "--tls-auth-clients no",
+            "--save \"\"",
+            "--appendonly no",
             "--requirepass ${random_password.redis_password.result}",
             "--maxmemory ${var.redis.max_memory}",
             var.redis.max_memory_samples != null ? "--maxmemory-samples ${var.redis.max_memory_samples}" : null,

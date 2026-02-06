@@ -11,16 +11,6 @@ locals {
   control_plane_node_selector_keys   = keys(local.control_plane_node_selector)
   control_plane_node_selector_values = values(local.control_plane_node_selector)
 
-  # Node selector for ingress
-  ingress_node_selector        = try(coalesce(var.ingress.node_selector), {})
-  ingress_node_selector_keys   = keys(local.ingress_node_selector)
-  ingress_node_selector_values = values(local.ingress_node_selector)
-
-  # Node selector for admin GUI
-  admin_gui_node_selector        = try(coalesce(var.admin_gui.node_selector), {})
-  admin_gui_node_selector_keys   = keys(local.admin_gui_node_selector)
-  admin_gui_node_selector_values = values(local.admin_gui_node_selector)
-
   # Node selector for compute plane
   compute_plane_node_selector        = { for partition, compute_plane in var.compute_plane : partition => try(coalesce(compute_plane.node_selector), {}) }
   compute_plane_node_selector_keys   = { for partition in local.partition_names : partition => keys(local.compute_plane_node_selector[partition]) }
@@ -41,9 +31,8 @@ locals {
   authentication_require_authorization  = try(coalesce(var.authentication.require_authorization), false)
 
   # Annotations
-  control_plane_annotations = try(coalesce(var.control_plane.annotations), {})
-  compute_plane_annotations = { for partition in local.partition_names : partition => try(coalesce(var.compute_plane[partition].annotations), {}) }
-  ingress_annotations       = try(coalesce(var.ingress.annotations), {})
+  control_plane_annotations = try(var.control_plane.annotations, {})
+  compute_plane_annotations = { for partition in local.partition_names : partition => try(var.compute_plane[partition].annotations, {}) }
 
   # Shared storage
   file_storage_type       = var.shared_storage_settings != null ? lower(var.shared_storage_settings.file_storage_type) : "FS"
@@ -203,38 +192,4 @@ locals {
   job_init           = var.init != null
   job_partitions     = var.job_partitions_in_database != null
   job_authentication = local.authentication_require_authentication && can(coalesce(var.authentication.name))
-
-  #Ingress CORS
-  cors_default_headers      = ["DNT", "X-CustomHeader", "Keep-Alive,User-Agent", "X-Requested-With", "If-Modified-Since", "Cache-Control", "Content-Type", "Access-Control-Allow-Origin", "Access-Control-Allow-Methods"]
-  cors_all_headers          = setunion(local.cors_default_headers, var.ingress.cors_allowed_headers)
-  cors_default_grpc_headers = ["x-grpc-web,x-user-agent"]
-
-  special_regex_characters = {
-    "."  = "\\."
-    "*"  = "\\*"
-    "+"  = "\\+"
-    "?"  = "\\?"
-    "^"  = "\\^"
-    "$"  = "\\$"
-    "("  = "\\("
-    ")"  = "\\)"
-    "["  = "\\["
-    "]"  = "\\]"
-    "{"  = "\\{"
-    "}"  = "\\}"
-    "|"  = "\\|"
-    "\\" = "\\\\"
-  }
-
-  # Escape common names to be matched as a literal
-  escaped_common_names = [
-    for str in var.authentication.trusted_common_names : join("", [
-      for char in split("", str) : (
-        lookup(local.special_regex_characters, char, char)
-      )
-    ])
-  ]
-
-  # Regex pattern to match only trusted common names
-  cn_regex_pattern = join("|", local.escaped_common_names)
 }

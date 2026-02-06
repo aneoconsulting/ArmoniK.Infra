@@ -4,34 +4,25 @@ resource "kubernetes_deployment" "admin_gui" {
   metadata {
     name      = "admin-gui"
     namespace = var.namespace
-    labels = {
-      app     = "armonik"
-      service = "admin-gui"
-    }
+    labels    = var.admin_gui.labels
   }
   spec {
     replicas = var.admin_gui.replicas
     selector {
-      match_labels = {
-        app     = "armonik"
-        service = "admin-gui"
-      }
+      match_labels = var.admin_gui.labels
     }
     template {
       metadata {
         name      = "admin-gui"
         namespace = var.namespace
-        labels = {
-          app     = "armonik"
-          service = "admin-gui"
-        }
+        labels    = var.admin_gui.labels
       }
       spec {
         dynamic "toleration" {
-          for_each = (local.admin_gui_node_selector != {} ? [
-            for index in range(0, length(local.admin_gui_node_selector_keys)) : {
-              key   = local.admin_gui_node_selector_keys[index]
-              value = local.admin_gui_node_selector_values[index]
+          for_each = (var.admin_gui.node_selector != {} ? [
+            for key, value in var.admin_gui.node_selector : {
+              key   = key
+              value = value
             }
           ] : [])
           content {
@@ -51,7 +42,7 @@ resource "kubernetes_deployment" "admin_gui" {
         # App container
         container {
           name              = var.admin_gui.name
-          image             = var.admin_gui.tag != "" ? "${var.admin_gui.image}:${var.admin_gui.tag}" : var.admin_gui.image
+          image             = can(try(coalesce(var.admin_gui.tag))) ? "${var.admin_gui.image}:${var.admin_gui.tag}" : var.admin_gui.image
           image_pull_policy = var.admin_gui.image_pull_policy
           resources {
             limits   = var.admin_gui.limits

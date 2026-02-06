@@ -35,49 +35,29 @@ variable "logging_level" {
 variable "ingress" {
   description = "Parameters of the ingress controller"
   type = object({
-    name                   = string
-    service_type           = string
-    replicas               = number
-    image                  = string
-    tag                    = string
-    image_pull_policy      = string
-    http_port              = number
-    grpc_port              = number
+    name                   = optional(string, "ingress")
+    service_type           = optional(string, "LoadBalancer")
+    replicas               = optional(number, 1)
+    image                  = optional(string, "nginxinc/nginx-unprivileged")
+    tag                    = optional(string)
+    image_pull_policy      = optional(string, "IfNotPresent")
+    http_port              = optional(number, 5000)
+    grpc_port              = optional(number, 5001)
     limits                 = optional(map(string))
     requests               = optional(map(string))
-    image_pull_secrets     = string
-    node_selector          = any
-    annotations            = any
-    tls                    = bool
-    mtls                   = bool
-    generate_client_cert   = bool
-    custom_client_ca_file  = string
+    image_pull_secrets     = optional(string, "")
+    node_selector          = optional(map(string))
+    annotations            = optional(map(string))
+    tls                    = optional(bool, false)
+    mtls                   = optional(bool, false)
+    generate_client_cert   = optional(bool, false)
+    custom_client_ca_file  = optional(string, "")
     langs                  = optional(set(string), ["en"])
     cors_allowed_host      = optional(string, "*")
     cors_allowed_headers   = optional(set(string), []) # Will be added to the default cors headers.
     cors_allowed_methods   = optional(set(string), ["GET", "POST", "OPTIONS"])
     cors_preflight_max_age = optional(number, 1728000)
   })
-  validation {
-    error_message = "Ingress mTLS requires TLS to be enabled."
-    condition     = var.ingress != null ? !var.ingress.mtls || var.ingress.tls : true
-  }
-  validation {
-    error_message = "Without TLS, http_port and grpc_port must be different."
-    condition     = var.ingress != null ? var.ingress.http_port != var.ingress.grpc_port || var.ingress.tls : true
-  }
-  validation {
-    error_message = "Client certificate generation requires mTLS to be enabled."
-    condition     = var.ingress != null ? !var.ingress.generate_client_cert || var.ingress.mtls : true
-  }
-  validation {
-    error_message = "Cannot generate client certificates if the client CA is custom."
-    condition     = var.ingress != null ? !var.ingress.mtls || var.ingress.custom_client_ca_file == "" || !var.ingress.generate_client_cert : true
-  }
-  validation {
-    error_message = "English must be supported."
-    condition     = contains(var.ingress.langs, "en")
-  }
 }
 
 # Job to insert partitions in the database
@@ -141,17 +121,23 @@ variable "init" {
 variable "admin_gui" {
   description = "Parameters of the admin GUI"
   type = object({
-    name               = string
-    image              = string
-    tag                = string
-    port               = number
-    limits             = optional(map(string))
-    requests           = optional(map(string))
-    service_type       = string
-    replicas           = number
-    image_pull_policy  = string
-    image_pull_secrets = string
-    node_selector      = any
+    name  = optional(string, "admin-app")
+    image = optional(string, "dockerhubaneo/armonik_admin_app")
+    tag   = string
+    port  = optional(number, 1080)
+    limits = optional(object({
+      cpu    = optional(string)
+      memory = optional(string)
+    }))
+    requests = optional(object({
+      cpu    = optional(string)
+      memory = optional(string)
+    }))
+    service_type       = optional(string, "ClusterIP")
+    replicas           = optional(number, 1)
+    image_pull_policy  = optional(string, "IfNotPresent")
+    image_pull_secrets = optional(string, "")
+    node_selector      = optional(map(string), {})
   })
   default = null
 }

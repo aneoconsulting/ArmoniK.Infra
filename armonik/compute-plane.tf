@@ -29,6 +29,11 @@ module "polling_agent_aggregation" {
       env = {
         for queue in tolist(local.supported_queues) : queue => each.key
       }
+    },
+    {
+      env = {
+        Pollster__CacheEvictionThreshold = can(coalesce(each.value.node_cache.path)) ? tostring(each.value.node_cache.threshold) : "0"
+      }
   }, module.compute_aggregation[each.key], each.value.polling_agent.conf])
 }
 
@@ -234,8 +239,13 @@ resource "kubernetes_deployment" "compute_plane" {
           }
 
           volume_mount {
+            name       = "comm-volume"
+            mount_path = "/cache/shared"
+          }
+
+          volume_mount {
             name       = "cache-volume"
-            mount_path = "/cache"
+            mount_path = "/cache/internal"
           }
 
           #mount from conf
@@ -377,8 +387,8 @@ resource "kubernetes_deployment" "compute_plane" {
               }
             }
             volume_mount {
-              name       = "cache-volume"
-              mount_path = "/cache"
+              name       = "comm-volume"
+              mount_path = "/cache/shared"
             }
             dynamic "volume_mount" {
               for_each = (local.check_file_storage_type == "FS" ? [1] : [])
@@ -391,10 +401,26 @@ resource "kubernetes_deployment" "compute_plane" {
           }
         }
         volume {
-          name = "cache-volume"
+          name = "comm-volume"
           empty_dir {
             medium     = try(each.value.cache_config.memory ? "Memory" : null, null)
             size_limit = try(each.value.cache_config.size_limit, null)
+          }
+        }
+
+        volume {
+          name = "cache-volume"
+          dynamic "host_path" {
+            for_each = (can(coalesce(each.value.node_cache.path)) ? [1] : [])
+            content {
+              path = each.value.node_cache.path
+              type = "DirectoryOrCreate"
+            }
+          }
+          dynamic "empty_dir" {
+            for_each = (can(coalesce(each.value.node_cache.path)) ? [] : [1])
+            content {
+            }
           }
         }
 
@@ -427,11 +453,6 @@ resource "kubernetes_deployment" "compute_plane" {
                   command = ["/bin/sh", "-c", local.pre_stop_wait_script]
                 }
               }
-            }
-            volume_mount {
-              name       = "cache-volume"
-              mount_path = "/cache"
-              read_only  = true
             }
             # Please don't change below read-only permissions
             dynamic "volume_mount" {

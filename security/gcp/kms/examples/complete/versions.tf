@@ -3,19 +3,19 @@ terraform {
   required_providers {
     google = {
       source  = "hashicorp/google"
-      version = "~> 6.16.0"
+      version = "~> 6.50.0"
     }
     local = {
       source  = "hashicorp/local"
-      version = "~> 2.4.0"
+      version = "~> 2.7.0"
     }
     external = {
       source  = "hashicorp/external"
-      version = "~> 2.3.1"
+      version = "~> 2.3.5"
     }
     null = {
       source  = "hashicorp/null"
-      version = "~> 3.2.1"
+      version = "~> 3.2.4"
     }
   }
 }

@@ -199,6 +199,10 @@ variable "compute_plane" {
       memory     = bool
       size_limit = string # if larger than supported, the max value for the node will be used instead
     })
+    node_cache = optional(object({
+      path      = optional(string)
+      threshold = optional(number, 0)
+    }))
     readiness_probe = optional(bool, false)
     hpa             = any
   }))

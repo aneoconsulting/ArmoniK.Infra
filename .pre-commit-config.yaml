@@ -8,12 +8,6 @@ repos:
     rev: v1.80.0
     hooks:
       - id: terraform_fmt
-      - id: terraform_docs
-        args:
-          - --args=--lockfile=false
-          - --args=--output-file=README.md
-          - --args=--output-mode=inject
-          - --args=--indent=2
       - id: terraform_validate
       - id: terraform_tflint
         args:
@@ -63,3 +57,10 @@ repos:
           - --chart-search-root=charts # Make the tool search for charts only under the `charts` directory
           - --template-files=./_templates.gotmpl # The `./` makes it relative to the chart-search-root set above
           - --template-files=README.md.gotmpl # Repeating the flag adds this to the list, now [./_templates.gotmpl, README.md.gotmpl] # A base filename makes it relative to each chart directory found
+  - repo: local
+    hooks:
+      - id: forbid-generated-docs
+        name: Forbid generated docs in README
+        entry: .pre-commit/forbid-generated-docs.py
+        language: python
+        files: \.md$

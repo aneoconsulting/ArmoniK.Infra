@@ -3,19 +3,19 @@ terraform {
   required_providers {
     helm = {
       source  = "hashicorp/helm"
-      version = ">= 2.10.1, < 3.0.0"
+      version = ">= 2.17.0, < 3.0.0"
     }
     random = {
       source  = "hashicorp/random"
-      version = ">= 3.5.1"
+      version = ">= 3.8.1"
     }
     kubernetes = {
       source  = "hashicorp/kubernetes"
-      version = ">= 2.21.1"
+      version = ">= 2.38.0"
     }
     local = {
       source  = "hashicorp/local"
-      version = ">= 2.4.0"
+      version = ">= 2.7.0"
     }
   }
 }

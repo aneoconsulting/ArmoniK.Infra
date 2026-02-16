@@ -16,7 +16,7 @@ in [Contributing to ArmoniK Infrastructure](./CONTRIBUTING.md).
 # Bugs/Support
 
 Please direct enquiries about ArmoniK to the public mailing
-list [armonik-support@aneo.fr](mailto:armonik-support@aneo.fr).
+list [armonik@aneo.fr](mailto:armonik@aneo.fr).
 
 See also [Issues](https://github.com/aneoconsulting/ArmoniK.Infra/issues) of ArmoniK project.
 

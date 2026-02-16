@@ -1,0 +1,35 @@
+# Read the Docs configuration file
+# See https://docs.readthedocs.io/en/stable/config-file/v2.html for details
+
+# Required
+version: 2
+
+# Set the OS and  Python version
+build:
+  os: ubuntu-24.04
+  tools:
+    python: "3.13"
+  jobs:
+      pre_install:
+        # Upgrade pip to latest version
+        - pip install --upgrade pip
+      pre_build:
+        # Download and extract terraform-docs binary
+        - wget -qO- https://github.com/terraform-docs/terraform-docs/releases/download/v0.19.0/terraform-docs-v0.19.0-linux-amd64.tar.gz | tar xz
+        - chmod +x terraform-docs
+        # Generate all terraform-docs READMEs using script (TFDOCS env var points to binary)
+        - TFDOCS="./terraform-docs" bash .docs/generate-tf-docs.sh
+        - bash .docs/generate-docs-symlinks.sh
+
+# Move anchors out of the titles
+# Build documentation in the ".docs/" directory with Sphinx
+sphinx:
+   configuration: .docs/conf.py
+
+# Optionally, but recommended,
+# declare the Python requirements required to build your documentation
+# See https://docs.readthedocs.io/en/stable/guides/reproducible-builds.html
+python:
+   install:
+   - requirements: .docs/requirements.txt
+        

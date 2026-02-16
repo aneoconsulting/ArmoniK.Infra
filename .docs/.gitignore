@@ -1,0 +1,13 @@
+# Sphinx build outputs
+_build/
+_static/
+_templates/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# OS
+.DS_Store
+Thumbs.db

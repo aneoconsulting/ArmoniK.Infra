@@ -85,7 +85,7 @@ resource "kubernetes_deployment" "example" {
 
 
         container {
-          image = "nginx:1.27.4"
+          image = "nginx:1.29.5"
           name  = "example"
 
           resources {

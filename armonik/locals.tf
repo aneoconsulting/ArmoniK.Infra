@@ -3,47 +3,47 @@ locals {
   supported_queues = toset(["Pollster__PartitionId", "Amqp__PartitionId", "PubSub__PartitionId", "SQS__PartitionId"])
 
   # list of partitions
-  partition_names   = keys(try(var.compute_plane, {}))
-  default_partition = try(contains(local.partition_names, coalesce(var.control_plane.default_partition)), false) ? var.control_plane.default_partition : try(local.partition_names[0], "")
+  partition_names   = keys(try(coalesce(var.compute_plane), {}))
+  default_partition = try(contains(local.partition_names, coalesce(var.control_plane.default_partition)), false) ? var.control_plane.default_partition : try(coalesce(local.partition_names[0]), "")
 
   # Node selector for control plane
-  control_plane_node_selector        = try(var.control_plane.node_selector, {})
+  control_plane_node_selector        = try(coalesce(var.control_plane.node_selector), {})
   control_plane_node_selector_keys   = keys(local.control_plane_node_selector)
   control_plane_node_selector_values = values(local.control_plane_node_selector)
 
   # Node selector for ingress
-  ingress_node_selector        = try(var.ingress.node_selector, {})
+  ingress_node_selector        = try(coalesce(var.ingress.node_selector), {})
   ingress_node_selector_keys   = keys(local.ingress_node_selector)
   ingress_node_selector_values = values(local.ingress_node_selector)
 
   # Node selector for admin GUI
-  admin_gui_node_selector        = try(var.admin_gui.node_selector, {})
+  admin_gui_node_selector        = try(coalesce(var.admin_gui.node_selector), {})
   admin_gui_node_selector_keys   = keys(local.admin_gui_node_selector)
   admin_gui_node_selector_values = values(local.admin_gui_node_selector)
 
   # Node selector for compute plane
-  compute_plane_node_selector        = { for partition, compute_plane in var.compute_plane : partition => try(compute_plane.node_selector, {}) }
+  compute_plane_node_selector        = { for partition, compute_plane in var.compute_plane : partition => try(coalesce(compute_plane.node_selector), {}) }
   compute_plane_node_selector_keys   = { for partition in local.partition_names : partition => keys(local.compute_plane_node_selector[partition]) }
   compute_plane_node_selector_values = { for partition in local.partition_names : partition => values(local.compute_plane_node_selector[partition]) }
 
   # Node selector for pod to insert partitions IDs in database
-  job_partitions_in_database_node_selector        = try(var.job_partitions_in_database.node_selector, {})
+  job_partitions_in_database_node_selector        = try(coalesce(var.job_partitions_in_database.node_selector), {})
   job_partitions_in_database_node_selector_keys   = keys(local.job_partitions_in_database_node_selector)
   job_partitions_in_database_node_selector_values = values(local.job_partitions_in_database_node_selector)
 
   # Node selector for pod to insert authentication data in database
-  job_authentication_in_database_node_selector        = try(var.authentication.node_selector, {})
+  job_authentication_in_database_node_selector        = try(coalesce(var.authentication.node_selector), {})
   job_authentication_in_database_node_selector_keys   = keys(local.job_authentication_in_database_node_selector)
   job_authentication_in_database_node_selector_values = values(local.job_authentication_in_database_node_selector)
 
   # Authentication
-  authentication_require_authentication = try(var.authentication.require_authentication, false)
-  authentication_require_authorization  = try(var.authentication.require_authorization, false)
+  authentication_require_authentication = try(coalesce(var.authentication.require_authentication), false)
+  authentication_require_authorization  = try(coalesce(var.authentication.require_authorization), false)
 
   # Annotations
-  control_plane_annotations = try(var.control_plane.annotations, {})
-  compute_plane_annotations = { for partition in local.partition_names : partition => try(var.compute_plane[partition].annotations, {}) }
-  ingress_annotations       = try(var.ingress.annotations, {})
+  control_plane_annotations = try(coalesce(var.control_plane.annotations), {})
+  compute_plane_annotations = { for partition in local.partition_names : partition => try(coalesce(var.compute_plane[partition].annotations), {}) }
+  ingress_annotations       = try(coalesce(var.ingress.annotations), {})
 
   # Shared storage
   file_storage_type       = var.shared_storage_settings != null ? lower(var.shared_storage_settings.file_storage_type) : "FS"
@@ -179,7 +179,7 @@ locals {
   }
   hpa_control_plane_triggers = {
     triggers = [
-      for trigger in try(var.control_plane.hpa.triggers, []) :
+      for trigger in try(coalesce(var.control_plane.hpa.triggers), []) :
       (lower(try(trigger.type, "")) == "cpu" || lower(try(trigger.type, "")) == "memory" ? {
         type       = lower(trigger.type)
         metricType = try(trigger.metric_type, "Utilization")
@@ -196,8 +196,8 @@ locals {
 
   #metrics
   metrics_exporter = {
-    node_selector_keys   = keys(var.metrics_exporter.node_selector)
-    node_selector_values = values(var.metrics_exporter.node_selector)
+    node_selector_keys   = keys(try(coalesce(var.metrics_exporter.node_selector), {}))
+    node_selector_values = values(try(coalesce(var.metrics_exporter.node_selector), {}))
   }
 
   job_init           = var.init != null

@@ -2,14 +2,14 @@
 # Certificate Authority
 #------------------------------------------------------------------------------
 resource "tls_private_key" "root_ingress" {
-  count       = var.ingress.tls ? 1 : 0
+  count       = local.generate_server_certs ? 1 : 0
   algorithm   = "RSA"
   ecdsa_curve = "P384"
   rsa_bits    = "4096"
 }
 
 resource "tls_self_signed_cert" "root_ingress" {
-  count                 = length(tls_private_key.root_ingress)
+  count                 = local.generate_server_certs ? 1 : 0
   private_key_pem       = tls_private_key.root_ingress[0].private_key_pem
   is_ca_certificate     = true
   validity_period_hours = "168"
@@ -19,9 +19,9 @@ resource "tls_self_signed_cert" "root_ingress" {
     "digital_signature"
   ]
   subject {
-    organization = var.certificate_authority.organization
-    common_name  = var.certificate_authority.common_name
-    country      = var.certificate_authority.country
+    organization = "ArmoniK Ingress Root (NonTrusted)"
+    common_name  = "ArmoniK Ingress Root (NonTrusted) Private Certificate Authority"
+    country      = "France"
   }
 }
 
@@ -29,14 +29,14 @@ resource "tls_self_signed_cert" "root_ingress" {
 # Client Certificate Authority
 #------------------------------------------------------------------------------
 resource "tls_private_key" "client_root_ingress" {
-  count       = var.ingress.mtls && !can(try(coalesce(var.ingress.client_certs.custom_ca_file))) ? 1 : 0
+  count       = local.generate_client_certs ? 1 : 0
   algorithm   = "RSA"
   ecdsa_curve = "P384"
   rsa_bits    = "4096"
 }
 
 resource "tls_self_signed_cert" "client_root_ingress" {
-  count                 = length(tls_private_key.client_root_ingress)
+  count                 = local.generate_client_certs ? 1 : 0
   private_key_pem       = tls_private_key.client_root_ingress[0].private_key_pem
   is_ca_certificate     = true
   validity_period_hours = "168"
@@ -56,14 +56,14 @@ resource "tls_self_signed_cert" "client_root_ingress" {
 # Server Certificate
 #------------------------------------------------------------------------------
 resource "tls_private_key" "ingress_private_key" {
-  count       = length(tls_private_key.root_ingress)
+  count       = local.generate_server_certs ? 1 : 0
   algorithm   = "RSA"
   ecdsa_curve = "P384"
   rsa_bits    = "4096"
 }
 
 resource "tls_cert_request" "ingress_cert_request" {
-  count           = length(tls_private_key.ingress_private_key)
+  count           = local.generate_server_certs ? 1 : 0
   private_key_pem = tls_private_key.ingress_private_key[0].private_key_pem
   subject {
     country     = "France"
@@ -76,7 +76,7 @@ resource "tls_cert_request" "ingress_cert_request" {
 }
 
 resource "tls_locally_signed_cert" "ingress_certificate" {
-  count                 = length(tls_cert_request.ingress_cert_request)
+  count                 = local.generate_server_certs ? 1 : 0
   cert_request_pem      = tls_cert_request.ingress_cert_request[0].cert_request_pem
   ca_private_key_pem    = tls_private_key.root_ingress[0].private_key_pem
   ca_cert_pem           = tls_self_signed_cert.root_ingress[0].cert_pem
@@ -91,27 +91,19 @@ resource "tls_locally_signed_cert" "ingress_certificate" {
 }
 
 resource "kubernetes_secret" "ingress_certificate" {
-  count = length(tls_locally_signed_cert.ingress_certificate)
+  count = var.tls != null ? 1 : 0
   metadata {
-    name      = "${var.ingress.name}-server-certificates"
+    name      = "${var.nginx.name}-server-certs"
     namespace = var.namespace
   }
-  data = {
-    "ingress.pem" = format("%s\n%s", tls_locally_signed_cert.ingress_certificate[0].cert_pem, tls_private_key.ingress_private_key[0].private_key_pem)
-    "ingress.crt" = tls_locally_signed_cert.ingress_certificate[0].cert_pem
-    "ingress.key" = tls_private_key.ingress_private_key[0].private_key_pem
-  }
+  data = local.formatted_server_certs
 }
 
 #------------------------------------------------------------------------------
 # Client Certificate
 #------------------------------------------------------------------------------
 resource "tls_private_key" "ingress_client_private_key" {
-  for_each = toset(
-    !var.ingress.mtls ? [] :
-    length(tls_private_key.client_root_ingress) == 0 ? [] :
-    var.ingress.client_certs.generate ? keys(local.permissions) : ["Submitter"]
-  )
+  for_each    = local.generate_client_certs ? var.mtls.generate_certs_for : toset([])
   algorithm   = "RSA"
   ecdsa_curve = "P384"
   rsa_bits    = "4096"
@@ -158,9 +150,9 @@ resource "pkcs12_from_pem" "ingress_client_pkcs12" {
 }
 
 resource "kubernetes_secret" "ingress_client_certificate" {
-  count = length(tls_locally_signed_cert.ingress_client_certificate) > 0 ? 1 : 0
+  count = local.generate_client_certs ? 1 : 0
   metadata {
-    name      = "${var.ingress.name}-user-certificates"
+    name      = "${var.nginx.name}-client-certs"
     namespace = var.namespace
   }
   data = merge([for name, cert in tls_locally_signed_cert.ingress_client_certificate :
@@ -173,25 +165,25 @@ resource "kubernetes_secret" "ingress_client_certificate" {
 }
 
 resource "kubernetes_secret" "ingress_client_certificate_authority" {
-  count = length(tls_locally_signed_cert.ingress_client_certificate) > 0 || can(try(coalesce(var.ingress.client_certs.custom_ca_file))) && var.ingress.mtls ? 1 : 0
+  count = var.mtls != null ? 1 : 0
   metadata {
-    name      = "${var.ingress.name}-user-certificate-authority"
+    name      = "${var.nginx.name}-client-ca"
     namespace = var.namespace
   }
   data = {
-    "ca.pem" = can(try(coalesce(var.ingress.client_certs.custom_ca_file))) ? file(var.ingress.client_certs.custom_ca_file) : tls_self_signed_cert.client_root_ingress[0].cert_pem
+    "ca.pem" = local.client_ca_pem
   }
 }
 
 resource "local_sensitive_file" "ingress_ca" {
-  count           = length(tls_self_signed_cert.root_ingress)
+  count           = local.generate_server_certs ? 1 : 0
   content         = tls_self_signed_cert.root_ingress[0].cert_pem
   filename        = "${path.root}/generated/certificates/ingress/ca.crt"
   file_permission = "0600"
 }
 
 resource "local_sensitive_file" "ingress_client_ca" {
-  count           = length(tls_self_signed_cert.client_root_ingress)
+  count           = local.generate_client_certs ? 1 : 0
   content         = tls_self_signed_cert.client_root_ingress[0].cert_pem
   filename        = "${path.root}/generated/certificates/ingress/client_ca.crt"
   file_permission = "0600"

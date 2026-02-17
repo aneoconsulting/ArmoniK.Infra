@@ -15,10 +15,7 @@ module "control_plane_endpoint" {
 }
 
 locals {
-  cluster_domain = try(regex("kubernetes\\s+(\\S+)\\s", data.kubernetes_config_map.dns.data["Corefile"])[0], "cluster.local")
-  control_plane_endpoints = {
-    ip   = module.control_plane_endpoint.host
-    port = module.control_plane_endpoint.ports[0]
-  }
-  control_plane_url = "http://${local.control_plane_endpoints.ip}:${local.control_plane_endpoints.port}"
+  cluster_domain                  = try(regex("kubernetes\\s+(\\S+)\\s", data.kubernetes_config_map.dns.data["Corefile"])[0], "cluster.local")
+  internal_control_plane_endpoint = "${module.control_plane_endpoint.host}:${module.control_plane_endpoint.ports[0]}"
+  internal_control_plane_url      = "http://${local.internal_control_plane_endpoint}"
 }

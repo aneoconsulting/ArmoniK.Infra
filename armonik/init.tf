@@ -12,16 +12,39 @@ locals {
     }
   ]
 
+  client_certs                 = try(module.ingress[0].client_certificates, {})
+  init_authentication_provided = can(try(coalesce(var.authentication.authentication_datafile))) ? jsondecode(file(var.authentication.authentication_datafile)) : null
+  init_authentication_users = local.init_authentication_provided == null ? [
+    for name, cert in local.client_certs : {
+      Username = name
+      Roles    = [name]
+    }
+  ] : local.init_authentication_provided.users_list
+  init_authentication_roles = local.init_authentication_provided == null ? [
+    for name, cert in local.client_certs : {
+      RoleName    = name
+      Permissions = local.ingress_generated_cert.permissions[name]
+    }
+  ] : local.init_authentication_provided.roles_list
+
+  init_authentication_certs = local.init_authentication_provided == null ? [
+    for name, cert in local.client_certs : {
+      Fingerprint = cert.certificates[length(cert.certificates) - 1].sha1_fingerprint
+      Cn          = try(module.ingress[0].common_names_map[name], "")
+      Username    = name
+    }
+  ] : local.init_authentication_provided.certificates_list
+
   init_partitions_env = { for i, partition in local.init_partitions :
     "InitServices__Partitioning__Partitions__${i}" => jsonencode(partition)
   }
-  init_authentication_users_env = { for i, user in module.external_access[0].init_authentication.users :
+  init_authentication_users_env = { for i, user in try(local.init_authentication_users, {}) :
     "InitServices__Authentication__Users__${i}" => jsonencode(merge(user, { Name = user.Username }))
   }
-  init_authentication_roles_env = { for i, role in module.external_access[0].init_authentication.roles :
+  init_authentication_roles_env = { for i, role in try(local.init_authentication_roles, {}) :
     "InitServices__Authentication__Roles__${i}" => jsonencode(merge(role, { Name = role.RoleName }))
   }
-  init_authentication_certs_env = { for i, cert in module.external_access[0].init_authentication.certs :
+  init_authentication_certs_env = { for i, cert in try(local.init_authentication_certs, {}) :
     "InitServices__Authentication__UserCertificates__${i}" => jsonencode(merge(cert, { User = cert.Username }))
   }
 }

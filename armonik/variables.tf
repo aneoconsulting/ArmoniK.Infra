@@ -58,6 +58,26 @@ variable "ingress" {
     cors_allowed_methods   = optional(set(string), ["GET", "POST", "OPTIONS"])
     cors_preflight_max_age = optional(number, 1728000)
   })
+  validation {
+    error_message = "Ingress mTLS requires TLS to be enabled."
+    condition     = !try(var.ingress.mtls, false) || var.ingress.tls
+  }
+  validation {
+    error_message = "Without TLS, http_port and grpc_port must be different."
+    condition     = !(try(var.ingress.tls, true)) ? try((var.ingress.http_port != var.ingress.grpc_port), true) : true
+  }
+  validation {
+    error_message = "Client certificate generation requires mTLS to be enabled."
+    condition     = try(var.ingress.generate_client_cert, false) ? try(var.ingress.mtls, true) : true
+  }
+  validation {
+    error_message = "English must be supported."
+    condition     = contains(try(var.ingress.langs, ["en"]), "en")
+  }
+  validation {
+    error_message = "Length of 'var.ingress.name' must not exceed 10 characters"
+    condition     = length(try(var.ingress.name, "")) > 10 ? false : true
+  }
 }
 
 # Job to insert partitions in the database
@@ -204,7 +224,7 @@ variable "authentication" {
     image_pull_policy       = optional(string)
     image_pull_secrets      = optional(string)
     node_selector           = optional(any)
-    authentication_datafile = string
+    authentication_datafile = optional(string)
     require_authentication  = bool
     require_authorization   = bool
     trusted_common_names    = optional(set(string), [])
@@ -215,8 +235,12 @@ variable "authentication" {
   }
   validation {
     error_message = "File specified in authentication.authentication_datafile must be a valid json file if the field is not empty."
-    condition     = var.authentication == null || !var.authentication.require_authentication || var.authentication.authentication_datafile == "" || try(fileexists(var.authentication.authentication_datafile), false) && can(jsondecode(file(var.authentication.authentication_datafile)))
+    condition     = !can(coalesce(var.authentication.authentication_datafile)) || !var.authentication.require_authentication || try(fileexists(var.authentication.authentication_datafile), false) && can(jsondecode(file(var.authentication.authentication_datafile)))
   }
+  # validation {
+  #   error_message = "Authentication or authorization requires mTLS"
+  #   condition     = var.authentication == null || !var.authentication.require_authentication || length(var.authentication.trusted_common_names) > 0
+  # }
 }
 
 # The output of modules.
@@ -382,4 +406,82 @@ variable "configurations" {
     metrics = optional(any, [])
     jobs    = optional(any, [])
   })
+}
+
+# variable "clusters" {
+#   type = map(object({
+#     endpoint                = optional(string)
+#     cert_pem                = optional(string)
+#     key_pem                 = optional(string)
+#     ca_cert                 = optional(string)
+#     allow_unsafe_connection = optional(bool, false)
+#     override_target_name    = optional(string)
+#     pool_size               = optional(number)
+#     requests_per_connection = optional(number)
+#     multiplex               = optional(bool, false)
+#     fallback                = optional(bool, false)
+#     forward_headers         = optional(list(string))
+#     grafana_url             = optional(string)
+#     seq_url                 = optional(string)
+#     s3_urls = optional(object({
+#       service = string
+#       console = string
+#     }))
+#   }))
+#   default = null
+#   validation {
+#     error_message = "var.clusters can only be used if load balancing is active (var.load_balancer not null)"
+#     condition     = var.clusters != null ? var.load_balancer != null : true
+#   }
+# }
+
+# variable "default_cluster" {
+#   type    = string
+#   default = null
+#   validation {
+#     error_message = "var.default_cluster is irrelevant if no cluster is provided (i.e. var.clusters is null)"
+#     condition = can(try(coalesce(var.default_cluster))) ? can(try(coalescelist(keys(var.clusters)))) : true
+#   }
+#   validation {
+#     error_message = "var.default_cluster must correspond to a key of var.clusters"
+#     condition     = can(try(coalesce(var.default_cluster))) ? contains(coalescelist(keys(var.clusters), [""]), var.default_cluster) : true
+#   }
+#   validation {
+#     error_message = "var.default_cluster is irrelevant if load balancing is not enforced (i.e. if var.load_balancer is null)"
+#     condition     = can(try(coalesce(var.default_cluster))) ? var.load_balancer != null : true
+#   }
+# }
+
+variable "load_balancer" {
+  description = "Parameters of the Load Balancer deployment"
+  type = object({
+    image              = optional(string, "dockerhubaneo/armonik_load_balancer")
+    tag                = optional(string)
+    image_pull_policy  = optional(string, "IfNotPresent")
+    limits             = optional(map(string))
+    requests           = optional(map(string))
+    image_pull_secrets = optional(string, "")
+    replicas           = optional(number, 1)
+    node_selector      = optional(map(string), {})
+    annotations        = optional(map(string), {})
+    service = optional(object({
+      type        = optional(string, "HeadLess")
+      annotations = optional(map(string), {})
+    }))
+    labels = optional(map(string), {
+      app     = "armonik",
+      service = "load-balancer"
+    })
+    conf = optional(object({
+      listen_ip             = optional(string)
+      listen_port           = optional(number, 8081)
+      refresh_delay_seconds = optional(number)
+      sqlite_db_path        = optional(string)
+      session_cache_size    = optional(number)
+      result_cache_size     = optional(number)
+      task_cache_size       = optional(number)
+    }), {})
+    extra_env = optional(map(string))
+  })
+  default = null
 }

@@ -1,27 +1,27 @@
 # Nginx Ingress deployment
 resource "kubernetes_deployment" "ingress" {
   metadata {
-    name      = var.ingress.name
+    name      = var.nginx.name
     namespace = var.namespace
-    labels = var.ingress.labels
+    labels    = var.nginx.labels
   }
   spec {
-    replicas = var.ingress.replicas
+    replicas = var.nginx.replicas
     selector {
-      match_labels = var.ingress.labels
+      match_labels = var.nginx.labels
     }
     template {
       metadata {
-        name        = var.ingress.name
+        name        = var.nginx.name
         namespace   = var.namespace
-        labels      = var.ingress.labels
-        annotations = var.ingress.annotations
+        labels      = var.nginx.labels
+        annotations = var.nginx.annotations
       }
       spec {
-        node_selector = var.ingress.node_selector
+        node_selector = var.nginx.node_selector
         dynamic "toleration" {
-          for_each = (var.ingress.node_selector != {} ? [
-            for key, value in var.ingress.node_selector : {
+          for_each = (var.nginx.node_selector != {} ? [
+            for key, value in var.nginx.node_selector : {
               key   = key
               value = value
             }
@@ -34,20 +34,20 @@ resource "kubernetes_deployment" "ingress" {
           }
         }
         dynamic "image_pull_secrets" {
-          for_each = (var.ingress.image_pull_secrets != "" ? [1] : [])
+          for_each = (var.nginx.image_pull_secrets != "" ? [1] : [])
           content {
-            name = var.ingress.image_pull_secrets
+            name = var.nginx.image_pull_secrets
           }
         }
         restart_policy = "Always" # Always, OnFailure, Never
         # Control plane container
         container {
-          name              = var.ingress.name
-          image             = can(try(coalesce(var.ingress.tag))) ? "${var.ingress.image}:${var.ingress.tag}" : var.ingress.image
-          image_pull_policy = var.ingress.image_pull_policy
+          name              = var.nginx.name
+          image             = can(try(coalesce(var.nginx.tag))) ? "${var.nginx.image}:${var.nginx.tag}" : var.nginx.image
+          image_pull_policy = var.nginx.image_pull_policy
           resources {
-            limits   = var.ingress.limits
-            requests = var.ingress.requests
+            limits   = var.nginx.limits
+            requests = var.nginx.requests
           }
           dynamic "port" {
             for_each = local.target_ports
@@ -58,7 +58,7 @@ resource "kubernetes_deployment" "ingress" {
           }
           env_from {
             config_map_ref {
-              name = kubernetes_config_map.ingress[0].metadata[0].name
+              name = kubernetes_config_map.nginx[0].metadata[0].name
             }
           }
           dynamic "volume_mount" {
@@ -111,7 +111,7 @@ resource "kubernetes_deployment" "ingress" {
         volume {
           name = "ingress-nginx"
           config_map {
-            name     = kubernetes_config_map.ingress[0].metadata[0].name
+            name     = kubernetes_config_map.nginx[0].metadata[0].name
             optional = false
           }
         }
@@ -130,20 +130,21 @@ resource "kubernetes_deployment" "ingress" {
 
 resource "kubernetes_service" "ingress" {
   metadata {
-    name      = var.ingress.name
-    namespace = var.namespace
-    labels    = var.ingress.labels
+    name        = var.nginx.name
+    namespace   = var.namespace
+    labels      = var.nginx.labels
+    annotations = var.nginx.service.annotations
   }
   spec {
-    type       = var.ingress.service_type == "HeadLess" ? "ClusterIP" : var.ingress.service_type
-    cluster_ip = var.ingress.service_type == "HeadLess" ? "None" : null
-    selector   = var.ingress.labels
+    type       = var.nginx.service.type == "HeadLess" ? "ClusterIP" : var.nginx.service.type
+    cluster_ip = var.nginx.service.type == "HeadLess" ? "None" : null
+    selector   = var.nginx.labels
     dynamic "port" {
-      for_each = var.ingress.http_port == var.ingress.grpc_port ? { http : var.ingress.http_port } : { http : var.ingress.http_port, grpc : var.ingress.grpc_port }
+      for_each = var.nginx.http_port == var.nginx.grpc_port ? { http : var.nginx.http_port } : { http : var.nginx.http_port, grpc : var.nginx.grpc_port }
       content {
         name        = port.key
         target_port = local.target_ports[port.key]
-        port        = var.ingress.service_type == "HeadLess" ? local.target_ports[port.key] : port.value
+        port        = var.nginx.service.type == "HeadLess" ? local.target_ports[port.key] : port.value
         protocol    = "TCP"
       }
     }

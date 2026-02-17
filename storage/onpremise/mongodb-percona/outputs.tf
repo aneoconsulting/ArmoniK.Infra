@@ -27,13 +27,9 @@ output "env" {
   description = "Elements to be set as environment variables"
   value = merge({
     "Components__TableStorage"  = "ArmoniK.Adapters.MongoDB.TableStorage"
-    "MongoDB__Host"             = local.mongodb_dns
-    "MongoDB__Port"             = tostring(local.mongodb_port)
     "MongoDB__Tls"              = "true" 
     "MongoDB__CAFile"           = "/mongodb/certs/ca.crt"
     "MongoDB__DatabaseName"     = var.cluster.database_name
-    "MongoDB__DirectConnection" = "false"
-    "MongoDB__AuthSource"       = "admin"
   }, var.sharding != null && var.sharding.enabled ? {
       "MongoDB__Sharding"  = "true"
       "MongoDB__ReplicaSet" = ""

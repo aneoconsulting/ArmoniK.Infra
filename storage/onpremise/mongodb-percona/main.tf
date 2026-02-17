@@ -6,6 +6,21 @@ resource "helm_release" "operator" {
   repository = var.operator.helm_chart_repository
   version    = var.operator.helm_chart_version
   timeout    = var.timeout
+
+  values = [
+    yamlencode({
+      nodeSelector = var.operator.node_selector
+      tolerations = [
+        for key, value in var.operator.node_selector : {
+          key      = key
+          operator = "Equal"
+          value    = value
+          effect   = "NoSchedule"
+        }
+      ]
+    })
+  ]
+
 }
 
 resource "helm_release" "cluster" {
@@ -15,7 +30,8 @@ resource "helm_release" "cluster" {
   repository = var.cluster.helm_chart_repository
   version    = var.cluster.helm_chart_version
   timeout    = var.timeout
-
+  wait = true
+  wait_for_jobs = true
   # Wait for the operator to be ready before creating the CR
   depends_on = [helm_release.operator]
   values = [
@@ -34,10 +50,6 @@ resource "helm_release" "cluster" {
         configsvrReplSet = var.sharding != null && var.sharding.enabled ? {
           size = var.sharding.configsvr.replicas
 
-          affinity = {
-            antiAffinityTopologyKey = "none"
-          }
-
           volumeSpec = {
             pvc = {
               resources = {
@@ -47,15 +59,25 @@ resource "helm_release" "cluster" {
               }
             }
           }
-        } : null
+        } : {
+            size = 0
+            volumeSpec = {
+              pvc = {
+                resources = {
+                  requests = {
+                    storage = "1Gi"
+                  }
+                }
+              }
+            }
+          }
 
         mongos = var.sharding != null && var.sharding.enabled ? {
           size = var.sharding.mongos.replicas
 
-          affinity = {
-            antiAffinityTopologyKey = "none"
+        } : {
+            size = 0
           }
-        } : null
       }
       allowUnsafeConfigurations = true
       unsafeFlags = {
@@ -102,14 +124,33 @@ resource "helm_release" "cluster" {
       replsets = {
         rs0 = {
           size = var.cluster.replicas
+
           affinity = {
             antiAffinityTopologyKey = "none"
           }
+
+          nodeSelector = var.cluster.node_selector
+          # will have to do this for shards/cfgsvrs but I'll do it later (kill me)
+          tolerations = [
+            for key, value in var.cluster.node_selector : {
+              key      = key
+              operator = "Equal"
+              value    = value
+              effect   = "NoSchedule"
+            }
+          ]
+          resources    = var.resources.shards
+
           volumeSpec = {
             pvc = {
+              storageClassName = try(
+                coalesce(var.persistence.shards.storage_class_name),
+                length(kubernetes_storage_class.shards) > 0 ? kubernetes_storage_class.shards[0].metadata[0].name : null,
+                null
+              )
               resources = {
                 requests = {
-                  storage = var.persistence.storage_size
+                  storage = var.persistence.shards.storage_size
                 }
               }
             }

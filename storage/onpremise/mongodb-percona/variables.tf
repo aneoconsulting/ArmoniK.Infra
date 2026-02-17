@@ -48,27 +48,63 @@ variable "cluster" {
   default = {}
 }
 
-# TODO: a lot of missing options
+variable "resources" {
+  description = "Resource requests and limits per component"
+  type = object({
+    shards = optional(object({
+      limits   = optional(map(string))
+      requests = optional(map(string))
+    }), {})
+    configsvr = optional(object({
+      limits   = optional(map(string))
+      requests = optional(map(string))
+    }), {})
+    mongos = optional(object({
+      limits   = optional(map(string))
+      requests = optional(map(string))
+    }), {})
+  })
+  default = {}
+}
 
 variable "sharding" {
   description = "Sharding configuration. Set to null to disable sharding."
   type = object({
     enabled = optional(bool, false)
     configsvr = optional(object({
-      replicas = optional(number, 1)
+      replicas      = optional(number, 1)
+      node_selector = optional(map(string), {})
     }), {})
     mongos = optional(object({
-      replicas = optional(number, 1)
+      replicas      = optional(number, 1)
+      node_selector = optional(map(string), {})
     }), {})
   })
   default = null
 }
 
-# TODO: add more options to this too
 variable "persistence" {
   description = "Persistence parameters for MongoDB pods"
   type = object({
-    storage_size = optional(string, "8Gi")
+    shards = optional(object({
+      storage_size        = optional(string, "8Gi")
+      storage_class_name  = optional(string)  # Use existing StorageClass
+      storage_provisioner = optional(string)   # Or create one
+      reclaim_policy      = optional(string, "Delete")
+      volume_binding_mode = optional(string, "WaitForFirstConsumer")
+      access_modes        = optional(list(string), ["ReadWriteOnce"])
+      parameters          = optional(map(string), {})
+    }), {})
+
+    configsvr = optional(object({
+      storage_size        = optional(string, "3Gi")
+      storage_class_name  = optional(string)
+      storage_provisioner = optional(string)
+      reclaim_policy      = optional(string, "Delete")
+      volume_binding_mode = optional(string, "WaitForFirstConsumer")
+      access_modes        = optional(list(string), ["ReadWriteOnce"])
+      parameters          = optional(map(string), {})
+    }), {})
   })
   default = {}
 }

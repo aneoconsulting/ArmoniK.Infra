@@ -14,6 +14,6 @@ locals {
   )
 
   mongodb_port = 27017
-  mongodb_connection_params = var.sharding != null && var.sharding.enabled ? "" : "&directConnection=true"
+  mongodb_connection_params = var.sharding != null && var.sharding.enabled ? "" : "?replicaSet=rs0"
   mongodb_url  = "mongodb://${local.mongodb_dns}:${local.mongodb_port}/${var.cluster.database_name}?authSource=admin"
 }

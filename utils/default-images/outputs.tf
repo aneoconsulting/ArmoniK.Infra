@@ -24,6 +24,12 @@ output "image_tags" {
     for image in var.armonik_images.extcsharp :
     image => var.armonik_versions.extcsharp
     }, {
+    for image in var.armonik_images.extcpp :
+    image => var.armonik_versions.extcpp
+    }, {
+    for image in var.armonik_images.extjava :
+    image => var.armonik_versions.extjava
+    }, {
     for image in var.armonik_images.samples :
     image => var.armonik_versions.samples
   }, var.image_tags)

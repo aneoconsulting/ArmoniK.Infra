@@ -7,6 +7,8 @@ variable "armonik_versions" {
     api           = string
     gui           = string
     extcsharp     = string
+    extcpp        = string
+    extjava       = string
     samples       = string
   })
 }
@@ -20,6 +22,8 @@ variable "armonik_images" {
     api           = set(string)
     gui           = set(string)
     extcsharp     = set(string)
+    extcpp        = set(string)
+    extjava       = set(string)
     samples       = set(string)
   })
 }

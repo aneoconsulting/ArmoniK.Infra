@@ -280,21 +280,21 @@ variable "ebs_csi" {
 variable "csi_liveness_probe" {
   description = "CSI liveness probe for both EFS and EBS"
   type = object({
-    image = optional(string, "public.ecr.aws/eks-distro/kubernetes-csi/livenessprobe")
+    image = optional(string, "public.ecr.aws/csi-components/livenessprobe")
     tag   = string
   })
 }
 variable "csi_node_driver_registrar" {
   description = "CSI node driver registrar for both EFS and EBS"
   type = object({
-    image = optional(string, "public.ecr.aws/eks-distro/kubernetes-csi/node-driver-registrar")
+    image = optional(string, "public.ecr.aws/csi-components/csi-node-driver-registrar")
     tag   = string
   })
 }
 variable "csi_external_provisioner" {
   description = "CSI external provisioner for both EFS and EBS"
   type = object({
-    image = optional(string, "public.ecr.aws/eks-distro/kubernetes-csi/external-provisioner")
+    image = optional(string, "public.ecr.aws/csi-components/csi-provisioner")
     tag   = string
   })
 }

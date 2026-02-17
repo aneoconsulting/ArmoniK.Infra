@@ -5,9 +5,9 @@ module "compute_aggregation" {
   conf_list = flatten([
     {
       env = {
-        ComputePlane__WorkerChannel__Address    = each.value.socket_type == "tcp" ? "http://localhost:10667" : "/cache/armonik_worker.sock"
+        ComputePlane__WorkerChannel__Address    = each.value.socket_type == "tcp" ? "http://localhost:10667" : "/cache/shared/armonik_worker.sock"
         ComputePlane__WorkerChannel__SocketType = each.value.socket_type
-        ComputePlane__AgentChannel__Address     = each.value.socket_type == "tcp" ? "http://localhost:10666" : "/cache/armonik_agent.sock"
+        ComputePlane__AgentChannel__Address     = each.value.socket_type == "tcp" ? "http://localhost:10666" : "/cache/shared/armonik_agent.sock"
         ComputePlane__AgentChannel__SocketType  = each.value.socket_type
       }
   }])

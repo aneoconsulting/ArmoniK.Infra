@@ -1,31 +1,11 @@
 variable "armonik_versions" {
   description = "Versions of all the ArmoniK components"
-  type = object({
-    infra         = string
-    infra_plugins = string
-    core          = string
-    api           = string
-    gui           = string
-    extcsharp     = string
-    extcpp        = string
-    extjava       = string
-    samples       = string
-  })
+  type        = map(string)
 }
 
 variable "armonik_images" {
   description = "Image names of all the ArmoniK components"
-  type = object({
-    infra         = set(string)
-    infra_plugins = set(string)
-    core          = set(string)
-    api           = set(string)
-    gui           = set(string)
-    extcsharp     = set(string)
-    extcpp        = set(string)
-    extjava       = set(string)
-    samples       = set(string)
-  })
+  type        = map(set(string))
 }
 
 variable "image_tags" {

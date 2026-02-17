@@ -96,6 +96,29 @@ resource "kubernetes_deployment" "metrics_exporter" {
             name           = var.metrics_exporter.port_name
             container_port = var.metrics_exporter.target_port
           }
+          liveness_probe {
+            http_get {
+              path = "/liveness"
+              port = var.metrics_exporter.target_port
+            }
+            initial_delay_seconds = 15
+            period_seconds        = 5
+            timeout_seconds       = 1
+            success_threshold     = 1
+            failure_threshold     = 1
+          }
+          startup_probe {
+            http_get {
+              path = "/startup"
+              port = var.metrics_exporter.target_port
+            }
+            initial_delay_seconds = 1
+            period_seconds        = 3
+            timeout_seconds       = 1
+            success_threshold     = 1
+            failure_threshold     = 20
+            # the pod has (period_seconds x failure_threshold) seconds to finalize its startup
+          }
 
           dynamic "env_from" {
             for_each = module.metrics_aggregation.env_configmap

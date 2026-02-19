@@ -79,8 +79,26 @@ resource "kubectl_manifest" "cluster" {
 
         configsvrReplSet = var.sharding != null && var.sharding.enabled ? {
           size = var.sharding.configsvr.replicas
+
+          nodeSelector = var.sharding.configsvr.node_selector
+          tolerations = [
+            for key, value in var.sharding.configsvr.node_selector : {
+              key      = key
+              operator = "Equal"
+              value    = value
+              effect   = "NoSchedule"
+            }
+          ]
+
+          resources = var.resources.configsvr
+
           volumeSpec = {
             persistentVolumeClaim = {
+              storageClassName = try(
+                coalesce(var.persistence.configsvr.storage_class_name),
+                length(kubernetes_storage_class.configsvr) > 0 ? kubernetes_storage_class.configsvr[0].metadata[0].name : null,
+                null
+              )
               resources = {
                 requests = { storage = var.persistence.configsvr.storage_size }
               }
@@ -88,8 +106,12 @@ resource "kubectl_manifest" "cluster" {
           }
         } : {
           size = 0
+          resources = {}
+          nodeSelector = {}
+          tolerations = []
           volumeSpec = {
             persistentVolumeClaim = {
+              storageClassName = ""
               resources = {
                 requests = { storage = "1Gi" }
               }
@@ -99,8 +121,25 @@ resource "kubectl_manifest" "cluster" {
 
         mongos = var.sharding != null && var.sharding.enabled ? {
           size = var.sharding.mongos.replicas
+
+          nodeSelector = var.sharding.mongos.node_selector
+
+          tolerations = [
+            for key, value in var.sharding.mongos.node_selector : {
+              key      = key
+              operator = "Equal"
+              value    = value
+              effect   = "NoSchedule"
+            }
+          ]
+
+          resources = var.resources.mongos
+
         } : {
           size = 0
+          nodeSelector = {}
+          tolerations = []
+          resources = {}
         }
       }
 

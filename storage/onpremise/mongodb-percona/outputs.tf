@@ -26,17 +26,17 @@ output "number_of_replicas" {
 output "env" {
   description = "Elements to be set as environment variables"
   value = merge({
-    "Components__TableStorage"  = "ArmoniK.Adapters.MongoDB.TableStorage"
-    "MongoDB__Tls"              = "true" 
-    "MongoDB__CAFile"           = "/mongodb/certs/ca.crt"
-    "MongoDB__DatabaseName"     = var.cluster.database_name
-  }, var.sharding != null && var.sharding.enabled ? {
-      "MongoDB__Sharding"  = "true"
-      "MongoDB__ReplicaSet" = ""
+    "Components__TableStorage" = "ArmoniK.Adapters.MongoDB.TableStorage"
+    "MongoDB__Tls"             = "true"
+    "MongoDB__CAFile"          = "/mongodb/certs/ca.crt"
+    "MongoDB__DatabaseName"    = var.cluster.database_name
+    }, var.sharding != null && var.sharding.enabled ? {
+    "MongoDB__Sharding"   = "true"
+    "MongoDB__ReplicaSet" = ""
     } : {
-      "MongoDB__Sharding"   = "false"
-      "MongoDB__ReplicaSet" = "rs0"
-    })
+    "MongoDB__Sharding"   = "false"
+    "MongoDB__ReplicaSet" = "rs0"
+  })
 }
 
 output "user_credentials" {
@@ -79,6 +79,10 @@ output "env_from_secret" {
     }
     "MongoDB__ConnectionString" = {
       secret = kubernetes_secret.mongodb_connection_string.metadata[0].name
+      field  = "uri"
+    }
+    "MongoDB__MonitoringConnectionString" = {
+      secret = kubernetes_secret.mongodb_monitoring_connection_string.metadata[0].name
       field  = "uri"
     }
   }

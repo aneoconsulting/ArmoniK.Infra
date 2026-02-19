@@ -47,8 +47,8 @@ resource "kubectl_manifest" "cluster" {
 
       secrets = {
         users = "${local.cluster_release_name}-secrets"
-      #   ssl         = "${local.cluster_release_name}-ssl"
-      #   sslInternal = "${local.cluster_release_name}-ssl-internal"
+        #   ssl         = "${local.cluster_release_name}-ssl"
+        #   sslInternal = "${local.cluster_release_name}-ssl-internal"
       }
 
       tls = {
@@ -104,11 +104,11 @@ resource "kubectl_manifest" "cluster" {
               }
             }
           }
-        } : {
-          size = 0
-          resources = {}
+          } : {
+          size         = 0
+          resources    = {}
           nodeSelector = {}
-          tolerations = []
+          tolerations  = []
           volumeSpec = {
             persistentVolumeClaim = {
               storageClassName = ""
@@ -135,17 +135,21 @@ resource "kubectl_manifest" "cluster" {
 
           resources = var.resources.mongos
 
-        } : {
-          size = 0
+          } : {
+          size         = 0
           nodeSelector = {}
-          tolerations = []
-          resources = {}
+          tolerations  = []
+          resources    = {}
         }
       }
 
       replsets = [
-        {
-          name = "rs0"
+        for i in range(
+          var.sharding != null && var.sharding.enabled
+          ? var.sharding.shards_quantity
+          : 1
+        ) : {
+          name = "rs${i}"
           size = var.cluster.replicas
 
           affinity = {

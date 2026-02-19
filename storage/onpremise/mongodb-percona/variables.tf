@@ -71,6 +71,7 @@ variable "sharding" {
   description = "Sharding configuration. Set to null to disable sharding."
   type = object({
     enabled = optional(bool, false)
+    shards_quantity = optional(number, 1)
     configsvr = optional(object({
       replicas      = optional(number, 1)
       node_selector = optional(map(string), {})
@@ -88,8 +89,8 @@ variable "persistence" {
   type = object({
     shards = optional(object({
       storage_size        = optional(string, "8Gi")
-      storage_class_name  = optional(string)  # Use existing StorageClass
-      storage_provisioner = optional(string)   # Or create one
+      storage_class_name  = optional(string) # Use existing StorageClass
+      storage_provisioner = optional(string) # Or create one
       reclaim_policy      = optional(string, "Delete")
       volume_binding_mode = optional(string, "WaitForFirstConsumer")
       access_modes        = optional(list(string), ["ReadWriteOnce"])

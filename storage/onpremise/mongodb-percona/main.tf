@@ -22,10 +22,12 @@ resource "helm_release" "operator" {
   ]
 
 }
-resource "kubernetes_manifest" "cluster" {
-  depends_on = [helm_release.operator]
+resource "kubectl_manifest" "cluster" {
+  depends_on = [
+    helm_release.operator,
+  ]
 
-  manifest = {
+  yaml_body = yamlencode({
     apiVersion = "psmdb.percona.com/v1"
     kind       = "PerconaServerMongoDB"
     metadata = {
@@ -38,10 +40,15 @@ resource "kubernetes_manifest" "cluster" {
         image   = "percona/percona-backup-mongodb:2.12.0"
       }
 
-      allowUnsafeConfigurations = true
       unsafeFlags = {
         replsetSize = var.cluster.replicas < 3
         mongosSize  = var.sharding != null && var.sharding.enabled ? var.sharding.mongos.replicas < 2 : false
+      }
+
+      secrets = {
+        users = "${local.cluster_release_name}-secrets"
+      #   ssl         = "${local.cluster_release_name}-ssl"
+      #   sslInternal = "${local.cluster_release_name}-ssl-internal"
       }
 
       tls = {
@@ -75,7 +82,7 @@ resource "kubernetes_manifest" "cluster" {
           volumeSpec = {
             persistentVolumeClaim = {
               resources = {
-                requests = { storage = var.persistence.storage_size }
+                requests = { storage = var.persistence.configsvr.storage_size }
               }
             }
           }
@@ -136,17 +143,5 @@ resource "kubernetes_manifest" "cluster" {
         }
       ]
     }
-  }
-
-  wait {
-    condition {
-      type   = "ready"
-      status = "True"
-    }
-  }
-
-  timeouts {
-    create = "15m"
-    update = "15m"
-  }
+  })
 }

@@ -4,7 +4,7 @@ terraform {
   required_providers {
     mongodbatlas = {
       source  = "mongodb/mongodbatlas"
-      version = ">= 1.12.0"
+      version = ">= 2.7.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -12,11 +12,11 @@ terraform {
     }
     kubernetes = {
       source  = "hashicorp/kubernetes"
-      version = ">= 2.21.1"
+      version = ">= 3.0.1"
     }
     aws = {
       source  = "hashicorp/aws"
-      version = ">= 5.0"
+      version = ">= 6.33.0"
     }
   }
 }

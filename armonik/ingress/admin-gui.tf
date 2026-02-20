@@ -1,37 +1,28 @@
 # Control plane deployment
 resource "kubernetes_deployment" "admin_gui" {
-  count = var.admin_gui != null ? 1 : 0
+  count = var.gui != null ? 1 : 0
   metadata {
     name      = "admin-gui"
     namespace = var.namespace
-    labels = {
-      app     = "armonik"
-      service = "admin-gui"
-    }
+    labels    = var.gui.labels
   }
   spec {
-    replicas = var.admin_gui.replicas
+    replicas = var.gui.replicas
     selector {
-      match_labels = {
-        app     = "armonik"
-        service = "admin-gui"
-      }
+      match_labels = var.gui.labels
     }
     template {
       metadata {
         name      = "admin-gui"
         namespace = var.namespace
-        labels = {
-          app     = "armonik"
-          service = "admin-gui"
-        }
+        labels    = var.gui.labels
       }
       spec {
         dynamic "toleration" {
-          for_each = (local.admin_gui_node_selector != {} ? [
-            for index in range(0, length(local.admin_gui_node_selector_keys)) : {
-              key   = local.admin_gui_node_selector_keys[index]
-              value = local.admin_gui_node_selector_values[index]
+          for_each = (var.gui.node_selector != {} ? [
+            for key, value in var.gui.node_selector : {
+              key   = key
+              value = value
             }
           ] : [])
           content {
@@ -42,20 +33,20 @@ resource "kubernetes_deployment" "admin_gui" {
           }
         }
         dynamic "image_pull_secrets" {
-          for_each = (var.admin_gui.image_pull_secrets != "" ? [1] : [])
+          for_each = (var.gui.image_pull_secrets != "" ? [1] : [])
           content {
-            name = var.admin_gui.image_pull_secrets
+            name = var.gui.image_pull_secrets
           }
         }
         restart_policy = "Always" # Always, OnFailure, Never
         # App container
         container {
-          name              = var.admin_gui.name
-          image             = var.admin_gui.tag != "" ? "${var.admin_gui.image}:${var.admin_gui.tag}" : var.admin_gui.image
-          image_pull_policy = var.admin_gui.image_pull_policy
+          name              = var.gui.name
+          image             = can(try(coalesce(var.gui.tag))) ? "${var.gui.image}:${var.gui.tag}" : var.gui.image
+          image_pull_policy = var.gui.image_pull_policy
           resources {
-            limits   = var.admin_gui.limits
-            requests = var.admin_gui.requests
+            limits   = var.gui.limits
+            requests = var.gui.requests
           }
           port {
             name           = "app-port"
@@ -79,15 +70,15 @@ resource "kubernetes_service" "admin_gui" {
     }
   }
   spec {
-    type       = var.admin_gui.service_type == "HeadLess" ? "ClusterIP" : var.admin_gui.service_type
-    cluster_ip = var.admin_gui.service_type == "HeadLess" ? "None" : null
+    type       = var.gui.service_type == "HeadLess" ? "ClusterIP" : var.gui.service_type
+    cluster_ip = var.gui.service_type == "HeadLess" ? "None" : null
     selector = {
       app     = kubernetes_deployment.admin_gui[0].metadata[0].labels.app
       service = kubernetes_deployment.admin_gui[0].metadata[0].labels.service
     }
     port {
       name        = kubernetes_deployment.admin_gui[0].spec[0].template[0].spec[0].container[0].port[0].name
-      port        = var.admin_gui.service_type == "HeadLess" ? kubernetes_deployment.admin_gui[0].spec[0].template[0].spec[0].container[0].port[0].container_port : var.admin_gui.port
+      port        = var.gui.service_type == "HeadLess" ? kubernetes_deployment.admin_gui[0].spec[0].template[0].spec[0].container[0].port[0].container_port : var.gui.port
       target_port = kubernetes_deployment.admin_gui[0].spec[0].template[0].spec[0].container[0].port[0].container_port
       protocol    = "TCP"
     }

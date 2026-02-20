@@ -1,10 +1,9 @@
 locals {
-
   armonik_cli_config = {
-    endpoint              = coalesce(local.ingress_grpc_url, local.control_plane_url)
-    certificate_authority = try(abspath(local_sensitive_file.ingress_ca[0].filename), null)
-    client_certificate    = try(abspath(local_sensitive_file.ingress_client_crt["Submitter"].filename), null)
-    client_key            = try(abspath(local_sensitive_file.ingress_client_key["Submitter"].filename), null)
+    endpoint              = coalesce(try(module.ingress[0].ingress_urls.grpc, ""), local.internal_control_plane_url)
+    certificate_authority = try(module.ingress[0].certs_files.certificate_authority, "")
+    client_certificate    = try(module.ingress[0].certs_files.client_certificate, "")
+    client_key            = try(module.ingress[0].certs_files.client_key, "")
   }
 
 }
@@ -24,15 +23,10 @@ output "armonik_config_file" {
 
 output "endpoint_urls" {
   description = "List of URL endpoints for: control-plane, Seq, Grafana and Admin GUI"
-  value = var.ingress != null ? {
-    control_plane_url = local.ingress_grpc_url != "" ? local.ingress_grpc_url : local.control_plane_url
-    grafana_url       = length(var.grafana) > 0 ? (local.ingress_http_url != "" ? "${local.ingress_http_url}/grafana/" : nonsensitive(var.grafana.url)) : ""
-    seq_web_url       = length(var.seq) > 0 ? (local.ingress_http_url != "" ? "${local.ingress_http_url}/seq/" : nonsensitive(var.seq.web_url)) : ""
-    admin_app_url     = length(kubernetes_service.admin_gui) > 0 ? (local.ingress_http_url != "" ? "${local.ingress_http_url}/admin" : local.admin_app_url) : null
-    } : {
-    control_plane_url = local.control_plane_url
-    grafana_url       = nonsensitive(var.grafana.url)
-    seq_web_url       = nonsensitive(var.seq.web_url)
-    admin_app_url     = local.admin_app_url
+  value = {
+    control_plane_url = try(module.ingress[0].endpoint_urls.control_plane, local.internal_control_plane_url)
+    grafana_url       = try(module.ingress[0].endpoint_urls.grafana, nonsensitive(var.grafana.url))
+    seq_web_url       = try(module.ingress[0].endpoint_urls.seq_web, nonsensitive(var.seq.web_url))
+    admin_app_url     = try(coalesce(module.ingress[0].endpoint_urls.admin_app), null)
   }
 }

@@ -1,6 +1,6 @@
 resource "kubernetes_job" "authentication_in_database" {
   depends_on = [
-    kubernetes_service.ingress
+    module.ingress
   ]
   count = local.job_authentication ? 1 : 0
   metadata {
@@ -169,10 +169,10 @@ resource "kubernetes_job" "authentication_in_database" {
   }
 }
 
-data "tls_certificate" "certificate_data" {
-  for_each = tls_locally_signed_cert.ingress_client_certificate
-  content  = each.value.cert_pem
-}
+# data "tls_certificate" "certificate_data" {
+#   for_each = tls_locally_signed_cert.ingress_client_certificate
+#   content  = each.value.cert_pem
+# }
 
 locals {
   authentication_data = jsonencode({

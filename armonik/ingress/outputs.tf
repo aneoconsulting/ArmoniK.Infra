@@ -21,15 +21,30 @@ output "client_certificates" {
 
 output "common_names_map" {
   description = "List of client certificate common names"
-  value       = local.common_names_map
+  value = local.generate_client_certs ? {
+    for name, cert in tls_cert_request.ingress_client_cert_request :
+    name => cert.subject[0].common_name
+  } : {}
 }
 
 output "endpoint_urls" {
   description = "List of URL endpoints for: control-plane, Seq, Grafana and Admin GUI"
   value = {
     control_plane = local.base_endpoints.grpc
-    grafana       = length(local.clusters_grafana_urls) > 0 ? { for cluster_name, url in local.clusters_grafana_urls : cluster_name => "${local.base_endpoints.http}/${cluster_name}/grafana" } : null
-    seq_web       = length(local.clusters_seq_urls) > 0 ? { for cluster_name, url in local.clusters_seq_urls : cluster_name => "${local.base_endpoints.http}/${cluster_name}/seq" } : null
+    grafana       = can(coalesce(var.clusters[var.default_cluster].grafana_url)) ? "${local.base_endpoints.http}/grafana" : null
+    seq_web       = can(coalesce(var.clusters[var.default_cluster].seq_url)) ? "${local.base_endpoints.http}/seq" : null
     admin_app     = var.gui != null ? "${local.base_endpoints.http}/admin" : ""
+  }
+}
+
+
+output "endpoint_cluster_urls" {
+  description = "List of URL endpoints for: control-plane, Seq, Grafana and Admin GUI"
+  value = {
+    for cluster in keys(var.clusters) :
+    cluster => {
+      grafana = "${local.base_endpoints.http}/${cluster}/grafana"
+      seq     = "${local.base_endpoints.http}/${cluster}/seq"
+    }
   }
 }

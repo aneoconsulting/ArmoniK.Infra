@@ -1,7 +1,14 @@
+locals {
+  target_ports = {
+    http = var.tls != null ? 8443 : 8080
+    grpc = var.tls != null ? 9443 : 9080
+  }
+}
+
 # Nginx Ingress deployment
 resource "kubernetes_deployment" "ingress" {
   metadata {
-    name      = var.nginx.name
+    name      = "${local.prefix}nginx"
     namespace = var.namespace
     labels    = var.nginx.labels
   }
@@ -12,7 +19,7 @@ resource "kubernetes_deployment" "ingress" {
     }
     template {
       metadata {
-        name        = var.nginx.name
+        name        = "${local.prefix}nginx"
         namespace   = var.namespace
         labels      = var.nginx.labels
         annotations = var.nginx.annotations
@@ -20,16 +27,11 @@ resource "kubernetes_deployment" "ingress" {
       spec {
         node_selector = var.nginx.node_selector
         dynamic "toleration" {
-          for_each = (var.nginx.node_selector != {} ? [
-            for key, value in var.nginx.node_selector : {
-              key   = key
-              value = value
-            }
-          ] : [])
+          for_each = var.nginx.node_selector
           content {
-            key      = toleration.value.key
+            key      = toleration.key
             operator = "Equal"
-            value    = toleration.value.value
+            value    = toleration.value
             effect   = "NoSchedule"
           }
         }
@@ -42,8 +44,8 @@ resource "kubernetes_deployment" "ingress" {
         restart_policy = "Always" # Always, OnFailure, Never
         # Control plane container
         container {
-          name              = var.nginx.name
-          image             = can(try(coalesce(var.nginx.tag))) ? "${var.nginx.image}:${var.nginx.tag}" : var.nginx.image
+          name              = "nginx"
+          image             = can(coalesce(var.nginx.tag)) ? "${var.nginx.image}:${var.nginx.tag}" : var.nginx.image
           image_pull_policy = var.nginx.image_pull_policy
           resources {
             limits   = var.nginx.limits
@@ -130,7 +132,7 @@ resource "kubernetes_deployment" "ingress" {
 
 resource "kubernetes_service" "ingress" {
   metadata {
-    name        = var.nginx.name
+    name        = "${local.prefix}nginx"
     namespace   = var.namespace
     labels      = var.nginx.labels
     annotations = var.nginx.service.annotations

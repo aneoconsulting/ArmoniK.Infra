@@ -1,7 +1,7 @@
 resource "kubernetes_deployment" "load_balancer" {
   count = var.load_balancer != null ? 1 : 0
   metadata {
-    name        = "armonik-load-balancer"
+    name        = "${local.prefix}load-balancer"
     namespace   = var.namespace
     labels      = var.load_balancer.labels
     annotations = var.load_balancer.annotations
@@ -13,7 +13,7 @@ resource "kubernetes_deployment" "load_balancer" {
     }
     template {
       metadata {
-        name        = "armonik-load-balancer"
+        name        = "${local.prefix}load-balancer"
         namespace   = var.namespace
         labels      = var.load_balancer.labels
         annotations = var.load_balancer.annotations
@@ -22,30 +22,25 @@ resource "kubernetes_deployment" "load_balancer" {
         node_selector  = var.load_balancer.node_selector
         restart_policy = "Always" # Always, OnFailure, Never
         dynamic "toleration" {
-          for_each = (var.load_balancer.node_selector != {} ? [
-            for key, value in var.load_balancer.node_selector : {
-              key   = key
-              value = value
-            }
-          ] : [])
+          for_each = var.load_balancer.node_selector
           content {
-            key      = toleration.value.key
+            key      = toleration.key
             operator = "Equal"
-            value    = toleration.value.value
+            value    = toleration.value
             effect   = "NoSchedule"
           }
         }
         dynamic "image_pull_secrets" {
-          for_each = can(try(coalesce(var.load_balancer.image_pull_secrets))) ? [1] : []
+          for_each = can(coalesce(var.load_balancer.image_pull_secrets)) ? [1] : []
           content {
             name = var.load_balancer.image_pull_secrets
           }
         }
         container {
           name              = "load-balancer"
-          image             = can(try(coalesce(var.load_balancer.tag))) ? "${var.load_balancer.image}:${var.load_balancer.tag}" : var.load_balancer.image
+          image             = can(coalesce(var.load_balancer.tag)) ? "${var.load_balancer.image}:${var.load_balancer.tag}" : var.load_balancer.image
           image_pull_policy = var.load_balancer.image_pull_policy
-          # args              = ["-c", "/app/config/lb.yaml"]
+          args              = ["-c", "/conf/lb.yml"]
           resources {
             limits   = var.load_balancer.limits
             requests = var.load_balancer.requests
@@ -54,26 +49,23 @@ resource "kubernetes_deployment" "load_balancer" {
             name           = "grpc"
             container_port = var.load_balancer.conf.listen_port
           }
-          env_from {
-            secret_ref {
-              name = kubernetes_secret.load_balancer_conf[0].metadata[0].name
-            }
-          }
-          dynamic "env_from" {
-            for_each = can(coalesce(var.load_balancer.conf)) ? [1] : []
-            content {
-              config_map_ref {
-                name = kubernetes_config_map.load_balancer_conf[0].metadata[0].name
-              }
-            }
-          }
           dynamic "env_from" {
             for_each = can(coalesce(var.load_balancer.extra_env)) ? [1] : []
             content {
               config_map_ref {
-                name = kubernetes_config_map.extra_conf[0].metadata[0].name
+                name = kubernetes_config_map.extra_env[0].metadata[0].name
               }
             }
+          }
+          volume_mount {
+            name       = "cluster-certs"
+            mount_path = "/cluster-certs"
+            read_only  = true
+          }
+          volume_mount {
+            name       = "lb-conf"
+            mount_path = "/conf"
+            read_only  = true
           }
           # dynamic "volume_mount" {
           #   for_each = kubernetes_secret.load_balancer_certs
@@ -83,6 +75,19 @@ resource "kubernetes_deployment" "load_balancer" {
           #     read_only  = true
           #   }
           # }
+        }
+        volume {
+          name = "cluster-certs"
+          secret {
+            secret_name = kubernetes_secret.cluster_certs[0].metadata[0].name
+            optional    = false
+          }
+        }
+        volume {
+          name = "lb-conf"
+          config_map {
+            name = kubernetes_config_map.load_balancer_conf[0].metadata[0].name
+          }
         }
         # dynamic "volume" {
         #   for_each = kubernetes_secret.load_balancer_certs
@@ -102,7 +107,7 @@ resource "kubernetes_deployment" "load_balancer" {
 resource "kubernetes_service" "load_balancer" {
   count = var.load_balancer != null ? 1 : 0
   metadata {
-    name        = "armonik-load-balancer"
+    name        = "${local.prefix}load-balancer"
     namespace   = var.namespace
     labels      = var.load_balancer.labels
     annotations = var.load_balancer.service.annotations

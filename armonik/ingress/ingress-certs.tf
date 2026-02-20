@@ -1,3 +1,7 @@
+locals {
+  generate_server_certs = !(can(coalesce(var.tls.cert_path)) && can(coalesce(var.tls.key_path)))
+}
+
 #------------------------------------------------------------------------------
 # Certificate Authority
 #------------------------------------------------------------------------------
@@ -23,6 +27,10 @@ resource "tls_self_signed_cert" "root_ingress" {
     common_name  = "ArmoniK Ingress Root (NonTrusted) Private Certificate Authority"
     country      = "France"
   }
+}
+
+locals {
+  generate_client_certs = var.mtls != null ? length(try(coalescelist(compact(var.mtls.generate_certs_for)), [])) > 0 : false
 }
 
 #------------------------------------------------------------------------------
@@ -90,10 +98,26 @@ resource "tls_locally_signed_cert" "ingress_certificate" {
   ]
 }
 
+locals {
+  formatted_custom_server_certs = var.tls != null && !local.generate_server_certs ? {
+    "ingress.pem"  = format("%s\n%s", file(var.tls.cert_path), file(var.tls.key_path))
+    "ingress.cert" = file(var.tls.cert_path)
+    "ingress.key"  = file(var.tls.key_path)
+  } : null
+
+  formatted_generated_server_certs = var.tls != null && local.generate_server_certs ? {
+    "ingress.pem" = format("%s\n%s", tls_locally_signed_cert.ingress_certificate[0].cert_pem, tls_private_key.ingress_private_key[0].private_key_pem)
+    "ingress.crt" = tls_locally_signed_cert.ingress_certificate[0].cert_pem
+    "ingress.key" = tls_private_key.ingress_private_key[0].private_key_pem
+  } : null
+
+  formatted_server_certs = var.tls != null ? coalesce(local.formatted_custom_server_certs, local.formatted_generated_server_certs) : null
+}
+
 resource "kubernetes_secret" "ingress_certificate" {
   count = var.tls != null ? 1 : 0
   metadata {
-    name      = "${var.nginx.name}-server-certs"
+    name      = "${local.prefix}nginx-server-certs"
     namespace = var.namespace
   }
   data = local.formatted_server_certs
@@ -149,10 +173,25 @@ resource "pkcs12_from_pem" "ingress_client_pkcs12" {
   ca_pem          = tls_self_signed_cert.client_root_ingress[0].cert_pem
 }
 
+locals {
+  generated_client_ca = local.generate_client_certs ? [tls_self_signed_cert.client_root_ingress[0].cert_pem] : []
+
+  extra_client_ca = can(coalescelist(compact(var.mtls.extra_ca_paths))) ? [
+    for cert_path in var.mtls.extra_ca_paths : file(cert_path)
+  ] : []
+
+  client_ca_pem = join("\n", concat(local.generated_client_ca, local.extra_client_ca))
+
+  common_names_map = local.generate_client_certs ? {
+    for name, cert in tls_cert_request.ingress_client_cert_request :
+    name => cert.subject[0].common_name
+  } : {}
+}
+
 resource "kubernetes_secret" "ingress_client_certificate" {
   count = local.generate_client_certs ? 1 : 0
   metadata {
-    name      = "${var.nginx.name}-client-certs"
+    name      = "${local.prefix}nginx-client-certs"
     namespace = var.namespace
   }
   data = merge([for name, cert in tls_locally_signed_cert.ingress_client_certificate :
@@ -167,7 +206,7 @@ resource "kubernetes_secret" "ingress_client_certificate" {
 resource "kubernetes_secret" "ingress_client_certificate_authority" {
   count = var.mtls != null ? 1 : 0
   metadata {
-    name      = "${var.nginx.name}-client-ca"
+    name      = "${local.prefix}nginx-client-ca"
     namespace = var.namespace
   }
   data = {

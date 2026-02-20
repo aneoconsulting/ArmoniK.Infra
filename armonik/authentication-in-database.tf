@@ -1,7 +1,4 @@
 resource "kubernetes_job" "authentication_in_database" {
-  depends_on = [
-    module.ingress
-  ]
   count = local.job_authentication ? 1 : 0
   metadata {
     name      = "authentication-in-database"

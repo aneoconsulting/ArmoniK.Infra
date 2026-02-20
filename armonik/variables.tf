@@ -141,18 +141,12 @@ variable "init" {
 variable "admin_gui" {
   description = "Parameters of the admin GUI"
   type = object({
-    name  = optional(string, "admin-app")
-    image = optional(string, "dockerhubaneo/armonik_admin_app")
-    tag   = string
-    port  = optional(number, 1080)
-    limits = optional(object({
-      cpu    = optional(string)
-      memory = optional(string)
-    }))
-    requests = optional(object({
-      cpu    = optional(string)
-      memory = optional(string)
-    }))
+    name               = optional(string, "admin-app")
+    image              = optional(string, "dockerhubaneo/armonik_admin_app")
+    tag                = string
+    port               = optional(number, 1080)
+    limits             = optional(map(string))
+    requests           = optional(map(string))
     service_type       = optional(string, "ClusterIP")
     replicas           = optional(number, 1)
     image_pull_policy  = optional(string, "IfNotPresent")

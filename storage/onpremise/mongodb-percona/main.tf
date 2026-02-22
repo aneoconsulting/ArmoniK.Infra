@@ -9,6 +9,7 @@ resource "helm_release" "operator" {
 
   values = [
     yamlencode({
+      annotations  = var.operator.annotations
       nodeSelector = var.operator.node_selector
       tolerations = [
         for key, value in var.operator.node_selector : {
@@ -26,13 +27,13 @@ resource "kubectl_manifest" "cluster" {
   depends_on = [
     helm_release.operator,
   ]
-
   yaml_body = yamlencode({
     apiVersion = "psmdb.percona.com/v1"
     kind       = "PerconaServerMongoDB"
     metadata = {
-      name      = local.cluster_release_name
-      namespace = var.namespace
+      name        = local.cluster_release_name
+      namespace   = var.namespace
+      annotations = var.cluster.annotations
     }
     spec = {
       backup = {
@@ -46,9 +47,9 @@ resource "kubectl_manifest" "cluster" {
       }
 
       secrets = {
-        users = "${local.cluster_release_name}-secrets"
-        #   ssl         = "${local.cluster_release_name}-ssl"
-        #   sslInternal = "${local.cluster_release_name}-ssl-internal"
+        users       = local.secrets_name
+        ssl         = local.ssl_secret_name
+        sslInternal = local.ssl_internal_secret_name
       }
 
       tls = {
@@ -92,30 +93,14 @@ resource "kubectl_manifest" "cluster" {
 
           resources = var.resources.configsvr
 
-          volumeSpec = {
-            persistentVolumeClaim = {
-              storageClassName = try(
-                coalesce(var.persistence.configsvr.storage_class_name),
-                length(kubernetes_storage_class.configsvr) > 0 ? kubernetes_storage_class.configsvr[0].metadata[0].name : null,
-                null
-              )
-              resources = {
-                requests = { storage = var.persistence.configsvr.storage_size }
-              }
-            }
-          }
+          volumeSpec = local.configsvr_volume_spec
           } : {
-          size         = 0
+          size         = 2
           resources    = {}
           nodeSelector = {}
           tolerations  = []
           volumeSpec = {
-            persistentVolumeClaim = {
-              storageClassName = ""
-              resources = {
-                requests = { storage = "1Gi" }
-              }
-            }
+            emptyDir = {}
           }
         }
 
@@ -148,7 +133,7 @@ resource "kubectl_manifest" "cluster" {
           var.sharding != null && var.sharding.enabled
           ? var.sharding.shards_quantity
           : 1
-        ) : {
+          ) : {
           name = "rs${i}"
           size = var.cluster.replicas
 
@@ -169,20 +154,7 @@ resource "kubectl_manifest" "cluster" {
 
           resources = var.resources.shards
 
-          volumeSpec = {
-            persistentVolumeClaim = {
-              storageClassName = try(
-                coalesce(var.persistence.shards.storage_class_name),
-                length(kubernetes_storage_class.shards) > 0 ? kubernetes_storage_class.shards[0].metadata[0].name : null,
-                null
-              )
-              resources = {
-                requests = {
-                  storage = var.persistence.shards.storage_size
-                }
-              }
-            }
-          }
+          volumeSpec = local.shards_volume_spec
         }
       ]
     }

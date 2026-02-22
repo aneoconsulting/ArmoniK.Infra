@@ -18,11 +18,6 @@ output "number_of_replicas" {
   value       = var.cluster.replicas
 }
 
-# ──────────────────────────────────────────────
-# Placeholder outputs for ArmoniK compatibility
-# These will be properly wired up in Phase 2-4
-# ──────────────────────────────────────────────
-
 output "env" {
   description = "Elements to be set as environment variables"
   value = merge({
@@ -37,12 +32,13 @@ output "env" {
     "MongoDB__Sharding"   = "false"
     "MongoDB__ReplicaSet" = "rs0"
   })
+  depends_on = [kubectl_manifest.cluster]
 }
 
 output "user_credentials" {
   description = "User credentials of MongoDB"
   value = {
-    secret    = "${local.cluster_release_name}-secrets"
+    secret    = local.secrets_name
     data_keys = ["MONGODB_DATABASE_ADMIN_USER", "MONGODB_DATABASE_ADMIN_PASSWORD"]
   }
 }
@@ -50,7 +46,7 @@ output "user_credentials" {
 output "endpoints" {
   description = "Endpoints of MongoDB"
   value = {
-    secret    = "${local.cluster_release_name}-secrets"
+    secret    = local.secrets_name
     data_keys = ["MONGODB_DATABASE_ADMIN_USER", "MONGODB_DATABASE_ADMIN_PASSWORD"]
   }
 }
@@ -59,7 +55,7 @@ output "mount_secret" {
   description = "Secrets to be mounted as volumes"
   value = {
     "mongo-certificate" = {
-      secret = "${local.cluster_release_name}-ssl"
+      secret = local.ssl_secret_name
       path   = "/mongodb/certs/"
       mode   = "0644"
     }
@@ -70,7 +66,7 @@ output "env_from_secret" {
   description = "Environment variables from secrets"
   value = {
     "MongoDB__User" = {
-      secret = "${local.cluster_release_name}-secrets"
+      secret = local.secrets_name
       field  = "MONGODB_DATABASE_ADMIN_USER"
     }
     "MongoDB__Password" = {

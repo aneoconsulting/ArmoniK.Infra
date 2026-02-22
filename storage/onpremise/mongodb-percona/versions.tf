@@ -13,13 +13,13 @@ terraform {
       source  = "hashicorp/kubernetes"
       version = ">= 2.21.1"
     }
-    local = {
-      source  = "hashicorp/local"
-      version = ">= 2.4.0"
-    }
     kubectl = {
       source  = "gavinbunney/kubectl"
       version = ">=1.14.0"
+    }
+    kubewait = {
+      source  = "Nuxij/kubewait"
+      version = "0.0.4"
     }
   }
 }

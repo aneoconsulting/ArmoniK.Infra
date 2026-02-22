@@ -1,4 +1,3 @@
-# TODO: There is the option of generating a random password and then supplying it to Helm but I'd rather wait for it (connection string only available when cluster done)
 resource "random_password" "app_user_password" {
   length  = 24
   special = false
@@ -25,16 +24,26 @@ resource "kubernetes_secret" "mongodb_connection_string" {
   }
 }
 
+
+resource "kubewait_wait" "percona_cluster_ready" {
+  depends_on = [kubectl_manifest.cluster]
+
+  resource  = "pods"
+  namespace = var.namespace
+  labels    = "app.kubernetes.io/instance=${local.cluster_release_name},app.kubernetes.io/component=mongod"
+  all       = true
+  for       = "condition=Ready"
+  timeout   = var.timeout
+}
+
 data "kubernetes_secret" "percona_cluster_secrets" {
   metadata {
     name      = local.secrets_name
     namespace = var.namespace
   }
 
-  depends_on = [kubectl_manifest.cluster]
+  depends_on = [kubewait_wait.percona_cluster_ready]
 }
-
-
 resource "kubernetes_secret" "mongodb_monitoring_connection_string" {
   metadata {
     name      = "mongodb-monitoring-connection-string"

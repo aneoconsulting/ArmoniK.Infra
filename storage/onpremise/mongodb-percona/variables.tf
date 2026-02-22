@@ -26,6 +26,7 @@ variable "operator" {
     image                 = optional(string, "percona/percona-server-mongodb-operator")
     tag                   = optional(string)
     node_selector         = optional(map(string), {})
+    annotations           = optional(map(string), {})
   })
   default = {}
 }
@@ -44,6 +45,7 @@ variable "cluster" {
     database_name         = optional(string, "database")
     replicas              = optional(number, 1)
     node_selector         = optional(map(string), {})
+    annotations           = optional(map(string), {})
   })
   default = {}
 }
@@ -70,7 +72,7 @@ variable "resources" {
 variable "sharding" {
   description = "Sharding configuration. Set to null to disable sharding."
   type = object({
-    enabled = optional(bool, false)
+    enabled         = optional(bool, false)
     shards_quantity = optional(number, 1)
     configsvr = optional(object({
       replicas      = optional(number, 1)
@@ -107,7 +109,7 @@ variable "persistence" {
       parameters          = optional(map(string), {})
     }), {})
   })
-  default = {}
+  default = null
 }
 
 # ──────────────────────────────────────────────

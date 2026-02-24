@@ -50,6 +50,29 @@ variable "cluster" {
   default = {}
 }
 
+variable "tls" {
+  description = <<-EOT
+    TLS configuration for the Percona MongoDB cluster.
+
+    self_managed         – When true (default), Terraform generates the CA and server
+                           certificates using the `tls` provider and pre-creates
+                           the ssl / ssl-internal Kubernetes secrets. The
+                           Percona operator then uses those secrets directly
+                           without invoking cert-manager.
+                           When false, the operator delegates
+                           certificate generation to cert-manager; cert-manager
+                           must therefore be installed in the cluster.
+
+    validity_period_hours – Lifetime of the generated certificates in hours.
+                            Only relevant when self_managed = true.
+                            Defaults to 8760h (1 year).
+  EOT
+  type = object({
+    self_managed          = optional(bool, true)
+    validity_period_hours = optional(number, 8760)
+  })
+  default = {}
+}
 variable "resources" {
   description = "Resource requests and limits per component"
   type = object({

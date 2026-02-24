@@ -32,8 +32,10 @@ locals {
         }
       }
     }
+    emptyDir = null
     } : {
-    emptyDir = {}
+    persistentVolumeClaim = null
+    emptyDir              = {}
   }
 
   configsvr_volume_spec = var.persistence != null ? {
@@ -46,8 +48,10 @@ locals {
       resources = {
         requests = { storage = var.persistence.configsvr.storage_size }
       }
+      emptyDir = null
     }
     } : {
-    emptyDir = {}
+    persistentVolumeClaim = null
+    emptyDir              = {}
   }
 }

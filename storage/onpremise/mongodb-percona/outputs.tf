@@ -83,3 +83,11 @@ output "env_from_secret" {
     }
   }
 }
+
+# Local client CA file
+resource "local_sensitive_file" "mongodb_client_certificate" {
+  count           = var.tls.self_managed ? 1 : 0
+  content         = tls_self_signed_cert.ca[0].cert_pem
+  filename        = "${path.root}/generated/certificates/${var.name}/ca.crt"
+  file_permission = "0600"
+}

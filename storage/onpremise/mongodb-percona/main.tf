@@ -26,6 +26,8 @@ resource "helm_release" "operator" {
 resource "kubectl_manifest" "cluster" {
   depends_on = [
     helm_release.operator,
+    kubernetes_secret.ssl,
+    kubernetes_secret.ssl_internal,
   ]
   yaml_body = yamlencode({
     apiVersion = "psmdb.percona.com/v1"
@@ -159,4 +161,102 @@ resource "kubectl_manifest" "cluster" {
       ]
     }
   })
+}
+
+resource "kubernetes_job" "wait_for_percona" {
+  depends_on = [kubectl_manifest.cluster]
+
+  metadata {
+    name      = "wait-for-percona-${local.cluster_release_name}"
+    namespace = var.namespace
+    labels = {
+      app     = "percona-mongodb"
+      service = "wait-for-database"
+    }
+  }
+
+  spec {
+    backoff_limit = 20
+
+    template {
+      metadata {
+        name = "wait-for-percona"
+        labels = {
+          app     = "percona-mongodb"
+          service = "wait-for-database"
+        }
+      }
+
+      spec {
+        restart_policy = "OnFailure"
+
+        container {
+          name  = "check-mongodb"
+          image = var.cluster.tag != null ? "${var.cluster.image}:${var.cluster.tag}" : var.cluster.image
+
+          command = ["/bin/sh", "-c"]
+          args = [
+            <<-EOT
+              set -e
+              MAX_ATTEMPTS=$((${var.timeout} / 5))
+              ATTEMPT=0
+
+              echo "Waiting for MongoDB to be ready..."
+
+              until mongosh \
+                "$MONGO_URI" \
+                --eval "
+                  const status = rs.status();
+                  const healthy = status.members.filter(m => m.health === 1);
+                  print('Healthy members: ' + healthy.length + '/' + status.members.length);
+                  if (healthy.length < status.members.length) {
+                    throw new Error('Not all members healthy yet');
+                  }
+                  print('Replica set is fully healthy.');
+                "; do
+                ATTEMPT=$((ATTEMPT + 1))
+                if [ "$ATTEMPT" -ge "$MAX_ATTEMPTS" ]; then
+                  echo "Timed out waiting for MongoDB to be ready"
+                  exit 1
+                fi
+                echo "Attempt $ATTEMPT/$MAX_ATTEMPTS - MongoDB not ready yet, retrying in 5s..."
+                sleep 5
+              done
+
+              echo "MongoDB cluster is fully ready."
+            EOT
+          ]
+
+          env {
+            name = "MONGO_URI"
+            value_from {
+              secret_key_ref {
+                name = kubernetes_secret.mongodb_connection_string.metadata[0].name
+                key  = "uri"
+              }
+            }
+          }
+
+          volume_mount {
+            name       = "mongo-certs"
+            mount_path = "/mongodb/certs"
+            read_only  = true
+          }
+        }
+
+        volume {
+          name = "mongo-certs"
+          secret {
+            secret_name = local.ssl_secret_name
+          }
+        }
+      }
+    }
+  }
+
+  wait_for_completion = true
+
+  timeouts {
+    create = "${var.timeout + 60}s"
+  }
 }

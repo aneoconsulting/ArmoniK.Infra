@@ -24,26 +24,16 @@ resource "kubernetes_secret" "mongodb_connection_string" {
   }
 }
 
-
-resource "kubewait_wait" "percona_cluster_ready" {
-  depends_on = [kubectl_manifest.cluster]
-
-  resource  = "pods"
-  namespace = var.namespace
-  labels    = "app.kubernetes.io/instance=${local.cluster_release_name},app.kubernetes.io/component=mongod"
-  all       = true
-  for       = "condition=Ready"
-  timeout   = var.timeout
-}
-
 data "kubernetes_secret" "percona_cluster_secrets" {
   metadata {
     name      = local.secrets_name
     namespace = var.namespace
   }
 
-  depends_on = [kubewait_wait.percona_cluster_ready]
+  depends_on = [kubernetes_job.wait_for_percona]
 }
+
+
 resource "kubernetes_secret" "mongodb_monitoring_connection_string" {
   metadata {
     name      = "mongodb-monitoring-connection-string"
@@ -62,5 +52,36 @@ resource "kubernetes_secret" "mongodb_monitoring_connection_string" {
       local.mongodb_port,
       "/admin",
     local.mongodb_connection_params])
+  }
+}
+
+# TLS secrets (must be created before cluster so that the operator uses them)
+resource "kubernetes_secret" "ssl" {
+  count = var.tls.self_managed ? 1 : 0
+
+  metadata {
+    name      = local.ssl_secret_name
+    namespace = var.namespace
+  }
+
+  data = {
+    "ca.crt"  = tls_self_signed_cert.ca[0].cert_pem
+    "tls.crt" = format("%s\n%s", tls_locally_signed_cert.server[0].cert_pem, tls_self_signed_cert.ca[0].cert_pem)
+    "tls.key" = tls_private_key.server[0].private_key_pem
+  }
+}
+
+resource "kubernetes_secret" "ssl_internal" {
+  count = var.tls.self_managed ? 1 : 0
+
+  metadata {
+    name      = local.ssl_internal_secret_name
+    namespace = var.namespace
+  }
+
+  data = {
+    "ca.crt"  = tls_self_signed_cert.ca[0].cert_pem
+    "tls.crt" = format("%s\n%s", tls_locally_signed_cert.internal[0].cert_pem, tls_self_signed_cert.ca[0].cert_pem)
+    "tls.key" = tls_private_key.internal[0].private_key_pem
   }
 }

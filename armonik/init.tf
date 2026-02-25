@@ -13,21 +13,21 @@ locals {
   ]
 
   custom_auth_file = can(try(coalesce(var.authentication.authentication_datafile))) ? jsondecode(file(var.authentication.authentication_datafile)) : null
-  create_auth_data = !can(coalesce(local.custom_auth_file)) && try(var.ingress.mtls, false) && try(var.authentication.require_authentication, false)
+  create_auth_data = try(var.ingress.mtls, false) && try(var.authentication.require_authentication, false)
 
-  init_authentication_users = local.create_auth_data ? [
+  init_authentication_users = local.create_auth_data ? concat([
     for u, r in local.username_roles_map : {
       Username = u
       Roles    = r
     }
-  ] : try(local.custom_auth_file.users_list, [])
+  ], try(coalesce(local.custom_auth_file.users_list), [])) : []
 
-  init_authentication_roles = local.create_auth_data ? [
+  init_authentication_roles = local.create_auth_data ? concat([
     for r, p in local.role_permissions_map : {
       RoleName    = r
       Permissions = p
     }
-  ] : try(local.custom_auth_file.roles_list, [])
+  ], try(coalesce(local.custom_auth_file.roles_list), [])) : []
 
   client_certs = try(module.ingress[0].client_certificates, {})
   username_fingerprint_map = {
@@ -35,13 +35,13 @@ locals {
     u => cert.certificates[length(cert.certificates) - 1].sha1_fingerprint
   }
 
-  init_authentication_certs = local.create_auth_data ? [
+  init_authentication_certs = local.create_auth_data ? concat([
     for u, fp in local.username_fingerprint_map : {
       Fingerprint = fp
       Cn          = local.username_common_name_map[u]
       Username    = u
     }
-  ] : try(local.custom_auth_file.certificates_list, [])
+  ], try(coalesce(local.custom_auth_file.certificates_list), [])) : []
 
   init_partitions_env = { for i, partition in local.init_partitions :
     "InitServices__Partitioning__Partitions__${i}" => jsonencode(partition)

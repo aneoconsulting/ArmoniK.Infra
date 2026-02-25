@@ -166,11 +166,6 @@ resource "kubernetes_job" "authentication_in_database" {
   }
 }
 
-# data "tls_certificate" "certificate_data" {
-#   for_each = tls_locally_signed_cert.ingress_client_certificate
-#   content  = each.value.cert_pem
-# }
-
 locals {
   authentication_data = jsonencode({
     certificates_list = local.init_authentication_certs

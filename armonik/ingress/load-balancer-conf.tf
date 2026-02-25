@@ -13,11 +13,12 @@ resource "kubernetes_config_map" "load_balancer_conf" {
         cluster => merge({
           for key, value in conf :
           key => value if can(coalesce(value)) && !contains(["grafana_url", "seq_url", "s3_urls"], key)
-          }, can(coalesce(conf.cert_pem)) && can(coalesce(conf.key_pem)) && can(coalesce(conf.ca_cert)) ? {
+          }, can(coalesce(conf.cert_pem)) && can(coalesce(conf.key_pem)) ? {
           cert_pem = conf.cert_pem != null ? "/cluster-certs/${cluster}.cert" : null
           key_pem  = conf.key_pem != null ? "/cluster-certs/${cluster}.key" : null
+          } : {}, can(coalesce(conf.ca_cert)) ? { 
           ca_cert  = conf.ca_cert != null ? "/cluster-certs/${cluster}.ca" : null
-          } : {}, {
+          }: {}, {
           fallback = conf.fallback != null ? conf.fallback : cluster == var.default_cluster
         })
       }

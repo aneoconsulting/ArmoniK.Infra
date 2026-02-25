@@ -22,6 +22,7 @@ variable "cluster_domain" {
 
 
 variable "tls" {
+  description = "Parameters of the TLS configuration, if null no TLS, if equal to {} generate certs, else provide path to your custom cert and key"
   type = object({
     cert_path = optional(string)
     key_path  = optional(string)
@@ -38,12 +39,13 @@ variable "tls" {
 }
 
 variable "mtls" {
+  description = "Parameters for mTLS, keys of generate_certs_for map are AK users' username"
   type = object({
     generate_certs_for = optional(map(object({
       common_name = optional(string)
     })), {})
-    extra_ca_paths     = optional(set(string), [])
-    trusted_cns        = optional(set(string), [])
+    extra_ca_paths = optional(set(string), [])
+    trusted_cns    = optional(set(string), [])
   })
   default = null
   # validation {
@@ -127,6 +129,7 @@ variable "nginx" {
 }
 
 variable "clusters" {
+  description = "Clusters to be targeted by Load Balancer. If no Load Balancer, endpoint serves as an upstream for nginx"
   type = map(object({
     endpoint                = string
     cert_pem                = optional(string)
@@ -150,8 +153,9 @@ variable "clusters" {
 }
 
 variable "default_cluster" {
-  type    = string
-  default = null
+  description = "Default cluster for the Load Balancer"
+  type        = string
+  default     = null
   # validation {
   #   error_message = "var.default_cluster is irrelevant if no cluster is provided (i.e. var.clusters is null)"
   #   condition     = can(coalesce(var.default_cluster)) ? can(coalescelist(keys(var.clusters))) : true

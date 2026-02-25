@@ -57,5 +57,3 @@ resource "kubernetes_secret" "cluster_certs" {
     }
   ]...)
 }
-
-

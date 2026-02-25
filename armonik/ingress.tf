@@ -1,6 +1,6 @@
 locals {
   ssc              = var.shared_storage_settings
-  s3_conf_required = can(try(coalesce(local.ssc.service_url))) && can(try(coalesce(local.ssc.console_url))) && lower(local.ssc.file_storage_type) == "s3"
+  s3_conf_required = can(coalesce(local.ssc.service_url)) && can(coalesce(local.ssc.console_url)) && lower(local.ssc.file_storage_type) == "s3"
 }
 
 module "ingress" {

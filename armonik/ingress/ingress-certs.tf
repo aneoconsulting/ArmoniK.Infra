@@ -30,7 +30,7 @@ resource "tls_self_signed_cert" "root_ingress" {
 }
 
 locals {
-  generate_client_certs = var.mtls != null ? length(try(coalescelist(compact(var.mtls.generate_certs_for)), [])) > 0 : false
+  generate_client_certs = var.mtls != null ? length(try(keys(var.mtls.generate_certs_for), {})) > 0 : false
 }
 
 #------------------------------------------------------------------------------
@@ -127,17 +127,10 @@ resource "kubernetes_secret" "ingress_certificate" {
 # Client Certificate
 #------------------------------------------------------------------------------
 resource "tls_private_key" "ingress_client_private_key" {
-  for_each    = local.generate_client_certs ? var.mtls.generate_certs_for : toset([])
+  for_each    = local.generate_client_certs ? var.mtls.generate_certs_for : {}
   algorithm   = "RSA"
   ecdsa_curve = "P384"
   rsa_bits    = "4096"
-}
-
-resource "random_string" "common_name" {
-  for_each = tls_private_key.ingress_client_private_key
-  length   = 16
-  special  = false
-  numeric  = false
 }
 
 resource "tls_cert_request" "ingress_client_cert_request" {
@@ -145,7 +138,7 @@ resource "tls_cert_request" "ingress_client_cert_request" {
   private_key_pem = each.value.private_key_pem
   subject {
     country     = "France"
-    common_name = random_string.common_name[each.key].result
+    common_name = coalesce(var.mtls.generate_certs_for[each.key].common_name, each.key)
     # organization = "127.0.0.1"
   }
 }
@@ -181,11 +174,6 @@ locals {
   ] : []
 
   client_ca_pem = join("\n", concat(local.generated_client_ca, local.extra_client_ca))
-
-  common_names_map = local.generate_client_certs ? {
-    for name, cert in tls_cert_request.ingress_client_cert_request :
-    name => cert.subject[0].common_name
-  } : {}
 }
 
 resource "kubernetes_secret" "ingress_client_certificate" {

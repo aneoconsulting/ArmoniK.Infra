@@ -12,39 +12,47 @@ locals {
     }
   ]
 
-  client_certs                 = try(module.ingress[0].client_certificates, {})
-  init_authentication_provided = can(try(coalesce(var.authentication.authentication_datafile))) ? jsondecode(file(var.authentication.authentication_datafile)) : null
-  init_authentication_users = local.init_authentication_provided == null ? [
-    for name, cert in local.client_certs : {
-      Username = name
-      Roles    = [name]
-    }
-  ] : local.init_authentication_provided.users_list
-  init_authentication_roles = local.init_authentication_provided == null ? [
-    for name, cert in local.client_certs : {
-      RoleName    = name
-      Permissions = local.ingress_generated_cert.permissions[name]
-    }
-  ] : local.init_authentication_provided.roles_list
+  custom_auth_file = can(try(coalesce(var.authentication.authentication_datafile))) ? jsondecode(file(var.authentication.authentication_datafile)) : null
+  create_auth_data = !can(coalesce(local.custom_auth_file)) && try(var.ingress.mtls, false) && try(var.authentication.require_authentication, false)
 
-  init_authentication_certs = local.init_authentication_provided == null ? [
-    for name, cert in local.client_certs : {
-      Fingerprint = cert.certificates[length(cert.certificates) - 1].sha1_fingerprint
-      Cn          = try(module.ingress[0].common_names_map[name], "")
-      Username    = name
+  init_authentication_users = local.create_auth_data ? [
+    for u, r in local.username_roles_map : {
+      Username = u
+      Roles    = r
     }
-  ] : local.init_authentication_provided.certificates_list
+  ] : try(local.custom_auth_file.users_list, [])
+
+  init_authentication_roles = local.create_auth_data ? [
+    for r, p in local.role_permissions_map : {
+      RoleName    = r
+      Permissions = p
+    }
+  ] : try(local.custom_auth_file.roles_list, [])
+
+  client_certs = try(module.ingress[0].client_certificates, {})
+  username_fingerprint_map = {
+    for u, cert in local.client_certs :
+    u => cert.certificates[length(cert.certificates) - 1].sha1_fingerprint
+  }
+
+  init_authentication_certs = local.create_auth_data ? [
+    for u, fp in local.username_fingerprint_map : {
+      Fingerprint = fp
+      Cn          = local.username_common_name_map[u]
+      Username    = u
+    }
+  ] : try(local.custom_auth_file.certificates_list, [])
 
   init_partitions_env = { for i, partition in local.init_partitions :
     "InitServices__Partitioning__Partitions__${i}" => jsonencode(partition)
   }
-  init_authentication_users_env = { for i, user in try(local.init_authentication_users, {}) :
+  init_authentication_users_env = { for i, user in local.init_authentication_users :
     "InitServices__Authentication__Users__${i}" => jsonencode(merge(user, { Name = user.Username }))
   }
-  init_authentication_roles_env = { for i, role in try(local.init_authentication_roles, {}) :
+  init_authentication_roles_env = { for i, role in local.init_authentication_roles :
     "InitServices__Authentication__Roles__${i}" => jsonencode(merge(role, { Name = role.RoleName }))
   }
-  init_authentication_certs_env = { for i, cert in try(local.init_authentication_certs, {}) :
+  init_authentication_certs_env = { for i, cert in local.init_authentication_certs :
     "InitServices__Authentication__UserCertificates__${i}" => jsonencode(merge(cert, { User = cert.Username }))
   }
 }

@@ -39,7 +39,9 @@ variable "tls" {
 
 variable "mtls" {
   type = object({
-    generate_certs_for = optional(set(string), [])
+    generate_certs_for = optional(map(object({
+      common_name = optional(string)
+    })), {})
     extra_ca_paths     = optional(set(string), [])
     trusted_cns        = optional(set(string), [])
   })
@@ -137,6 +139,7 @@ variable "clusters" {
     multiplex               = optional(bool, false)
     fallback                = optional(bool)
     forward_headers         = optional(list(string))
+    extra_headers           = optional(map(string))
     grafana_url             = optional(string)
     seq_url                 = optional(string)
     s3_urls = optional(object({

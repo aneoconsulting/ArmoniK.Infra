@@ -11,7 +11,7 @@ module "ingress" {
   tls            = try(coalesce(var.ingress.tls), false) ? {} : null
 
   mtls = try(coalesce(var.ingress.mtls), false) ? {
-    generate_certs_for = var.ingress.generate_client_cert ? keys(local.ingress_generated_cert.permissions) : null
+    generate_certs_for = var.ingress.generate_client_cert ? local.generate_certs_for : null
     extra_ca_paths     = compact(split(",", var.ingress.custom_client_ca_file))
     trusted_cns        = var.authentication.trusted_common_names
   } : null
@@ -33,19 +33,24 @@ module "ingress" {
   })
 
   clusters = {
-    local = {
+    local = merge({
       endpoint    = local.internal_control_plane_url
       grafana_url = try(coalesce(var.grafana.url), null)
       seq_url     = try(coalesce(var.seq.web_url), null)
+      extra_headers = var.load_balancer != null && var.authentication.require_authentication ? {
+        "X-Certificate-Client-CN"          = local.username_common_name_map["loadbalancer"]
+        "X-Certificate-Client-Fingerprint" = local.username_fingerprint_map["loadbalancer"]
+      } : null
       s3_urls = local.s3_conf_required ? {
         service = local.ssc.service_url
         console = local.ssc.console_url
       } : null
-    }
+    })
   }
-  
-  default_cluster         = "local"
-  load_balancer           = var.load_balancer
+  default_cluster = "local"
+  load_balancer = merge(var.load_balancer, {
+    common_name = local.username_common_name_map["loadbalancer"]
+  })
   environment_description = var.environment_description
   static                  = var.static
 }

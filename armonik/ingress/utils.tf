@@ -12,7 +12,7 @@ data "tls_certificate" "client_certificates" {
 }
 
 module "load_balancer_endpoint" {
-  count          = can(coalesce(var.load_balancer)) ? 1 : 0
+  count          = var.load_balancer != null ? 1 : 0
   source         = "../../utils/service-ip"
   service        = kubernetes_service.load_balancer[0]
   cluster_domain = local.cluster_domain

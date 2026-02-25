@@ -19,14 +19,6 @@ output "client_certificates" {
   value       = try(data.tls_certificate.client_certificates, null)
 }
 
-output "common_names_map" {
-  description = "List of client certificate common names"
-  value = local.generate_client_certs ? {
-    for name, cert in tls_cert_request.ingress_client_cert_request :
-    name => cert.subject[0].common_name
-  } : {}
-}
-
 output "endpoint_urls" {
   description = "List of URL endpoints for: control-plane, Seq, Grafana and Admin GUI"
   value = {
@@ -36,7 +28,6 @@ output "endpoint_urls" {
     admin_app     = var.gui != null ? "${local.base_endpoints.http}/admin" : ""
   }
 }
-
 
 output "endpoint_cluster_urls" {
   description = "List of URL endpoints for: control-plane, Seq, Grafana and Admin GUI"

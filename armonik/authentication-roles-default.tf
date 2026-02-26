@@ -6,17 +6,29 @@ resource "random_string" "common_name" {
 }
 
 locals {
+
+  custom_auth_file  = can(coalesce(var.authentication.authentication_datafile)) ? jsondecode(file(var.authentication.authentication_datafile)) : null
+  custom_users_list = try(local.custom_auth_file.users_list, null)
+  custom_roles_list = try(local.custom_auth_file.roles_list, null)
+
+
+  # Ignore custom users named 'submitter' or 'monitoring'
+  provided_users_roles_map = {
+    for obj in local.custom_users_list :
+    obj.Username => obj.Roles if !contains(["submitter", "monitoring"], obj.Username)
+  }
+
   username_roles_map = merge({
     submitter  = ["Submitter"]
     monitoring = ["Monitoring"]
-    }, var.load_balancer != null ? {
+    }, var.load_balancer != null && !can(try(local.provided_users_roles_map["loadbalancer"])) ? {
     loadbalancer = ["Submitter"]
-  } : null)
+  } : null, local.provided_users_roles_map)
 
   username_common_name_map = merge({
     submitter  = random_string.common_name["submitter"].result
     monitoring = random_string.common_name["monitoring"].result
-    }, var.load_balancer != null ? {
+    }, can(try(local.username_roles_map["loadbalancer"])) ? {
     loadbalancer = random_string.common_name["loadbalancer"].result
   } : null)
 
@@ -27,8 +39,13 @@ locals {
     }
   }
 
-  role_permissions_map = tomap({
-    "Submitter" = [
+  provided_roles_permissions_map = {
+    for obj in local.custom_roles_list :
+    obj.RoleName => obj.Permissions
+  }
+
+  default_roles_permissions_map = tomap({
+    Submitter = [
       "Submitter:GetServiceConfiguration",
       "Submitter:CancelSession",
       "Submitter:CancelTasks",
@@ -79,7 +96,7 @@ locals {
       "Versions:ListVersions",
       "HealthChecks:CheckHealth"
     ]
-    "Monitoring" = [
+    Monitoring = [
       "Submitter:GetServiceConfiguration",
       "Submitter:CountTasks",
       "Submitter:GetTaskStatus",
@@ -105,4 +122,5 @@ locals {
       "HealthChecks:CheckHealth"
     ]
   })
+  final_roles_permissions_map = merge(local.default_roles_permissions_map, local.provided_roles_permissions_map)
 }

@@ -12,22 +12,21 @@ locals {
     }
   ]
 
-  custom_auth_file = can(coalesce(var.authentication.authentication_datafile)) ? jsondecode(file(var.authentication.authentication_datafile)) : null
   create_auth_data = try(var.ingress.mtls, false) && try(var.authentication.require_authentication, false)
 
-  init_authentication_users = local.create_auth_data ? concat([
+  init_authentication_users = local.create_auth_data ? [
     for u, r in local.username_roles_map : {
       Username = u
       Roles    = r
     }
-  ], try(coalesce(local.custom_auth_file.users_list), [])) : []
+  ] : []
 
-  init_authentication_roles = local.create_auth_data ? concat([
-    for r, p in local.role_permissions_map : {
+  init_authentication_roles = local.create_auth_data ? [
+    for r, p in local.final_roles_permissions_map : {
       RoleName    = r
       Permissions = p
     }
-  ], try(coalesce(local.custom_auth_file.roles_list), [])) : []
+  ] : []
 
   client_certs = try(module.ingress[0].client_certificates, {})
   username_fingerprint_map = {

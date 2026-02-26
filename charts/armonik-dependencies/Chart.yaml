@@ -26,10 +26,11 @@ dependencies:
     version: 16.x.x
     repository: https://charts.bitnami.com/bitnami
     condition: mongodb.enabled
-  - name: kube-prometheus
-    version: 11.x.x
-    repository: https://charts.bitnami.com/bitnami
+  - name: kube-prometheus-stack
+    version: 82.x.x
+    repository: https://prometheus-community.github.io/helm-charts
     condition: kube-prometheus.enabled
+    alias: kube-prometheus # TODO: Might swap in the future for clarity but for now. 
   - name: keda
     version: 2.x.x
     repository: https://kedacore.github.io/charts

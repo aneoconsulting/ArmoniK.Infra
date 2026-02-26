@@ -67,14 +67,6 @@ resource "kubernetes_deployment" "load_balancer" {
             mount_path = "/conf"
             read_only  = true
           }
-          # dynamic "volume_mount" {
-          #   for_each = kubernetes_secret.load_balancer_certs
-          #   content {
-          #     name       = "lb-certs"
-          #     mount_path = "/certs"
-          #     read_only  = true
-          #   }
-          # }
         }
         volume {
           name = "cluster-certs"
@@ -89,16 +81,6 @@ resource "kubernetes_deployment" "load_balancer" {
             name = kubernetes_config_map.load_balancer_conf[0].metadata[0].name
           }
         }
-        # dynamic "volume" {
-        #   for_each = kubernetes_secret.load_balancer_certs
-        #   content {
-        #     name = "lb-certs"
-        #     secret {
-        #       secret_name = volume.value.metadata[0].name
-        #       optional    = false
-        #     }
-        #   }
-        # }
       }
     }
   }

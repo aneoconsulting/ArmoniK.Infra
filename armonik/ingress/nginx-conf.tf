@@ -29,10 +29,9 @@ locals {
   }
 
   # If load_balancer is null, ingress module assumes its being deployed on K8s alongside an AK cluster, 
-  # Thus defining nginx upstream directly to AK endpoint (first cluster from var.clusters in lexicographic order)
-  upstream = var.load_balancer != null ? "${module.load_balancer_endpoint[0].host}:${module.load_balancer_endpoint[0].ports_map["grpc"]}" : trimprefix(var.clusters[keys(var.clusters)[0]].endpoint, "http://")
+  # Thus defining nginx upstream directly to AK endpoint (default cluster if so, or first cluster from var.clusters in lexicographic order)
+  upstream = var.load_balancer != null ? "${module.load_balancer_endpoint[0].host}:${module.load_balancer_endpoint[0].ports_map["grpc"]}" : trimprefix(try(var.clusters[var.default_cluster].endpoint, var.clusters[keys(var.clusters)[0]].endpoint), "http://")
 
-  #nginx_conf = var.nginx.conf_type == "ControlPlane" ? local.control_plane_nginx_conf : local.load_balancer_nginx_conf
   nginx_conf = templatefile(
     abspath("${path.module}/nginx-conf/ingress.conf.tftpl"),
     {

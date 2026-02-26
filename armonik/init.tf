@@ -12,7 +12,7 @@ locals {
     }
   ]
 
-  custom_auth_file = can(try(coalesce(var.authentication.authentication_datafile))) ? jsondecode(file(var.authentication.authentication_datafile)) : null
+  custom_auth_file = can(coalesce(var.authentication.authentication_datafile)) ? jsondecode(file(var.authentication.authentication_datafile)) : null
   create_auth_data = try(var.ingress.mtls, false) && try(var.authentication.require_authentication, false)
 
   init_authentication_users = local.create_auth_data ? concat([

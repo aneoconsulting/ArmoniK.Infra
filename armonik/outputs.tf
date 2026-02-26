@@ -24,9 +24,9 @@ output "armonik_config_file" {
 output "endpoint_urls" {
   description = "List of URL endpoints for: control-plane, Seq, Grafana and Admin GUI"
   value = {
-    control_plane_url = try(module.ingress[0].endpoint_urls.control_plane, local.internal_control_plane_url)
-    grafana_url       = try(module.ingress[0].endpoint_urls.grafana, nonsensitive(var.grafana.url))
-    seq_web_url       = try(module.ingress[0].endpoint_urls.seq_web, nonsensitive(var.seq.web_url))
+    control_plane_url = try(coalesce(module.ingress[0].endpoint_urls.control_plane), local.internal_control_plane_url)
+    grafana_url       = try(coalesce(module.ingress[0].endpoint_urls.grafana), nonsensitive(var.grafana.url))
+    seq_web_url       = try(coalesce(module.ingress[0].endpoint_urls.seq_web), nonsensitive(var.seq.web_url))
     admin_app_url     = try(coalesce(module.ingress[0].endpoint_urls.admin_app), null)
   }
 }

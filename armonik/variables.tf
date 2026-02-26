@@ -402,50 +402,6 @@ variable "configurations" {
   })
 }
 
-# variable "clusters" {
-#   type = map(object({
-#     endpoint                = optional(string)
-#     cert_pem                = optional(string)
-#     key_pem                 = optional(string)
-#     ca_cert                 = optional(string)
-#     allow_unsafe_connection = optional(bool, false)
-#     override_target_name    = optional(string)
-#     pool_size               = optional(number)
-#     requests_per_connection = optional(number)
-#     multiplex               = optional(bool, false)
-#     fallback                = optional(bool, false)
-#     forward_headers         = optional(list(string))
-#     grafana_url             = optional(string)
-#     seq_url                 = optional(string)
-#     s3_urls = optional(object({
-#       service = string
-#       console = string
-#     }))
-#   }))
-#   default = null
-#   validation {
-#     error_message = "var.clusters can only be used if load balancing is active (var.load_balancer not null)"
-#     condition     = var.clusters != null ? var.load_balancer != null : true
-#   }
-# }
-
-# variable "default_cluster" {
-#   type    = string
-#   default = null
-#   validation {
-#     error_message = "var.default_cluster is irrelevant if no cluster is provided (i.e. var.clusters is null)"
-#     condition = can(try(coalesce(var.default_cluster))) ? can(try(coalescelist(keys(var.clusters)))) : true
-#   }
-#   validation {
-#     error_message = "var.default_cluster must correspond to a key of var.clusters"
-#     condition     = can(try(coalesce(var.default_cluster))) ? contains(coalescelist(keys(var.clusters), [""]), var.default_cluster) : true
-#   }
-#   validation {
-#     error_message = "var.default_cluster is irrelevant if load balancing is not enforced (i.e. if var.load_balancer is null)"
-#     condition     = can(try(coalesce(var.default_cluster))) ? var.load_balancer != null : true
-#   }
-# }
-
 variable "load_balancer" {
   description = "Parameters of the Load Balancer deployment"
   type = object({

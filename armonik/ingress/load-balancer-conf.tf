@@ -16,9 +16,9 @@ resource "kubernetes_config_map" "load_balancer_conf" {
           }, can(coalesce(conf.cert_pem)) && can(coalesce(conf.key_pem)) ? {
           cert_pem = conf.cert_pem != null ? "/cluster-certs/${cluster}.cert" : null
           key_pem  = conf.key_pem != null ? "/cluster-certs/${cluster}.key" : null
-          } : {}, can(coalesce(conf.ca_cert)) ? { 
-          ca_cert  = conf.ca_cert != null ? "/cluster-certs/${cluster}.ca" : null
-          }: {}, {
+          } : {}, can(coalesce(conf.ca_cert)) ? {
+          ca_cert = conf.ca_cert != null ? "/cluster-certs/${cluster}.ca" : null
+          } : {}, {
           fallback = conf.fallback != null ? conf.fallback : cluster == var.default_cluster
         })
       }

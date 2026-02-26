@@ -47,10 +47,8 @@ module "ingress" {
       } : null
     })
   }
-  default_cluster = "local"
-  load_balancer = merge(var.load_balancer, {
-    common_name = local.username_common_name_map["loadbalancer"]
-  })
+  default_cluster         = "local"
+  load_balancer           = var.load_balancer
   environment_description = var.environment_description
   static                  = var.static
 }

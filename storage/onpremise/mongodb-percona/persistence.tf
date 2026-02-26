@@ -1,0 +1,41 @@
+resource "kubernetes_storage_class" "shards" {
+  count = var.persistence != null && can(coalesce(var.persistence.shards.storage_provisioner)) ? 1 : 0
+  metadata {
+    name = "${var.name}-shards"
+    labels = {
+      app     = "mongodb"
+      type    = "storage-class"
+      service = "persistent-volume"
+    }
+  }
+  mount_options = try(
+    coalesce(
+      var.persistence.configsvr.mount_options,
+      var.persistence.shards.storage_provisioner == "efs.csi.aws.com" ? ["tls"] : null
+  ), null)
+  storage_provisioner = var.persistence.shards.storage_provisioner
+  reclaim_policy      = var.persistence.shards.reclaim_policy
+  volume_binding_mode = var.persistence.shards.volume_binding_mode
+  parameters          = var.persistence.shards.parameters
+}
+
+resource "kubernetes_storage_class" "configsvr" {
+  count = var.persistence != null && var.sharding != null && can(coalesce(var.persistence.configsvr.storage_provisioner)) ? 1 : 0
+  metadata {
+    name = "${var.name}-configsvr"
+    labels = {
+      app     = "mongodb"
+      type    = "storage-class"
+      service = "persistent-volume"
+    }
+  }
+  mount_options = try(
+    coalesce(
+      var.persistence.configsvr.mount_options,
+      var.persistence.configsvr.storage_provisioner == "efs.csi.aws.com" ? ["tls"] : null
+  ), null)
+  storage_provisioner = var.persistence.configsvr.storage_provisioner
+  reclaim_policy      = var.persistence.configsvr.reclaim_policy
+  volume_binding_mode = var.persistence.configsvr.volume_binding_mode
+  parameters          = var.persistence.configsvr.parameters
+}

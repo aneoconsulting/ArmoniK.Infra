@@ -8,7 +8,7 @@ registry: ""
 imagePullSecrets: []
 
 global:
-  imageRegistry: ""
+  imageRegistry: "public.ecr.aws"
   dependencies.keda: false
 
 serviceAccount:
@@ -180,7 +180,6 @@ partitions:
     worker:
       image:
         name: "armonik_worker_dll"
-        tag: "0.19.1"
 
   stream:
     worker:
@@ -197,6 +196,12 @@ partitions:
     worker:
       image:
         name: "armonik_core_bench_test_worker"
+  
+  pymonik:
+    worker:
+      image:
+        name: "harmonic_snake"
+        tag: "python-3.11"
 
 fluentBit:
   isDaemonSet: true

@@ -21,7 +21,7 @@ control-plane:
       value: control-plane
 compute-plane:
   computePlane:
-    partition:
+    partitions:
       default:
         replicas: 1
         nodeSelector:

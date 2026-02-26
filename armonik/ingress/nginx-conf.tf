@@ -1,6 +1,6 @@
 locals {
   # Escape common names to be matched as a literal
-  escaped_common_names = !can(coalescelist(var.mtls.trusted_cns)) ? [] : [
+  escaped_common_names = !can(coalescelist(tolist(var.mtls.trusted_cns))) ? [] : [
     for str in var.mtls.trusted_cns : join("", [
       for char in split("", str) : (
         lookup(local.special_regex_characters, char, char)

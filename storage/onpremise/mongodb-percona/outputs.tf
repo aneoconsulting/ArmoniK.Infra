@@ -1,16 +1,19 @@
 output "host" {
   description = "Hostname or IP address of MongoDB server"
   value       = local.mongodb_dns
+  depends_on  = [kubernetes_job.wait_for_percona]
 }
 
 output "port" {
   description = "Port of MongoDB server"
   value       = local.mongodb_port
+  depends_on  = [kubernetes_job.wait_for_percona]
 }
 
 output "url" {
   description = "URL of MongoDB server"
   value       = local.mongodb_url
+  depends_on  = [kubernetes_job.wait_for_percona]
 }
 
 output "number_of_replicas" {
@@ -25,14 +28,14 @@ output "env" {
     "MongoDB__Tls"             = "true"
     "MongoDB__CAFile"          = "/mongodb/certs/ca.crt"
     "MongoDB__DatabaseName"    = var.cluster.database_name
-    }, var.sharding != null && var.sharding.enabled ? {
+    }, var.sharding != null ? {
     "MongoDB__Sharding"   = "true"
     "MongoDB__ReplicaSet" = ""
     } : {
     "MongoDB__Sharding"   = "false"
     "MongoDB__ReplicaSet" = "rs0"
   })
-  depends_on = [kubectl_manifest.cluster]
+  depends_on = [kubernetes_job.wait_for_percona]
 }
 
 output "user_credentials" {
@@ -41,6 +44,7 @@ output "user_credentials" {
     secret    = local.secrets_name
     data_keys = ["MONGODB_DATABASE_ADMIN_USER", "MONGODB_DATABASE_ADMIN_PASSWORD"]
   }
+  depends_on = [kubernetes_job.wait_for_percona]
 }
 
 output "endpoints" {
@@ -49,6 +53,7 @@ output "endpoints" {
     secret    = local.secrets_name
     data_keys = ["MONGODB_DATABASE_ADMIN_USER", "MONGODB_DATABASE_ADMIN_PASSWORD"]
   }
+  depends_on = [kubernetes_job.wait_for_percona]
 }
 
 output "mount_secret" {
@@ -60,6 +65,7 @@ output "mount_secret" {
       mode   = "0644"
     }
   }
+  depends_on = [kubernetes_job.wait_for_percona]
 }
 
 output "env_from_secret" {
@@ -82,6 +88,7 @@ output "env_from_secret" {
       field  = "uri"
     }
   }
+  depends_on = [kubernetes_job.wait_for_percona]
 }
 
 # Local client CA file

@@ -37,15 +37,12 @@ variable "operator" {
 variable "cluster" {
   description = "Parameters for the Percona Server for MongoDB cluster"
   type = object({
-    helm_chart_repository = optional(string, "https://percona.github.io/percona-helm-charts/")
-    helm_chart_name       = optional(string, "psmdb-db")
-    helm_chart_version    = optional(string)
-    image                 = optional(string, "percona/percona-server-mongodb")
-    tag                   = optional(string)
-    database_name         = optional(string, "database")
-    replicas              = optional(number, 1)
-    node_selector         = optional(map(string), {})
-    annotations           = optional(map(string), {})
+    image         = optional(string, "percona/percona-server-mongodb")
+    tag           = optional(string)
+    database_name = optional(string, "database")
+    replicas      = optional(number, 1)
+    node_selector = optional(map(string), {})
+    annotations   = optional(map(string), {})
   })
   default = {}
 }
@@ -95,7 +92,6 @@ variable "resources" {
 variable "sharding" {
   description = "Sharding configuration. Set to null to disable sharding."
   type = object({
-    enabled         = optional(bool, false)
     shards_quantity = optional(number, 1)
     configsvr = optional(object({
       replicas      = optional(number, 1)
@@ -113,6 +109,7 @@ variable "persistence" {
   description = "Persistence parameters for MongoDB pods"
   type = object({
     shards = optional(object({
+      mount_options       = optional(string)
       storage_size        = optional(string, "8Gi")
       storage_class_name  = optional(string) # Use existing StorageClass
       storage_provisioner = optional(string) # Or create one
@@ -123,6 +120,7 @@ variable "persistence" {
     }), {})
 
     configsvr = optional(object({
+      mount_options       = optional(string)
       storage_size        = optional(string, "3Gi")
       storage_class_name  = optional(string)
       storage_provisioner = optional(string)

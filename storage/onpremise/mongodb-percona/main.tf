@@ -45,7 +45,7 @@ resource "kubectl_manifest" "cluster" {
 
       unsafeFlags = {
         replsetSize = var.cluster.replicas < 3
-        mongosSize  = var.sharding != null && var.sharding.enabled ? var.sharding.mongos.replicas < 2 : false
+        mongosSize  = var.sharding != null ? var.sharding.mongos.replicas < 2 : false
       }
 
       secrets = {
@@ -78,9 +78,9 @@ resource "kubectl_manifest" "cluster" {
       ]
 
       sharding = {
-        enabled = var.sharding != null ? var.sharding.enabled : false
+        enabled = var.sharding != null
 
-        configsvrReplSet = var.sharding != null && var.sharding.enabled ? {
+        configsvrReplSet = var.sharding != null ? {
           size = var.sharding.configsvr.replicas
 
           nodeSelector = var.sharding.configsvr.node_selector
@@ -106,7 +106,7 @@ resource "kubectl_manifest" "cluster" {
           }
         }
 
-        mongos = var.sharding != null && var.sharding.enabled ? {
+        mongos = var.sharding != null ? {
           size = var.sharding.mongos.replicas
 
           nodeSelector = var.sharding.mongos.node_selector
@@ -132,7 +132,7 @@ resource "kubectl_manifest" "cluster" {
 
       replsets = [
         for i in range(
-          var.sharding != null && var.sharding.enabled
+          var.sharding != null
           ? var.sharding.shards_quantity
           : 1
           ) : {

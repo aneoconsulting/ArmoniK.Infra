@@ -9,14 +9,14 @@ locals {
   ssl_secret_name          = "${local.cluster_release_name}-ssl"
   ssl_internal_secret_name = "${local.cluster_release_name}-ssl-internal"
 
-  mongodb_dns = var.sharding != null && var.sharding.enabled ? (
+  mongodb_dns = var.sharding != null ? (
     "${local.cluster_release_name}-mongos.${var.namespace}.svc.cluster.local"
     ) : (
     "${local.cluster_release_name}-rs0.${var.namespace}.svc.cluster.local"
   )
 
   mongodb_port              = 27017
-  mongodb_connection_params = var.sharding != null && var.sharding.enabled ? "" : "?replicaSet=rs0"
+  mongodb_connection_params = var.sharding != null ? "" : "?replicaSet=rs0"
   mongodb_url               = "mongodb://${local.mongodb_dns}:${local.mongodb_port}/${var.cluster.database_name}?authSource=admin"
 
   shards_volume_spec = var.persistence != null ? {

@@ -101,7 +101,7 @@ resource "tls_locally_signed_cert" "internal" {
 
 locals {
   tls_shards_count = (
-    var.sharding != null && var.sharding.enabled
+    var.sharding != null
     ? var.sharding.shards_quantity
     : 1
   )

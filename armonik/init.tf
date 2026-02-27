@@ -11,28 +11,36 @@ locals {
       PodConfiguration     = value.partition_data.pod_configuration
     }
   ]
-  init_authentication_provided = can(coalesce(var.authentication.authentication_datafile)) ? jsondecode(file(var.authentication.authentication_datafile)) : null
-  init_authentication_users = local.init_authentication_provided == null ? [
-    for name, cert in data.tls_certificate.certificate_data : {
-      Username = name,
-      Roles    = [name]
-    }
-  ] : local.init_authentication_provided.users_list
-  init_authentication_roles = local.init_authentication_provided == null ? [
-    for name, cert in data.tls_certificate.certificate_data : {
-      RoleName    = name,
-      Permissions = local.ingress_generated_cert.permissions[name]
-    }
-  ] : local.init_authentication_provided.roles_list
 
-  init_authentication_certs = local.init_authentication_provided == null ? [
-    for name, cert in data.tls_certificate.certificate_data : {
-      Fingerprint = cert.certificates[length(cert.certificates) - 1].sha1_fingerprint,
-      Cn          = tls_cert_request.ingress_client_cert_request[name].subject[0].common_name,
-      Username    = name
-    }
-  ] : local.init_authentication_provided.certificates_list
+  create_auth_data = try(var.ingress.mtls, false) && try(var.authentication.require_authentication, false)
 
+  init_authentication_users = local.create_auth_data ? [
+    for u, r in local.username_roles_map : {
+      Username = u
+      Roles    = r
+    }
+  ] : []
+
+  init_authentication_roles = local.create_auth_data ? [
+    for r, p in local.final_roles_permissions_map : {
+      RoleName    = r
+      Permissions = p
+    }
+  ] : []
+
+  client_certs = try(module.ingress[0].client_certificates, {})
+  username_fingerprint_map = {
+    for u, cert in local.client_certs :
+    u => cert.certificates[length(cert.certificates) - 1].sha1_fingerprint
+  }
+
+  init_authentication_certs = local.create_auth_data ? concat([
+    for u, fp in local.username_fingerprint_map : {
+      Fingerprint = fp
+      Cn          = local.username_common_name_map[u]
+      Username    = u
+    }
+  ], try(coalesce(local.custom_auth_file.certificates_list), [])) : []
 
   init_partitions_env = { for i, partition in local.init_partitions :
     "InitServices__Partitioning__Partitions__${i}" => jsonencode(partition)

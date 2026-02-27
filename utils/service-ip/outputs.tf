@@ -22,3 +22,8 @@ output "ports" {
   description = "Ports of the service"
   value       = var.service == null ? null : var.service.spec[0].cluster_ip != "None" ? var.service.spec[0].port[*].port : var.service.spec[0].port[*].target_port
 }
+
+output "ports_map" {
+  description = "Map of ports of the service with port name as key and exposed port number as value"
+  value       = var.service == null ? null : var.service.spec[0].cluster_ip != "None" ? { for port in var.service.spec[0].port : port.name => port.port } : { for port in var.service.spec[0].port : port.name => port.target_port }
+}

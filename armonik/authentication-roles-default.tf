@@ -8,8 +8,8 @@ resource "random_string" "common_name" {
 locals {
 
   custom_auth_file  = can(coalesce(var.authentication.authentication_datafile)) ? jsondecode(file(var.authentication.authentication_datafile)) : null
-  custom_users_list = try(local.custom_auth_file.users_list, null)
-  custom_roles_list = try(local.custom_auth_file.roles_list, null)
+  custom_users_list = try(local.custom_auth_file.users_list, [])
+  custom_roles_list = try(local.custom_auth_file.roles_list, [])
 
 
   # Ignore custom users named 'submitter' or 'monitoring'

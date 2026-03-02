@@ -49,8 +49,8 @@ dependencies:
     repository: https://grafana.github.io/helm-charts
     condition: grafana.enabled
   - name: fluent-bit
-    version: 2.x.x
-    repository: https://charts.bitnami.com/bitnami
+    version: 0.x.x
+    repository: https://fluent.github.io/helm-charts
     condition: fluent-bit.enabled
   - name: seq
     version: 2024.x.x

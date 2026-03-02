@@ -19,7 +19,7 @@ module "load_balancer_endpoint" {
 }
 
 module "gui_endpoint" {
-  count          = can(coalesce(var.gui)) ? 1 : 0
+  count          = var.gui != null ? 1 : 0
   source         = "../../utils/service-ip"
   service        = kubernetes_service.gui[0]
   cluster_domain = local.cluster_domain

@@ -10,7 +10,7 @@ dependencies:
   version: 16.5.45
 - name: kube-prometheus-stack
   repository: https://prometheus-community.github.io/helm-charts
-  version: 82.4.0
+  version: 82.4.3
 - name: keda
   repository: https://kedacore.github.io/charts
   version: 2.19.0
@@ -21,13 +21,13 @@ dependencies:
   repository: https://grafana.github.io/helm-charts
   version: 8.15.0
 - name: fluent-bit
-  repository: https://charts.bitnami.com/bitnami
-  version: 2.5.7
+  repository: https://fluent.github.io/helm-charts
+  version: 0.56.0
 - name: seq
   repository: https://helm.datalust.co
   version: 2024.3.2
 - name: cert-manager
   repository: https://charts.jetstack.io
   version: v1.19.4
-digest: sha256:9ace0336d66d7dabb58d501f4fbb386ad419636d5ba88910a85041d734acd407
-generated: "2026-02-25T12:10:29.089708884+01:00"
+digest: sha256:256d4384f71420c271e12cbecaa2955b72cfc79056e9bced439eee857484ad5e
+generated: "2026-03-02T12:09:24.382537296+01:00"

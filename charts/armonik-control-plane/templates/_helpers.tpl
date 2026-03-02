@@ -24,6 +24,11 @@ env:
   InitServices__InitObjectStorage: "true"
   InitServices__InitQueue: "true"
   InitServices__StopAfterInit: "true"
+  {{- $i := 0 }}
+  {{- range $name, $config := .Values.init.partitions }}
+  InitServices__Partitioning__Partitions__{{ $i }}: {{ dict "ParentPartitionIds" ($config.parentPartitionIds | default list) "PartitionId" $name "PodConfiguration" nil "PodMax" ($config.podMax | default 100) "PodReserved" ($config.podReserved | default 50) "PreemptionPercentage" ($config.preemptionPercentage | default 20) "Priority" ($config.priority | default 1) | toJson | quote }}
+  {{- $i = add $i 1 }}
+  {{- end }}
 {{- end }}
 
 {{- define "armonik.control.metricsConfHelper" }}

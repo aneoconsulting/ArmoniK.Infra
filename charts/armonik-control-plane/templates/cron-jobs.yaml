@@ -1,0 +1,88 @@
+{{ if false }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+    labels:
+      app: seq
+      service: seq-retention-job
+      type: monitoring
+    name: seq-retention-job
+spec:
+    concurrencyPolicy: Replace
+    failedJobsHistoryLimit: 5
+    jobTemplate:
+      metadata:
+        creationTimestamp: null
+        labels:
+          app: seq
+          service: seq-retention-job
+          type: monitoring
+        name: seq-retention-job
+      spec:
+        backoffLimit: 5
+        completions: 1
+        manualSelector: false
+        parallelism: 1
+        template:
+          metadata:
+            creationTimestamp: null
+            labels:
+              app: seq
+              service: seq-retention-job
+              type: monitoring
+            name: seq-retention-job
+          spec:
+            automountServiceAccountToken: true
+            containers:
+            - command: ["/script/seq.sh"]
+              env:
+              - name: SEQ_URL
+                value: http://seq:8080
+              - name: SEQ_USER
+              - name: SEQ_PASSWORD
+              {{- $registry := .Values.global.imageRegistry | default .Values.image.registry }}
+              {{- if $registry }}
+              image: "{{ $registry }}/{{ .Values.imageCron.repository }}/{{ .Values.imageCron.name }}:{{ .Values.imageCron.tag | default .Chart.AppVersion }}"
+              {{- else }}
+              image: "{{ .Values.imageCron.repository }}/{{ .Values.imageCron.name }}:{{ .Values.imageCron.tag | default .Chart.AppVersion }}"
+              {{- end }}
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              name: seq-retention-job
+              resources: {}
+              terminationMessagePath: /dev/termination-log
+              terminationMessagePolicy: File
+              volumeMounts:
+              - name: script
+                mountPath: "/script"
+            {{- $imagePullSecrets := .Values.global.imagePullSecrets | default .Values.imagePullSecrets }}
+            {{- if $imagePullSecrets }}
+            {{- with $imagePullSecrets }}
+            imagePullSecrets:
+              {{- toYaml . | nindent 14 }}
+            {{- end }}
+            {{- end }}
+            dnsPolicy: ClusterFirst
+            enableServiceLinks: true
+            restartPolicy: OnFailure
+            schedulerName: default-scheduler
+            securityContext: {}
+            shareProcessNamespace: false
+            terminationGracePeriodSeconds: 30
+            {{- if .Values.nodeSelector }}
+            nodeSelector:
+              {{- toYaml .Values.nodeSelector | nindent 14 }}
+            {{- end }}
+            {{- if .Values.tolerations }}
+            tolerations:
+              {{- toYaml .Values.tolerations | nindent 14 }}
+            {{- end }}
+            volumes:
+            - name: script
+              configMap:
+                name: jobs-configmap
+                defaultMode: 0500
+    schedule: 0 */12 * * *
+    startingDeadlineSeconds: 20
+    successfulJobsHistoryLimit: 0
+    suspend: false
+{{ end }}

@@ -1,0 +1,205 @@
+{{- range $partitionName, $config := .Values.partitions }}
+{{- $partition := dict -}}
+{{- dict "dst" $partition "srcs" (list $config $.Values.partitionCommon) "print" false "render" true "context" (
+  merge (dict "Values" (dict "partitionName" $partitionName)) (omit $ "Values")
+  ) | include "armonik.merge" -}}
+{{- $registry := $.Values.global.imageRegistry | default $.Values.registry -}}
+{{- $agent := $partition.agent -}}
+{{- $worker := $partition.worker -}}
+{{- $commonConf := list
+    (include "armonik.conf.compute" $ | fromYaml)
+    (list $partitionName $partition | include "armonik.compute.CommonConfHelper" | fromYaml)
+    $partition.conf
+  | include "armonik.conf.merge" | fromYaml -}}
+{{- $agentConf := list
+  (include "armonik.conf.polling" $ | fromYaml)
+  (list $partitionName $partition | include "armonik.compute.AgentConfHelper" | fromYaml)
+  $agent.conf
+  $commonConf
+| include "armonik.conf.merge" | fromYaml -}}
+{{- $workerConf := list
+  (include "armonik.conf.worker" $ | fromYaml)
+  (list $partitionName $partition | include "armonik.compute.WorkerConfHelper" | fromYaml)
+  $worker.conf
+  $commonConf
+| include "armonik.conf.merge" | fromYaml -}}
+{{- $volumeConf := list
+  $agentConf
+  $workerConf
+| include "armonik.conf.merge" | fromYaml }}
+{{- $agentImage := list $ $agent.image $.Values.partitionCommon.agent.image | include "armonik.image" | fromYaml }}
+{{- $workerImage := list $ $worker.image $.Values.partitionCommon.worker.image | include "armonik.image" | fromYaml }}
+{{- $fluentBitImage := list $ $.Values.fluentBit.image | include "armonik.image" | fromYaml }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ printf "%s-%s" (include "armonik.fullname" $) $partitionName | trunc 63 | trimSuffix "-" | quote }}
+  namespace: {{ include "armonik.namespace" $ }}
+  labels:
+    app.kubernetes.io/component: {{ printf "compute-plane-%s" $partitionName | quote }}
+    app.kubernetes.io/part-of: compute-plane
+    armonik.fr/partition: {{ $partitionName | quote }}
+    {{- include "armonik.labels" $ | nindent 4 }}
+spec:
+  replicas: {{ $partition.replicas }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: {{ printf "compute-plane-%s" $partitionName | quote }}
+      app.kubernetes.io/part-of: compute-plane
+      armonik.fr/partition: {{ $partitionName | quote }}
+      {{- include "armonik.selectorLabels" $ | nindent 6 }}
+  template:
+    metadata:
+      name: {{ $partitionName | quote }}
+      labels:
+        app.kubernetes.io/component: {{ printf "compute-plane-%s" $partitionName | quote }}
+        app.kubernetes.io/part-of: compute-plane
+        armonik.fr/partition: {{ $partitionName | quote }}
+        {{- include "armonik.selectorLabels" $ | nindent 8 }}
+      {{- with $partition.annotations}}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      {{- with $partition.nodeSelector}}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if $.Values.serviceAccount.create }}
+      serviceAccountName: {{ include "armonik.serviceAccountName" $ }}
+      serviceAccount: {{ include "armonik.serviceAccountName" $ }}
+      automountServiceAccountToken: true
+      {{- end }}
+      {{- with $partition.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      terminationGracePeriodSeconds: {{ $partition.terminationGracePeriodSeconds }}
+      shareProcessNamespace: {{ $.Values.shareProcessNamespace }}
+      enableServiceLinks: true
+      {{- with $.Values.imagePullSecrets | default $.Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      restartPolicy: {{ $.Values.restartPolicy }}
+      containers:
+      # agent container
+      - name: agent
+        image: {{ $agentImage.fullname }}
+        imagePullPolicy: {{ $agentImage.pullPolicy }}
+        {{- with $agent.resources }}
+        resources:
+          {{- toYaml . | nindent 12 }}
+        {{- end }}{{/* with $agent.resources */}}
+        securityContext:
+          {{- toYaml $agent.securityContext | nindent 10 }}
+        ports:
+        - name: {{ $agent.ports.name }}
+          containerPort: {{ $agent.ports.containerPort }}
+          protocol: TCP
+        {{- with $agent.readinessProbe }}
+        readinessProbe:
+          {{- . toYaml | nindent 10 }}
+        {{- end }}
+        {{- with $agent.livenessProbe }}
+        livenessProbe:
+          {{- . | toYaml | nindent 10 }}
+        {{- end }}
+        {{- with $agent.startupProbe }}
+        startupProbe:
+          {{- . | toYaml | nindent 10 }}
+        {{- end }}
+        env: {{- include "armonik.conf.generateEnv" $agentConf | nindent 10 }}
+        envFrom: {{- include "armonik.conf.generateEnvFrom" $agentConf | nindent 10 }}
+        volumeMounts:
+          {{- include "armonik.conf.generateVolumeMounts" $agentConf | nindent 10 }}
+          - name: cache-volume
+            mountPath: /cache
+            mountPropagation: None
+      # worker containers
+      - name: worker
+        image: {{ $workerImage.fullname }}
+        imagePullPolicy: {{ $workerImage.pullPolicy }}
+        {{- with $worker.resources }}
+        resources:
+          {{- toYaml . | nindent 12 }}
+        {{- end }}{{/* with $worker.resources */}}
+        {{- with $worker.livenessProbe }}
+        livenessProbe:
+          {{- . | toYaml | nindent 10 }}
+        {{- end }}
+        {{- with $worker.startupProbe }}
+        startupProbe:
+          {{- . | toYaml | nindent 10 }}
+        {{- end }}
+        lifecycle:
+          preStop:
+            exec:
+              command: ["/bin/sh", "-c", {{ $.Values.preStopWaitScript }}]
+        env: {{- include "armonik.conf.generateEnv" $workerConf | nindent 10 }}
+        envFrom: {{- include "armonik.conf.generateEnvFrom" $workerConf | nindent 10 }}
+        volumeMounts:
+          {{- include "armonik.conf.generateVolumeMounts" $workerConf | nindent 10 }}
+          - name: cache-volume
+            mountPath: /cache
+            mountPropagation: None
+      {{- if not $.Values.fluentBit.isDaemonSet }}
+      - name: fluent-bit
+        image: {{ $fluentBitImage.fullname }}
+        imagePullPolicy: {{ $fluentBitImage.pullPolicy }}
+        envFrom:
+        - configMapRef:
+            name: {{ .Values.fluentBit.configMapName }}
+        lifecycle:
+          preStop:
+            exec:
+              command: ["/bin/sh", "-c", {{ $.Values.preStopWaitScript }}]
+        volumeMounts:
+        - name: cache-volume
+          mountPath: /cache
+          mountPropagation: None
+        - name: "varlog"
+          mountPath: "/var/log"
+          readOnly: true
+        - name: "varlibdockercontainers"
+          mountPath: "/var/lib/docker/containers"
+          readOnly: true
+        - name: runlogjournal
+          mountPath: "/run/log/journal"
+          readOnly: true
+        - name: dmesg
+          mountPath: "/var/log/dmesg"
+          readOnly: true
+        - name: fluentbitconfig
+          mountPath: "/fluent-bit/etc"
+          readOnly: false
+      {{- end }}
+      volumes:
+        {{- include "armonik.conf.generateVolumes" $volumeConf | nindent 8 }}
+        - name: cache-volume
+          emptyDir: {}
+        {{- if not $.Values.fluentBit.isDaemonSet }}
+        - name: dmesg
+          hostPath:
+            path: /var/log/dmesg
+            type: ""
+        - name: fluentbitconfig
+          configMap:
+            name: {{ .Values.fluentBit.configMapName }}
+            defaultMode: 420
+            optional: false
+        - name: runlogjournal
+          hostPath:
+            path: /run/log/journal
+            type: ""
+        - name: varlibdockercontainers
+          hostPath:
+            path: /var/lib/docker/containers
+            type: ""
+        - name: varlog
+          hostPath:
+            path: /var/log
+            type: ""
+        {{- end }}
+{{- end }}

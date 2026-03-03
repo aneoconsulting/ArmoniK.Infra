@@ -33,7 +33,7 @@ partitionCommon:
   labels:
     app: "armonik"
     service: "compute-plane"
-  socketType: "unixdomainsocket"
+  socketType: "tcp"
   agent:
     name: polling-agent
     image:
@@ -179,7 +179,8 @@ partitions:
   default:
     worker:
       image:
-        name: "armonik_worker_dll"
+        name: "armonik-dynamic-dotnet-worker"
+        tag: "0.21.3-ppi.taskFail.1.geb3e9a8"
 
   stream:
     worker:
@@ -201,7 +202,7 @@ partitions:
     worker:
       image:
         name: "harmonic_snake"
-        tag: "python-3.11"
+        tag: "python-3.11-v0.2.5"
 
 fluentBit:
   isDaemonSet: true

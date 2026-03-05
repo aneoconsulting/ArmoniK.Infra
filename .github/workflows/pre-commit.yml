@@ -37,7 +37,7 @@ jobs:
         uses: jaxxstorm/action-install-gh-release@6096f2a2bbfee498ced520b6922ac2c06e990ed2 # v2.1.0
         with: # Grab the latest version
           repo: terraform-docs/terraform-docs
-          tag: v0.19.0
+          tag: v0.21.0
       
       - name: Checkout
         uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4

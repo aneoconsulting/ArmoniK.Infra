@@ -38,8 +38,8 @@ module "ingress" {
       grafana_url = try(coalesce(var.grafana.url), null)
       seq_url     = try(coalesce(var.seq.web_url), null)
       extra_headers = var.load_balancer != null && var.authentication.require_authentication ? {
-        "X-Certificate-Client-CN"          = local.username_common_name_map["loadbalancer"]
-        "X-Certificate-Client-Fingerprint" = local.username_fingerprint_map["loadbalancer"]
+        "X-Certificate-Client-CN"          = local.auth_data["loadbalancer"].common_name
+        "X-Certificate-Client-Fingerprint" = local.auth_data["loadbalancer"].fingerprint
       } : null
       s3_urls = local.s3_conf_required ? {
         service = local.ssc.service_url

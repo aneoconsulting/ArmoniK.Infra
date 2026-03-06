@@ -19,9 +19,8 @@ resource "tls_self_signed_cert" "ca" {
   ]
 
   subject {
-    organization = "ArmoniK Percona MongoDB Root (NonTrusted)"
-    common_name  = "ArmoniK Percona MongoDB Root (NonTrusted) Private Certificate Authority"
-    country      = "France"
+    organization = "PSMDB"
+    common_name  = "Root CA"
   }
 }
 
@@ -37,8 +36,8 @@ resource "tls_cert_request" "server" {
   private_key_pem = tls_private_key.server[0].private_key_pem
 
   subject {
-    country     = "France"
-    common_name = local.mongodb_dns
+    organization = "PSMDB"
+    common_name  = local.cluster_release_name
   }
 
   dns_names = local.tls_server_sans
@@ -73,8 +72,8 @@ resource "tls_cert_request" "internal" {
   private_key_pem = tls_private_key.internal[0].private_key_pem
 
   subject {
-    country     = "France"
-    common_name = "${local.cluster_release_name}-internal"
+    organization = "PSMDB"
+    common_name  = local.cluster_release_name
   }
 
   dns_names = local.tls_internal_sans

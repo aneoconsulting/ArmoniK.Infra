@@ -1,0 +1,107 @@
+services:
+  redis:
+    image: "redis:8"
+    ports:
+      - "6379:6379"
+  mongodb:
+    image: "mongo:8"
+    ports:
+      - "27017:27017"
+    command:
+      - /bin/sh
+      - -c
+      - |
+        (
+          sleep 5
+          mongosh --eval 'rs.initiate({_id: "rs0", members: [{_id: 0, host: "127.0.0.1:27017"}]})'
+        ) &
+        exec mongod --bind_ip_all --replSet rs0
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh
+      interval: 5s
+      timeout: 2s
+      retries: 2
+  activemq:
+    image: "apache/activemq-classic:6.1.7"
+    ports:
+      - "5672:5672"
+      - "8161:8161"
+    healthcheck:
+      test: activemq status
+      interval: 5s
+      timeout: 2s
+      retries: 2
+
+  gui:
+    image: "dockerhubaneo/armonik_admin_app:0.14.5"
+  nginx:
+    image: "nginxinc/nginx-unprivileged:1.27.5-alpine-slim"
+    ports:
+      - "8080:8080"
+      - "9080:9080"
+    configs:
+      - source: nginx
+        target: /etc/nginx/conf.d/armonik.conf
+
+  control:
+    image: "dockerhubaneo/armonik_control:0.35.0"
+    depends_on:
+      - redis
+      - mongodb
+      - activemq
+    ports:
+      - "1080:1080"
+      - "1081:1081"
+    environment:
+      # Configuration for ActiveMQ
+      Components__QueueAdaptorSettings__AdapterAbsolutePath: /adapters/queue/amqp/ArmoniK.Core.Adapters.Amqp.dll
+      Components__QueueAdaptorSettings__ClassName: ArmoniK.Core.Adapters.Amqp.QueueBuilder
+      Amqp__Host: linux-activemq-1
+      Amqp__Port: "5672"
+      Amqp__Scheme: AMQP
+      Amqp__User: admin
+      Amqp__Password: admin
+      Amqp__MaxPriority: "10"
+
+      # Configuration for MongoDB
+      Components__TableStorage: "ArmoniK.Adapters.MongoDB.TableStorage"
+      MongoDB__ConnectionString: "mongodb://linux-mongodb-1:27017/database?directConnection=true&authSource=admin"
+      MongoDB__Port: "27017"
+      MongoDB__Tls: "false"
+      MongoDB__DatabaseName: "database"
+      MongoDB__DirectConnection: "true"
+      MongoDB__AuthSource: "admin"
+
+      # Configuration for Redis
+      Components__ObjectStorageAdaptorSettings__AdapterAbsolutePath: /adapters/object/redis/ArmoniK.Core.Adapters.Redis.dll
+      Components__ObjectStorageAdaptorSettings__ClassName: ArmoniK.Core.Adapters.Redis.ObjectBuilder
+      Components__ObjectStorage: ArmoniK.Adapters.Redis.ObjectStorage
+
+      Redis__EndpointUrl: "linux-redis-1:6379"
+      Redis__InstanceName: ArmoniKRedis
+      Redis__ClientName: ArmoniK.Core
+      Redis__User: ""
+      Redis__Password: ""
+      Redis__Ssl: "false"
+
+      # Configuration for ArmoniK
+      Serilog__MinimumLevel: Information
+      Submitter__DefaultPartition: default
+      InitServices__InitDatabase: "true"
+      InitServices__InitObjectStorage: "true"
+      InitServices__InitQueue: "true"
+      InitServices__StopAfterInit: "false"
+      InitServices__Partitioning__Partitions__0: |
+        {
+          "PartitionId": "default",
+          "ParentPartitionIds": [],
+          "PodReserved": 0,
+          "PodMax": 100,
+          "PreemptionPercentage": 0,
+          "Priority": 0,
+          "PodConfiguration": {}
+        }
+
+configs:
+  nginx:
+    file: nginx.conf

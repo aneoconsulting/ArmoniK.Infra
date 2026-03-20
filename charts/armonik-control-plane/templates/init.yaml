@@ -1,0 +1,73 @@
+{{- if .Values.init.enabled }}
+{{- $conf := list
+    (include "armonik.conf.jobs" $ | fromYaml)
+    (include "armonik.control.initConfHelper" $ | fromYaml)
+    .Values.conf
+    .Values.init.conf
+  | include "armonik.conf.merge" | fromYaml -}}
+{{- $image := list $ .Values.init.image .Values.image | include "armonik.image" | fromYaml }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "armonik.fullname" . | printf "%s-init" | trunc 63 | trimSuffix "-" | quote }}
+  namespace: {{ include "armonik.namespace" . }}
+  labels:
+    app.kubernetes.io/component: init
+    app.kubernetes.io/part-of: control-plane
+    {{- include "armonik.labels" . | nindent 4 }}
+spec:
+  backoffLimit: 5
+  completionMode: NonIndexed
+  completions: 1
+  manualSelector: false
+  parallelism: 1
+  suspend: false
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        job-name: {{ include "armonik.fullname" . | printf "%s-init" | trunc 63 | trimSuffix "-" | quote }}
+        app.kubernetes.io/component: init
+        app.kubernetes.io/part-of: control-plane
+        {{- include "armonik.selectorLabels" . | nindent 8 }}
+      name: init
+    spec:
+      automountServiceAccountToken: true
+      containers:
+      - name: init
+        image: {{ $image.fullname }}
+        imagePullPolicy: {{ $image.pullPolicy }}
+        
+        env: {{- include "armonik.conf.generateEnv" $conf | nindent 10 }}
+        envFrom: {{- include "armonik.conf.generateEnvFrom" $conf | nindent 10 }}
+        volumeMounts: {{- include "armonik.conf.generateVolumeMounts" $conf | nindent 10 }}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        {{- with coalesce .Values.init.resources .Values.resources }}
+        resources:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}{{/* with .Values.resources */}}
+      volumes: {{- include "armonik.conf.generateVolumes" $conf | nindent 8 }}
+
+      {{- with .Values.global.imagePullSecrets | default .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}{{/* with $imagePullSecrets */}}
+      {{- if $.Values.serviceAccount.create }}
+      serviceAccountName: {{ include "armonik.serviceAccountName" $ }}
+      serviceAccount: {{ include "armonik.serviceAccountName" $ }}
+      automountServiceAccountToken: true
+      {{- end }}{{/* if .Values.serviceAccount.create */}}
+      shareProcessNamespace: false
+      {{- with coalesce .Values.init.nodeSelector .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}{{/* with .Values.nodeSelector */}}
+      {{- with coalesce .Values.init.tolerations .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}{{/* with .Values.tolerations */}}
+      enableServiceLinks: true
+      dnsPolicy: ClusterFirst
+      restartPolicy: OnFailure
+{{- end }}

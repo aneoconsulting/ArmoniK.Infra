@@ -54,7 +54,28 @@ control-plane:
         priority: 1
 compute-plane:
   enabled: true
+  # partitions:
+  #   default:
+  #     worker:
+  #       image:
+  #         name: "armonik-dynamic-dotnet-worker"
+  #         tag: "0.21.3-ppi.taskFail.1.geb3e9a8"
 
+  #   stream:
+  #     worker:
+  #       image:
+  #         name: "armonik_core_stream_test_worker"
+
+  #   htcmock:
+  #     socketType: "tcp"
+  #     worker:
+  #       image:
+  #         name: "armonik_core_htcmock_test_worker"
+
+  #   bench:
+  #     worker:
+  #       image:
+  #         name: "armonik_core_bench_test_worker"
 config:
   log:
     minimumLevel: Information

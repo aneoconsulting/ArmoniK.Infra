@@ -1,0 +1,49 @@
+global:
+  armonik-dependencies:
+    conf:
+      fullnameOverride: "armonik-conf"
+
+init:
+  enabled: true
+  image:
+    repository: dockerhubaneo
+    name: armonik_control
+  conf:
+    envFromSecret:
+      Redis__Password:
+        secret: redis
+        field: redis-password
+      MongoDB__Password:
+        secret: mongodb
+        field: mongodb-root-password
+
+  configmaps:
+    - "armonik-conf-core"
+    - "armonik-conf-log"
+    - "armonik-conf-jobs"
+
+serviceAccount:
+  create: false
+  name: compute-plane
+# TODO: to test
+rbac:
+  create: false
+
+# Only define the partition(s) this compute-plane manages
+partitions:
+  # pymonik:
+  #   podMax: 100
+  #   podReserved: 50
+  #   preemptionPercentage: 20
+  #   priority: 1
+  #   parentPartitionIds: []
+  #   worker:
+  #     image:
+  #       name: "harmonic_snake"
+  #       tag: "python-3.11-v0.2.5"
+
+  hello-partition:
+    socketType: "tcp"
+    worker:
+      image:
+        name: "armonik_core_htcmock_test_worker"

@@ -29,11 +29,28 @@ podDisruptionBudget:
   minAvailable:
   maxUnavailable:
 
+# Just to stay consistent with the control plane, don't really understand why it's here though
+conf:
+
+init:
+  enabled: false
+  image:
+    registry:
+    repository:
+    name:
+    tag:
+    pullPolicy:
+  resources:
+  nodeSelector:
+  tolerations:
+  conf:
+  configmaps:
+
 partitionCommon:
+  socketType: "tcp" #TODO: things break without this, need to look into it later
   labels:
     app: "armonik"
     service: "compute-plane"
-  socketType: "tcp"
   agent:
     name: polling-agent
     image:
@@ -174,35 +191,7 @@ partitionCommon:
           query: 'armonik_{{ .Values.partitionName }}_tasks_queued{job="metrics-exporter"}'
   replicas: 1
   conf:
-
-partitions:
-  default:
-    worker:
-      image:
-        name: "armonik-dynamic-dotnet-worker"
-        tag: "0.21.3-ppi.taskFail.1.geb3e9a8"
-
-  stream:
-    worker:
-      image:
-        name: "armonik_core_stream_test_worker"
-
-  htcmock:
-    socketType: "tcp"
-    worker:
-      image:
-        name: "armonik_core_htcmock_test_worker"
-
-  bench:
-    worker:
-      image:
-        name: "armonik_core_bench_test_worker"
-  
-  pymonik:
-    worker:
-      image:
-        name: "harmonic_snake"
-        tag: "python-3.11-v0.2.5"
+partitions:  
 
 fluentBit:
   isDaemonSet: true

@@ -14,3 +14,18 @@ Service Installed:
 {{- end }}
 {{- end }}
 **********************************************************
+
+To add a standalone compute-plane with new partitions:
+
+  1. Extract the context file:
+
+     kubectl get configmap {{ include "armonik.fullname" . }}-compute-plane-context \
+       -n {{ .Release.Namespace }} \
+       -o jsonpath='{.data.compute-plane-context\.yaml}' > compute-plane-context.yaml
+
+  2. Install your compute-plane:
+
+     helm install <release-name> ./charts/armonik-compute-plane \
+       -n {{ .Release.Namespace }} \
+       -f compute-plane-context.yaml \
+       -f <your-partitions>.yaml

@@ -126,8 +126,10 @@ prefixItems:
 {{- define "armonik.conf.materialized" }}
   {{- $configmap := index . 0 }}
   {{- $conf := index . 1 | deepCopy }}
+  {{- if $conf.env }}
   {{- $_ := dict | set $conf "env" }}
   {{- $_ := $configmap | append $conf.envConfigmap | uniq | set $conf "envConfigmap" }}
+  {{- end }}
   {{- $conf | toYaml }}
 {{- end }}
 

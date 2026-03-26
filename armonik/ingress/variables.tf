@@ -197,6 +197,7 @@ variable "load_balancer" {
       session_cache_size    = optional(number)
       result_cache_size     = optional(number)
       task_cache_size       = optional(number)
+      log_format            = optional(string) # pretty or json
     }), {})
     extra_env = optional(map(string))
   })

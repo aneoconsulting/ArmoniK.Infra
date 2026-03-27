@@ -1,0 +1,21 @@
+{{- if .Values.podDisruptionBudget.enabled -}}
+apiVersion: {{ include "armonik.compute.pdb.apiVersion" . }}
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "armonik.fullname" . }}
+  namespace: {{ include "armonik.namespace" . }}
+  labels:
+    app.kubernetes.io/component: compute-plane
+    {{- include "armonik.labels" . | nindent 4 }}
+spec:
+  {{- if .Values.podDisruptionBudget.minAvailable }}
+  minAvailable: {{ .Values.podDisruptionBudget.minAvailable }}
+  {{- end  }}
+  {{- if .Values.podDisruptionBudget.maxUnavailable }}
+  maxUnavailable: {{ .Values.podDisruptionBudget.maxUnavailable }}
+  {{- end  }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: compute-plane
+      {{- include "armonik.selectorLabels" . | nindent 6 }}
+{{- end -}}

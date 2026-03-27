@@ -1,0 +1,82 @@
+{{- $image := list $ .Values.gui.image | include "armonik.image" | fromYaml }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "armonik.fullname" . | printf "%s-gui" | trunc 63 | trimSuffix "-" }}
+  namespace: {{ include "armonik.namespace" . }}
+  labels:
+    app.kubernetes.io/component: gui
+    {{- include "armonik.labels" . | nindent 4 }}
+  {{- with .Values.annotations}}
+  annotations:
+  {{- range $key, $value := . }}
+    {{ $key }}: {{ $value }}
+  {{- end }}
+  {{- end }}
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: gui
+      {{- include "armonik.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: gui
+        {{- include "armonik.selectorLabels" . | nindent 8 }}
+    spec:
+      automountServiceAccountToken: true
+      containers:
+      - name: gui
+        image: {{ $image.fullname }}
+        imagePullPolicy: {{ $image.pullPolicy }}
+        ports:
+          {{- range .Values.gui.ports }}
+          - name: {{ .name }}
+            containerPort: {{ .containerPort }}
+            protocol: TCP
+          {{- end }}{{/* range .Values.ports */}}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        {{- with coalesce .Values.gui.resources .Values.resources }}
+        resources:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}{{/* with .Values.resources */}}
+        {{- with coalesce .Values.gui.livenessProbe .Values.livenessProbe }}
+        livenessProbe:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}{{/* with .Values.livenessProbe */}}
+        {{- with coalesce .Values.gui.startupProbe .Values.startupProbe }}
+        startupProbe:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}{{/* with .Values.startupProbe */}}
+        {{- with coalesce .Values.gui.readinessProbe .Values.readinessProbe }}
+        readinessProbe:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}{{/* with .Values.readinessProbe */}}
+        {{- with .extraEnv }}
+        env:
+          {{- .extraEnv | toYaml | nindent 10 }}
+        {{- end }}
+        {{- with .extraEnvFrom }}
+        envFrom:
+          {{- .extraEnvFrom | toYaml | nindent 10 }}
+        {{- end }}
+        {{- with .extraVolumeMounts }}
+        volumeMounts:
+          {{ . | toYaml | nindent 10 }}
+        {{- end }}
+      dnsPolicy: ClusterFirst
+      shareProcessNamespace: false
+      {{- with coalesce .Values.gui.nodeSelector .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}{{/* with .Values.nodeSelector */}}
+      {{- with coalesce .Values.gui.tolerations .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}{{/* with .Values.tolerations */}}
+      enableServiceLinks: true
+      {{- with coalesce .Values.gui.extraVolumeMounts .Values.extraVolumeMounts }}
+      volumes:
+        {{ . | toYaml | nindent 8 }}
+      {{- end }}

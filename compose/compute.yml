@@ -1,0 +1,77 @@
+services:
+  agent:
+    image: "dockerhubaneo/armonik_pollingagent:0.35.0"
+    user: ContainerAdministrator
+    environment:
+      ComputePlane__WorkerChannel__Address: "/cache/armonik_worker.sock"
+      ComputePlane__WorkerChannel__SocketType: "unixdomainsocket"
+      ComputePlane__AgentChannel__Address: "/cache/armonik_agent.sock"
+      ComputePlane__AgentChannel__SocketType: "unixdomainsocket"
+      # ComputePlane__WorkerChannel__Address    : "http://armonik-worker-1:8080"
+      # ComputePlane__WorkerChannel__SocketType : "tcp"
+      # ComputePlane__AgentChannel__Address     : "http://armonik-agent-1:8080"
+      # ComputePlane__AgentChannel__SocketType  : "tcp"
+      # Configuration for ActiveMQ
+      Components__QueueAdaptorSettings__AdapterAbsolutePath: "/adapters/queue/amqp/ArmoniK.Core.Adapters.Amqp.dll"
+      Components__QueueAdaptorSettings__ClassName: "ArmoniK.Core.Adapters.Amqp.QueueBuilder"
+      Amqp__Host: "192.168.21.133"
+      Amqp__Port: "5672"
+      Amqp__Scheme: "AMQP"
+      Amqp__User: "admin"
+      Amqp__Password: "admin"
+      Amqp__MaxPriority: "10"
+      # Configuration for MongoDB
+      Components__TableStorage: "ArmoniK.Adapters.MongoDB.TableStorage"
+      MongoDB__ConnectionString: "mongodb://192.168.21.133:27017/database?directConnection=true&authSource=admin"
+      MongoDB__Port: "27017"
+      MongoDB__Tls: "false"
+      MongoDB__DatabaseName: "database"
+      MongoDB__DirectConnection: "true"
+      MongoDB__AuthSource: "admin"
+
+      # Configuration for Redis
+      Components__ObjectStorageAdaptorSettings__AdapterAbsolutePath: "/adapters/object/redis/ArmoniK.Core.Adapters.Redis.dll"
+      Components__ObjectStorageAdaptorSettings__ClassName: "ArmoniK.Core.Adapters.Redis.ObjectBuilder"
+      Components__ObjectStorage: "ArmoniK.Adapters.Redis.ObjectStorage"
+
+      Redis__EndpointUrl: "192.168.21.133:6379"
+      Redis__InstanceName: "ArmoniKRedis"
+      Redis__ClientName: "ArmoniK.Core"
+      Redis__User: ""
+      Redis__Password: ""
+      Redis__Ssl: "false"
+
+      # Configuration for ArmoniK
+      Serilog__MinimumLevel: Information
+
+      ComputePlane__MessageBatchSize: "1"
+      InitWorker__WorkerCheckRetries: "10"
+      InitWorker__WorkerCheckDelay: "00:00:10"
+      Amqp__LinkCredit: "2"
+      Pollster__GraceDelay: "00:00:15"
+      InitServices__InitDatabase: "false"
+      InitServices__InitObjectStorage: "false"
+      InitServices__InitQueue: "false"
+      InitServices__StopAfterInit: "false"
+      Pollster__PartitionId: "default"
+    volumes:
+      - armonik:C:\cache
+
+  worker:
+    image: "quantworker:v1"
+    user: ContainerAdministrator
+    environment:
+      ComputePlane__WorkerChannel__Address: "/cache/armonik_worker.sock"
+      ComputePlane__WorkerChannel__SocketType: "unixdomainsocket"
+      ComputePlane__AgentChannel__Address: "/cache/armonik_agent.sock"
+      ComputePlane__AgentChannel__SocketType: "unixdomainsocket"
+      # ComputePlane__WorkerChannel__Address    : "http://armonik-worker-1:8080"
+      # ComputePlane__WorkerChannel__SocketType : "tcp"
+      # ComputePlane__AgentChannel__Address     : "http://armonik-agent-1:8080"
+      # ComputePlane__AgentChannel__SocketType  : "tcp"
+      Serilog__MinimumLevel: "Information"
+    volumes:
+      - armonik:C:\cache
+
+volumes:
+  armonik:

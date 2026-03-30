@@ -95,6 +95,27 @@ Create chart name and version as used by the chart label.
 {{- end }}
 
 {{/*
+Create the name of the service account to use
+*/}}
+{{- define "armonik.serviceAccountName" -}}
+  {{- if .Values.serviceAccount.create }}
+    {{- default (include "armonik.fullname" .) .Values.serviceAccount.name }}
+  {{- else }}
+    {{- default "default" .Values.serviceAccount.name }}
+  {{- end }}
+{{- end }}
+
+{{/* Get PodDisruptionBudget API Version */}}
+{{- define "armonik.pdb.apiVersion" -}}
+  {{- if and (.Capabilities.APIVersions.Has "policy/v1") (semverCompare ">= 1.21-0" .Capabilities.KubeVersion.Version) -}}
+      {{- print "policy/v1" -}}
+  {{- else -}}
+    {{- print "policy/v1beta1" -}}
+  {{- end -}}
+{{- end -}}
+
+
+{{/*
 Common labels
 */}}
 {{- define "armonik.labels" -}}
@@ -116,23 +137,3 @@ Selector labels
 app.kubernetes.io/name: {{ include "armonik.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
-
-{{/*
-Create the name of the service account to use
-*/}}
-{{- define "armonik.serviceAccountName" -}}
-{{- if .Values.serviceAccount.create }}
-{{- default (include "armonik.fullname" .) .Values.serviceAccount.name }}
-{{- else }}
-{{- default "default" .Values.serviceAccount.name }}
-{{- end }}
-{{- end }}
-
-{{/* Get PodDisruptionBudget API Version */}}
-{{- define "armonik.pdb.apiVersion" -}}
-  {{- if and (.Capabilities.APIVersions.Has "policy/v1") (semverCompare ">= 1.21-0" .Capabilities.KubeVersion.Version) -}}
-      {{- print "policy/v1" -}}
-  {{- else -}}
-    {{- print "policy/v1beta1" -}}
-  {{- end -}}
-{{- end -}}

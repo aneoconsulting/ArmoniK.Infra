@@ -3,7 +3,7 @@
 {{- $partition := dict -}}
 {{- dict "dst" $partition "srcs" (list $config $.Values.partitionCommon) "print" false "render" true "context" (
   merge (dict "Values" (dict "partitionName" $partitionName)) (omit $ "Values")
-  ) | include "armonik.merge" -}}
+  ) | include "armonik.utils.merge" -}}
 ---
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject

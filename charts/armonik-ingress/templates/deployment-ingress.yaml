@@ -63,13 +63,13 @@ spec:
           {{- .extraEnvFrom | toYaml | nindent 10 }}
         {{- end }}
         volumeMounts:
-        {{- if list .Values "tls" "enabled" | include "armonik.index" }}
+        {{- if list .Values "tls" "enabled" | include "armonik.utils.index" }}
         - name: server-cert
           mountPath: /ingress
           mountPropagation: None
           readOnly: true
         {{- end }}
-        {{- if list .Values "mtls" "enabled" | include "armonik.index" }}
+        {{- if list .Values "mtls" "enabled" | include "armonik.utils.index" }}
         - name: client-cert
           mountPath: /ingressclient
           mountPropagation: None
@@ -98,14 +98,14 @@ spec:
       {{- end }}{{/* with .Values.tolerations */}}
       enableServiceLinks: true
       volumes:
-      {{- if list .Values "tls" "enabled" | include "armonik.index" }}
+      {{- if list .Values "tls" "enabled" | include "armonik.utils.index" }}
       - name: server-cert
         secret:
           defaultMode: 420
           optional: false
           secretName: {{ include "armonik.fullname" . }}-cert
       {{- end }}
-      {{- if list .Values "mtls" "enabled" | include "armonik.index" }}
+      {{- if list .Values "mtls" "enabled" | include "armonik.utils.index" }}
       - name: client-cert
         secret:
           defaultMode: 420

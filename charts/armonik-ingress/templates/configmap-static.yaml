@@ -9,7 +9,7 @@ metadata:
 immutable: false
 data:
 {{- $call := dict "src" .Values.static "render" true "context" $ "print" false -}}
-{{- include "armonik.merge" $call }}
+{{- include "armonik.utils.merge" $call }}
 {{- range $k, $v := $call.dst }}
   {{ $k | quote }}: {{ $v | toJson | quote }}
 {{- end }}

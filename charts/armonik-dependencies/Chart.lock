@@ -10,7 +10,7 @@ dependencies:
   version: 16.5.45
 - name: kube-prometheus-stack
   repository: https://prometheus-community.github.io/helm-charts
-  version: 82.4.3
+  version: 82.15.0
 - name: keda
   repository: https://kedacore.github.io/charts
   version: 2.19.0
@@ -28,6 +28,6 @@ dependencies:
   version: 2024.3.2
 - name: cert-manager
   repository: https://charts.jetstack.io
-  version: v1.19.4
-digest: sha256:256d4384f71420c271e12cbecaa2955b72cfc79056e9bced439eee857484ad5e
-generated: "2026-03-02T12:09:24.382537296+01:00"
+  version: v1.20.0
+digest: sha256:5b975e9f38b783dbff171f91c99a241ef5cdb36478f5daa6d2a95a2a4e332e61
+generated: "2026-03-30T17:17:56.370390329+02:00"

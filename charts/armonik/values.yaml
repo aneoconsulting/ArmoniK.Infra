@@ -76,7 +76,7 @@ compute-plane:
   #     worker:
   #       image:
   #         name: "armonik_core_bench_test_worker"
-config:
+conf:
   log:
     minimumLevel: Information
 

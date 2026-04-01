@@ -25,60 +25,6 @@ Gets the context of a dependency to execute named templates from this dependency
 {{- end -}}
 
 {{/*
-Constructs and returns an image configuration object (see schema below) representing the most complete image configuration
-given a context and one or more image configuration objects.
-
-Here, "the most complete image configuration" means that the template retrieves each 
-attribute from the first image object passed to it (i.e. with precedence from left to right).
-
-If no tag is found in the provided image configuration objects, the templates looks into the `appVersion`  defined in Chart.yaml
-and ultimately sets it to "latest" if no `appVersion` was found.
-
-Thus, when calling this template for an third-party image deployed with the armonik-dependencies chart, 
-is adviced to set the context to the dependency context, especially if you know no tag is provided. 
-
-Usage:
- {{- include "armonik.utils.finalImageConf" (list <context> <imageConf1> <imageConf2> ...)| fromYaml }}
-Example:
-{{- $ctx :=  list $ "mongodb" | include "armonik.dependencyContext" | fromYaml -}}
-{{- $imageConf := list $ctx .Values.mongodb.image .Values.mongodbCommon.image  | include "armonik.utils.finalImageConf" | fromYaml }}
-
-image configuration object schema:
-  registry: string
-  repository: string
-  name: string
-  tag: string
-  pullPolicy: string in ['IfNotPresent', 'Always', 'Never']
-*/}}
-{{- define "armonik.utils.finalImageConf" -}}
-  {{- $ctx := first . -}}
-  {{- $imageConfs := rest . -}}
-  {{- $image := dict
-    "registry" ""
-    "repository" ""
-    "name" ""
-    "tag" ""
-    "pullPolicy" ""
-  -}}
-  {{- range $imageConf := $imageConfs -}}
-    {{- $_ := coalesce $image.registry $imageConf.registry | set $image "registry" -}}
-    {{- $_ := coalesce $image.repository $imageConf.repository | set $image "repository" -}}
-    {{- $_ := coalesce $image.name $imageConf.name | set $image "name" -}}
-    {{- $_ := coalesce $image.tag $imageConf.tag | set $image "tag" -}}
-    {{- $_ := coalesce $image.pullPolicy $imageConf.pullPolicy | set $image "pullPolicy" -}}
-  {{- end -}}
-  {{- $_ := coalesce $image.tag $ctx.Chart.AppVersion "latest" | set $image "tag" -}}
-  {{- if $image.registry -}}
-    {{- $_ := printf "%s/%s/%s:%s" $image.registry $image.repository $image.name $image.tag | set $image "fullname" -}}
-  {{- else if $image.repository -}}
-    {{- $_ := printf "%s/%s:%s" $image.repository $image.name $image.tag | set $image "fullname" -}}
-  {{- else -}}
-    {{- $_ := printf "%s:%s" $image.name $image.tag | set $image "fullname" -}}
-  {{- end -}}
-  {{- $image | toYaml -}}
-{{- end -}}
-
-{{/*
 Expand the name of the chart.
 */}}
 {{- define "armonik.name" -}}

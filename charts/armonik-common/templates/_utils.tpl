@@ -1,30 +1,4 @@
 {{/*
-Gets the context of a dependency to execute named templates from this dependency
-
-# Usage
-
-{{ $ctx := list $ "mongodb" | include "armonik.dependencyContext" $ | fromYaml }}
-*/}}
-{{- define "armonik.dependencyContext" -}}
-  {{- $root := index . 0 -}}
-  {{- $dependency := index . 1 -}}
-  {{-
-    $context := dict
-      "Values" (list $root.Values "global" "armonik-dependencies" $dependency | include "armonik.utils.index" | fromYaml)
-      "Chart" (dict
-        "IsRoot" $root.Chart.IsRoot
-        "Name" $dependency
-        "Type" "application")
-      "Capabilities" $root.Capabilities
-      "Files" dict
-      "Release" $root.Release
-      "Subcharts" dict
-      "Template" $root.Template
-  -}}
-  {{- $context | toYaml -}}
-{{- end -}}
-
-{{/*
 Constructs and returns an image configuration object (see schema below) representing the most complete image configuration
 given a context and one or more image configuration objects.
 

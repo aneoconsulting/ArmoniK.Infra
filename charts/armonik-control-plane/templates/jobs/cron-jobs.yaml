@@ -1,3 +1,4 @@
+{{- $image := list $ .Values.cron.image .Values.global.image | include "armonik.utils.finalImageConf" | fromYaml }}
 {{ if false }}
 apiVersion: batch/v1
 kind: CronJob
@@ -40,13 +41,8 @@ spec:
                 value: http://seq:8080
               - name: SEQ_USER
               - name: SEQ_PASSWORD
-              {{- $registry := .Values.global.imageRegistry | default .Values.image.registry }}
-              {{- if $registry }}
-              image: "{{ $registry }}/{{ .Values.imageCron.repository }}/{{ .Values.imageCron.name }}:{{ .Values.imageCron.tag | default .Chart.AppVersion }}"
-              {{- else }}
-              image: "{{ .Values.imageCron.repository }}/{{ .Values.imageCron.name }}:{{ .Values.imageCron.tag | default .Chart.AppVersion }}"
-              {{- end }}
-              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              image: {{ $image.fullname }}
+              imagePullPolicy: {{ $image.pullPolicy }}
               name: seq-retention-job
               resources: {}
               terminationMessagePath: /dev/termination-log
@@ -54,12 +50,9 @@ spec:
               volumeMounts:
               - name: script
                 mountPath: "/script"
-            {{- $imagePullSecrets := .Values.global.imagePullSecrets | default .Values.imagePullSecrets }}
-            {{- if $imagePullSecrets }}
-            {{- with $imagePullSecrets }}
+            {{- with (coalesce .Values.global.imagePullSecrets .Values.imagePullSecrets dict) }}
             imagePullSecrets:
               {{- toYaml . | nindent 14 }}
-            {{- end }}
             {{- end }}
             dnsPolicy: ClusterFirst
             enableServiceLinks: true
@@ -68,13 +61,13 @@ spec:
             securityContext: {}
             shareProcessNamespace: false
             terminationGracePeriodSeconds: 30
-            {{- if .Values.nodeSelector }}
+            {{- with .Values.nodeSelector }}
             nodeSelector:
-              {{- toYaml .Values.nodeSelector | nindent 14 }}
+              {{- toYaml . | nindent 14 }}
             {{- end }}
-            {{- if .Values.tolerations }}
+            {{- with .Values.tolerations }}
             tolerations:
-              {{- toYaml .Values.tolerations | nindent 14 }}
+              {{- toYaml . | nindent 14 }}
             {{- end }}
             volumes:
             - name: script

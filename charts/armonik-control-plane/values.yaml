@@ -159,3 +159,11 @@ init:
   #   users: []
   #   roles: []
   #   userCertificates: []
+
+cron:
+  image:
+    registry:
+    repository:
+    name: armonik_control_metrics
+    tag:
+    pullPolicy:

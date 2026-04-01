@@ -25,9 +25,32 @@ Gets the context of a dependency to execute named templates from this dependency
 {{- end -}}
 
 {{/*
+Constructs and returns an image configuration object (see schema below) representing the most complete image configuration
+given a context and one or more image configuration objects.
 
+Here, "the most complete image configuration" means that the template retrieves each 
+attribute from the first image object passed to it (i.e. with precedence from left to right).
+
+If no tag is found in the provided image configuration objects, the templates looks into the `appVersion`  defined in Chart.yaml
+and ultimately sets it to "latest" if no `appVersion` was found.
+
+Thus, when calling this template for an third-party image deployed with the armonik-dependencies chart, 
+is adviced to set the context to the dependency context, especially if you know no tag is provided. 
+
+Usage:
+ {{- include "armonik.utils.finalImageConf" (list <context> <imageConf1> <imageConf2> ...)| fromYaml }}
+Example:
+{{- $ctx :=  list $ "mongodb" | include "armonik.dependencyContext" | fromYaml -}}
+{{- $imageConf := list $ctx .Values.mongodb.image .Values.mongodbCommon.image  | include "armonik.utils.finalImageConf" | fromYaml }}
+
+image configuration object schema:
+  registry: string
+  repository: string
+  name: string
+  tag: string
+  pullPolicy: string in ['IfNotPresent', 'Always', 'Never']
 */}}
-{{- define "armonik.image" -}}
+{{- define "armonik.utils.finalImageConf" -}}
   {{- $ctx := first . -}}
   {{- $imageConfs := rest . -}}
   {{- $image := dict
@@ -95,7 +118,7 @@ Create chart name and version as used by the chart label.
 {{- end }}
 
 {{/*
-Create the name of the service account to use
+Returns the name of the service account to use
 */}}
 {{- define "armonik.serviceAccountName" -}}
   {{- if .Values.serviceAccount.create }}

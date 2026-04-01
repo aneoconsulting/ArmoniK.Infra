@@ -3,7 +3,7 @@
     (include "armonik.control.confHelper" $ | fromYaml)
     .Values.conf
   | include "armonik.conf.merge" | fromYaml -}}
-{{- $image := list $ .Values.image | include "armonik.image" | fromYaml }}
+{{- $image := list $ .Values.image | include "armonik.utils.finalImageConf" | fromYaml }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:

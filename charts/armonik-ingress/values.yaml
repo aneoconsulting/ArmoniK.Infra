@@ -33,7 +33,7 @@ ports:
 
 service:
   type: LoadBalancer
-  annotations:
+  annotations: {}
 
 tls:
   clusterDomain: cluster.local
@@ -89,10 +89,10 @@ gui:
       cpu: 100m
       memory: 128Mi
 
-  nodeSelector:
-  tolerations:
-  annotations:
-  affinity:
+  nodeSelector: {}
+  tolerations: []
+  annotations: {}
+  affinity: {}
 
 static:
   environment.json:
@@ -100,4 +100,4 @@ static:
     description: "{{ .Values.global.environment.description }}"
     name: "{{ .Values.global.environment.name }}"
     version: "{{ .Chart.AppVersion }}"
-  gui_configuration: {}
+  guiConfiguration: {}

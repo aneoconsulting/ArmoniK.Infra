@@ -27,9 +27,9 @@
   $agentConf
   $workerConf
 | include "armonik.conf.merge" | fromYaml }}
-{{- $agentImage := list $ $agent.image $.Values.partitionCommon.agent.image | include "armonik.image" | fromYaml }}
-{{- $workerImage := list $ $worker.image $.Values.partitionCommon.worker.image | include "armonik.image" | fromYaml }}
-{{- $fluentBitImage := list $ $.Values.fluentBit.image | include "armonik.image" | fromYaml }}
+{{- $agentImage := list $ $agent.image $.Values.partitionCommon.agent.image | include "armonik.utils.finalImageConf" | fromYaml }}
+{{- $workerImage := list $ $worker.image $.Values.partitionCommon.worker.image | include "armonik.utils.finalImageConf" | fromYaml }}
+{{- $fluentBitImage := list $ $.Values.fluentBit.image | include "armonik.utils.finalImageConf" | fromYaml }}
 ---
 apiVersion: apps/v1
 kind: Deployment

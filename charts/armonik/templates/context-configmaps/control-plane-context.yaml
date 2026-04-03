@@ -5,7 +5,6 @@
 {{- /* Determines the service account name to use for later control planes */}}
 {{- $controlPlaneServiceAccountName := include "armonik.utils.index" (list .Values "compute-plane" "serviceAccountName" "name") | default "compute-plane" -}}
 
-
 apiVersion: v1
 kind: ConfigMap
 metadata:

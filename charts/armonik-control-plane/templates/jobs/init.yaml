@@ -5,7 +5,7 @@
     .Values.conf
     .Values.init.conf
   | include "armonik.conf.merge" | fromYaml -}}
-{{- $image := list $ .Values.init.image .Values.image | include "armonik.utils.finalImageConf" | fromYaml }}
+{{- $image := list . .Values.init.image .Values.image | include "armonik.utils.finalImageConf" | fromYaml }}
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -48,7 +48,7 @@ spec:
         {{- end }}{{/* with .Values.resources */}}
       volumes: {{- include "armonik.conf.generateVolumes" $conf | nindent 8 }}
 
-      {{- with .Values.global.imagePullSecrets | default .Values.imagePullSecrets }}
+      {{- with (coalesce .Values.imagePullSecrets (include "armonik.utils.index" (list .Values "global" "imagePullSecrets")) list) }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}{{/* with $imagePullSecrets */}}

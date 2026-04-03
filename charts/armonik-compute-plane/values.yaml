@@ -29,8 +29,14 @@ podDisruptionBudget:
   minAvailable:
   maxUnavailable:
 
-# Just to stay consistent with the control plane, don't really understand why it's here though
 conf:
+  env: {}
+  envConfigmap: []
+  envFromConfigmap: {}
+  envSecret: []
+  envFromSecret: {}
+  mountConfigmap: {}
+  mountSecret: {}
 
 init:
   enabled: false
@@ -44,6 +50,13 @@ init:
   nodeSelector:
   tolerations:
   conf:
+    env: {}
+    envConfigmap: []
+    envFromConfigmap: {}
+    envSecret: []
+    envFromSecret: {}
+    mountConfigmap: {}
+    mountSecret: {}
   configmaps:
 
 partitionCommon:
@@ -101,6 +114,13 @@ partitionCommon:
     messageBatchSize: 1
     graceDelay: "00:00:15"
     conf:
+      env: {}
+      envConfigmap: []
+      envFromConfigmap: {}
+      envSecret: []
+      envFromSecret: {}
+      mountConfigmap: {}
+      mountSecret: {}
   annotations: {}
   nodeSelector: {}
   tolerations: []
@@ -149,6 +169,13 @@ partitionCommon:
     checkRetries: 10
     checkDelay: "00:00:10"
     conf:
+      # env: {}
+      # envConfigmap: []
+      # envFromConfigmap: {}
+      # envSecret: []
+      # envFromSecret: {}
+      # mountConfigmap: {}
+      # mountSecret: {}
   hpa:
     type: "prometheus"
     # -- Polling interval in seconds

@@ -8,18 +8,18 @@
 {{- $worker := $partition.worker -}}
 {{- $commonConf := list
     (include "armonik.conf.compute" $ | fromYaml)
-    (list $partitionName $partition | include "armonik.compute.CommonConfHelper" | fromYaml)
+    (list $partitionName $partition | include "armonik.compute.confHelper" | fromYaml)
     $partition.conf
   | include "armonik.conf.merge" | fromYaml -}}
 {{- $agentConf := list
   (include "armonik.conf.polling" $ | fromYaml)
-  (list $partitionName $partition | include "armonik.compute.AgentConfHelper" | fromYaml)
+  (list $partitionName $partition | include "armonik.compute.agent.confHelper" | fromYaml)
   $agent.conf
   $commonConf
 | include "armonik.conf.merge" | fromYaml -}}
 {{- $workerConf := list
   (include "armonik.conf.worker" $ | fromYaml)
-  (list $partitionName $partition | include "armonik.compute.WorkerConfHelper" | fromYaml)
+  (list $partitionName $partition | include "armonik.compute.worker.confHelper" | fromYaml)
   $worker.conf
   $commonConf
 | include "armonik.conf.merge" | fromYaml -}}

@@ -1,11 +1,11 @@
 {{- if .Values.init.enabled }}
 {{- $conf := list
     (include "armonik.conf.jobs" $ | fromYaml)
-    (include "armonik.compute.initConfHelper" $ | fromYaml)
+    (include "armonik.compute.init.confHelper" $ | fromYaml)
     .Values.conf
     .Values.init.conf
   | include "armonik.conf.merge" | fromYaml -}}
-{{- $image := list $ .Values.init.image .Values.partitionCommon.agent.image | include "armonik.utils.finalImageConf" | fromYaml }}
+{{- $image := list . .Values.init.image .Values.partitionCommon.agent.image | include "armonik.utils.finalImageConf" | fromYaml }}
 apiVersion: batch/v1
 kind: Job
 metadata:

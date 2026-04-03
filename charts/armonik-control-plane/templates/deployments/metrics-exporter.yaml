@@ -1,7 +1,7 @@
 {{- if .Values.metricsExporter.enabled }}
 {{- $conf := list
     (include "armonik.conf.jobs" $ | fromYaml)
-    (include "armonik.control.metricsConfHelper" $ | fromYaml)
+    (include "armonik.control.metrics.confHelper" $ | fromYaml)
     .Values.metricsExporter.conf
     .Values.conf
   | include "armonik.conf.merge" | fromYaml }}

@@ -10,14 +10,13 @@
   {{- end -}}
 {{- end -}}
 
-{{- /* Resolve the core conf to get envFromSecret and mountSecret */}}
+{{- /* Retrieves minimal/required confs for later control planes and init jobs */}}
 {{- $controlConf := include "armonik.conf.controlRaw" . | fromYaml -}}
 {{- $jobsConf := include "armonik.conf.jobsRaw" . | fromYaml -}}
 
-{{- /* Resolve the service account name from the control-plane subchart */}}
-{{- $cpValues := index .Values "controle-plane" | default dict -}}
-{{- $cpSA := $cpValues.serviceAccount | default dict -}}
-{{- $cpSAName := $cpSA.name | default "control-plane" -}}
+{{- /* Determines the service account name to use for later control planes */}}
+{{- $controlPlaneServiceAccountName := include "armonik.utils.index" (list .Values "compute-plane" "serviceAccountName" "name") | default "compute-plane" -}}
+
 
 apiVersion: v1
 kind: ConfigMap
@@ -37,14 +36,9 @@ data:
     #     -f control-plane-context.yaml \
     #     -f your-control-plane.yaml
 
-    global:
-      armonik-dependencies:
-        conf:
-          fullnameOverride: {{ $confFullname | quote }}
-
     serviceAccount:
       create: false
-      name: {{ $cpSAName | quote }}
+      name: {{ $controlPlaneServiceAccountName | quote }}
 
     init:
       configmaps:

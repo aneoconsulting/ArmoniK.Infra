@@ -59,7 +59,7 @@ spec:
           {{- end }}{{/* with .Values.startupProbe */}}
           volumeMounts: {{- include "armonik.conf.generateVolumeMounts" $conf | nindent 12 }}
       volumes: {{- include "armonik.conf.generateVolumes" $conf | nindent 8 }}
-      {{- with .Values.global.imagePullSecrets | default .Values.imagePullSecrets }}
+      {{- with (include "armonik.utils.index" (list .Values "global" "imagePullSecrets")) | default .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}{{/* with $imagePullSecrets */}}

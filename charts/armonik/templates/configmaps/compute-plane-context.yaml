@@ -50,45 +50,8 @@ data:
         - {{ printf "%s-core" $confFullname | quote }}
         - {{ printf "%s-log" $confFullname | quote }}
         - {{ printf "%s-jobs" $confFullname | quote }}
-      conf:
-    {{- if $coreConf.envFromSecret }}
-        envFromSecret:
-      {{- range $name, $ref := $coreConf.envFromSecret }}
-          {{ $name }}:
-            secret: {{ $ref.secret | quote }}
-            field: {{ $ref.field | quote }}
-      {{- end }}
-    {{- end }}
-    {{- if $coreConf.mountSecret }}
-        mountSecret:
-      {{- range $name, $ref := $coreConf.mountSecret }}
-          {{ $name }}:
-            secret: {{ $ref.secret | quote }}
-            path: {{ $ref.path | quote }}
-        {{- if $ref.mode }}
-            mode: {{ $ref.mode | quote }}
-        {{- end }}
-      {{- end }}
-    {{- end }}
-
+      conf: {{- $coreConf | toYaml | nindent 8 }}
+  
     partitionCommon:
-      conf:
-    {{- if $coreConf.envFromSecret }}
-        envFromSecret:
-      {{- range $name, $ref := $coreConf.envFromSecret }}
-          {{ $name }}:
-            secret: {{ $ref.secret | quote }}
-            field: {{ $ref.field | quote }}
-      {{- end }}
-    {{- end }}
-    {{- if $coreConf.mountSecret }}
-        mountSecret:
-      {{- range $name, $ref := $coreConf.mountSecret }}
-          {{ $name }}:
-            secret: {{ $ref.secret | quote }}
-            path: {{ $ref.path | quote }}
-        {{- if $ref.mode }}
-            mode: {{ $ref.mode | quote }}
-        {{- end }}
-      {{- end }}
-    {{- end }}
+      conf: {{- $coreConf | toYaml | nindent 8 }}
+      

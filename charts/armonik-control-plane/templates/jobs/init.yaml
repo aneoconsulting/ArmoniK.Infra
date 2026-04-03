@@ -1,7 +1,7 @@
 {{- if .Values.init.enabled }}
 {{- $conf := list
     (include "armonik.conf.jobs" $ | fromYaml)
-    (include "armonik.control.initConfHelper" $ | fromYaml)
+    (include "armonik.control.init.confHelper" $ | fromYaml)
     .Values.conf
     .Values.init.conf
   | include "armonik.conf.merge" | fromYaml -}}

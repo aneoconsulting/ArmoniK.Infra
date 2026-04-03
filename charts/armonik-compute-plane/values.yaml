@@ -42,8 +42,8 @@ init:
   enabled: true
   image:
     registry:
-    repository:
-    name:
+    repository: dockerhubaneo
+    name: armonik_control
     tag:
     pullPolicy:
   resources:

@@ -39,7 +39,7 @@ conf:
   mountSecret: {}
 
 init:
-  enabled: false
+  enabled: true
   image:
     registry:
     repository:

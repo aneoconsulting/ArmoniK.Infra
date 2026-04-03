@@ -54,6 +54,8 @@ control-plane:
         priority: 1
 compute-plane:
   enabled: true
+  init:
+    enabled: false
   # partitions:
   #   default:
   #     worker:

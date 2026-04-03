@@ -169,13 +169,13 @@ partitionCommon:
     checkRetries: 10
     checkDelay: "00:00:10"
     conf:
-      # env: {}
-      # envConfigmap: []
-      # envFromConfigmap: {}
-      # envSecret: []
-      # envFromSecret: {}
-      # mountConfigmap: {}
-      # mountSecret: {}
+      env: {}
+      envConfigmap: []
+      envFromConfigmap: {}
+      envSecret: []
+      envFromSecret: {}
+      mountConfigmap: {}
+      mountSecret: {}
   hpa:
     type: "prometheus"
     # -- Polling interval in seconds
@@ -218,6 +218,13 @@ partitionCommon:
           query: 'armonik_{{ .Values.partitionName }}_tasks_queued{job="metrics-exporter"}'
   replicas: 1
   conf:
+    env: {}
+    envConfigmap: []
+    envFromConfigmap: {}
+    envSecret: []
+    envFromSecret: {}
+    mountConfigmap: {}
+    mountSecret: {}
 partitions:  
 
 fluentBit:

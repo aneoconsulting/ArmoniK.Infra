@@ -53,7 +53,7 @@ control-plane:
         preemptionPercentage: 20
         priority: 1
 compute-plane:
-  enabled: true
+  enabled: false
   init:
     enabled: false
   # partitions:

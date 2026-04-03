@@ -127,7 +127,7 @@ metricsExporter:
   conf:
   
 init:
-  enabled: true
+  enabled: false
   name: init
   image:
     registry:

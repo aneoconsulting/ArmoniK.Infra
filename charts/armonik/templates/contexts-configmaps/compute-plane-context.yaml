@@ -12,6 +12,10 @@
 
 {{- /* Resolve the core conf to get envFromSecret and mountSecret */}}
 {{- $coreConf := include "armonik.conf.coreRaw" . | fromYaml -}}
+{{- $jobsConf := include "armonik.conf.jobsRaw" . | fromYaml -}}
+{{- $computeConf := include "armonik.conf.computeRaw" . | fromYaml -}}
+{{- $pollingConf := include "armonik.conf.pollingRaw" . | fromYaml -}}
+{{- $workerConf := include "armonik.conf.workerRaw" . | fromYaml -}}
 
 {{- /* Resolve the service account name from the compute-plane subchart */}}
 {{- $cpValues := index .Values "compute-plane" | default dict -}}
@@ -47,11 +51,14 @@ data:
 
     init:
       configmaps:
-        - {{ printf "%s-core" $confFullname | quote }}
-        - {{ printf "%s-log" $confFullname | quote }}
         - {{ printf "%s-jobs" $confFullname | quote }}
-      conf: {{- $coreConf | toYaml | nindent 8 }}
+      conf: {{- $jobsConf | toYaml | nindent 8 }}
   
+    conf: {{- $computeConf | toYaml | nindent 6 }}
     partitionCommon:
-      conf: {{- $coreConf | toYaml | nindent 8 }}
+      conf: {{- $jobsConf | toYaml | nindent 8 }}
+      agent:
+        conf: {{- $pollingConf | toYaml | nindent 10 }}
+      worker:
+        conf: {{- $workerConf | toYaml | nindent 10 }}
       

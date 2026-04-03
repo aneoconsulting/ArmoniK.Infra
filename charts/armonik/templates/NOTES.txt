@@ -29,3 +29,18 @@ To add a standalone compute-plane with new partitions:
        -n {{ .Release.Namespace }} \
        -f compute-plane-context.yaml \
        -f <your-partitions>.yaml
+
+To add a standalone control-plane (with optional external partitions):
+
+  1. Extract the context file:
+
+     kubectl get configmap {{ include "armonik.fullname" . }}-control-plane-context \
+       -n {{ .Release.Namespace }} \
+       -o jsonpath='{.data.control-plane-context\.yaml}' > control-plane-context.yaml
+
+  2. Install your control-plane:
+
+     helm install <release-name> ./charts/armonik-compute-plane \
+       -n {{ .Release.Namespace }} \
+       -f control-plane-context.yaml \
+       [-f <your-control-plane>.yaml] 

@@ -1,4 +1,5 @@
-{{- $image := list $ .Values.cron.image .Values.global.image | include "armonik.utils.finalImageConf" | fromYaml }}
+{{- $global := coalesce .Values.global.image (dict "Values" (dict "image" (dict "registry" "" "repository" "" "name" "" "tag" "" "pullPolicy" "" ))) -}}
+{{- $image := list $ .Values.image $global .Values.cron.image | include "armonik.utils.finalImageConf" | fromYaml }}
 {{ if false }}
 apiVersion: batch/v1
 kind: CronJob

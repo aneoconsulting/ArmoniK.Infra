@@ -37,7 +37,6 @@ spec:
       - name: init
         image: {{ $image.fullname }}
         imagePullPolicy: {{ $image.pullPolicy }}
-        
         env: {{- include "armonik.conf.generateEnv" $conf | nindent 10 }}
         envFrom: {{- include "armonik.conf.generateEnvFrom" $conf | nindent 10 }}
         volumeMounts: {{- include "armonik.conf.generateVolumeMounts" $conf | nindent 10 }}

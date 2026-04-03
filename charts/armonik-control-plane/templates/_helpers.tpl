@@ -1,0 +1,43 @@
+{{- define "armonik.control.confHelper" }}
+{{- $defaultPartition := .Values.defaultPartition }}
+{{- $partitionNames := .Values.extraPartitions }}
+env:
+  {{- if and $defaultPartition (has $defaultPartition $partitionNames) }}
+  Submitter__DefaultPartition: {{ $defaultPartition }}
+  {{- else if gt (len $partitionNames) 0 }}
+  Submitter__DefaultPartition: {{ index $partitionNames 0 }}
+  {{- else }}
+  Submitter__DefaultPartition: ""
+  {{- end }}
+  InitServices__InitDatabase: {{ not .Values.init.enabled | quote }}
+  InitServices__InitObjectStorage: {{ not .Values.init.enabled | quote }}
+  InitServices__InitQueue: {{ not .Values.init.enabled | quote }}
+  InitServices__StopAfterInit: "false"
+{{- end }}
+
+{{- define "armonik.control.init.confHelper" }}
+{{- $defaultPartition := .Values.defaultPartition }}
+{{- $partitionNames := .Values.extraPartitions }}
+env:
+  Submitter__DefaultPartition: ""
+  InitServices__InitDatabase: "true"
+  InitServices__InitObjectStorage: "true"
+  InitServices__InitQueue: "true"
+  InitServices__StopAfterInit: "true"
+  {{- $i := 0 }}
+  {{- range $name, $config := .Values.init.partitions }}
+  InitServices__Partitioning__Partitions__{{ $i }}: {{ dict "ParentPartitionIds" ($config.parentPartitionIds | default list) "PartitionId" $name "PodConfiguration" nil "PodMax" ($config.podMax | default 100) "PodReserved" ($config.podReserved | default 50) "PreemptionPercentage" ($config.preemptionPercentage | default 20) "Priority" ($config.priority | default 1) | toJson | quote }}
+  {{- $i = add $i 1 }}
+  {{- end }}
+{{- end }}
+
+{{- define "armonik.control.metrics.confHelper" }}
+{{- $defaultPartition := .Values.defaultPartition }}
+{{- $partitionNames := .Values.extraPartitions }}
+env:
+  Submitter__DefaultPartition: ""
+  InitServices__InitDatabase: "false"
+  InitServices__InitObjectStorage: "false"
+  InitServices__InitQueue: "false"
+  InitServices__StopAfterInit: "false"
+{{- end }}

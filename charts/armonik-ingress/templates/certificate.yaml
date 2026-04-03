@@ -1,0 +1,50 @@
+{{- if eq .Values.tls.type "cert-manager" }}
+{{- if not .Values.tls.certManager.existingIssuer.enabled }}
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  annotations:
+    {{- toYaml .Values.additionalAnnotations | nindent 4 }}
+  name: {{ include "armonik.fullname" . }}-issuer
+  namespace: {{ include "armonik.namespace" . }}
+spec:
+  selfSigned: {}
+{{- end }}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "armonik.fullname" . }}
+  namespace: {{ include "armonik.namespace" . }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "10"
+spec:
+  commonName: {{ include "armonik.fullname" . }}-cert
+  dnsNames:
+  - {{ include "armonik.fullname" . }}.{{ include "armonik.namespace" . }}
+  - {{ include "armonik.fullname" . }}.{{ include "armonik.namespace" . }}.svc
+  - {{ include "armonik.fullname" . }}.{{ include "armonik.namespace" . }}.svc.{{ .Values.tls.clusterDomain }}
+  secretName: {{ include "armonik.fullname" . }}
+  usages:
+    - server auth
+    - client auth
+  privateKey:
+    algorithm: RSA
+    size: 2048
+  {{- with .Values.tls.certManager.duration }}
+  duration: {{ . }}
+  {{- end }}
+  {{- with .Values.tls.certManager.renewBefore }}
+  renewBefore: {{ . }}
+  {{- end }}
+  issuerRef:
+    {{- if .Values.tls.certManager.existingIssuer.enabled }}
+    name: {{ .Values.tls.certManager.existingIssuer.name }}
+    kind: {{ .Values.tls.certManager.existingIssuer.kind }}
+    {{- else }}
+    name: {{ include "armonik.fullname" . }}-issuer
+    kind: Issuer
+    {{- end }}
+    group: cert-manager.io
+{{- end }}

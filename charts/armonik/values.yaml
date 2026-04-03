@@ -26,6 +26,7 @@ control-plane:
   enabled: true
   defaultPartition: default
   init:
+    enabled: true
     partitions:
       default:
         podMax: 100

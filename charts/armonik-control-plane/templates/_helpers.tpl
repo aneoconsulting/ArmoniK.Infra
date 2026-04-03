@@ -15,7 +15,7 @@ env:
   InitServices__StopAfterInit: "false"
 {{- end }}
 
-{{- define "armonik.control.initConfHelper" }}
+{{- define "armonik.control.init.confHelper" }}
 {{- $defaultPartition := .Values.defaultPartition }}
 {{- $partitionNames := .Values.extraPartitions }}
 env:
@@ -31,7 +31,7 @@ env:
   {{- end }}
 {{- end }}
 
-{{- define "armonik.control.metricsConfHelper" }}
+{{- define "armonik.control.metrics.confHelper" }}
 {{- $defaultPartition := .Values.defaultPartition }}
 {{- $partitionNames := .Values.extraPartitions }}
 env:

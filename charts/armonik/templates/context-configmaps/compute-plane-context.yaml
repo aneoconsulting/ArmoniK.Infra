@@ -1,15 +1,3 @@
-{{- /* Resolve the conf fullname prefix */}}
-{{- $confCtx := include "armonik.conf.context" . | fromYaml -}}
-{{- $confFullname := $confCtx.Values.fullnameOverride | default "" -}}
-{{- if not $confFullname -}}
-  {{- $confName := default "conf" $confCtx.Values.nameOverride -}}
-  {{- if contains $confName $confCtx.Release.Name -}}
-    {{- $confFullname = $confCtx.Release.Name -}}
-  {{- else -}}
-    {{- $confFullname = printf "%s-%s" $confCtx.Release.Name $confName | trunc 63 | trimSuffix "-" -}}
-  {{- end -}}
-{{- end -}}
-
 {{- /* Retrieves minimal/required confs for later compute planes and init jobs */}}
 {{- $jobsConf := include "armonik.conf.jobsRaw" . | fromYaml -}}
 {{- $computeConf := include "armonik.conf.computeRaw" . | fromYaml -}}
@@ -43,8 +31,6 @@ data:
       name: {{ $computePlaneServiceAccountName | quote }}
 
     init:
-      configmaps:
-        - {{ printf "%s-jobs" $confFullname | quote }}
       conf: {{- $jobsConf | toYaml | nindent 8 }}
   
     conf: {{- $computeConf | toYaml | nindent 6 }}

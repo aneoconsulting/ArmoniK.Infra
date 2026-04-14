@@ -9,8 +9,30 @@ image:
 
 replicas: 1
 maxErrorAllowed: 50
+
 defaultPartition: default
-extraPartitions: []
+extraPartitions:
+  # default:
+  #   parentPartitionIds: []
+  #   podMax: 100
+  #   podReserved: 50
+  #   preemptionPercentage: 20
+  #   priority: 1
+
+rbac:
+  authentication:
+    required: false
+  authorization:
+    required: false
+  createBuiltInRoles: false
+  roles:
+    # <roleName>: [""]
+  users:
+    # <username>: [""]
+  userCertificates:
+    # <username>:
+    #   commonName: ""
+    #   fingerprint: ""
 
 serviceAccount:
   create: true
@@ -125,7 +147,7 @@ metricsExporter:
         port: 9419
         targetPort: 1080
   conf:
-  
+
 init:
   enabled: false
   name: init
@@ -142,28 +164,3 @@ init:
   annotations:
   affinity:
   conf:
-  partitions:
-    # default:
-    #   parentPartitionIds: []
-    #   podMax: 100
-    #   podReserved: 50
-    #   preemptionPercentage: 20
-    #   priority: 1
-    pymonik:
-      parentPartitionIds: []
-      podMax: 100
-      podReserved: 50
-      preemptionPercentage: 20
-      priority: 1
-  # authentication:
-  #   users: []
-  #   roles: []
-  #   userCertificates: []
-
-cron:
-  image:
-    registry: ""
-    repository:
-    name: armonik_control_metrics
-    tag:
-    pullPolicy:

@@ -1,5 +1,6 @@
 {{- $conf := list
     (include "armonik.conf.control" . | fromYaml)
+    (not .Values.init.enabled | ternary (include "armonik.control.init.confHelper" .) "" | fromYaml)
     (include "armonik.control.confHelper" . | fromYaml)
     .Values.conf
   | include "armonik.conf.merge" | fromYaml -}}

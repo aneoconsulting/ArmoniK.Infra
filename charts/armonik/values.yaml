@@ -25,60 +25,33 @@ global:
 control-plane:
   enabled: true
   defaultPartition: default
-  init:
-    enabled: true
-    partitions:
-      default:
-        podMax: 100
-        podReserved: 50
-        preemptionPercentage: 20
-        priority: 1
-      stream:
-        podMax: 100
-        podReserved: 50
-        preemptionPercentage: 20
-        priority: 1
-      htcmock:
-        podMax: 100
-        podReserved: 50
-        preemptionPercentage: 20
-        priority: 1
-      bench:
-        podMax: 100
-        podReserved: 50
-        preemptionPercentage: 20
-        priority: 1
-      pymonik:
-        podMax: 100
-        podReserved: 50
-        preemptionPercentage: 20
-        priority: 1
+  extraPartitions:
+    # default:
+    #   podMax: 100
+    #   podReserved: 50
+    #   preemptionPercentage: 20
+    #   priority: 1
+  rbac:
+    createBuiltInRoles: true
+
 compute-plane:
-  enabled: false
-  init:
-    enabled: false
+  enabled: true
   # partitions:
   #   default:
   #     worker:
   #       image:
   #         name: "armonik-dynamic-dotnet-worker"
   #         tag: "0.21.3-ppi.taskFail.1.geb3e9a8"
-
   #   stream:
   #     worker:
   #       image:
   #         name: "armonik_core_stream_test_worker"
-
   #   htcmock:
   #     socketType: "tcp"
   #     worker:
   #       image:
   #         name: "armonik_core_htcmock_test_worker"
 
-  #   bench:
-  #     worker:
-  #       image:
-  #         name: "armonik_core_bench_test_worker"
 conf:
   log:
     minimumLevel: Information

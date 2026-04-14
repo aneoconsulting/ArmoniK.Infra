@@ -8,9 +8,69 @@
  Chart Version: {{ .Chart.Version }}  Core Version: {{ .Chart.AppVersion }}    Enjoy ♪ ♫
 **********************************************************
 Service Installed:
-{{- range $key, $value := .Values.global.dependencies }}
+{{- range $key, $value := include "armonik.dependencies" $ | fromYaml }}
 {{- if $value }}
   - {{- $key }} 
 {{- end }}
 {{- end }}
 **********************************************************
+
+{{- if and (not (index .Values "control-plane").rbac.userCertificates) (index .Values "control-plane").rbac.authentication.required }}
+Authentication in ArmoniK is enabled, default roles "Submitter" and "Monitoring" were created.
+Since authentication inside ArmoniK in enabled, you must apply the following steps to be able to query your ArmoniK cluster :
+
+  1. Make sure your users hold a x509 certificate
+  2. For each user, check their certificate common name and fingerprint (keep them for the next step)
+  3. Create a YAML file with the following structure (replace brackets-wrapped values with your own): 
+  
+### YAML start ###
+init:
+  enabled: true
+  rbac:
+    users:
+      <username1>: [<RoleName1>, <RolesNameN>]
+      <usernameN>: [<RoleName1>, <RolesNameN>]
+    userCertificates:
+      <username1>:
+        commonName: <user1commonName>
+        fingerprint: <user1fingerprint>
+      <usernameN>:
+        commonName: <userNcommonName>
+        fingerprint <userNfingerprint>
+### YAML end ###
+
+  4. Use this YAML file as a values file for a standalone control-plane (further details below)
+{{- end }}
+
+To add a standalone compute-plane with new partitions:
+
+  1. Extract the context file:
+
+     kubectl get configmap {{ include "armonik.fullname" . }}-compute-plane-context \
+       -n {{ .Release.Namespace }} \
+       -o jsonpath='{.data.compute-plane-context\.yaml}' > compute-plane-context.yaml
+
+  2. Install your compute-plane:
+
+     helm install <release-name> ./charts/armonik-compute-plane \
+       -n {{ .Release.Namespace }} \
+       -f compute-plane-context.yaml \
+       -f <your-partitions>.yaml
+
+To add a standalone control-plane (with optional external partitions):
+
+  1. Extract the context file:
+
+     kubectl get configmap {{ include "armonik.fullname" . }}-control-plane-context \
+       -n {{ .Release.Namespace }} \
+       -o jsonpath='{.data.control-plane-context\.yaml}' > control-plane-context.yaml
+
+  2. Install your control-plane:
+
+     helm install <release-name> ./charts/armonik-compute-plane \
+       -n {{ .Release.Namespace }} \
+       -f control-plane-context.yaml \
+      {{- if .Values.conf.core.rbac.authentication.required }}
+       -f <your-authentication-data>.yaml
+      {{- end }}
+       [-f <your-control-plane>.yaml] 

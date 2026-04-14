@@ -1,0 +1,18 @@
+{{ if (include "armonik.dependencies" $ | fromYaml).grafana }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-kub
+  labels:
+    grafana_dashboard: "1"
+    grafana_dashboard_folder: "Armonik"
+data:
+  dashboard-pods.json: |-
+{{ .Files.Get "static-confs/grafana-dashboards/dashboard-pods.json" | indent 4 }}
+  dashboard-k8s.json: |-
+{{ .Files.Get "static-confs/grafana-dashboards/dashboard-k8s.json" | indent 4 }}
+  dashboard-node.json: |-
+{{ .Files.Get "static-confs/grafana-dashboards/dashboard-node.json" | indent 4 }}
+  dashboard-node2.json: |-
+{{ .Files.Get "static-confs/grafana-dashboards/dashboard-node2.json" | indent 4 }}
+{{ end }}

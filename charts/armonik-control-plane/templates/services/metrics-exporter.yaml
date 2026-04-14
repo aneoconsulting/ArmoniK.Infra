@@ -1,0 +1,39 @@
+{{- if .Values.metricsExporter.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "armonik.fullname" . | printf "%s-metrics-exporter" | trunc 63 | trimSuffix "-" | quote }}
+  namespace: {{ include "armonik.namespace" . }}
+  labels:
+    app.kubernetes.io/component: metrics-exporter
+    {{- include "armonik.labels" . | nindent 4 }}
+  {{- with coalesce .Values.metricsExporter.service.annotations .Values.metricsExporter.annotations .Values.annotations}}
+  annotations:
+  {{- range $key, $value := . }}
+    {{ $key }}: {{ $value }}
+  {{- end }}
+  {{- end }}
+spec:
+{{- if eq .Values.metricsExporter.service.serviceType "HeadLess" }}
+  type: "ClusterIP"
+  clusterIP: "None"
+{{ else }}
+  type: {{ .Values.metricsExporter.service.serviceType | quote}}
+  clusterIP: null
+{{- end }}
+  selector:
+    app.kubernetes.io/component: metrics-exporter
+    {{- include "armonik.selectorLabels" . | nindent 4 }}
+  ports:
+    - name: {{ .Values.metricsExporter.service.name }}
+    {{- if (eq .Values.metricsExporter.service.serviceType "HeadLess") -}}
+      {{ $firstPort := index .Values.metricsExporter.ports 0 }}
+      port: {{ $firstPort.containerPort }}
+    {{ else }}
+      {{- range .Values.metricsExporter.service.ports }}
+      port: {{ .port }}
+      targetPort: {{ .targetPort }}
+      {{- end }}
+      protocol: "TCP"
+    {{- end }}
+{{- end }}

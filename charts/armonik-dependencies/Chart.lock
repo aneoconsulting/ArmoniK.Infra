@@ -5,12 +5,15 @@ dependencies:
 - name: redis
   repository: https://charts.bitnami.com/bitnami
   version: 20.13.4
-- name: mongodb
-  repository: https://charts.bitnami.com/bitnami
-  version: 16.5.45
+- name: psmdb-operator
+  repository: https://percona.github.io/percona-helm-charts/
+  version: 1.22.0
+- name: psmdb-db
+  repository: https://percona.github.io/percona-helm-charts/
+  version: 1.22.2
 - name: kube-prometheus-stack
   repository: https://prometheus-community.github.io/helm-charts
-  version: 82.16.2
+  version: 82.18.0
 - name: keda
   repository: https://kedacore.github.io/charts
   version: 2.19.0
@@ -22,12 +25,12 @@ dependencies:
   version: 8.15.0
 - name: fluent-bit
   repository: https://fluent.github.io/helm-charts
-  version: 0.57.2
+  version: 0.57.3
 - name: seq
   repository: https://helm.datalust.co
   version: 2024.3.2
 - name: cert-manager
   repository: https://charts.jetstack.io
-  version: v1.20.1
-digest: sha256:90df2fb1dba81bf4a9c7e1186a893d8ee36294730ea6592b66a29d31c18401c7
-generated: "2026-04-03T09:19:30.391520039+02:00"
+  version: v1.20.2
+digest: sha256:90a55858045d2643c2e47f94498e559beb4617b963861b5504d100876ef3c8aa
+generated: "2026-04-23T08:14:23.303388701+02:00"

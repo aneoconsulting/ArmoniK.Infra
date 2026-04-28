@@ -38,6 +38,7 @@ service:
 tls:
   clusterDomain: cluster.local
   certManager:
+    enabled: true
     addInjectorAnnotations: true
     existingIssuer:
       # Use an existing cert-manager issuer
@@ -56,6 +57,15 @@ tls:
     annotations: {}
     # Add extra labels to the Certificate resource
     labels: {}
+  customCert:
+    certPem: ""
+    keyPem: ""
+
+mtls:
+  enabled: false
+  certificationAuthority:
+    pem: ""
+  trustedCommonNames: []
 
 volumes:
   #ingressSecret: ingress-crt

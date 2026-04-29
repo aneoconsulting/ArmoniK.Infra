@@ -18,10 +18,15 @@ dependencies:
     version: 1.x.x
     repository: file://../activemq
     condition: activemq.enabled
-  - name: redis
-    version: 20.x.x
-    repository: https://charts.bitnami.com/bitnami
+  # - name: redis
+  #   version: 20.x.x
+  #   repository: https://charts.bitnami.com/bitnami
+  #   condition: redis.enabled
+  - name: valkey
+    version: 0.9.x
+    repository: https://valkey.io/valkey-helm/
     condition: redis.enabled
+    alias: redis
   - name: psmdb-operator
     version: 1.x.x
     repository: https://percona.github.io/percona-helm-charts/

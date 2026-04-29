@@ -53,7 +53,7 @@ To add a standalone compute-plane with new partitions:
 
      kubectl get configmap {{ include "armonik.fullname" . }}-compute-plane-context \
        -n {{ .Release.Namespace }} \
-       -o jsonpath='{.data.compute-plane-context.yaml}' > compute-plane-context.yaml
+       -o jsonpath='{.data.context}' > compute-plane-context.yaml
 
   2. Install your compute-plane:
 
@@ -68,7 +68,7 @@ To add a standalone control-plane (with optional external partitions):
 
      kubectl get configmap {{ include "armonik.fullname" . }}-control-plane-context \
        -n {{ .Release.Namespace }} \
-       -o jsonpath='{.data.control-plane-context.yaml}' > control-plane-context.yaml
+       -o jsonpath='{.data.context}' > control-plane-context.yaml
 
   2. Install your control-plane:
 

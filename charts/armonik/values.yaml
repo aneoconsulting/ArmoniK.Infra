@@ -38,6 +38,8 @@ control-plane:
 
 compute-plane:
   enabled: true
+  serviceAccount:
+    create: true
   # partitions:
   #   default:
   #     worker:

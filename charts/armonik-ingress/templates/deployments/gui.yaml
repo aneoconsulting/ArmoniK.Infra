@@ -1,4 +1,4 @@
-{{- $image := list $ .Values.gui.image | include "armonik.utils.finalImageConf" | fromYaml }}
+{{- $image := list . .Values.gui.image | include "armonik.utils.imageConf" | fromYaml }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:

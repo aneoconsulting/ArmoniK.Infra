@@ -12,10 +12,10 @@ Thus, when calling this template for an third-party image deployed with the armo
 is adviced to set the context to the dependency context, especially if you know no tag is provided. 
 
 Usage:
- {{- include "armonik.utils.finalImageConf" (list <context> <imageConf1> <imageConf2> ...)| fromYaml }}
+ {{- include "armonik.utils.imageConf" (list <context> <imageConf1> <imageConf2> ...)| fromYaml }}
 Example:
 {{- $ctx :=  list $ "mongodb" | include "armonik.dependencyContext" | fromYaml -}}
-{{- $imageConf := list $ctx .Values.mongodb.image .Values.mongodbCommon.image  | include "armonik.utils.finalImageConf" | fromYaml }}
+{{- $imageConf := list $ctx .Values.mongodb.image .Values.mongodbCommon.image  | include "armonik.utils.imageConf" | fromYaml }}
 
 image configuration object schema:
   registry: string
@@ -24,7 +24,7 @@ image configuration object schema:
   tag: string
   pullPolicy: string in ['IfNotPresent', 'Always', 'Never']
 */}}
-{{- define "armonik.utils.finalImageConf" -}}
+{{- define "armonik.utils.imageConf" -}}
   {{- $ctx := first . -}}
   {{- $imageConfs := rest . -}}
   {{- $image := dict

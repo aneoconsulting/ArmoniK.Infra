@@ -293,6 +293,8 @@ resource "kubernetes_service" "control_plane" {
       port        = var.control_plane.service_type == "HeadLess" ? local.control_plane_port.container_port : var.control_plane.port
       target_port = local.control_plane_port.container_port
       protocol    = "TCP"
+      # App protocol is required when it is http2 clear text to work properly with some gateway API controllers like on GCP
+      app_protocol = "kubernetes.io/h2c"
     }
   }
 }

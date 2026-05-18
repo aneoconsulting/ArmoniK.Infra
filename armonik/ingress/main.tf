@@ -148,6 +148,8 @@ resource "kubernetes_service" "ingress" {
         target_port = local.target_ports[port.key]
         port        = var.nginx.service.type == "HeadLess" ? local.target_ports[port.key] : port.value
         protocol    = "TCP"
+        # App protocol is required when it is http2 clear text to work properly with some gateway API controllers like on GCP
+        app_protocol = var.tls != null ? null : "kubernetes.io/h2c"
       }
     }
   }

@@ -183,7 +183,7 @@ partitionCommon:
     # -- Cooldown period in seconds
     cooldownPeriod: 300 # Optional. Default: 300 seconds
     # -- Count of idle replicas
-    idleReplicaCount: 1 # Optional. Default: ignored, must be less than minReplicaCount
+    idleReplicaCount: 0 # Optional. Default: ignored, must be less than minReplicaCount
     # -- Minimum count of replicas
     minReplicaCount: 1 # Optional. Default: 0
     # -- Maximum count of replicas

@@ -108,20 +108,20 @@ resource "helm_release" "cluster_autoscaler" {
     value = "1000Mi"
   }
 
-  # Method 2 - Specifying groups manually
-  # Example for an ASG
-  /*set {
-    name  = "autoscalingGroups[0].name"
-    value = "<your-asg-name>"
-  }
-  set {
-    name  = "autoscalingGroups[0].maxSize"
-    value = "10"
-  }
-  set {
-    name  = "autoscalingGroups[0].minSize"
-    value = "1"
-  }*/
+  # # Method 2 - Specifying groups manually
+  # # Example for an ASG
+  # set {
+  #   name  = "autoscalingGroups[0].name"
+  #   value = "<your-asg-name>"
+  # }
+  # set {
+  #   name  = "autoscalingGroups[0].maxSize"
+  #   value = "10"
+  # }
+  # set {
+  #   name  = "autoscalingGroups[0].minSize"
+  #   value = "1"
+  # }
 
   values = [
     yamlencode(local.node_selector),

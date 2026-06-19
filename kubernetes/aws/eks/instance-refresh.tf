@@ -43,15 +43,15 @@ resource "helm_release" "aws_node_termination_handler" {
     name  = "image.tag"
     value = var.instance_refresh_tag
   }
-  /*set {
-    name  = "enableSqsTerminationDraining"
-    value = "true"
-  }
+  # set {
+  #   name  = "enableSqsTerminationDraining"
+  #   value = "true"
+  # }
 
-  set {
-    name  = "queueURL"
-    value = module.aws_node_termination_handler_sqs.sqs_queue_id
-  }*/
+  # set {
+  #   name  = "queueURL"
+  #   value = module.aws_node_termination_handler_sqs.sqs_queue_id
+  # }
   depends_on = [
     module.eks,
     null_resource.update_kubeconfig
@@ -81,16 +81,16 @@ data "aws_iam_policy_document" "aws_node_termination_handler" {
     ]
     resources = data.aws_autoscaling_groups.groups.arns
   }
-  /*statement {
-    effect    = "Allow"
-    actions   = [
-      "sqs:DeleteMessage",
-      "sqs:ReceiveMessage"
-    ]
-    resources = [
-      module.aws_node_termination_handler_sqs.sqs_queue_arn
-    ]
-  }*/
+  # statement {
+  #   effect    = "Allow"
+  #   actions   = [
+  #     "sqs:DeleteMessage",
+  #     "sqs:ReceiveMessage"
+  #   ]
+  #   resources = [
+  #     module.aws_node_termination_handler_sqs.sqs_queue_arn
+  #   ]
+  # }
 }
 
 resource "aws_iam_policy" "aws_node_termination_handler" {
@@ -157,43 +157,42 @@ resource "aws_autoscaling_lifecycle_hook" "aws_node_termination_handler" {
   default_result         = "CONTINUE"
 }
 
-/*
-data "aws_iam_policy_document" "aws_node_termination_handler_events" {
-  statement {
-    effect    = "Allow"
-    principals {
-      type        = "Service"
-      identifiers = [
-        "events.amazonaws.com",
-        "sqs.amazonaws.com",
-      ]
-    }
-    actions   = [
-      "sqs:SendMessage",
-    ]
-    resources = [
-      "arn:aws:sqs:${var.region}:${data.aws_caller_identity.current.account_id}:${local.cluster_name}",
-    ]
-  }
-}
 
-module "aws_node_termination_handler_sqs" {
-  source                    = "terraform-aws-modules/sqs/aws"
-  version                   = "~> 3.0.0"
-  name                      = local.cluster_name
-  message_retention_seconds = 300
-  policy                    = data.aws_iam_policy_document.aws_node_termination_handler_events.json
-}
+# data "aws_iam_policy_document" "aws_node_termination_handler_events" {
+#   statement {
+#     effect    = "Allow"
+#     principals {
+#       type        = "Service"
+#       identifiers = [
+#         "events.amazonaws.com",
+#         "sqs.amazonaws.com",
+#       ]
+#     }
+#     actions   = [
+#       "sqs:SendMessage",
+#     ]
+#     resources = [
+#       "arn:aws:sqs:${var.region}:${data.aws_caller_identity.current.account_id}:${local.cluster_name}",
+#     ]
+#   }
+# }
 
-resource "aws_cloudwatch_event_target" "aws_node_termination_handler_asg" {
-  target_id = "${local.cluster_name}-asg-termination"
-  rule      = aws_cloudwatch_event_rule.aws_node_termination_handler_asg.name
-  arn       = module.aws_node_termination_handler_sqs.sqs_queue_arn
-}
+# module "aws_node_termination_handler_sqs" {
+#   source                    = "terraform-aws-modules/sqs/aws"
+#   version                   = "~> 3.0.0"
+#   name                      = local.cluster_name
+#   message_retention_seconds = 300
+#   policy                    = data.aws_iam_policy_document.aws_node_termination_handler_events.json
+# }
 
-resource "aws_cloudwatch_event_target" "aws_node_termination_handler_spot" {
-  target_id = "${local.cluster_name}-spot-termination"
-  rule      = aws_cloudwatch_event_rule.aws_node_termination_handler_spot.name
-  arn       = module.aws_node_termination_handler_sqs.sqs_queue_arn
-}
-*/
+# resource "aws_cloudwatch_event_target" "aws_node_termination_handler_asg" {
+#   target_id = "${local.cluster_name}-asg-termination"
+#   rule      = aws_cloudwatch_event_rule.aws_node_termination_handler_asg.name
+#   arn       = module.aws_node_termination_handler_sqs.sqs_queue_arn
+# }
+
+# resource "aws_cloudwatch_event_target" "aws_node_termination_handler_spot" {
+#   target_id = "${local.cluster_name}-spot-termination"
+#   rule      = aws_cloudwatch_event_rule.aws_node_termination_handler_spot.name
+#   arn       = module.aws_node_termination_handler_sqs.sqs_queue_arn
+# }

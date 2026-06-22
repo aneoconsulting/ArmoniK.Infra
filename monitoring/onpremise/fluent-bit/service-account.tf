@@ -8,22 +8,21 @@ resource "kubernetes_service_account" "fluent_bit" {
   }
 }
 
-/*
-## To use kubernetes_manifest, you should have Kubernetes already installed !!
-## Issue: https://github.com/hashicorp/terraform-provider-kubernetes/issues/1724
-## This should be rolled back once the kubernetes provider for terraform has been updated.
-resource "kubernetes_manifest" "service_account_fluent_bit" {
-  count = (local.fluent_bit_is_daemonset ? 1 : 0)
-  manifest = {
-    apiVersion = "v1"
-    kind       = "ServiceAccount"
-    metadata = {
-      name      = "fluent-bit"
-      namespace = var.namespace
-    }
-  }
-}
-*/
+# ## To use kubernetes_manifest, you should have Kubernetes already installed !!
+# ## Issue: https://github.com/hashicorp/terraform-provider-kubernetes/issues/1724
+# ## This should be rolled back once the kubernetes provider for terraform has been updated.
+# resource "kubernetes_manifest" "service_account_fluent_bit" {
+#   count = (local.fluent_bit_is_daemonset ? 1 : 0)
+#   manifest = {
+#     apiVersion = "v1"
+#     kind       = "ServiceAccount"
+#     metadata = {
+#       name      = "fluent-bit"
+#       namespace = var.namespace
+#     }
+#   }
+# }
+
 resource "kubernetes_cluster_role" "fluent_bit_role" {
   count = (local.fluent_bit_is_daemonset ? 1 : 0)
   metadata {

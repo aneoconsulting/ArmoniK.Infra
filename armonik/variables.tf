@@ -115,6 +115,7 @@ variable "control_plane" {
     hpa                  = any
     default_partition    = string
     service_account_name = string
+    readiness_probe      = optional(bool, false)
   })
 }
 

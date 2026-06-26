@@ -71,3 +71,7 @@ dependencies:
     version: 1.x.x
     repository: https://charts.jetstack.io
     condition: cert-manager.enabled
+  - name: prometheus-mongodb-exporter
+    version: 3.x.x
+    repository: https://prometheus-community.github.io/helm-charts
+    condition: prometheus-mongodb-exporter.enabled

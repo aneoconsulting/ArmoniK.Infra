@@ -82,3 +82,5 @@ dependencies:
         parent: global.armonik-dependencies.seq
       - child: cert-manager
         parent: global.armonik-dependencies.cert-manager
+      - child: prometheus-mongodb-exporter
+        parent: global.armonik-dependencies.prometheus-mongodb-exporter

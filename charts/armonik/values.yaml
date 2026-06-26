@@ -616,6 +616,15 @@ dependencies:
         evaluationInterval: 30s
         
         additionalScrapeConfigsSecret:
+          enabled: true
           name: additional-scrape-configs
           key: prometheus-additional.yaml
+          
+  prometheus-mongodb-exporter:
+    enabled: true
+    existingSecret:
+      name: armonik-mongodb-exporter-uri
+      key: mongodb-uri
+    serviceMonitor:
+      enabled: true
 ############################################

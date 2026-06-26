@@ -101,6 +101,20 @@ resource "kubernetes_deployment" "control_plane" {
             success_threshold     = 1
             failure_threshold     = 1
           }
+          dynamic "readiness_probe" {
+            for_each = var.control_plane.readiness_probe ? [1] : []
+            content {
+              http_get {
+                path = "/readiness"
+                port = 1081
+              }
+              initial_delay_seconds = 15
+              period_seconds        = 5
+              timeout_seconds       = 1
+              success_threshold     = 1
+              failure_threshold     = 1
+            }
+          }
           startup_probe {
             http_get {
               path = "/startup"

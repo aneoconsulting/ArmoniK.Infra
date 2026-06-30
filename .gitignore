@@ -44,3 +44,6 @@ kubeconfig_*
 generated
 .external_modules
 **.tgz
+
+# Helm
+**/Chart.lock

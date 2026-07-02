@@ -1,8 +1,13 @@
 #! /bin/sh
 
+SKIP_REFRESH="--skip-refresh"
+if [ "$1" = "-r" ]; then
+  SKIP_REFRESH=""
+fi
+
 updatedeps() {
   for chart in "$@"; do
-    helm dependency update "$chart" --skip-refresh &
+    helm dependency update "$chart" $SKIP_REFRESH &
   done
   wait
 }

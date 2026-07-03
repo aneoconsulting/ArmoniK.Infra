@@ -9,6 +9,10 @@ metadata:
     {{- include "armonik.labels" . | nindent 4 }}
 data:
   armonik.conf: |
+    {{- $tls := .Values.tls.enabled | default false }}
+
+    resolver kube-dns.kube-system ipv6=off;
+
     map $http_accept_language $accept_language {
         default en;
         ~*^en en;
@@ -17,19 +21,38 @@ data:
         default upgrade;
         '' close;
     }
+
+    upstream armonik {
+        zone armonik_zone 32k;
+        server armonik-control-plane.{{ include "armonik.namespace" . }}.svc.cluster.local:5001 resolve;
+        keepalive 128;
+        keepalive_time 8h;
+        keepalive_timeout 1h;
+    }
+
     server {
-        {{- range .Values.ports }}
-        {{- if .http2 }}
-        listen {{ .containerPort }} http2;
-        listen [::]:{{ .containerPort }} http2;
+        {{- if $tls }}
+        # ===== TLS ENABLED =====
+        listen 8443 ssl http2;
+        listen [::]:8443 ssl http2;
+        listen 9443 ssl http2;
+        listen [::]:9443 ssl http2;
+        ssl_certificate     {{ .Values.tls.ssl.certificatePath }};
+        ssl_certificate_key {{ .Values.tls.ssl.keyPath }};
+        ssl_verify_client off;
+        ssl_protocols {{ .Values.tls.ssl.protocols }};
+        ssl_ciphers {{ .Values.tls.ssl.ciphers }};
+        ssl_conf_command Ciphersuites {{ .Values.tls.ssl.cipherSuites }};
         {{- else }}
-        listen {{ .containerPort }};
-        listen [::]:{{ .containerPort }};
-        {{- end }}
+        # ===== TLS DISABLED =====
+        listen 8080;
+        listen [::]:8080;
+        listen 9080 http2;
+        listen [::]:9080 http2;
         {{- end }}
 
         sendfile on;
-        resolver kube-dns.kube-system ipv6=off;
+        tcp_nopush on;
 
         location = / {
             rewrite ^ $scheme://$http_host/admin/$accept_language/;
@@ -102,6 +125,7 @@ data:
             proxy_set_header Host $http_host;
             rewrite  ^/grafana/(.*)  /$1 break;
             proxy_http_version 1.1;
+            proxy_set_header Connection $connection_upgrade;
             proxy_pass $grafana_upstream$uri$is_args$args;
         }
     }

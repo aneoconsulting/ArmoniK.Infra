@@ -24,10 +24,12 @@ resources:
 
 ports:
   - name: ingress-grpc
+    protocol: grpc
     containerPort: 9080
     servicePort: 5001
     http2: true
   - name: ingress-http
+    protocol: http
     containerPort: 8080
     servicePort: 5000
 
@@ -60,6 +62,12 @@ tls:
   customCert:
     certPem: ""
     keyPem: ""
+  ssl:
+    protocols: "TLSv1.2 TLSv1.3"
+    ciphers: "EECDH+AESGCM:EECDH+AES256"
+    cipherSuites: "TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256"
+    certificatePath: "/ingress/tls.crt"
+    keyPath: "/ingress/tls.key"
 
 mtls:
   enabled: false

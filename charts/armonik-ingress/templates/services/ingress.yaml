@@ -26,6 +26,6 @@ spec:
     {{- range .Values.ports }}
     - name: {{ .name }}
       port: {{ eq $.Values.service.type "HeadLess" | ternary .containerPort .servicePort }}
-      targetPort: {{ .containerPort }}
+      targetPort: {{ include "armonik.ingress.port" (dict "protocol" .protocol "tls" $.Values.tls) }}
       protocol: TCP
     {{- end }}

@@ -1,0 +1,3 @@
+{{- if and .Values.mtls.enabled (not .Values.tls.enabled) -}}
+{{- fail "Invalid configuration: mTLS requires TLS to be enabled. Please set tls.enabled=true when enabling mTLS." -}}
+{{- end -}}

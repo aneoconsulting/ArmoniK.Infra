@@ -110,7 +110,7 @@ spec:
         secret:
           defaultMode: 420
           optional: false
-          secretName: {{ include "armonik.fullname" . }}-cert
+          secretName: {{ include "armonik.fullname" . }}-mtls-ca
       {{- end}}
       - name: conf
         configMap:

@@ -33,7 +33,7 @@ spec:
         ports:
           {{- range .Values.ports }}
           - name: {{ .name }}
-            containerPort: {{ .containerPort }}
+            containerPort: {{ include "armonik.ingress.port" (dict "protocol" .protocol "tls" $.Values.tls) }}
             protocol: TCP
           {{- end }}{{/* range .Values.ports */}}
         terminationMessagePath: /dev/termination-log
@@ -103,7 +103,7 @@ spec:
         secret:
           defaultMode: 420
           optional: false
-          secretName: {{ include "armonik.fullname" . }}-cert
+          secretName: {{ include "armonik.fullname" . }}
       {{- end }}
       {{- if list .Values "mtls" "enabled" | include "armonik.utils.index" }}
       - name: client-cert

@@ -36,53 +36,74 @@ computePlane:
     labels:
       app: "armonik"
       service: "compute-plane"
+  partitionCommon:
+    pollingAgent:
+      image: "armonik_pollingagent"
+      tag: "0.31.2"
+      imagePullPolicy: "IfNotPresent"
+      limits:
+        cpu: "1000m"
+        memory: "1024Mi"
+      requests:
+        cpu: "500m"
+        memory: "256Mi"
+      securityContext:
+        capabilities:
+          drop:
+          - SYS_PTRACE
+        privileged: false
+        runAsNonRoot: false
+        readOnlyRootFilesystem: false
+        allowPrivilegeEscalation: true
+      enableServiceLinks: true
+    annotations: {}
+    nodeSelector: {}
+    tolerations: []
+    terminationGracePeriodSeconds: 30
+    readinessProbe: {}
+    livenessProbe:
+      httpGet:
+        path: "/liveness"
+        port: 1080
+        scheme: HTTP
+      initialDelaySeconds: 15
+      periodSeconds: 10
+      timeoutSeconds: 10
+      successThreshold: 1
+      failureThreshold: 3
+    startupProbe:
+      httpGet:
+        path: "/startup"
+        port: 1080
+        scheme: HTTP
+      initialDelaySeconds: 1
+      periodSeconds: 3
+      timeoutSeconds: 1
+      successThreshold: 1
+      failureThreshold: 20
+    # Default envHardValue, will be overridden per partition for PartitionId
+    envHardValue: []
+    # Default envCommon, only set in htcmock
+    envCommon: []
+    # Default worker, will be overridden per partition
+    worker: []
+    hpa:
+      type: "prometheus"
+      polling_interval: 15
+      cooldown_period: 300
+      min_replica_count: 0
+      max_replica_count: 5
+      behavior:
+        restore_to_original_replica_count: true
+        stabilization_window_seconds: 300
+        type: "Percent"
+        value: 100
+        period_seconds: 15
+      triggers: []
+    replicas: 1
+
   partition:
     default:
-      replicas: 1
-      pollingAgent:
-        image: "armonik_pollingagent"
-        tag: "0.31.2"
-        imagePullPolicy: "IfNotPresent"
-        limits:
-          cpu: "1000m"
-          memory: "1024Mi"
-        requests:
-          cpu: "500m"
-          memory: "256Mi"
-        securityContext:
-          capabilities:
-            drop:
-            - SYS_PTRACE
-          privileged: false
-          runAsNonRoot: false
-          readOnlyRootFilesystem: false
-          allowPrivilegeEscalation: true
-        enableServiceLinks: true
-      annotations: {}
-      nodeSelector: {}
-      tolerations: []
-      terminationGracePeriodSeconds: 30
-      readinessProbe: {}
-      livenessProbe:
-        httpGet:
-          path: "/liveness"
-          port: 1080
-          scheme: HTTP
-        initialDelaySeconds: 15
-        periodSeconds: 10
-        timeoutSeconds: 10
-        successThreshold: 1
-        failureThreshold: 3
-      startupProbe:
-        httpGet:
-          path: "/startup"
-          port: 1080
-          scheme: HTTP
-        initialDelaySeconds: 1
-        periodSeconds: 3
-        timeoutSeconds: 1
-        successThreshold: 1
-        failureThreshold: 20
       envHardValue:
         - name: Amqp__PartitionId
           value: default
@@ -90,7 +111,6 @@ computePlane:
           value: default
         - name: SQS__PartitionId
           value: default
-      # ArmoniK workers
       worker:
         - name: "worker"
           image: "armonik_worker_dll"
@@ -103,17 +123,6 @@ computePlane:
             cpu: "500m"
             memory: "512Mi"
       hpa:
-        type: "prometheus"
-        polling_interval: 15
-        cooldown_period: 300
-        min_replica_count: 0
-        max_replica_count: 5
-        behavior:
-          restore_to_original_replica_count: true
-          stabilization_window_seconds: 300
-          type: "Percent"
-          value: 100
-          period_seconds: 15
         triggers:
           - type: "prometheus"
             metadata:
@@ -123,53 +132,7 @@ computePlane:
               namespace: "armonik"
               query: "armonik_default_tasks_queued{job=\"metrics-exporter\"}"
 
-    # Partition for the stream worker
     stream:
-      replicas: 1
-      pollingAgent:
-        image: "armonik_pollingagent"
-        tag: "0.31.2"
-        imagePullPolicy: "IfNotPresent"
-        limits:
-          cpu: "1000m"
-          memory: "1024Mi"
-        requests:
-          cpu: "500m"
-          memory: "256Mi"
-        securityContext:
-          capabilities:
-            drop:
-            - SYS_PTRACE
-          privileged: false
-          runAsNonRoot: false
-          readOnlyRootFilesystem: false
-          allowPrivilegeEscalation: true
-        enableServiceLinks: true
-      annotations: {}
-      nodeSelector: {}
-      tolerations: []
-      terminationGracePeriodSeconds: 30
-      readinessProbe: {}
-      livenessProbe:
-        httpGet:
-          path: "/liveness"
-          port: 1080
-          scheme: HTTP
-        initialDelaySeconds: 15
-        periodSeconds: 10
-        timeoutSeconds: 10
-        successThreshold: 1
-        failureThreshold: 3
-      startupProbe:
-        httpGet:
-          path: "/startup"
-          port: 1080
-          scheme: HTTP
-        initialDelaySeconds: 1
-        periodSeconds: 3
-        timeoutSeconds: 1
-        successThreshold: 1
-        failureThreshold: 20
       envHardValue:
         - name: Amqp__PartitionId
           value: stream
@@ -179,7 +142,6 @@ computePlane:
           value: stream
         - name: MongoDB__User
           value: root
-      # ArmoniK workers
       worker:
         - name: "worker"
           image: "armonik_core_stream_test_worker"
@@ -192,17 +154,6 @@ computePlane:
             cpu: "500m"
             memory: "512Mi"
       hpa:
-        type: "prometheus"
-        polling_interval: 15
-        cooldown_period: 300
-        min_replica_count: 0
-        max_replica_count: 5
-        behavior:
-          restore_to_original_replica_count: true
-          stabilization_window_seconds: 300
-          type: "Percent"
-          value: 100
-          period_seconds: 15
         triggers:
           - type: "prometheus"
             metadata:
@@ -212,55 +163,7 @@ computePlane:
               namespace: "armonik"
               query: "armonik_stream_tasks_queued{job=\"metrics-exporter\"}"
 
-    # Partition for the htcmock worker
     htcmock:
-      replicas: 1
-      pollingAgent:
-        image: "armonik_pollingagent"
-        tag: "0.31.2"
-        imagePullPolicy: "IfNotPresent"
-        limits:
-          cpu: "1000m"
-          memory: "1024Mi"
-        requests:
-          cpu: "500m"
-          memory: "256Mi"
-        securityContext:
-          capabilities:
-            drop:
-            - SYS_PTRACE
-          privileged: false
-          runAsNonRoot: false
-          readOnlyRootFilesystem: false
-          allowPrivilegeEscalation: true
-        enableServiceLinks: true
-      annotations: {}
-      nodeSelector: {}
-      tolerations: []
-      terminationGracePeriodSeconds: 30
-      ImagePullSecrets:
-        - name: ""
-      readinessProbe: {}
-      livenessProbe:
-        httpGet:
-          path: "/liveness"
-          port: 1080
-          scheme: HTTP
-        initialDelaySeconds: 15
-        periodSeconds: 10
-        timeoutSeconds: 10
-        successThreshold: 1
-        failureThreshold: 3
-      startupProbe:
-        httpGet:
-          path: "/startup"
-          port: 1080
-          scheme: HTTP
-        initialDelaySeconds: 1
-        periodSeconds: 3
-        timeoutSeconds: 1
-        successThreshold: 1
-        failureThreshold: 20
       envHardValue:
         - name: Amqp__PartitionId
           value: htcmock
@@ -279,7 +182,6 @@ computePlane:
           value: tcp
         - name: ComputePlane__AgentChannel__Address
           value: http://localhost:6667
-      # ArmoniK workers
       worker:
         - name: "worker"
           image: "armonik_core_htcmock_test_worker"
@@ -292,17 +194,6 @@ computePlane:
             cpu: "500m"
             memory: "512Mi"
       hpa:
-        type: "prometheus"
-        polling_interval: 15
-        cooldown_period: 300
-        min_replica_count: 0
-        max_replica_count: 5
-        behavior:
-          restore_to_original_replica_count: true
-          stabilization_window_seconds: 300
-          type: "Percent"
-          value: 100
-          period_seconds: 15
         triggers:
           - type: "prometheus"
             metadata:
@@ -312,53 +203,7 @@ computePlane:
               namespace: "armonik"
               query: "armonik_htcmock_tasks_queued{job=\"metrics-exporter\"}"
 
-    # Partition for the bench worker
     bench:
-      replicas: 1
-      pollingAgent:
-        image: "armonik_pollingagent"
-        tag: "0.31.2"
-        imagePullPolicy: "IfNotPresent"
-        limits:
-          cpu: "1000m"
-          memory: "1024Mi"
-        requests:
-          cpu: "500m"
-          memory: "256Mi"
-        securityContext:
-          capabilities:
-            drop:
-            - SYS_PTRACE
-          privileged: false
-          runAsNonRoot: false
-          readOnlyRootFilesystem: false
-          allowPrivilegeEscalation: true
-        enableServiceLinks: true
-      annotations: {}
-      nodeSelector: {}
-      tolerations: []
-      terminationGracePeriodSeconds: 30
-      readinessProbe: {}
-      livenessProbe:
-        httpGet:
-          path: "/liveness"
-          port: 1080
-          scheme: HTTP
-        initialDelaySeconds: 15
-        periodSeconds: 10
-        timeoutSeconds: 10
-        successThreshold: 1
-        failureThreshold: 3
-      startupProbe:
-        httpGet:
-          path: "/startup"
-          port: 1080
-          scheme: HTTP
-        initialDelaySeconds: 1
-        periodSeconds: 3
-        timeoutSeconds: 1
-        successThreshold: 1
-        failureThreshold: 20
       envHardValue:
         - name: Amqp__PartitionId
           value: bench
@@ -368,7 +213,6 @@ computePlane:
           value: bench
         - name: MongoDB__User
           value: root
-      # ArmoniK workers
       worker:
         - name: "worker"
           image: "armonik_core_bench_test_worker"
@@ -381,17 +225,6 @@ computePlane:
             cpu: "500m"
             memory: "512Mi"
       hpa:
-        type: "prometheus"
-        polling_interval: 15
-        cooldown_period: 300
-        min_replica_count: 0
-        max_replica_count: 5
-        behavior:
-          restore_to_original_replica_count: true
-          stabilization_window_seconds: 300
-          type: "Percent"
-          value: 100
-          period_seconds: 15
         triggers:
           - type: "prometheus"
             metadata:

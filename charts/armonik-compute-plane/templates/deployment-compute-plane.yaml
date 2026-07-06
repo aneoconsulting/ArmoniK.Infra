@@ -1,4 +1,5 @@
 {{- range $partitionName, $config := .Values.computePlane.partition }}
+  {{- $merged := mergeOverwrite (deepCopy $.Values.computePlane.partitionCommon) $config }}
 {{- $registry := $.Values.global.imageRegistry | default $.Values.registry }}
 ---
 apiVersion: apps/v1
@@ -11,7 +12,7 @@ metadata:
     service: {{ $.Values.computePlane.metadata.labels.service }}
     partition: {{ $partitionName }}
 spec:
-  replicas: {{ $config.replicas }}
+  replicas: {{ $merged.replicas }}
   selector:
     matchLabels:
       app: {{ $.Values.computePlane.metadata.labels.app }}
@@ -24,16 +25,16 @@ spec:
         app: {{ $.Values.computePlane.metadata.labels.app }}
         service: {{ $.Values.computePlane.metadata.labels.service }}
         partition: {{ $partitionName }}
-      {{- if $config.annotations}}
+      {{- if $merged.annotations}}
       annotations:
-        {{- range $key, $value := $config.annotations }}
+        {{- range $key, $value := $merged.annotations }}
         {{ $key }}: {{ $value | quote }}
         {{- end }}
       {{- end }}
     spec:
-      {{- if $config.nodeSelector}}
+      {{- if $merged.nodeSelector}}
       nodeSelector:
-        {{- range $key, $value := $config.nodeSelector }}
+        {{- range $key, $value := $merged.nodeSelector }}
         {{ $key }}: {{ $value | quote }}
         {{- end }}
       {{- end }}
@@ -42,16 +43,16 @@ spec:
       serviceAccount: {{ $.Values.serviceAccount.name }}
       automountServiceAccountToken: true
       {{- end }}
-      {{- if $config.tolerations }}
+      {{- if $merged.tolerations }}
       tolerations:
-        {{- range $i, $toleration := $config.tolerations }}
+        {{- range $i, $toleration := $merged.tolerations }}
         - key: {{ $toleration.key }}
           operator: Equal
           value: {{ $toleration.value }}
           effect: NoSchedule
         {{- end }}
       {{- end }}
-      terminationGracePeriodSeconds: {{ $config.terminationGracePeriodSeconds }}
+      terminationGracePeriodSeconds: {{ $merged.terminationGracePeriodSeconds }}
       shareProcessNamespace: {{ $.Values.shareProcessNamespace }}
       enableServiceLinks: true
       {{- $imagePullSecrets := $.Values.global.imagePullSecrets | default $.Values.imagePullSecrets }}
@@ -66,50 +67,50 @@ spec:
       # agent container
       - name: {{ $.Values.pollingAgent.name }}
         {{- if $registry }}
-        image: "{{ $registry }}/{{ $.Values.repository }}/{{ $config.pollingAgent.image }}:{{- include "armonikPollingagent.tag" $ | default $config.pollingAgent.tag }}"
+        image: "{{ $registry }}/{{ $.Values.repository }}/{{ $merged.pollingAgent.image }}:{{- include "armonikPollingagent.tag" $ | default $merged.pollingAgent.tag }}"
         {{- else }}
-        image: "{{ $.Values.repository }}/{{ $config.pollingAgent.image }}:{{- include "armonikPollingagent.tag" $ | default $config.pollingAgent.tag }}"
+        image: "{{ $.Values.repository }}/{{ $merged.pollingAgent.image }}:{{- include "armonikPollingagent.tag" $ | default $merged.pollingAgent.tag }}"
         {{- end }}
-        imagePullPolicy: {{ $config.pollingAgent.imagePullPolicy | quote}}
+        imagePullPolicy: {{ $merged.pollingAgent.imagePullPolicy | quote}}
         resources:
           limits:
-            cpu: "{{ $config.pollingAgent.limits.cpu }}"
-            memory: "{{ $config.pollingAgent.limits.memory }}"
+            cpu: "{{ $merged.pollingAgent.limits.cpu }}"
+            memory: "{{ $merged.pollingAgent.limits.memory }}"
           requests:
-            cpu: "{{ $config.pollingAgent.requests.cpu }}"
-            memory: "{{ $config.pollingAgent.requests.memory }}"
+            cpu: "{{ $merged.pollingAgent.requests.cpu }}"
+            memory: "{{ $merged.pollingAgent.requests.memory }}"
         securityContext:
-        {{- toYaml $config.pollingAgent.securityContext | nindent 10 }}
+        {{- toYaml $merged.pollingAgent.securityContext | nindent 10 }}
         ports:
         - name: {{ $.Values.pollingAgent.ports.name }}
           containerPort: {{ $.Values.pollingAgent.ports.containerPort }}
           protocol: TCP
-        {{if $config.readinessProbe }}
+        {{if $merged.readinessProbe }}
         readinessProbe:
-        {{- toYaml $config.readinessProbe | nindent 10 }}
+        {{- toYaml $merged.readinessProbe | nindent 10 }}
         {{- end }}
-        {{- if $config.livenessProbe }}
+        {{- if $merged.livenessProbe }}
         livenessProbe:
-        {{- toYaml $config.livenessProbe | nindent 10 }}
+        {{- toYaml $merged.livenessProbe | nindent 10 }}
         {{- end }}
-        {{- if $config.startupProbe }}
+        {{- if $merged.startupProbe }}
         startupProbe:
-        {{- toYaml $config.startupProbe | nindent 10 }}
+        {{- toYaml $merged.startupProbe | nindent 10 }}
         {{- end }}
         {{- if $.Values.pollingAgent.envFrom }}
         envFrom:
         {{- toYaml $.Values.pollingAgent.envFrom | nindent 10 }}
         {{- end }}
-        {{- if or $config.envHardValue $.Values.pollingAgent.envSecretValue $config.envCommon }}
+        {{- if or $merged.envHardValue $.Values.pollingAgent.envSecretValue $merged.envCommon }}
         env:
-          {{- if $config.envHardValue }}
-          {{- range $index, $item := $config.envHardValue }}
+          {{- if $merged.envHardValue }}
+          {{- range $index, $item := $merged.envHardValue }}
           - name: {{ $item.name }}
             value: {{ $item.value }}
           {{- end }}
           {{- end }}
-          {{- if $config.envCommon }}
-          {{- range $index, $item := $config.envCommon }}
+          {{- if $merged.envCommon }}
+          {{- range $index, $item := $merged.envCommon }}
           - name: {{ $item.name }}
             value: {{ $item.value }}
           {{- end }}
@@ -129,9 +130,9 @@ spec:
             mountPropagation: None
           {{- end }}
       # worker containers
-      {{- range $index, $worker := $config.worker }}
+      {{- range $index, $worker := $merged.worker }}
       - name: "{{ $worker.name }}-{{ $index }}"
-        {{- range $config.worker}}
+        {{- range $merged.worker}}
         {{- if $registry }}
         image: "{{ $registry }}/{{ $.Values.repository }}/{{ $worker.image }}:{{- include "armonikCore.tag" $ | default $worker.tag }}"
         {{- else }}
@@ -162,10 +163,10 @@ spec:
         envFrom:
         {{- toYaml $.Values.worker.envFrom | nindent 8 }}
         {{- end }}
-        {{- if $config.envCommon }}
+        {{- if $merged.envCommon }}
         env:
-          {{- if $config.envCommon }}
-          {{- range $index, $item := $config.envCommon }}
+          {{- if $merged.envCommon }}
+          {{- range $index, $item := $merged.envCommon }}
           - name: {{ $item.name }}
             value: {{ $item.value }}
           {{- end }}

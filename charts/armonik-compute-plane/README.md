@@ -55,6 +55,7 @@ Kubernetes: `>=v1.23.0-0`
 | init.nodeSelector | string | `nil` |  |
 | init.resources | string | `nil` |  |
 | init.tolerations | string | `nil` |  |
+| keda.enabled | bool | `true` |  |
 | nameOverride | string | `""` |  |
 | partitionCommon.agent.conf.envSecret[0] | string | `"{{ list \"core\" . | include \"armonik.conf.secretName\" }}"` |  |
 | partitionCommon.agent.conf.envSecret[1] | string | `"{{ list \"polling\" . | include \"armonik.conf.secretName\" }}"` |  |

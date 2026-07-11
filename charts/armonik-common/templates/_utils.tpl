@@ -8,14 +8,14 @@ attribute from the first image object passed to it (i.e. with precedence from le
 If no tag is found in the provided image configuration objects, the templates looks into the `appVersion`  defined in Chart.yaml
 and ultimately sets it to "latest" if no `appVersion` was found.
 
-Thus, when calling this template for an third-party image deployed with the armonik-dependencies chart, 
-is adviced to set the context to the dependency context, especially if you know no tag is provided. 
+Thus, when calling this template for a third-party image deployed with the armonik-dependencies chart,
+it is advised to set the context to that dependency's scope (.Subcharts.dependencies.Subcharts.<dep>),
+especially if you know no tag is provided.
 
 Usage:
  {{- include "armonik.utils.imageConf" (list <context> <imageConf1> <imageConf2> ...)| fromYaml }}
 Example:
-{{- $ctx :=  list $ "mongodb" | include "armonik.dependencyContext" | fromYaml -}}
-{{- $imageConf := list $ctx .Values.mongodb.image .Values.mongodbCommon.image  | include "armonik.utils.imageConf" | fromYaml }}
+{{- $imageConf := list $ .Values.image | include "armonik.utils.imageConf" | fromYaml }}
 
 image configuration object schema:
   registry: string

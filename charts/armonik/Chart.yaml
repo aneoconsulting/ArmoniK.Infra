@@ -40,24 +40,3 @@ dependencies:
     version: 0.1.x
     repository: file://../armonik-dependencies
     alias: dependencies
-    import-values:
-      - child: activemq
-        parent: global.armonik-dependencies.activemq
-      - child: redis
-        parent: global.armonik-dependencies.redis
-      - child: mongodb
-        parent: global.armonik-dependencies.mongodb
-      - child: kube-prometheus
-        parent: global.armonik-dependencies.kube-prometheus
-      - child: keda
-        parent: global.armonik-dependencies.keda
-      - child: rabbitmq
-        parent: global.armonik-dependencies.rabbitmq
-      - child: grafana
-        parent: global.armonik-dependencies.grafana
-      - child: fluent-bit
-        parent: global.armonik-dependencies.fluent-bit
-      - child: seq
-        parent: global.armonik-dependencies.seq
-      - child: cert-manager
-        parent: global.armonik-dependencies.cert-manager

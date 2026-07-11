@@ -1,15 +1,4 @@
 {{/*
-Render context for rabbitmq templates: the root-visible .Values.dependencies.rabbitmq tree.
-
-# Usage
-
-{{ $ctx := include "armonik.rabbitmq.context" $ | fromYaml }}
-*/}}
-{{- define "armonik.rabbitmq.context" -}}
-  {{- list . "rabbitmq" | include "armonik.rootDependencyContext" -}}
-{{- end -}}
-
-{{/*
 Gets the hostname from rabbitmq context.
 */}}
 {{- define "armonik.rabbitmq.host" -}}
@@ -27,18 +16,18 @@ Gets the port from rabbitmq context.
 Gets the configuration from rabbitmq forwarded to ArmoniK Core.
 */}}
 {{- define "armonik.rabbitmq.conf" -}}
-{{- $ctx := include "armonik.rabbitmq.context" . | fromYaml -}}
-{{- if index $ctx.Values "enabled" -}}
+{{/* Live subchart scope via .Subcharts (armonik-dependencies is aliased "dependencies"); skipped when the dep is disabled. */}}
+{{- with .Subcharts.dependencies.Subcharts.rabbitmq -}}
 env:
   Components__QueueAdaptorSettings__AdapterAbsolutePath: /adapters/queue/amqp/ArmoniK.Core.Adapters.Amqp.dll
   Components__QueueAdaptorSettings__ClassName: ArmoniK.Core.Adapters.Amqp.QueueBuilder
   Components__QueueStorage: ArmoniK.Adapters.Amqp.ObjectStorage
 
-  Amqp__Host: {{ include "armonik.rabbitmq.host" $ctx | quote }}
-  Amqp__Port: {{ include "armonik.rabbitmq.port" $ctx | quote }}
-  Amqp__User: {{ $ctx.Values.auth.username | quote }}
+  Amqp__Host: {{ include "armonik.rabbitmq.host" . | quote }}
+  Amqp__Port: {{ include "armonik.rabbitmq.port" . | quote }}
+  Amqp__User: {{ .Values.auth.username | quote }}
   Amqp__MaxPriority: "10"
-{{- if $ctx.Values.auth.tls.enabled }}
+{{- if .Values.auth.tls.enabled }}
   Amqp__CaPath: /mounts/rabbitmq-ca.crt
   Amqp__Scheme: AMQPS
 {{- else }}
@@ -47,12 +36,12 @@ env:
 
 envFromSecret:
   Amqp__Password:
-    secret: {{ include "rabbitmq.secretPasswordName" $ctx }}
-    field: {{ include "rabbitmq.secretPasswordKey" $ctx }}
+    secret: {{ include "rabbitmq.secretPasswordName" . }}
+    field: {{ include "rabbitmq.secretPasswordKey" . }}
 mountSecret:
-{{- if $ctx.Values.auth.tls.enabled }}
+{{- if .Values.auth.tls.enabled }}
   rabbitmq:
-    secret: {{ include "rabbitmq.tlsSecretName" $ctx }}
+    secret: {{ include "rabbitmq.tlsSecretName" . }}
 {{- end }}
 {{- end }}
 {{- end }}

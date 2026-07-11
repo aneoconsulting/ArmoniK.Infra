@@ -29,6 +29,11 @@ podDisruptionBudget:
   minAvailable:
   maxUnavailable:
 
+# Whether KEDA is usable in the target cluster. When true, a ScaledObject is rendered per
+# partition for queue-depth autoscaling; set false when KEDA is not installed.
+keda:
+  enabled: true
+
 # Base conf, merged into the init Job only (agent/worker build theirs from partitionCommon).
 conf:
   # Release name of the umbrella that owns the conf Secrets (defaults to "armonik").

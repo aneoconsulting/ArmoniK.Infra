@@ -55,7 +55,7 @@ init:
     envSecret:
       - '{{ list "core" . | include "armonik.conf.secretName" }}'
       - '{{ list "log" . | include "armonik.conf.secretName" }}'
-      - '{{ list "jobs" . | include "armonik.conf.secretName" }}'
+      - '{{ list "init" . | include "armonik.conf.secretName" }}'
     mountSecret:
       core-mount:
         secret: '{{ list "core" . | include "armonik.conf.mountSecretName" }}'

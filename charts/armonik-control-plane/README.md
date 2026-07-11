@@ -47,7 +47,7 @@ Kubernetes: `>=v1.23.0-0`
 | imagePullSecrets | list | `[]` |  |
 | init.affinity | string | `nil` |  |
 | init.annotations | string | `nil` |  |
-| init.conf.envSecret[0] | string | `"{{ list \"jobs\" . | include \"armonik.conf.secretName\" }}"` |  |
+| init.conf.envSecret[0] | string | `"{{ list \"init\" . | include \"armonik.conf.secretName\" }}"` |  |
 | init.enabled | bool | `false` |  |
 | init.image.name | string | `nil` |  |
 | init.image.pullPolicy | string | `nil` |  |

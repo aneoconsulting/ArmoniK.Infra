@@ -1,15 +1,4 @@
 {{/*
-Render context for mongodb templates: the root-visible .Values.dependencies.mongodb tree.
-
-# Usage
-
-{{ $ctx := include "armonik.mongodb.context" $ | fromYaml }}
-*/}}
-{{- define "armonik.mongodb.context" -}}
-  {{- list . "mongodb" | include "armonik.rootDependencyContext" -}}
-{{- end -}}
-
-{{/*
 Gets the hostname from mongodb context.
 */}}
 {{- define "armonik.mongodb.host" -}}
@@ -58,17 +47,17 @@ By default set to 27017.
 Gets the configuration from mongodb forwarded to ArmoniK Core.
 */}}
 {{- define "armonik.mongodb.conf" -}}
-{{- $ctx := include "armonik.mongodb.context" . | fromYaml -}}
-{{- if $ctx.Values.enabled -}}
-{{- $requireTls := (include "armonik.mongodb.requireTls" $ctx | fromYaml).enabled -}}
+{{/* Live subchart scope via .Subcharts (armonik-dependencies is aliased "dependencies"); skipped when the dep is disabled. */}}
+{{- with .Subcharts.dependencies.Subcharts.mongodb -}}
+{{- $requireTls := (include "armonik.mongodb.requireTls" . | fromYaml).enabled -}}
 env:
   Components__TableStorage:  "ArmoniK.Adapters.MongoDB.TableStorage"
-  MongoDB__Host:             {{ include "armonik.mongodb.host" $ctx | quote }}
-  MongoDB__Port:             {{ include "armonik.mongodb.port" $ctx | quote }}
+  MongoDB__Host:             {{ include "armonik.mongodb.host" . | quote }}
+  MongoDB__Port:             {{ include "armonik.mongodb.port" . | quote }}
   MongoDB__Tls:              {{ $requireTls | quote }}
-  MongoDB__ReplicaSet:       {{ $ctx.Values.replsets.rs0.name | quote }}
+  MongoDB__ReplicaSet:       {{ .Values.replsets.rs0.name | quote }}
   MongoDB__DatabaseName:     {{ include "armonik.mongodb.database" . | quote }}
-  MongoDB__DirectConnection: {{ ($ctx.Values.replsets.rs0.size | default 3 | quote) | eq "1" | quote }}
+  MongoDB__DirectConnection: {{ (.Values.replsets.rs0.size | default 3 | quote) | eq "1" | quote }}
   MongoDB__AuthSource:       {{ include "armonik.mongodb.authSource" . | quote }}
   MongoDB__AllowInsecureTls: "true"
 {{- if $requireTls }}
@@ -76,13 +65,13 @@ env:
 {{- end }}
 envFromSecret:
   MongoDB__User:
-    secret: {{ include "armonik.mongodb.secretName" $ctx }}
+    secret: {{ include "armonik.mongodb.secretName" . }}
     field: MONGODB_DATABASE_ADMIN_USER
   MongoDB__Password:
-    secret: {{ include "armonik.mongodb.secretName" $ctx }}
+    secret: {{ include "armonik.mongodb.secretName" . }}
     field: MONGODB_DATABASE_ADMIN_PASSWORD
 mountSecret:
-{{- $internalTlsSecret := list $ctx.Values "secrets" "sslInternal" | include "armonik.utils.index" | fromYaml -}}
+{{- $internalTlsSecret := list .Values "secrets" "sslInternal" | include "armonik.utils.index" | fromYaml -}}
 {{- if and $requireTls $internalTlsSecret }}
   mongodb:
     secret: {{ $internalTlsSecret }}

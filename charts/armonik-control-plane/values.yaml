@@ -179,4 +179,4 @@ init:
   # On top of the base conf: jobs layer.
   conf:
     envSecret:
-      - '{{ list "jobs" . | include "armonik.conf.secretName" }}'
+      - '{{ list "init" . | include "armonik.conf.secretName" }}'

@@ -41,7 +41,7 @@ Kubernetes: `>=v1.23.0-0`
 | imagePullSecrets | list | `[]` |  |
 | init.conf.envSecret[0] | string | `"{{ list \"core\" . | include \"armonik.conf.secretName\" }}"` |  |
 | init.conf.envSecret[1] | string | `"{{ list \"log\" . | include \"armonik.conf.secretName\" }}"` |  |
-| init.conf.envSecret[2] | string | `"{{ list \"jobs\" . | include \"armonik.conf.secretName\" }}"` |  |
+| init.conf.envSecret[2] | string | `"{{ list \"init\" . | include \"armonik.conf.secretName\" }}"` |  |
 | init.conf.mountSecret.core-mount.mode | string | `"0444"` |  |
 | init.conf.mountSecret.core-mount.path | string | `"/mounts/"` |  |
 | init.conf.mountSecret.core-mount.secret | string | `"{{ list \"core\" . | include \"armonik.conf.mountSecretName\" }}"` |  |

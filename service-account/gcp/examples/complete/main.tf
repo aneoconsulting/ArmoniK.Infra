@@ -53,7 +53,7 @@ module "vpc" {
 
 module "gke" {
   source                  = "terraform-google-modules/kubernetes-engine/google"
-  version                 = "36.1.0"
+  version                 = "36.3.0"
   project_id              = data.google_client_config.current.project
   name                    = "gke-sa-test"
   region                  = data.google_client_config.current.region

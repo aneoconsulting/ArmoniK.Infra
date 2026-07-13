@@ -16,6 +16,8 @@ Gets the port from rabbitmq context.
 Gets the configuration from rabbitmq forwarded to ArmoniK Core.
 */}}
 {{- define "armonik.rabbitmq.conf" -}}
+{{- $root := . -}}
+{{- $prefix := "rabbitmq-" -}}
 {{/* Live subchart scope via .Subcharts (armonik-dependencies is aliased "dependencies"); skipped when the dep is disabled. */}}
 {{- with .Subcharts.dependencies.Subcharts.rabbitmq -}}
 env:
@@ -28,7 +30,7 @@ env:
   Amqp__User: {{ .Values.auth.username | quote }}
   Amqp__MaxPriority: "10"
 {{- if .Values.auth.tls.enabled }}
-  Amqp__CaPath: /mounts/rabbitmq-ca.crt
+  Amqp__CaPath: {{ list $prefix "ca.crt" $root | include "armonik.conf.mountFilePath" }}
   Amqp__Scheme: AMQPS
 {{- else }}
   Amqp__Scheme: AMQP
@@ -42,6 +44,7 @@ mountSecret:
 {{- if .Values.auth.tls.enabled }}
   rabbitmq:
     secret: {{ include "rabbitmq.tlsSecretName" . }}
+    prefix: {{ $prefix | quote }}
 {{- end }}
 {{- end }}
 {{- end }}

@@ -33,7 +33,7 @@ Kubernetes: `>=v1.23.0-0`
 | conf.envSecret[0] | string | `"{{ list \"core\" . | include \"armonik.conf.secretName\" }}"` |  |
 | conf.envSecret[1] | string | `"{{ list \"log\" . | include \"armonik.conf.secretName\" }}"` |  |
 | conf.mountSecret.core-mount.mode | string | `"0444"` |  |
-| conf.mountSecret.core-mount.path | string | `"/mounts/"` |  |
+| conf.mountSecret.core-mount.path | string | `"{{ include \"armonik.conf.mountPath\" . }}"` |  |
 | conf.mountSecret.core-mount.secret | string | `"{{ list \"core\" . | include \"armonik.conf.mountSecretName\" }}"` |  |
 | conf.source | string | `"armonik"` |  |
 | defaultPartition | string | `"default"` |  |

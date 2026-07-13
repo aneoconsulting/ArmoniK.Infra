@@ -47,6 +47,8 @@ By default set to 27017.
 Gets the configuration from mongodb forwarded to ArmoniK Core.
 */}}
 {{- define "armonik.mongodb.conf" -}}
+{{- $root := . -}}
+{{- $prefix := "mongodb-" -}}
 {{/* Live subchart scope via .Subcharts (armonik-dependencies is aliased "dependencies"); skipped when the dep is disabled. */}}
 {{- with .Subcharts.dependencies.Subcharts.mongodb -}}
 {{- $requireTls := (include "armonik.mongodb.requireTls" . | fromYaml).enabled -}}
@@ -61,7 +63,7 @@ env:
   MongoDB__AuthSource:       {{ include "armonik.mongodb.authSource" . | quote }}
   MongoDB__AllowInsecureTls: "true"
 {{- if $requireTls }}
-  MongoDB__CAFile:           "/mounts/mongodb-ca.crt"
+  MongoDB__CAFile:           {{ list $prefix "ca.crt" $root | include "armonik.conf.mountFilePath" | quote }}
 {{- end }}
 envFromSecret:
   MongoDB__User:
@@ -75,6 +77,7 @@ mountSecret:
 {{- if and $requireTls $internalTlsSecret }}
   mongodb:
     secret: {{ $internalTlsSecret }}
+    prefix: {{ $prefix | quote }}
 {{- end }}
 {{- end }}
 {{- end }}

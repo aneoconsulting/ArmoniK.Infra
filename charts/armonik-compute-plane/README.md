@@ -43,7 +43,7 @@ Kubernetes: `>=v1.23.0-0`
 | init.conf.envSecret[1] | string | `"{{ list \"log\" . | include \"armonik.conf.secretName\" }}"` |  |
 | init.conf.envSecret[2] | string | `"{{ list \"init\" . | include \"armonik.conf.secretName\" }}"` |  |
 | init.conf.mountSecret.core-mount.mode | string | `"0444"` |  |
-| init.conf.mountSecret.core-mount.path | string | `"/mounts/"` |  |
+| init.conf.mountSecret.core-mount.path | string | `"{{ include \"armonik.conf.mountPath\" . }}"` |  |
 | init.conf.mountSecret.core-mount.secret | string | `"{{ list \"core\" . | include \"armonik.conf.mountSecretName\" }}"` |  |
 | init.configmaps | string | `nil` |  |
 | init.enabled | bool | `true` |  |
@@ -60,7 +60,7 @@ Kubernetes: `>=v1.23.0-0`
 | partitionCommon.agent.conf.envSecret[0] | string | `"{{ list \"core\" . | include \"armonik.conf.secretName\" }}"` |  |
 | partitionCommon.agent.conf.envSecret[1] | string | `"{{ list \"polling\" . | include \"armonik.conf.secretName\" }}"` |  |
 | partitionCommon.agent.conf.mountSecret.core-mount.mode | string | `"0444"` |  |
-| partitionCommon.agent.conf.mountSecret.core-mount.path | string | `"/mounts/"` |  |
+| partitionCommon.agent.conf.mountSecret.core-mount.path | string | `"{{ include \"armonik.conf.mountPath\" . }}"` |  |
 | partitionCommon.agent.conf.mountSecret.core-mount.secret | string | `"{{ list \"core\" . | include \"armonik.conf.mountSecretName\" }}"` |  |
 | partitionCommon.agent.enableServiceLinks | bool | `true` |  |
 | partitionCommon.agent.graceDelay | string | `"00:00:15"` |  |

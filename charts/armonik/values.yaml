@@ -17,6 +17,9 @@ global:
   environment:
     name: "local"
     description: "Armonik environment"
+  # Root dir for conf mount Secrets in pods; propagated to subcharts. env strings and volumeMounts derive from it.
+  armonik:
+    mountPath: /mounts
 
 
 ############################################

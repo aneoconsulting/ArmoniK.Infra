@@ -77,13 +77,15 @@ affinity: {}
 conf:
   # Release name of the umbrella that owns the conf Secrets (defaults to "armonik").
   source: armonik
+  # Overrides the umbrella's global.armonik.mountPath for this release (default "/mounts").
+  # mountPath: /mounts
   envSecret:
     - '{{ list "core" . | include "armonik.conf.secretName" }}'
     - '{{ list "log" . | include "armonik.conf.secretName" }}'
   mountSecret:
     core-mount:
       secret: '{{ list "core" . | include "armonik.conf.mountSecretName" }}'
-      path: /mounts/
+      path: '{{ include "armonik.conf.mountPath" . }}'
       mode: "0444"
 
 # On top of the base conf: control layer.

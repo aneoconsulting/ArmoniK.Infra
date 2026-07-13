@@ -41,6 +41,7 @@ items:
         required: [ "configmap", "path" ]
         properties:
           configmap: { "type": "string" }
+          # See mountSecret below.
           path:      { "type": "string" }
           subpath:   { "type": "string" }
           mode:      { "type": "string" }
@@ -58,10 +59,21 @@ items:
         required: [ "secret", "path" ]
         properties:
           secret: { "type": "string" }
+          # Aggregation source only (conf.<layer>.mountSecret): key prefix on imported keys; default
+          # "<mount-name>-", "" for none. A source drives the aggregate via secret/prefix/items; the
+          # consuming-mount fields below may still be set to mirror the plane config (only path is
+          # then validated - see path).
+          prefix:    { "type": "string" }
+          # Consuming-mount mountPath. On an aggregation source it is validated against the umbrella
+          # mountPath: it must equal it (or, with a subpath, be a path under it).
           path:      { "type": "string" }
+          # Consuming-mount subPath (aggregate key, prefix included). Not refreshed on rotation.
           subpath:   { "type": "string" }
           mode:      { "type": "string" }
           optional:  { "type": "boolean" }
+          # map <dest> -> { field: <source key> }.
+          #  consuming mount: secret volume items (whitelist).
+          #  aggregation source: per-key select+rename into the aggregate via ESO data[] ("<prefix><dest>", flat).
           items:
             type: object
             required: [ "field" ]
@@ -134,6 +146,36 @@ Name of a conf layer's mount Secret (TLS material): <source>-conf-<layer>-mount.
   {{- $layer := index . 0 -}}
   {{- $root := index . 1 -}}
   {{- printf "%s-conf-%s-mount" (include "armonik.conf.source" $root) $layer | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+{{/*
+Root dir for conf mount Secrets in pods; both the storage env strings and the volumeMounts derive
+from it. Precedence: .Values.conf.mountPath > .Values.global.armonik.mountPath > "/mounts" (trailing
+"/" trimmed). Root scope only, never inside a backend-subchart `with`.
+
+# Usage
+
+{{ include "armonik.conf.mountPath" $ }}
+*/}}
+{{- define "armonik.conf.mountPath" -}}
+  {{- $global := list .Values "global" "armonik" "mountPath" | include "armonik.utils.index" -}}
+  {{- $conf := list .Values "conf" | include "armonik.utils.index" | fromYaml -}}
+  {{- $conf.mountPath | default $global | default "/mounts" | trimSuffix "/" -}}
+{{- end -}}
+
+{{/*
+In-pod path of one mounted conf file: <mountPath>/<prefix><filename>. Keeps the storage env string
+and the mounted file in sync.
+
+# Usage
+
+{{ list "mongodb-" "ca.crt" $root | include "armonik.conf.mountFilePath" }}
+*/}}
+{{- define "armonik.conf.mountFilePath" -}}
+  {{- $prefix := index . 0 -}}
+  {{- $file := index . 1 -}}
+  {{- $root := index . 2 -}}
+  {{- printf "%s/%s%s" (include "armonik.conf.mountPath" $root) $prefix $file -}}
 {{- end -}}
 
 {{/*
@@ -211,9 +253,13 @@ the root. Idempotent on plain strings.
   {{- end -}}
   {{- range $n, $m := $conf.mountSecret | default dict -}}
     {{- $_ := set $m "secret" (tpl $m.secret $root) -}}
+    {{- if $m.subpath -}}{{- $_ := set $m "subpath" (tpl $m.subpath $root) -}}{{- end -}}
+    {{- if $m.path -}}{{- $_ := set $m "path" (tpl $m.path $root) -}}{{- end -}}
   {{- end -}}
   {{- range $n, $m := $conf.mountConfigmap | default dict -}}
     {{- $_ := set $m "configmap" (tpl $m.configmap $root) -}}
+    {{- if $m.subpath -}}{{- $_ := set $m "subpath" (tpl $m.subpath $root) -}}{{- end -}}
+    {{- if $m.path -}}{{- $_ := set $m "path" (tpl $m.path $root) -}}{{- end -}}
   {{- end -}}
   {{- $conf | toYaml -}}
 {{- end -}}
@@ -256,11 +302,17 @@ the root. Idempotent on plain strings.
 {{- range $name, $mount := .mountConfigmap }}
 - name: {{ $name | quote }}
   mountPath: {{ $mount.path | quote }}
+  {{- with $mount.subpath }}
+  subPath: {{ . | quote }}
+  {{- end }}
   readOnly: true
 {{- end }}{{/* range $name, $mount := .mountConfigmap */}}
 {{- range $name, $mount := .mountSecret }}
 - name: {{ $name | quote }}
   mountPath: {{ $mount.path | quote }}
+  {{- with $mount.subpath }}
+  subPath: {{ . | quote }}
+  {{- end }}
   readOnly: true
 {{- end }}{{/* range $name, $mount := .mountSecret */}}
 {{- end -}}{{/* define "armonik.conf.generateVolumeMounts" */}}

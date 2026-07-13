@@ -28,10 +28,6 @@
   $commonConf
 | include "armonik.conf.merge" | fromYaml -}}
 {{- $workerConf = list $workerConf $ | include "armonik.conf.resolve" | fromYaml -}}
-{{- $volumeConf := list
-  $agentConf
-  $workerConf
-| include "armonik.conf.merge" | fromYaml }}
 {{- $agentImage := list $ $agent.image $.Values.partitionCommon.agent.image | include "armonik.utils.imageConf" | fromYaml }}
 {{- $workerImage := list $ $worker.image $.Values.partitionCommon.worker.image | include "armonik.utils.imageConf" | fromYaml }}
 {{- $fluentBitImage := list $ $.Values.fluentBit.image | include "armonik.utils.imageConf" | fromYaml }}
@@ -181,7 +177,7 @@ spec:
           readOnly: false
       {{- end }}
       volumes:
-        {{- include "armonik.conf.generateVolumes" $volumeConf | nindent 8 }}
+        {{- include "armonik.conf.generateVolumes" (list $agentConf $workerConf) | nindent 8 }}
         - name: cache-volume
           emptyDir: {}
         {{- if not $.Values.fluentBit.isDaemonSet }}

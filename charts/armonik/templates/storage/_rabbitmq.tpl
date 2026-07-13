@@ -42,8 +42,7 @@ envFromSecret:
     field: {{ include "rabbitmq.secretPasswordKey" . }}
 mountSecret:
 {{- if .Values.auth.tls.enabled }}
-  rabbitmq:
-    secret: {{ include "rabbitmq.tlsSecretName" . }}
+  - secret: {{ include "rabbitmq.tlsSecretName" . }}
     prefix: {{ $prefix | quote }}
 {{- end }}
 {{- end }}

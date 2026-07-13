@@ -79,20 +79,22 @@ conf:
   source: armonik
   # Overrides the umbrella's global.armonik.mountPath for this release (default "/mounts").
   # mountPath: /mounts
+  # A workload mounts the mount-aggregate of each layer it uses (same layers as envSecret), all at
+  # mountPath (merged into one projected volume). path defaults to mountPath, mode to "0444".
   envSecret:
     - '{{ list "core" . | include "armonik.conf.secretName" }}'
     - '{{ list "log" . | include "armonik.conf.secretName" }}'
   mountSecret:
-    core-mount:
-      secret: '{{ list "core" . | include "armonik.conf.mountSecretName" }}'
-      path: '{{ include "armonik.conf.mountPath" . }}'
-      mode: "0444"
+    - secret: '{{ list "core" . | include "armonik.conf.mountSecretName" }}'
+    - secret: '{{ list "log" . | include "armonik.conf.mountSecretName" }}'
 
 # On top of the base conf: control layer.
 deployment:
   conf:
     envSecret:
       - '{{ list "control" . | include "armonik.conf.secretName" }}'
+    mountSecret:
+      - secret: '{{ list "control" . | include "armonik.conf.mountSecretName" }}'
 
 ports:
   - name: control-port
@@ -162,6 +164,8 @@ metricsExporter:
   conf:
     envSecret:
       - '{{ list "metrics" . | include "armonik.conf.secretName" }}'
+    mountSecret:
+      - secret: '{{ list "metrics" . | include "armonik.conf.mountSecretName" }}'
 
 init:
   enabled: false
@@ -182,3 +186,5 @@ init:
   conf:
     envSecret:
       - '{{ list "init" . | include "armonik.conf.secretName" }}'
+    mountSecret:
+      - secret: '{{ list "init" . | include "armonik.conf.mountSecretName" }}'

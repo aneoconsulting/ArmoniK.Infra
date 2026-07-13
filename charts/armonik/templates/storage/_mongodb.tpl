@@ -75,8 +75,7 @@ envFromSecret:
 mountSecret:
 {{- $internalTlsSecret := list .Values "secrets" "sslInternal" | include "armonik.utils.index" | fromYaml -}}
 {{- if and $requireTls $internalTlsSecret }}
-  mongodb:
-    secret: {{ $internalTlsSecret }}
+  - secret: {{ $internalTlsSecret }}
     prefix: {{ $prefix | quote }}
 {{- end }}
 {{- end }}

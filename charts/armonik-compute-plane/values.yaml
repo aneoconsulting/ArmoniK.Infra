@@ -38,6 +38,8 @@ keda:
 conf:
   # Release name of the umbrella that owns the conf Secrets (defaults to "armonik").
   source: armonik
+  # Overrides the umbrella's global.armonik.mountPath for this release (default "/mounts").
+  # mountPath: /mounts
 
 init:
   enabled: true
@@ -59,7 +61,7 @@ init:
     mountSecret:
       core-mount:
         secret: '{{ list "core" . | include "armonik.conf.mountSecretName" }}'
-        path: /mounts/
+        path: '{{ include "armonik.conf.mountPath" . }}'
         mode: "0444"
   configmaps:
 
@@ -125,7 +127,7 @@ partitionCommon:
       mountSecret:
         core-mount:
           secret: '{{ list "core" . | include "armonik.conf.mountSecretName" }}'
-          path: /mounts/
+          path: '{{ include "armonik.conf.mountPath" . }}'
           mode: "0444"
   annotations: {}
   nodeSelector: {}

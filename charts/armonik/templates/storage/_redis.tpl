@@ -16,6 +16,8 @@ Gets the port from redis context.
 Gets the configuration from redis forwarded to ArmoniK Core.
 */}}
 {{- define "armonik.redis.conf" -}}
+{{- $root := . -}}
+{{- $prefix := "redis-" -}}
 {{/* Live subchart scope via .Subcharts (armonik-dependencies is aliased "dependencies"); skipped when the dep is disabled. */}}
 {{- with .Subcharts.dependencies.Subcharts.redis -}}
 env:
@@ -29,7 +31,7 @@ env:
   Redis__User:         "default"
   Redis__Ssl:          {{ .Values.tls.enabled | quote }}
 {{- if .Values.tls.enabled }}
-  Redis__CaPath:       /mounts/redis-{{ .Values.tls.caPublicKey }}
+  Redis__CaPath:       {{ list $prefix .Values.tls.caPublicKey $root | include "armonik.conf.mountFilePath" }}
 {{- end }}
 envFromSecret:
   Redis__Password:
@@ -39,6 +41,7 @@ mountSecret:
 {{- if .Values.tls.enabled }}
   redis:
     secret: {{ .Values.tls.existingSecret }}
+    prefix: {{ $prefix | quote }}
 {{- end }}
 {{- end }}
 {{- end }}

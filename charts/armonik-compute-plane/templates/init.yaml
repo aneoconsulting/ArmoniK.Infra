@@ -47,7 +47,7 @@ spec:
         resources:
           {{- toYaml . | nindent 10 }}
         {{- end }}
-      volumes: {{- include "armonik.conf.generateVolumes" $conf | nindent 8 }}
+      volumes: {{- include "armonik.conf.generateVolumes" (list $conf) | nindent 8 }}
 
       {{- with $.Values.imagePullSecrets | default $.Values.global.imagePullSecrets }}
       imagePullSecrets:

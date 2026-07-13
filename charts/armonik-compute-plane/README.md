@@ -42,9 +42,9 @@ Kubernetes: `>=v1.23.0-0`
 | init.conf.envSecret[0] | string | `"{{ list \"core\" . | include \"armonik.conf.secretName\" }}"` |  |
 | init.conf.envSecret[1] | string | `"{{ list \"log\" . | include \"armonik.conf.secretName\" }}"` |  |
 | init.conf.envSecret[2] | string | `"{{ list \"init\" . | include \"armonik.conf.secretName\" }}"` |  |
-| init.conf.mountSecret.core-mount.mode | string | `"0444"` |  |
-| init.conf.mountSecret.core-mount.path | string | `"{{ include \"armonik.conf.mountPath\" . }}"` |  |
-| init.conf.mountSecret.core-mount.secret | string | `"{{ list \"core\" . | include \"armonik.conf.mountSecretName\" }}"` |  |
+| init.conf.mountSecret[0].secret | string | `"{{ list \"core\" . | include \"armonik.conf.mountSecretName\" }}"` |  |
+| init.conf.mountSecret[1].secret | string | `"{{ list \"log\" . | include \"armonik.conf.mountSecretName\" }}"` |  |
+| init.conf.mountSecret[2].secret | string | `"{{ list \"init\" . | include \"armonik.conf.mountSecretName\" }}"` |  |
 | init.configmaps | string | `nil` |  |
 | init.enabled | bool | `true` |  |
 | init.image.name | string | `"armonik_control"` |  |
@@ -59,9 +59,8 @@ Kubernetes: `>=v1.23.0-0`
 | nameOverride | string | `""` |  |
 | partitionCommon.agent.conf.envSecret[0] | string | `"{{ list \"core\" . | include \"armonik.conf.secretName\" }}"` |  |
 | partitionCommon.agent.conf.envSecret[1] | string | `"{{ list \"polling\" . | include \"armonik.conf.secretName\" }}"` |  |
-| partitionCommon.agent.conf.mountSecret.core-mount.mode | string | `"0444"` |  |
-| partitionCommon.agent.conf.mountSecret.core-mount.path | string | `"{{ include \"armonik.conf.mountPath\" . }}"` |  |
-| partitionCommon.agent.conf.mountSecret.core-mount.secret | string | `"{{ list \"core\" . | include \"armonik.conf.mountSecretName\" }}"` |  |
+| partitionCommon.agent.conf.mountSecret[0].secret | string | `"{{ list \"core\" . | include \"armonik.conf.mountSecretName\" }}"` |  |
+| partitionCommon.agent.conf.mountSecret[1].secret | string | `"{{ list \"polling\" . | include \"armonik.conf.mountSecretName\" }}"` |  |
 | partitionCommon.agent.enableServiceLinks | bool | `true` |  |
 | partitionCommon.agent.graceDelay | string | `"00:00:15"` |  |
 | partitionCommon.agent.image.name | string | `"armonik_pollingagent"` |  |
@@ -102,6 +101,8 @@ Kubernetes: `>=v1.23.0-0`
 | partitionCommon.annotations | object | `{}` |  |
 | partitionCommon.conf.envSecret[0] | string | `"{{ list \"log\" . | include \"armonik.conf.secretName\" }}"` |  |
 | partitionCommon.conf.envSecret[1] | string | `"{{ list \"compute\" . | include \"armonik.conf.secretName\" }}"` |  |
+| partitionCommon.conf.mountSecret[0].secret | string | `"{{ list \"log\" . | include \"armonik.conf.mountSecretName\" }}"` |  |
+| partitionCommon.conf.mountSecret[1].secret | string | `"{{ list \"compute\" . | include \"armonik.conf.mountSecretName\" }}"` |  |
 | partitionCommon.hpa.behavior | object | `{"periodSeconds":15,"restoreToOriginalReplicaCount":false,"stabilizationWindowSeconds":300,"type":"Percent","value":100}` | Advanced options to manage the behavior of the HPA |
 | partitionCommon.hpa.behavior.periodSeconds | int | `15` | Period in seconds |
 | partitionCommon.hpa.behavior.restoreToOriginalReplicaCount | bool | `false` | Restore to the original replicas count |
@@ -130,6 +131,7 @@ Kubernetes: `>=v1.23.0-0`
 | partitionCommon.worker.checkDelay | string | `"00:00:10"` |  |
 | partitionCommon.worker.checkRetries | int | `10` |  |
 | partitionCommon.worker.conf.envSecret[0] | string | `"{{ list \"worker\" . | include \"armonik.conf.secretName\" }}"` |  |
+| partitionCommon.worker.conf.mountSecret[0].secret | string | `"{{ list \"worker\" . | include \"armonik.conf.mountSecretName\" }}"` |  |
 | partitionCommon.worker.image.name | string | `nil` |  |
 | partitionCommon.worker.image.pullPolicy | string | `"IfNotPresent"` |  |
 | partitionCommon.worker.image.registry | string | `nil` |  |

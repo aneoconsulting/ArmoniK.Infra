@@ -32,12 +32,12 @@ Kubernetes: `>=v1.23.0-0`
 | annotations | object | `{}` |  |
 | conf.envSecret[0] | string | `"{{ list \"core\" . | include \"armonik.conf.secretName\" }}"` |  |
 | conf.envSecret[1] | string | `"{{ list \"log\" . | include \"armonik.conf.secretName\" }}"` |  |
-| conf.mountSecret.core-mount.mode | string | `"0444"` |  |
-| conf.mountSecret.core-mount.path | string | `"{{ include \"armonik.conf.mountPath\" . }}"` |  |
-| conf.mountSecret.core-mount.secret | string | `"{{ list \"core\" . | include \"armonik.conf.mountSecretName\" }}"` |  |
+| conf.mountSecret[0].secret | string | `"{{ list \"core\" . | include \"armonik.conf.mountSecretName\" }}"` |  |
+| conf.mountSecret[1].secret | string | `"{{ list \"log\" . | include \"armonik.conf.mountSecretName\" }}"` |  |
 | conf.source | string | `"armonik"` |  |
 | defaultPartition | string | `"default"` |  |
 | deployment.conf.envSecret[0] | string | `"{{ list \"control\" . | include \"armonik.conf.secretName\" }}"` |  |
+| deployment.conf.mountSecret[0].secret | string | `"{{ list \"control\" . | include \"armonik.conf.mountSecretName\" }}"` |  |
 | extraPartitions | string | `nil` |  |
 | image.name | string | `"armonik_control"` |  |
 | image.pullPolicy | string | `"IfNotPresent"` |  |
@@ -48,6 +48,7 @@ Kubernetes: `>=v1.23.0-0`
 | init.affinity | string | `nil` |  |
 | init.annotations | string | `nil` |  |
 | init.conf.envSecret[0] | string | `"{{ list \"init\" . | include \"armonik.conf.secretName\" }}"` |  |
+| init.conf.mountSecret[0].secret | string | `"{{ list \"init\" . | include \"armonik.conf.mountSecretName\" }}"` |  |
 | init.enabled | bool | `false` |  |
 | init.image.name | string | `nil` |  |
 | init.image.pullPolicy | string | `nil` |  |
@@ -70,6 +71,7 @@ Kubernetes: `>=v1.23.0-0`
 | metricsExporter.affinity | string | `nil` |  |
 | metricsExporter.annotations | string | `nil` |  |
 | metricsExporter.conf.envSecret[0] | string | `"{{ list \"metrics\" . | include \"armonik.conf.secretName\" }}"` |  |
+| metricsExporter.conf.mountSecret[0].secret | string | `"{{ list \"metrics\" . | include \"armonik.conf.mountSecretName\" }}"` |  |
 | metricsExporter.enabled | bool | `true` |  |
 | metricsExporter.image.name | string | `"armonik_control_metrics"` |  |
 | metricsExporter.image.pullPolicy | string | `nil` |  |

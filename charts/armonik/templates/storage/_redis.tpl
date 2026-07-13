@@ -39,8 +39,7 @@ envFromSecret:
     field: default
 mountSecret:
 {{- if .Values.tls.enabled }}
-  redis:
-    secret: {{ .Values.tls.existingSecret }}
+  - secret: {{ .Values.tls.existingSecret }}
     prefix: {{ $prefix | quote }}
 {{- end }}
 {{- end }}

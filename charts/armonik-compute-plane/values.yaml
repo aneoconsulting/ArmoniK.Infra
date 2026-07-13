@@ -59,10 +59,9 @@ init:
       - '{{ list "log" . | include "armonik.conf.secretName" }}'
       - '{{ list "init" . | include "armonik.conf.secretName" }}'
     mountSecret:
-      core-mount:
-        secret: '{{ list "core" . | include "armonik.conf.mountSecretName" }}'
-        path: '{{ include "armonik.conf.mountPath" . }}'
-        mode: "0444"
+      - secret: '{{ list "core" . | include "armonik.conf.mountSecretName" }}'
+      - secret: '{{ list "log" . | include "armonik.conf.mountSecretName" }}'
+      - secret: '{{ list "init" . | include "armonik.conf.mountSecretName" }}'
   configmaps:
 
 partitionCommon:
@@ -125,10 +124,8 @@ partitionCommon:
         - '{{ list "core" . | include "armonik.conf.secretName" }}'
         - '{{ list "polling" . | include "armonik.conf.secretName" }}'
       mountSecret:
-        core-mount:
-          secret: '{{ list "core" . | include "armonik.conf.mountSecretName" }}'
-          path: '{{ include "armonik.conf.mountPath" . }}'
-          mode: "0444"
+        - secret: '{{ list "core" . | include "armonik.conf.mountSecretName" }}'
+        - secret: '{{ list "polling" . | include "armonik.conf.mountSecretName" }}'
   annotations: {}
   nodeSelector: {}
   tolerations: []
@@ -180,6 +177,8 @@ partitionCommon:
     conf:
       envSecret:
         - '{{ list "worker" . | include "armonik.conf.secretName" }}'
+      mountSecret:
+        - secret: '{{ list "worker" . | include "armonik.conf.mountSecretName" }}'
   hpa:
     type: "prometheus"
     # -- Polling interval in seconds
@@ -226,6 +225,9 @@ partitionCommon:
     envSecret:
       - '{{ list "log" . | include "armonik.conf.secretName" }}'
       - '{{ list "compute" . | include "armonik.conf.secretName" }}'
+    mountSecret:
+      - secret: '{{ list "log" . | include "armonik.conf.mountSecretName" }}'
+      - secret: '{{ list "compute" . | include "armonik.conf.mountSecretName" }}'
 partitions:
 
 fluentBit:

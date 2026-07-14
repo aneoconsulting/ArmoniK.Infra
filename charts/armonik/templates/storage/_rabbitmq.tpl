@@ -30,7 +30,7 @@ env:
   Amqp__User: {{ .Values.auth.username | quote }}
   Amqp__MaxPriority: "10"
 {{- if .Values.auth.tls.enabled }}
-  Amqp__CaPath: {{ list $prefix "ca.crt" $root | include "armonik.conf.mountFilePath" }}
+  Amqp__CaPath: {{ list $prefix "ca.crt" $root | include "armonik.conf.mountFilePath" | quote }}
   Amqp__Scheme: AMQPS
 {{- else }}
   Amqp__Scheme: AMQP

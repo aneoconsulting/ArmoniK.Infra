@@ -31,7 +31,7 @@ env:
   Redis__User:         "default"
   Redis__Ssl:          {{ .Values.tls.enabled | quote }}
 {{- if .Values.tls.enabled }}
-  Redis__CaPath:       {{ list $prefix .Values.tls.caPublicKey $root | include "armonik.conf.mountFilePath" }}
+  Redis__CaPath:       {{ list $prefix .Values.tls.caPublicKey $root | include "armonik.conf.mountFilePath" | quote }}
 {{- end }}
 envFromSecret:
   Redis__Password:

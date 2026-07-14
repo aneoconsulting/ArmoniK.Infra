@@ -57,8 +57,9 @@ image configuration object schema:
 Like index, but does not error if any intermediary key is absent.
 If result is empty, it is not printed out, and thus is directly compatible with conditions.
 
-To get the result as a value other than a string you would need to convert it back using the following functions:
-- bool: `empty`
+A string value is rendered raw and must be `quote`d before being inserted into a template.
+Any other value is toYaml-encoded and needs a conversion function to get the proper type:
+- bool: `empty | not`
 - int: `int`
 - array: `fromYamlArray`
 - object: `fromYaml`
@@ -71,7 +72,11 @@ To get the result as a value other than a string you would need to convert it ba
     {{- end -}}
   {{- end -}}
   {{- if $value.value -}}
-    {{- $value.value | toYaml -}}
+    {{- if kindIs "string" $value.value -}}
+      {{- $value.value -}}
+    {{- else -}}
+      {{- $value.value | toYaml -}}
+    {{- end -}}
   {{- end -}}
 {{- end -}}
 

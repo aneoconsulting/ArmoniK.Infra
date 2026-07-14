@@ -40,8 +40,8 @@ Returns the port of rs0 replica set, as indicated by the documentation, https://
 By default set to 27017.
 */}}
 {{- define "armonik.mongodb.port" }}
-  {{- $port := list .Values.replsets.rs0 "configuration" "net" "port" | include "armonik.utils.index" | fromYaml }}
-  {{- $port | default "27017" -}}
+  {{- $config := list .Values "replsets" "rs0" "configuration" | include "armonik.utils.index" | fromYaml }}
+  {{- list $config "net" "port" | include "armonik.utils.index" | default "27017" -}}
 {{- end }}
 {{/*
 Gets the configuration from mongodb forwarded to ArmoniK Core.
@@ -73,9 +73,9 @@ envFromSecret:
     secret: {{ include "armonik.mongodb.secretName" . }}
     field: MONGODB_DATABASE_ADMIN_PASSWORD
 mountSecret:
-{{- $internalTlsSecret := list .Values "secrets" "sslInternal" | include "armonik.utils.index" | fromYaml -}}
+{{- $internalTlsSecret := list .Values "secrets" "sslInternal" | include "armonik.utils.index" -}}
 {{- if and $requireTls $internalTlsSecret }}
-  - secret: {{ $internalTlsSecret }}
+  - secret: {{ $internalTlsSecret | quote }}
     prefix: {{ $prefix | quote }}
 {{- end }}
 {{- end }}

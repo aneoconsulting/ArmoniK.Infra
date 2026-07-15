@@ -1,6 +1,6 @@
 # armonik-control-plane
 
-![Version: 0.1.0](https://img.shields.io/badge/Version-0.1.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.35.0](https://img.shields.io/badge/AppVersion-0.35.0-informational?style=flat-square)
+![Version: 0.1.0](https://img.shields.io/badge/Version-0.1.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.37.1](https://img.shields.io/badge/AppVersion-0.37.1-informational?style=flat-square)
 
 A Helm chart for Armonik
 
@@ -38,17 +38,17 @@ Kubernetes: `>=v1.23.0-0`
 | conf.mountConfigmap | object | `{}` |  |
 | conf.mountSecret | object | `{}` |  |
 | defaultPartition | string | `"default"` |  |
-| extraPartitions | list | `[]` |  |
+| extraPartitions | string | `nil` |  |
 | image.name | string | `"armonik_control"` |  |
 | image.pullPolicy | string | `"IfNotPresent"` |  |
-| image.registry | string | `nil` |  |
+| image.registry | string | `""` |  |
 | image.repository | string | `"dockerhubaneo"` |  |
 | image.tag | string | `nil` |  |
 | imagePullSecrets | list | `[]` |  |
 | init.affinity | string | `nil` |  |
 | init.annotations | string | `nil` |  |
 | init.conf | string | `nil` |  |
-| init.enabled | bool | `true` |  |
+| init.enabled | bool | `false` |  |
 | init.image.name | string | `nil` |  |
 | init.image.pullPolicy | string | `nil` |  |
 | init.image.registry | string | `nil` |  |
@@ -113,6 +113,12 @@ Kubernetes: `>=v1.23.0-0`
 | ports[1].containerPort | int | `1081` |  |
 | ports[1].name | string | `"metrics-port"` |  |
 | ports[1].protocol | string | `"TCP"` |  |
+| rbac.authentication.required | bool | `false` |  |
+| rbac.authorization.required | bool | `false` |  |
+| rbac.createBuiltInRoles | bool | `false` |  |
+| rbac.roles | string | `nil` |  |
+| rbac.userCertificates | string | `nil` |  |
+| rbac.users | string | `nil` |  |
 | replicas | int | `1` |  |
 | resources.limits.cpu | int | `1` |  |
 | resources.limits.memory | string | `"1Gi"` |  |

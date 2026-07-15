@@ -3,11 +3,11 @@ on:
   push:
     branches:
       - main
-      - 0.2.x
+      - feat/revamp-helm
   pull_request:
     branches:
       - main
-      - 0.2.x
+      - feat/revamp-helm
 jobs:
   HelmChartlint:
     name: Lint Helm charts

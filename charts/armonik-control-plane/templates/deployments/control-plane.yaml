@@ -1,9 +1,10 @@
 {{- $conf := list
-    (include "armonik.conf.control" . | fromYaml)
     (not .Values.init.enabled | ternary (include "armonik.control.init.confHelper" .) "" | fromYaml)
     (include "armonik.control.confHelper" . | fromYaml)
     .Values.conf
+    .Values.deployment.conf
   | include "armonik.conf.merge" | fromYaml -}}
+{{- $conf = list $conf $ | include "armonik.conf.resolve" | fromYaml -}}
 {{- $image := list $ .Values.image | include "armonik.utils.imageConf" | fromYaml }}
 apiVersion: apps/v1
 kind: Deployment

@@ -73,14 +73,24 @@ tolerations: []
 annotations: {}
 affinity: {}
 
+# Base conf merged into every control-plane workload: core + log layers + core TLS mounts.
 conf:
-  env: {}
-  envConfigmap: []
-  envFromConfigmap: {}
-  envSecret: []
-  envFromSecret: {}
-  mountConfigmap: {}
-  mountSecret: {}
+  # Release name of the umbrella that owns the conf Secrets (defaults to "armonik").
+  source: armonik
+  envSecret:
+    - '{{ list "core" . | include "armonik.conf.secretName" }}'
+    - '{{ list "log" . | include "armonik.conf.secretName" }}'
+  mountSecret:
+    core-mount:
+      secret: '{{ list "core" . | include "armonik.conf.mountSecretName" }}'
+      path: /mounts/
+      mode: "0444"
+
+# On top of the base conf: control layer.
+deployment:
+  conf:
+    envSecret:
+      - '{{ list "control" . | include "armonik.conf.secretName" }}'
 
 ports:
   - name: control-port
@@ -146,7 +156,10 @@ metricsExporter:
       - name: metrics-port
         port: 9419
         targetPort: 1080
+  # On top of the base conf: metrics layer.
   conf:
+    envSecret:
+      - '{{ list "metrics" . | include "armonik.conf.secretName" }}'
 
 init:
   enabled: false
@@ -163,4 +176,7 @@ init:
   tolerations:
   annotations:
   affinity:
+  # On top of the base conf: jobs layer.
   conf:
+    envSecret:
+      - '{{ list "jobs" . | include "armonik.conf.secretName" }}'

@@ -1,12 +1,12 @@
 {{/*
-Gets the context to execute activemq named templates
+Render context for activemq templates: the root-visible .Values.dependencies.activemq tree.
 
 # Usage
 
 {{ $ctx := include "armonik.activemq.context" $ | fromYaml }}
 */}}
 {{- define "armonik.activemq.context" -}}
-  {{- list . "activemq" | include "armonik.dependencyContext" -}}
+  {{- list . "activemq" | include "armonik.rootDependencyContext" -}}
 {{- end -}}
 
 {{/*

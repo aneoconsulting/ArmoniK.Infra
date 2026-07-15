@@ -24,7 +24,6 @@ Kubernetes: `>=v1.25.0-0`
 |------------|------|---------|
 | file://../armonik-common | armonik-common | 0.1.x |
 | file://../armonik-compute-plane | compute-plane(armonik-compute-plane) | 0.1.x |
-| file://../armonik-configuration | conf(armonik-configuration) | 0.1.x |
 | file://../armonik-control-plane | control-plane(armonik-control-plane) | 0.1.x |
 | file://../armonik-dependencies | dependencies(armonik-dependencies) | 0.1.x |
 | file://../armonik-ingress | ingress(armonik-ingress) | 0.1.x |
@@ -33,9 +32,12 @@ Kubernetes: `>=v1.25.0-0`
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
+| compute-plane.conf.source | string | `"{{ .Release.Name }}"` |  |
 | compute-plane.enabled | bool | `true` |  |
 | compute-plane.serviceAccount.create | bool | `true` |  |
 | conf.log.minimumLevel | string | `"Information"` |  |
+| conf.source | string | `"{{ .Release.Name }}"` |  |
+| control-plane.conf.source | string | `"{{ .Release.Name }}"` |  |
 | control-plane.defaultPartition | string | `"default"` |  |
 | control-plane.enabled | bool | `true` |  |
 | control-plane.extraPartitions | string | `nil` |  |

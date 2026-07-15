@@ -1,12 +1,12 @@
 {{/*
-Gets the context to execute rabbitmq named templates
+Render context for rabbitmq templates: the root-visible .Values.dependencies.rabbitmq tree.
 
 # Usage
 
 {{ $ctx := include "armonik.rabbitmq.context" $ | fromYaml }}
 */}}
 {{- define "armonik.rabbitmq.context" -}}
-  {{- list . "rabbitmq" | include "armonik.dependencyContext" -}}
+  {{- list . "rabbitmq" | include "armonik.rootDependencyContext" -}}
 {{- end -}}
 
 {{/*
@@ -39,7 +39,7 @@ env:
   Amqp__User: {{ $ctx.Values.auth.username | quote }}
   Amqp__MaxPriority: "10"
 {{- if $ctx.Values.auth.tls.enabled }}
-  Amqp__CaPath: /rabbitmq/certificate/ca.crt
+  Amqp__CaPath: /mounts/rabbitmq-ca.crt
   Amqp__Scheme: AMQPS
 {{- else }}
   Amqp__Scheme: AMQP
@@ -51,10 +51,8 @@ envFromSecret:
     field: {{ include "rabbitmq.secretPasswordKey" $ctx }}
 mountSecret:
 {{- if $ctx.Values.auth.tls.enabled }}
-  rabbitmq-cert:
+  rabbitmq:
     secret: {{ include "rabbitmq.tlsSecretName" $ctx }}
-    path: /rabbitmq/certificate/
-    mode: "0444"
 {{- end }}
 {{- end }}
 {{- end }}

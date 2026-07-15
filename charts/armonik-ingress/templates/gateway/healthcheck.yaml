@@ -1,0 +1,41 @@
+  {{- if .Values.healthCheckPolicy.enabled }}
+  apiVersion: networking.gke.io/v1
+  kind: HealthCheckPolicy
+  metadata:
+    name: {{ .Values.healthCheckPolicy.name | default (printf "%s-health-check" (include "armonik.fullname" .)) }}
+    namespace: {{ .Values.gateway.namespace | default (include "armonik.namespace" .) }}
+
+    labels:
+      app.kubernetes.io/component: healthcheckpolicy
+      {{- include "armonik.labels" . | nindent 4 }}
+
+    {{- with .Values.healthCheckPolicy.annotations }}
+    annotations:
+  {{ toYaml . | nindent 4 }}
+    {{- end }}
+
+  spec:
+    default:
+      logConfig:
+        enabled: {{ .Values.healthCheckPolicy.default.logConfig.enabled | default true }}
+      
+      config:
+        type: {{ .Values.healthCheckPolicy.default.config.type | default "TCP" }}
+        
+        {{- if eq .Values.healthCheckPolicy.default.config.type "TCP" }}
+        tcpHealthCheck:
+          port: {{ .Values.healthCheckPolicy.default.config.tcpHealthCheck.port | default (include "armonik.ingress.port" (dict "protocol" "grpc" "tls" .Values.tls)) }}
+        {{- else if eq .Values.healthCheckPolicy.default.config.type "HTTP" }}
+        httpHealthCheck:
+          port: {{ .Values.healthCheckPolicy.default.config.httpHealthCheck.port | default (include "armonik.ingress.port" (dict "protocol" "http" "tls" .Values.tls)) }}
+          {{- with .Values.healthCheckPolicy.default.config.httpHealthCheck.requestPath }}
+          requestPath: {{ . | quote }}
+          {{- end }}
+        {{- end }}
+    
+    targetRef:
+      group: ""
+      kind: Service
+      name: {{ .Values.healthCheckPolicy.targetRef.name | default (include "armonik.fullname" .) }}
+      namespace: {{ .Values.healthCheckPolicy.targetRef.namespace | default (include "armonik.namespace" .) }}
+  {{- end }}

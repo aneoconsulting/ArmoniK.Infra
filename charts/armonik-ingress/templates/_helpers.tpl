@@ -1,14 +1,12 @@
 {{/*
 Calculate port based on protocol and TLS status
 */}}
-{{- define "armonik.ingress.port" -}}
-  {{- $tlsObj := .tls | default dict -}}
-  {{- $isTlsEnabled := $tlsObj.enabled | default false -}}
-  {{- if eq .protocol "http" -}}
-    {{- if $isTlsEnabled -}}8443{{- else -}}8080{{- end -}}
-  {{- else if eq .protocol "grpc" -}}
-    {{- if $isTlsEnabled -}}9443{{- else -}}9080{{- end -}}
-  {{- end -}}
+{{- define "armonik.ingress.httpPort" -}}
+{{- if and .Values.tls.enabled (not .Values.gateway.enabled) -}}8443{{- else -}}8080{{- end -}}
+{{- end -}}
+
+{{- define "armonik.ingress.grpcPort" -}}
+{{- if and .Values.tls.enabled (not .Values.gateway.enabled) -}}9443{{- else -}}9080{{- end -}}
 {{- end -}}
 
 {{- define "armonik.ingress.mtlsCnPattern" -}}
@@ -22,4 +20,12 @@ Calculate port based on protocol and TLS status
       {{- join "|" $patterns -}}
     {{- end -}}
   {{- end -}}
+{{- end -}}
+
+{{- define "armonik.ingress.serviceType" -}}
+{{- if .Values.gateway.enabled -}}
+ClusterIP
+{{- else -}}
+{{ .Values.service.type }}
+{{- end -}}
 {{- end -}}

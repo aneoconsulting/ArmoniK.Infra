@@ -15,7 +15,7 @@ metadata:
   {{- end }}
 
 spec:
-  gatewayClassName: {{ .Values.gateway.gatewayClassName | default "nginx" }}
+  gatewayClassName: {{ .Values.gateway.gatewayClassName }}
  
   {{- with .Values.gateway.addresses }}
   addresses:
@@ -27,7 +27,9 @@ spec:
     - name: https
       port: 443
       protocol: HTTPS
+      {{- if .Values.gateway.hostname }}
       hostname: {{ .Values.gateway.hostname | quote }}
+      {{- end }}
       
       tls:
         mode: Terminate
@@ -49,7 +51,9 @@ spec:
     - name: http
       port: 80
       protocol: HTTP
+      {{- if .Values.gateway.hostname }}
       hostname: {{ .Values.gateway.hostname | quote }}
+      {{- end }}
       
       allowedRoutes:
         namespaces:

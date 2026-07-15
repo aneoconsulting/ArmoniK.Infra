@@ -119,3 +119,22 @@ static:
     name: "{{ .Values.global.environment.name }}"
     version: "{{ .Chart.AppVersion }}"
   guiConfiguration: {}
+
+
+# GATEWAY 
+gateway:
+  enabled: false
+  tls:
+    enabled: false
+  allowedRoutes:
+    namespaces:
+      from: Same
+
+# HTTPROUTE 
+httpRoute:
+  enabled: false
+
+# HEALTHCHECKPOLICY
+healthCheckPolicy:
+  enabled: false
+  

@@ -1,0 +1,58 @@
+{{- if .Values.gateway.enabled }}
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: Gateway
+metadata:
+  name: {{ .Values.gateway.name | default (include "armonik.fullname" .) }}
+  namespace: {{ .Values.gateway.namespace | default (include "armonik.namespace" .) }}
+  labels:
+    app.kubernetes.io/component: ingress
+    {{- include "armonik.labels" . | nindent 4 }}
+  {{- with .Values.annotations}}
+  annotations:
+  {{- range $key, $value := . }}
+    {{ $key }}: {{ $value }}
+  {{- end }}
+  {{- end }}
+
+spec:
+  gatewayClassName: {{ .Values.gateway.gatewayClassName | default "nginx" }}
+ 
+  {{- with .Values.gateway.addresses }}
+  addresses:
+{{ toYaml . | nindent 4 }}
+  {{- end }}
+ 
+  listeners:
+    {{- if .Values.gateway.tls.enabled }}
+    - name: https
+      port: 443
+      protocol: HTTPS
+      hostname: {{ .Values.gateway.hostname | quote }}
+      
+      tls:
+        mode: Terminate
+        {{- if .Values.gateway.tls.options }}
+        options:
+{{ toYaml .Values.gateway.tls.options | nindent 10 }}
+        {{- else if .Values.gateway.tls.certificateRefs }}
+        certificateRefs:
+{{ toYaml .Values.gateway.tls.certificateRefs | nindent 10 }}
+        {{- else }}
+        certificateRefs:
+        - name: {{ include "armonik.fullname" . }}
+        {{- end }}
+      
+      allowedRoutes:
+        namespaces:
+          from: {{ .Values.gateway.allowedRoutes.namespaces.from | default "Same" }}
+    {{- else }}
+    - name: http
+      port: 80
+      protocol: HTTP
+      hostname: {{ .Values.gateway.hostname | quote }}
+      
+      allowedRoutes:
+        namespaces:
+          from: {{ .Values.gateway.allowedRoutes.namespaces.from | default "Same" }}
+    {{- end }}
+{{- end }}

@@ -17,7 +17,7 @@ spec:
   type: "ClusterIP"
   clusterIP: "None"
 {{ else }}
-  type: {{ .Values.service.type | quote}}
+  type: {{ include "armonik.ingress.serviceType" . }}
 {{- end }}
   selector:
     app.kubernetes.io/component: ingress
@@ -26,6 +26,10 @@ spec:
     {{- range .Values.ports }}
     - name: {{ .name }}
       port: {{ eq $.Values.service.type "HeadLess" | ternary .containerPort .servicePort }}
-      targetPort: {{ include "armonik.ingress.port" (dict "protocol" .protocol "tls" $.Values.tls) }}
+      targetPort: {{ if eq .protocol "http" }}
+        {{ include "armonik.ingress.httpPort" $ }}
+      {{ else }}
+        {{ include "armonik.ingress.grpcPort" $ }}
+      {{ end }}
       protocol: TCP
     {{- end }}

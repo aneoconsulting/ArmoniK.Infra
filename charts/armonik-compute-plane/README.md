@@ -1,6 +1,6 @@
 # armonik-compute-plane
 
-![Version: 0.1.0](https://img.shields.io/badge/Version-0.1.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.35.0](https://img.shields.io/badge/AppVersion-0.35.0-informational?style=flat-square)
+![Version: 0.1.0](https://img.shields.io/badge/Version-0.1.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.37.1](https://img.shields.io/badge/AppVersion-0.37.1-informational?style=flat-square)
 
 A Helm chart for Armonik
 
@@ -28,19 +28,48 @@ Kubernetes: `>=v1.23.0-0`
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
+| conf.env | object | `{}` |  |
+| conf.envConfigmap | list | `[]` |  |
+| conf.envFromConfigmap | object | `{}` |  |
+| conf.envFromSecret | object | `{}` |  |
+| conf.envSecret | list | `[]` |  |
+| conf.mountConfigmap | object | `{}` |  |
+| conf.mountSecret | object | `{}` |  |
 | fluentBit.configMapRef | string | `"fluent-bit-config"` |  |
 | fluentBit.image.name | string | `"fluent-bit"` |  |
 | fluentBit.image.pullPolicy | string | `"IfNotPresent"` |  |
 | fluentBit.image.registry | string | `nil` |  |
 | fluentBit.image.repository | string | `"fluent"` |  |
-| fluentBit.image.tag | string | `"2.0.9"` |  |
 | fluentBit.isDaemonSet | bool | `true` |  |
 | fullnameOverride | string | `""` |  |
 | global."dependencies.keda" | bool | `false` |  |
-| global.imageRegistry | string | `""` |  |
+| global.imageRegistry | string | `"public.ecr.aws"` |  |
 | imagePullSecrets | list | `[]` |  |
+| init.conf.env | object | `{}` |  |
+| init.conf.envConfigmap | list | `[]` |  |
+| init.conf.envFromConfigmap | object | `{}` |  |
+| init.conf.envFromSecret | object | `{}` |  |
+| init.conf.envSecret | list | `[]` |  |
+| init.conf.mountConfigmap | object | `{}` |  |
+| init.conf.mountSecret | object | `{}` |  |
+| init.configmaps | string | `nil` |  |
+| init.enabled | bool | `true` |  |
+| init.image.name | string | `"armonik_control"` |  |
+| init.image.pullPolicy | string | `nil` |  |
+| init.image.registry | string | `nil` |  |
+| init.image.repository | string | `"dockerhubaneo"` |  |
+| init.image.tag | string | `nil` |  |
+| init.nodeSelector | string | `nil` |  |
+| init.resources | string | `nil` |  |
+| init.tolerations | string | `nil` |  |
 | nameOverride | string | `""` |  |
-| partitionCommon.agent.conf | string | `nil` |  |
+| partitionCommon.agent.conf.env | object | `{}` |  |
+| partitionCommon.agent.conf.envConfigmap | list | `[]` |  |
+| partitionCommon.agent.conf.envFromConfigmap | object | `{}` |  |
+| partitionCommon.agent.conf.envFromSecret | object | `{}` |  |
+| partitionCommon.agent.conf.envSecret | list | `[]` |  |
+| partitionCommon.agent.conf.mountConfigmap | object | `{}` |  |
+| partitionCommon.agent.conf.mountSecret | object | `{}` |  |
 | partitionCommon.agent.enableServiceLinks | bool | `true` |  |
 | partitionCommon.agent.graceDelay | string | `"00:00:15"` |  |
 | partitionCommon.agent.image.name | string | `"armonik_pollingagent"` |  |
@@ -79,7 +108,13 @@ Kubernetes: `>=v1.23.0-0`
 | partitionCommon.agent.startupProbe.successThreshold | int | `1` |  |
 | partitionCommon.agent.startupProbe.timeoutSeconds | int | `1` |  |
 | partitionCommon.annotations | object | `{}` |  |
-| partitionCommon.conf | string | `nil` |  |
+| partitionCommon.conf.env | object | `{}` |  |
+| partitionCommon.conf.envConfigmap | list | `[]` |  |
+| partitionCommon.conf.envFromConfigmap | object | `{}` |  |
+| partitionCommon.conf.envFromSecret | object | `{}` |  |
+| partitionCommon.conf.envSecret | list | `[]` |  |
+| partitionCommon.conf.mountConfigmap | object | `{}` |  |
+| partitionCommon.conf.mountSecret | object | `{}` |  |
 | partitionCommon.hpa.behavior | object | `{"periodSeconds":15,"restoreToOriginalReplicaCount":false,"stabilizationWindowSeconds":300,"type":"Percent","value":100}` | Advanced options to manage the behavior of the HPA |
 | partitionCommon.hpa.behavior.periodSeconds | int | `15` | Period in seconds |
 | partitionCommon.hpa.behavior.restoreToOriginalReplicaCount | bool | `false` | Restore to the original replicas count |
@@ -87,7 +122,7 @@ Kubernetes: `>=v1.23.0-0`
 | partitionCommon.hpa.behavior.type | string | `"Percent"` | Type of the target |
 | partitionCommon.hpa.behavior.value | int | `100` | Value of the target |
 | partitionCommon.hpa.cooldownPeriod | int | `300` | Cooldown period in seconds |
-| partitionCommon.hpa.idleReplicaCount | int | `1` | Count of idle replicas |
+| partitionCommon.hpa.idleReplicaCount | int | `0` | Count of idle replicas |
 | partitionCommon.hpa.maxReplicaCount | int | `5` | Maximum count of replicas |
 | partitionCommon.hpa.minReplicaCount | int | `1` | Minimum count of replicas |
 | partitionCommon.hpa.pollingInterval | int | `15` | Polling interval in seconds |
@@ -102,12 +137,18 @@ Kubernetes: `>=v1.23.0-0`
 | partitionCommon.labels.service | string | `"compute-plane"` |  |
 | partitionCommon.nodeSelector | object | `{}` |  |
 | partitionCommon.replicas | int | `1` |  |
-| partitionCommon.socketType | string | `"unixdomainsocket"` |  |
+| partitionCommon.socketType | string | `"tcp"` |  |
 | partitionCommon.terminationGracePeriodSeconds | int | `30` |  |
 | partitionCommon.tolerations | list | `[]` |  |
 | partitionCommon.worker.checkDelay | string | `"00:00:10"` |  |
 | partitionCommon.worker.checkRetries | int | `10` |  |
-| partitionCommon.worker.conf | string | `nil` |  |
+| partitionCommon.worker.conf.env | object | `{}` |  |
+| partitionCommon.worker.conf.envConfigmap | list | `[]` |  |
+| partitionCommon.worker.conf.envFromConfigmap | object | `{}` |  |
+| partitionCommon.worker.conf.envFromSecret | object | `{}` |  |
+| partitionCommon.worker.conf.envSecret | list | `[]` |  |
+| partitionCommon.worker.conf.mountConfigmap | object | `{}` |  |
+| partitionCommon.worker.conf.mountSecret | object | `{}` |  |
 | partitionCommon.worker.image.name | string | `nil` |  |
 | partitionCommon.worker.image.pullPolicy | string | `"IfNotPresent"` |  |
 | partitionCommon.worker.image.registry | string | `nil` |  |
@@ -139,12 +180,7 @@ Kubernetes: `>=v1.23.0-0`
 | partitionCommon.worker.startupProbe.timeoutSeconds | int | `1` |  |
 | partitionCommon.worker.terminationMessagePath | string | `"/dev/termination-log"` |  |
 | partitionCommon.worker.terminationMessagePolicy | string | `"File"` |  |
-| partitions.bench.worker.image.name | string | `"armonik_core_bench_test_worker"` |  |
-| partitions.default.worker.image.name | string | `"armonik_worker_dll"` |  |
-| partitions.default.worker.image.tag | string | `"0.19.1"` |  |
-| partitions.htcmock.socketType | string | `"tcp"` |  |
-| partitions.htcmock.worker.image.name | string | `"armonik_core_htcmock_test_worker"` |  |
-| partitions.stream.worker.image.name | string | `"armonik_core_stream_test_worker"` |  |
+| partitions | string | `nil` |  |
 | podDisruptionBudget.enabled | bool | `false` |  |
 | podDisruptionBudget.maxUnavailable | string | `nil` |  |
 | podDisruptionBudget.minAvailable | string | `nil` |  |
@@ -156,7 +192,7 @@ Kubernetes: `>=v1.23.0-0`
 | restartPolicy | string | `"Always"` |  |
 | service | object | `{}` |  |
 | serviceAccount.annotations | object | `{}` |  |
-| serviceAccount.create | bool | `true` |  |
+| serviceAccount.create | bool | `false` |  |
 | serviceAccount.name | string | `"compute-plane"` |  |
 | serviceAccount.secrets | list | `[]` |  |
 | shareProcessNamespace | bool | `false` |  |

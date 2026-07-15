@@ -1,6 +1,6 @@
 # armonik
 
-![Version: 0.1.0](https://img.shields.io/badge/Version-0.1.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.35.0](https://img.shields.io/badge/AppVersion-0.35.0-informational?style=flat-square)
+![Version: 0.1.0](https://img.shields.io/badge/Version-0.1.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.37.1](https://img.shields.io/badge/AppVersion-0.37.1-informational?style=flat-square)
 
 A Helm chart for Armonik
 
@@ -34,26 +34,52 @@ Kubernetes: `>=v1.25.0-0`
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | compute-plane.enabled | bool | `true` |  |
-| config.log.minimumLevel | string | `"Information"` |  |
+| compute-plane.serviceAccount.create | bool | `true` |  |
+| conf.log.minimumLevel | string | `"Information"` |  |
+| control-plane.defaultPartition | string | `"default"` |  |
 | control-plane.enabled | bool | `true` |  |
+| control-plane.extraPartitions | string | `nil` |  |
+| control-plane.init.enabled | bool | `true` |  |
+| control-plane.rbac.createBuiltInRoles | bool | `true` |  |
 | dependencies.activemq.enabled | bool | `true` |  |
 | dependencies.activemq.fullnameOverride | string | `"activemq"` |  |
+| dependencies.activemq.image.registry | string | `"docker.io"` |  |
 | dependencies.activemq.replicas | int | `1` |  |
 | dependencies.cert-manager.enabled | bool | `true` |  |
 | dependencies.cert-manager.fullnameOverride | string | `"cert-manager"` |  |
 | dependencies.cert-manager.installCRDs | bool | `true` |  |
 | dependencies.cert-manager.prometheus.servicemonitor.enabled | bool | `true` |  |
-| dependencies.fluent-bit.config.customParsers | string | `"[PARSER]\n    Name   apache\n    Format regex\n    Regex  ^(?<host>[^ ]*) [^ ]* (?<user>[^ ]*) \\[(?<time>[^\\]]*)\\] \"(?<method>\\S+)(?: +(?<path>[^\\\"]*?)(?: +\\S*)?)?\" (?<code>[^ ]*) (?<size>[^ ]*)(?: \"(?<referer>[^\\\"]*)\" \"(?<agent>[^\\\"]*)\")?$\n    Time_Key time\n    Time_Format %d/%b/%Y:%H:%M:%S %z\n[PARSER]\n    Name   apache2\n    Format regex\n    Regex  ^(?<host>[^ ]*) [^ ]* (?<user>[^ ]*) \\[(?<time>[^\\]]*)\\] \"(?<method>\\S+)(?: +(?<path>[^ ]*) +\\S*)?\" (?<code>[^ ]*) (?<size>[^ ]*)(?: \"(?<referer>[^\\\"]*)\" \"(?<agent>[^\\\"]*)\")?$\n    Time_Key time\n    Time_Format %d/%b/%Y:%H:%M:%S %z\n[PARSER]\n    Name   apache_error\n    Format regex\n    Regex  ^\\[[^ ]* (?<time>[^\\]]*)\\] \\[(?<level>[^\\]]*)\\](?: \\[pid (?<pid>[^\\]]*)\\])?( \\[client (?<client>[^\\]]*)\\])? (?<message>.*)$\n[PARSER]\n    Name   nginx\n    Format regex\n    Regex ^(?<remote>[^ ]*) (?<host>[^ ]*) (?<user>[^ ]*) \\[(?<time>[^\\]]*)\\] \"(?<method>\\S+)(?: +(?<path>[^\\\"]*?)(?: +\\S*)?)?\" (?<code>[^ ]*) (?<size>[^ ]*)(?: \"(?<referer>[^\\\"]*)\" \"(?<agent>[^\\\"]*)\")?$\n    Time_Key time\n    Time_Format %d/%b/%Y:%H:%M:%S %z\n[PARSER]\n    Name   json\n    Format json\n    Time_Key time\n    Time_Format %d/%b/%Y:%H:%M:%S %z\n[PARSER]\n    Name        docker\n    Format      json\n    Time_Key    time\n    Time_Format %Y-%m-%dT%H:%M:%S.%L\n    Time_Keep   On\n[PARSER]\n    Name cri\n    Format regex\n    Regex ^(?:(?<time>[^\\s]+)\\s+(?<stream>\\w+)\\s+(?<logtag>\\w+)\\s+)?(?<message>\\{.*\\})$\n    Time_Key time\n    Time_Format %Y-%m-%dT%H:%M:%S.%L\n    Time_Keep On\n[PARSER]\n    Name        syslog\n    Format      regex\n    Regex       ^\\<(?<pri>[0-9]+)\\>(?<time>[^ ]* {1,2}[^ ]* [^ ]*) (?<host>[^ ]*) (?<ident>[a-zA-Z0-9_\\/\\.\\-]*)(?:\\[(?<pid>[0-9]+)\\])?(?:[^\\:]*\\:)? *(?<message>.*)$\n    Time_Key    time\n    Time_Format %b %d %H:%M:%S\n"` |  |
-| dependencies.fluent-bit.config.filters | string | `"[FILTER]\n    Name                kubernetes\n    Match               *\n    Kube_URL            https://kubernetes.default.svc:443\n    Kube_CA_File        /var/run/secrets/kubernetes.io/serviceaccount/ca.crt\n    Kube_Token_File     /var/run/secrets/kubernetes.io/serviceaccount/token\n    Kube_Tag_Prefix     kube.var.log.containers.\n    Merge_Log           On\n    Merge_Log_Key       log\n    Merge_Log_Trim      On\n    Merge_Parser        json\n    Keep_Log            Off\n    Annotations         On\n    Labels              On\n    K8S-Logging.Parser  On\n    K8S-Logging.Exclude Off\n    Buffer_Size         0\n[FILTER]\n    Name                    parser\n    Match                   *\n    key_name                message\n    Parser                  json\n[FILTER]\n    Name                    nest\n    Match                   *\n    Operation               lift\n    Nested_under            kubernetes\n    Add_prefix              kubernetes_\n[FILTER]\n    Name                    nest\n    Match                   *\n    Operation               lift\n    Nested_under            message\n[FILTER]\n    Name                    modify\n    Match                   *\n    Condition               Key_exists message\n    Rename                  message @m\n    Add                     sourcetype renamelog\n"` |  |
-| dependencies.fluent-bit.config.inputs | string | `"[INPUT]\n    Name               tail\n    Tag                kube.*\n    Path               /var/log/containers/control-plane*.log, /var/log/containers/compute-plane*.log\n    Parser             cri\n    Docker_Mode        On\n    Buffer_Chunk_Size  512KB\n    Buffer_Max_Size    5M\n    Rotate_Wait        30\n    Mem_Buf_Limit      30MB\n    Skip_Long_Lines    Off\n    Refresh_Interval   10\n    READ_FROM_HEAD     On\n[INPUT]\n    Name               tail\n    Tag                application.*\n    Path               /var/log/containers/control-plane*.log, /var/log/containers/compute-plane*.log, /var/log/containers/ingress*.log, /var/log/containers/mongodb*.log, /var/log/containers/keda*.log\n    Parser             cri\n    Docker_Mode        On\n    Buffer_Chunk_Size  512KB\n    Buffer_Max_Size    5M\n    Rotate_Wait        30\n    Mem_Buf_Limit      30MB\n    Skip_Long_Lines    Off\n    Refresh_Interval   10\n    READ_FROM_HEAD     On\n[INPUT]\n    Name               tail\n    Tag                s3-application.*\n    Path               /var/log/containers/control-plane*.log, /var/log/containers/compute-plane*.log, /var/log/containers/ingress*.log, /var/log/containers/mongodb*.log, /var/log/containers/keda*.log\n    Parser             cri\n    Docker_Mode        On\n    Buffer_Chunk_Size  512KB\n    Buffer_Max_Size    5M\n    Rotate_Wait        30\n    Mem_Buf_Limit      30MB\n    Skip_Long_Lines    Off\n    Refresh_Interval   10\n    READ_FROM_HEAD     On\n"` |  |
-| dependencies.fluent-bit.config.outputs | string | `"[OUTPUT]\n    Name                    http\n    Match                   kube.*\n    Host                    seq\n    Port                    5341\n    URI                     /api/events/raw?clef\n    Header                  ContentType application/vnd.serilog.clef\n    Format                  json_lines\n    json_date_key           @t\n    json_date_format        iso8601\n"` |  |
-| dependencies.fluent-bit.daemonset.enabled | bool | `true` |  |
+| dependencies.fluent-bit.config.customParsers | string | `"[PARSER]\n    Name   json\n    Format json\n    Time_Key time\n    Time_Format %Y-%m-%dT%H:%M:%S.%L%z\n[PARSER]\n    Name cri\n    Format regex\n    Regex ^(?<time>[^ ]+) (?<stream>stdout|stderr) (?<logtag>[^ ]*) (?<log>.*)$\n    Time_Key time\n    Time_Format %Y-%m-%dT%H:%M:%S.%L%z\n    Time_Keep On\n"` |  |
+| dependencies.fluent-bit.config.filters | string | `"[FILTER]\n    Name                kubernetes\n    Match               *\n    Kube_URL            https://kubernetes.default.svc:443\n    Kube_CA_File        /var/run/secrets/kubernetes.io/serviceaccount/ca.crt\n    Kube_Token_File     /var/run/secrets/kubernetes.io/serviceaccount/token\n    Kube_Tag_Prefix     kube.var.log.containers.\n    Merge_Log           On\n    Merge_Log_Trim      On\n    Merge_Parser        json\n    Keep_Log            Off\n    Annotations         On\n    Labels              On\n    K8S-Logging.Parser  On\n    K8S-Logging.Exclude Off\n    Buffer_Size         0\n[FILTER]\n    Name                    nest\n    Match                   *\n    Operation               lift\n    Nested_under            kubernetes\n    Add_prefix              kubernetes_\n[FILTER]\n    Name                    modify\n    Match                   *\n    Condition               Key_exists log\n    Rename                  log @m\n    Add                     sourcetype renamelog\n"` |  |
+| dependencies.fluent-bit.config.inputs | string | `"[INPUT]\n    Name               tail\n    Tag                kube.*\n    Path               /var/log/containers/*control-plane*.log, /var/log/containers/*compute-plane*.log\n    Parser             cri\n    Docker_Mode        On\n    Buffer_Chunk_Size  512KB\n    Buffer_Max_Size    5M\n    Rotate_Wait        30\n    Mem_Buf_Limit      30MB\n    Skip_Long_Lines    Off\n    Refresh_Interval   10\n    Read_from_Head     On\n[INPUT]\n    Name               tail\n    Tag                application.*\n    Path               /var/log/containers/*control-plane*.log, /var/log/containers/*compute-plane*.log, /var/log/containers/*ingress*.log, /var/log/containers/mongodb*.log, /var/log/containers/keda*.log\n    Parser             cri\n    Buffer_Chunk_Size  512KB\n    Buffer_Max_Size    5M\n    Rotate_Wait        30\n    Mem_Buf_Limit      30MB\n    Skip_Long_Lines    Off\n    Refresh_Interval   10\n    Read_from_Head     On\n"` |  |
+| dependencies.fluent-bit.config.outputs | string | `"[OUTPUT]\n    Name                    http\n    Match                   kube.*\n    Host                    seq\n    Port                    5341\n    URI                     /api/events/raw?clef\n    Header                  Content-Type application/vnd.serilog.clef\n    Format                  json_lines\n    json_date_key           @t\n    json_date_format        iso8601\n[OUTPUT]\n    Name                    stdout\n    Match                   kube.*\n"` |  |
+| dependencies.fluent-bit.config.service | string | `"[SERVICE]\n    Daemon        Off\n    Flush         1\n    Log_Level     info\n    Parsers_File  /fluent-bit/etc/conf/custom_parsers.conf\n    HTTP_Server   On\n    HTTP_Listen   0.0.0.0\n    HTTP_Port     2020\n    Health_Check  On\n"` |  |
+| dependencies.fluent-bit.daemonSetVolumeMounts[0].mountPath | string | `"/run/log/journal"` |  |
+| dependencies.fluent-bit.daemonSetVolumeMounts[0].name | string | `"runlogjournal"` |  |
+| dependencies.fluent-bit.daemonSetVolumeMounts[0].readOnly | bool | `true` |  |
+| dependencies.fluent-bit.daemonSetVolumeMounts[1].mountPath | string | `"/var/log/dmesg"` |  |
+| dependencies.fluent-bit.daemonSetVolumeMounts[1].name | string | `"dmesg"` |  |
+| dependencies.fluent-bit.daemonSetVolumeMounts[1].readOnly | bool | `true` |  |
+| dependencies.fluent-bit.daemonSetVolumeMounts[2].mountPath | string | `"/var/log"` |  |
+| dependencies.fluent-bit.daemonSetVolumeMounts[2].name | string | `"varlog"` |  |
+| dependencies.fluent-bit.daemonSetVolumeMounts[2].readOnly | bool | `true` |  |
+| dependencies.fluent-bit.daemonSetVolumeMounts[3].mountPath | string | `"/var/lib/docker/containers"` |  |
+| dependencies.fluent-bit.daemonSetVolumeMounts[3].name | string | `"varlibdockercontainers"` |  |
+| dependencies.fluent-bit.daemonSetVolumeMounts[3].readOnly | bool | `true` |  |
+| dependencies.fluent-bit.daemonSetVolumes[0].hostPath.path | string | `"/run/log/journal"` |  |
+| dependencies.fluent-bit.daemonSetVolumes[0].hostPath.type | string | `""` |  |
+| dependencies.fluent-bit.daemonSetVolumes[0].name | string | `"runlogjournal"` |  |
+| dependencies.fluent-bit.daemonSetVolumes[1].hostPath.path | string | `"/var/log/dmesg"` |  |
+| dependencies.fluent-bit.daemonSetVolumes[1].hostPath.type | string | `""` |  |
+| dependencies.fluent-bit.daemonSetVolumes[1].name | string | `"dmesg"` |  |
+| dependencies.fluent-bit.daemonSetVolumes[2].hostPath.path | string | `"/var/log"` |  |
+| dependencies.fluent-bit.daemonSetVolumes[2].hostPath.type | string | `""` |  |
+| dependencies.fluent-bit.daemonSetVolumes[2].name | string | `"varlog"` |  |
+| dependencies.fluent-bit.daemonSetVolumes[3].hostPath.path | string | `"/var/lib/docker/containers"` |  |
+| dependencies.fluent-bit.daemonSetVolumes[3].hostPath.type | string | `""` |  |
+| dependencies.fluent-bit.daemonSetVolumes[3].name | string | `"varlibdockercontainers"` |  |
 | dependencies.fluent-bit.enabled | bool | `true` |  |
-| dependencies.fluent-bit.extraVolumeMounts | string | `"- name: runlogjournal\n  readOnly: true\n  mountPath: /run/log/journal\n  mountPropagation: None\n- name: dmesg\n  readOnly: true\n  mountPath: /var/log/dmesg\n  mountPropagation: None\n"` |  |
-| dependencies.fluent-bit.extraVolumes | string | `"- name: runlogjournal\n  hostPath:\n    path: /run/log/journal\n    type: ''\n- name: dmesg\n  hostPath:\n    path: /var/log/dmesg\n    type: ''\n"` |  |
 | dependencies.fluent-bit.fullnameOverride | string | `"fluent-bit"` |  |
-| dependencies.fluent-bit.metrics.enabled | bool | `true` |  |
-| dependencies.fluent-bit.metrics.serviceMonitor.enabled | bool | `true` |  |
 | dependencies.grafana."grafana.ini"."auth.anonymous".enabled | bool | `true` |  |
 | dependencies.grafana."grafana.ini".anonymous.enabled | bool | `true` |  |
 | dependencies.grafana."grafana.ini".server.domain | string | `"grafana.local"` |  |
@@ -61,6 +87,7 @@ Kubernetes: `>=v1.25.0-0`
 | dependencies.grafana."grafana.ini".server.serve_from_sub_path | bool | `true` |  |
 | dependencies.grafana.enabled | bool | `true` |  |
 | dependencies.grafana.fullnameOverride | string | `"grafana"` |  |
+| dependencies.grafana.image.registry | string | `"docker.io"` |  |
 | dependencies.grafana.serviceMonitor.enabled | bool | `true` |  |
 | dependencies.grafana.sidecar.dashboards.enabled | bool | `true` |  |
 | dependencies.grafana.sidecar.dashboards.folderAnnotation | string | `"grafana_dashboard_folder"` |  |
@@ -76,56 +103,51 @@ Kubernetes: `>=v1.25.0-0`
 | dependencies.keda.image.pullPolicy | string | `"IfNotPresent"` |  |
 | dependencies.keda.prometheus.metricServer.enabled | bool | `true` |  |
 | dependencies.keda.prometheus.metricServer.serviceMonitor.enabled | bool | `true` |  |
-| dependencies.kube-prometheus."operator.image.registry" | string | `""` |  |
 | dependencies.kube-prometheus.alertmanager.enabled | bool | `false` |  |
-| dependencies.kube-prometheus.blackboxExporter.enabled | bool | `false` |  |
 | dependencies.kube-prometheus.enabled | bool | `true` |  |
 | dependencies.kube-prometheus.fullnameOverride | string | `"prometheus"` |  |
-| dependencies.kube-prometheus.prometheus.additionalScrapeConfigs.enabled | bool | `true` |  |
-| dependencies.kube-prometheus.prometheus.additionalScrapeConfigs.external.key | string | `"prometheus-additional.yaml"` |  |
-| dependencies.kube-prometheus.prometheus.additionalScrapeConfigs.external.name | string | `"additional-scrape-configs"` |  |
-| dependencies.kube-prometheus.prometheus.additionalScrapeConfigs.type | string | `"external"` |  |
-| dependencies.kube-prometheus.prometheus.evaluationInterval | string | `"30s"` |  |
-| dependencies.kube-prometheus.prometheus.scrapeInterval | string | `"10s"` |  |
-| dependencies.mongodb.architecture | string | `"replicaset"` |  |
+| dependencies.kube-prometheus.grafana.enabled | bool | `false` |  |
+| dependencies.kube-prometheus.prometheus-node-exporter.hostRootFsMount.enabled | bool | `false` |  |
+| dependencies.kube-prometheus.prometheus.prometheusSpec.additionalScrapeConfigsSecret.key | string | `"prometheus-additional.yaml"` |  |
+| dependencies.kube-prometheus.prometheus.prometheusSpec.additionalScrapeConfigsSecret.name | string | `"additional-scrape-configs"` |  |
+| dependencies.kube-prometheus.prometheus.prometheusSpec.evaluationInterval | string | `"30s"` |  |
+| dependencies.kube-prometheus.prometheus.prometheusSpec.scrapeInterval | string | `"10s"` |  |
+| dependencies.mongodb.backup.enabled | bool | `false` |  |
 | dependencies.mongodb.enabled | bool | `true` |  |
-| dependencies.mongodb.extraFlags | string | `"--tlsAllowConnectionsWithoutCertificates"` |  |
-| dependencies.mongodb.fullnameOverride | string | `"mongodb"` |  |
-| dependencies.mongodb.metrics.enabled | bool | `true` |  |
-| dependencies.mongodb.metrics.serviceMonitor.enabled | bool | `true` |  |
-| dependencies.mongodb.persistence.enabled | bool | `false` |  |
-| dependencies.mongodb.replicaCount | int | `1` |  |
-| dependencies.mongodb.replicas | int | `2` |  |
-| dependencies.mongodb.tls.autoGenerated | bool | `true` |  |
-| dependencies.mongodb.tls.enabled | bool | `true` |  |
-| dependencies.mongodb.tls.mode | string | `"allowTLS"` |  |
-| dependencies.mongodb.tls.replicaset.existingSecret | string | `"mongodb-crt"` |  |
-| dependencies.mongodb.useStatefulSet | bool | `true` |  |
+| dependencies.mongodb.finalizers | list | `[]` |  |
+| dependencies.mongodb.replsets.rs0.size | int | `1` |  |
+| dependencies.mongodb.sharding.enabled | bool | `false` |  |
+| dependencies.mongodb.tls.allowInvalidCertificates | bool | `true` |  |
+| dependencies.mongodb.tls.mode | string | `"preferTLS"` |  |
+| dependencies.mongodb.unsafeFlags.replsetSize | bool | `true` |  |
+| dependencies.mongodb.unsafeFlags.tls | bool | `true` |  |
+| dependencies.prometheus-node-exporter.hostRootFsMount | bool | `false` |  |
 | dependencies.rabbitmq.auth.password | string | `"admin"` |  |
 | dependencies.rabbitmq.auth.username | string | `"admin"` |  |
 | dependencies.rabbitmq.enabled | bool | `false` |  |
 | dependencies.rabbitmq.fullnameOverride | string | `"rabbitmq"` |  |
+| dependencies.rabbitmq.image.registry | string | `"public.ecr.aws"` |  |
 | dependencies.rabbitmq.metrics.enabled | bool | `true` |  |
+| dependencies.rabbitmq.metrics.image.registry | string | `"public.ecr.aws"` |  |
 | dependencies.rabbitmq.metrics.serviceMonitor.enabled | bool | `true` |  |
 | dependencies.rabbitmq.persistence.enabled | bool | `false` |  |
+| dependencies.redis.auth.aclUsers.default.permissions | string | `"~* &* +@all"` |  |
+| dependencies.redis.auth.enabled | bool | `true` |  |
+| dependencies.redis.auth.usersExistingSecret | string | `"redis-users"` |  |
 | dependencies.redis.enabled | bool | `true` |  |
-| dependencies.redis.fullnameOverride | string | `"redis"` |  |
-| dependencies.redis.master.containerPorts.redis | int | `6379` |  |
-| dependencies.redis.master.persistence.enabled | bool | `false` |  |
-| dependencies.redis.master.resourcesPreset | string | `"nano"` |  |
+| dependencies.redis.image.registry | string | `"public.ecr.aws"` |  |
 | dependencies.redis.metrics.enabled | bool | `true` |  |
+| dependencies.redis.metrics.image.registry | string | `"public.ecr.aws"` |  |
 | dependencies.redis.metrics.serviceMonitor.enabled | bool | `true` |  |
-| dependencies.redis.replica.autoscaling.enabled | bool | `false` |  |
-| dependencies.redis.replica.autoscaling.targetCPU | string | `"80"` |  |
-| dependencies.redis.replica.autoscaling.targetMemory | string | `"80"` |  |
-| dependencies.redis.replica.persistence.enabled | bool | `false` |  |
-| dependencies.redis.replica.replicaCount | int | `1` |  |
-| dependencies.redis.tls.authClients | bool | `false` |  |
-| dependencies.redis.tls.autoGenerated | bool | `false` |  |
+| dependencies.redis.metrics.serviceMonitor.port | string | `"http-metrics"` |  |
+| dependencies.redis.replica.enabled | bool | `false` |  |
+| dependencies.redis.tls.caPublicKey | string | `""` |  |
 | dependencies.redis.tls.enabled | bool | `false` |  |
-| dependencies.redis.useStatefulSet | bool | `true` |  |
-| dependencies.redis.usernames.admin | string | `"admin"` |  |
+| dependencies.redis.tls.existingSecret | string | `""` |  |
+| dependencies.redis.tls.serverKey | string | `""` |  |
+| dependencies.redis.tls.serverPublicKey | string | `""` |  |
 | dependencies.seq.enabled | bool | `true` |  |
+| dependencies.seq.env.SEQ_API_LISTENURI | string | `"http://+:5341"` |  |
 | dependencies.seq.fullnameOverride | string | `"seq"` |  |
 | dependencies.seq.image.pullPolicy | string | `"IfNotPresent"` |  |
 | dependencies.seq.persistence.enabled | bool | `false` |  |
@@ -134,7 +156,8 @@ Kubernetes: `>=v1.25.0-0`
 | global.image.pullPolicy | string | `"IfNotPresent"` |  |
 | global.image.registry | string | `""` |  |
 | global.imageRegistry | string | `""` |  |
-| global.version.armonikCore | string | `"0.35.0"` |  |
+| global.security.allowInsecureImages | bool | `true` |  |
+| global.version.armonikCore | string | `"0.37.1"` |  |
 | ingress.enabled | bool | `true` |  |
 
 ----------------------------------------------

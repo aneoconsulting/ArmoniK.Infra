@@ -24,14 +24,14 @@ Kubernetes: `>=v1.25.0-0`
 |-----|------|---------|-------------|
 | affinity | object | `{}` |  |
 | annotations | object | `{}` |  |
-| gui.affinity | string | `nil` |  |
-| gui.annotations | string | `nil` |  |
+| gui.affinity | object | `{}` |  |
+| gui.annotations | object | `{}` |  |
 | gui.image.name | string | `"armonik_admin_app"` |  |
 | gui.image.pullPolicy | string | `"IfNotPresent"` |  |
 | gui.image.registry | string | `nil` |  |
 | gui.image.repository | string | `"dockerhubaneo"` |  |
 | gui.image.tag | string | `nil` |  |
-| gui.nodeSelector | string | `nil` |  |
+| gui.nodeSelector | object | `{}` |  |
 | gui.ports[0].containerPort | int | `1080` |  |
 | gui.ports[0].name | string | `"gui"` |  |
 | gui.ports[0].servicePort | int | `1080` |  |
@@ -41,13 +41,16 @@ Kubernetes: `>=v1.25.0-0`
 | gui.resources.requests.memory | string | `"128Mi"` |  |
 | gui.service.annotations | string | `nil` |  |
 | gui.service.type | string | `"ClusterIP"` |  |
-| gui.tolerations | string | `nil` |  |
+| gui.tolerations | list | `[]` |  |
 | image.name | string | `"nginx-unprivileged"` |  |
 | image.pullPolicy | string | `"IfNotPresent"` |  |
 | image.registry | string | `nil` |  |
 | image.repository | string | `"nginxinc"` |  |
 | image.tag | string | `"1.27.4-alpine-slim"` |  |
 | imagePullSecrets | list | `[]` |  |
+| mtls.certificationAuthority.pem | string | `""` |  |
+| mtls.enabled | bool | `false` |  |
+| mtls.trustedCommonNames | list | `[]` |  |
 | nameOverride | string | `""` |  |
 | nodeSelector | object | `{}` |  |
 | ports[0].containerPort | int | `9080` |  |
@@ -62,22 +65,25 @@ Kubernetes: `>=v1.25.0-0`
 | resources.limits.memory | string | `"1Gi"` |  |
 | resources.requests.cpu | string | `"100m"` |  |
 | resources.requests.memory | string | `"128Mi"` |  |
-| service.annotations | string | `nil` |  |
+| service.annotations | object | `{}` |  |
 | service.type | string | `"LoadBalancer"` |  |
 | static."environment.json".color | string | `"#80ff80"` |  |
 | static."environment.json".description | string | `"{{ .Values.global.environment.description }}"` |  |
 | static."environment.json".name | string | `"{{ .Values.global.environment.name }}"` |  |
 | static."environment.json".version | string | `"{{ .Chart.AppVersion }}"` |  |
-| static.gui_configuration | object | `{}` |  |
+| static.guiConfiguration | object | `{}` |  |
 | tls.certManager.addInjectorAnnotations | bool | `true` |  |
 | tls.certManager.annotations | object | `{}` |  |
 | tls.certManager.duration | string | `""` |  |
+| tls.certManager.enabled | bool | `true` |  |
 | tls.certManager.existingIssuer.enabled | bool | `false` |  |
 | tls.certManager.existingIssuer.kind | string | `"Issuer"` |  |
 | tls.certManager.existingIssuer.name | string | `"my-issuer"` |  |
 | tls.certManager.labels | object | `{}` |  |
 | tls.certManager.renewBefore | string | `""` |  |
 | tls.clusterDomain | string | `"cluster.local"` |  |
+| tls.customCert.certPem | string | `""` |  |
+| tls.customCert.keyPem | string | `""` |  |
 | tolerations | list | `[]` |  |
 | volumes.mongodbSecret | string | `"mongodb"` |  |
 | volumes.nginxConfigMap | string | `"armonik-ingress-conf"` |  |

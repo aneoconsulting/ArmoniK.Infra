@@ -44,6 +44,7 @@ items:
           path:      { "type": "string" }
           subpath:   { "type": "string" }
           mode:      { "type": "string" }
+          optional:  { "type": "boolean" }
           items:
             type: object
             required: [ "field" ]
@@ -60,6 +61,7 @@ items:
           path:      { "type": "string" }
           subpath:   { "type": "string" }
           mode:      { "type": "string" }
+          optional:  { "type": "boolean" }
           items:
             type: object
             required: [ "field" ]
@@ -96,69 +98,100 @@ items:
 {{- end }}
 
 {{/*
-Materialize env inside a configmap
-
-# Schema
-
-type: object
-properties:
-  env: { "type": "object" }
-*/}}
-{{- define "armonik.conf.materialize" }}
-  {{- .env | default dict | toYaml }}
-{{- end }}
-
-{{/*
-Materialized configuration
-
-# Schema
-
-type: array
-prefixItems:
-  - type: string
-  - type: object
-    properties:
-      env: { "type": "object" }
-      envConfigmap:
-        type: array
-        items: { "type": "string" }
-*/}}
-{{- define "armonik.conf.materialized" }}
-  {{- $configmap := index . 0 }}
-  {{- $conf := index . 1 | deepCopy }}
-  {{- if $conf.env }}
-  {{- $_ := dict | set $conf "env" }}
-  {{- $_ := $configmap | append $conf.envConfigmap | uniq | set $conf "envConfigmap" }}
-  {{- end }}
-  {{- $conf | toYaml }}
-{{- end }}
-
-{{/*
-Gets the context to execute conf named templates
+Prefix of every conf Secret name: .Values.conf.source (tpl-rendered), default .Release.Name.
 
 # Usage
 
-{{ $ctx := include "armonik.conf.context" $ | fromYaml }}
+{{ include "armonik.conf.source" $ }}
 */}}
-{{- define "armonik.conf.context" -}}
-  {{- list . "conf" | include "armonik.dependencyContext" -}}
+{{- define "armonik.conf.source" -}}
+  {{- $conf := list .Values "conf" | include "armonik.utils.index" | fromYaml -}}
+  {{- $source := $conf.source | default .Release.Name -}}
+  {{- tpl $source . -}}
 {{- end -}}
 
+{{/*
+Name of a conf layer's Secret: <source>-conf-<layer>.
 
-{{- define "armonik.conf.configmap" -}}
-  {{- $configmap := index . 0 -}}
-  {{- $ctx := index . 1 | include "armonik.conf.context" | fromYaml -}}
-  {{- if $ctx.Values.fullnameOverride }}
-    {{- printf "%s-%s" $ctx.Values.fullnameOverride $configmap | trunc 63 | trimSuffix "-" }}
-  {{- else }}
-    {{- $name := default $ctx.Chart.Name $ctx.Values.nameOverride }}
-    {{- if contains $name $ctx.Release.Name }}
-      {{- printf "%s-%s" $ctx.Release.Name $configmap | trunc 63 | trimSuffix "-" }}
-    {{- else }}
-      {{- printf "%s-%s-%s" $ctx.Release.Name $name $configmap | trunc 63 | trimSuffix "-" }}
-    {{- end }}
-  {{- end }}
-{{- end -}}{{/* define "armonik.conf.configmap" */}}
+# Usage
+
+{{ list "core" $ | include "armonik.conf.secretName" }}
+*/}}
+{{- define "armonik.conf.secretName" -}}
+  {{- $layer := index . 0 -}}
+  {{- $root := index . 1 -}}
+  {{- printf "%s-conf-%s" (include "armonik.conf.source" $root) $layer | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+{{/*
+Name of a conf layer's mount Secret (TLS material): <source>-conf-<layer>-mount.
+
+# Usage
+
+{{ list "core" $ | include "armonik.conf.mountSecretName" }}
+*/}}
+{{- define "armonik.conf.mountSecretName" -}}
+  {{- $layer := index . 0 -}}
+  {{- $root := index . 1 -}}
+  {{- printf "%s-conf-%s-mount" (include "armonik.conf.source" $root) $layer | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+{{/*
+Name of the release SecretStore used by the conf ExternalSecrets.
+
+# Usage
+
+{{ include "armonik.conf.storeName" $ }}
+*/}}
+{{- define "armonik.conf.storeName" -}}
+  {{- printf "%s-conf-store" .Release.Name | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+{{/*
+Whether ESO is enabled (dependencies.external-secrets.enabled). "true"/"false"; default "true".
+
+# Usage
+
+{{ if eq (include "armonik.conf.esoEnabled" $) "true" }}
+*/}}
+{{- define "armonik.conf.esoEnabled" -}}
+  {{- $eso := list .Values "dependencies" "external-secrets" | include "armonik.utils.index" | fromYaml -}}
+  {{- if kindIs "bool" $eso.enabled -}}{{ $eso.enabled }}{{- else -}}true{{- end -}}
+{{- end -}}
+
+{{/*
+tpl-renders a conf's name-bearing fields (envSecret/envConfigmap/mountSecret.secret/...) against
+the root. Idempotent on plain strings.
+
+# Usage
+
+{{ $conf := list $conf $ | include "armonik.conf.resolve" | fromYaml }}
+*/}}
+{{- define "armonik.conf.resolve" -}}
+  {{- $conf := index . 0 | deepCopy -}}
+  {{- $root := index . 1 -}}
+  {{- if $conf.envSecret -}}
+    {{- $rendered := list -}}
+    {{- range $s := $conf.envSecret -}}
+      {{- $rendered = append $rendered (tpl $s $root) -}}
+    {{- end -}}
+    {{- $_ := set $conf "envSecret" $rendered -}}
+  {{- end -}}
+  {{- if $conf.envConfigmap -}}
+    {{- $rendered := list -}}
+    {{- range $s := $conf.envConfigmap -}}
+      {{- $rendered = append $rendered (tpl $s $root) -}}
+    {{- end -}}
+    {{- $_ := set $conf "envConfigmap" $rendered -}}
+  {{- end -}}
+  {{- range $n, $m := $conf.mountSecret | default dict -}}
+    {{- $_ := set $m "secret" (tpl $m.secret $root) -}}
+  {{- end -}}
+  {{- range $n, $m := $conf.mountConfigmap | default dict -}}
+    {{- $_ := set $m "configmap" (tpl $m.configmap $root) -}}
+  {{- end -}}
+  {{- $conf | toYaml -}}
+{{- end -}}
 
 {{- define "armonik.conf.generateEnv" }}
 {{- range $name, $value := .env }}
@@ -179,8 +212,8 @@ Gets the context to execute conf named templates
       name: {{ $value.secret | quote }}
       key: {{ $value.field | quote }}
 {{- end }}{{/* range $name, $value := .envFromSecret */}}
-{{- end -}}{{/* define "armonik.conf.{{- define "armonik.conf.generateEnv" */}}
- 
+{{- end -}}{{/* define "armonik.conf.generateEnv" */}}
+
 {{- define "armonik.conf.generateEnvFrom" }}
 {{- range $name := .envConfigmap }}
 - configMapRef:
@@ -198,12 +231,12 @@ Gets the context to execute conf named templates
 {{- range $name, $mount := .mountConfigmap }}
 - name: {{ $name | quote }}
   mountPath: {{ $mount.path | quote }}
-  readOnly: {{ or (eq (toString $mount.mode) "0444") true }}
+  readOnly: true
 {{- end }}{{/* range $name, $mount := .mountConfigmap */}}
 {{- range $name, $mount := .mountSecret }}
 - name: {{ $name | quote }}
   mountPath: {{ $mount.path | quote }}
-  readOnly: {{ or (eq (toString $mount.mode) "0444") true }}
+  readOnly: true
 {{- end }}{{/* range $name, $mount := .mountSecret */}}
 {{- end -}}{{/* define "armonik.conf.generateVolumeMounts" */}}
 
@@ -212,6 +245,7 @@ Gets the context to execute conf named templates
 - name: {{ $name | quote }}
   configMap:
     name: {{ $mount.configmap | quote }}
+    optional: {{ $mount.optional | default false }}
     {{- if $mount.items }}
     items:
       {{- range $itemName, $item := $mount.items }}
@@ -223,13 +257,14 @@ Gets the context to execute conf named templates
       {{- end }}{{/* range $itemName, $item := $mount.items */}}
     {{- end }}{{/* if $mount.items */}}
     {{- if $mount.mode }}
-    defaultMode: {{ $mount.mode | replace "0" "" }}
+    defaultMode: {{ $mount.mode }}
     {{- end }}{{/* if $mount.mode */}}
 {{- end }}{{/* range $name, $mount := .mountConfigmap */}}
 {{- range $name, $mount := .mountSecret }}
 - name: {{ $name | quote }}
   secret:
     secretName: {{ $mount.secret | quote }}
+    optional: {{ $mount.optional | default false }}
     {{- if $mount.items }}
     items:
       {{- range $itemName, $item := $mount.items }}
@@ -241,7 +276,7 @@ Gets the context to execute conf named templates
       {{- end }}{{/* $itemName, $item := $mount.items */}}
     {{- end }}{{/* if $mount.items */}}
     {{- if $mount.mode }}
-    defaultMode: {{ $mount.mode | replace "0" "" }}
+    defaultMode: {{ $mount.mode }}
     {{- end }}{{/* if $mount.mode */}}
 {{- end }}{{/* range $name, $mount := .mountSecret */}}
 {{- end -}}{{/* define "armonik.conf.generateVolumes" */}}

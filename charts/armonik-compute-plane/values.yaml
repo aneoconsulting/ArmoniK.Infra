@@ -29,14 +29,10 @@ podDisruptionBudget:
   minAvailable:
   maxUnavailable:
 
+# Base conf, merged into the init Job only (agent/worker build theirs from partitionCommon).
 conf:
-  env: {}
-  envConfigmap: []
-  envFromConfigmap: {}
-  envSecret: []
-  envFromSecret: {}
-  mountConfigmap: {}
-  mountSecret: {}
+  # Release name of the umbrella that owns the conf Secrets (defaults to "armonik").
+  source: armonik
 
 init:
   enabled: true
@@ -49,14 +45,17 @@ init:
   resources:
   nodeSelector:
   tolerations:
+  # Init Job: core + log + jobs layers + core TLS mounts.
   conf:
-    env: {}
-    envConfigmap: []
-    envFromConfigmap: {}
-    envSecret: []
-    envFromSecret: {}
-    mountConfigmap: {}
-    mountSecret: {}
+    envSecret:
+      - '{{ list "core" . | include "armonik.conf.secretName" }}'
+      - '{{ list "log" . | include "armonik.conf.secretName" }}'
+      - '{{ list "jobs" . | include "armonik.conf.secretName" }}'
+    mountSecret:
+      core-mount:
+        secret: '{{ list "core" . | include "armonik.conf.mountSecretName" }}'
+        path: /mounts/
+        mode: "0444"
   configmaps:
 
 partitionCommon:
@@ -113,14 +112,16 @@ partitionCommon:
     enableServiceLinks: true
     messageBatchSize: 1
     graceDelay: "00:00:15"
+    # On top of partitionCommon: core (credentials) + polling + core TLS mounts.
     conf:
-      env: {}
-      envConfigmap: []
-      envFromConfigmap: {}
-      envSecret: []
-      envFromSecret: {}
-      mountConfigmap: {}
-      mountSecret: {}
+      envSecret:
+        - '{{ list "core" . | include "armonik.conf.secretName" }}'
+        - '{{ list "polling" . | include "armonik.conf.secretName" }}'
+      mountSecret:
+        core-mount:
+          secret: '{{ list "core" . | include "armonik.conf.mountSecretName" }}'
+          path: /mounts/
+          mode: "0444"
   annotations: {}
   nodeSelector: {}
   tolerations: []
@@ -168,14 +169,10 @@ partitionCommon:
       memory: "512Mi"
     checkRetries: 10
     checkDelay: "00:00:10"
+    # On top of partitionCommon: worker layer only. Never core, so user code stays credential-free.
     conf:
-      env: {}
-      envConfigmap: []
-      envFromConfigmap: {}
-      envSecret: []
-      envFromSecret: {}
-      mountConfigmap: {}
-      mountSecret: {}
+      envSecret:
+        - '{{ list "worker" . | include "armonik.conf.secretName" }}'
   hpa:
     type: "prometheus"
     # -- Polling interval in seconds
@@ -217,15 +214,12 @@ partitionCommon:
           namespace: "{{ .Release.Namespace }}"
           query: 'armonik_{{ .Values.partitionName }}_tasks_queued{job="metrics-exporter"}'
   replicas: 1
+  # Shared by agent + worker (no credentials): log + compute layers.
   conf:
-    env: {}
-    envConfigmap: []
-    envFromConfigmap: {}
-    envSecret: []
-    envFromSecret: {}
-    mountConfigmap: {}
-    mountSecret: {}
-partitions:  
+    envSecret:
+      - '{{ list "log" . | include "armonik.conf.secretName" }}'
+      - '{{ list "compute" . | include "armonik.conf.secretName" }}'
+partitions:
 
 fluentBit:
   isDaemonSet: true

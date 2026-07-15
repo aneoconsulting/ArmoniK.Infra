@@ -1,12 +1,12 @@
 {{/*
-Gets the context to execute mongodb named templates
+Render context for mongodb templates: the root-visible .Values.dependencies.mongodb tree.
 
 # Usage
 
 {{ $ctx := include "armonik.mongodb.context" $ | fromYaml }}
 */}}
 {{- define "armonik.mongodb.context" -}}
-  {{- list . "mongodb" | include "armonik.dependencyContext" -}}
+  {{- list . "mongodb" | include "armonik.rootDependencyContext" -}}
 {{- end -}}
 
 {{/*
@@ -48,10 +48,10 @@ since no such partial is defined in the chart helpers
 
 {{/*
 Returns the port of rs0 replica set, as indicated by the documentation, https://docs.percona.com/percona-operator-for-mongodb/custom-install.html?h=port#configure-ports-for-mongodb-cluster-components
-By default set to 27017. 
+By default set to 27017.
 */}}
 {{- define "armonik.mongodb.port" }}
-  {{- $port := include "armonik.utils.index" (list .Values.replsets.rs0 "configuration" "net" "port") | fromYaml }}
+  {{- $port := list .Values.replsets.rs0 "configuration" "net" "port" | include "armonik.utils.index" | fromYaml }}
   {{- $port | default "27017" -}}
 {{- end }}
 {{/*
@@ -72,7 +72,7 @@ env:
   MongoDB__AuthSource:       {{ include "armonik.mongodb.authSource" . | quote }}
   MongoDB__AllowInsecureTls: "true"
 {{- if $requireTls }}
-  MongoDB__CAFile:           "/mongodb/certificate/mongodb-ca-cert"
+  MongoDB__CAFile:           "/mounts/mongodb-ca.crt"
 {{- end }}
 envFromSecret:
   MongoDB__User:
@@ -82,12 +82,10 @@ envFromSecret:
     secret: {{ include "armonik.mongodb.secretName" $ctx }}
     field: MONGODB_DATABASE_ADMIN_PASSWORD
 mountSecret:
-{{- $internalTlsSecret := include "armonik.utils.index" (list $ctx.Values "secrets" "sslInternal") | fromYaml -}}
+{{- $internalTlsSecret := list $ctx.Values "secrets" "sslInternal" | include "armonik.utils.index" | fromYaml -}}
 {{- if and $requireTls $internalTlsSecret }}
-  mongodb-cert:
+  mongodb:
     secret: {{ $internalTlsSecret }}
-    path: /mongodb/certificate/
-    mode: "0444"
 {{- end }}
 {{- end }}
 {{- end }}

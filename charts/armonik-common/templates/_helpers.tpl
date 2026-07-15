@@ -25,6 +25,35 @@ Gets the context of a dependency to execute named templates from this dependency
 {{- end -}}
 
 {{/*
+Like armonik.dependencyContext but reads the dependency values from the root-visible
+.Values.dependencies.<dep> tree (override-aware) instead of the import-values copy under
+global.armonik-dependencies.<dep>. Use from the umbrella when producing config so that
+user -f/--set overrides of a dependency reach ArmoniK's generated connection config.
+
+# Usage
+
+{{ $ctx := list $ "mongodb" | include "armonik.rootDependencyContext" | fromYaml }}
+*/}}
+{{- define "armonik.rootDependencyContext" -}}
+  {{- $root := index . 0 -}}
+  {{- $dependency := index . 1 -}}
+  {{-
+    $context := dict
+      "Values" (list $root.Values "dependencies" $dependency | include "armonik.utils.index" | fromYaml)
+      "Chart" (dict
+        "IsRoot" $root.Chart.IsRoot
+        "Name" $dependency
+        "Type" "application")
+      "Capabilities" $root.Capabilities
+      "Files" dict
+      "Release" $root.Release
+      "Subcharts" dict
+      "Template" $root.Template
+  -}}
+  {{- $context | toYaml -}}
+{{- end -}}
+
+{{/*
 Expand the name of the chart.
 */}}
 {{- define "armonik.name" -}}

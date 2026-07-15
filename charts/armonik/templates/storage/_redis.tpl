@@ -1,12 +1,12 @@
 {{/*
-Gets the context to execute redis named templates
+Render context for redis templates: the root-visible .Values.dependencies.redis tree.
 
 # Usage
 
 {{ $ctx := include "armonik.redis.context" $ | fromYaml }}
 */}}
 {{- define "armonik.redis.context" -}}
-  {{- list . "redis" | include "armonik.dependencyContext" -}}
+  {{- list . "redis" | include "armonik.rootDependencyContext" -}}
 {{- end -}}
 
 {{/*
@@ -40,7 +40,7 @@ env:
   Redis__User:         "default"
   Redis__Ssl:          {{ $ctx.Values.tls.enabled | quote }}
 {{- if $ctx.Values.tls.enabled }}
-  Redis__CaPath:       /redis/certificate/{{ $ctx.Values.tls.caPublicKey }}
+  Redis__CaPath:       /mounts/redis-{{ $ctx.Values.tls.caPublicKey }}
 {{- end }}
 envFromSecret:
   Redis__Password:
@@ -48,10 +48,8 @@ envFromSecret:
     field: default
 mountSecret:
 {{- if $ctx.Values.tls.enabled }}
-  redis-cert:
+  redis:
     secret: {{ $ctx.Values.tls.existingSecret }}
-    path: /redis/certificate/
-    mode: "0444"
 {{- end }}
 {{- end }}
 {{- end }}

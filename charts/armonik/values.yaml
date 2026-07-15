@@ -31,6 +31,9 @@ control-plane:
     #   podReserved: 50
     #   preemptionPercentage: 20
     #   priority: 1
+  # Point the child at the conf Secrets this umbrella renders (overrides its "armonik" default).
+  conf:
+    source: '{{ .Release.Name }}'
   init:
     enabled: true
   rbac:
@@ -40,6 +43,9 @@ compute-plane:
   enabled: true
   serviceAccount:
     create: true
+  # Point the child at the conf Secrets this umbrella renders (overrides its "armonik" default).
+  conf:
+    source: '{{ .Release.Name }}'
   # partitions:
   #   default:
   #     worker:
@@ -57,6 +63,8 @@ compute-plane:
   #         name: "armonik_core_htcmock_test_worker"
 
 conf:
+  # Names every <source>-conf-<layer> Secret the umbrella renders (this release).
+  source: '{{ .Release.Name }}'
   log:
     minimumLevel: Information
 

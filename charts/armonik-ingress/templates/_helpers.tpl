@@ -2,7 +2,11 @@
 Calculate port based on protocol and TLS status
 */}}
 {{- define "armonik.ingress.httpPort" -}}
-{{- if and .Values.tls.enabled (not .Values.gateway.enabled) -}}8443{{- else -}}8080{{- end -}}
+  {{- if and .Values.tls.enabled (not .Values.gateway.enabled) -}}
+    8443
+  {{- else -}}
+    8080
+  {{- end -}}
 {{- end -}}
 
 {{- define "armonik.ingress.grpcPort" -}}
@@ -23,9 +27,9 @@ Calculate port based on protocol and TLS status
 {{- end -}}
 
 {{- define "armonik.ingress.serviceType" -}}
-{{- if .Values.gateway.enabled -}}
-ClusterIP
-{{- else -}}
-{{ .Values.service.type }}
-{{- end -}}
+  {{- if .Values.gateway.enabled -}}
+    ClusterIP
+  {{- else -}}
+    {{ .Values.service.type }}
+  {{- end -}}
 {{- end -}}

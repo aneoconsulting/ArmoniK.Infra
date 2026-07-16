@@ -1,4 +1,4 @@
-{{- if .Values.tls.certManager.enabled }}
+{{- if list .Values "tls" "certManager" "enabled" | include "armonik.utils.index" }}
 {{- if not .Values.tls.certManager.existingIssuer.enabled }}
 apiVersion: cert-manager.io/v1
 kind: Issuer

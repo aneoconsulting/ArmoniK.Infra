@@ -10,8 +10,7 @@
       {{- include "armonik.labels" . | nindent 4 }}
 
     {{- with .Values.healthCheckPolicy.annotations }}
-    annotations:
-  {{ toYaml . | nindent 4 }}
+    annotations: {{- toYaml . | nindent 4 }}
     {{- end }}
 
   spec:

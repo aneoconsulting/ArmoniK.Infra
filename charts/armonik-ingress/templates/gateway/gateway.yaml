@@ -46,7 +46,7 @@ spec:
       
       allowedRoutes:
         namespaces:
-          from: {{ .Values.gateway.allowedRoutes.namespaces.from | default "Same" }}
+          from: {{ list .Values "gateway" "allowedRoutes" "namespaces" "from" | include "armonik.utils.index" | default "Same" | quote }}
     {{- else }}
     - name: http
       port: 80

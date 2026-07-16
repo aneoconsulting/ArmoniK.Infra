@@ -33,11 +33,7 @@ spec:
         ports:
           {{- range .Values.ports }}
           - name: {{ .name }}
-            containerPort: {{ if eq .protocol "http" }}
-              {{ include "armonik.ingress.httpPort" $ }}
-            {{ else }}
-              {{ include "armonik.ingress.grpcPort" $ }}
-            {{ end }}
+            containerPort: {{ if eq .protocol "http" }}{{ include "armonik.ingress.httpPort" $ }}{{ else }}{{ include "armonik.ingress.grpcPort" $ }}{{ end }}
             protocol: TCP
           {{- end }}{{/* range .Values.ports */}}
         terminationMessagePath: /dev/termination-log

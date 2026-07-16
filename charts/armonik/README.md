@@ -108,6 +108,7 @@ Kubernetes: `>=v1.25.0-0`
 | dependencies.kube-prometheus.fullnameOverride | string | `"prometheus"` |  |
 | dependencies.kube-prometheus.grafana.enabled | bool | `false` |  |
 | dependencies.kube-prometheus.prometheus-node-exporter.hostRootFsMount.enabled | bool | `false` |  |
+| dependencies.kube-prometheus.prometheus.prometheusSpec.additionalScrapeConfigsSecret.enabled | bool | `true` |  |
 | dependencies.kube-prometheus.prometheus.prometheusSpec.additionalScrapeConfigsSecret.key | string | `"prometheus-additional.yaml"` |  |
 | dependencies.kube-prometheus.prometheus.prometheusSpec.additionalScrapeConfigsSecret.name | string | `"additional-scrape-configs"` |  |
 | dependencies.kube-prometheus.prometheus.prometheusSpec.evaluationInterval | string | `"30s"` |  |
@@ -126,7 +127,9 @@ Kubernetes: `>=v1.25.0-0`
 | dependencies.rabbitmq.auth.username | string | `"admin"` |  |
 | dependencies.rabbitmq.enabled | bool | `false` |  |
 | dependencies.rabbitmq.fullnameOverride | string | `"rabbitmq"` |  |
-| dependencies.rabbitmq.image.registry | string | `"public.ecr.aws"` |  |
+| dependencies.rabbitmq.image.registry | string | `"bitnamilegacy"` |  |
+| dependencies.rabbitmq.image.repository | string | `"rabbitmq"` |  |
+| dependencies.rabbitmq.image.tag | string | `"4.1.3"` |  |
 | dependencies.rabbitmq.metrics.enabled | bool | `true` |  |
 | dependencies.rabbitmq.metrics.image.registry | string | `"public.ecr.aws"` |  |
 | dependencies.rabbitmq.metrics.serviceMonitor.enabled | bool | `true` |  |

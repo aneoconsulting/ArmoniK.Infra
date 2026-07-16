@@ -17,6 +17,7 @@ metadata:
     {{- include "armonik.labels" . | nindent 4 }}
 spec:
   backoffLimit: 5
+  ttlSecondsAfterFinished: 1
   completionMode: NonIndexed
   completions: 1
   manualSelector: false

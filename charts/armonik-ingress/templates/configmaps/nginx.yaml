@@ -48,7 +48,12 @@ data:
 
     upstream armonik {
         zone armonik_zone 32k;
+        {{- if .Values.loadBalancer.enabled }}
+        # Load balancer enabled: route gRPC through it
+        server {{ include "armonik.fullname" . | printf "%s-load-balancer" | trunc 63 | trimSuffix "-" }}.{{ include "armonik.namespace" . }}.svc.cluster.local:{{ .Values.loadBalancer.conf.listenPort }} resolve;
+        {{- else }}
         server armonik-control-plane.{{ include "armonik.namespace" . }}.svc.cluster.local:5001 resolve;
+        {{- end }}
         keepalive 128;
         keepalive_time 8h;
         keepalive_timeout 1h;
@@ -106,13 +111,12 @@ data:
         location /admin/ {
             proxy_pass $admin_app_upstream$uri$is_args$args;
         }
-        set $armonik_upstream grpc://armonik-control-plane.{{ include "armonik.namespace" . }}.svc.cluster.local:5001;
         location ~* ^/armonik\. {
             {{- if $mtls }}
             grpc_set_header X-Certificate-Client-CN $client_cn;
             grpc_set_header X-Certificate-Client-Fingerprint $client_fingerprint;
             {{- end }}
-            grpc_pass $armonik_upstream;
+            grpc_pass grpc://armonik;
 
             # Apparently, multiple chunks in a grpc stream is counted has a single body
             # So disable the limit

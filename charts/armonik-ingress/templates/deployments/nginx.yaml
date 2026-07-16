@@ -19,6 +19,9 @@ spec:
       {{- include "armonik.selectorLabels" . | nindent 6 }}
   template:
     metadata:
+      annotations:
+        # Roll the pod when the nginx conf changes so config updates
+        checksum/config: {{ include (print $.Template.BasePath "/configmaps/nginx.yaml") . | sha256sum }}
       labels:
         app.kubernetes.io/component: ingress
         {{- include "armonik.selectorLabels" . | nindent 8 }}

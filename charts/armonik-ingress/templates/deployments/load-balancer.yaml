@@ -1,0 +1,110 @@
+{{- if .Values.loadBalancer.enabled }}
+{{- $image := list $ .Values.loadBalancer.image | include "armonik.utils.imageConf" | fromYaml }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "armonik.fullname" . | printf "%s-load-balancer" | trunc 63 | trimSuffix "-" }}
+  namespace: {{ include "armonik.namespace" . }}
+  labels:
+    app.kubernetes.io/component: load-balancer
+    {{- include "armonik.labels" . | nindent 4 }}
+  {{- with coalesce .Values.loadBalancer.annotations .Values.annotations }}
+  annotations:
+  {{- range $key, $value := . }}
+    {{ $key }}: {{ $value }}
+  {{- end }}
+  {{- end }}
+spec:
+  replicas: {{ .Values.loadBalancer.replicas }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: load-balancer
+      {{- include "armonik.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        # The LB reads lb.yml (and the cluster certs) only at startup, so roll the pod whenever either changes
+        checksum/config: {{ include (print $.Template.BasePath "/configmaps/load-balancer.yaml") . | sha256sum }}
+        checksum/certs: {{ include (print $.Template.BasePath "/secrets/lb-cluster-certs.yaml") . | sha256sum }}
+      labels:
+        app.kubernetes.io/component: load-balancer
+        {{- include "armonik.selectorLabels" . | nindent 8 }}
+    spec:
+      automountServiceAccountToken: true
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+      - name: load-balancer
+        image: {{ $image.fullname }}
+        imagePullPolicy: {{ $image.pullPolicy }}
+        args: ["-c", "/conf/lb.yml"]
+        ports:
+          - name: grpc
+            containerPort: {{ .Values.loadBalancer.conf.listenPort }}
+            protocol: TCP
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        {{- with coalesce .Values.loadBalancer.resources .Values.resources }}
+        resources:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- with .Values.loadBalancer.livenessProbe }}
+        livenessProbe:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- with .Values.loadBalancer.startupProbe }}
+        startupProbe:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- with .Values.loadBalancer.readinessProbe }}
+        readinessProbe:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- with .Values.loadBalancer.extraEnv }}
+        env:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- with .Values.loadBalancer.extraEnvFrom }}
+        envFrom:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        volumeMounts:
+        - name: cluster-certs
+          mountPath: /cluster-certs
+          mountPropagation: None
+          readOnly: true
+        - name: lb-conf
+          mountPath: /conf
+          mountPropagation: None
+          readOnly: true
+        {{- with .Values.loadBalancer.extraVolumeMounts }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      dnsPolicy: ClusterFirst
+      shareProcessNamespace: false
+      {{- with coalesce .Values.loadBalancer.nodeSelector .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with coalesce .Values.loadBalancer.tolerations .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      enableServiceLinks: true
+      volumes:
+      - name: cluster-certs
+        secret:
+          secretName: {{ include "armonik.fullname" . | printf "%s-lb-cluster-certs" | trunc 63 | trimSuffix "-" }}
+          defaultMode: 420
+          optional: false
+      - name: lb-conf
+        configMap:
+          name: {{ include "armonik.fullname" . | printf "%s-load-balancer-conf" | trunc 63 | trimSuffix "-" }}
+          defaultMode: 420
+          optional: false
+      {{- with .Values.loadBalancer.extraVolumes }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
+{{- end }}

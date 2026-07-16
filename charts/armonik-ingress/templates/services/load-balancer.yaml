@@ -1,0 +1,31 @@
+{{- if .Values.loadBalancer.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "armonik.fullname" . | printf "%s-load-balancer" | trunc 63 | trimSuffix "-" }}
+  namespace: {{ include "armonik.namespace" . }}
+  labels:
+    app.kubernetes.io/component: load-balancer
+    {{- include "armonik.labels" . | nindent 4 }}
+  {{- with coalesce .Values.loadBalancer.service.annotations .Values.annotations }}
+  annotations:
+  {{- range $key, $value := . }}
+    {{ $key }}: {{ $value }}
+  {{- end }}
+  {{- end }}
+spec:
+{{- if eq .Values.loadBalancer.service.type "HeadLess" }}
+  type: "ClusterIP"
+  clusterIP: "None"
+{{ else }}
+  type: {{ .Values.loadBalancer.service.type | quote }}
+{{- end }}
+  selector:
+    app.kubernetes.io/component: load-balancer
+    {{- include "armonik.selectorLabels" . | nindent 4 }}
+  ports:
+    - name: grpc
+      port: {{ eq .Values.loadBalancer.service.type "HeadLess" | ternary .Values.loadBalancer.conf.listenPort .Values.loadBalancer.service.port }}
+      targetPort: {{ .Values.loadBalancer.conf.listenPort }}
+      protocol: TCP
+{{- end }}

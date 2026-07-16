@@ -72,7 +72,9 @@ dependencies:
   ################# RABBITMQ #################
   rabbitmq:
     image:
-      registry: public.ecr.aws
+      registry: bitnamilegacy
+      repository: rabbitmq
+      tag: 4.1.3
     enabled: false
     fullnameOverride: "rabbitmq"
     auth:
@@ -621,7 +623,7 @@ dependencies:
           key: prometheus-additional.yaml
           
   prometheus-mongodb-exporter:
-    enabled: true
+    enabled: false
     existingSecret:
       name: armonik-mongodb-exporter-uri
       key: mongodb-uri

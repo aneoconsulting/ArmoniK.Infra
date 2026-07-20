@@ -1,5 +1,5 @@
 {{- if and .Values.tls.enabled .Values.tls.certManager.enabled }}
-{{- if not .Values.tls.certManager.existingIssuer.enabled }}
+{{- if not (list .Values "tls" "certManager" "existingIssuer" "enabled" | include "armonik.utils.index") }}
 apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
@@ -40,34 +40,30 @@ spec:
   renewBefore: {{ . }}
   {{- end }}
   issuerRef:
-    {{- if .Values.tls.certManager.existingIssuer.enabled }}
-    name: {{ .Values.tls.certManager.existingIssuer.name }}
-    kind: {{ .Values.tls.certManager.existingIssuer.kind }}
+    {{- if list .Values "tls" "certManager" "existingIssuer" "enabled" | include "armonik.utils.index" }}
+    name: {{ list .Values "tls" "certManager" "existingIssuer" "name" | include "armonik.utils.index" }}
+    kind: {{ list .Values "tls" "certManager" "existingIssuer" "kind" | include "armonik.utils.index" | default "Issuer" }}
     {{- else }}
     name: {{ include "armonik.fullname" . }}-issuer
     kind: Issuer
     {{- end }}
     group: cert-manager.io
+
+{{- if list .Values "tls" "certManager" "waitJob" "enabled" | include "armonik.utils.index" }}
+
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: {{ include "armonik.fullname" . }}-cert-manager-wait
   namespace: {{ include "armonik.namespace" . }}
-  annotations:
-    "helm.sh/hook": post-install,post-upgrade
-    "helm.sh/hook-weight": "-20"
-    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
+kind: Role
 metadata:
   name: {{ include "armonik.fullname" . }}-cert-manager-wait
-  annotations:
-    "helm.sh/hook": post-install,post-upgrade
-    "helm.sh/hook-weight": "-20"
-    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+  namespace: {{ include "armonik.namespace" . }}
 rules:
 - apiGroups:
   - apps
@@ -78,6 +74,28 @@ rules:
   - list
   - watch
 
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "armonik.fullname" . }}-cert-manager-wait
+  namespace: {{ include "armonik.namespace" . }}
+subjects:
+- kind: ServiceAccount
+  name: {{ include "armonik.fullname" . }}-cert-manager-wait
+  namespace: {{ include "armonik.namespace" . }}
+
+roleRef:
+  kind: Role
+  name: {{ include "armonik.fullname" . }}-cert-manager-wait
+  apiGroup: rbac.authorization.k8s.io
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "armonik.fullname" . }}-cert-manager-wait
+rules:
 - apiGroups:
   - admissionregistration.k8s.io
   resources:
@@ -90,10 +108,6 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: {{ include "armonik.fullname" . }}-cert-manager-wait
-  annotations:
-    "helm.sh/hook": post-install,post-upgrade
-    "helm.sh/hook-weight": "-20"
-    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
 subjects:
 - kind: ServiceAccount
   name: {{ include "armonik.fullname" . }}-cert-manager-wait
@@ -116,6 +130,9 @@ metadata:
     "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
 
 spec:
+  backoffLimit: 3
+  ttlSecondsAfterFinished: 30
+
   template:
     spec:
       restartPolicy: Never
@@ -123,31 +140,32 @@ spec:
       serviceAccountName: {{ include "armonik.fullname" . }}-cert-manager-wait
 
       containers:
-      - name: wait
-        image: bitnami/kubectl:latest
-        command:
-        - sh
-        - -c
-        - |
-          set -e
+        - name: wait
+          image: "{{ list .Values "tls" "certManager" "waitJob" "image" "repository" | include "armonik.utils.index" }}:{{ list .Values "tls" "certManager" "waitJob" "image" "tag" | include "armonik.utils.index" }}"
+          imagePullPolicy: {{ list .Values "tls" "certManager" "waitJob" "image" "pullPolicy" | include "armonik.utils.index" | default "IfNotPresent" }}
+          command:
+            - sh
+            - -c
+            - |
+              set -e
 
-          echo "Waiting for cert-manager webhook deployment..."
+              echo "Waiting for cert-manager webhook deployment..."
 
-          kubectl wait \
-            --for=condition=Available \
-            deployment/cert-manager-webhook \
-            -n {{ include "armonik.namespace" . }} \
-            --timeout=300s
+              kubectl wait \
+                --for=condition=Available \
+                deployment/cert-manager-webhook \
+                -n {{ include "armonik.namespace" . }} \
+                --timeout={{ .Values.tls.certManager.waitJob.timeout }}
 
+              echo "Waiting for webhook CA injection..."
 
-          echo "Waiting for webhook CA injection..."
+              until kubectl get validatingwebhookconfiguration cert-manager-webhook \
+                -o jsonpath='{.webhooks[0].clientConfig.caBundle}' | grep -q .;
+              do
+                echo "CA bundle not injected yet..."
+                sleep 5
+              done
 
-          until kubectl get validatingwebhookconfiguration cert-manager-webhook \
-            -o jsonpath='{.webhooks[0].clientConfig.caBundle}' | grep -q .;
-          do
-            echo "CA bundle not injected yet..."
-            sleep 5
-          done
-
-          echo "cert-manager webhook ready"
+              echo "cert-manager webhook ready"
+{{- end }}
 {{- end }}

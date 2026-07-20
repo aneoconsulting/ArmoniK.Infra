@@ -58,12 +58,10 @@ Kubernetes: `>=v1.25.0-0`
 | mtls.trustedCommonNames | list | `[]` |  |
 | nameOverride | string | `""` |  |
 | nodeSelector | object | `{}` |  |
-| ports[0].containerPort | int | `9080` |  |
 | ports[0].http2 | bool | `true` |  |
 | ports[0].name | string | `"ingress-grpc"` |  |
 | ports[0].protocol | string | `"grpc"` |  |
 | ports[0].servicePort | int | `5001` |  |
-| ports[1].containerPort | int | `8080` |  |
 | ports[1].name | string | `"ingress-http"` |  |
 | ports[1].protocol | string | `"http"` |  |
 | ports[1].servicePort | int | `5000` |  |
@@ -88,6 +86,11 @@ Kubernetes: `>=v1.25.0-0`
 | tls.certManager.existingIssuer.name | string | `"my-issuer"` |  |
 | tls.certManager.labels | object | `{}` |  |
 | tls.certManager.renewBefore | string | `""` |  |
+| tls.certManager.waitJob.enabled | bool | `true` |  |
+| tls.certManager.waitJob.image.pullPolicy | string | `"IfNotPresent"` |  |
+| tls.certManager.waitJob.image.repository | string | `"alpine/k8s"` |  |
+| tls.certManager.waitJob.image.tag | string | `"1.31.0"` |  |
+| tls.certManager.waitJob.timeout | string | `"300s"` |  |
 | tls.clusterDomain | string | `"cluster.local"` |  |
 | tls.customCert.certPem | string | `""` |  |
 | tls.customCert.keyPem | string | `""` |  |

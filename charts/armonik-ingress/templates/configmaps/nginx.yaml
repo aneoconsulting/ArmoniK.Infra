@@ -1,6 +1,6 @@
-    {{- $tls := .Values.tls.enabled | default false }}
-    {{- $mtls := .Values.mtls.enabled | default false }}
-    {{- $cnPattern := include "armonik.ingress.mtlsCnPattern" .Values }}
+{{- $tls := .Values.tls.enabled | default false }}
+{{- $mtls := .Values.mtls.enabled | default false }}
+{{- $cnPattern := include "armonik.ingress.mtlsCnPattern" .Values }}
 apiVersion: v1
 immutable: false
 kind: ConfigMap

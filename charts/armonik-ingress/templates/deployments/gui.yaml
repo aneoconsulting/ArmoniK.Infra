@@ -9,9 +9,7 @@ metadata:
     {{- include "armonik.labels" . | nindent 4 }}
   {{- with .Values.annotations}}
   annotations:
-  {{- range $key, $value := . }}
-    {{ $key }}: {{ $value }}
-  {{- end }}
+{{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
   selector:

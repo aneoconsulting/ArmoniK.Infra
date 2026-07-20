@@ -9,9 +9,7 @@ metadata:
     {{- include "armonik.labels" . | nindent 4 }}
   {{- with .Values.annotations}}
   annotations:
-  {{- range $key, $value := . }}
-    {{ $key }}: {{ $value }}
-  {{- end }}
+{{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
   replicas: {{ .Values.replicas }}
@@ -33,7 +31,7 @@ spec:
         ports:
           {{- range .Values.ports }}
           - name: {{ .name }}
-            containerPort: {{ if eq .protocol "http" }}{{ include "armonik.ingress.httpPort" $ }}{{ else }}{{ include "armonik.ingress.grpcPort" $ }}{{ end }}
+            containerPort: {{ include "armonik.ingress.containerPort" (dict "protocol" .protocol "root" $) }}
             protocol: TCP
           {{- end }}{{/* range .Values.ports */}}
         terminationMessagePath: /dev/termination-log

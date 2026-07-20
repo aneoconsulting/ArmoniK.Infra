@@ -25,12 +25,10 @@ resources:
 ports:
   - name: ingress-grpc
     protocol: grpc
-    containerPort: 9080
     servicePort: 5001
     http2: true
   - name: ingress-http
     protocol: http
-    containerPort: 8080
     servicePort: 5000
 
 service:
@@ -59,6 +57,13 @@ tls:
     annotations: {}
     # Add extra labels to the Certificate resource
     labels: {}
+    waitJob:
+      enabled: true
+      image:
+        repository: alpine/k8s
+        tag: 1.31.0
+        pullPolicy: IfNotPresent
+      timeout: 300s
   customCert:
     certPem: ""
     keyPem: ""

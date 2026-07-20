@@ -7,11 +7,9 @@ metadata:
   labels:
     app.kubernetes.io/component: ingress
     {{- include "armonik.labels" . | nindent 4 }}
-  {{- with .Values.annotations}}
+  {{- with .Values.annotations }}
   annotations:
-  {{- range $key, $value := . }}
-    {{ $key }}: {{ $value }}
-  {{- end }}
+{{- toYaml . | nindent 4 }}
   {{- end }}
 
 spec:
@@ -19,7 +17,7 @@ spec:
  
   {{- with .Values.gateway.addresses }}
   addresses:
-{{ toYaml . | nindent 4 }}
+{{- toYaml . | nindent 4 }}
   {{- end }}
  
   listeners:
@@ -27,18 +25,18 @@ spec:
     - name: https
       port: 443
       protocol: HTTPS
-      {{- if .Values.gateway.hostname }}
-      hostname: {{ .Values.gateway.hostname | quote }}
+      {{- with .Values.gateway.hostname }}
+      hostname: {{ . | quote }}
       {{- end }}
       
       tls:
         mode: Terminate
         {{- if .Values.gateway.tls.options }}
         options:
-{{ toYaml .Values.gateway.tls.options | nindent 10 }}
+{{- toYaml .Values.gateway.tls.options | nindent 10 }}
         {{- else if .Values.gateway.tls.certificateRefs }}
         certificateRefs:
-{{ toYaml .Values.gateway.tls.certificateRefs | nindent 10 }}
+{{- toYaml .Values.gateway.tls.certificateRefs | nindent 10 }}
         {{- else }}
         certificateRefs:
         - name: {{ include "armonik.fullname" . }}
@@ -51,12 +49,12 @@ spec:
     - name: http
       port: 80
       protocol: HTTP
-      {{- if .Values.gateway.hostname }}
-      hostname: {{ .Values.gateway.hostname | quote }}
+      {{- with .Values.gateway.hostname }}
+      hostname: {{ . | quote }}
       {{- end }}
       
       allowedRoutes:
         namespaces:
-          from: {{ .Values.gateway.allowedRoutes.namespaces.from | default "Same" }}
+          from: {{ list .Values "gateway" "allowedRoutes" "namespaces" "from" | include "armonik.utils.index" | default "Same" | quote }}
     {{- end }}
 {{- end }}

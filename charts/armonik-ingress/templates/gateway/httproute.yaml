@@ -7,8 +7,9 @@ metadata:
   labels:
     app.kubernetes.io/component: ingress
     {{- include "armonik.labels" . | nindent 4 }}
-  {{- with .Values.annotations}}
-  annotations: {{- toYaml . | nindent 4 }}
+  {{- with .Values.annotations }}
+  annotations:
+{{- toYaml . | nindent 4 }}
   {{- end }}
 
 spec:
@@ -24,12 +25,13 @@ spec:
   {{- end }}
 
   {{- with .Values.httpRoute.hostnames }}
-  hostnames: {{- toYaml . | nindent 4 }}
+  hostnames:
+{{- toYaml . | nindent 4 }}
   {{- end }}
 
   rules:
-  {{- if .Values.httpRoute.rules }}
-  {{- range .Values.httpRoute.rules }}
+  {{- with .Values.httpRoute.rules }}
+  {{- range . }}
   - matches:
     {{- range .matches }}
     - path:

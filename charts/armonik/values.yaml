@@ -632,4 +632,6 @@ dependencies:
           enabled: true
           name: additional-scrape-configs
           key: prometheus-additional.yaml
+  external-secrets:
+    enabled: true
 ############################################

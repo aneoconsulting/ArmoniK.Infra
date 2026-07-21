@@ -9,7 +9,7 @@ metadata:
     {{- include "armonik.labels" . | nindent 4 }}
   {{- with .Values.annotations}}
   annotations:
-{{- toYaml . | nindent 4 }}
+    {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
   replicas: {{ .Values.replicas }}
@@ -101,7 +101,7 @@ spec:
         secret:
           defaultMode: 420
           optional: false
-          secretName: {{ include "armonik.fullname" . }}
+          secretName: {{ include "armonik.fullname" . | quote }}
       {{- end }}
       {{- if list .Values "mtls" "enabled" | include "armonik.utils.index" }}
       - name: client-cert

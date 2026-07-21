@@ -24,6 +24,9 @@ Kubernetes: `>=v1.25.0-0`
 |-----|------|---------|-------------|
 | affinity | object | `{}` |  |
 | annotations | object | `{}` |  |
+| gateway.allowedRoutes.namespaces.from | string | `"Same"` |  |
+| gateway.enabled | bool | `false` |  |
+| gateway.tls.enabled | bool | `false` |  |
 | gui.affinity | object | `{}` |  |
 | gui.annotations | object | `{}` |  |
 | gui.image.name | string | `"armonik_admin_app"` |  |
@@ -42,6 +45,8 @@ Kubernetes: `>=v1.25.0-0`
 | gui.service.annotations | string | `nil` |  |
 | gui.service.type | string | `"ClusterIP"` |  |
 | gui.tolerations | list | `[]` |  |
+| healthCheckPolicy.enabled | bool | `false` |  |
+| httpRoute.enabled | bool | `false` |  |
 | image.name | string | `"nginx-unprivileged"` |  |
 | image.pullPolicy | string | `"IfNotPresent"` |  |
 | image.registry | string | `nil` |  |
@@ -53,12 +58,12 @@ Kubernetes: `>=v1.25.0-0`
 | mtls.trustedCommonNames | list | `[]` |  |
 | nameOverride | string | `""` |  |
 | nodeSelector | object | `{}` |  |
-| ports[0].containerPort | int | `9080` |  |
 | ports[0].http2 | bool | `true` |  |
 | ports[0].name | string | `"ingress-grpc"` |  |
+| ports[0].protocol | string | `"grpc"` |  |
 | ports[0].servicePort | int | `5001` |  |
-| ports[1].containerPort | int | `8080` |  |
 | ports[1].name | string | `"ingress-http"` |  |
+| ports[1].protocol | string | `"http"` |  |
 | ports[1].servicePort | int | `5000` |  |
 | replicas | int | `1` |  |
 | resources.limits.cpu | int | `1` |  |
@@ -81,9 +86,19 @@ Kubernetes: `>=v1.25.0-0`
 | tls.certManager.existingIssuer.name | string | `"my-issuer"` |  |
 | tls.certManager.labels | object | `{}` |  |
 | tls.certManager.renewBefore | string | `""` |  |
+| tls.certManager.waitJob.enabled | bool | `true` |  |
+| tls.certManager.waitJob.image.pullPolicy | string | `"IfNotPresent"` |  |
+| tls.certManager.waitJob.image.repository | string | `"alpine/k8s"` |  |
+| tls.certManager.waitJob.image.tag | string | `"1.31.0"` |  |
+| tls.certManager.waitJob.timeout | string | `"300s"` |  |
 | tls.clusterDomain | string | `"cluster.local"` |  |
 | tls.customCert.certPem | string | `""` |  |
 | tls.customCert.keyPem | string | `""` |  |
+| tls.ssl.certificatePath | string | `"/ingress/tls.crt"` |  |
+| tls.ssl.cipherSuites | string | `"TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256"` |  |
+| tls.ssl.ciphers | string | `"EECDH+AESGCM:EECDH+AES256"` |  |
+| tls.ssl.keyPath | string | `"/ingress/tls.key"` |  |
+| tls.ssl.protocols | string | `"TLSv1.2 TLSv1.3"` |  |
 | tolerations | list | `[]` |  |
 | volumes.mongodbSecret | string | `"mongodb"` |  |
 | volumes.nginxConfigMap | string | `"armonik-ingress-conf"` |  |

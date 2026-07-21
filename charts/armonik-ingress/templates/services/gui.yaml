@@ -8,9 +8,7 @@ metadata:
     {{- include "armonik.labels" . | nindent 4 }}
   {{- with coalesce .Values.gui.service.annotations .Values.annotations}}
   annotations:
-  {{- range $key, $value := . }}
-    {{ $key }}: {{ $value }}
-  {{- end }}
+    {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
 {{- if eq .Values.gui.service.type "HeadLess" }}

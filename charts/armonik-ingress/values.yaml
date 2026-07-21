@@ -24,11 +24,11 @@ resources:
 
 ports:
   - name: ingress-grpc
-    containerPort: 9080
+    protocol: grpc
     servicePort: 5001
     http2: true
   - name: ingress-http
-    containerPort: 8080
+    protocol: http
     servicePort: 5000
 
 service:
@@ -57,9 +57,22 @@ tls:
     annotations: {}
     # Add extra labels to the Certificate resource
     labels: {}
+    waitJob:
+      enabled: true
+      image:
+        repository: alpine/k8s
+        tag: 1.31.0
+        pullPolicy: IfNotPresent
+      timeout: 300s
   customCert:
     certPem: ""
     keyPem: ""
+  ssl:
+    protocols: "TLSv1.2 TLSv1.3"
+    ciphers: "EECDH+AESGCM:EECDH+AES256"
+    cipherSuites: "TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256"
+    certificatePath: "/ingress/tls.crt"
+    keyPath: "/ingress/tls.key"
 
 mtls:
   enabled: false
@@ -111,3 +124,22 @@ static:
     name: "{{ .Values.global.environment.name }}"
     version: "{{ .Chart.AppVersion }}"
   guiConfiguration: {}
+
+
+# GATEWAY 
+gateway:
+  enabled: false
+  tls:
+    enabled: false
+  allowedRoutes:
+    namespaces:
+      from: Same
+
+# HTTPROUTE 
+httpRoute:
+  enabled: false
+
+# HEALTHCHECKPOLICY
+healthCheckPolicy:
+  enabled: false
+  

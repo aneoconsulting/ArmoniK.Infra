@@ -6,26 +6,24 @@ metadata:
   labels:
     app.kubernetes.io/component: ingress
     {{- include "armonik.labels" . | nindent 4 }}
-  {{- with coalesce .Values.service.annotations .Values.annotations}}
+  {{- with coalesce .Values.service.annotations .Values.annotations }}
   annotations:
-  {{- range $key, $value := . }}
-    {{ $key }}: {{ $value }}
-  {{- end }}
+    {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
 {{- if eq .Values.service.type "HeadLess" }}
   type: "ClusterIP"
   clusterIP: "None"
 {{ else }}
-  type: {{ .Values.service.type | quote}}
+  type: {{ include "armonik.ingress.serviceType" . }}
 {{- end }}
   selector:
     app.kubernetes.io/component: ingress
     {{- include "armonik.selectorLabels" . | nindent 4 }}
   ports:
-    {{- range .Values.ports }}
-    - name: {{ .name }}
-      port: {{ eq $.Values.service.type "HeadLess" | ternary .containerPort .servicePort }}
-      targetPort: {{ .containerPort }}
-      protocol: TCP
-    {{- end }}
+  {{- range .Values.ports }}
+  - name: {{ .name }}
+    port: {{ eq $.Values.service.type "HeadLess" | ternary (include "armonik.ingress.containerPort" (dict "protocol" .protocol "root" $)) .servicePort }}
+    targetPort: {{ include "armonik.ingress.containerPort" (dict "protocol" .protocol "root" $) }}
+    protocol: TCP
+  {{- end }}

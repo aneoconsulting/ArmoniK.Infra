@@ -1,3 +1,6 @@
+{{- $tls := .Values.tls.enabled | default false }}
+{{- $mtls := .Values.mtls.enabled | default false }}
+{{- $cnPattern := include "armonik.ingress.mtlsCnPattern" .Values }}
 apiVersion: v1
 immutable: false
 kind: ConfigMap
@@ -9,6 +12,8 @@ metadata:
     {{- include "armonik.labels" . | nindent 4 }}
 data:
   armonik.conf: |
+    resolver kube-dns.kube-system ipv6=off;
+
     map $http_accept_language $accept_language {
         default en;
         ~*^en en;
@@ -17,19 +22,72 @@ data:
         default upgrade;
         '' close;
     }
+    map $http_x_forwarded_proto $real_scheme {
+    default   $scheme;
+    https     https;
+    }
+
+    {{- if $mtls }}
+    map $ssl_client_s_dn $ssl_client_s_dn_cn {
+        default "";
+        ~CN=(?<CN>[^,/]+) $CN;
+    }
+    map "$http_x_certificate_client_cn|$ssl_client_s_dn_cn" $client_cn {
+        default $ssl_client_s_dn_cn;
+    {{- if $cnPattern }}
+        ~^(.+)|({{ $cnPattern }})$ $http_x_certificate_client_cn;
+    {{- end }}
+    }
+    map "$http_x_certificate_client_fingerprint|$ssl_client_s_dn_cn" $client_fingerprint {
+        default $ssl_client_fingerprint;
+    {{- if $cnPattern }}
+        ~^(.+)|({{ $cnPattern }})$ $http_x_certificate_client_fingerprint;
+    {{- end }}
+    }
+    {{- end }}
+
+    upstream armonik {
+        zone armonik_zone 32k;
+        server armonik-control-plane.{{ include "armonik.namespace" . }}.svc.cluster.local:5001 resolve;
+        keepalive 128;
+        keepalive_time 8h;
+        keepalive_timeout 1h;
+    }
+
     server {
-        {{- range .Values.ports }}
-        {{- if .http2 }}
-        listen {{ .containerPort }} http2;
-        listen [::]:{{ .containerPort }} http2;
+        {{- if $tls }}
+        # ===== TLS ENABLED =====
+        listen 8443 ssl http2;
+        listen [::]:8443 ssl http2;
+        listen 9443 ssl http2;
+        listen [::]:9443 ssl http2;
+        {{- if or .Values.tls.ssl.certificatePath .Values.tls.ssl.keyPath }}
+        ssl_certificate     {{ default "/ingress/tls.crt" .Values.tls.ssl.certificatePath }};
+        ssl_certificate_key {{ default "/ingress/tls.key" .Values.tls.ssl.keyPath }};
         {{- else }}
-        listen {{ .containerPort }};
-        listen [::]:{{ .containerPort }};
+        # TLS enabled but no certificate paths configured — mount certificate at /ingress or set .Values.tls.ssl.certificatePath and .Values.tls.ssl.keyPath
         {{- end }}
+        {{- if $mtls }}
+        ssl_verify_client on;
+        ssl_client_certificate /ingressclient/ca.pem;
+        {{- else }}
+        ssl_verify_client off;
+        proxy_hide_header X-Certificate-Client-CN;
+        proxy_hide_header X-Certificate-Client-Fingerprint;
+        {{- end }}
+        ssl_protocols {{ default "TLSv1.2 TLSv1.3" .Values.tls.ssl.protocols }};
+        ssl_ciphers {{ default "EECDH+AESGCM:EECDH+AES256" .Values.tls.ssl.ciphers }};
+        ssl_conf_command Ciphersuites {{ default "TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256" .Values.tls.ssl.cipherSuites }};
+        {{- else }}
+        # ===== TLS DISABLED =====
+        listen 8080;
+        listen [::]:8080;
+        listen 9080 http2;
+        listen [::]:9080 http2;
         {{- end }}
 
         sendfile on;
-        resolver kube-dns.kube-system ipv6=off;
+        tcp_nopush on;
 
         location = / {
             rewrite ^ $scheme://$http_host/admin/$accept_language/;
@@ -50,6 +108,10 @@ data:
         }
         set $armonik_upstream grpc://armonik-control-plane.{{ include "armonik.namespace" . }}.svc.cluster.local:5001;
         location ~* ^/armonik\. {
+            {{- if $mtls }}
+            grpc_set_header X-Certificate-Client-CN $client_cn;
+            grpc_set_header X-Certificate-Client-Fingerprint $client_fingerprint;
+            {{- end }}
             grpc_pass $armonik_upstream;
 
             # Apparently, multiple chunks in a grpc stream is counted has a single body
@@ -80,7 +142,7 @@ data:
             proxy_set_header Accept-Encoding "";
             rewrite  ^/seq/(.*)  /$1 break;
             proxy_pass $seq_upstream$uri$is_args$args;
-            sub_filter '<head>' '<head><base href="${scheme}://${http_host}/seq/">';
+            sub_filter '<head>' '<head><base href="${real_scheme}://${http_host}/seq/">';
             sub_filter_once on;
             proxy_hide_header content-security-policy;
         }
@@ -93,7 +155,7 @@ data:
             proxy_set_header Accept-Encoding "";
             rewrite  ^/grafana/(.*)  /$1 break;
             proxy_pass $grafana_upstream$uri$is_args$args;
-            sub_filter '<head>' '<head><base href="${scheme}://${http_host}/grafana/">';
+            sub_filter '<head>' '<head><base href="${real_scheme}://${http_host}/grafana/">';
             sub_filter_once on;
             proxy_intercept_errors on;
             error_page 301 302 307 =302 ${scheme}://${http_host}${upstream_http_location};
@@ -102,6 +164,7 @@ data:
             proxy_set_header Host $http_host;
             rewrite  ^/grafana/(.*)  /$1 break;
             proxy_http_version 1.1;
+            proxy_set_header Connection $connection_upgrade;
             proxy_pass $grafana_upstream$uri$is_args$args;
         }
     }

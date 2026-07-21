@@ -195,47 +195,6 @@ Name of the release SecretStore used by the conf ExternalSecrets.
 {{- end -}}
 
 {{/*
-Whether ESO is enabled (dependencies.external-secrets.enabled). "true"/"false"; default "true".
-
-# Usage
-
-{{ if eq (include "armonik.conf.esoEnabled" $) "true" }}
-*/}}
-{{- define "armonik.conf.esoEnabled" -}}
-  {{- $eso := list .Values "dependencies" "external-secrets" | include "armonik.utils.index" | fromYaml -}}
-  {{- if kindIs "bool" $eso.enabled -}}
-    {{- $eso.enabled -}}
-  {{- else -}}
-    true
-  {{- end -}}
-{{- end -}}
-
-{{/*
-Fails if a built conf layer declares fields the umbrella cannot render into a Secret:
-- envConfigmap / envFromConfigmap / mountConfigmap are ALWAYS unsupported (a layer is rendered as a
-  Secret, and ESO can import only from Secrets, so ConfigMap sources cannot be represented).
-- when ESO is disabled a layer is a plain Secret carrying only literal env, so envSecret /
-  envFromSecret / mountSecret (which need ESO to populate/aggregate) are unsupported too.
-
-# Usage
-
-{{ list "core" $conf $ | include "armonik.conf.validate" }}
-*/}}
-{{- define "armonik.conf.validate" -}}
-  {{- $layer := index . 0 -}}
-  {{- $conf := index . 1 -}}
-  {{- $root := index . 2 -}}
-  {{- if or $conf.envConfigmap $conf.envFromConfigmap $conf.mountConfigmap -}}
-    {{- fail (printf "conf layer %q: envConfigmap/envFromConfigmap/mountConfigmap are unsupported - each layer is rendered as a Secret and ESO can import only from Secrets" $layer) -}}
-  {{- end -}}
-  {{- if ne (include "armonik.conf.esoEnabled" $root) "true" -}}
-    {{- if or $conf.envSecret $conf.envFromSecret $conf.mountSecret -}}
-      {{- fail (printf "conf layer %q: External Secrets is disabled, so only 'env' is supported; envSecret/envFromSecret/mountSecret require ESO (enable dependencies.external-secrets, or pre-create the Secret)" $layer) -}}
-    {{- end -}}
-  {{- end -}}
-{{- end -}}
-
-{{/*
 tpl-renders a conf's name-bearing fields (envSecret/envConfigmap/mountSecret.secret/...) against
 the root. Idempotent on plain strings.
 

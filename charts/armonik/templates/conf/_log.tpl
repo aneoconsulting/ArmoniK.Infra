@@ -20,6 +20,7 @@ env:
   Serilog__MinimumLevel__Override__Serilog.AspNetCore.RequestLoggingMiddleware: Warning
 {{- end }}
 {{- end -}}
+
 {{- define "armonik.conf.log" -}}
   {{- list
         (include "armonik.conf.logHelper" . | fromYaml)

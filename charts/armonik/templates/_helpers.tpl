@@ -12,4 +12,5 @@ grafana: {{ include "armonik.utils.index" (list .Values "dependencies" "grafana"
 fluentBit: {{ include "armonik.utils.index" (list .Values "dependencies" "fluent-bit" "enabled") | empty | not }}
 seq: {{ include "armonik.utils.index" (list .Values "dependencies" "seq" "enabled") | empty | not }}
 certManager: {{ include "armonik.utils.index" (list .Values "dependencies" "cert-manager" "enabled") | empty | not }}
+externalSecrets: {{ include "armonik.utils.index" (list .Values "dependencies" "external-secrets" "enabled") | empty | not }}
 {{- end }}

@@ -1,4 +1,4 @@
-{{ if (include "armonik.keda.context" $ | fromYaml).Values.enabled }}
+{{- if .Values.keda.enabled }}
 {{- range $partitionName, $config := .Values.partitions }}
 {{- $partition := dict -}}
 {{- dict "dst" $partition "srcs" (list $config $.Values.partitionCommon) "print" false "render" true "context" (

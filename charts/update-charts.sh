@@ -8,5 +8,5 @@ updatedeps() {
 }
 
 updatedeps activemq armonik-common
-updatedeps armonik-compute-plane armonik-control-plane armonik-configuration armonik-dependencies armonik-ingress
+updatedeps armonik-compute-plane armonik-control-plane armonik-dependencies armonik-ingress
 updatedeps armonik

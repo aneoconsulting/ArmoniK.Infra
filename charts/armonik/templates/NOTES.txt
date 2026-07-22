@@ -47,35 +47,35 @@ init:
   5. Use this YAML file as a values file for a standalone control-plane (further details below)
 {{- end }}
 
+{{- $mountPath := include "armonik.conf.mountPath" $ }}
+The configuration Secrets are owned by this release ({{ .Release.Name }}) and live in namespace
+{{ .Release.Namespace }}. To install a plane as a separate release, point it at those Secrets with
+--set conf.source={{ .Release.Name }} and install it in the SAME namespace. (A plane in another
+namespace needs the Secrets mirrored there, e.g. via an ESO remoteNamespace ExternalSecret.)
+{{- if ne $mountPath "/mounts" }}
+This release overrides the conf mount path; a standalone plane must also set
+--set conf.mountPath={{ $mountPath }} so it mounts the config where the Secrets expect it.
+{{- end }}
+
 To add a standalone compute-plane with new partitions:
-
-  1. Extract the context file:
-
-     kubectl get configmap {{ include "armonik.fullname" . }}-compute-plane-context \
-       -n {{ .Release.Namespace }} \
-       -o jsonpath='{.data.context}' > compute-plane-context.yaml
-
-  2. Install your compute-plane:
 
      helm install <release-name> ./charts/armonik-compute-plane \
        -n {{ .Release.Namespace }} \
-       -f compute-plane-context.yaml \
+       --set conf.source={{ .Release.Name }} \
+      {{- if ne $mountPath "/mounts" }}
+       --set conf.mountPath={{ $mountPath }} \
+      {{- end }}
        -f <your-partitions>.yaml
 
 To add a standalone control-plane (with optional external partitions):
 
-  1. Extract the context file:
-
-     kubectl get configmap {{ include "armonik.fullname" . }}-control-plane-context \
+     helm install <release-name> ./charts/armonik-control-plane \
        -n {{ .Release.Namespace }} \
-       -o jsonpath='{.data.context}' > control-plane-context.yaml
-
-  2. Install your control-plane:
-
-     helm install <release-name> ./charts/armonik-compute-plane \
-       -n {{ .Release.Namespace }} \
-       -f control-plane-context.yaml \
-      {{- if (index .Values "control-plane").rbac.authentication.required }}
-       -f <your-authentication-data>.yaml
+       --set conf.source={{ .Release.Name }} \
+      {{- if ne $mountPath "/mounts" }}
+       --set conf.mountPath={{ $mountPath }} \
       {{- end }}
-       [-f <your-control-plane>.yaml] 
+      {{- if (index .Values "control-plane").rbac.authentication.required }}
+       -f <your-authentication-data>.yaml \
+      {{- end }}
+       [-f <your-control-plane>.yaml]

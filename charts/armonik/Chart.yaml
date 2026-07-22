@@ -21,27 +21,6 @@ dependencies:
   - name: armonik-common
     version: 0.1.x
     repository: file://../armonik-common
-  - name: armonik-configuration
-    version: 0.1.x
-    repository: file://../armonik-configuration
-    alias: conf
-    import-values:
-      - child: core
-        parent: global.armonik-dependencies.conf.core
-      - child: control
-        parent: global.armonik-dependencies.conf.control
-      - child: compute
-        parent: global.armonik-dependencies.conf.compute
-      - child: worker
-        parent: global.armonik-dependencies.conf.worker
-      - child: polling
-        parent: global.armonik-dependencies.conf.polling
-      - child: log
-        parent: global.armonik-dependencies.conf.log
-      - child: metrics
-        parent: global.armonik-dependencies.conf.metrics
-      - child: jobs
-        parent: global.armonik-dependencies.conf.jobs
   - name: armonik-control-plane
     version: 0.1.x
     repository: file://../armonik-control-plane
@@ -61,24 +40,3 @@ dependencies:
     version: 0.1.x
     repository: file://../armonik-dependencies
     alias: dependencies
-    import-values:
-      - child: activemq
-        parent: global.armonik-dependencies.activemq
-      - child: redis
-        parent: global.armonik-dependencies.redis
-      - child: mongodb
-        parent: global.armonik-dependencies.mongodb
-      - child: kube-prometheus
-        parent: global.armonik-dependencies.kube-prometheus
-      - child: keda
-        parent: global.armonik-dependencies.keda
-      - child: rabbitmq
-        parent: global.armonik-dependencies.rabbitmq
-      - child: grafana
-        parent: global.armonik-dependencies.grafana
-      - child: fluent-bit
-        parent: global.armonik-dependencies.fluent-bit
-      - child: seq
-        parent: global.armonik-dependencies.seq
-      - child: cert-manager
-        parent: global.armonik-dependencies.cert-manager

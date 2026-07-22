@@ -1,10 +1,10 @@
 {{- if .Values.metricsExporter.enabled }}
 {{- $conf := list
-    (include "armonik.conf.jobs" $ | fromYaml)
     (include "armonik.control.metrics.confHelper" $ | fromYaml)
-    .Values.metricsExporter.conf
     .Values.conf
+    .Values.metricsExporter.conf
   | include "armonik.conf.merge" | fromYaml }}
+{{- $conf = list $conf $ | include "armonik.conf.resolve" | fromYaml }}
 {{- $image := list $ .Values.metricsExporter.image .Values.image | include "armonik.utils.imageConf" | fromYaml }}
 apiVersion: apps/v1
 kind: Deployment
@@ -60,7 +60,7 @@ spec:
             {{- toYaml . | nindent 12 }}
           {{- end }}{{/* with .Values.startupProbe */}}
           volumeMounts: {{- include "armonik.conf.generateVolumeMounts" $conf | nindent 12 }}
-      volumes: {{- include "armonik.conf.generateVolumes" $conf | nindent 8 }}
+      volumes: {{- include "armonik.conf.generateVolumes" (list $conf) | nindent 8 }}
       {{- with (include "armonik.utils.index" (list .Values "global" "imagePullSecrets")) | default .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}

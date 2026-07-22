@@ -1,10 +1,10 @@
 {{- if .Values.init.enabled }}
 {{- $conf := list
-    (include "armonik.conf.jobs" $ | fromYaml)
     (include "armonik.control.init.confHelper" $ | fromYaml)
     .Values.conf
     .Values.init.conf
   | include "armonik.conf.merge" | fromYaml -}}
+{{- $conf = list $conf $ | include "armonik.conf.resolve" | fromYaml -}}
 {{- $image := list . .Values.init.image .Values.image | include "armonik.utils.imageConf" | fromYaml }}
 apiVersion: batch/v1
 kind: Job
@@ -47,7 +47,7 @@ spec:
         resources:
           {{- toYaml . | nindent 10 }}
         {{- end }}{{/* with .Values.resources */}}
-      volumes: {{- include "armonik.conf.generateVolumes" $conf | nindent 8 }}
+      volumes: {{- include "armonik.conf.generateVolumes" (list $conf) | nindent 8 }}
 
       {{- with (coalesce .Values.imagePullSecrets (include "armonik.utils.index" (list .Values "global" "imagePullSecrets")) list) }}
       imagePullSecrets:

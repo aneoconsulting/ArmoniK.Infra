@@ -16,7 +16,7 @@ dependencies:
   version: 82.18.0
 - name: keda
   repository: https://kedacore.github.io/charts
-  version: 2.20.0
+  version: 2.20.1
 - name: rabbitmq
   repository: https://charts.bitnami.com/bitnami
   version: 15.5.3
@@ -25,12 +25,15 @@ dependencies:
   version: 8.15.0
 - name: fluent-bit
   repository: https://fluent.github.io/helm-charts
-  version: 0.57.6
+  version: 0.57.8
 - name: seq
   repository: https://helm.datalust.co
   version: 2024.3.2
 - name: cert-manager
   repository: https://charts.jetstack.io
-  version: v1.20.2
-digest: sha256:c67e786ae868e6891c42aeb1e718dcf9f0bd0563fcc7d9063c956dbd83ef9a79
-generated: "2026-06-17T16:11:24.92236577+02:00"
+  version: v1.20.3
+- name: external-secrets
+  repository: https://charts.external-secrets.io
+  version: 2.7.0
+digest: sha256:ac2e1f0dd5bbfd1dbc0df9642605d53a314eabdbf309e737478bcdcf95128735
+generated: "2026-07-06T16:00:04.489052527+02:00"

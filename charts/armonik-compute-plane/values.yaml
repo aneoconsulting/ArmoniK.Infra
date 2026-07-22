@@ -29,14 +29,17 @@ podDisruptionBudget:
   minAvailable:
   maxUnavailable:
 
+# Whether KEDA is usable in the target cluster. When true, a ScaledObject is rendered per
+# partition for queue-depth autoscaling; set false when KEDA is not installed.
+keda:
+  enabled: true
+
+# Base conf, merged into the init Job only (agent/worker build theirs from partitionCommon).
 conf:
-  env: {}
-  envConfigmap: []
-  envFromConfigmap: {}
-  envSecret: []
-  envFromSecret: {}
-  mountConfigmap: {}
-  mountSecret: {}
+  # Release name of the umbrella that owns the conf Secrets (defaults to "armonik").
+  source: armonik
+  # Overrides the umbrella's global.armonik.mountPath for this release (default "/mounts").
+  # mountPath: /mounts
 
 init:
   enabled: true
@@ -49,14 +52,16 @@ init:
   resources:
   nodeSelector:
   tolerations:
+  # Init Job: core + log + jobs layers + core TLS mounts.
   conf:
-    env: {}
-    envConfigmap: []
-    envFromConfigmap: {}
-    envSecret: []
-    envFromSecret: {}
-    mountConfigmap: {}
-    mountSecret: {}
+    envSecret:
+      - '{{ list "core" . | include "armonik.conf.secretName" }}'
+      - '{{ list "log" . | include "armonik.conf.secretName" }}'
+      - '{{ list "init" . | include "armonik.conf.secretName" }}'
+    mountSecret:
+      - secret: '{{ list "core" . | include "armonik.conf.mountSecretName" }}'
+      - secret: '{{ list "log" . | include "armonik.conf.mountSecretName" }}'
+      - secret: '{{ list "init" . | include "armonik.conf.mountSecretName" }}'
   configmaps:
 
 partitionCommon:
@@ -113,14 +118,14 @@ partitionCommon:
     enableServiceLinks: true
     messageBatchSize: 1
     graceDelay: "00:00:15"
+    # On top of partitionCommon: core (credentials) + polling + core TLS mounts.
     conf:
-      env: {}
-      envConfigmap: []
-      envFromConfigmap: {}
-      envSecret: []
-      envFromSecret: {}
-      mountConfigmap: {}
-      mountSecret: {}
+      envSecret:
+        - '{{ list "core" . | include "armonik.conf.secretName" }}'
+        - '{{ list "polling" . | include "armonik.conf.secretName" }}'
+      mountSecret:
+        - secret: '{{ list "core" . | include "armonik.conf.mountSecretName" }}'
+        - secret: '{{ list "polling" . | include "armonik.conf.mountSecretName" }}'
   annotations: {}
   nodeSelector: {}
   tolerations: []
@@ -168,14 +173,12 @@ partitionCommon:
       memory: "512Mi"
     checkRetries: 10
     checkDelay: "00:00:10"
+    # On top of partitionCommon: worker layer only. Never core, so user code stays credential-free.
     conf:
-      env: {}
-      envConfigmap: []
-      envFromConfigmap: {}
-      envSecret: []
-      envFromSecret: {}
-      mountConfigmap: {}
-      mountSecret: {}
+      envSecret:
+        - '{{ list "worker" . | include "armonik.conf.secretName" }}'
+      mountSecret:
+        - secret: '{{ list "worker" . | include "armonik.conf.mountSecretName" }}'
   hpa:
     type: "prometheus"
     # -- Polling interval in seconds
@@ -217,15 +220,15 @@ partitionCommon:
           namespace: "{{ .Release.Namespace }}"
           query: 'armonik_{{ .Values.partitionName }}_tasks_queued{job="metrics-exporter"}'
   replicas: 1
+  # Shared by agent + worker (no credentials): log + compute layers.
   conf:
-    env: {}
-    envConfigmap: []
-    envFromConfigmap: {}
-    envSecret: []
-    envFromSecret: {}
-    mountConfigmap: {}
-    mountSecret: {}
-partitions:  
+    envSecret:
+      - '{{ list "log" . | include "armonik.conf.secretName" }}'
+      - '{{ list "compute" . | include "armonik.conf.secretName" }}'
+    mountSecret:
+      - secret: '{{ list "log" . | include "armonik.conf.mountSecretName" }}'
+      - secret: '{{ list "compute" . | include "armonik.conf.mountSecretName" }}'
+partitions:
 
 fluentBit:
   isDaemonSet: true

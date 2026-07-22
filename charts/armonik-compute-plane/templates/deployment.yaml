@@ -1,32 +1,33 @@
 {{- range $partitionName, $config := .Values.partitions }}
 {{- $partition := dict -}}
-{{- dict "dst" $partition "srcs" (list $config $.Values.partitionCommon) "print" false "render" true "context" (
-  merge (dict "Values" (dict "partitionName" $partitionName)) (omit $ "Values")
-  ) | include "armonik.utils.merge" -}}
+{{/* Partition render context: the chart context minus .Values.partitions (no self-reference),
+     plus .Values.partitionName. Shallow omit-copies; originals untouched. */}}
+{{- $context := omit $ "Values" -}}
+{{- $_ := omit $.Values "partitions" | set $context "Values" -}}
+{{- $_ := set $context.Values "partitionName" $partitionName -}}
+{{- dict "dst" $partition "srcs" (list $config $.Values.partitionCommon) "print" false "render" true "context" $context | include "armonik.utils.merge" -}}
 {{- $registry := $.Values.global.imageRegistry | default $.Values.registry -}}
 {{- $agent := $partition.agent -}}
 {{- $worker := $partition.worker -}}
+{{/* Layer secrets shared by both agent and worker (log + compute); no credentials. */}}
 {{- $commonConf := list
-    (include "armonik.conf.compute" $ | fromYaml)
     (list $partitionName $partition | include "armonik.compute.confHelper" | fromYaml)
     $partition.conf
   | include "armonik.conf.merge" | fromYaml -}}
+{{/* Agent additionally gets core (credentials) + polling + cert mounts. */}}
 {{- $agentConf := list
-  (include "armonik.conf.polling" $ | fromYaml)
   (list $partitionName $partition | include "armonik.compute.agent.confHelper" | fromYaml)
   $agent.conf
   $commonConf
 | include "armonik.conf.merge" | fromYaml -}}
+{{- $agentConf = list $agentConf $ | include "armonik.conf.resolve" | fromYaml -}}
+{{/* Worker (user code) never references the core secret: stays credential-free. */}}
 {{- $workerConf := list
-  (include "armonik.conf.worker" $ | fromYaml)
   (list $partitionName $partition | include "armonik.compute.worker.confHelper" | fromYaml)
   $worker.conf
   $commonConf
 | include "armonik.conf.merge" | fromYaml -}}
-{{- $volumeConf := list
-  $agentConf
-  $workerConf
-| include "armonik.conf.merge" | fromYaml }}
+{{- $workerConf = list $workerConf $ | include "armonik.conf.resolve" | fromYaml -}}
 {{- $agentImage := list $ $agent.image $.Values.partitionCommon.agent.image | include "armonik.utils.imageConf" | fromYaml }}
 {{- $workerImage := list $ $worker.image $.Values.partitionCommon.worker.image | include "armonik.utils.imageConf" | fromYaml }}
 {{- $fluentBitImage := list $ $.Values.fluentBit.image | include "armonik.utils.imageConf" | fromYaml }}
@@ -176,7 +177,7 @@ spec:
           readOnly: false
       {{- end }}
       volumes:
-        {{- include "armonik.conf.generateVolumes" $volumeConf | nindent 8 }}
+        {{- include "armonik.conf.generateVolumes" (list $agentConf $workerConf) | nindent 8 }}
         - name: cache-volume
           emptyDir: {}
         {{- if not $.Values.fluentBit.isDaemonSet }}

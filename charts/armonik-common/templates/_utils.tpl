@@ -8,14 +8,14 @@ attribute from the first image object passed to it (i.e. with precedence from le
 If no tag is found in the provided image configuration objects, the templates looks into the `appVersion`  defined in Chart.yaml
 and ultimately sets it to "latest" if no `appVersion` was found.
 
-Thus, when calling this template for an third-party image deployed with the armonik-dependencies chart, 
-is adviced to set the context to the dependency context, especially if you know no tag is provided. 
+Thus, when calling this template for a third-party image deployed with the armonik-dependencies chart,
+it is advised to set the context to that dependency's scope (.Subcharts.dependencies.Subcharts.<dep>),
+especially if you know no tag is provided.
 
 Usage:
  {{- include "armonik.utils.imageConf" (list <context> <imageConf1> <imageConf2> ...)| fromYaml }}
 Example:
-{{- $ctx :=  list $ "mongodb" | include "armonik.dependencyContext" | fromYaml -}}
-{{- $imageConf := list $ctx .Values.mongodb.image .Values.mongodbCommon.image  | include "armonik.utils.imageConf" | fromYaml }}
+{{- $imageConf := list $ .Values.image | include "armonik.utils.imageConf" | fromYaml }}
 
 image configuration object schema:
   registry: string
@@ -57,8 +57,9 @@ image configuration object schema:
 Like index, but does not error if any intermediary key is absent.
 If result is empty, it is not printed out, and thus is directly compatible with conditions.
 
-To get the result as a value other than a string you would need to convert it back using the following functions:
-- bool: `empty`
+A string value is rendered raw and must be `quote`d before being inserted into a template.
+Any other value is toYaml-encoded and needs a conversion function to get the proper type:
+- bool: `empty | not`
 - int: `int`
 - array: `fromYamlArray`
 - object: `fromYaml`
@@ -71,7 +72,11 @@ To get the result as a value other than a string you would need to convert it ba
     {{- end -}}
   {{- end -}}
   {{- if $value.value -}}
-    {{- $value.value | toYaml -}}
+    {{- if kindIs "string" $value.value -}}
+      {{- $value.value -}}
+    {{- else -}}
+      {{- $value.value | toYaml -}}
+    {{- end -}}
   {{- end -}}
 {{- end -}}
 

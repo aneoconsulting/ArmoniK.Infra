@@ -1,0 +1,18 @@
+dependencies:
+- name: keda
+  repository: https://kedacore.github.io/charts
+  version: 2.20.1
+- name: external-secrets
+  repository: https://charts.external-secrets.io
+  version: 2.8.0
+- name: cert-manager
+  repository: https://charts.jetstack.io
+  version: v1.21.0
+- name: psmdb-operator
+  repository: https://percona.github.io/percona-helm-charts/
+  version: 1.23.0
+- name: kube-prometheus-stack
+  repository: https://prometheus-community.github.io/helm-charts
+  version: 82.18.0
+digest: sha256:df30eb5eeb98bc481f8f0e3c77e9d7ebaaec823afcfa27ab291867ffbe158d80
+generated: "2026-07-24T16:40:04.506272224+02:00"

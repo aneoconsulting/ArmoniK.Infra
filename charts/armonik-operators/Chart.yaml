@@ -1,0 +1,42 @@
+apiVersion: v2
+name: armonik-operators
+description: Install-once cluster operators for ArmoniK (External Secrets, KEDA, cert-manager, Percona MongoDB operator, kube-prometheus-stack). Deploy once per cluster, ahead of the ArmoniK application release(s).
+icon: https://25070129.fs1.hubspotusercontent-eu1.net/hubfs/25070129/Website/Images%20-%20Website/ArmoniK/logo_armonik_by_aneo%201.svg
+kubeVersion: ">=v1.25.0-0"
+keywords:
+  - armonik
+  - helm
+  - operators
+type: application
+version: 0.1.0
+maintainers:
+  - name: Aneo
+    email: armonik@aneo.fr
+    url: armonik.fr
+
+# This chart has no templates of its own (pure aggregation, like armonik-dependencies); the
+# deploy/available validation guard lives in the umbrella chart. Each operator is gated by
+# `condition: global.armonik.operators.<op>.deploy`.
+dependencies:
+  - name: keda
+    version: 2.x.x
+    repository: https://kedacore.github.io/charts
+    condition: global.armonik.operators.keda.deploy
+  - name: external-secrets
+    version: 2.x.x
+    repository: https://charts.external-secrets.io
+    condition: global.armonik.operators.externalSecrets.deploy
+  - name: cert-manager
+    version: 1.x.x
+    repository: https://charts.jetstack.io
+    condition: global.armonik.operators.certManager.deploy
+  - name: psmdb-operator
+    version: 1.x.x
+    repository: https://percona.github.io/percona-helm-charts/
+    alias: mongodb-operator
+    condition: global.armonik.operators.mongodbOperator.deploy
+  - name: kube-prometheus-stack
+    version: 82.x.x
+    repository: https://prometheus-community.github.io/helm-charts
+    alias: kube-prometheus
+    condition: global.armonik.operators.prometheusOperator.deploy

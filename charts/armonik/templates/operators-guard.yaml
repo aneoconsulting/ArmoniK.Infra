@@ -1,0 +1,12 @@
+{{- /*
+Validation guard (renders nothing). Rejects the one invalid operator control combination:
+`deploy: true` with `available: false` = "this release installs the operator but nothing is allowed
+to use it". `available` is only meaningful where CRs are emitted (here, the umbrella), which is why
+this guard lives in the umbrella and not in armonik-operators.
+*/ -}}
+{{- $ops := include "armonik.operators" $ | fromYaml -}}
+{{- range $op, $cfg := $ops -}}
+{{- if and $cfg.deploy (not $cfg.available) -}}
+{{- fail (printf "global.armonik.operators.%s: deploy=true but available=false (operator would be installed but unusable). Set available=true, or deploy=false to only consume an externally-installed operator." $op) -}}
+{{- end -}}
+{{- end -}}

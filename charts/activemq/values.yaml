@@ -6,9 +6,6 @@ global:
 nameOverride: ""
 fullnameOverride: activemq
 
-certificates:
-  enable: false
-
 HorizontalPodAutoscaler:
   enabled: false
 
@@ -111,11 +108,11 @@ extraVolumeMounts:
     readOnly: true
 
 extraVolumes:
-  # - name: activemq-storage-secret-volume
+  # - name: activemq-tls-volume
   #   secret:
   #     defaultMode: 420
   #     optional: false
-  #     secretName: activemq-crt
+  #     secretName: activemq   # cert Secret from certificate.yaml (when tls.type=cert-manager)
   - configMap:
       defaultMode: 420
       name: activemq-configs

@@ -22,6 +22,30 @@ global:
   # Root dir for conf mount Secrets in pods; propagated to subcharts. env strings and volumeMounts derive from it.
   armonik:
     mountPath: /mounts
+    # In-cluster service hostnames stop at ".svc" (resolves via the kubelet search domains without
+    # assuming the cluster domain). Set clusterDomain to force fully-qualified names, e.g. "cluster.local".
+    clusterDomain: ""
+    # Cross-chart operator control (see charts/armonik-operators). Per operator:
+    #   deploy    - this (umbrella) release installs the operator via the armonik-operators subchart.
+    #   available - the operator's CRDs are present (installed here OR external) -> ArmoniK emits CRs.
+    # All-in-one default: install and use every operator (managed).
+    operators:
+      externalSecrets: { deploy: true, available: true }
+      keda: { deploy: true, available: true }
+      certManager: { deploy: true, available: true }
+      mongodbOperator: { deploy: true, available: true }
+      prometheusOperator: { deploy: true, available: true }
+    monitoring:
+      # Fully-qualified URL of the shared cluster Prometheus (Grafana datasource + optional PromQL KEDA
+      # trigger). Empty -> http://prometheus-prometheus.<release-ns>.svc.cluster.local:9090 (all-in-one).
+      # Override for layered/multi-release installs where Prometheus lives in another namespace.
+      prometheusUrl: ""
+      # Full URL of the control-plane metrics-exporter /metrics that KEDA scrapes directly (default
+      # scaling path). Empty -> derived from conf.source (like the conf Secret names):
+      # <conf.source>-control-plane-metrics-exporter.<ns>.svc[.clusterDomain]:9419/metrics. A standalone
+      # compute-plane that sets conf.source=<main-release> resolves it automatically; override only for
+      # a control-plane in another namespace or with a custom name.
+      metricsExporterUrl: ""
 
 
 ############################################
@@ -76,6 +100,22 @@ conf:
 ################## INGRESS ##################
 ingress:
   enabled: true
+
+# To bring your own MongoDB, set dependencies.mongodb.enabled=false and supply the connection via the
+# conf values (conf.core.env / conf.core.envFromSecret). The in-cluster psmdb-db (below) is the default.
+
+############################################
+############ CERT-MANAGER WAIT #############
+############################################
+# Umbrella-rendered Job that waits for the cert-manager webhook to be Available (and its CA injected)
+# before Certificate/Issuer CRs are applied. Rendered ONLY when this release installs cert-manager
+# (global.armonik.operators.certManager.deploy); covers every emitter (ingress, activemq). Config only.
+certManagerWait:
+  image:
+    repository: alpine/k8s
+    tag: 1.31.0
+    pullPolicy: IfNotPresent
+  timeout: 300s
 
 ############################################
 ############### DEPENDENCIES ###############
@@ -205,38 +245,11 @@ dependencies:
       tls: true
     finalizers: []
 
-  ################## KEDA ##################
-  keda:
-    enabled: true
-    crds:
-      install: true
-    prometheus:
-      metricServer:
-        enabled: true
-        serviceMonitor:
-          enabled: true
-    certificates:
-      certManager:
-        enabled: false
-        issuer:
-          {
-            "generate": false,
-            "group": "cert-manager.io",
-            "kind": "ClusterIssuer",
-            "name": "armonik-selfsigned-issuer",
-          }
-    image:
-      pullPolicy: IfNotPresent
-    #imagePullSecrets: []
+  # KEDA moved to charts/armonik-operators (config at operators.keda.*; install/use via
+  # global.armonik.operators.keda.{deploy,available}).
 
-  ################## CERT-MANAGER ##################
-  cert-manager:
-    enabled: true
-    installCRDs: true
-    fullnameOverride: "cert-manager"
-    prometheus:
-      servicemonitor:
-        enabled: true
+  # cert-manager moved to charts/armonik-operators (config at operators.cert-manager.*; install/use
+  # via global.armonik.operators.certManager.{deploy,available}).
 
   ################## GRAFANA ##################
   grafana:
@@ -580,61 +593,10 @@ dependencies:
     # imagePullSecrets: []
 
   ################## PROMETHEUS ##################
-  # TODO: Remove
-  # kube-prometheus:
-  #   kube-state-metrics:
-  #     image:
-  #       registry: public.ecr.aws
-  #       repository: bitnami/kube-state-metrics
-  #       tag: 2.18.0-debian-12-r3
-
-
-  #   node-exporter:
-  #       image:
-  #         registry: public.ecr.aws  
-      
-  #   enabled: true
-  #   operator.image.registry: ""
-  #   fullnameOverride: "prometheus"
-  #   alertmanager:
-  #     enabled: false
-  #   blackboxExporter:
-  #     enabled: false
-  #   prometheus:
-  #     image:
-  #       registry: public.ecr.aws
-  #     scrapeInterval: 10s
-  #     evaluationInterval: 30s
-  #     additionalScrapeConfigs:
-  #       enabled: true
-  #       type: external
-  #       external:
-  #         name: additional-scrape-configs
-  #         key: prometheus-additional.yaml
-# New :
-  prometheus-node-exporter:
-      # TODO: Temporarily disabled the root filesystem mount to fix the Docker Desktop crash
-    hostRootFsMount: false
-  kube-prometheus:
-    enabled: true
-    fullnameOverride: "prometheus"
-    prometheus-node-exporter:
-        # TODO: Temporarily disabled the root filesystem mount to fix the Docker Desktop crash
-      hostRootFsMount:
-        enabled: false
-    alertmanager:
-      enabled: false
-    grafana:
-      enabled: false #NOTE: We already have Grafana
-    prometheus:
-      prometheusSpec:
-        scrapeInterval: 10s
-        evaluationInterval: 30s
-        
-        additionalScrapeConfigsSecret:
-          enabled: true
-          name: additional-scrape-configs
-          key: prometheus-additional.yaml
-  external-secrets:
-    enabled: true
+  # kube-prometheus-stack (prometheus-operator + CRDs + node-exporter + kube-state-metrics + the shared
+  # cluster Prometheus) moved to charts/armonik-operators (config at operators.kube-prometheus.*;
+  # install/use via global.armonik.operators.prometheusOperator.{deploy,available}). The broken static
+  # additionalScrapeConfigs Secret was replaced by first-party ServiceMonitor/PodMonitor.
+  # external-secrets moved to charts/armonik-operators (install/use via
+  # global.armonik.operators.externalSecrets.{deploy,available}).
 ############################################

@@ -9,7 +9,16 @@ imagePullSecrets: []
 
 global:
   imageRegistry: "public.ecr.aws"
-  dependencies.keda: false
+  # Cross-chart operator control (see charts/armonik-operators). A standalone plane never installs
+  # operators (deploy:false) and assumes the cluster provides them (available:true = "external").
+  # Under the umbrella these are overridden by the umbrella's global.armonik.operators.*.
+  armonik:
+    operators:
+      externalSecrets: { deploy: false, available: true }
+      keda: { deploy: false, available: true }
+      certManager: { deploy: false, available: true }
+      mongodbOperator: { deploy: false, available: true }
+      prometheusOperator: { deploy: false, available: true }
 
 serviceAccount:
   create: false
@@ -29,10 +38,8 @@ podDisruptionBudget:
   minAvailable:
   maxUnavailable:
 
-# Whether KEDA is usable in the target cluster. When true, a ScaledObject is rendered per
-# partition for queue-depth autoscaling; set false when KEDA is not installed.
-keda:
-  enabled: true
+# KEDA usability is now controlled cross-chart via global.armonik.operators.keda.{deploy,available}
+# (see charts/armonik-operators). A ScaledObject is rendered per partition when KEDA is available.
 
 # Base conf, merged into the init Job only (agent/worker build theirs from partitionCommon).
 conf:
@@ -212,13 +219,32 @@ partitionCommon:
       # -- Period in seconds
       periodSeconds: 15
     triggers:
-      - type: "prometheus"
+      # Default: KEDA scrapes the control-plane metrics-exporter /metrics directly - no Prometheus in
+      # the scaling path (decoupled from the monitoring stack; per-release isolation for free). The URL
+      # is injected per-render from global.armonik.monitoring.metricsExporterUrl. valueLocation is a
+      # PromQL metric selector; targetValue = queued tasks per replica (the old prometheus `threshold`).
+      #
+      # ASSUMPTION: the exporter emits exactly ONE always-present sample per
+      # armonik_<partition>_tasks_queued. If ArmoniK moves to labeled/multi-dimensional metrics that
+      # break that (metrics-api cannot aggregate, and has no absent-as-zero), switch to the PromQL
+      # opt-in below.
+      - type: metrics-api
         metadata:
-          serverAddress: http://prometheus-prometheus:9090
-          metricName: "armonik_{{ .Values.partitionName }}_tasks_queued"
-          threshold: "2"
-          namespace: "{{ .Release.Namespace }}"
-          query: 'armonik_{{ .Values.partitionName }}_tasks_queued{job="metrics-exporter"}'
+          url: "{{ .Values.metricsExporterUrl }}"
+          format: prometheus
+          valueLocation: 'armonik_{{ .Values.partitionName }}_tasks_queued'
+          targetValue: "2"
+          activationTargetValue: "0"
+      # --- PromQL opt-in (advanced) ---------------------------------------------------------------
+      # For rate/ratio/aggregation-based scaling, replace the metrics-api trigger above with a
+      # prometheus trigger against the shared cluster Prometheus. NOTE: this reintroduces a dependency
+      # on global.armonik.operators.prometheusOperator being available, and needs a namespace filter
+      # for multi-release correctness:
+      #   - type: prometheus
+      #     metadata:
+      #       serverAddress: <global.armonik.monitoring.prometheusUrl>
+      #       query: 'sum(armonik_<partition>_tasks_queued{namespace="<release-namespace>"})'
+      #       threshold: "2"
   replicas: 1
   # Shared by agent + worker (no credentials): log + compute layers.
   conf:

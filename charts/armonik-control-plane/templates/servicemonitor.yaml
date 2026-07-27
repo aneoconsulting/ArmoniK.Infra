@@ -1,0 +1,25 @@
+{{- $ops := include "armonik.operators" $ | fromYaml }}
+{{- if and .Values.metricsExporter.enabled $ops.prometheusOperator.available }}
+{{/* First-party ServiceMonitor for the control-plane metrics-exporter (ArmoniK app metrics, incl.
+     armonik_<partition>_tasks_queued). Rendered only when the prometheus-operator CRDs are present;
+     the shared cluster Prometheus selects it across namespaces. */}}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "armonik.fullname" . | printf "%s-metrics-exporter" | trunc 63 | trimSuffix "-" | quote }}
+  namespace: {{ include "armonik.namespace" . | quote }}
+  labels:
+    app.kubernetes.io/component: metrics-exporter
+    {{- include "armonik.labels" . | nindent 4 }}
+spec:
+  namespaceSelector:
+    matchNames:
+      - {{ include "armonik.namespace" . }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: metrics-exporter
+      {{- include "armonik.selectorLabels" . | nindent 6 }}
+  endpoints:
+    - port: {{ .Values.metricsExporter.service.name }}
+      path: /metrics
+{{- end }}

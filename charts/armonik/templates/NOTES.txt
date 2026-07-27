@@ -10,8 +10,12 @@
 Service Installed:
 {{- range $key, $value := include "armonik.dependencies" $ | fromYaml }}
 {{- if $value }}
-  - {{- $key }} 
+  - {{- $key }}
 {{- end }}
+{{- end }}
+Operators:
+{{- range $op, $cfg := include "armonik.operators" $ | fromYaml }}
+  - {{ $op }}: {{ if $cfg.deploy }}managed (installed by this release){{ else if $cfg.available }}external (already present in the cluster){{ else }}absent (degraded){{ end }}
 {{- end }}
 **********************************************************
 
@@ -56,6 +60,10 @@ namespace needs the Secrets mirrored there, e.g. via an ESO remoteNamespace Exte
 This release overrides the conf mount path; a standalone plane must also set
 --set conf.mountPath={{ $mountPath }} so it mounts the config where the Secrets expect it.
 {{- end }}
+
+Standalone planes assume the cluster already provides the operators (KEDA, External Secrets,
+cert-manager, psmdb-operator, prometheus-operator): global.armonik.operators.<op>.available defaults
+to true. Pass --set global.armonik.operators.<op>.available=false for any operator NOT installed.
 
 To add a standalone compute-plane with new partitions:
 

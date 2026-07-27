@@ -1,0 +1,24 @@
+{{- $ops := include "armonik.operators" $ | fromYaml }}
+{{- if $ops.prometheusOperator.available }}
+{{/* First-party PodMonitor for the control-plane pod metrics port (1081). Rendered only when the
+     prometheus-operator CRDs are present. */}}
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: {{ include "armonik.fullname" . | printf "%s-control-plane" | trunc 63 | trimSuffix "-" | quote }}
+  namespace: {{ include "armonik.namespace" . | quote }}
+  labels:
+    app.kubernetes.io/component: control-plane
+    {{- include "armonik.labels" . | nindent 4 }}
+spec:
+  namespaceSelector:
+    matchNames:
+      - {{ include "armonik.namespace" . }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: control-plane
+      {{- include "armonik.selectorLabels" . | nindent 6 }}
+  podMetricsEndpoints:
+    - port: metrics-port
+      path: /metrics
+{{- end }}

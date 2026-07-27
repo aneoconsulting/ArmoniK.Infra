@@ -1,4 +1,7 @@
 {{- if eq .Values.tls.type "cert-manager" }}
+{{- if and (not (dig "armonik" "operators" "certManager" "available" true .Values.global)) (not .Values.tls.certManager.existingIssuer.enabled) }}
+{{- fail "activemq TLS via cert-manager requires it: set global.armonik.operators.certManager.available=true, set tls.certManager.existingIssuer.enabled=true, or use a tls.type other than cert-manager." }}
+{{- end }}
 {{- if not .Values.tls.certManager.existingIssuer.enabled }}
 apiVersion: cert-manager.io/v1
 kind: Issuer
@@ -16,9 +19,12 @@ kind: Certificate
 metadata:
   name: {{ include "activemq.fullname" . }}
   namespace: {{ .Release.Namespace }}
+  {{- if dig "armonik" "operators" "certManager" "deploy" false .Values.global }}
+  {{- /* CRD-ordering hook only when THIS release installs cert-manager; external/absent -> no hook. */}}
   annotations:
     "helm.sh/hook": post-install,post-upgrade
     "helm.sh/hook-weight": "10"
+  {{- end }}
 spec:
   commonName: {{ include "activemq.fullname" . }}
   dnsNames:
@@ -47,4 +53,6 @@ spec:
     kind: Issuer
     {{- end }}
     group: cert-manager.io
+  additionalOutputFormats:
+    - type: CombinedPEM
 {{- end }}

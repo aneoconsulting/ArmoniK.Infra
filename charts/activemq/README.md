@@ -28,7 +28,6 @@ Kubernetes: `>=v1.23.0-0`
 | activemqOptsMemory | string | `"-Xms1g -Xmx1g"` |  |
 | affinity | object | `{}` |  |
 | args | list | `[]` |  |
-| certificates.enable | bool | `false` |  |
 | commonLabels.app | string | `"storage"` |  |
 | commonLabels.service | string | `"activemq"` |  |
 | commonLabels.type | string | `"queue"` |  |

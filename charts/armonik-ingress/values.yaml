@@ -1,3 +1,15 @@
+global:
+  # Cross-chart operator control (see charts/armonik-operators). A standalone release never installs
+  # operators (deploy:false) and assumes the cluster provides them (available:true = "external").
+  # Under the umbrella these are overridden by the umbrella's global.armonik.operators.*.
+  armonik:
+    operators:
+      externalSecrets: { deploy: false, available: true }
+      keda: { deploy: false, available: true }
+      certManager: { deploy: false, available: true }
+      mongodbOperator: { deploy: false, available: true }
+      prometheusOperator: { deploy: false, available: true }
+
 nameOverride: ""
 imagePullSecrets: []
 image:
@@ -60,13 +72,6 @@ tls:
     annotations: {}
     # Add extra labels to the Certificate resource
     labels: {}
-    waitJob:
-      enabled: true
-      image:
-        repository: alpine/k8s
-        tag: 1.31.0
-        pullPolicy: IfNotPresent
-      timeout: 300s
   customCert:
     certPem: ""
     keyPem: ""

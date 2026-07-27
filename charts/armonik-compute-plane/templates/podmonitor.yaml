@@ -1,0 +1,29 @@
+{{- $ops := include "armonik.operators" $ | fromYaml }}
+{{- if $ops.prometheusOperator.available }}
+{{/* First-party PodMonitor for the compute-plane polling-agent metrics port (1080), across all
+     partitions. Rendered only when the prometheus-operator CRDs are present. */}}
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: {{ include "armonik.fullname" $ | printf "%s-compute-plane" | trunc 63 | trimSuffix "-" | quote }}
+  namespace: {{ include "armonik.namespace" $ | quote }}
+  labels:
+    app.kubernetes.io/part-of: compute-plane
+    {{- include "armonik.labels" $ | nindent 4 }}
+spec:
+  namespaceSelector:
+    matchNames:
+      - {{ include "armonik.namespace" $ }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/part-of: compute-plane
+      {{- include "armonik.selectorLabels" $ | nindent 6 }}
+  {{/* Carry the partition and release onto the scraped series so a shared cluster Prometheus keeps
+       per-partition / per-release metrics distinguishable (as armonik_fr_partition, app_kubernetes_io_instance). */}}
+  podTargetLabels:
+    - armonik.fr/partition
+    - app.kubernetes.io/instance
+  podMetricsEndpoints:
+    - port: poll-agent-port
+      path: /metrics
+{{- end }}

@@ -1,0 +1,91 @@
+{{- if .Values.networkPolicy.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "armonik.fullname" . }}-network-policy
+  namespace: {{ include "armonik.namespace" . }}
+  labels:
+    app.kubernetes.io/component: control-plane
+    {{- include "armonik.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- tpl (toYaml .Values.networkPolicy.podSelector.matchLabels) . | nindent 6 }}
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+                {{- toYaml .Values.networkPolicy.ingress.computePlaneLabels | nindent 16 }}
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ .Values.global.namespaces.ingress | default (include "armonik.namespace" .) }}
+          podSelector:
+            matchLabels:
+              {{- toYaml .Values.networkPolicy.ingress.ingressLabels | nindent 14 }}
+      ports:
+        {{- toYaml .Values.networkPolicy.ingress.ports | nindent 8 }}
+
+  egress:
+    {{- if list .Values "networkPolicy" "egress" "mongodb" "enabled" | include "armonik.utils.index" }}
+    # MongoDB Percona
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ include "armonik.namespace" . }}
+          podSelector:
+            matchLabels:
+              {{- toYaml .Values.networkPolicy.egress.mongodb.labels | nindent 14 }}
+      ports:
+        - protocol: TCP
+          port: {{ .Values.networkPolicy.egress.mongodb.port }}
+    {{- end }}
+
+    {{- if list .Values "networkPolicy" "egress" "redis" "enabled" | include "armonik.utils.index" }}
+    # Redis (Valkey)
+    - to:
+        - podSelector:
+            matchLabels:
+              {{- toYaml .Values.networkPolicy.egress.redis.labels | nindent 14 }}
+      ports:
+        - protocol: TCP
+          port: {{ .Values.networkPolicy.egress.redis.port }}
+    {{- end }}
+
+    {{- if list .Values "networkPolicy" "egress" "activemq" "enabled" | include "armonik.utils.index" }}
+    # ActiveMQ
+    - to:
+        - podSelector:
+            matchLabels:
+              {{- toYaml .Values.networkPolicy.egress.activemq.labels | nindent 14 }}
+      ports:
+        - protocol: TCP
+          port: {{ .Values.networkPolicy.egress.activemq.port }}
+    {{- end }}
+
+    {{- if list .Values "networkPolicy" "egress" "rabbitmq" "enabled" | include "armonik.utils.index" }}
+    # RabbitMQ
+    - to:
+        - podSelector:
+            matchLabels:
+              {{- toYaml .Values.networkPolicy.egress.rabbitmq.labels | nindent 14 }}
+      ports:
+        - protocol: TCP
+          port: {{ .Values.networkPolicy.egress.rabbitmq.port }}
+    {{- end }}
+
+    {{- if list .Values "networkPolicy" "egress" "dns" "enabled" | include "armonik.utils.index" }}
+    # DNS
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ .Values.networkPolicy.egress.dns.namespace }}
+          podSelector:
+            matchLabels:
+              {{- toYaml .Values.networkPolicy.egress.dns.labels | nindent 14 }}
+      ports:
+        {{- toYaml .Values.networkPolicy.egress.dns.ports | nindent 8 }}
+    {{- end }}
+{{- end }}

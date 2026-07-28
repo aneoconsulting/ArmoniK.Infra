@@ -1,3 +1,24 @@
+{{/*
+Live partitions: .Values.partitions with null entries filtered out. A partition set to null is a
+removal (lets a layered values file drop an inherited partition); an empty map ({}) is a real
+partition that inherits partitionCommon and is kept. Single source of truth for "which partitions
+actually deploy" - used by the partitions guard and by the Deployment / ScaledObject / init-seeding
+ranges, so the null-removal rule lives in exactly one place. Returns a YAML map; consume with
+`| fromYaml`.
+
+# Usage
+{{- $partitions := include "armonik.compute.partitions" . | fromYaml }}
+*/}}
+{{- define "armonik.compute.partitions" -}}
+  {{- $live := dict -}}
+  {{- range $name, $config := .Values.partitions -}}
+    {{- if not (kindIs "invalid" $config) -}}
+      {{- $_ := set $live $name $config -}}
+    {{- end -}}
+  {{- end -}}
+  {{- $live | toYaml -}}
+{{- end -}}
+
 {{/* Get common conf for agent and worker */}}
 {{- define "armonik.compute.confHelper" -}}
 {{- $partitionName := index . 0 -}}
@@ -43,7 +64,7 @@ env:
   InitServices__InitQueue: "true"
   InitServices__StopAfterInit: "true"
   {{- $i := 0 }}
-  {{- range $name, $config := .Values.partitions }}
+  {{- range $name, $config := include "armonik.compute.partitions" . | fromYaml }}
   InitServices__Partitioning__Partitions__{{ $i }}: {{ dict "ParentPartitionIds" ($config.parentPartitionIds | default list) "PartitionId" $name "PodConfiguration" nil "PodMax" ($config.podMax | default 100) "PodReserved" ($config.podReserved | default 50) "PreemptionPercentage" ($config.preemptionPercentage | default 20) "Priority" ($config.priority | default 1) | toJson | quote }}
   {{- $i = add $i 1 }}
   {{- end }}

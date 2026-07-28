@@ -69,27 +69,35 @@ control-plane:
     createBuiltInRoles: true
 
 compute-plane:
+  # The umbrella ships a working set of default partitions (below) and deploys them, so a plain
+  # `helm install` gives a usable cluster. Set enabled=false to deploy a "base" release
+  # (control-plane + storage + operators + conf) with NO compute-plane, and add partitions via
+  # separate armonik-compute-plane releases (see NOTES.txt). Whenever enabled=true at least one
+  # partition is required: an empty compute-plane runs no workers and is rejected by its guard.
   enabled: true
   serviceAccount:
     create: true
   # Point the child at the conf Secrets this umbrella renders (overrides its "armonik" default).
   conf:
     source: '{{ .Release.Name }}'
-  # partitions:
-  #   default:
-  #     worker:
-  #       image:
-  #         name: "armonik-dynamic-dotnet-worker"
-  #         tag: "0.21.3-ppi.taskFail.1.geb3e9a8"
-  #   stream:
-  #     worker:
-  #       image:
-  #         name: "armonik_core_stream_test_worker"
-  #   htcmock:
-  #     socketType: "tcp"
-  #     worker:
-  #       image:
-  #         name: "armonik_core_htcmock_test_worker"
+  # Default partitions. Partitions merge additively across values files (adding one never removes
+  # the defaults below); drop one you don't want by setting it to null - e.g.
+  # `--set compute-plane.partitions.htcmock=null` or, in a values file, `partitions: { htcmock: null }`.
+  partitions:
+    default:
+      worker:
+        image:
+          name: "armonik-dynamic-dotnet-worker"
+          tag: "0.21.2"
+    stream:
+      worker:
+        image:
+          name: "armonik_core_stream_test_worker"
+    htcmock:
+      socketType: "tcp"
+      worker:
+        image:
+          name: "armonik_core_htcmock_test_worker"
 
 conf:
   # Names every <source>-conf-<layer> Secret the umbrella renders (this release).

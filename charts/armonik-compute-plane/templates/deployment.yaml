@@ -1,4 +1,4 @@
-{{- range $partitionName, $config := .Values.partitions }}
+{{- range $partitionName, $config := include "armonik.compute.partitions" $ | fromYaml }}
 {{- $partition := dict -}}
 {{/* Partition render context: the chart context minus .Values.partitions (no self-reference),
      plus .Values.partitionName. Shallow omit-copies; originals untouched. */}}

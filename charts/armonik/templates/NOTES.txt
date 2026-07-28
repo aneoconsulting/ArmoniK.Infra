@@ -18,6 +18,22 @@ Operators:
   - {{ $op }}: {{ if $cfg.deploy }}managed (installed by this release){{ else if $cfg.available }}external (already present in the cluster){{ else }}absent (degraded){{ end }}
 {{- end }}
 **********************************************************
+{{- $cp := index .Values "compute-plane" }}
+{{- $workerPartitions := list }}
+{{- if and $cp $cp.enabled $cp.partitions }}{{ $workerPartitions = keys $cp.partitions | sortAlpha }}{{ end }}
+{{- if gt (len $workerPartitions) 0 }}
+This release deployed {{ len $workerPartitions }} compute-plane partition(s): {{ join ", " $workerPartitions }}.
+{{- else }}
+
+NOTE: this release deploys NO compute-plane, so there are no worker pods (and no KEDA ScaledObjects)
+to execute tasks. To run work, either enable the bundled compute-plane (set compute-plane.enabled=true
+AND define compute-plane.partitions - an empty compute-plane is rejected at render time), or install
+one or more separate armonik-compute-plane releases pointed at this release (see the recipe below).
+Reminder: a submission may still be ACCEPTED for any partition already registered in the database
+(seeded by a prior release, or persisted in a reused MongoDB volume). Such tasks will queue with
+nothing to run them, so an accepted submission is NOT proof that a worker exists.
+{{- end }}
+**********************************************************
 
 {{- if and (not (index .Values "control-plane").rbac.userCertificates) (index .Values "control-plane").rbac.authentication.required }}
 Authentication in ArmoniK is enabled{{ if (index .Values "control-plane").rbac.createBuiltinRoles }}, default roles "Submitter" and "Monitoring" were created{{ end }}.

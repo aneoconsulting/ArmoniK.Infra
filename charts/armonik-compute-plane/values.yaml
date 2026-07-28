@@ -254,6 +254,19 @@ partitionCommon:
     mountSecret:
       - secret: '{{ list "log" . | include "armonik.conf.mountSecretName" }}'
       - secret: '{{ list "compute" . | include "armonik.conf.mountSecretName" }}'
+# Partitions to deploy. Each key is a partition name; its value is per-partition overrides merged
+# over `partitionCommon`. At least one partition is REQUIRED (see templates/partitions-guard.yaml):
+# a compute-plane with none runs no workers.
+#
+# Helm value merge is additive for maps: partitions you set are UNIONED with any inherited from a
+# lower-precedence values file (a shared base, the umbrella, etc.); adding one never removes the
+# others. To drop an inherited partition, set it to null - e.g. in a values file
+#   partitions:
+#     unwanted: null
+# or `--set partitions.unwanted=null`. The templates treat a null partition as removed (skipped),
+# so this works in any layer. An empty map ({}) is a REAL partition (inherits partitionCommon);
+# only null removes. This chart ships no active default partitions, so a fresh install has nothing
+# to null; the note matters only when layering values files.
 partitions:
 
 fluentBit:

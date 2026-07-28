@@ -39,6 +39,11 @@ Kubernetes: `>=v1.25.0-0`
 | certManagerWait.timeout | string | `"300s"` |  |
 | compute-plane.conf.source | string | `"{{ .Release.Name }}"` |  |
 | compute-plane.enabled | bool | `true` |  |
+| compute-plane.partitions.default.worker.image.name | string | `"armonik-dynamic-dotnet-worker"` |  |
+| compute-plane.partitions.default.worker.image.tag | string | `"0.21.2"` |  |
+| compute-plane.partitions.htcmock.socketType | string | `"tcp"` |  |
+| compute-plane.partitions.htcmock.worker.image.name | string | `"armonik_core_htcmock_test_worker"` |  |
+| compute-plane.partitions.stream.worker.image.name | string | `"armonik_core_stream_test_worker"` |  |
 | compute-plane.serviceAccount.create | bool | `true` |  |
 | conf.log.minimumLevel | string | `"Information"` |  |
 | conf.source | string | `"{{ .Release.Name }}"` |  |

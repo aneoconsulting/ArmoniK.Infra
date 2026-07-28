@@ -1,7 +1,7 @@
 {{- $ops := include "armonik.operators" $ | fromYaml -}}
 {{- $metricsUrl := include "armonik.monitoring.metricsExporterUrl" $ -}}
 {{- if $ops.keda.available }}
-{{- range $partitionName, $config := .Values.partitions }}
+{{- range $partitionName, $config := include "armonik.compute.partitions" $ | fromYaml }}
 {{- $partition := dict -}}
 {{- dict "dst" $partition "srcs" (list $config $.Values.partitionCommon) "print" false "render" true "context" (
   merge (dict "Values" (dict "partitionName" $partitionName "metricsExporterUrl" $metricsUrl)) (omit $ "Values")

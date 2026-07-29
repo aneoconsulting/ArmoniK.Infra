@@ -3,16 +3,14 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "armonik.fullname" . | printf "%s-load-balancer" | trunc 63 | trimSuffix "-" }}
-  namespace: {{ include "armonik.namespace" . }}
+  name: {{ include "armonik.fullname" . | printf "%s-load-balancer" | trunc 63 | trimSuffix "-" | quote }}
+  namespace: {{ include "armonik.namespace" . | quote }}
   labels:
     app.kubernetes.io/component: load-balancer
     {{- include "armonik.labels" . | nindent 4 }}
   {{- with coalesce .Values.loadBalancer.annotations .Values.annotations }}
   annotations:
-  {{- range $key, $value := . }}
-    {{ $key }}: {{ $value }}
-  {{- end }}
+    {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
   replicas: {{ .Values.loadBalancer.replicas }}
@@ -96,12 +94,12 @@ spec:
       volumes:
       - name: cluster-certs
         secret:
-          secretName: {{ include "armonik.fullname" . | printf "%s-lb-cluster-certs" | trunc 63 | trimSuffix "-" }}
+          secretName: {{ include "armonik.fullname" . | printf "%s-lb-cluster-certs" | trunc 63 | trimSuffix "-" | quote }}
           defaultMode: 420
           optional: false
       - name: lb-conf
         configMap:
-          name: {{ include "armonik.fullname" . | printf "%s-load-balancer-conf" | trunc 63 | trimSuffix "-" }}
+          name: {{ include "armonik.fullname" . | printf "%s-load-balancer-conf" | trunc 63 | trimSuffix "-" | quote }}
           defaultMode: 420
           optional: false
       {{- with .Values.loadBalancer.extraVolumes }}

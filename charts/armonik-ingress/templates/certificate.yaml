@@ -27,7 +27,7 @@ spec:
   dnsNames:
   - {{ include "armonik.fullname" . }}.{{ include "armonik.namespace" . }}
   - {{ include "armonik.fullname" . }}.{{ include "armonik.namespace" . }}.svc
-  - {{ include "armonik.fullname" . }}.{{ include "armonik.namespace" . }}.svc.{{ $tls.clusterDomain }}
+  - {{ include "armonik.fullname" . }}.{{ include "armonik.namespace" . }}.svc.{{ include "armonik.clusterDomain" . }}
   secretName: {{ include "armonik.fullname" . }}
   usages:
     - server auth

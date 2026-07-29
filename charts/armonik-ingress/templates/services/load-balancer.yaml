@@ -26,4 +26,5 @@ spec:
       port: {{ eq .Values.loadBalancer.service.type "HeadLess" | ternary .Values.loadBalancer.conf.listenPort .Values.loadBalancer.service.port }}
       targetPort: {{ .Values.loadBalancer.conf.listenPort }}
       protocol: TCP
+      appProtocol: kubernetes.io/h2c
 {{- end }}

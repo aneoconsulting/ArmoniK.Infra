@@ -158,6 +158,7 @@ Kubernetes: `>=v1.25.0-0`
 | dependencies.seq.image.pullPolicy | string | `"IfNotPresent"` |  |
 | dependencies.seq.persistence.enabled | bool | `false` |  |
 | global.armonik.mountPath | string | `"/mounts"` |  |
+| global.clusterDomain | string | `""` |  |
 | global.environment.description | string | `"Armonik environment"` |  |
 | global.environment.name | string | `"local"` |  |
 | global.image.pullPolicy | string | `"IfNotPresent"` |  |

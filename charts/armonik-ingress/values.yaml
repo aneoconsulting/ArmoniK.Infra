@@ -35,8 +35,10 @@ service:
   type: LoadBalancer
   annotations: {}
 
+# DNS domain of the cluster
+clusterDomain: ""
+
 tls:
-  clusterDomain: cluster.local
   certManager:
     enabled: true
     addInjectorAnnotations: true

@@ -24,6 +24,7 @@ Kubernetes: `>=v1.25.0-0`
 |-----|------|---------|-------------|
 | affinity | object | `{}` |  |
 | annotations | object | `{}` |  |
+| clusterDomain | string | `""` |  |
 | gateway.allowedRoutes.namespaces.from | string | `"Same"` |  |
 | gateway.enabled | bool | `false` |  |
 | gateway.tls.enabled | bool | `false` |  |
@@ -110,7 +111,6 @@ Kubernetes: `>=v1.25.0-0`
 | tls.certManager.waitJob.image.repository | string | `"alpine/k8s"` |  |
 | tls.certManager.waitJob.image.tag | string | `"1.31.0"` |  |
 | tls.certManager.waitJob.timeout | string | `"300s"` |  |
-| tls.clusterDomain | string | `"cluster.local"` |  |
 | tls.customCert.certPem | string | `""` |  |
 | tls.customCert.keyPem | string | `""` |  |
 | tls.ssl.certificatePath | string | `"/ingress/tls.crt"` |  |

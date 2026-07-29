@@ -17,6 +17,8 @@ global:
   environment:
     name: "local"
     description: "Armonik environment"
+  # DNS domain of the cluster. Defaults to "cluster.local"
+  clusterDomain: ""
   # Root dir for conf mount Secrets in pods; propagated to subcharts. env strings and volumeMounts derive from it.
   armonik:
     mountPath: /mounts

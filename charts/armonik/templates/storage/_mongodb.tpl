@@ -5,7 +5,7 @@ provisions for the replica-set Service, so it mirrors the psmdb-db chart's clust
 This is intentionally driven by the mongodb chart mechanism, NOT by global.armonik.clusterDomain.
 */}}
 {{- define "armonik.mongodb.host" -}}
-  {{- include "psmdb-database.fullname" . }}-{{ .Values.replsets.rs0.name | default "rs0" }}.{{ include "psmdb-database.namespace" . }}.{{ .Values.clusterServiceDNSSuffix | default "svc.cluster.local" }}
+  {{- include "psmdb-database.fullname" . }}-{{ list .Values "replsets" "rs0" "name" | include "armonik.utils.index" | default "rs0" }}.{{ include "psmdb-database.namespace" . }}.{{ .Values.clusterServiceDNSSuffix | default "svc.cluster.local" }}
 {{- end -}}
 
 {{/*
@@ -26,7 +26,7 @@ Gets the authentication source from mongodb context.
 Returns whether MongoDB requires tls from mongodb context
 */}}
 {{- define "armonik.mongodb.requireTls" -}}
-  enabled: {{ not .Values.unsafeFlags.tls }}
+  enabled: {{ list .Values "unsafeFlags" "tls" | include "armonik.utils.index" | empty }}
 {{- end -}}
 
 {{/*
@@ -65,9 +65,9 @@ env:
   MongoDB__Host:             {{ include "armonik.mongodb.host" . | quote }}
   MongoDB__Port:             {{ include "armonik.mongodb.port" . | quote }}
   MongoDB__Tls:              {{ $requireTls | quote }}
-  MongoDB__ReplicaSet:       {{ .Values.replsets.rs0.name | quote }}
+  MongoDB__ReplicaSet:       {{ list .Values "replsets" "rs0" "name" | include "armonik.utils.index" | default "rs0" | quote }}
   MongoDB__DatabaseName:     {{ include "armonik.mongodb.database" . | quote }}
-  MongoDB__DirectConnection: {{ (.Values.replsets.rs0.size | default 3 | quote) | eq "1" | quote }}
+  MongoDB__DirectConnection: {{ (list .Values "replsets" "rs0" "size" | include "armonik.utils.index" | default 3 | quote) | eq "1" | quote }}
   MongoDB__AuthSource:       {{ include "armonik.mongodb.authSource" . | quote }}
   MongoDB__AllowInsecureTls: "true"
 {{- if $requireTls }}

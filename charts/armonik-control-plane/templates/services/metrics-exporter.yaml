@@ -1,4 +1,6 @@
-{{- if .Values.metricsExporter.enabled }}
+{{- $me := .Values.metricsExporter | default dict -}}
+{{- $svc := $me.service | default dict -}}
+{{- if $me.enabled }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -8,30 +10,30 @@ metadata:
     app.kubernetes.io/component: metrics-exporter
     armonik.fr/deployment: {{ include "armonik.conf.source" . | quote }}
     {{- include "armonik.labels" . | nindent 4 }}
-  {{- with coalesce .Values.metricsExporter.service.annotations .Values.metricsExporter.annotations .Values.annotations}}
+  {{- with coalesce $svc.annotations $me.annotations .Values.annotations}}
   annotations:
   {{- range $key, $value := . }}
     {{ $key }}: {{ $value }}
   {{- end }}
   {{- end }}
 spec:
-{{- if eq .Values.metricsExporter.service.serviceType "HeadLess" }}
+{{- if eq $svc.serviceType "HeadLess" }}
   type: "ClusterIP"
   clusterIP: "None"
 {{ else }}
-  type: {{ .Values.metricsExporter.service.serviceType | quote}}
+  type: {{ $svc.serviceType | quote}}
   clusterIP: null
 {{- end }}
   selector:
     app.kubernetes.io/component: metrics-exporter
     {{- include "armonik.selectorLabels" . | nindent 4 }}
   ports:
-    - name: {{ .Values.metricsExporter.service.name }}
-    {{- if (eq .Values.metricsExporter.service.serviceType "HeadLess") -}}
-      {{ $firstPort := index .Values.metricsExporter.ports 0 }}
+    - name: {{ $svc.name }}
+    {{- if (eq $svc.serviceType "HeadLess") -}}
+      {{ $firstPort := index $me.ports 0 }}
       port: {{ $firstPort.containerPort }}
     {{ else }}
-      {{- range .Values.metricsExporter.service.ports }}
+      {{- range $svc.ports }}
       port: {{ .port }}
       targetPort: {{ .targetPort }}
       {{- end }}

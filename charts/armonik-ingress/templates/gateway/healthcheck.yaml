@@ -39,5 +39,5 @@ spec:
     group: ""
     kind: Service
     name: {{ list .Values "healthCheckPolicy" "targetRef" "name" | include "armonik.utils.index" | default (include "armonik.fullname" .) | quote }}
-    namespace: {{ list .Values "healthCheckPolicy" "targetRef" "namespace" | include "armonik.utils.index" | default (include "armonik.namespace" .) | quote }}
+    namespace: {{ list .Values "healthCheckPolicy" "targetRef" "namespace" | include "armonik.utils.index" | default .Values.namespace | default (include "armonik.namespace" .) | quote }}
 {{- end }}

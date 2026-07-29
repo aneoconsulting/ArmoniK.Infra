@@ -1,6 +1,9 @@
 {{- $tls := .Values.tls.enabled | default false }}
 {{- $mtls := .Values.mtls.enabled | default false }}
 {{- $cnPattern := include "armonik.ingress.mtlsCnPattern" .Values }}
+{{- $lbHost := include "armonik.fullname" . | printf "%s-load-balancer" | trunc 63 | trimSuffix "-" }}
+{{- $guiHost := include "armonik.fullname" . | printf "%s-gui" | trunc 63 | trimSuffix "-" }}
+{{- $svcSuffix := printf "%s.svc.%s" (include "armonik.namespace" .) (include "armonik.clusterDomain" .) }}
 apiVersion: v1
 immutable: false
 kind: ConfigMap
@@ -50,9 +53,9 @@ data:
         zone armonik_zone 32k;
         {{- if .Values.loadBalancer.enabled }}
         # Load balancer enabled: route gRPC through it
-        server {{ include "armonik.fullname" . | printf "%s-load-balancer" | trunc 63 | trimSuffix "-" }}.{{ include "armonik.namespace" . }}.svc.cluster.local:{{ .Values.loadBalancer.conf.listenPort }} resolve;
+        server {{ $lbHost }}.{{ $svcSuffix }}:{{ .Values.loadBalancer.conf.listenPort }} resolve;
         {{- else }}
-        server armonik-control-plane.{{ include "armonik.namespace" . }}.svc.cluster.local:5001 resolve;
+        server armonik-control-plane.{{ $svcSuffix }}:5001 resolve;
         {{- end }}
         keepalive 128;
         keepalive_time 8h;
@@ -107,7 +110,7 @@ data:
         location = /admin/en {
             rewrite ^ $scheme://$http_host/admin/en/;
         }
-        set $admin_app_upstream http://{{ include "armonik.fullname" . | printf "%s-gui" | trunc 63 | trimSuffix "-" }}.{{ include "armonik.namespace" . }}.svc.cluster.local:1080;
+        set $admin_app_upstream http://{{ $guiHost }}.{{ $svcSuffix }}:1080;
         location /admin/ {
             proxy_pass $admin_app_upstream$uri$is_args$args;
         }
@@ -137,7 +140,7 @@ data:
         proxy_buffering off;
         proxy_request_buffering off;
 
-        set $seq_upstream http://seq.{{ include "armonik.namespace" . }}.svc.cluster.local;
+        set $seq_upstream http://seq.{{ $svcSuffix }};
         location = /seq {
             rewrite ^ $scheme://$http_host/seq/ permanent;
         }
@@ -150,7 +153,7 @@ data:
             sub_filter_once on;
             proxy_hide_header content-security-policy;
         }
-        set $grafana_upstream http://grafana.{{ include "armonik.namespace" . }}.svc.cluster.local;
+        set $grafana_upstream http://grafana.{{ $svcSuffix }};
         location = /grafana {
             rewrite ^ $scheme://$http_host/grafana/ permanent;
         }

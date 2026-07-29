@@ -155,7 +155,7 @@ spec:
         imagePullPolicy: {{ $fluentBitImage.pullPolicy }}
         envFrom:
         - configMapRef:
-            name: {{ $fluentBit.configMapName }}
+            name: {{ $fluentBit.configMapName | quote }}
         lifecycle:
           preStop:
             exec:
@@ -191,7 +191,7 @@ spec:
             type: ""
         - name: fluentbitconfig
           configMap:
-            name: {{ $fluentBit.configMapName }}
+            name: {{ $fluentBit.configMapName | quote }}
             defaultMode: 420
             optional: false
         - name: runlogjournal

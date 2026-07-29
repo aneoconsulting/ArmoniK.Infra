@@ -28,7 +28,7 @@ spec:
     app.kubernetes.io/component: metrics-exporter
     {{- include "armonik.selectorLabels" . | nindent 4 }}
   ports:
-    - name: {{ $svc.name }}
+    - name: {{ $svc.name | quote }}
     {{- if (eq $svc.serviceType "HeadLess") -}}
       {{ $firstPort := index $me.ports 0 }}
       port: {{ $firstPort.containerPort }}

@@ -23,7 +23,13 @@ spec:
   podTargetLabels:
     - armonik.fr/partition
     - app.kubernetes.io/instance
+    - armonik.fr/deployment
   podMetricsEndpoints:
     - port: poll-agent-port
       path: /metrics
+      {{/* Legacy job name for the bundled Grafana dashboards; per-partition/release stay distinct
+           via the armonik.fr/partition and instance podTargetLabels above. */}}
+      relabelings:
+        - targetLabel: job
+          replacement: metrics-polling-agent
 {{- end }}

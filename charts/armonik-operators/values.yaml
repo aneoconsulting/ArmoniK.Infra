@@ -86,7 +86,12 @@ kube-prometheus:
   alertmanager:
     enabled: false
   grafana:
+    # kube-prometheus-stack's bundled Grafana stays OFF (Grafana is per-release, from
+    # armonik-dependencies). forceDeployDashboards ships kps's standard dashboard ConfigMaps
+    # (labeled grafana_dashboard) even with its Grafana disabled, so the per-release Grafana
+    # sidecar picks them up - our source for the standard k8s/node dashboards.
     enabled: false
+    forceDeployDashboards: true
   prometheus:
     prometheusSpec:
       scrapeInterval: 10s

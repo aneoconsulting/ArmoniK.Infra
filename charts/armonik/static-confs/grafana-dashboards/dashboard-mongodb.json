@@ -1,14 +1,4 @@
 {
-  "__inputs": [
-    {
-      "name": "DS_PROMETHEUS",
-      "label": "prometheus",
-      "description": "",
-      "type": "datasource",
-      "pluginId": "prometheus",
-      "pluginName": "Prometheus"
-    }
-  ],
   "__elements": [],
   "__requires": [
     {
@@ -88,7 +78,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "description": "",
       "fieldConfig": {
@@ -144,7 +134,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "mongodb_up{app_kubernetes_io_instance=\"$cluster\"}",
@@ -159,7 +149,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "description": "Mongodb Service Uptime in hours",
       "fieldConfig": {
@@ -211,7 +201,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "mongodb_members_uptime{app_kubernetes_io_instance=\"$cluster\", member_state=\"PRIMARY\"}",
@@ -226,7 +216,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "description": "The number of incoming connections from clients to the database server. This number includes the current shell session. Consider the value of connections.available to add more context to this datum.",
       "fieldConfig": {
@@ -277,7 +267,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "mongodb_ss_connections{app_kubernetes_io_instance=\"$cluster\", conn_type=\"current\"}",
@@ -292,7 +282,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "description": "Count of all incoming connections created to the server. This number includes connections that have since closed.",
       "fieldConfig": {
@@ -343,7 +333,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "mongodb_ss_connections{app_kubernetes_io_instance=\"$cluster\", conn_type=\"totalCreated\"}",
@@ -358,7 +348,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "description": "The number of unused incoming connections available. Consider this value in combination with the value of connections.current to understand the connection load on the database, and the UNIX ulimit Settings document for more information about system thresholds on available connections.",
       "fieldConfig": {
@@ -409,7 +399,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "mongodb_ss_connections{app_kubernetes_io_instance=\"$cluster\", conn_type=\"available\"}",
@@ -424,7 +414,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "description": "The number of active client connections to the server. Active client connections refers to client connections that currently have operations in progress.",
       "fieldConfig": {
@@ -475,7 +465,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "mongodb_ss_connections{app_kubernetes_io_instance=\"$cluster\", conn_type=\"available\"}",
@@ -490,7 +480,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "description": "",
       "gridPos": {
@@ -516,7 +506,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "description": "The total number of insert operations received since the mongod instance last started.",
       "fieldConfig": {
@@ -593,7 +583,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "rate(mongodb_ss_opcounters{app_kubernetes_io_instance=\"$cluster\", legacy_op_type=\"insert\"}[$__rate_interval])",
@@ -608,7 +598,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "description": "The total number of update operations received since the mongod instance last started.",
       "fieldConfig": {
@@ -685,7 +675,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "rate(mongodb_ss_opcounters{app_kubernetes_io_instance=\"$cluster\", legacy_op_type=\"update\"}[$__rate_interval])",
@@ -700,7 +690,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "description": "The total number of commands issued to the database since the mongod instance last started.\n\nopcounters.command counts all commands except the write commands: insert, update, and delete.",
       "fieldConfig": {
@@ -777,7 +767,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "rate(mongodb_ss_opcounters{app_kubernetes_io_instance=\"$cluster\", legacy_op_type=\"command\"}[$__rate_interval])",
@@ -792,7 +782,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "description": "The total number of queries received since the mongod instance last started.",
       "fieldConfig": {
@@ -869,7 +859,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "rate(mongodb_ss_opcounters{app_kubernetes_io_instance=\"$cluster\", legacy_op_type=\"query\"}[$__rate_interval])",
@@ -884,7 +874,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "description": "The total number of delete operations since the mongod instance last started.",
       "fieldConfig": {
@@ -961,7 +951,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "rate(mongodb_ss_opcounters{app_kubernetes_io_instance=\"$cluster\", legacy_op_type=\"delete\"}[$__rate_interval])",
@@ -976,7 +966,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "description": "The total number of getMore operations since the mongod instance last started. This counter can be high even if the query count is low. Secondary nodes send getMore operations as part of the replication process.",
       "fieldConfig": {
@@ -1053,7 +1043,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "rate(mongodb_ss_opcounters{app_kubernetes_io_instance=\"$cluster\", legacy_op_type=\"getmore\"}[$__rate_interval])",
@@ -1068,7 +1058,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "description": "Number of collections in the database.",
       "fieldConfig": {
@@ -1126,7 +1116,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "mongodb_dbstats_collections{app_kubernetes_io_instance=\"$cluster\", instance=\"$instance\"}",
@@ -1141,7 +1131,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "description": "Total number of indexes across all collections in the database.",
       "fieldConfig": {
@@ -1199,7 +1189,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "mongodb_dbstats_indexes{app_kubernetes_io_instance=\"$cluster\", instance=\"$instance\"}",
@@ -1214,7 +1204,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "description": "Number of views in the database.",
       "fieldConfig": {
@@ -1272,7 +1262,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "mongodb_dbstats_views{app_kubernetes_io_instance=\"$cluster\", instance=\"$instance\"}",
@@ -1287,7 +1277,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "description": "Sum of the space allocated to all collections in the database for document storage, including free space.",
       "fieldConfig": {
@@ -1367,7 +1357,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "mongodb_dbstats_storageSize{app_kubernetes_io_instance=\"$cluster\", instance=\"$instance\"}",
@@ -1382,7 +1372,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "description": "Sum of the space allocated to all indexes in the database, including free index space.",
       "fieldConfig": {
@@ -1462,7 +1452,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "mongodb_dbstats_indexSize{app_kubernetes_io_instance=\"$cluster\", instance=\"$instance\"}",
@@ -1490,7 +1480,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -1539,7 +1529,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "mongodb_rs_members_id{app_kubernetes_io_instance=\"$cluster\", member_state=\"PRIMARY\", instance=\"$instance\"}",
@@ -1553,7 +1543,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "description": "This metric can show a correlation with the replication lag value.",
       "fieldConfig": {
@@ -1635,7 +1625,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "mongodb_rs_members_pingMs{app_kubernetes_io_instance=\"$cluster\", instance=\"$instance\"}",
@@ -1650,7 +1640,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "description": "The oplog (operations log) is a special capped collection that keeps a rolling record of all operations that modify the data stored in your databases.",
       "fieldConfig": {
@@ -1743,7 +1733,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "mongodb_oplog_stats_storageStats_size{app_kubernetes_io_instance=\"$cluster\", instance=\"$instance\"}",
@@ -1758,7 +1748,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -1804,7 +1794,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "mongodb_rs_members_id{app_kubernetes_io_instance=\"$cluster\", member_state=\"SECONDARY\", instance=\"$instance\"}",
@@ -1818,7 +1808,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "description": "MongoDB replication lag occurs when the secondary node cannot replicate data fast enough to keep up with the rate that data is being written to the primary node. It could be caused by something as simple as network latency, packet loss within your network, or a routing issue.",
       "fieldConfig": {
@@ -1899,7 +1889,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "rate(mongodb_mongod_replset_oplog_head_timestamp[5m])",
@@ -1914,7 +1904,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "description": "This shows the time since the last election.",
       "fieldConfig": {
@@ -1962,7 +1952,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "expr": "mongodb_electionCandidateMetrics_lastElectionDate{app_kubernetes_io_instance=\"$cluster\"}",
           "refId": "A"
@@ -1987,7 +1977,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "description": "Cursor is a pointer, and using this pointer we can access the document. cursor.timeOut property was updated incrementally, and connections that died without closing the cursor. The consequence is that it will remain open on the server and consume memory unless it is reaped by the default MongoDB setting.",
       "fieldConfig": {
@@ -2066,7 +2056,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "mongodb_ss_metrics_cursor_timedOut{app_kubernetes_io_instance=\"$cluster\"}",
@@ -2081,7 +2071,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "description": "Number of cursors currently opened by MongoDB for clients",
       "fieldConfig": {
@@ -2160,7 +2150,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "mongodb_ss_metrics_cursor_totalOpened{app_kubernetes_io_instance=\"$cluster\"}",
@@ -2180,29 +2170,23 @@
   "templating": {
     "list": [
       {
-        "current": {
-          "selected": false,
-          "text": "default",
-          "value": "default"
-        },
-        "datasource": "PBFA97CFB590B2093",
-        "hide": 2,
-        "includeAll": false,
-        "label": "datasource",
-        "multi": false,
-        "name": "DS_PROMETHEUS",
-        "options": [],
+        "name": "datasource",
+        "label": "Data source",
+        "type": "datasource",
         "query": "prometheus",
         "refresh": 1,
-        "regex": "",
-        "skipUrlSync": false,
-        "type": "datasource"
+        "hide": 0,
+        "includeAll": false,
+        "multi": false,
+        "current": {},
+        "options": [],
+        "regex": ""
       },
       {
         "current": {},
         "datasource": {
           "type": "prometheus",
-          "uid": "${DS_PROMETHEUS}"
+          "uid": "${datasource}"
         },
         "definition": "label_values(mongodb_up,app_kubernetes_io_instance)",
         "hide": 0,
@@ -2225,7 +2209,7 @@
         "current": {},
         "datasource": {
           "type": "prometheus",
-          "uid": "${DS_PROMETHEUS}"
+          "uid": "${datasource}"
         },
         "definition": "label_values(mongodb_up{app_kubernetes_io_instance=\"$cluster\"},instance)",
         "hide": 0,

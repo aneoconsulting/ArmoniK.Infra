@@ -6,6 +6,7 @@ metadata:
   namespace: {{ include "armonik.namespace" . }}
   labels:
     app.kubernetes.io/component: metrics-exporter
+    armonik.fr/deployment: {{ include "armonik.conf.source" . | quote }}
     {{- include "armonik.labels" . | nindent 4 }}
   {{- with coalesce .Values.metricsExporter.service.annotations .Values.metricsExporter.annotations .Values.annotations}}
   annotations:

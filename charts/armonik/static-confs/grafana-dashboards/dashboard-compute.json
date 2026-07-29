@@ -1,14 +1,4 @@
 {
-  "__inputs": [
-    {
-      "name": "DS_PROMETHEUS",
-      "label": "prometheus",
-      "description": "",
-      "type": "datasource",
-      "pluginId": "prometheus",
-      "pluginName": "Prometheus"
-    }
-  ],
   "__elements": [],
   "__requires": [
     {
@@ -68,7 +58,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -147,10 +137,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum (delta(TaskHandler_RequestExecution_milliseconds_sum{job=\"metrics-polling-agent\"}[1m])/ delta(uptime_Milliseconds_total{job=\"metrics-polling-agent\"}[1m]))",
+          "expr": "sum (delta(TaskHandler_RequestExecution_milliseconds_sum{job=\"metrics-polling-agent\",armonik_fr_deployment=~\"$deployment\"}[1m])/ delta(uptime_Milliseconds_total{job=\"metrics-polling-agent\",armonik_fr_deployment=~\"$deployment\"}[1m]))",
           "instant": false,
           "legendFormat": "utilization",
           "range": true,
@@ -159,10 +149,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "count(TaskHandler_RequestExecution_milliseconds_sum{job=\"metrics-polling-agent\"})",
+          "expr": "count(TaskHandler_RequestExecution_milliseconds_sum{job=\"metrics-polling-agent\",armonik_fr_deployment=~\"$deployment\"})",
           "hide": false,
           "instant": false,
           "legendFormat": "limit",
@@ -176,7 +166,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -256,12 +246,12 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "delta(TaskHandler_RequestExecution_milliseconds_sum{job=\"metrics-polling-agent\", kubernetes_pod_name=~\"$podName\"}[1m]) / delta(uptime_Milliseconds_total{job=\"metrics-polling-agent\", kubernetes_pod_name=~\"$podName\"}[1m])",
+          "expr": "delta(TaskHandler_RequestExecution_milliseconds_sum{job=\"metrics-polling-agent\",armonik_fr_deployment=~\"$deployment\", pod=~\"$podName\"}[1m]) / delta(uptime_Milliseconds_total{job=\"metrics-polling-agent\",armonik_fr_deployment=~\"$deployment\", pod=~\"$podName\"}[1m])",
           "instant": false,
-          "legendFormat": "{{kubernetes_pod_name}}",
+          "legendFormat": "{{pod}}",
           "range": true,
           "refId": "A"
         }
@@ -272,7 +262,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -350,10 +340,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (pod)(irate(container_cpu_usage_seconds_total{job=\"kubernetes-cadvisor\",namespace=\"armonik\", pod=~\"$podName\"}[1m]))",
+          "expr": "sum by (pod)(irate(container_cpu_usage_seconds_total{job=\"kubelet\", pod=~\"$podName\"}[1m]))",
           "instant": false,
           "legendFormat": "{{pod}}",
           "range": true,
@@ -362,10 +352,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "irate(container_cpu_usage_seconds_total{namespace=\"armonik\", job=\"kubernetes-resource\", pod=~\"$podName\", container=~\"$container\"}[1m])",
+          "expr": "irate(container_cpu_usage_seconds_total{job=\"kubelet\", pod=~\"$podName\", container=~\"$container\"}[1m])",
           "hide": false,
           "instant": false,
           "legendFormat": "{{pod}} {{container}}",
@@ -379,7 +369,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -457,10 +447,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (pod) (container_memory_working_set_bytes{job=\"kubernetes-cadvisor\",namespace=\"armonik\", pod=~\"$podName\"})",
+          "expr": "sum by (pod) (container_memory_working_set_bytes{job=\"kubelet\", pod=~\"$podName\"})",
           "instant": false,
           "legendFormat": "{{pod}}",
           "range": true,
@@ -469,10 +459,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "container_memory_working_set_bytes{namespace=\"armonik\", job=\"kubernetes-resource\", pod=~\"$podName\", container=~\"$container\"}",
+          "expr": "container_memory_working_set_bytes{job=\"kubelet\", pod=~\"$podName\", container=~\"$container\"}",
           "hide": false,
           "instant": false,
           "legendFormat": "{{pod}} {{container}}",
@@ -487,27 +477,54 @@
   "refresh": "5s",
   "schemaVersion": 38,
   "style": "dark",
-  "tags": [],
+  "tags": [
+    "ArmoniK"
+  ],
   "templating": {
     "list": [
       {
-        "current": {
-          "selected": false,
-          "text": "default",
-          "value": "default"
-        },
-        "datasource": "PBFA97CFB590B2093",
-        "hide": 2,
-        "includeAll": false,
-        "label": "datasource",
-        "multi": false,
-        "name": "DS_PROMETHEUS",
-        "options": [],
+        "name": "datasource",
+        "label": "Data source",
+        "type": "datasource",
         "query": "prometheus",
         "refresh": 1,
+        "hide": 0,
+        "includeAll": false,
+        "multi": false,
+        "current": {},
+        "options": [],
+        "regex": ""
+      },
+      {
+        "name": "deployment",
+        "label": "ArmoniK deployment",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${datasource}"
+        },
+        "query": {
+          "query": "label_values(armonik_fr_deployment)",
+          "refId": "StandardVariableQuery"
+        },
+        "refresh": 2,
+        "includeAll": true,
+        "allValue": ".*",
+        "multi": true,
+        "current": {
+          "selected": true,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "options": [],
         "regex": "",
-        "skipUrlSync": false,
-        "type": "datasource"
+        "sort": 1,
+        "hide": 0,
+        "definition": "label_values(armonik_fr_deployment)"
       },
       {
         "current": {
@@ -521,9 +538,9 @@
         },
         "datasource": {
           "type": "prometheus",
-          "uid": "${DS_PROMETHEUS}"
+          "uid": "${datasource}"
         },
-        "definition": "label_values(kubernetes_pod_name)",
+        "definition": "label_values(up{job=\"metrics-polling-agent\", armonik_fr_deployment=~\"$deployment\"}, pod)",
         "hide": 0,
         "includeAll": true,
         "label": "Pod Name",
@@ -531,7 +548,7 @@
         "name": "podName",
         "options": [],
         "query": {
-          "query": "label_values(kubernetes_pod_name)",
+          "query": "label_values(up{job=\"metrics-polling-agent\", armonik_fr_deployment=~\"$deployment\"}, pod)",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,

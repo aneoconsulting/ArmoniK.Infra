@@ -47,6 +47,7 @@ Kubernetes: `>=v1.25.0-0`
 | kube-prometheus.alertmanager.enabled | bool | `false` |  |
 | kube-prometheus.fullnameOverride | string | `"prometheus"` |  |
 | kube-prometheus.grafana.enabled | bool | `false` |  |
+| kube-prometheus.grafana.forceDeployDashboards | bool | `true` |  |
 | kube-prometheus.prometheus-node-exporter.hostRootFsMount.enabled | bool | `false` |  |
 | kube-prometheus.prometheus.prometheusSpec.evaluationInterval | string | `"30s"` |  |
 | kube-prometheus.prometheus.prometheusSpec.podMonitorNamespaceSelector | object | `{}` |  |

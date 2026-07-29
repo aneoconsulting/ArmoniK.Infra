@@ -57,6 +57,7 @@ spec:
         app.kubernetes.io/component: {{ printf "compute-plane-%s" $partitionName | quote }}
         app.kubernetes.io/part-of: compute-plane
         armonik.fr/partition: {{ $partitionName | quote }}
+        armonik.fr/deployment: {{ include "armonik.conf.source" $ | quote }}
         {{- include "armonik.selectorLabels" $ | nindent 8 }}
       {{- with $partition.annotations}}
       annotations:

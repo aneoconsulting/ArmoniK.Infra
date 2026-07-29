@@ -1,14 +1,4 @@
 {
-  "__inputs": [
-    {
-      "name": "DS_PROMETHEUS",
-      "label": "prometheus",
-      "description": "",
-      "type": "datasource",
-      "pluginId": "prometheus",
-      "pluginName": "Prometheus"
-    }
-  ],
   "__elements": [],
   "__requires": [
     {
@@ -78,7 +68,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -162,10 +152,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum by(le) (rate(TaskHandler_AcquireTask_milliseconds_bucket{kubernetes_pod_name=~\"$podName\"}[$__rate_interval])))",
+          "expr": "histogram_quantile(0.95, sum by(le) (rate(TaskHandler_AcquireTask_milliseconds_bucket{pod=~\"$podName\"}[$__rate_interval])))",
           "instant": false,
           "legendFormat": "Task Acquisition Duration",
           "range": true,
@@ -174,10 +164,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum by(le) (rate(TaskHandler_PreProcessing_milliseconds_bucket{kubernetes_pod_name=~\"$podName\"}[$__rate_interval]))) ",
+          "expr": "histogram_quantile(0.95, sum by(le) (rate(TaskHandler_PreProcessing_milliseconds_bucket{pod=~\"$podName\"}[$__rate_interval]))) ",
           "hide": false,
           "instant": false,
           "legendFormat": "Task Pre-processing Duration",
@@ -187,10 +177,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum by(le) (rate(TaskHandler_RequestExecution_milliseconds_bucket{kubernetes_pod_name=~\"$podName\"}[$__rate_interval]))) ",
+          "expr": "histogram_quantile(0.95, sum by(le) (rate(TaskHandler_RequestExecution_milliseconds_bucket{pod=~\"$podName\"}[$__rate_interval]))) ",
           "hide": false,
           "instant": false,
           "legendFormat": "Task Execution Request Duration",
@@ -200,10 +190,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum by(le) (rate(TaskHandler_ExecuteTask_milliseconds_bucket{kubernetes_pod_name=~\"$podName\"}[$__rate_interval])))",
+          "expr": "histogram_quantile(0.95, sum by(le) (rate(TaskHandler_ExecuteTask_milliseconds_bucket{pod=~\"$podName\"}[$__rate_interval])))",
           "hide": false,
           "instant": false,
           "legendFormat": "Task Execution Duration",
@@ -213,10 +203,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum by(le) (rate(TaskHandler_PostProcessing_milliseconds_bucket{kubernetes_pod_name=~\"$podName\"}[$__rate_interval])))",
+          "expr": "histogram_quantile(0.95, sum by(le) (rate(TaskHandler_PostProcessing_milliseconds_bucket{pod=~\"$podName\"}[$__rate_interval])))",
           "hide": false,
           "instant": false,
           "legendFormat": "Task Post-Processing Duration",
@@ -226,10 +216,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum by(le) (rate(TaskHandler_DisposeAsync_milliseconds_bucket{kubernetes_pod_name=~\"$podName\"}[$__rate_interval])))",
+          "expr": "histogram_quantile(0.95, sum by(le) (rate(TaskHandler_DisposeAsync_milliseconds_bucket{pod=~\"$podName\"}[$__rate_interval])))",
           "hide": false,
           "instant": false,
           "legendFormat": "Task Dispose Duration",
@@ -243,7 +233,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -326,10 +316,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(rate(TaskHandler_ExecuteTask_Count_total{kubernetes_pod_name=~\"$podName\"}[$__rate_interval]))",
+          "expr": "sum(rate(TaskHandler_ExecuteTask_Count_total{pod=~\"$podName\"}[$__rate_interval]))",
           "instant": false,
           "legendFormat": "Throughput",
           "range": true,
@@ -342,7 +332,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -395,7 +385,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "sum_over_time(armonik_htcmock_tasks_submitted[$__range])",
@@ -412,7 +402,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -466,7 +456,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "armonik_tasks_dispatched",
@@ -482,7 +472,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -536,7 +526,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "armonik_tasks_processing",
@@ -553,7 +543,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -607,7 +597,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "armonik_tasks_queued",
@@ -623,7 +613,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -676,7 +666,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "armonik_tasks_submitted",
@@ -705,7 +695,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "description": "",
       "fieldConfig": {
@@ -790,11 +780,11 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "disableTextWrap": false,
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum by(le) (rate(TaskHandler_AcquireTask_milliseconds_bucket[$__rate_interval])))",
+          "expr": "histogram_quantile(0.95, sum by(le) (rate(TaskHandler_AcquireTask_milliseconds_bucket{pod=~\"$podName\"}[$__rate_interval])))",
           "fullMetaSearch": false,
           "includeNullMetadata": false,
           "instant": false,
@@ -811,7 +801,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "description": "",
       "fieldConfig": {
@@ -896,11 +886,11 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "disableTextWrap": false,
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum by(le) (rate(TaskHandler_PreProcessing_milliseconds_bucket[$__rate_interval])))",
+          "expr": "histogram_quantile(0.95, sum by(le) (rate(TaskHandler_PreProcessing_milliseconds_bucket{pod=~\"$podName\"}[$__rate_interval])))",
           "fullMetaSearch": false,
           "includeNullMetadata": false,
           "instant": false,
@@ -917,7 +907,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "description": "",
       "fieldConfig": {
@@ -1002,11 +992,11 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "disableTextWrap": false,
           "editorMode": "builder",
-          "expr": "histogram_quantile(0.95, sum by(le) (rate(TaskHandler_RequestExecution_milliseconds_bucket[$__rate_interval])))",
+          "expr": "histogram_quantile(0.95, sum by(le) (rate(TaskHandler_RequestExecution_milliseconds_bucket{pod=~\"$podName\"}[$__rate_interval])))",
           "fullMetaSearch": false,
           "includeNullMetadata": false,
           "instant": false,
@@ -1023,7 +1013,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "description": "",
       "fieldConfig": {
@@ -1108,11 +1098,11 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "disableTextWrap": false,
           "editorMode": "builder",
-          "expr": "histogram_quantile(0.95, sum by(le) (rate(TaskHandler_ExecuteTask_milliseconds_bucket[$__rate_interval])))",
+          "expr": "histogram_quantile(0.95, sum by(le) (rate(TaskHandler_ExecuteTask_milliseconds_bucket{pod=~\"$podName\"}[$__rate_interval])))",
           "fullMetaSearch": false,
           "includeNullMetadata": false,
           "instant": false,
@@ -1129,7 +1119,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "description": "",
       "fieldConfig": {
@@ -1214,11 +1204,11 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "disableTextWrap": false,
           "editorMode": "builder",
-          "expr": "histogram_quantile(0.95, sum by(le) (rate(TaskHandler_PostProcessing_milliseconds_bucket[$__rate_interval])))",
+          "expr": "histogram_quantile(0.95, sum by(le) (rate(TaskHandler_PostProcessing_milliseconds_bucket{pod=~\"$podName\"}[$__rate_interval])))",
           "fullMetaSearch": false,
           "includeNullMetadata": false,
           "instant": false,
@@ -1235,7 +1225,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "description": "",
       "fieldConfig": {
@@ -1320,11 +1310,11 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "disableTextWrap": false,
           "editorMode": "builder",
-          "expr": "histogram_quantile(0.95, sum by(le) (rate(TaskHandler_DisposeAsync_milliseconds_bucket[$__rate_interval])))",
+          "expr": "histogram_quantile(0.95, sum by(le) (rate(TaskHandler_DisposeAsync_milliseconds_bucket{pod=~\"$podName\"}[$__rate_interval])))",
           "fullMetaSearch": false,
           "includeNullMetadata": false,
           "instant": false,
@@ -1354,7 +1344,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "description": "",
       "fieldConfig": {
@@ -1441,11 +1431,11 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "disableTextWrap": false,
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum by(le,kubernetes_pod_name) (rate(TaskHandler_AcquireTask_milliseconds_bucket[$__rate_interval])))",
+          "expr": "histogram_quantile(0.95, sum by(le,pod) (rate(TaskHandler_AcquireTask_milliseconds_bucket{pod=~\"$podName\"}[$__rate_interval])))",
           "fullMetaSearch": false,
           "includeNullMetadata": false,
           "instant": false,
@@ -1462,7 +1452,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "description": "",
       "fieldConfig": {
@@ -1549,11 +1539,11 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "disableTextWrap": false,
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum by(le, kubernetes_pod_name) (rate(TaskHandler_PreProcessing_milliseconds_bucket[$__rate_interval])))",
+          "expr": "histogram_quantile(0.95, sum by(le, pod) (rate(TaskHandler_PreProcessing_milliseconds_bucket{pod=~\"$podName\"}[$__rate_interval])))",
           "fullMetaSearch": false,
           "includeNullMetadata": false,
           "instant": false,
@@ -1570,7 +1560,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "description": "",
       "fieldConfig": {
@@ -1657,11 +1647,11 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "disableTextWrap": false,
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum by(le, kubernetes_pod_name) (rate(TaskHandler_RequestExecution_milliseconds_bucket[$__rate_interval])))",
+          "expr": "histogram_quantile(0.95, sum by(le, pod) (rate(TaskHandler_RequestExecution_milliseconds_bucket{pod=~\"$podName\"}[$__rate_interval])))",
           "fullMetaSearch": false,
           "includeNullMetadata": false,
           "instant": false,
@@ -1678,7 +1668,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "description": "",
       "fieldConfig": {
@@ -1765,11 +1755,11 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "disableTextWrap": false,
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum by(le, kubernetes_pod_name) (rate(TaskHandler_ExecuteTask_milliseconds_bucket[$__rate_interval])))",
+          "expr": "histogram_quantile(0.95, sum by(le, pod) (rate(TaskHandler_ExecuteTask_milliseconds_bucket{pod=~\"$podName\"}[$__rate_interval])))",
           "fullMetaSearch": false,
           "includeNullMetadata": false,
           "instant": false,
@@ -1786,7 +1776,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "description": "",
       "fieldConfig": {
@@ -1873,11 +1863,11 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "disableTextWrap": false,
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum by(le, kubernetes_pod_name) (rate(TaskHandler_PostProcessing_milliseconds_bucket[$__rate_interval])))",
+          "expr": "histogram_quantile(0.95, sum by(le, pod) (rate(TaskHandler_PostProcessing_milliseconds_bucket{pod=~\"$podName\"}[$__rate_interval])))",
           "fullMetaSearch": false,
           "includeNullMetadata": false,
           "instant": false,
@@ -1894,7 +1884,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "${datasource}"
       },
       "description": "",
       "fieldConfig": {
@@ -1981,11 +1971,11 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "${datasource}"
           },
           "disableTextWrap": false,
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum by(le, kubernetes_pod_name) (rate(TaskHandler_DisposeAsync_milliseconds_bucket[$__rate_interval])))",
+          "expr": "histogram_quantile(0.95, sum by(le, pod) (rate(TaskHandler_DisposeAsync_milliseconds_bucket{pod=~\"$podName\"}[$__rate_interval])))",
           "fullMetaSearch": false,
           "includeNullMetadata": false,
           "instant": false,
@@ -2002,27 +1992,54 @@
   ],
   "refresh": "auto",
   "schemaVersion": 39,
-  "tags": [],
+  "tags": [
+    "ArmoniK"
+  ],
   "templating": {
     "list": [
       {
-        "current": {
-          "selected": false,
-          "text": "default",
-          "value": "default"
-        },
-        "datasource": "PBFA97CFB590B2093",
-        "hide": 2,
-        "includeAll": false,
-        "label": "datasource",
-        "multi": false,
-        "name": "DS_PROMETHEUS",
-        "options": [],
+        "name": "datasource",
+        "label": "Data source",
+        "type": "datasource",
         "query": "prometheus",
         "refresh": 1,
+        "hide": 0,
+        "includeAll": false,
+        "multi": false,
+        "current": {},
+        "options": [],
+        "regex": ""
+      },
+      {
+        "name": "deployment",
+        "label": "ArmoniK deployment",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${datasource}"
+        },
+        "query": {
+          "query": "label_values(armonik_fr_deployment)",
+          "refId": "StandardVariableQuery"
+        },
+        "refresh": 2,
+        "includeAll": true,
+        "allValue": ".*",
+        "multi": true,
+        "current": {
+          "selected": true,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "options": [],
         "regex": "",
-        "skipUrlSync": false,
-        "type": "datasource"
+        "sort": 1,
+        "hide": 0,
+        "definition": "label_values(armonik_fr_deployment)"
       },
       {
         "current": {
@@ -2036,9 +2053,9 @@
         },
         "datasource": {
           "type": "prometheus",
-          "uid": "${DS_PROMETHEUS}"
+          "uid": "${datasource}"
         },
-        "definition": "label_values(kubernetes_pod_name)",
+        "definition": "label_values(TaskHandler_AcquireTask_milliseconds_count{armonik_fr_deployment=~\"$deployment\"}, pod)",
         "hide": 0,
         "includeAll": true,
         "label": "Pod Name",
@@ -2047,11 +2064,11 @@
         "options": [],
         "query": {
           "qryType": 1,
-          "query": "label_values(kubernetes_pod_name)",
+          "query": "label_values(TaskHandler_AcquireTask_milliseconds_count{armonik_fr_deployment=~\"$deployment\"}, pod)",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,
-        "regex": "/compute/",
+        "regex": "",
         "skipUrlSync": false,
         "sort": 0,
         "type": "query"

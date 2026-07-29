@@ -32,6 +32,7 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/component: control-plane
+        armonik.fr/deployment: {{ include "armonik.conf.source" . | quote }}
         {{- include "armonik.selectorLabels" . | nindent 8 }}
     spec:
       containers:

@@ -18,7 +18,15 @@ spec:
     matchLabels:
       app.kubernetes.io/component: control-plane
       {{- include "armonik.selectorLabels" . | nindent 6 }}
+  {{/* Release discriminator, matching the metrics-exporter ServiceMonitor and compute-plane PodMonitor. */}}
+  podTargetLabels:
+    - app.kubernetes.io/instance
+    - armonik.fr/deployment
   podMetricsEndpoints:
     - port: metrics-port
       path: /metrics
+      {{/* Legacy job name for the bundled Grafana dashboards (releases stay distinct via namespace/pod). */}}
+      relabelings:
+        - targetLabel: job
+          replacement: metrics-control-plane
 {{- end }}

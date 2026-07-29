@@ -19,7 +19,17 @@ spec:
     matchLabels:
       app.kubernetes.io/component: metrics-exporter
       {{- include "armonik.selectorLabels" . | nindent 6 }}
+  {{/* Carry the release onto the series so a shared Prometheus keeps per-release metrics distinct
+       (job stays the stable role name; app_kubernetes_io_instance identifies the release). */}}
+  targetLabels:
+    - app.kubernetes.io/instance
+    - armonik.fr/deployment
   endpoints:
     - port: {{ .Values.metricsExporter.service.name }}
       path: /metrics
+      {{/* Force the legacy job name so the bundled Grafana dashboards match; releases are still
+           distinguishable by the namespace/pod labels the operator adds. */}}
+      relabelings:
+        - targetLabel: job
+          replacement: metrics-exporter
 {{- end }}

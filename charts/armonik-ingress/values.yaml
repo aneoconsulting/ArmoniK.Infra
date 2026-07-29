@@ -166,3 +166,24 @@ httpRoute:
 # HEALTHCHECKPOLICY
 healthCheckPolicy:
   enabled: false
+
+
+networkPolicies:
+  dns:
+    enabled: false
+    podSelector: {}
+    namespace: kube-system
+    labels:
+      k8s-app: kube-dns
+    ports:
+      - protocol: UDP
+        port: 53
+      - protocol: TCP
+        port: 53
+
+  healthCheck:
+    enabled: false
+    podSelector: {}
+    from: []
+    ports: []
+

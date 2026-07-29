@@ -1,5 +1,5 @@
-{{- if .Values.loadBalancer.enabled }}
 {{- $lb := .Values.loadBalancer }}
+{{- if $lb.enabled }}
 {{- $clusters := dict }}
 {{- range $name, $conf := $lb.clusters }}
   {{- $c := dict }}

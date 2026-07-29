@@ -33,7 +33,7 @@ Kubernetes: `>=v1.25.0-0`
 | adminGui.tolerations[0].operator | string | `"Equal"` |  |
 | adminGui.tolerations[0].value | string | `"control-plane"` |  |
 | affinity | object | `{}` |  |
-| global.environment.description | string | `"Armonik environment"` |  |
+| global.environment.description | string | `"ArmoniK environment"` |  |
 | global.environment.name | string | `"local"` |  |
 | global.imagePullSecrets | list | `[]` |  |
 | global.imageRegistry | string | `""` |  |

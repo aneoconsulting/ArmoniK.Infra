@@ -35,8 +35,11 @@ nothing to run them, so an accepted submission is NOT proof that a worker exists
 {{- end }}
 **********************************************************
 
-{{- if and (not (index .Values "control-plane").rbac.userCertificates) (index .Values "control-plane").rbac.authentication.required }}
-Authentication in ArmoniK is enabled{{ if (index .Values "control-plane").rbac.createBuiltinRoles }}, default roles "Submitter" and "Monitoring" were created{{ end }}.
+{{- $cp := index .Values "control-plane" | default dict }}
+{{- $cpRbac := $cp.rbac | default dict }}
+{{- $cpAuth := $cpRbac.authentication | default dict }}
+{{- if and (not $cpRbac.userCertificates) $cpAuth.required }}
+Authentication in ArmoniK is enabled{{ if $cpRbac.createBuiltinRoles }}, default roles "Submitter" and "Monitoring" were created{{ end }}.
 Since authentication inside ArmoniK in enabled, you must apply the following steps to be able to query your ArmoniK cluster :
 
   1. Make sure your users hold a x509 certificate
@@ -47,7 +50,7 @@ Since authentication inside ArmoniK in enabled, you must apply the following ste
 init:
   enabled: true
   rbac:
-{{- if not (index .Values "control-plane").rbac.createBuiltinRoles }}
+{{- if not $cpRbac.createBuiltinRoles }}
     roles:
       <Role1>: [<Permission1>, <PermissionN>]
       <Role2>: [<Permission1>, <PermissionN>]
@@ -99,7 +102,7 @@ To add a standalone control-plane (with optional external partitions):
       {{- if ne $mountPath "/mounts" }}
        --set conf.mountPath={{ $mountPath }} \
       {{- end }}
-      {{- if (index .Values "control-plane").rbac.authentication.required }}
+      {{- if $cpAuth.required }}
        -f <your-authentication-data>.yaml \
       {{- end }}
        [-f <your-control-plane>.yaml]

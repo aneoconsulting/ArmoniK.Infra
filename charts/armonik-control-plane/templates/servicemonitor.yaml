@@ -1,5 +1,7 @@
 {{- $ops := include "armonik.operators" $ | fromYaml }}
-{{- if and .Values.metricsExporter.enabled $ops.prometheusOperator.available }}
+{{- $me := .Values.metricsExporter | default dict }}
+{{- $svc := $me.service | default dict }}
+{{- if and $me.enabled $ops.prometheusOperator.available }}
 {{/* First-party ServiceMonitor for the control-plane metrics-exporter (ArmoniK app metrics, incl.
      armonik_<partition>_tasks_queued). Rendered only when the prometheus-operator CRDs are present;
      the shared cluster Prometheus selects it across namespaces. */}}
@@ -25,7 +27,7 @@ spec:
     - app.kubernetes.io/instance
     - armonik.fr/deployment
   endpoints:
-    - port: {{ .Values.metricsExporter.service.name }}
+    - port: {{ $svc.name }}
       path: /metrics
       {{/* Force the legacy job name so the bundled Grafana dashboards match; releases are still
            distinguishable by the namespace/pod labels the operator adds. */}}

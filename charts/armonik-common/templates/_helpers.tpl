@@ -84,5 +84,5 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- define "armonik.clusterDomain" -}}
   {{- $global := .Values.global | default dict -}}
   {{- $tls := .Values.tls | default dict -}}
-  {{- $tls.clusterDomain | default .Values.clusterDomain | default $global.clusterDomain | default "cluster.local" -}}
+  {{- coalesce $tls.clusterDomain .Values.clusterDomain $global.clusterDomain "cluster.local" -}}
 {{- end -}}

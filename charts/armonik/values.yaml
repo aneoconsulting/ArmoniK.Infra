@@ -611,3 +611,72 @@ dependencies:
     projectId: ""  # required when pubsub.enabled
     prefix: ""
     kmsKeyName: ""
+
+# Network policies
+networkPolicies:
+  mongodb:
+    operator:
+      enabled: false
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/name: mongodb-operator
+
+      ingress:
+        from:
+          - podSelector:
+              matchLabels:
+                app.kubernetes.io/name: percona-server-mongodb
+
+      egress:
+        to:
+          - podSelector:
+              matchLabels:
+                app.kubernetes.io/name: percona-server-mongodb
+          - podSelector:
+              matchLabels:
+                app.kubernetes.io/name: cert-manager
+          - namespaceSelector:
+              matchLabels:
+                kubernetes.io/metadata.name: kube-system
+            podSelector:
+              matchLabels:
+                k8s-app: kube-dns
+        ports:
+          - protocol: TCP
+            port: 27017
+          - protocol: TCP
+            port: 53
+          - protocol: UDP
+            port: 53
+
+    server:
+      enabled: false
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/name: percona-server-mongodb
+
+      ingress:
+        from:
+          - podSelector:
+              matchLabels:
+                app.kubernetes.io/name: mongodb-operator
+          - podSelector:
+              matchLabels:
+                app.kubernetes.io/name: control-plane
+
+      egress:
+        to:
+          - podSelector:
+              matchLabels:
+                app.kubernetes.io/name: mongodb-operator
+          - namespaceSelector:
+              matchLabels:
+                kubernetes.io/metadata.name: kube-system
+            podSelector:
+              matchLabels:
+                k8s-app: kube-dns
+        ports:
+          - protocol: TCP
+            port: 53
+          - protocol: UDP
+            port: 53

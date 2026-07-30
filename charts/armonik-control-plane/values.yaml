@@ -192,7 +192,7 @@ init:
       - secret: '{{ list "init" . | include "armonik.conf.mountSecretName" }}'
 
 networkPolicy:
-  enabled: true
+  enabled: false
 
   podSelector:
     matchLabels:

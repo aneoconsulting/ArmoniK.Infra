@@ -21,7 +21,7 @@ spec:
                 {{- toYaml .Values.networkPolicy.ingress.computePlaneLabels | nindent 16 }}
         - namespaceSelector:
             matchLabels:
-              kubernetes.io/metadata.name: {{ .Values.global.namespaces.ingress | default (include "armonik.namespace" .) }}
+              kubernetes.io/metadata.name: {{ .Values.networkPolicy.ingress.namespace | default (include "armonik.namespace" .) }}
           podSelector:
             matchLabels:
               {{- toYaml .Values.networkPolicy.ingress.ingressLabels | nindent 14 }}

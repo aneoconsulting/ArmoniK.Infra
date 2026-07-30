@@ -648,6 +648,9 @@ networkPolicies:
           - podSelector:
               matchLabels:
                 app.kubernetes.io/name: control-plane
+          - podSelector:
+              matchLabels:
+                app.kubernetes.io/name: compute-plane
 
       egress:
         to:

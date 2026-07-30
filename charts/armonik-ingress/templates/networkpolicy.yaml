@@ -1,25 +1,20 @@
-{{- if (list .Values "networkPolicies" "dns" "enabled" | include "armonik.utils.index" | default false) }}
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: {{ include "armonik.fullname" . }}-kube-dns-egress
-  namespace: {{ .Values.namespace | default (include "armonik.namespace" .) | quote }}
-  labels:
-    app.kubernetes.io/component: ingress
-    {{- include "armonik.labels" . | nindent 4 }}
-spec:
-  podSelector:
-    {{- toYaml .Values.networkPolicies.dns.podSelector | nindent 4 }}
-  policyTypes:
-    - Egress
-  egress:
-    - to:
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: {{ .Values.networkPolicies.dns.namespace }}
-          podSelector:
-            matchLabels:
-              {{- toYaml .Values.networkPolicies.dns.labels | nindent 14 }}
-      ports:
-        {{- toYaml .Values.networkPolicies.dns.ports | nindent 8 }}
+{{- $ingressRules := list -}}
+{{- if .Values.networkPolicy.ingress.healthCheck.enabled }}
+  {{- $ingressRules = append $ingressRules (dict
+        "from" .Values.networkPolicy.ingress.healthCheck.from
+        "ports" .Values.networkPolicy.ingress.healthCheck.ports) }}
 {{- end }}
+
+{{- $egressRules := list -}}
+{{- if .Values.networkPolicy.egress.dns.enabled }}
+  {{- $egressRules = append $egressRules (include "armonik.netpol.dnsRule" .Values.networkPolicy.egress.dns | fromYaml) }}
+{{- end }}
+
+{{- $cfg := dict
+      "enabled" .Values.networkPolicy.enabled
+      "podSelector" .Values.networkPolicy.podSelector
+      "policyTypes" (list "Ingress" "Egress")
+      "ingress" (dict "rules" $ingressRules "extraRules" (.Values.networkPolicy.ingress.extraRules | default list))
+      "egress" (dict "rules" $egressRules "extraRules" (.Values.networkPolicy.egress.extraRules | default list)) -}}
+
+{{ include "armonik.netpol.render" (dict "context" . "config" $cfg "component" "ingress") }}

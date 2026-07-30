@@ -39,6 +39,7 @@ service:
 clusterDomain: ""
 
 tls:
+  enabled: false
   certManager:
     enabled: true
     addInjectorAnnotations: true

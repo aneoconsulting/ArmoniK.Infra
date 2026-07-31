@@ -106,3 +106,56 @@ To add a standalone control-plane (with optional external partitions):
        -f <your-authentication-data>.yaml \
       {{- end }}
        [-f <your-control-plane>.yaml]
+**********************************************************
+UNINSTALLING (full procedure and recovery steps: charts/uninstall.md)
+
+{{- /* Operators installed BY this release render their CRs as post-install hooks (the CRD does not
+       exist yet when the main manifest is applied). Helm does not track hook resources, so those CRs
+       outlive `helm uninstall` and wedge the CRD deletion. Types listed only when hooked. */}}
+{{- $ops := include "armonik.operators" $ | fromYaml }}
+{{- $drain := list }}
+{{- if $ops.keda.deploy }}{{ $drain = append $drain "scaledobjects.keda.sh" }}{{ end }}
+{{- if $ops.externalSecrets.deploy }}{{ $drain = concat $drain (list "externalsecrets.external-secrets.io" "secretstores.external-secrets.io") }}{{ end }}
+{{- if $ops.certManager.deploy }}{{ $drain = concat $drain (list "certificates.cert-manager.io" "issuers.cert-manager.io") }}{{ end }}
+{{- if $drain }}
+This release installs its own operators, so the custom resources below are applied as Helm hooks, and
+Helm does NOT delete hook resources on uninstall. Delete them FIRST, while the operators are still
+running, otherwise their CRDs hang in Terminating with orphaned resources no controller can finalize:
+
+     for t in {{ join " " $drain }}; do
+       kubectl delete "$t" -n {{ .Release.Namespace }} \
+         -l app.kubernetes.io/instance={{ .Release.Name }} --ignore-not-found
+     done
+
+     helm uninstall {{ .Release.Name }} -n {{ .Release.Namespace }}
+
+Deleting the ExternalSecrets also removes the conf Secrets they own; deleting the Certificates removes
+the TLS Secrets they own.
+{{- else }}
+Every operator used here comes from another release, so no custom resource is applied as a Helm hook
+and a plain uninstall is complete:
+
+     helm uninstall {{ .Release.Name }} -n {{ .Release.Namespace }}
+
+Uninstall the operators release only AFTER this one: its CRDs are cluster-scoped, and removing them
+cascade-deletes the custom resources of every ArmoniK release in the cluster.
+{{- end }}
+
+{{- $managedAny := false }}
+{{- range $op, $cfg := $ops }}{{ if $cfg.deploy }}{{ $managedAny = true }}{{ end }}{{ end }}
+Left behind on purpose: the MongoDB PVCs (mongodb.finalizers carries no percona.com/delete-psmdb-pvc)
+and the Secrets the operators generate themselves, which no release owns.
+{{- if $managedAny }}
+{{- if or $ops.mongodbOperator.deploy $ops.prometheusOperator.deploy }}
+Also the CRDs Helm never manages: psmdb-operator and kube-prometheus-stack ship them in an untemplated
+crds/ directory, so they are neither upgraded nor deleted by any release.
+{{- end }}
+{{- if $ops.certManager.deploy }}
+The cert-manager CRDs, in contrast, DO go away with this release (operators.cert-manager.crds.keep is
+false), and that deletes every Certificate and Issuer in the cluster, ArmoniK's or not.
+{{- end }}
+{{- else }}
+The operator CRDs belong to the operators release and are untouched by this one.
+{{- end }}
+A reinstall reuses the old MongoDB volume, so partitions from a previous release stay registered in the
+database.

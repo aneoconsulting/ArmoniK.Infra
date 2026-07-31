@@ -62,7 +62,16 @@ external-secrets: {}
 # cert-manager (https://charts.jetstack.io). fullnameOverride keeps the webhook Deployment named
 # "cert-manager-webhook" so the ingress cert wait-Job can find it.
 cert-manager:
-  installCRDs: true
+  crds:
+    # Replaces the deprecated installCRDs, which is defined as crds.enabled=true + crds.keep=true.
+    enabled: true
+    # keep=false (chart default is true) makes teardown symmetric: `helm uninstall` removes the six
+    # cert-manager.io CRDs it created instead of leaving them behind for ever, which is what an
+    # install-once operators release should do (see charts/uninstall.md).
+    # WARNING: deleting a CRD deletes every custom resource of that type CLUSTER-WIDE. On a cluster
+    # where workloads outside ArmoniK own cert-manager Certificates/Issuers, either set keep=true
+    # here or do not let this release own cert-manager (global.armonik.operators.certManager.deploy=false).
+    keep: false
   fullnameOverride: "cert-manager"
   prometheus:
     servicemonitor:

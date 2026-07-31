@@ -272,7 +272,7 @@ dependencies:
         # Beware `helm upgrade --reuse-values`: it replays the old coalesced values, where the grafana
         # chart's own `searchNamespace: null` beats this default. Pass values explicitly.
         searchNamespace:
-          - '{{ include "armonik.monitoring.dashboardNamespaces" . }}'
+          - '{{ include "armonik.monitoring.dashboardNamespaces.default" . }}'
       datasources:
         enabled: true
 

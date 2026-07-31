@@ -217,7 +217,7 @@ partitionCommon:
       # cannot aggregate and has no absent-as-zero, so labeled metrics would need the PromQL opt-in.
       - type: metrics-api
         metadata:
-          url: "{{ .Values.metricsExporterUrl }}"
+          url: '{{ include "armonik.monitoring.metricsExporterUrl" . }}'
           format: prometheus
           valueLocation: 'armonik_{{ .Values.partitionName }}_tasks_queued'
           targetValue: "2"
@@ -228,8 +228,8 @@ partitionCommon:
       # correct:
       #   - type: prometheus
       #     metadata:
-      #       serverAddress: <global.armonik.monitoring.prometheusUrl>
-      #       query: 'sum(armonik_<partition>_tasks_queued{namespace="<release-namespace>"})'
+      #       serverAddress: '{{ include "armonik.monitoring.prometheusUrl" . }}'
+      #       query: 'sum(armonik_{{ .Values.partitionName }}_tasks_queued{namespace="{{ .Release.Namespace }}"})'
       #       threshold: "2"
   replicas: 1
   # Shared by agent + worker (no credentials): log + compute layers.

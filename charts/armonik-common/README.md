@@ -18,8 +18,8 @@ Kubernetes: `>=v1.25.0-0`
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| global.armonik.monitoring.metricsExporterUrl | string | `"{{ include \"armonik.monitoring.metricsExporterUrl\" . }}"` | Control-plane metrics-exporter `/metrics` scraped by KEDA (default scaling path). Defaults to the `armonik.monitoring.metricsExporterUrl` derivation off `conf.source`; a literal URL replaces it. |
-| global.armonik.monitoring.prometheusUrl | string | `"{{ include \"armonik.monitoring.prometheusUrl\" . }}"` | Prometheus for the Grafana datasource and PromQL KEDA triggers. Defaults to the `armonik.monitoring.prometheusUrl` derivation; a literal URL replaces it. |
+| global.armonik.monitoring.metricsExporterUrl | string | `"{{ include \"armonik.monitoring.metricsExporterUrl.default\" . }}"` | Control-plane metrics-exporter `/metrics` scraped by KEDA (default scaling path). Defaults to the `armonik.monitoring.metricsExporterUrl.default` derivation off `conf.source`; a literal URL replaces it. |
+| global.armonik.monitoring.prometheusUrl | string | `"{{ include \"armonik.monitoring.prometheusUrl.default\" . }}"` | Prometheus for the Grafana datasource and PromQL KEDA triggers. Defaults to the `armonik.monitoring.prometheusUrl.default` derivation; a literal URL replaces it. |
 | global.armonik.operators.certManager.available | bool | `true` |  |
 | global.armonik.operators.certManager.deploy | bool | `false` |  |
 | global.armonik.operators.certManager.namespace | string | `"{{ .Values.global.armonik.operators.certManager.deploy | ternary .Release.Namespace \"\" }}"` |  |

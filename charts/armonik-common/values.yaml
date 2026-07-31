@@ -34,9 +34,13 @@ global:
       prometheusOperator:
         deploy: false
         available: true
-    # `namespace` belongs to this subtree too but is declared by the umbrella instead, where users set it;
-    # absent it means the release's own namespace, which is what a standalone chart wants anyway.
     monitoring:
+      # -- Namespace of the `armonik-operators` release (the shared kube-prometheus-stack), defaulting to
+      # this release's own. Layered installs must set it: nothing here can discover where the cluster
+      # monitoring lives, and it drives `prometheusUrl` plus the Grafana dashboard search namespaces.
+      # Resolving empty is a render error; so is leaving it at this release's namespace while
+      # `operators.prometheusOperator.deploy=false`, which would mean Prometheus is elsewhere.
+      namespace: '{{ .Release.Namespace }}'
       # -- Prometheus for the Grafana datasource and PromQL KEDA triggers. Defaults to the
       # `armonik.monitoring.prometheusUrl` derivation; a literal URL replaces it.
       prometheusUrl: '{{ include "armonik.monitoring.prometheusUrl" . }}'

@@ -142,7 +142,6 @@ Kubernetes: `>=v1.25.0-0`
 | dependencies.seq.image.pullPolicy | string | `"IfNotPresent"` |  |
 | dependencies.seq.persistence.enabled | bool | `false` |  |
 | global.armonik.clusterDomain | string | `""` |  |
-| global.armonik.monitoring.namespace | string | `""` | Namespace of the `armonik-operators` release (the shared kube-prometheus-stack). Empty = this release's namespace. Required for layered installs: it drives both `prometheusUrl` and the Grafana dashboard sidecar's search namespaces. Rendering fails when `prometheusOperator.deploy=false` and neither this nor `prometheusUrl` is set, instead of emitting an unresolvable datasource. |
 | global.armonik.mountPath | string | `"/mounts"` |  |
 | global.armonik.operators.certManager.deploy | bool | `true` |  |
 | global.armonik.operators.externalSecrets.deploy | bool | `true` |  |

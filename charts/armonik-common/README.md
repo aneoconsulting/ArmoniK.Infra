@@ -19,6 +19,7 @@ Kubernetes: `>=v1.25.0-0`
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | global.armonik.monitoring.metricsExporterUrl | string | `"{{ include \"armonik.monitoring.metricsExporterUrl\" . }}"` | Control-plane metrics-exporter `/metrics` scraped by KEDA (default scaling path). Defaults to the `armonik.monitoring.metricsExporterUrl` derivation off `conf.source`; a literal URL replaces it. |
+| global.armonik.monitoring.namespace | string | `"{{ .Release.Namespace }}"` | Namespace of the `armonik-operators` release (the shared kube-prometheus-stack), defaulting to this release's own. Layered installs must set it: nothing here can discover where the cluster monitoring lives, and it drives `prometheusUrl` plus the Grafana dashboard search namespaces. Resolving empty is a render error; so is leaving it at this release's namespace while `operators.prometheusOperator.deploy=false`, which would mean Prometheus is elsewhere. |
 | global.armonik.monitoring.prometheusUrl | string | `"{{ include \"armonik.monitoring.prometheusUrl\" . }}"` | Prometheus for the Grafana datasource and PromQL KEDA triggers. Defaults to the `armonik.monitoring.prometheusUrl` derivation; a literal URL replaces it. |
 | global.armonik.operators.certManager.available | bool | `true` |  |
 | global.armonik.operators.certManager.deploy | bool | `false` |  |

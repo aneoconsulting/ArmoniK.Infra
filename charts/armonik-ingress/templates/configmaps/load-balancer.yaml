@@ -1,0 +1,44 @@
+{{- $lb := .Values.loadBalancer }}
+{{- if $lb.enabled }}
+{{- $clusters := dict }}
+{{- range $name, $conf := $lb.clusters }}
+  {{- $c := dict }}
+  {{- range $key, $value := $conf }}
+    {{- if not (has $key (list "grafanaUrl" "seqUrl" "s3Urls" "certPem" "keyPem" "caCert" "fallback")) }}
+      {{- if and (not (kindIs "invalid" $value)) (ne ($value | toString) "") }}
+        {{- $_ := set $c (snakecase $key) $value }}
+      {{- end }}
+    {{- end }}
+  {{- end }}
+  {{- if and $conf.certPem $conf.keyPem }}
+    {{- $_ := set $c "cert_pem" (printf "/cluster-certs/%s.cert" $name) }}
+    {{- $_ := set $c "key_pem" (printf "/cluster-certs/%s.key" $name) }}
+  {{- end }}
+  {{- if $conf.caCert }}
+    {{- $_ := set $c "ca_cert" (printf "/cluster-certs/%s.ca" $name) }}
+  {{- end }}
+  {{- $fallback := $conf.fallback }}
+  {{- if kindIs "invalid" $fallback }}
+    {{- $fallback = eq $name ($lb.defaultCluster | default "") }}
+  {{- end }}
+  {{- $_ := set $c "fallback" $fallback }}
+  {{- $_ := set $clusters $name $c }}
+{{- end }}
+{{- $lbConf := dict "clusters" $clusters }}
+{{- range $key, $value := $lb.conf }}
+  {{- if and (not (kindIs "invalid" $value)) (ne ($value | toString) "") }}
+    {{- $_ := set $lbConf (snakecase $key) $value }}
+  {{- end }}
+{{- end }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "armonik.fullname" . | printf "%s-load-balancer-conf" | trunc 63 | trimSuffix "-" }}
+  namespace: {{ include "armonik.namespace" . }}
+  labels:
+    app.kubernetes.io/component: load-balancer
+    {{- include "armonik.labels" . | nindent 4 }}
+data:
+  lb.yml: |-
+    {{- $lbConf | toPrettyJson | nindent 4 }}
+{{- end }}

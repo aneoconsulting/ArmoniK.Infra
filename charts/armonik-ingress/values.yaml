@@ -35,8 +35,11 @@ service:
   type: LoadBalancer
   annotations: {}
 
+# DNS domain of the cluster
+clusterDomain: ""
+
 tls:
-  clusterDomain: cluster.local
+  enabled: false
   certManager:
     enabled: true
     addInjectorAnnotations: true
@@ -86,6 +89,32 @@ volumes:
   #mongodbSecretCrt: mongodb-ca
   nginxConfigMap: armonik-ingress-conf
   nginxStaticConfigMap: armonik-ingress-static
+
+# Load Balancer (multi-cluster gRPC load balancer)
+loadBalancer:
+  enabled: false
+  clusters: {}
+  defaultCluster: ""
+  image:
+    registry:
+    repository: dockerhubaneo
+    name: armonik_load_balancer
+    tag: "0.3.1"
+    pullPolicy: IfNotPresent
+  replicas: 1
+  conf:
+    listenPort: 8081
+  service:
+    type: HeadLess
+    port: 8080
+    annotations: {}
+  resources: {}
+
+  extraEnv: []
+  extraEnvFrom: []
+  nodeSelector: {}
+  tolerations: []
+  annotations: {}
 
 ###########################################################
 # Admin GUI

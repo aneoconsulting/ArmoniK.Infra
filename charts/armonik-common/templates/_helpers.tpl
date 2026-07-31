@@ -80,3 +80,9 @@ Selector labels
 app.kubernetes.io/name: {{ include "armonik.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
+
+{{- define "armonik.clusterDomain" -}}
+  {{- $global := .Values.global | default dict -}}
+  {{- $tls := .Values.tls | default dict -}}
+  {{- coalesce $tls.clusterDomain .Values.clusterDomain $global.clusterDomain "cluster.local" -}}
+{{- end -}}

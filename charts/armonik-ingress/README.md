@@ -24,6 +24,7 @@ Kubernetes: `>=v1.25.0-0`
 |-----|------|---------|-------------|
 | affinity | object | `{}` |  |
 | annotations | object | `{}` |  |
+| clusterDomain | string | `""` |  |
 | gateway.allowedRoutes.namespaces.from | string | `"Same"` |  |
 | gateway.enabled | bool | `false` |  |
 | gateway.tls.enabled | bool | `false` |  |
@@ -53,6 +54,25 @@ Kubernetes: `>=v1.25.0-0`
 | image.repository | string | `"nginxinc"` |  |
 | image.tag | string | `"1.27.4-alpine-slim"` |  |
 | imagePullSecrets | list | `[]` |  |
+| loadBalancer.annotations | object | `{}` |  |
+| loadBalancer.clusters | object | `{}` |  |
+| loadBalancer.conf.listenPort | int | `8081` |  |
+| loadBalancer.defaultCluster | string | `""` |  |
+| loadBalancer.enabled | bool | `false` |  |
+| loadBalancer.extraEnv | list | `[]` |  |
+| loadBalancer.extraEnvFrom | list | `[]` |  |
+| loadBalancer.image.name | string | `"armonik_load_balancer"` |  |
+| loadBalancer.image.pullPolicy | string | `"IfNotPresent"` |  |
+| loadBalancer.image.registry | string | `nil` |  |
+| loadBalancer.image.repository | string | `"dockerhubaneo"` |  |
+| loadBalancer.image.tag | string | `"0.3.1"` |  |
+| loadBalancer.nodeSelector | object | `{}` |  |
+| loadBalancer.replicas | int | `1` |  |
+| loadBalancer.resources | object | `{}` |  |
+| loadBalancer.service.annotations | object | `{}` |  |
+| loadBalancer.service.port | int | `8080` |  |
+| loadBalancer.service.type | string | `"HeadLess"` |  |
+| loadBalancer.tolerations | list | `[]` |  |
 | mtls.certificationAuthority.pem | string | `""` |  |
 | mtls.enabled | bool | `false` |  |
 | mtls.trustedCommonNames | list | `[]` |  |
@@ -91,9 +111,9 @@ Kubernetes: `>=v1.25.0-0`
 | tls.certManager.waitJob.image.repository | string | `"alpine/k8s"` |  |
 | tls.certManager.waitJob.image.tag | string | `"1.31.0"` |  |
 | tls.certManager.waitJob.timeout | string | `"300s"` |  |
-| tls.clusterDomain | string | `"cluster.local"` |  |
 | tls.customCert.certPem | string | `""` |  |
 | tls.customCert.keyPem | string | `""` |  |
+| tls.enabled | bool | `false` |  |
 | tls.ssl.certificatePath | string | `"/ingress/tls.crt"` |  |
 | tls.ssl.cipherSuites | string | `"TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256"` |  |
 | tls.ssl.ciphers | string | `"EECDH+AESGCM:EECDH+AES256"` |  |

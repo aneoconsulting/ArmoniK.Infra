@@ -17,7 +17,7 @@ value (conf.source) makes this the one helper here that needs one of OUR charts 
 */}}
 {{- define "armonik.monitoring.metricsExporterUrl" -}}
   {{- $src := include "armonik.conf.source" . -}}
-  {{- $domain := list .Values "global" "armonik" "clusterDomain" | include "armonik.utils.index" -}}
+  {{- $domain := list .Values "global" "clusterDomain" | include "armonik.utils.index" -}}
   {{- printf "http://%s-control-plane-metrics-exporter.%s.svc%s:9419/metrics" $src .Release.Namespace (ternary "" (printf ".%s" $domain) (empty $domain)) -}}
 {{- end -}}
 
@@ -60,6 +60,6 @@ and nothing here knows where.
   {{- if and (not (include "armonik.operators" . | fromYaml).prometheusOperator.deploy) (eq $ns .Release.Namespace) -}}
     {{- fail (printf "global.armonik.monitoring: this release does not install kube-prometheus-stack (global.armonik.operators.prometheusOperator.deploy=false), so the shared Prometheus is not in namespace %q and its location is unknown. Set global.armonik.monitoring.namespace to the namespace of the armonik-operators release (which also points the Grafana sidecar at the kps dashboards), or global.armonik.monitoring.prometheusUrl to a full URL." .Release.Namespace) -}}
   {{- end -}}
-  {{- $domain := list .Values "global" "armonik" "clusterDomain" | include "armonik.utils.index" -}}
+  {{- $domain := list .Values "global" "clusterDomain" | include "armonik.utils.index" -}}
   {{- printf "http://prometheus-prometheus.%s.svc%s:9090" $ns (ternary "" (printf ".%s" $domain) (empty $domain)) -}}
 {{- end -}}

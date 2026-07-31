@@ -12,7 +12,7 @@ metadata:
 spec:
   namespaceSelector:
     matchNames:
-      - {{ include "armonik.namespace" . }}
+      - {{ include "armonik.namespace" . | quote }}
   selector:
     matchLabels:
       app.kubernetes.io/component: control-plane

@@ -22,23 +22,23 @@ global:
       externalSecrets:
         deploy: false
         available: true
-        namespace: '{{ .Values.global.armonik.operators.externalSecrets.deploy | ternary .Release.Namespace "" }}'
+        namespace: '{{ .Values.global.armonik.operators.externalSecrets.deploy | empty | ternary "" .Release.Namespace }}'
       keda:
         deploy: false
         available: true
-        namespace: '{{ .Values.global.armonik.operators.keda.deploy | ternary .Release.Namespace "" }}'
+        namespace: '{{ .Values.global.armonik.operators.keda.deploy | empty | ternary "" .Release.Namespace }}'
       certManager:
         deploy: false
         available: true
-        namespace: '{{ .Values.global.armonik.operators.certManager.deploy | ternary .Release.Namespace "" }}'
+        namespace: '{{ .Values.global.armonik.operators.certManager.deploy | empty | ternary "" .Release.Namespace }}'
       mongodbOperator:
         deploy: false
         available: true
-        namespace: '{{ .Values.global.armonik.operators.mongodbOperator.deploy | ternary .Release.Namespace "" }}'
+        namespace: '{{ .Values.global.armonik.operators.mongodbOperator.deploy | empty | ternary "" .Release.Namespace }}'
       prometheusOperator:
         deploy: false
         available: true
-        namespace: '{{ .Values.global.armonik.operators.prometheusOperator.deploy | ternary .Release.Namespace "" }}'
+        namespace: '{{ .Values.global.armonik.operators.prometheusOperator.deploy | empty | ternary "" .Release.Namespace }}'
     monitoring:
       # -- Prometheus for the Grafana datasource and PromQL KEDA triggers. Defaults to the
       # `armonik.monitoring.prometheusUrl.default` derivation; a literal URL replaces it.

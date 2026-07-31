@@ -12,7 +12,11 @@ Resolves metricsExporterUrl. Its default reads chart-level conf.source, so this 
 */}}
 {{- define "armonik.monitoring.metricsExporterUrl" -}}
   {{- $raw := list .Values "global" "armonik" "monitoring" "metricsExporterUrl" | include "armonik.utils.index" -}}
-  {{- tpl $raw . -}}
+  {{- $url := tpl $raw . -}}
+  {{- if empty $url -}}
+    {{- fail "global.armonik.monitoring.metricsExporterUrl resolved empty: set it, or check that this render context carries .Values.global (a fabricated one, like the partition merge, must pass the full .Values)." -}}
+  {{- end -}}
+  {{- $url -}}
 {{- end -}}
 
 {{/*
@@ -32,7 +36,11 @@ Resolves prometheusUrl: the Grafana datasource, and a PromQL KEDA trigger's endp
 */}}
 {{- define "armonik.monitoring.prometheusUrl" -}}
   {{- $raw := list .Values "global" "armonik" "monitoring" "prometheusUrl" | include "armonik.utils.index" -}}
-  {{- tpl $raw . -}}
+  {{- $url := tpl $raw . -}}
+  {{- if empty $url -}}
+    {{- fail "global.armonik.monitoring.prometheusUrl resolved empty: set it, or check that this render context carries .Values.global (a fabricated one, like the partition merge, must pass the full .Values)." -}}
+  {{- end -}}
+  {{- $url -}}
 {{- end -}}
 
 {{/*

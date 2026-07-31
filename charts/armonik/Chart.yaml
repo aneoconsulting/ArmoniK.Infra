@@ -21,6 +21,10 @@ dependencies:
   - name: armonik-common
     version: 0.1.x
     repository: file://../armonik-common
+    # Cross-chart global.armonik defaults, defined once in armonik-common/values.yaml.
+    import-values:
+      - child: global.armonik
+        parent: global.armonik
   - name: armonik-operators
     version: 0.1.x
     repository: file://../armonik-operators

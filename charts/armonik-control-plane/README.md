@@ -39,16 +39,6 @@ Kubernetes: `>=v1.23.0-0`
 | deployment.conf.envSecret[0] | string | `"{{ list \"control\" . | include \"armonik.conf.secretName\" }}"` |  |
 | deployment.conf.mountSecret[0].secret | string | `"{{ list \"control\" . | include \"armonik.conf.mountSecretName\" }}"` |  |
 | extraPartitions | string | `nil` |  |
-| global.armonik.operators.certManager.available | bool | `true` |  |
-| global.armonik.operators.certManager.deploy | bool | `false` |  |
-| global.armonik.operators.externalSecrets.available | bool | `true` |  |
-| global.armonik.operators.externalSecrets.deploy | bool | `false` |  |
-| global.armonik.operators.keda.available | bool | `true` |  |
-| global.armonik.operators.keda.deploy | bool | `false` |  |
-| global.armonik.operators.mongodbOperator.available | bool | `true` |  |
-| global.armonik.operators.mongodbOperator.deploy | bool | `false` |  |
-| global.armonik.operators.prometheusOperator.available | bool | `true` |  |
-| global.armonik.operators.prometheusOperator.deploy | bool | `false` |  |
 | image.name | string | `"armonik_control"` |  |
 | image.pullPolicy | string | `"IfNotPresent"` |  |
 | image.registry | string | `""` |  |

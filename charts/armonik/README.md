@@ -141,7 +141,6 @@ Kubernetes: `>=v1.25.0-0`
 | dependencies.seq.fullnameOverride | string | `"seq"` |  |
 | dependencies.seq.image.pullPolicy | string | `"IfNotPresent"` |  |
 | dependencies.seq.persistence.enabled | bool | `false` |  |
-| global.armonik.clusterDomain | string | `""` |  |
 | global.armonik.mountPath | string | `"/mounts"` |  |
 | global.armonik.operators.certManager.deploy | bool | `true` |  |
 | global.armonik.operators.externalSecrets.deploy | bool | `true` |  |
@@ -149,8 +148,7 @@ Kubernetes: `>=v1.25.0-0`
 | global.armonik.operators.mongodbOperator.deploy | bool | `true` |  |
 | global.armonik.operators.prometheusOperator.deploy | bool | `true` |  |
 | global.clusterDomain | string | `""` |  |
-| global.environment.description | string | `"Armonik environment"` |  |
-| global.environment.name | string | `"local"` |  |
+| global.environment.description | string | `"ArmoniK environment"` |  |
 | global.image.pullPolicy | string | `"IfNotPresent"` |  |
 | global.image.registry | string | `""` |  |
 | global.imageRegistry | string | `""` |  |

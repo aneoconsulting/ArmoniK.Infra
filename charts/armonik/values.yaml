@@ -15,15 +15,12 @@ global:
     allowInsecureImages: true
   #imagePullSecrets: [{"name": "secret"}] # FOR BITNAMI IMAGES AND ARMONIK IMAGES
   environment:
-    name: "local"
-    description: "Armonik environment"
-  # DNS domain of the cluster. Defaults to "cluster.local"
+    description: "ArmoniK environment"
+  # Cluster DNS domain. Empty stops hostnames at ".svc"; callers needing an FQDN use cluster.local.
   clusterDomain: ""
   # Root dir for conf mount Secrets in pods; propagated to subcharts. env strings and volumeMounts derive from it.
   armonik:
     mountPath: /mounts
-    # Hostnames stop at ".svc" (kubelet search domains resolve it); set this to force FQDNs.
-    clusterDomain: ""
     # Operator control (semantics in armonik-common/values.yaml). All-in-one default: this release
     # installs every operator, through the armonik-operators subchart.
     operators:

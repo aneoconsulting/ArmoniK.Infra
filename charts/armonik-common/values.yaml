@@ -1,1 +1,45 @@
-# armonik-common is a library chart, so values is empty
+# armonik-common is a library chart: it renders nothing and takes no configuration. What it owns is the
+# single definition of the cross-chart `global.armonik` defaults below, which each root chart lifts with
+#
+#   import-values:
+#     - child: global.armonik
+#       parent: global.armonik
+#
+# on its armonik-common dependency, since a subchart's globals never reach its parent. Precedence holds
+# per key: these < the root chart's own values.yaml < user -f/--set. import-values copies chart-file
+# values only, which is what makes it right here (nobody configures this chart) and wrong for
+# propagating a dependency's user-set values (REVIEW.md #7).
+#
+# Only what must be identical across charts belongs here.
+global:
+  armonik:
+    # Cross-chart operator control (see charts/armonik-operators), per operator:
+    #   deploy    - THIS release installs the operator + CRDs; gates the armonik-operators subchart
+    #               conditions and the CRD-ordering hooks on the CRs we emit.
+    #   available - the CRDs exist, from here or another release -> emit CRs.
+    # Default = consume operators installed elsewhere; the umbrella overrides deploy=true.
+    operators:
+      externalSecrets:
+        deploy: false
+        available: true
+      keda:
+        deploy: false
+        available: true
+      certManager:
+        deploy: false
+        available: true
+      mongodbOperator:
+        deploy: false
+        available: true
+      prometheusOperator:
+        deploy: false
+        available: true
+    # `namespace` belongs to this subtree too but is declared by the umbrella instead, where users set it;
+    # absent it means the release's own namespace, which is what a standalone chart wants anyway.
+    monitoring:
+      # -- Prometheus for the Grafana datasource and PromQL KEDA triggers. Defaults to the
+      # `armonik.monitoring.prometheusUrl` derivation; a literal URL replaces it.
+      prometheusUrl: '{{ include "armonik.monitoring.prometheusUrl" . }}'
+      # -- Control-plane metrics-exporter `/metrics` scraped by KEDA (default scaling path). Defaults to
+      # the `armonik.monitoring.metricsExporterUrl` derivation off `conf.source`; a literal URL replaces it.
+      metricsExporterUrl: '{{ include "armonik.monitoring.metricsExporterUrl" . }}'

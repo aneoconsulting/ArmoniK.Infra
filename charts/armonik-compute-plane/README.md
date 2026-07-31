@@ -36,17 +36,6 @@ Kubernetes: `>=v1.23.0-0`
 | fluentBit.image.repository | string | `"fluent"` |  |
 | fluentBit.isDaemonSet | bool | `true` |  |
 | fullnameOverride | string | `""` |  |
-| global.armonik.monitoring.metricsExporterUrl | string | `"{{ include \"armonik.monitoring.metricsExporterUrl\" . }}"` | Control-plane metrics-exporter `/metrics` scraped by the KEDA trigger. Defaults to the `armonik.monitoring.metricsExporterUrl` derivation off `conf.source`, so a standalone plane pointed at the main release resolves that release's exporter; a literal URL replaces it. |
-| global.armonik.operators.certManager.available | bool | `true` |  |
-| global.armonik.operators.certManager.deploy | bool | `false` |  |
-| global.armonik.operators.externalSecrets.available | bool | `true` |  |
-| global.armonik.operators.externalSecrets.deploy | bool | `false` |  |
-| global.armonik.operators.keda.available | bool | `true` |  |
-| global.armonik.operators.keda.deploy | bool | `false` |  |
-| global.armonik.operators.mongodbOperator.available | bool | `true` |  |
-| global.armonik.operators.mongodbOperator.deploy | bool | `false` |  |
-| global.armonik.operators.prometheusOperator.available | bool | `true` |  |
-| global.armonik.operators.prometheusOperator.deploy | bool | `false` |  |
 | global.imageRegistry | string | `"public.ecr.aws"` |  |
 | imagePullSecrets | list | `[]` |  |
 | init.conf.envSecret[0] | string | `"{{ list \"core\" . | include \"armonik.conf.secretName\" }}"` |  |

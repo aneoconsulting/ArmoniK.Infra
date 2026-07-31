@@ -28,16 +28,6 @@ Kubernetes: `>=v1.25.0-0`
 | gateway.allowedRoutes.namespaces.from | string | `"Same"` |  |
 | gateway.enabled | bool | `false` |  |
 | gateway.tls.enabled | bool | `false` |  |
-| global.armonik.operators.certManager.available | bool | `true` |  |
-| global.armonik.operators.certManager.deploy | bool | `false` |  |
-| global.armonik.operators.externalSecrets.available | bool | `true` |  |
-| global.armonik.operators.externalSecrets.deploy | bool | `false` |  |
-| global.armonik.operators.keda.available | bool | `true` |  |
-| global.armonik.operators.keda.deploy | bool | `false` |  |
-| global.armonik.operators.mongodbOperator.available | bool | `true` |  |
-| global.armonik.operators.mongodbOperator.deploy | bool | `false` |  |
-| global.armonik.operators.prometheusOperator.available | bool | `true` |  |
-| global.armonik.operators.prometheusOperator.deploy | bool | `false` |  |
 | gui.affinity | object | `{}` |  |
 | gui.annotations | object | `{}` |  |
 | gui.image.name | string | `"armonik_admin_app"` |  |

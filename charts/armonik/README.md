@@ -99,6 +99,7 @@ Kubernetes: `>=v1.25.0-0`
 | dependencies.grafana.sidecar.dashboards.enabled | bool | `true` |  |
 | dependencies.grafana.sidecar.dashboards.folderAnnotation | string | `"grafana_dashboard_folder"` |  |
 | dependencies.grafana.sidecar.dashboards.label | string | `"grafana_dashboard"` |  |
+| dependencies.grafana.sidecar.dashboards.searchNamespace | list | `["{{ include \"armonik.monitoring.dashboardNamespaces\" . }}"]` | Namespaces the sidecar watches: this release's plus `global.armonik.monitoring.namespace`, where kps renders the standard k8s/node dashboards (the sidecar sees only its own by default; `rbac.namespaced=false` already grants the cluster-wide read). Beware `helm upgrade --reuse-values`: it replays the old coalesced values, where the grafana chart's own `searchNamespace: null` beats this default. Pass values explicitly. |
 | dependencies.grafana.sidecar.datasources.enabled | bool | `true` |  |
 | dependencies.mongodb.backup.enabled | bool | `false` |  |
 | dependencies.mongodb.enabled | bool | `true` |  |
@@ -141,8 +142,9 @@ Kubernetes: `>=v1.25.0-0`
 | dependencies.seq.image.pullPolicy | string | `"IfNotPresent"` |  |
 | dependencies.seq.persistence.enabled | bool | `false` |  |
 | global.armonik.clusterDomain | string | `""` |  |
-| global.armonik.monitoring.metricsExporterUrl | string | `""` |  |
-| global.armonik.monitoring.prometheusUrl | string | `""` |  |
+| global.armonik.monitoring.metricsExporterUrl | string | `"{{ include \"armonik.monitoring.metricsExporterUrl\" . }}"` | Control-plane metrics-exporter `/metrics` scraped by KEDA (default scaling path). Defaults to the `armonik.monitoring.metricsExporterUrl` derivation off `conf.source`; a literal URL replaces it. |
+| global.armonik.monitoring.namespace | string | `""` | Namespace of the `armonik-operators` release (the shared kube-prometheus-stack). Empty = this release's namespace. Required for layered installs: it drives both `prometheusUrl` and the Grafana dashboard sidecar's search namespaces. Rendering fails when `prometheusOperator.deploy=false` and neither this nor `prometheusUrl` is set, instead of emitting an unresolvable datasource. |
+| global.armonik.monitoring.prometheusUrl | string | `"{{ include \"armonik.monitoring.prometheusUrl\" . }}"` | Prometheus for the Grafana datasource and PromQL KEDA triggers. Defaults to the `armonik.monitoring.prometheusUrl` derivation; a literal URL replaces it. |
 | global.armonik.mountPath | string | `"/mounts"` |  |
 | global.armonik.operators.certManager.available | bool | `true` |  |
 | global.armonik.operators.certManager.deploy | bool | `true` |  |

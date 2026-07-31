@@ -1,5 +1,5 @@
 {{- $ops := include "armonik.operators" $ | fromYaml -}}
-{{- $metricsUrl := include "armonik.monitoring.metricsExporterUrl" $ -}}
+{{- $metricsUrl := tpl (list $.Values "global" "armonik" "monitoring" "metricsExporterUrl" | include "armonik.utils.index") $ -}}
 {{- if $ops.keda.available }}
 {{- range $partitionName, $config := include "armonik.compute.partitions" $ | fromYaml }}
 {{- $partition := dict -}}

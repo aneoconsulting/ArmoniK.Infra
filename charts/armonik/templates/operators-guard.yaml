@@ -1,9 +1,5 @@
-{{- /*
-Validation guard (renders nothing). Rejects the one invalid operator control combination:
-`deploy: true` with `available: false` = "this release installs the operator but nothing is allowed
-to use it". `available` is only meaningful where CRs are emitted (here, the umbrella), which is why
-this guard lives in the umbrella and not in armonik-operators.
-*/ -}}
+{{- /* Rejects deploy=true with available=false: installed but unusable. Lives in the umbrella
+       because that is where the CRs available gates are emitted. Renders nothing. */ -}}
 {{- $ops := include "armonik.operators" $ | fromYaml -}}
 {{- range $op, $cfg := $ops -}}
 {{- if and $cfg.deploy (not $cfg.available) -}}

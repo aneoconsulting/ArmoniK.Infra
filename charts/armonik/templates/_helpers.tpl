@@ -9,6 +9,5 @@ rabbitmq: {{ include "armonik.utils.index" (list .Values "dependencies" "rabbitm
 grafana: {{ include "armonik.utils.index" (list .Values "dependencies" "grafana" "enabled") | empty | not }}
 fluentBit: {{ include "armonik.utils.index" (list .Values "dependencies" "fluent-bit" "enabled") | empty | not }}
 seq: {{ include "armonik.utils.index" (list .Values "dependencies" "seq" "enabled") | empty | not }}
-{{- /* Operator availability (keda/certManager/externalSecrets/prometheusOperator/mongodbOperator) is
-       served by the armonik.operators helper reading global.armonik.operators.*, not from here. */}}
+{{- /* Operators are not listed here: see the armonik.operators helper. */}}
 {{- end }}

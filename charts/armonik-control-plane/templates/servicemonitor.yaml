@@ -2,9 +2,8 @@
 {{- $me := .Values.metricsExporter | default dict }}
 {{- $svc := $me.service | default dict }}
 {{- if and $me.enabled $ops.prometheusOperator.available }}
-{{/* First-party ServiceMonitor for the control-plane metrics-exporter (ArmoniK app metrics, incl.
-     armonik_<partition>_tasks_queued). Rendered only when the prometheus-operator CRDs are present;
-     the shared cluster Prometheus selects it across namespaces. */}}
+{{/* Metrics-exporter app metrics, incl. armonik_<partition>_tasks_queued. The shared cluster
+     Prometheus selects it across namespaces. */}}
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:

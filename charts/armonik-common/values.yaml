@@ -1,15 +1,10 @@
-# armonik-common is a library chart: it renders nothing and takes no configuration. What it owns is the
-# single definition of the cross-chart `global.armonik` defaults below, which each root chart lifts with
-#
-#   import-values:
-#     - child: global.armonik
-#       parent: global.armonik
-#
-# on its armonik-common dependency, since a subchart's globals never reach its parent. Precedence holds
-# per key: these < the root chart's own values.yaml < user -f/--set. import-values copies chart-file
-# values only, which is what makes it right here (nobody configures this chart) and wrong for
-# propagating a dependency's user-set values (REVIEW.md #7).
-#
+# Library chart: renders nothing, takes no configuration of its own. What it owns is the single
+# definition of the cross-chart `global.armonik` defaults below, which each root chart lifts with
+# `import-values: [{child: global.armonik, parent: global.armonik}]` on its armonik-common dependency,
+# globals not propagating upward on their own. Precedence holds per key: these < the root chart's
+# values.yaml < user -f/--set. import-values copies chart-file values only, which is what makes it right
+# here (nobody configures this chart) and unusable for propagating a dependency's user-set values, which
+# it would silently drop.
 # Only what must be identical across charts belongs here.
 global:
   armonik:

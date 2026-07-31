@@ -30,8 +30,8 @@ podDisruptionBudget:
   minAvailable:
   maxUnavailable:
 
-# KEDA usability is now controlled cross-chart via global.armonik.operators.keda.{deploy,available}
-# (see charts/armonik-operators). A ScaledObject is rendered per partition when KEDA is available.
+# KEDA is controlled cross-chart by global.armonik.operators.keda: one ScaledObject per partition when
+# it is available.
 
 # Base conf, merged into the init Job only (agent/worker build theirs from partitionCommon).
 conf:
@@ -211,15 +211,10 @@ partitionCommon:
       # -- Period in seconds
       periodSeconds: 15
     triggers:
-      # Default: KEDA scrapes the control-plane metrics-exporter /metrics directly - no Prometheus in
-      # the scaling path (decoupled from the monitoring stack; per-release isolation for free). The URL
-      # is injected per-render from global.armonik.monitoring.metricsExporterUrl. valueLocation is a
-      # PromQL metric selector; targetValue = queued tasks per replica (the old prometheus `threshold`).
-      #
-      # ASSUMPTION: the exporter emits exactly ONE always-present sample per
-      # armonik_<partition>_tasks_queued. If ArmoniK moves to labeled/multi-dimensional metrics that
-      # break that (metrics-api cannot aggregate, and has no absent-as-zero), switch to the PromQL
-      # opt-in below.
+      # Default: KEDA scrapes the metrics-exporter directly, keeping Prometheus out of the scaling path.
+      # url comes from global.armonik.monitoring.metricsExporterUrl; targetValue is queued tasks per
+      # replica. ASSUMES one always-present sample per armonik_<partition>_tasks_queued - metrics-api
+      # cannot aggregate and has no absent-as-zero, so labeled metrics would need the PromQL opt-in.
       - type: metrics-api
         metadata:
           url: "{{ .Values.metricsExporterUrl }}"
@@ -228,10 +223,9 @@ partitionCommon:
           targetValue: "2"
           activationTargetValue: "0"
       # --- PromQL opt-in (advanced) ---------------------------------------------------------------
-      # For rate/ratio/aggregation-based scaling, replace the metrics-api trigger above with a
-      # prometheus trigger against the shared cluster Prometheus. NOTE: this reintroduces a dependency
-      # on global.armonik.operators.prometheusOperator being available, and needs a namespace filter
-      # for multi-release correctness:
+      # For rate/ratio/aggregation scaling, swap the trigger above for a prometheus one. Reintroduces the
+      # dependency on prometheusOperator.available, and needs the namespace filter to stay multi-release
+      # correct:
       #   - type: prometheus
       #     metadata:
       #       serverAddress: <global.armonik.monitoring.prometheusUrl>
@@ -246,19 +240,11 @@ partitionCommon:
     mountSecret:
       - secret: '{{ list "log" . | include "armonik.conf.mountSecretName" }}'
       - secret: '{{ list "compute" . | include "armonik.conf.mountSecretName" }}'
-# Partitions to deploy. Each key is a partition name; its value is per-partition overrides merged
-# over `partitionCommon`. At least one partition is REQUIRED (see templates/partitions-guard.yaml):
-# a compute-plane with none runs no workers.
-#
-# Helm value merge is additive for maps: partitions you set are UNIONED with any inherited from a
-# lower-precedence values file (a shared base, the umbrella, etc.); adding one never removes the
-# others. To drop an inherited partition, set it to null - e.g. in a values file
-#   partitions:
-#     unwanted: null
-# or `--set partitions.unwanted=null`. The templates treat a null partition as removed (skipped),
-# so this works in any layer. An empty map ({}) is a REAL partition (inherits partitionCommon);
-# only null removes. This chart ships no active default partitions, so a fresh install has nothing
-# to null; the note matters only when layering values files.
+# Partitions to deploy: each key is a partition name, its value overrides merged over `partitionCommon`.
+# At least one is REQUIRED (templates/partitions-guard.yaml), since a plane with none runs no workers.
+# Maps being unioned across values files, partitions accumulate rather than replace; `unwanted: null`
+# (or --set partitions.unwanted=null) drops an inherited one, while `{}` is a real partition inheriting
+# partitionCommon. Only relevant when layering values files: this chart ships no active default.
 partitions:
 
 fluentBit:

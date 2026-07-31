@@ -1,10 +1,8 @@
 {{- $ops := include "armonik.operators" $ | fromYaml }}
 {{- if $ops.certManager.deploy }}
-{{- /* Release-wide cert-manager ordering. The wait-Job (and its ServiceAccount/Role/bindings) exists
-       only to block dependent CRs until the cert-manager webhook installed by THIS release is Available
-       + its CA is injected. Rendered by the umbrella so it covers every Certificate/Issuer emitter
-       (ingress, activemq, ...) exactly once. Skipped when cert-manager is external/absent - a
-       pre-existing webhook is already ready. Runs at hook-weight -10, ahead of the Certificates at 10. */}}
+{{- /* Blocks dependent CRs until the cert-manager webhook this release installs is Available with its
+       CA injected: hook-weight -10, ahead of the Certificates at 10. Rendered by the umbrella so it
+       covers every emitter (ingress, activemq) once; skipped for an external cert-manager. */}}
 {{- $wait := .Values.certManagerWait | default dict }}
 {{- $image := $wait.image | default dict }}
 ---

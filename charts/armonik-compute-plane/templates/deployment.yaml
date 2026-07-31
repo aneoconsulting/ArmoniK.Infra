@@ -3,8 +3,7 @@
 {{- $sa := $.Values.serviceAccount | default dict -}}
 {{- $partitionCommon := $.Values.partitionCommon | default dict -}}
 {{- $partition := dict -}}
-{{/* Partition render context: the chart context minus .Values.partitions (no self-reference),
-     plus .Values.partitionName. Shallow omit-copies; originals untouched. */}}
+{{/* Partition render context: chart context minus .Values.partitions, plus .Values.partitionName. */}}
 {{- $context := omit $ "Values" -}}
 {{- $_ := omit $.Values "partitions" | set $context "Values" -}}
 {{- $_ := set $context.Values "partitionName" $partitionName -}}

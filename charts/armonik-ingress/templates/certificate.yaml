@@ -11,7 +11,7 @@ apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
   {{- if $ops.certManager.deploy }}
-  {{- /* CRD-ordering hook only when THIS release installs cert-manager; external/absent -> no hook. */}}
+  {{- /* Hooked only when this release installs the CRDs; otherwise a plain resource. */}}
   annotations:
     "helm.sh/hook": post-install,post-upgrade
     "helm.sh/hook-weight": "0"
@@ -28,7 +28,7 @@ metadata:
   name: {{ include "armonik.fullname" . }}
   namespace: {{ include "armonik.namespace" . }}
   {{- if $ops.certManager.deploy }}
-  {{- /* CRD-ordering hook only when THIS release installs cert-manager; external/absent -> no hook. */}}
+  {{- /* Hooked only when this release installs the CRDs; otherwise a plain resource. */}}
   annotations:
     "helm.sh/hook": post-install,post-upgrade
     "helm.sh/hook-weight": "10"

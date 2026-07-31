@@ -1,10 +1,7 @@
 {{/*
-Live partitions: .Values.partitions with null entries filtered out. A partition set to null is a
-removal (lets a layered values file drop an inherited partition); an empty map ({}) is a real
-partition that inherits partitionCommon and is kept. Single source of truth for "which partitions
-actually deploy" - used by the partitions guard and by the Deployment / ScaledObject / init-seeding
-ranges, so the null-removal rule lives in exactly one place. Returns a YAML map; consume with
-`| fromYaml`.
+Live partitions: .Values.partitions minus null entries, which are removals from a lower-precedence
+values file ({} stays, being a real partition inheriting partitionCommon). Single source for "which
+partitions deploy": the guard and the Deployment / ScaledObject / init ranges all range over this.
 
 # Usage
 {{- $partitions := include "armonik.compute.partitions" . | fromYaml }}

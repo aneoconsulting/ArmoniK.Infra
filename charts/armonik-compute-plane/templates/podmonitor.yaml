@@ -1,7 +1,6 @@
 {{- $ops := include "armonik.operators" $ | fromYaml }}
 {{- if $ops.prometheusOperator.available }}
-{{/* First-party PodMonitor for the compute-plane polling-agent metrics port (1080), across all
-     partitions. Rendered only when the prometheus-operator CRDs are present. */}}
+{{/* Polling-agent metrics (1080) for every partition, when the prometheus-operator CRDs are present. */}}
 apiVersion: monitoring.coreos.com/v1
 kind: PodMonitor
 metadata:

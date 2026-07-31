@@ -1,14 +1,8 @@
 {{/*
-Fail-closed guard. The compute-plane exists to run partitions: a release with none deploys no
-worker Deployments and no KEDA ScaledObjects (only a redundant init Job and a PodMonitor that
-scrapes nothing), and silently accepts work that never runs. Require at least one LIVE partition.
-
-Emptiness is checked on armonik.compute.partitions (null entries already filtered out), so a map
-whose values are all null counts as zero - the same set the Deployment/ScaledObject/init ranges use.
-
-Under the umbrella this template renders only when compute-plane.enabled=true (the subchart
-condition in armonik/Chart.yaml); a "base" release (compute-plane.enabled=false) never trips it, so
-the guard bites exactly when a compute-plane is actually being deployed.
+Fail-closed: a plane with no partition deploys no worker and no ScaledObject, yet still accepts work
+that never runs. Checked on armonik.compute.partitions, the same null-filtered set the Deployment,
+ScaledObject and init ranges use, so an all-null map counts as zero. Under the umbrella the subchart
+condition means this only renders when compute-plane.enabled=true.
 */}}
 {{- if include "armonik.compute.partitions" . | fromYaml | not }}
   {{- fail "armonik-compute-plane requires at least one non-null partition under `partitions`: a compute-plane with none runs no workers (partitions set to null are removals and do not count). Define a partition, or (in the umbrella) set compute-plane.enabled=false and add partitions via separate armonik-compute-plane releases." }}

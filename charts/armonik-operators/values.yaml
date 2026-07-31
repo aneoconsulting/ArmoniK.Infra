@@ -1,20 +1,8 @@
-# armonik-operators control surface
-#
-# Two flags per operator, both under the cross-chart `global.armonik.operators.<op>` subtree so
-# every chart (this one + the ArmoniK application charts) reads a single source of truth:
-#
-#   deploy    - this release installs the operator + its CRDs. Drives each operator subchart's
-#               `Chart.yaml` condition here, AND is the "managedHere" fact the ArmoniK charts use to
-#               gate CRD-ordering Helm hooks.
-#   available - the operator's CRDs are present in the cluster (installed here OR by another release).
-#               Consumed by the ArmoniK application charts to decide whether to emit CRs; NOT used by
-#               this chart, so it is not defaulted here.
-#
-# Standalone default for this chart: deploy everything (installing the operators is its whole purpose).
-# Under the umbrella, the umbrella's `global.armonik.operators.*` overrides these.
-#
-# NOTE: `global.armonik.operators.<op>` (control flags) is a DIFFERENT path from `<op>` at the top
-# level (each operator subchart's real configuration). Similar names, no collision.
+# armonik-operators control surface. The deploy/available semantics are documented once in
+# armonik-common/values.yaml; only `deploy` matters here and defaults to true, installing the operators
+# being this chart's whole purpose. Under the umbrella, the umbrella's global.armonik.operators.* wins.
+# Mind the two paths: global.armonik.operators.<op> are the control flags, <op> at the top level is the
+# operator subchart's own configuration.
 global:
   armonik:
     operators:
@@ -29,9 +17,7 @@ global:
       prometheusOperator:
         deploy: true
 
-# --- Operator subchart configuration (passed through to the upstream charts) ---
-# Under the umbrella these live at operators.<op>.* (armonik-operators is aliased "operators");
-# they are distinct from the global.armonik.operators.<op>.{deploy,available} control flags above.
+# --- Operator subchart configuration, at operators.<op>.* under the umbrella ---
 
 # KEDA (https://github.com/kedacore/charts)
 keda:
@@ -63,37 +49,26 @@ external-secrets: {}
 # "cert-manager-webhook" so the ingress cert wait-Job can find it.
 cert-manager:
   crds:
-    # Replaces the deprecated installCRDs, which is defined as crds.enabled=true + crds.keep=true.
+    # enabled+keep replace the deprecated installCRDs (defined as enabled=true plus keep=true).
     enabled: true
-    # keep=false (chart default is true) makes teardown symmetric: `helm uninstall` removes the six
-    # cert-manager.io CRDs it created instead of leaving them behind for ever, which is what an
-    # install-once operators release should do (see charts/uninstall.md).
-    # WARNING: deleting a CRD deletes every custom resource of that type CLUSTER-WIDE. On a cluster
-    # where workloads outside ArmoniK own cert-manager Certificates/Issuers, either set keep=true
-    # here or do not let this release own cert-manager (global.armonik.operators.certManager.deploy=false).
+    # keep=false so uninstall removes the six cert-manager.io CRDs (charts/uninstall.md). That also
+    # deletes every Certificate and Issuer CLUSTER-WIDE: keep=true on a shared cluster.
     keep: false
   fullnameOverride: "cert-manager"
   prometheus:
     servicemonitor:
       enabled: true
 
-# Percona Server for MongoDB operator (https://percona.github.io/percona-helm-charts/).
-# Chart defaults install the CRDs. The psmdb-db instance (the PerconaServerMongoDB CR) stays in
-# armonik-dependencies.
+# Percona Server for MongoDB operator (https://percona.github.io/percona-helm-charts/). Chart defaults
+# install the CRDs; the PerconaServerMongoDB CR itself stays in armonik-dependencies.
 mongodb-operator:
-  # REQUIRED for the layered layout, and the one operator here that is not cluster-wide by default.
-  # The chart default (watchAllNamespaces=false) pins WATCH_NAMESPACE to this release's own namespace
-  # and creates a namespaced Role/RoleBinding, so an ArmoniK release in any OTHER namespace has its
-  # PerconaServerMongoDB CR silently ignored: no StatefulSet, no operator-generated Secrets, hence no
-  # conf-core ExternalSecret sync and CreateContainerConfigError on every pod. Setting this to true
-  # switches the RBAC to ClusterRole/ClusterRoleBinding as well (templates/role*.yaml), and makes
-  # certManagerNamespace irrelevant (it only applies in namespaced mode).
+  # The one operator here that is namespaced by default: otherwise WATCH_NAMESPACE is pinned to this
+  # release's namespace with a namespaced Role, and a CR in any other namespace is silently ignored.
+  # true also switches the RBAC to ClusterRole/ClusterRoleBinding.
   watchAllNamespaces: true
 
-# kube-prometheus-stack (https://prometheus-community.github.io/helm-charts) - the shared, cluster-wide
-# monitoring stack (prometheus-operator + CRDs + node-exporter + kube-state-metrics + ONE Prometheus).
-# Deployed once per cluster; the Prometheus scrapes ServiceMonitors/PodMonitors from ALL namespaces so
-# every ArmoniK release reports to it. Grafana stays per-release under the umbrella.
+# kube-prometheus-stack (https://prometheus-community.github.io/helm-charts): the shared cluster
+# monitoring stack, one per cluster. Grafana stays per-release, in armonik-dependencies.
 kube-prometheus:
   fullnameOverride: "prometheus"
   prometheus-node-exporter:
@@ -103,18 +78,15 @@ kube-prometheus:
   alertmanager:
     enabled: false
   grafana:
-    # kube-prometheus-stack's bundled Grafana stays OFF (Grafana is per-release, from
-    # armonik-dependencies). forceDeployDashboards ships kps's standard dashboard ConfigMaps
-    # (labeled grafana_dashboard) even with its Grafana disabled, so the per-release Grafana
-    # sidecar picks them up - our source for the standard k8s/node dashboards.
+    # kps's own Grafana stays off, but forceDeployDashboards still ships its dashboard ConfigMaps for the
+    # per-release Grafana sidecar to collect: our source for the standard k8s/node dashboards.
     enabled: false
     forceDeployDashboards: true
   prometheus:
     prometheusSpec:
       scrapeInterval: 10s
       evaluationInterval: 30s
-      # Cluster-wide scraping: pick up ServiceMonitors/PodMonitors in every namespace, from any
-      # release (not just those carrying the kps Helm release label).
+      # Scrape ServiceMonitors/PodMonitors from every namespace and any release, not just kps's own.
       serviceMonitorSelectorNilUsesHelmValues: false
       serviceMonitorNamespaceSelector: {}
       podMonitorSelectorNilUsesHelmValues: false

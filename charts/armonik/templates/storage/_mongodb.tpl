@@ -1,8 +1,7 @@
 {{/*
-Gets the hostname from mongodb context. The DNS suffix must match what the Percona operator
-provisions for the replica-set Service, so it mirrors the psmdb-db chart's clusterServiceDNSSuffix
-(which already includes the "svc." segment); its default equals the operator default (svc.cluster.local).
-This is intentionally driven by the mongodb chart mechanism, NOT by global.armonik.clusterDomain.
+Replica-set hostname. The suffix mirrors the psmdb-db chart's clusterServiceDNSSuffix (it already
+carries the "svc." segment) to match what the operator provisions, so this one is deliberately driven
+by the mongodb chart rather than global.armonik.clusterDomain.
 */}}
 {{- define "armonik.mongodb.host" -}}
   {{- include "psmdb-database.fullname" . }}-{{ list .Values "replsets" "rs0" "name" | include "armonik.utils.index" | default "rs0" }}.{{ include "psmdb-database.namespace" . }}.{{ .Values.clusterServiceDNSSuffix | default "svc.cluster.local" }}

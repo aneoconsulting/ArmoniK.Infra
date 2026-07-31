@@ -1,7 +1,6 @@
 {{- $ops := include "armonik.operators" $ | fromYaml }}
 {{- if $ops.prometheusOperator.available }}
-{{/* First-party PodMonitor for the control-plane pod metrics port (1081). Rendered only when the
-     prometheus-operator CRDs are present. */}}
+{{/* Control-plane pod metrics (1081), when the prometheus-operator CRDs are present. */}}
 apiVersion: monitoring.coreos.com/v1
 kind: PodMonitor
 metadata:

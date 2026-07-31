@@ -22,13 +22,10 @@ global:
   # Root dir for conf mount Secrets in pods; propagated to subcharts. env strings and volumeMounts derive from it.
   armonik:
     mountPath: /mounts
-    # In-cluster service hostnames stop at ".svc" (resolves via the kubelet search domains without
-    # assuming the cluster domain). Set clusterDomain to force fully-qualified names, e.g. "cluster.local".
+    # Hostnames stop at ".svc" (kubelet search domains resolve it); set this to force FQDNs.
     clusterDomain: ""
-    # Cross-chart operator control (see charts/armonik-operators). Per operator:
-    #   deploy    - this (umbrella) release installs the operator via the armonik-operators subchart.
-    #   available - the operator's CRDs are present (installed here OR external) -> ArmoniK emits CRs.
-    # All-in-one default: install and use every operator (managed).
+    # Operator control (semantics in armonik-common/values.yaml). All-in-one default: this release
+    # installs every operator, through the armonik-operators subchart.
     operators:
       externalSecrets:
         deploy: true
@@ -41,8 +38,7 @@ global:
       prometheusOperator:
         deploy: true
     # monitoring.{namespace,prometheusUrl,metricsExporterUrl} come from armonik-common (see its README).
-    # A layered install sets namespace here: it names the armonik-operators release's namespace, which
-    # this release cannot discover and which the datasource URL and dashboard search namespaces derive from.
+    # Layered installs set namespace here, naming the armonik-operators release's namespace.
 
 
 ############################################
@@ -66,20 +62,17 @@ control-plane:
     createBuiltInRoles: true
 
 compute-plane:
-  # The umbrella ships a working set of default partitions (below) and deploys them, so a plain
-  # `helm install` gives a usable cluster. Set enabled=false to deploy a "base" release
-  # (control-plane + storage + operators + conf) with NO compute-plane, and add partitions via
-  # separate armonik-compute-plane releases (see NOTES.txt). Whenever enabled=true at least one
-  # partition is required: an empty compute-plane runs no workers and is rejected by its guard.
+  # Default partitions below make a plain `helm install` usable. enabled=false gives a base release
+  # (control-plane + storage + operators + conf) whose partitions come from separate
+  # armonik-compute-plane releases instead; see NOTES.txt. enabled=true requires at least one partition.
   enabled: true
   serviceAccount:
     create: true
   # Point the child at the conf Secrets this umbrella renders (overrides its "armonik" default).
   conf:
     source: '{{ .Release.Name }}'
-  # Default partitions. Partitions merge additively across values files (adding one never removes
-  # the defaults below); drop one you don't want by setting it to null - e.g.
-  # `--set compute-plane.partitions.htcmock=null` or, in a values file, `partitions: { htcmock: null }`.
+  # Partitions accumulate across values files; drop one of these with
+  # `--set compute-plane.partitions.htcmock=null`.
   partitions:
     default:
       worker:
@@ -112,9 +105,8 @@ ingress:
 ############################################
 ############ CERT-MANAGER WAIT #############
 ############################################
-# Umbrella-rendered Job that waits for the cert-manager webhook to be Available (and its CA injected)
-# before Certificate/Issuer CRs are applied. Rendered ONLY when this release installs cert-manager
-# (global.armonik.operators.certManager.deploy); covers every emitter (ingress, activemq). Config only.
+# Job gating Certificate/Issuer CRs on the cert-manager webhook being Available with its CA injected.
+# Rendered only when this release installs cert-manager; covers every emitter (ingress, activemq).
 certManagerWait:
   image:
     repository: alpine/k8s
@@ -250,11 +242,9 @@ dependencies:
       tls: true
     finalizers: []
 
-  # KEDA moved to charts/armonik-operators (config at operators.keda.*; install/use via
-  # global.armonik.operators.keda.{deploy,available}).
+  # KEDA moved to charts/armonik-operators, configured at operators.keda.*.
 
-  # cert-manager moved to charts/armonik-operators (config at operators.cert-manager.*; install/use
-  # via global.armonik.operators.certManager.{deploy,available}).
+  # cert-manager moved to charts/armonik-operators, configured at operators.cert-manager.*.
 
   ################## GRAFANA ##################
   grafana:
@@ -605,10 +595,7 @@ dependencies:
     # imagePullSecrets: []
 
   ################## PROMETHEUS ##################
-  # kube-prometheus-stack (prometheus-operator + CRDs + node-exporter + kube-state-metrics + the shared
-  # cluster Prometheus) moved to charts/armonik-operators (config at operators.kube-prometheus.*;
-  # install/use via global.armonik.operators.prometheusOperator.{deploy,available}). The broken static
-  # additionalScrapeConfigs Secret was replaced by first-party ServiceMonitor/PodMonitor.
-  # external-secrets moved to charts/armonik-operators (install/use via
-  # global.armonik.operators.externalSecrets.{deploy,available}).
+  # kube-prometheus-stack moved to charts/armonik-operators, configured at operators.kube-prometheus.*.
+  # Its broken static additionalScrapeConfigs Secret is now first-party ServiceMonitor/PodMonitor.
+  # external-secrets moved to charts/armonik-operators.
 ############################################

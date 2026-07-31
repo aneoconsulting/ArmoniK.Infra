@@ -13,7 +13,7 @@ metadata:
   name: {{ printf "%s-%s" (include "armonik.fullname" $) $partitionName | trunc 63 | trimSuffix "-" | quote }}
   namespace: {{ include "armonik.namespace" $ }}
   {{- if $ops.keda.deploy }}
-  {{- /* CRD-ordering hook only when THIS release installs KEDA; external/absent -> no hook. */}}
+  {{- /* Hooked only when this release installs the CRDs; otherwise a plain resource. */}}
   annotations:
     "helm.sh/hook": post-install,post-upgrade
     "helm.sh/hook-weight": "10"

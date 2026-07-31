@@ -36,16 +36,17 @@ global:
       mongodbOperator: { deploy: true, available: true }
       prometheusOperator: { deploy: true, available: true }
     monitoring:
-      # Fully-qualified URL of the shared cluster Prometheus (Grafana datasource + optional PromQL KEDA
-      # trigger). Empty -> http://prometheus-prometheus.<release-ns>.svc.cluster.local:9090 (all-in-one).
-      # Override for layered/multi-release installs where Prometheus lives in another namespace.
-      prometheusUrl: ""
-      # Full URL of the control-plane metrics-exporter /metrics that KEDA scrapes directly (default
-      # scaling path). Empty -> derived from conf.source (like the conf Secret names):
-      # <conf.source>-control-plane-metrics-exporter.<ns>.svc[.clusterDomain]:9419/metrics. A standalone
-      # compute-plane that sets conf.source=<main-release> resolves it automatically; override only for
-      # a control-plane in another namespace or with a custom name.
-      metricsExporterUrl: ""
+      # -- Namespace of the `armonik-operators` release (the shared kube-prometheus-stack). Empty = this
+      # release's namespace. Required for layered installs: it drives both `prometheusUrl` and the Grafana
+      # dashboard sidecar's search namespaces. Rendering fails when `prometheusOperator.deploy=false` and
+      # neither this nor `prometheusUrl` is set, instead of emitting an unresolvable datasource.
+      namespace: ""
+      # -- Prometheus for the Grafana datasource and PromQL KEDA triggers. Defaults to the
+      # `armonik.monitoring.prometheusUrl` derivation; a literal URL replaces it.
+      prometheusUrl: '{{ include "armonik.monitoring.prometheusUrl" . }}'
+      # -- Control-plane metrics-exporter `/metrics` scraped by KEDA (default scaling path). Defaults to
+      # the `armonik.monitoring.metricsExporterUrl` derivation off `conf.source`; a literal URL replaces it.
+      metricsExporterUrl: '{{ include "armonik.monitoring.metricsExporterUrl" . }}'
 
 
 ############################################
@@ -282,6 +283,13 @@ dependencies:
         enabled: true
         folderAnnotation: "grafana_dashboard_folder"
         label: "grafana_dashboard"
+        # -- Namespaces the sidecar watches: this release's plus `global.armonik.monitoring.namespace`,
+        # where kps renders the standard k8s/node dashboards (the sidecar sees only its own by default;
+        # `rbac.namespaced=false` already grants the cluster-wide read).
+        # Beware `helm upgrade --reuse-values`: it replays the old coalesced values, where the grafana
+        # chart's own `searchNamespace: null` beats this default. Pass values explicitly.
+        searchNamespace:
+          - '{{ include "armonik.monitoring.dashboardNamespaces" . }}'
       datasources:
         enabled: true
 

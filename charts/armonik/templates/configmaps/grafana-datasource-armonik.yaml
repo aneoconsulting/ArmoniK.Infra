@@ -1,11 +1,4 @@
 {{ if (include "armonik.dependencies" $ | fromYaml).grafana }}
-{{- /* Shared cluster Prometheus URL: global.armonik.monitoring.prometheusUrl (override) else the
-       in-release kps Prometheus at .svc[.<clusterDomain>]. Umbrella-only, so computed inline here. */}}
-{{- $promUrl := list $.Values "global" "armonik" "monitoring" "prometheusUrl" | include "armonik.utils.index" -}}
-{{- if not $promUrl -}}
-{{- $domain := list $.Values "global" "armonik" "clusterDomain" | include "armonik.utils.index" -}}
-{{- $promUrl = printf "http://prometheus-prometheus.%s.svc%s:9090" .Release.Namespace (ternary "" (printf ".%s" $domain) (empty $domain)) -}}
-{{- end -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -20,7 +13,7 @@ data:
         type: prometheus
         access: proxy
         orgId: 1
-        url: {{ tpl $promUrl $ }}
+        url: {{ tpl (list $.Values "global" "armonik" "monitoring" "prometheusUrl" | include "armonik.utils.index") $ | quote }}
         isDefault: true
         uid: "PBFA97CFB590B2093"
         jsonData:

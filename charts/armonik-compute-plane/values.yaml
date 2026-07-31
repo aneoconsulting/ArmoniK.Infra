@@ -19,6 +19,11 @@ global:
       certManager: { deploy: false, available: true }
       mongodbOperator: { deploy: false, available: true }
       prometheusOperator: { deploy: false, available: true }
+    monitoring:
+      # -- Control-plane metrics-exporter `/metrics` scraped by the KEDA trigger. Defaults to the
+      # `armonik.monitoring.metricsExporterUrl` derivation off `conf.source`, so a standalone plane
+      # pointed at the main release resolves that release's exporter; a literal URL replaces it.
+      metricsExporterUrl: '{{ include "armonik.monitoring.metricsExporterUrl" . }}'
 
 serviceAccount:
   create: false

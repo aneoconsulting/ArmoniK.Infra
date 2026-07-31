@@ -16,6 +16,7 @@ Kubernetes: `>=v1.25.0-0`
 
 | Repository | Name | Version |
 |------------|------|---------|
+| file://../armonik-common | armonik-common | 0.1.x |
 | https://charts.external-secrets.io | external-secrets | 2.x.x |
 | https://charts.jetstack.io | cert-manager | 1.x.x |
 | https://kedacore.github.io/charts | keda | 2.x.x |
@@ -26,8 +27,9 @@ Kubernetes: `>=v1.25.0-0`
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
+| cert-manager.crds.enabled | bool | `true` |  |
+| cert-manager.crds.keep | bool | `false` |  |
 | cert-manager.fullnameOverride | string | `"cert-manager"` |  |
-| cert-manager.installCRDs | bool | `true` |  |
 | cert-manager.prometheus.servicemonitor.enabled | bool | `true` |  |
 | external-secrets | object | `{}` |  |
 | global.armonik.operators.certManager.deploy | bool | `true` |  |

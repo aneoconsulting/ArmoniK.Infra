@@ -78,9 +78,17 @@ cert-manager:
       enabled: true
 
 # Percona Server for MongoDB operator (https://percona.github.io/percona-helm-charts/).
-# Chart defaults watch all namespaces and install the CRDs. The psmdb-db instance (the
-# PerconaServerMongoDB CR) stays in armonik-dependencies.
-mongodb-operator: {}
+# Chart defaults install the CRDs. The psmdb-db instance (the PerconaServerMongoDB CR) stays in
+# armonik-dependencies.
+mongodb-operator:
+  # REQUIRED for the layered layout, and the one operator here that is not cluster-wide by default.
+  # The chart default (watchAllNamespaces=false) pins WATCH_NAMESPACE to this release's own namespace
+  # and creates a namespaced Role/RoleBinding, so an ArmoniK release in any OTHER namespace has its
+  # PerconaServerMongoDB CR silently ignored: no StatefulSet, no operator-generated Secrets, hence no
+  # conf-core ExternalSecret sync and CreateContainerConfigError on every pod. Setting this to true
+  # switches the RBAC to ClusterRole/ClusterRoleBinding as well (templates/role*.yaml), and makes
+  # certManagerNamespace irrelevant (it only applies in namespaced mode).
+  watchAllNamespaces: true
 
 # kube-prometheus-stack (https://prometheus-community.github.io/helm-charts) - the shared, cluster-wide
 # monitoring stack (prometheus-operator + CRDs + node-exporter + kube-state-metrics + ONE Prometheus).

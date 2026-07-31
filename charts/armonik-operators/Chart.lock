@@ -4,7 +4,7 @@ dependencies:
   version: 0.1.0
 - name: keda
   repository: https://kedacore.github.io/charts
-  version: 2.20.1
+  version: 2.20.2
 - name: external-secrets
   repository: https://charts.external-secrets.io
   version: 2.8.0
@@ -17,5 +17,5 @@ dependencies:
 - name: kube-prometheus-stack
   repository: https://prometheus-community.github.io/helm-charts
   version: 82.18.0
-digest: sha256:3112101235aee5d225e06890cdc2e2dec3812337cf6d676847ab3a940de68fe9
-generated: "2026-07-31T10:02:09.481113962+02:00"
+digest: sha256:c520ab9be6f51a8e767546f436e6883785703e0e6d7b21ffabc4a99499500985
+generated: "2026-07-31T17:57:56.896981758+02:00"

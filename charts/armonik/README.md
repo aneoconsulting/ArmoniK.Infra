@@ -99,7 +99,7 @@ Kubernetes: `>=v1.25.0-0`
 | dependencies.grafana.sidecar.dashboards.enabled | bool | `true` |  |
 | dependencies.grafana.sidecar.dashboards.folderAnnotation | string | `"grafana_dashboard_folder"` |  |
 | dependencies.grafana.sidecar.dashboards.label | string | `"grafana_dashboard"` |  |
-| dependencies.grafana.sidecar.dashboards.searchNamespace | list | `["{{ include \"armonik.monitoring.dashboardNamespaces\" . }}"]` | Namespaces the sidecar watches: this release's plus `global.armonik.monitoring.namespace`, where kps renders the standard k8s/node dashboards (the sidecar sees only its own by default; `rbac.namespaced=false` already grants the cluster-wide read). Beware `helm upgrade --reuse-values`: it replays the old coalesced values, where the grafana chart's own `searchNamespace: null` beats this default. Pass values explicitly. |
+| dependencies.grafana.sidecar.dashboards.searchNamespace | list | `["{{ include \"armonik.monitoring.dashboardNamespaces\" . }}"]` | Namespaces the sidecar watches: this release's plus the prometheusOperator namespace, where kps renders the standard k8s/node dashboards (the sidecar sees only its own by default; `rbac.namespaced=false` already grants the cluster-wide read). Beware `helm upgrade --reuse-values`: it replays the old coalesced values, where the grafana chart's own `searchNamespace: null` beats this default. Pass values explicitly. |
 | dependencies.grafana.sidecar.datasources.enabled | bool | `true` |  |
 | dependencies.mongodb.backup.enabled | bool | `false` |  |
 | dependencies.mongodb.enabled | bool | `true` |  |

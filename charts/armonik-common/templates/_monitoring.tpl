@@ -18,21 +18,8 @@ value (conf.source) makes this the one helper here that needs one of OUR charts 
 {{- define "armonik.monitoring.metricsExporterUrl" -}}
   {{- $src := include "armonik.conf.source" . -}}
   {{- $domain := list .Values "global" "clusterDomain" | include "armonik.utils.index" -}}
-  {{- printf "http://%s-control-plane-metrics-exporter.%s.svc%s:9419/metrics" $src .Release.Namespace (ternary "" (printf ".%s" $domain) (empty $domain)) -}}
-{{- end -}}
-
-{{/*
-Namespace of the armonik-operators release (the shared kube-prometheus-stack), read from the value
-whose default is this release's own namespace. Nothing in a release can discover it, hence the value;
-the two helpers below build on it. Fails on empty instead of letting a blank segment reach a host or
-the sidecar's namespace list.
-*/}}
-{{- define "armonik.monitoring.namespace" -}}
-  {{- $ns := tpl (list .Values "global" "armonik" "monitoring" "namespace" | include "armonik.utils.index") . -}}
-  {{- if empty $ns -}}
-    {{- fail "global.armonik.monitoring.namespace resolved empty. Set it to the namespace of the armonik-operators release; the chart default is this release's own namespace." -}}
-  {{- end -}}
-  {{- $ns -}}
+  {{- $suffix := $domain | empty | ternary "" (printf ".%s" $domain) -}}
+  {{- printf "http://%s-control-plane-metrics-exporter.%s.svc%s:9419/metrics" $src .Release.Namespace $suffix -}}
 {{- end -}}
 
 {{/*
@@ -43,23 +30,28 @@ Reached through the grafana chart's tpl of sidecar.dashboards.searchNamespace, h
 subchart's context: read nothing but .Release and .Values.global here.
 */}}
 {{- define "armonik.monitoring.dashboardNamespaces" -}}
-  {{- list .Release.Namespace (include "armonik.monitoring.namespace" .) | uniq | join "," -}}
+  {{- $ops := include "armonik.operators" . | fromYaml -}}
+  {{- $ns := $ops.prometheusOperator.namespace -}}
+  {{- if empty $ns -}}
+    {{- fail "global.armonik.operators.prometheusOperator.namespace resolved empty: set it to the namespace of the release installing kube-prometheus-stack. It only defaults to this release's namespace when this release installs it." -}}
+  {{- end -}}
+  {{- list .Release.Namespace $ns | uniq | join "," -}}
 {{- end -}}
 
 {{/*
 Shared cluster Prometheus, for the Grafana datasource and PromQL KEDA triggers:
-http://prometheus-prometheus.<armonik.monitoring.namespace>.svc[.<clusterDomain>]:9090, the service
-name being fixed by the kps fullnameOverride in armonik-operators.
-
-Fails instead of emitting an unresolvable host when this release does not deploy the prometheus
-operator and the monitoring namespace is still the release namespace: Prometheus is then elsewhere
-and nothing here knows where.
+http://prometheus-prometheus.<prometheusOperator namespace>.svc[.<clusterDomain>]:9090, the service
+name being fixed by the kps fullnameOverride in armonik-operators. That namespace is empty, hence fatal,
+unless this release installs kps or it was stated: no unresolvable host gets emitted. Point the value at a
+literal URL for a Prometheus armonik-operators did not deploy.
 */}}
 {{- define "armonik.monitoring.prometheusUrl" -}}
-  {{- $ns := include "armonik.monitoring.namespace" . -}}
-  {{- if and (not (include "armonik.operators" . | fromYaml).prometheusOperator.deploy) (eq $ns .Release.Namespace) -}}
-    {{- fail (printf "global.armonik.monitoring: this release does not install kube-prometheus-stack (global.armonik.operators.prometheusOperator.deploy=false), so the shared Prometheus is not in namespace %q and its location is unknown. Set global.armonik.monitoring.namespace to the namespace of the armonik-operators release (which also points the Grafana sidecar at the kps dashboards), or global.armonik.monitoring.prometheusUrl to a full URL." .Release.Namespace) -}}
+  {{- $ops := include "armonik.operators" . | fromYaml -}}
+  {{- $ns := $ops.prometheusOperator.namespace -}}
+  {{- if empty $ns -}}
+    {{- fail "global.armonik.operators.prometheusOperator.namespace resolved empty: set it to the namespace of the release installing kube-prometheus-stack. It only defaults to this release's namespace when this release installs it." -}}
   {{- end -}}
   {{- $domain := list .Values "global" "clusterDomain" | include "armonik.utils.index" -}}
-  {{- printf "http://prometheus-prometheus.%s.svc%s:9090" $ns (ternary "" (printf ".%s" $domain) (empty $domain)) -}}
+  {{- $suffix := $domain | empty | ternary "" (printf ".%s" $domain) -}}
+  {{- printf "http://prometheus-prometheus.%s.svc%s:9090" $ns $suffix -}}
 {{- end -}}

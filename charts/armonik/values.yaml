@@ -34,8 +34,8 @@ global:
         deploy: true
       prometheusOperator:
         deploy: true
-    # monitoring.{namespace,prometheusUrl,metricsExporterUrl} come from armonik-common (see its README).
-    # Layered installs set namespace here, naming the armonik-operators release's namespace.
+    # monitoring.{prometheusUrl,metricsExporterUrl} come from armonik-common (see its README); both derive
+    # from the operators namespaces above, which a layered install has to state.
 
 
 ############################################
@@ -266,7 +266,7 @@ dependencies:
         enabled: true
         folderAnnotation: "grafana_dashboard_folder"
         label: "grafana_dashboard"
-        # -- Namespaces the sidecar watches: this release's plus `global.armonik.monitoring.namespace`,
+        # -- Namespaces the sidecar watches: this release's plus the prometheusOperator namespace,
         # where kps renders the standard k8s/node dashboards (the sidecar sees only its own by default;
         # `rbac.namespaced=false` already grants the cluster-wide read).
         # Beware `helm upgrade --reuse-values`: it replays the old coalesced values, where the grafana

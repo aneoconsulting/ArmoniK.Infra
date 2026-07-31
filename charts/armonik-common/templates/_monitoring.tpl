@@ -22,11 +22,17 @@ value (conf.source) makes this the one helper here that needs one of OUR charts 
 {{- end -}}
 
 {{/*
-Namespace of the armonik-operators release (the shared kube-prometheus-stack), else this release's.
-Nothing in a release can discover it, hence the value; the two helpers below derive from it.
+Namespace of the armonik-operators release (the shared kube-prometheus-stack), read from the value
+whose default is this release's own namespace. Nothing in a release can discover it, hence the value;
+the two helpers below build on it. Fails on empty instead of letting a blank segment reach a host or
+the sidecar's namespace list.
 */}}
 {{- define "armonik.monitoring.namespace" -}}
-  {{- list .Values "global" "armonik" "monitoring" "namespace" | include "armonik.utils.index" | default .Release.Namespace -}}
+  {{- $ns := tpl (list .Values "global" "armonik" "monitoring" "namespace" | include "armonik.utils.index") . -}}
+  {{- if empty $ns -}}
+    {{- fail "global.armonik.monitoring.namespace resolved empty. Set it to the namespace of the armonik-operators release; the chart default is this release's own namespace." -}}
+  {{- end -}}
+  {{- $ns -}}
 {{- end -}}
 
 {{/*

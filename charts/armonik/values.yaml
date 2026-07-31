@@ -40,14 +40,9 @@ global:
         deploy: true
       prometheusOperator:
         deploy: true
-    monitoring:
-      # -- Namespace of the `armonik-operators` release (the shared kube-prometheus-stack). Empty = this
-      # release's namespace. Required for layered installs: it drives both `prometheusUrl` and the Grafana
-      # dashboard sidecar's search namespaces. Rendering fails when `prometheusOperator.deploy=false` and
-      # neither this nor `prometheusUrl` is set, instead of emitting an unresolvable datasource.
-      namespace: ""
-      # prometheusUrl and metricsExporterUrl come from armonik-common (see its README); override either
-      # here with a literal URL.
+    # monitoring.{namespace,prometheusUrl,metricsExporterUrl} come from armonik-common (see its README).
+    # A layered install sets namespace here: it names the armonik-operators release's namespace, which
+    # this release cannot discover and which the datasource URL and dashboard search namespaces derive from.
 
 
 ############################################

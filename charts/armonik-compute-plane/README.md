@@ -115,7 +115,7 @@ Kubernetes: `>=v1.23.0-0`
 | partitionCommon.hpa.triggers[0].metadata.activationTargetValue | string | `"0"` |  |
 | partitionCommon.hpa.triggers[0].metadata.format | string | `"prometheus"` |  |
 | partitionCommon.hpa.triggers[0].metadata.targetValue | string | `"2"` |  |
-| partitionCommon.hpa.triggers[0].metadata.url | string | `"{{ .Values.metricsExporterUrl }}"` |  |
+| partitionCommon.hpa.triggers[0].metadata.url | string | `"{{ include \"armonik.monitoring.metricsExporterUrl\" . }}"` |  |
 | partitionCommon.hpa.triggers[0].metadata.valueLocation | string | `"armonik_{{ .Values.partitionName }}_tasks_queued"` |  |
 | partitionCommon.hpa.triggers[0].type | string | `"metrics-api"` |  |
 | partitionCommon.hpa.type | string | `"prometheus"` |  |

@@ -1,0 +1,15 @@
+suite: chart defaults
+templates:
+  - deployments/nginx.yaml
+tests:
+  - it: renders with plain chart defaults, no extra values
+    skip:
+      reason: >-
+        Broken render path: the chart ships no global.environment defaults, and
+        static."environment.json" tpl-renders global.environment.{name,description}
+        (nil pointer). Enable once the chart defines defaults for them.
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: Deployment

@@ -1,0 +1,9 @@
+# Inputs are provided by the test suites (tests/*_test.yaml); each case block
+# gates the template that surfaces the corresponding helper's output.
+# merge: input for armonik.utils.merge (schema: src, srcs, dst, overwrite,
+#   nullIsAbsent, emptyStringIsAbsent, render, concatList)
+merge:
+# index: input for armonik.utils.index (root object + path keys)
+index:
+# conf: one or more conf objects for the armonik.conf.* generators
+conf:

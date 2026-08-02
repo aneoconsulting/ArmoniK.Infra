@@ -1,0 +1,62 @@
+suite: tls and mtls
+templates:
+  - certificate.yaml
+  - configmaps/nginx.yaml
+values:
+  - ../ci/tls-mtls-values.yaml
+tests:
+  - it: renders the Certificate, its Issuer and the wait-job set
+    template: certificate.yaml
+    asserts:
+      - containsDocument:
+          kind: Certificate
+          apiVersion: cert-manager.io/v1
+          any: true
+      - containsDocument:
+          kind: Issuer
+          apiVersion: cert-manager.io/v1
+          any: true
+      - containsDocument:
+          kind: Job
+          apiVersion: batch/v1
+          any: true
+  - it: puts helm hook annotations on the wait job only
+    template: certificate.yaml
+    documentSelector:
+      path: kind
+      value: Job
+    asserts:
+      - equal:
+          path: metadata.annotations["helm.sh/hook"]
+          value: post-install,post-upgrade
+      - matchRegex:
+          path: metadata.annotations["helm.sh/hook-delete-policy"]
+          pattern: before-hook-creation
+  - it: references an existing issuer instead of creating one
+    template: certificate.yaml
+    set:
+      tls:
+        certManager:
+          existingIssuer:
+            enabled: true
+            kind: ClusterIssuer
+            name: my-issuer
+    asserts:
+      - notFailedTemplate: {}
+      - containsDocument:
+          kind: Issuer
+          apiVersion: cert-manager.io/v1
+          any: true
+        not: true
+      - equal:
+          path: spec.issuerRef.name
+          value: my-issuer
+        documentSelector:
+          path: kind
+          value: Certificate
+  - it: turns on client certificate verification with mTLS
+    template: configmaps/nginx.yaml
+    asserts:
+      - matchRegex:
+          path: data["armonik.conf"]
+          pattern: ssl_verify_client on

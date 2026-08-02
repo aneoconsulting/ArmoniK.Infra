@@ -3486,7 +3486,7 @@
           "expr": "sum (container_memory_working_set_bytes{origin_prometheus=~\"$origin_prometheus\",container !=\"\",container!=\"POD\"}) by (namespace) > 1*1024*1024*1024",
           "interval": "",
           "intervalFactor": 1,
-          "legendFormat": "{{namespace} {{ pod }}",
+          "legendFormat": "{{namespace}} {{ pod }}",
           "metric": "container_memory_usage:sort_desc",
           "range": true,
           "refId": "A",

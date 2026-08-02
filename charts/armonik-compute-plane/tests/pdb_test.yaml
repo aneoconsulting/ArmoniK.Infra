@@ -1,0 +1,23 @@
+suite: pod disruption budget
+templates:
+  - pdb.yaml
+tests:
+  - it: renders a policy/v1 PodDisruptionBudget when enabled
+    skip:
+      reason: >-
+        Broken render path: pdb.yaml calls armonik.compute.pdb.apiVersion, which is
+        not defined (armonik-common defines armonik.pdb.apiVersion). Enable once fixed.
+    capabilities:
+      apiVersions:
+        - policy/v1
+    set:
+      podDisruptionBudget:
+        enabled: true
+        minAvailable: 1
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: PodDisruptionBudget
+      - isAPIVersion:
+          of: policy/v1

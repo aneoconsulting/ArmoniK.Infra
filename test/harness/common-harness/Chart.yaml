@@ -1,0 +1,13 @@
+apiVersion: v2
+name: common-harness
+description: >-
+  Test harness exercising the armonik-common library helpers (merge engine,
+  conf engine, nil-safe index) through helm-unittest. Never deployed; lives
+  outside charts/ so ct and helm-docs ignore it.
+type: application
+version: 0.1.0
+kubeVersion: ">=v1.25.0-0"
+dependencies:
+  - name: armonik-common
+    version: 0.1.x
+    repository: file://../../../charts/armonik-common

@@ -64,7 +64,7 @@ init:
   configmaps:
 
 partitionCommon:
-  socketType: "tcp" #TODO: things break without this, need to look into it later
+  socketType: "tcp"  # TODO: things break without this, need to look into it later
   labels:
     app: "armonik"
     service: "compute-plane"
@@ -181,18 +181,18 @@ partitionCommon:
   hpa:
     type: "prometheus"
     # -- Polling interval in seconds
-    pollingInterval: 15 # Optional. Default: 30 seconds
+    pollingInterval: 15  # Optional. Default: 30 seconds
     # -- Cooldown period in seconds
-    cooldownPeriod: 300 # Optional. Default: 300 seconds
+    cooldownPeriod: 300  # Optional. Default: 300 seconds
     # -- Count of idle replicas
-    idleReplicaCount: 0 # Optional. Default: ignored, must be less than minReplicaCount
+    idleReplicaCount: 0  # Optional. Default: ignored, must be less than minReplicaCount
     # -- Minimum count of replicas
-    minReplicaCount: 1 # Optional. Default: 0
+    minReplicaCount: 1  # Optional. Default: 0
     # -- Maximum count of replicas
-    maxReplicaCount: 5 # Optional. Default: 100
+    maxReplicaCount: 5  # Optional. Default: 100
 
     # -- Fallback options
-    #fallback: # Optional. Section to specify fallback options
+    # fallback: # Optional. Section to specify fallback options
     #  # -- Threshold of failures
     #  failureThreshold: 3 # Mandatory if fallback section is included
     #  # -- Number of replicas
@@ -201,7 +201,7 @@ partitionCommon:
     # -- Advanced options to manage the behavior of the HPA
     behavior:
       # -- Restore to the original replicas count
-      restoreToOriginalReplicaCount: false # Optional. Default: false
+      restoreToOriginalReplicaCount: false  # Optional. Default: false
       # -- Stabilization window in seconds
       stabilizationWindowSeconds: 300
       # -- Type of the target

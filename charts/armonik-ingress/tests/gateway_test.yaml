@@ -1,0 +1,42 @@
+suite: gateway api
+templates:
+  - gateway/gateway.yaml
+  - gateway/httproute.yaml
+  - gateway/healthcheck.yaml
+  - services/ingress.yaml
+values:
+  - ../ci/gateway-values.yaml
+tests:
+  - it: renders the Gateway with its class
+    template: gateway/gateway.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: Gateway
+      - equal:
+          path: spec.gatewayClassName
+          value: example-gateway-class
+  - it: renders the HTTPRoute attached to the gateway
+    template: gateway/httproute.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: HTTPRoute
+  - it: renders a TCP HealthCheckPolicy on the grpc port by default
+    template: gateway/healthcheck.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: HealthCheckPolicy
+      - equal:
+          path: spec.default.config.type
+          value: TCP
+  - it: forces the service to ClusterIP while the gateway fronts it
+    template: services/ingress.yaml
+    asserts:
+      - equal:
+          path: spec.type
+          value: ClusterIP

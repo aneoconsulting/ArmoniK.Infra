@@ -24,5 +24,6 @@ repo_add datalust             https://helm.datalust.co
 repo_add jetstack             https://charts.jetstack.io
 repo_add external-secrets     https://charts.external-secrets.io
 
-charts/update-charts.sh "$@"
+# update-charts.sh resolves chart names relative to charts/.
+(cd charts && ./update-charts.sh "$@")
 helm dependency build test/harness/common-harness --skip-refresh

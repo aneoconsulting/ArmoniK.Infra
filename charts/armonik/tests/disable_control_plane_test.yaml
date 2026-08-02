@@ -7,7 +7,9 @@ tests:
       reason: >-
         Broken render path: NOTES.txt dereferences the control-plane subchart
         values unconditionally, so control-plane.enabled=false nil-pointers.
-        Enable once NOTES.txt guards the disabled case.
+        PR #294 (operator split) rewrites NOTES.txt nil-safe; enable after it
+        merges (also swap the umbrella-no-control-plane matrix skip for a
+        real ok case).
     set:
       control-plane:
         enabled: false

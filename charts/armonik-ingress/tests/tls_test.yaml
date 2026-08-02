@@ -5,6 +5,8 @@ templates:
 values:
   - ../ci/tls-mtls-values.yaml
 tests:
+  # The two wait-job tests below move to the umbrella (operators_test.yaml)
+  # when PR #294 relocates the wait job to armonik/templates/cert-manager-wait.yaml.
   - it: renders the Certificate, its Issuer and the wait-job set
     template: certificate.yaml
     asserts:
@@ -60,3 +62,20 @@ tests:
       - matchRegex:
           path: data["armonik.conf"]
           pattern: ssl_verify_client on
+  - it: fails TLS via cert-manager when the operator is unavailable and no issuer exists
+    skip:
+      reason: >-
+        Enable after PR #294 (operator split) merges: certificate.yaml gains a
+        guard requiring global.armonik.operators.certManager.available=true,
+        an existing issuer, or a user-supplied TLS Secret.
+    template: certificate.yaml
+    set:
+      global:
+        armonik:
+          operators:
+            certManager:
+              deploy: false
+              available: false
+    asserts:
+      - failedTemplate:
+          errorPattern: "ingress TLS via cert-manager requires it"

@@ -1,0 +1,102 @@
+suite: armonik.utils.merge contract
+templates:
+  - merge.yaml
+tests:
+  - it: gives dst precedence and only adds new keys by default
+    set:
+      merge:
+        dst: {a: 1, b: 2}
+        src: {a: 9, c: 3}
+    asserts:
+      - equal:
+          path: data.result
+          value: '{"a":1,"b":2,"c":3}'
+  - it: gives src precedence with overwrite
+    set:
+      merge:
+        dst: {a: 1}
+        src: {a: 9, c: 3}
+        overwrite: true
+    asserts:
+      - equal:
+          path: data.result
+          value: '{"a":9,"c":3}'
+  - it: treats null as absent (a null never erases a value)
+    set:
+      merge:
+        dst: {a: 1}
+        src: {a: null}
+        overwrite: true
+    asserts:
+      - equal:
+          path: data.result
+          value: '{"a":1}'
+  - it: lets null through when nullIsAbsent is disabled
+    set:
+      merge:
+        dst: {a: 1}
+        src: {a: null}
+        overwrite: true
+        nullIsAbsent: false
+    asserts:
+      - equal:
+          path: data.result
+          value: '{"a":null}'
+  - it: treats the empty string as absent
+    set:
+      merge:
+        dst: {a: x}
+        src: {a: ""}
+        overwrite: true
+    asserts:
+      - equal:
+          path: data.result
+          value: '{"a":"x"}'
+  - it: lets the empty string through when emptyStringIsAbsent is disabled
+    set:
+      merge:
+        dst: {a: x}
+        src: {a: ""}
+        overwrite: true
+        emptyStringIsAbsent: false
+    asserts:
+      - equal:
+          path: data.result
+          value: '{"a":""}'
+  - it: keeps the dst list by default
+    set:
+      merge:
+        dst: [1, 2]
+        src: [3]
+    asserts:
+      - equal:
+          path: data.result
+          value: '[1,2]'
+  - it: appends src after dst with concatList
+    set:
+      merge:
+        dst: [1, 2]
+        src: [3]
+        concatList: true
+    asserts:
+      - equal:
+          path: data.result
+          value: '[1,2,3]'
+  - it: tpl-renders string sources on merge
+    set:
+      merge:
+        extra: rendered
+        src: '{{ .Values.merge.extra }}'
+        render: true
+    asserts:
+      - equal:
+          path: data.result
+          value: '"rendered"'
+  - it: refuses to merge a map with a scalar
+    set:
+      merge:
+        dst: {a: 1}
+        src: str
+    asserts:
+      - failedTemplate:
+          errorPattern: "cannot merge a map with a string"

@@ -1,0 +1,83 @@
+suite: value gates
+templates:
+  - pdb.yaml
+  - hpa.yaml
+  - psp.yaml
+  - certificate.yaml
+  - certificat.yaml
+tests:
+  - it: renders no gated resource by default
+    asserts:
+      - hasDocuments:
+          count: 0
+  - it: renders a policy/v1 PodDisruptionBudget when enabled
+    template: pdb.yaml
+    capabilities:
+      majorVersion: 1
+      minorVersion: 31
+      apiVersions:
+        - policy/v1
+    set:
+      podDisruptionBudget:
+        enabled: true
+        minAvailable: 1
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: PodDisruptionBudget
+      - isAPIVersion:
+          of: policy/v1
+      - equal:
+          path: spec.minAvailable
+          value: 1
+  - it: renders the HorizontalPodAutoscaler when enabled
+    template: hpa.yaml
+    set:
+      HorizontalPodAutoscaler:
+        enabled: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: HorizontalPodAutoscaler
+  - it: renders the PodSecurityPolicy below Kubernetes 1.25
+    template: psp.yaml
+    capabilities:
+      majorVersion: 1
+      minorVersion: 24
+    set:
+      rbac:
+        pspEnabled: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: PodSecurityPolicy
+  - it: renders no PodSecurityPolicy from Kubernetes 1.25 on
+    template: psp.yaml
+    capabilities:
+      majorVersion: 1
+      minorVersion: 28
+    set:
+      rbac:
+        pspEnabled: true
+    asserts:
+      - hasDocuments:
+          count: 0
+  - it: renders the cert-manager Certificate from an existing issuer
+    template: certificate.yaml
+    set:
+      tls:
+        type: "cert-manager"
+        certManager:
+          existingIssuer:
+            enabled: true
+            kind: ClusterIssuer
+            name: my-issuer
+    asserts:
+      - isKind:
+          of: Certificate
+      - equal:
+          path: spec.issuerRef.name
+          value: my-issuer

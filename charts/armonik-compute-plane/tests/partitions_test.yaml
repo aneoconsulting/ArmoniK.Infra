@@ -1,0 +1,73 @@
+suite: partition fan-out
+templates:
+  - deployment.yaml
+  - scaledobject.yaml
+values:
+  - ../ci/partitions-values.yaml
+release:
+  name: t
+tests:
+  - it: renders one deployment per partition
+    template: deployment.yaml
+    asserts:
+      - hasDocuments:
+          count: 2
+      - isKind:
+          of: Deployment
+  - it: renders one scaled object per partition, targeting its deployment
+    template: scaledobject.yaml
+    asserts:
+      - hasDocuments:
+          count: 2
+      - isKind:
+          of: ScaledObject
+      - equal:
+          path: spec.scaleTargetRef.name
+          value: "t-armonik-compute-plane-htcmock"
+        documentIndex: 1
+  - it: overrides the worker image per partition
+    template: deployment.yaml
+    documentSelector:
+      path: metadata.name
+      value: "t-armonik-compute-plane-htcmock"
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[?(@.name == "worker")].image
+          pattern: armonik_core_htcmock_test_worker
+  - it: uses tcp channel addresses when socketType is tcp (partitionCommon default)
+    template: deployment.yaml
+    documentSelector:
+      path: metadata.name
+      value: "t-armonik-compute-plane-bench"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[?(@.name == "agent")].env
+          content:
+            name: ComputePlane__AgentChannel__Address
+            value: http://localhost:6667
+  - it: uses unix socket addresses when socketType is not tcp
+    template: deployment.yaml
+    documentSelector:
+      path: metadata.name
+      value: "t-armonik-compute-plane-htcmock"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[?(@.name == "agent")].env
+          content:
+            name: ComputePlane__AgentChannel__Address
+            value: /cache/armonik_agent.sock
+  - it: replaces the default KEDA trigger with the partition override
+    template: scaledobject.yaml
+    documentSelector:
+      path: metadata.name
+      value: "t-armonik-compute-plane-htcmock"
+    asserts:
+      - lengthEqual:
+          path: spec.triggers
+          count: 1
+      - equal:
+          path: spec.triggers[0].metadata.threshold
+          value: "5"
+      - equal:
+          path: spec.triggers[0].metadata.metricName
+          value: armonik_htcmock_tasks_queued

@@ -1,0 +1,16 @@
+{{- with .Values.conf }}
+  {{- $confs := list }}
+  {{- range . }}
+    {{- $confs = list . $ | include "armonik.conf.resolve" | fromYaml | append $confs }}
+  {{- end }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: conf-result
+data:
+  env: {{ include "armonik.conf.generateEnv" (first $confs) | fromYamlArray | toJson | quote }}
+  envFrom: {{ include "armonik.conf.generateEnvFrom" (first $confs) | fromYamlArray | toJson | quote }}
+  volumeMounts: {{ include "armonik.conf.generateVolumeMounts" (first $confs) | fromYamlArray | toJson | quote }}
+  # volumes are generated for the whole pod: one call over every conf
+  volumes: {{ include "armonik.conf.generateVolumes" $confs | fromYamlArray | toJson | quote }}
+{{- end }}

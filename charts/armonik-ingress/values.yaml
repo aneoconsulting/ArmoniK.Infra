@@ -79,9 +79,9 @@ mtls:
   trustedCommonNames: []
 
 volumes:
-  #ingressSecret: ingress-crt
+  # ingressSecret: ingress-crt
   mongodbSecret: mongodb
-  #mongodbSecretCrt: mongodb-ca
+  # mongodbSecretCrt: mongodb-ca
   nginxConfigMap: armonik-ingress-conf
   nginxStaticConfigMap: armonik-ingress-static
 
@@ -150,7 +150,7 @@ static:
   guiConfiguration: {}
 
 
-# GATEWAY 
+# GATEWAY
 gateway:
   enabled: false
   tls:
@@ -159,11 +159,10 @@ gateway:
     namespaces:
       from: Same
 
-# HTTPROUTE 
+# HTTPROUTE
 httpRoute:
   enabled: false
 
 # HEALTHCHECKPOLICY
 healthCheckPolicy:
   enabled: false
-  

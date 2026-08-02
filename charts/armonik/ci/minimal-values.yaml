@@ -1,0 +1,25 @@
+# Deterministic minimal profile: every third-party dependency disabled.
+# Keeps the render small, offline-friendly and reproducible (no operator CRs,
+# no randAlphaNum redis-users Secret). Used by the render matrix
+# (test/matrix.sh), the umbrella unittest suites, and linted by ct.
+dependencies:
+  redis:
+    enabled: false
+  activemq:
+    enabled: false
+  mongodb:
+    enabled: false
+  keda:
+    enabled: false
+  cert-manager:
+    enabled: false
+  grafana:
+    enabled: false
+  fluent-bit:
+    enabled: false
+  seq:
+    enabled: false
+  kube-prometheus:
+    enabled: false
+  external-secrets:
+    enabled: false

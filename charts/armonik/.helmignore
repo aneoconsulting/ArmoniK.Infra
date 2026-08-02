@@ -1,0 +1,3 @@
+# Keep test material out of vendored/packaged chart archives.
+tests/
+ci/

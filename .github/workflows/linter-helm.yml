@@ -21,7 +21,7 @@ jobs:
       - name: Set up Helm
         uses: azure/setup-helm@1a275c3b69536ee54be43f2070a358922e12c8d4 # v4
         with:
-          version: v3.17.0
+          version: v3.18.4
 
       - name: Set up Python
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
@@ -29,32 +29,17 @@ jobs:
           python-version: '3.x'
           check-latest: true
 
-      # - name: "Upgrade Helm chart dependencies"
-      #   id: deps-update
-      #   uses: camptocamp/helm-dependency-update-action@v0.4.1
-      #   with:
-      #     chart-path: "charts/armonik"
-      #     excluded-dependencies: "control-plane,compute-plane,ingress,activemq"
-
       - name: Set up chart-testing
         uses: helm/chart-testing-action@0d28d3144d3a25ea2cc349d6e59901c4ff469b3b # v2.7.0
 
       - name: Run chart-testing (list-changed)
         id: list-changed
         run: |
-          changed=$(ct list-changed --chart-dirs charts/armonik --target-branch ${{ github.event.repository.default_branch }})
+          changed=$(ct list-changed --config ct.yaml --target-branch ${{ github.event.repository.default_branch }})
           if [[ -n "$changed" ]]; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Run chart-testing (lint)
         if: steps.list-changed.outputs.changed == 'true'
-        run: ct lint --chart-dirs charts/armonik --target-branch ${{ github.event.repository.default_branch }} --chart-repos "bitnami=https://charts.bitnami.com/bitnami,cert-manager=https://charts.jetstack.io,seq=https://helm.datalust.co,grafana=https://grafana.github.io/helm-charts,keda=https://kedacore.github.io/charts"
-
-      - name: Create kind cluster
-        if: steps.list-changed.outputs.changed == 'true'
-        uses: helm/kind-action@a1b0e391336a6ee6713a0583f8c6240d70863de3 # v1.12.0
-
-      - name: Run chart-testing (install)
-        if: steps.list-changed.outputs.changed == 'true'
-        run: ct install --chart-dirs charts/armonik --target-branch ${{ github.event.repository.default_branch }} --chart-repos "bitnami=https://charts.bitnami.com/bitnami,cert-manager=https://charts.jetstack.io,seq=https://helm.datalust.co,grafana=https://grafana.github.io/helm-charts,keda=https://kedacore.github.io/charts"
+        run: ct lint --config ct.yaml --target-branch ${{ github.event.repository.default_branch }}

@@ -1,0 +1,6 @@
+# PodSecurityPolicy renders only below Kubernetes 1.25; the matrix renders
+# this fixture with --kube-version 1.24.17 (and without PSP at the default
+# kube version). Not in ci/: ct lint has no per-fixture kube-version.
+rbac:
+  create: true
+  pspEnabled: true

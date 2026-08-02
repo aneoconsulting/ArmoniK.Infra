@@ -56,7 +56,6 @@ spec:
       {{- if $.Values.serviceAccount.create }}
       serviceAccountName: {{ include "armonik.serviceAccountName" $ }}
       serviceAccount: {{ include "armonik.serviceAccountName" $ }}
-      automountServiceAccountToken: true
       {{- end }}{{/* if .Values.serviceAccount.create */}}
       shareProcessNamespace: false
       {{- with coalesce .Values.init.nodeSelector .Values.nodeSelector }}

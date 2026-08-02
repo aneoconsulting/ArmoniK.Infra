@@ -1,0 +1,15 @@
+suite: subchart toggles
+templates:
+  - secrets/conf-secrets.yaml
+tests:
+  - it: renders without the control plane
+    skip:
+      reason: >-
+        Broken render path: NOTES.txt dereferences the control-plane subchart
+        values unconditionally, so control-plane.enabled=false nil-pointers.
+        Enable once NOTES.txt guards the disabled case.
+    set:
+      control-plane:
+        enabled: false
+    asserts:
+      - notFailedTemplate: {}

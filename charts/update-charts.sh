@@ -5,6 +5,10 @@
 # Charts are processed in layers: a layer's charts are packaged into the
 # charts/ of the next layer, so the layers run in order while the charts of a
 # single layer run in parallel.
+#
+# A dependency repository absent from `helm repo list` (helm calls it
+# unmanaged) is only ever fetched by `dependency update` while it refreshes, so
+# -u -r is the one mode that needs no `helm repo add` beforehand.
 
 set -eu
 
@@ -24,7 +28,8 @@ Re-vendors the dependencies of every chart, cheapest mode first:
 
   -u  re-resolve the dependencies and rewrite Chart.lock, instead of
       reproducing the versions it already pins
-  -r  refresh the local repository cache before resolving
+  -r  refresh the local repository cache; the charts pulling from a repository
+      then run one at a time, the others stay parallel
   -h  show this help
 EOF
 }
@@ -51,31 +56,47 @@ if [ "$#" -gt 0 ]; then
   exit 2
 fi
 
-helm_opts=$action
-[ "$refresh" -eq 1 ] || helm_opts="$helm_opts --skip-refresh"
+# Word splitting of both is wanted; they only ever hold literal flags.
+cached_opts="$action --skip-refresh"
+refresh_opts=$action
+
+# Only a chart pulling a dependency from an http(s) repository reads the shared
+# repository index, and refreshes it when told to; one that resolves everything
+# from file:// or an OCI registry never opens it.
+usesrepos() {
+  grep -qE '^[[:space:]]*repository:[[:space:]]*"?https?://' "$1/Chart.yaml"
+}
 
 updatedeps() {
   running=
+  failed=
+  cached=
   for chart in "$@"; do
-    # Word splitting of helm_opts is wanted; it only ever holds literal flags.
-    helm dependency $helm_opts "$chart" &
+    if [ "$refresh" -eq 1 ] && usesrepos "$chart"; then
+      # A refresh rewrites the whole index and helm offers no way to refresh it
+      # separately, so these run one at a time, before anything reads it.
+      helm dependency $refresh_opts "$chart" || failed="$failed $chart"
+    else
+      cached="$cached $chart"
+    fi
+  done
+
+  for chart in $cached; do
+    helm dependency $cached_opts "$chart" &
     running="$running $!:$chart"
   done
 
   # `wait` without operand always reports success, so every job is waited on
   # individually to catch the ones that failed.
-  failed=
   for job in $running; do
-    if ! wait "${job%%:*}"; then
-      failed="$failed ${job#*:}"
-    fi
+    wait "${job%%:*}" || failed="$failed ${job#*:}"
   done
 
   # A layer feeds the next one, so a failure here stops everything.
   if [ -n "$failed" ]; then
     printf '%s: failed to vendor:%s\n' "$self" "$failed" >&2
     [ "$action" = update ] || printf '%s: hint: a Chart.lock out of sync with its Chart.yaml needs -u\n' "$self" >&2
-    [ "$refresh" -eq 1 ] || printf '%s: hint: a missing or stale repository index needs -r\n' "$self" >&2
+    [ "$refresh" -eq 1 ] || printf '%s: hint: a stale repository index needs -r, one absent from `helm repo list` needs -u -r\n' "$self" >&2
     exit 1
   fi
 }

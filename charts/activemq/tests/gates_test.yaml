@@ -81,3 +81,22 @@ tests:
       - equal:
           path: spec.issuerRef.name
           value: my-issuer
+  - it: fails TLS via cert-manager when the operator is unavailable and no issuer exists
+    skip:
+      reason: >-
+        Enable after PR #294 (operator split) merges: certificate.yaml gains a
+        guard requiring global.armonik.operators.certManager.available=true,
+        an existing issuer, or a non-cert-manager tls.type.
+    template: certificate.yaml
+    set:
+      tls:
+        type: "cert-manager"
+      global:
+        armonik:
+          operators:
+            certManager:
+              deploy: false
+              available: false
+    asserts:
+      - failedTemplate:
+          errorPattern: "activemq TLS via cert-manager requires it"

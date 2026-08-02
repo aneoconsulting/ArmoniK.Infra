@@ -1,0 +1,29 @@
+suite: prometheus-operator monitors
+templates:
+  - podmonitor.yaml
+  - servicemonitor.yaml
+tests:
+  - it: renders the monitors when the prometheus-operator CRDs are present
+    skip:
+      reason: >-
+        Enable after PR #294 (operator split) merges: it adds
+        templates/podmonitor.yaml and templates/servicemonitor.yaml, gated on
+        global.armonik.operators.prometheusOperator.available (default true
+        via the armonik-common import-values lift).
+    asserts:
+      - hasDocuments:
+          count: 1
+  - it: renders no monitor when the prometheus operator is unavailable
+    skip:
+      reason: >-
+        Enable after PR #294 (operator split) merges (same gate as above).
+    set:
+      global:
+        armonik:
+          operators:
+            prometheusOperator:
+              deploy: false
+              available: false
+    asserts:
+      - hasDocuments:
+          count: 0

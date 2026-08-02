@@ -81,10 +81,14 @@ skip() { # <name> <reason>
 # --- defaults, one per chart ---------------------------------------------
 ok activemq-defaults      activemq
 ok control-plane-defaults armonik-control-plane
+# After PR #294 (operator split), partitions-guard makes a partition-less
+# compute-plane a render error: flip this case to
+#   fail_with compute-plane-defaults armonik-compute-plane "requires at least one non-null partition"
 ok compute-plane-defaults armonik-compute-plane
 ok dependencies-defaults  armonik-dependencies
 ok umbrella-defaults      armonik
-skip ingress-defaults "broken: chart values lack global.environment, static.environment.json hits a nil pointer; enable when fixed"
+skip operators-defaults "PR #294 adds charts/armonik-operators; enable then: ok operators-defaults armonik-operators (and add the chart to test/unittest.sh once it has suites)"
+skip ingress-defaults "broken: chart values lack global.environment, static.environment.json hits a nil pointer; enable when fixed (not fixed by PRs #294-#296)"
 
 # --- conditional variants --------------------------------------------------
 ok umbrella-minimal       armonik               -f charts/armonik/ci/minimal-values.yaml
@@ -102,7 +106,9 @@ ok activemq-pdb-hpa       activemq              -f charts/activemq/ci/pdb-hpa-va
 ok activemq-tls           activemq              -f charts/activemq/ci/tls-values.yaml
 ok activemq-psp-k8s124    activemq --kube-version 1.24.17 -f test/fixtures/activemq/psp-values.yaml
 ok activemq-psp-k8s131    activemq              -f test/fixtures/activemq/psp-values.yaml
-skip umbrella-no-control-plane "broken: NOTES.txt dereferences control-plane values unconditionally; enable when fixed"
+# PR #294 rewrites NOTES.txt nil-safe; enable then:
+#   ok umbrella-no-control-plane armonik -f charts/armonik/ci/minimal-values.yaml --set control-plane.enabled=false
+skip umbrella-no-control-plane "broken: NOTES.txt dereferences control-plane values unconditionally; PR #294 fixes it, enable after it merges"
 
 # --- render-time guards ------------------------------------------------
 fail_with ingress-mtls-without-tls armonik-ingress \
@@ -114,6 +120,10 @@ fail_with ingress-httproute-no-gateway armonik-ingress \
 fail_with control-authz-without-authn armonik-control-plane \
   "Authorization requires authentication to be enabled" \
   -f test/fixtures/armonik-control-plane/authz-values.yaml
+# After PR #294 (operator split), the ESO gate moves to
+# global.armonik.operators.externalSecrets: replace the trigger with
+#   --set global.armonik.operators.externalSecrets.available=false \
+#   --set global.armonik.operators.externalSecrets.deploy=false
 fail_with umbrella-envsecret-without-eso armonik \
   "envSecret and envFromSecret require ExternalSecretsOperator" \
   --set dependencies.external-secrets.enabled=false

@@ -1,0 +1,32 @@
+suite: keda via operator control
+templates:
+  - deployment.yaml
+  - scaledobject.yaml
+set:
+  partitions:
+    default:
+      worker:
+        image:
+          name: armonik-dynamic-dotnet-worker
+tests:
+  - it: renders no scaled object when the KEDA operator is unavailable
+    skip:
+      reason: >-
+        Enable after PR #294 (operator split) merges: the KEDA switch moves
+        from keda.enabled to global.armonik.operators.keda.available (the
+        ci/keda-off-values.yaml fixture and keda_test must move to the new
+        key at the same time).
+    set:
+      global:
+        armonik:
+          operators:
+            keda:
+              deploy: false
+              available: false
+    asserts:
+      - hasDocuments:
+          count: 1
+        template: deployment.yaml
+      - hasDocuments:
+          count: 0
+        template: scaledobject.yaml

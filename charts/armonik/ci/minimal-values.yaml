@@ -2,6 +2,31 @@
 # Keeps the render small, offline-friendly and reproducible (no operator CRs,
 # no randAlphaNum redis-users Secret). Used by the render matrix
 # (test/matrix.sh), the umbrella unittest suites, and linted by ct.
+#
+# Inert until PR #294 (operator split) merges, then load-bearing: it keeps the
+# operators subchart and the operator-gated resources (SecretStore,
+# ExternalSecrets, monitors, ScaledObjects) out of the minimal render. The
+# dependencies keys for the charts #294 moves to armonik-operators
+# (keda, cert-manager, kube-prometheus, external-secrets) become inert then
+# and can be dropped.
+global:
+  armonik:
+    operators:
+      externalSecrets:
+        deploy: false
+        available: false
+      keda:
+        deploy: false
+        available: false
+      certManager:
+        deploy: false
+        available: false
+      mongodbOperator:
+        deploy: false
+        available: false
+      prometheusOperator:
+        deploy: false
+        available: false
 dependencies:
   redis:
     enabled: false

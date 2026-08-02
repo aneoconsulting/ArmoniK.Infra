@@ -1,0 +1,36 @@
+suite: grafana-behind-ingress guards
+templates:
+  - validate.yaml
+release:
+  name: t
+tests:
+  - it: fails when grafana root_url carries a path
+    skip:
+      reason: >-
+        Enable after PR #295 merges: it adds templates/validate.yaml, which
+        rejects a root_url path because armonik-ingress injects Grafana's
+        public prefix itself and needs an empty appSubUrl.
+    set:
+      dependencies:
+        grafana:
+          grafana.ini:
+            server:
+              root_url: http://grafana/grafana
+    asserts:
+      - failedTemplate:
+          errorPattern: "must not carry a path"
+  - it: fails when grafana serve_from_sub_path is enabled
+    skip:
+      reason: >-
+        Enable after PR #295 merges: it adds templates/validate.yaml, which
+        pins serve_from_sub_path to false because armonik-ingress strips the
+        prefix before proxying.
+    set:
+      dependencies:
+        grafana:
+          grafana.ini:
+            server:
+              serve_from_sub_path: true
+    asserts:
+      - failedTemplate:
+          errorPattern: "must stay false"

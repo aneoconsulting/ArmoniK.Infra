@@ -84,10 +84,9 @@ Kubernetes: `>=v1.25.0-0`
 | dependencies.fluent-bit.enabled | bool | `true` |  |
 | dependencies.fluent-bit.fullnameOverride | string | `"fluent-bit"` |  |
 | dependencies.grafana."grafana.ini"."auth.anonymous".enabled | bool | `true` |  |
-| dependencies.grafana."grafana.ini".anonymous.enabled | bool | `true` |  |
 | dependencies.grafana."grafana.ini".server.domain | string | `"grafana.local"` |  |
 | dependencies.grafana."grafana.ini".server.root_url | string | `"http://grafana"` |  |
-| dependencies.grafana."grafana.ini".server.serve_from_sub_path | bool | `true` |  |
+| dependencies.grafana."grafana.ini".server.serve_from_sub_path | bool | `false` |  |
 | dependencies.grafana.enabled | bool | `true` |  |
 | dependencies.grafana.fullnameOverride | string | `"grafana"` |  |
 | dependencies.grafana.image.registry | string | `"docker.io"` |  |

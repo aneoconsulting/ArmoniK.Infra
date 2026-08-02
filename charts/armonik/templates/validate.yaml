@@ -1,0 +1,18 @@
+{{- /* The ingress injects Grafana's public prefix into its output (armonik-ingress
+       templates/configmaps/nginx.yaml) and needs an empty appSubUrl to do so. Breaking that
+       breaks the UI with no error anywhere, hence a render-time guard. */ -}}
+{{- $grafanaEnabled := list .Values "dependencies" "grafana" "enabled" | include "armonik.utils.index" | empty | not -}}
+{{- $ingressEnabled := list .Values "ingress" "enabled" | include "armonik.utils.index" | empty | not -}}
+{{- if and $grafanaEnabled $ingressEnabled -}}
+  {{- $server := list .Values "dependencies" "grafana" "grafana.ini" "server" | include "armonik.utils.index" | fromYaml | default dict -}}
+  {{- $rootUrl := $server.root_url | default "" | toString -}}
+  {{- /* appSubUrl is root_url's path. */ -}}
+  {{- $parts := splitList "://" $rootUrl | last | splitn "/" 2 -}}
+  {{- $path := $parts._1 | default "" | trimSuffix "/" -}}
+  {{- if $path -}}
+    {{- printf `dependencies.grafana."grafana.ini".server.root_url must not carry a path, got %q: armonik-ingress injects Grafana's public prefix itself and needs an empty appSubUrl. Drop the %q segment, or set ingress.enabled=false to proxy Grafana yourself.` $rootUrl $path | fail -}}
+  {{- end -}}
+  {{- if $server.serve_from_sub_path -}}
+    {{- fail `dependencies.grafana."grafana.ini".server.serve_from_sub_path must stay false: armonik-ingress strips the prefix before proxying, so Grafana keeps serving at "/".` -}}
+  {{- end -}}
+{{- end -}}

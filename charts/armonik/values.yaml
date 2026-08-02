@@ -248,11 +248,12 @@ dependencies:
     fullnameOverride: "grafana"
     grafana.ini:
       server:
+        # Keep root_url path-less and serve_from_sub_path false: the ingress publishes Grafana
+        # under a prefix it injects itself (armonik-ingress templates/configmaps/nginx.yaml),
+        # which needs an empty appSubUrl. Enforced by armonik/templates/validate.yaml.
         domain: grafana.local
         root_url: http://grafana
-        serve_from_sub_path: true
-      anonymous:
-        enabled: true
+        serve_from_sub_path: false
       auth.anonymous:
         enabled: true
     sidecar:

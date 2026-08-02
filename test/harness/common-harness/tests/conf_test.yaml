@@ -1,0 +1,70 @@
+suite: armonik.conf generators and guards
+templates:
+  - conf.yaml
+tests:
+  - it: generates env entries and secret envFrom references
+    set:
+      conf:
+        - env:
+            A: "1"
+          envSecret:
+            - my-secret
+    asserts:
+      - equal:
+          path: data.env
+          value: '[{"name":"A","value":"1"}]'
+      - equal:
+          path: data.envFrom
+          value: '[{"secretRef":{"name":"my-secret","optional":false}}]'
+  - it: mounts a projected volume with a content-addressed name
+    set:
+      conf:
+        - mountSecret:
+            - secret: s1
+    asserts:
+      - matchRegex:
+          path: data.volumeMounts
+          pattern: '\{"mountPath":"/mounts","name":"conf-[0-9a-f]{16}","readOnly":true\}'
+  - it: dedupes identical mounts across confs into one volume
+    set:
+      conf:
+        - mountSecret:
+            - secret: s1
+        - mountSecret:
+            - secret: s1
+    asserts:
+      - matchRegex:
+          path: data.volumes
+          pattern: '^\[\{"name":"conf-[0-9a-f]{16}","projected":\{"defaultMode":292,"sources":\[\{"secret":\{"name":"s1","optional":false\}\}\]\}\}\]$'
+  - it: keeps mounts at distinct paths in distinct volumes
+    set:
+      conf:
+        - mountSecret:
+            - secret: s1
+            - secret: s2
+              path: /other
+    asserts:
+      - matchRegex:
+          path: data.volumes
+          pattern: '^\[\{.*\},\{.*\}\]$'
+  - it: rejects a subpath at a shared path
+    set:
+      conf:
+        - mountSecret:
+            - secret: s1
+            - secret: s2
+              subpath: x
+    asserts:
+      - failedTemplate:
+          errorPattern: 'subpath is not supported at shared path'
+  - it: rejects conflicting modes at a shared path
+    set:
+      conf:
+        - mountSecret:
+            - secret: s1
+              mode: "0444"
+            - secret: s2
+              mode: "0400"
+    asserts:
+      - failedTemplate:
+          errorPattern: 'have conflicting modes'

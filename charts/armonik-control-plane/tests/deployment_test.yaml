@@ -1,0 +1,38 @@
+suite: deployment defaults
+templates:
+  - deployments/control-plane.yaml
+  - deployments/metrics-exporter.yaml
+tests:
+  - it: renders the control-plane deployment by default
+    template: deployments/control-plane.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: Deployment
+  - it: keeps the selector to name, instance and static component only (immutable across upgrades)
+    template: deployments/control-plane.yaml
+    release:
+      name: my-release
+    asserts:
+      - equal:
+          path: spec.selector.matchLabels
+          value:
+            app.kubernetes.io/name: armonik-control-plane
+            app.kubernetes.io/instance: my-release
+            app.kubernetes.io/component: control-plane
+  - it: renders the metrics-exporter by default
+    template: deployments/metrics-exporter.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: Deployment
+  - it: renders no metrics-exporter when disabled
+    template: deployments/metrics-exporter.yaml
+    set:
+      metricsExporter:
+        enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0

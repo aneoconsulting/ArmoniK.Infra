@@ -1,0 +1,9 @@
+# Expected failure: mTLS without TLS must be rejected by templates/validate.yaml.
+global:
+  environment:
+    name: ci
+    description: ArmoniK CI environment
+tls:
+  enabled: false
+mtls:
+  enabled: true

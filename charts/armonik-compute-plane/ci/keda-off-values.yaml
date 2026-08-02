@@ -1,0 +1,9 @@
+# KEDA not available in the target cluster: partitions still deploy, but no
+# ScaledObject is rendered.
+keda:
+  enabled: false
+partitions:
+  default:
+    worker:
+      image:
+        name: armonik-dynamic-dotnet-worker

@@ -1,0 +1,6 @@
+# PodDisruptionBudget and HorizontalPodAutoscaler gates.
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+HorizontalPodAutoscaler:
+  enabled: true

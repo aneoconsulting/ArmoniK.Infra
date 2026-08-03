@@ -20,6 +20,8 @@ ReadTheDocs build.
 ├── index.md                      # Main documentation index
 ├── conf.py                       # Sphinx configuration
 ├── requirements.txt              # Python dependencies
+├── _static/
+│   └── custom.css                # Widens the content area for the generated tables
 │
 ├── aws/                          # AWS provider
 │   ├── storage/
@@ -123,11 +125,16 @@ When you add a new Terraform module:
    - Update the category index to include it
 3. No manual documentation changes needed
 
-When you add a new Helm chart, nothing has to be done: `helm-docs` picks up any chart directory
-under `charts/` that has a `Chart.yaml` **and** a `values.yaml` (it silently skips a chart missing
-the latter), and the `charts/*/index` toctree glob picks up its page. To document a chart beyond
-its metadata and values, add per-value `# -- ` comments in `values.yaml`, or a `README.md.gotmpl`
-template in the chart directory.
+When you add a new Helm chart:
+
+1. `helm-docs` picks it up on its own, as long as the chart directory has a `Chart.yaml` **and** a
+   `values.yaml`. It silently skips a chart missing the latter
+2. Add `charts/<chart>/index` to the `Helm Charts` toctree in `index.md`. That list is explicit
+   because the charts are ordered by deployment role rather than alphabetically. Forgetting it
+   leaves the page orphaned, which Sphinx reports as `document isn't included in any toctree`
+
+To document a chart beyond its metadata and values, add per-value `# -- ` comments in `values.yaml`,
+or a `README.md.gotmpl` template in the chart directory.
 
 ## Troubleshooting
 

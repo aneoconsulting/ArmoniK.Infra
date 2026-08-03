@@ -87,7 +87,8 @@ find charts -mindepth 2 -maxdepth 2 -name "README.md" |
     done
 
 # Generate category index files (bottom-up for nested structure)
-find .docs -depth -type d -not -path '*examples*' |
+# .docs/charts is left out, index.md lists the charts itself to order them
+find .docs -depth -type d -not -path '*examples*' -not -path '.docs/charts' |
     while read -r d; do
         generate_index "$d"
     done

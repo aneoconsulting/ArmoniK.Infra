@@ -8,6 +8,8 @@ keywords:
   - helm
 type: application
 version: 0.1.0
+sources:
+  - https://github.com/aneoconsulting/ArmoniK.Infra
 maintainers:
   - name: Aneo
     email: armonik@aneo.fr

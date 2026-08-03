@@ -9,6 +9,8 @@ keywords:
 type: application
 version: 0.1.0
 appVersion: "0.14.5"
+sources:
+  - https://github.com/aneoconsulting/ArmoniK.Infra
 maintainers:
   - name: Aneo
     email: armonik@aneo.fr

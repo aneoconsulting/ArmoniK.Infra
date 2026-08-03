@@ -38,6 +38,12 @@ terraform.rc
 # Ignore Terraform plugins
 terraform-plugins
 
+# Generated chart documentation, rendered by the readthedocs pipeline
+charts/*/README.md
+
+# Doc generator binaries downloaded by the readthedocs pipeline
+/.bin/
+
 # others
 .idea
 kubeconfig_*

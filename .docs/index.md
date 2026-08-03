@@ -13,6 +13,14 @@ Welcome to the ArmoniK Infrastructure documentation. This repository contains In
 
 ```{toctree}
 :maxdepth: 2
+:caption: Helm Charts
+:glob:
+
+charts/*/index
+```
+
+```{toctree}
+:maxdepth: 2
 :caption: ArmoniK
 
 armonik/index

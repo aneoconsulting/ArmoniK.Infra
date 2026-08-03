@@ -4,7 +4,14 @@ This directory contains the Sphinx documentation for ArmoniK.Infra.
 
 ## How It Works
 
-The documentation is automatically generated from the Terraform module READMEs using symlinks and auto-generated category indexes.
+The documentation is automatically generated from the Terraform module READMEs and the Helm chart
+READMEs using symlinks and auto-generated category indexes.
+
+Both kinds of README are generated artifacts and are therefore **not committed**: `terraform-docs`
+injects its section into the committed module README skeleton (the `pre-commit` hook strips the
+injected part back out before a commit), and `helm-docs` writes the chart README in full, so
+`charts/*/README.md` is git-ignored altogether. Everything is regenerated at the start of every
+ReadTheDocs build.
 
 ### Directory Structure
 
@@ -31,15 +38,21 @@ The documentation is automatically generated from the Terraform module READMEs u
 │
 ├── gcp/                          # GCP provider (same structure)
 ├── on-premise/                   # On-premise provider (same structure)
-├── armonik/                      # ArmoniK charts
-└── utils/                        # Utility modules
+├── armonik/                      # ArmoniK module
+├── utils/                        # Utility modules
+│
+└── charts/                       # Helm charts
+    ├── index.md                  # Auto-generated category index
+    ├── armonik/
+    │   └── index.md              # Symlink -> charts/armonik/README.md
+    └── ...
 ```
 
 ### Symlink Generation
 
-The `generate-docs-symlinks.sh` script (in the project root) does two things:
+The `generate-docs-symlinks.sh` script does two things:
 
-1. **Creates symlinks** from `.docs/<provider>/<category>/<module>/index.md` to the actual `README.md` files in the source tree
+1. **Creates symlinks** from `.docs/<provider>/<category>/<module>/index.md` to the actual `README.md` files in the source tree. Chart READMEs keep their path instead, at `.docs/charts/<chart>/index.md`
 2. **Generates category index files** (e.g., `.docs/aws/storage/index.md`) with toctrees pointing to all modules in that category
 
 This allows:
@@ -51,9 +64,11 @@ This allows:
 
 On RTD, the build process (defined in `.readthedocs.yaml`):
 
-1. Generates Terraform documentation with `terraform-docs`
-2. Runs `generate-docs-symlinks.sh` to create symlinks and category indexes
-3. Builds the Sphinx documentation
+1. Downloads the `terraform-docs` and `helm-docs` binaries
+2. Generates the Terraform module READMEs with `generate-tf-docs.sh`
+3. Generates the Helm chart READMEs with `generate-helm-docs.sh`
+4. Runs `generate-docs-symlinks.sh` to create symlinks and category indexes
+5. Builds the Sphinx documentation
 
 ## Building Documentation Locally
 
@@ -63,13 +78,16 @@ On RTD, the build process (defined in `.readthedocs.yaml`):
 pip install -r requirements.txt
 ```
 
-### Generate Symlinks
+### Generate the READMEs and the Symlinks
 
-Before building, generate the symlinks and category indexes:
+Before building, generate the READMEs, then the symlinks and category indexes. This needs
+`terraform-docs` and `helm-docs` on the `PATH`, or `TFDOCS`/`HELMDOCS` pointing at them:
 
 ```bash
 # From project root
-bash generate-docs-symlinks.sh
+bash .docs/generate-tf-docs.sh
+bash .docs/generate-helm-docs.sh
+bash .docs/generate-docs-symlinks.sh
 ```
 
 ### Build HTML Documentation
@@ -95,7 +113,7 @@ Then open http://127.0.0.1:8000 in your browser.
 make linkcheck
 ```
 
-## Adding New Modules
+## Adding New Modules and Charts
 
 When you add a new Terraform module:
 
@@ -104,6 +122,12 @@ When you add a new Terraform module:
    - Create a symlink for the new module
    - Update the category index to include it
 3. No manual documentation changes needed
+
+When you add a new Helm chart, nothing has to be done: `helm-docs` picks up any chart directory
+under `charts/` that has a `Chart.yaml` **and** a `values.yaml` (it silently skips a chart missing
+the latter), and the `charts/*/index` toctree glob picks up its page. To document a chart beyond
+its metadata and values, add per-value `# -- ` comments in `values.yaml`, or a `README.md.gotmpl`
+template in the chart directory.
 
 ## Troubleshooting
 

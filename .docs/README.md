@@ -136,6 +136,10 @@ When you add a new Helm chart:
 To document a chart beyond its metadata and values, add per-value `# -- ` comments in `values.yaml`,
 or a `README.md.gotmpl` template in the chart directory.
 
+`charts/_templates.gotmpl` holds the overrides of the helm-docs built-in templates that apply to
+every chart, currently the values table, whose cells it escapes so that a default holding a template
+pipeline does not spill into the next column.
+
 ## Troubleshooting
 
 ### Symlinks Not Working

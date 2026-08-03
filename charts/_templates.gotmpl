@@ -1,0 +1,40 @@
+{{- /*
+  Overrides of the helm-docs built-in templates. The file holds definitions only,
+  so helm-docs still appends its default README body, and a definition here wins
+  over the built-in one of the same name. Every construct trims its surrounding
+  whitespace: text left outside a definition would be prepended to that body.
+*/ -}}
+
+{{- /*
+  A pipe splits a markdown table row into further cells even inside a code span,
+  and helm-docs emits the Default and Description cells raw. Any value holding a
+  template pipeline, which most of the conf defaults do, would therefore render
+  half in the Default column and half in the Description one.
+*/ -}}
+{{- define "armonik.escapePipes" -}}
+{{ . | replace "|" "\\|" }}
+{{- end -}}
+
+{{- /*
+  Same as the built-in chart.valuesTable, the cells going through the escaping
+  above. Whitespace here mirrors the built-in one exactly, keep it that way.
+*/ -}}
+{{- define "chart.valuesTable" -}}
+{{ if .Sections.Sections }}{{ range .Sections.Sections }}
+
+### {{ .SectionName }}
+
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+  {{- range .SectionItems }}
+| {{ .Key }} | {{ .Type }} | {{ if .Default }}{{ template "armonik.escapePipes" .Default }}{{ else }}{{ template "armonik.escapePipes" .AutoDefault }}{{ end }} | {{ if .Description }}{{ template "armonik.escapePipes" .Description }}{{ else }}{{ template "armonik.escapePipes" .AutoDescription }}{{ end }} |  {{- end }}{{- end }}{{ if .Sections.DefaultSection.SectionItems}}
+
+### {{ .Sections.DefaultSection.SectionName }}
+
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+  {{- range .Sections.DefaultSection.SectionItems }}
+| {{ .Key }} | {{ .Type }} | {{ if .Default }}{{ template "armonik.escapePipes" .Default }}{{ else }}{{ template "armonik.escapePipes" .AutoDefault }}{{ end }} | {{ if .Description }}{{ template "armonik.escapePipes" .Description }}{{ else }}{{ template "armonik.escapePipes" .AutoDescription }}{{ end }} |  {{- end }}{{ end }}{{ else }}| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+  {{- range .Values }}
+| {{ .Key }} | {{ .Type }} | {{ if .Default }}{{ template "armonik.escapePipes" .Default }}{{ else }}{{ template "armonik.escapePipes" .AutoDefault }}{{ end }} | {{ if .Description }}{{ template "armonik.escapePipes" .Description }}{{ else }}{{ template "armonik.escapePipes" .AutoDescription }}{{ end }} |  {{- end }}{{ end }}{{ end -}}

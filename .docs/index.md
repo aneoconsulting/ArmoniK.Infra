@@ -11,12 +11,23 @@ Welcome to the ArmoniK Infrastructure documentation. This repository contains In
 
 ## Documentation Structure
 
+<!-- Listed explicitly, and not globbed, to keep a deployment order rather than an
+     alphabetical one. A chart missing from this list raises an "isn't included in
+     any toctree" build warning. -->
 ```{toctree}
 :maxdepth: 2
 :caption: Helm Charts
-:glob:
 
-charts/*/index
+charts/armonik/index
+charts/armonik-compute-plane/index
+charts/armonik-control-plane/index
+charts/armonik-ingress/index
+charts/armonik-common/index
+charts/armonik-dependencies/index
+charts/armonik-operators/index
+charts/activemq/index
+charts/eniconfig/index
+charts/keda-hpa/index
 ```
 
 ```{toctree}

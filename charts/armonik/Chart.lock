@@ -2,6 +2,9 @@ dependencies:
 - name: armonik-common
   repository: file://../armonik-common
   version: 0.1.0
+- name: armonik-operators
+  repository: file://../armonik-operators
+  version: 0.1.0
 - name: armonik-control-plane
   repository: file://../armonik-control-plane
   version: 0.1.0
@@ -14,5 +17,5 @@ dependencies:
 - name: armonik-dependencies
   repository: file://../armonik-dependencies
   version: 0.1.0
-digest: sha256:5f9db710dbd7e5a33777e4f6d30387cadac6b63a3025014402ee1814f24093f4
-generated: "2026-07-11T21:03:56.165375091+02:00"
+digest: sha256:8debc3b52d5bbdd21d9e5526567ec069f0b21d05398713cfabf181c3d3f3741e
+generated: "2026-07-31T14:29:26.636796127+02:00"

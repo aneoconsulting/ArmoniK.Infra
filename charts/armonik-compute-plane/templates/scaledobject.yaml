@@ -1,18 +1,25 @@
-{{- if .Values.keda.enabled }}
-{{- range $partitionName, $config := .Values.partitions }}
+{{- $ops := include "armonik.operators" $ | fromYaml -}}
+{{- if $ops.keda.available }}
+{{- range $partitionName, $config := include "armonik.compute.partitions" $ | fromYaml }}
 {{- $partition := dict -}}
-{{- dict "dst" $partition "srcs" (list $config $.Values.partitionCommon) "print" false "render" true "context" (
-  merge (dict "Values" (dict "partitionName" $partitionName)) (omit $ "Values")
-  ) | include "armonik.utils.merge" -}}
+{{/* Partition render context: .Values minus partitions, plus partitionName. Full .Values so
+     partitionCommon can call helpers, like the monitoring resolver in its triggers. */}}
+{{- $context := omit $ "Values" -}}
+{{- $_ := omit $.Values "partitions" | set $context "Values" -}}
+{{- $_ := set $context.Values "partitionName" $partitionName -}}
+{{- dict "dst" $partition "srcs" (list $config $.Values.partitionCommon) "print" false "render" true "context" $context | include "armonik.utils.merge" -}}
 ---
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
   name: {{ printf "%s-%s" (include "armonik.fullname" $) $partitionName | trunc 63 | trimSuffix "-" | quote }}
   namespace: {{ include "armonik.namespace" $ }}
+  {{- if $ops.keda.deploy }}
+  {{- /* Hooked only when this release installs the CRDs; otherwise a plain resource. */}}
   annotations:
     "helm.sh/hook": post-install,post-upgrade
     "helm.sh/hook-weight": "10"
+  {{- end }}
   labels:
     app.kubernetes.io/component: {{ printf "compute-plane-%s" $partitionName | quote }}
     app.kubernetes.io/part-of: compute-plane

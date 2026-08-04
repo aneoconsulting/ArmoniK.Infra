@@ -106,11 +106,6 @@ Kubernetes: `>=v1.25.0-0`
 | tls.certManager.existingIssuer.name | string | `"my-issuer"` |  |
 | tls.certManager.labels | object | `{}` |  |
 | tls.certManager.renewBefore | string | `""` |  |
-| tls.certManager.waitJob.enabled | bool | `true` |  |
-| tls.certManager.waitJob.image.pullPolicy | string | `"IfNotPresent"` |  |
-| tls.certManager.waitJob.image.repository | string | `"alpine/k8s"` |  |
-| tls.certManager.waitJob.image.tag | string | `"1.31.0"` |  |
-| tls.certManager.waitJob.timeout | string | `"300s"` |  |
 | tls.customCert.certPem | string | `""` |  |
 | tls.customCert.keyPem | string | `""` |  |
 | tls.enabled | bool | `false` |  |

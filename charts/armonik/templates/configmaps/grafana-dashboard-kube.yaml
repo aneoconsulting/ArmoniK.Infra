@@ -5,7 +5,7 @@ metadata:
   name: grafana-dashboard-kub
   labels:
     grafana_dashboard: "1"
-    grafana_dashboard_folder: "Armonik"
+    grafana_dashboard_folder: "ArmoniK"
 data:
   dashboard-pods.json: |-
 {{ .Files.Get "static-confs/grafana-dashboards/dashboard-pods.json" | indent 4 }}

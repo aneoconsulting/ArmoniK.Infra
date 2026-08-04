@@ -81,8 +81,13 @@ app.kubernetes.io/name: {{ include "armonik.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
+{{/*
+Cluster DNS domain for callers needing a complete name (ingress Certificate dnsNames, nginx upstreams):
+tls.clusterDomain, clusterDomain, global.clusterDomain, then the Kubernetes default. Callers that can
+stop at ".svc" read global.clusterDomain and drop the suffix when it is empty.
+*/}}
 {{- define "armonik.clusterDomain" -}}
-  {{- $global := .Values.global | default dict -}}
   {{- $tls := .Values.tls | default dict -}}
-  {{- coalesce $tls.clusterDomain .Values.clusterDomain $global.clusterDomain "cluster.local" -}}
+  {{- $global := list .Values "global" "clusterDomain" | include "armonik.utils.index" -}}
+  {{- coalesce $tls.clusterDomain .Values.clusterDomain $global "cluster.local" -}}
 {{- end -}}

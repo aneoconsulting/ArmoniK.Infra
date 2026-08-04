@@ -1,1 +1,48 @@
-# armonik-common is a library chart, so values is empty
+# Library chart: renders nothing, takes no configuration of its own. What it owns is the single
+# definition of the cross-chart `global.armonik` defaults below, which each root chart lifts with
+# `import-values: [{child: global.armonik, parent: global.armonik}]` on its armonik-common dependency,
+# globals not propagating upward on their own. Precedence holds per key: these < the root chart's
+# values.yaml < user -f/--set. import-values copies chart-file values only, which is what makes it right
+# here (nobody configures this chart) and unusable for propagating a dependency's user-set values, which
+# it would silently drop.
+# Only what must be identical across charts belongs here.
+global:
+  armonik:
+    # Cross-chart operator control (see charts/armonik-operators), per operator:
+    #   deploy    - THIS release installs the operator + CRDs; gates the armonik-operators subchart
+    #               conditions and the CRD-ordering hooks on the CRs we emit.
+    #   available - the CRDs exist, from here or another release -> emit CRs.
+    #   namespace - where the operator runs, for consumers deriving hostnames from it. Defaults to this
+    #               release's namespace when this release deploys it, else empty, meaning "not stated":
+    #               that is a render error for anything that needs it. Set it for an externally installed
+    #               operator, or when a subchart's own namespaceOverride moves it (the umbrella guards
+    #               against the two disagreeing).
+    # Default = consume operators installed elsewhere; the umbrella overrides deploy=true.
+    operators:
+      externalSecrets:
+        deploy: false
+        available: true
+        namespace: '{{ .Values.global.armonik.operators.externalSecrets.deploy | empty | ternary "" .Release.Namespace }}'
+      keda:
+        deploy: false
+        available: true
+        namespace: '{{ .Values.global.armonik.operators.keda.deploy | empty | ternary "" .Release.Namespace }}'
+      certManager:
+        deploy: false
+        available: true
+        namespace: '{{ .Values.global.armonik.operators.certManager.deploy | empty | ternary "" .Release.Namespace }}'
+      mongodbOperator:
+        deploy: false
+        available: true
+        namespace: '{{ .Values.global.armonik.operators.mongodbOperator.deploy | empty | ternary "" .Release.Namespace }}'
+      prometheusOperator:
+        deploy: false
+        available: true
+        namespace: '{{ .Values.global.armonik.operators.prometheusOperator.deploy | empty | ternary "" .Release.Namespace }}'
+    monitoring:
+      # -- Prometheus for the Grafana datasource and PromQL KEDA triggers. Defaults to the
+      # `armonik.monitoring.prometheusUrl.default` derivation; a literal URL replaces it.
+      prometheusUrl: '{{ include "armonik.monitoring.prometheusUrl.default" . }}'
+      # -- Control-plane metrics-exporter `/metrics` scraped by KEDA (default scaling path). Defaults to
+      # the `armonik.monitoring.metricsExporterUrl.default` derivation off `conf.source`; a literal URL replaces it.
+      metricsExporterUrl: '{{ include "armonik.monitoring.metricsExporterUrl.default" . }}'

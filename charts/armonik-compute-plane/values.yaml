@@ -7,9 +7,10 @@ repository: dockerhubaneo
 registry: ""
 imagePullSecrets: []
 
+# global.armonik.* comes from armonik-common via import-values; its defaults suit a standalone plane
+# (external operators, KEDA trigger URL derived from conf.source).
 global:
   imageRegistry: "public.ecr.aws"
-  dependencies.keda: false
 
 serviceAccount:
   create: false
@@ -29,10 +30,8 @@ podDisruptionBudget:
   minAvailable:
   maxUnavailable:
 
-# Whether KEDA is usable in the target cluster. When true, a ScaledObject is rendered per
-# partition for queue-depth autoscaling; set false when KEDA is not installed.
-keda:
-  enabled: true
+# KEDA is controlled cross-chart by global.armonik.operators.keda: one ScaledObject per partition when
+# it is available.
 
 # Base conf, merged into the init Job only (agent/worker build theirs from partitionCommon).
 conf:
@@ -212,13 +211,26 @@ partitionCommon:
       # -- Period in seconds
       periodSeconds: 15
     triggers:
-      - type: "prometheus"
+      # Default: KEDA scrapes the metrics-exporter directly, keeping Prometheus out of the scaling path.
+      # url comes from global.armonik.monitoring.metricsExporterUrl; targetValue is queued tasks per
+      # replica. ASSUMES one always-present sample per armonik_<partition>_tasks_queued - metrics-api
+      # cannot aggregate and has no absent-as-zero, so labeled metrics would need the PromQL opt-in.
+      - type: metrics-api
         metadata:
-          serverAddress: http://prometheus-prometheus:9090
-          metricName: "armonik_{{ .Values.partitionName }}_tasks_queued"
-          threshold: "2"
-          namespace: "{{ .Release.Namespace }}"
-          query: 'armonik_{{ .Values.partitionName }}_tasks_queued{job="metrics-exporter"}'
+          url: '{{ include "armonik.monitoring.metricsExporterUrl" . }}'
+          format: prometheus
+          valueLocation: 'armonik_{{ .Values.partitionName }}_tasks_queued'
+          targetValue: "2"
+          activationTargetValue: "0"
+      # --- PromQL opt-in (advanced) ---------------------------------------------------------------
+      # For rate/ratio/aggregation scaling, swap the trigger above for a prometheus one. Reintroduces the
+      # dependency on prometheusOperator.available, and needs the namespace filter to stay multi-release
+      # correct:
+      #   - type: prometheus
+      #     metadata:
+      #       serverAddress: '{{ include "armonik.monitoring.prometheusUrl" . }}'
+      #       query: 'sum(armonik_{{ .Values.partitionName }}_tasks_queued{namespace="{{ .Release.Namespace }}"})'
+      #       threshold: "2"
   replicas: 1
   # Shared by agent + worker (no credentials): log + compute layers.
   conf:
@@ -228,6 +240,11 @@ partitionCommon:
     mountSecret:
       - secret: '{{ list "log" . | include "armonik.conf.mountSecretName" }}'
       - secret: '{{ list "compute" . | include "armonik.conf.mountSecretName" }}'
+# Partitions to deploy: each key is a partition name, its value overrides merged over `partitionCommon`.
+# At least one is REQUIRED (templates/partitions-guard.yaml), since a plane with none runs no workers.
+# Maps being unioned across values files, partitions accumulate rather than replace; `unwanted: null`
+# (or --set partitions.unwanted=null) drops an inherited one, while `{}` is a real partition inheriting
+# partitionCommon. Only relevant when layering values files: this chart ships no active default.
 partitions:
 
 fluentBit:

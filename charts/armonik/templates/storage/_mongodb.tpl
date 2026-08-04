@@ -1,8 +1,10 @@
 {{/*
-Gets the hostname from mongodb context.
+Replica-set hostname. The suffix mirrors the psmdb-db chart's clusterServiceDNSSuffix (it already
+carries the "svc." segment) to match what the operator provisions, so this one is deliberately driven
+by the mongodb chart rather than global.clusterDomain.
 */}}
 {{- define "armonik.mongodb.host" -}}
-  {{- include "psmdb-database.fullname" . }}-{{ .Values.replsets.rs0.name | default "rs0" }}.{{ include "psmdb-database.namespace" . }}.svc.{{ .Values.clusterServiceDNSSuffix | default "cluster.local" }}
+  {{- include "psmdb-database.fullname" . }}-{{ list .Values "replsets" "rs0" "name" | include "armonik.utils.index" | default "rs0" }}.{{ include "psmdb-database.namespace" . }}.{{ .Values.clusterServiceDNSSuffix | default "svc.cluster.local" }}
 {{- end -}}
 
 {{/*
@@ -23,7 +25,7 @@ Gets the authentication source from mongodb context.
 Returns whether MongoDB requires tls from mongodb context
 */}}
 {{- define "armonik.mongodb.requireTls" -}}
-  enabled: {{ not .Values.unsafeFlags.tls }}
+  enabled: {{ list .Values "unsafeFlags" "tls" | include "armonik.utils.index" | empty }}
 {{- end -}}
 
 {{/*
@@ -44,7 +46,12 @@ By default set to 27017.
   {{- list $config "net" "port" | include "armonik.utils.index" | default "27017" -}}
 {{- end }}
 {{/*
-Gets the configuration from mongodb forwarded to ArmoniK Core.
+MongoDB configuration forwarded to ArmoniK Core, derived from the in-cluster Percona MongoDB (the
+psmdb-db dependency). Skipped when that dependency is disabled: to bring your own MongoDB, set
+dependencies.mongodb.enabled=false and supply the connection through the conf values directly
+(conf.core.env / conf.core.envFromSecret). The mongodb OPERATOR may be managed here or external
+(global.armonik.operators.mongodbOperator) - it does not affect this derivation, which reads the
+psmdb-db instance's own rendered values.
 */}}
 {{- define "armonik.mongodb.conf" -}}
 {{- $root := . -}}
@@ -57,9 +64,9 @@ env:
   MongoDB__Host:             {{ include "armonik.mongodb.host" . | quote }}
   MongoDB__Port:             {{ include "armonik.mongodb.port" . | quote }}
   MongoDB__Tls:              {{ $requireTls | quote }}
-  MongoDB__ReplicaSet:       {{ .Values.replsets.rs0.name | quote }}
+  MongoDB__ReplicaSet:       {{ list .Values "replsets" "rs0" "name" | include "armonik.utils.index" | default "rs0" | quote }}
   MongoDB__DatabaseName:     {{ include "armonik.mongodb.database" . | quote }}
-  MongoDB__DirectConnection: {{ (.Values.replsets.rs0.size | default 3 | quote) | eq "1" | quote }}
+  MongoDB__DirectConnection: {{ (list .Values "replsets" "rs0" "size" | include "armonik.utils.index" | default 3 | quote) | eq "1" | quote }}
   MongoDB__AuthSource:       {{ include "armonik.mongodb.authSource" . | quote }}
   MongoDB__AllowInsecureTls: "true"
 {{- if $requireTls }}

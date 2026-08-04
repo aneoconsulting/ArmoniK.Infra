@@ -5,7 +5,7 @@ metadata:
   name: grafana-dashboard-armonik
   labels:
     grafana_dashboard: "1"
-    grafana_dashboard_folder: "Armonik"
+    grafana_dashboard_folder: "ArmoniK"
 data:
   dashboard-armonik.json: |-
 {{ .Files.Get "static-confs/grafana-dashboards/dashboard-armonik.json" | indent 4 }}

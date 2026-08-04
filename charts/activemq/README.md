@@ -2,7 +2,7 @@
 
 ![Version: 1.0.0](https://img.shields.io/badge/Version-1.0.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 5.18.4](https://img.shields.io/badge/AppVersion-5.18.4-informational?style=flat-square)
 
-A Helm chart for Armonik
+A Helm chart for ArmoniK
 
 **Homepage:** <https://github.com/aneoconsulting/ArmoniK>
 
@@ -28,7 +28,6 @@ Kubernetes: `>=v1.23.0-0`
 | activemqOptsMemory | string | `"-Xms1g -Xmx1g"` |  |
 | affinity | object | `{}` |  |
 | args | list | `[]` |  |
-| certificates.enable | bool | `false` |  |
 | commonLabels.app | string | `"storage"` |  |
 | commonLabels.service | string | `"activemq"` |  |
 | commonLabels.type | string | `"queue"` |  |

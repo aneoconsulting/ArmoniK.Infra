@@ -27,25 +27,11 @@ dependencies:
     repository: https://valkey.io/valkey-helm/
     condition: redis.enabled
     alias: redis
-  - name: psmdb-operator
-    version: 1.x.x
-    repository: https://percona.github.io/percona-helm-charts/
-    alias: mongodb-operator
-    condition: mongodb.enabled
   - name: psmdb-db
     version: 1.x.x
     repository: https://percona.github.io/percona-helm-charts/
     alias: mongodb
     condition: mongodb.enabled
-  - name: kube-prometheus-stack
-    version: 82.x.x
-    repository: https://prometheus-community.github.io/helm-charts
-    condition: kube-prometheus.enabled
-    alias: kube-prometheus # TODO: Might swap in the future for clarity but for now.
-  - name: keda
-    version: 2.x.x
-    repository: https://kedacore.github.io/charts
-    condition: keda.enabled
   # - name: chaos-mesh
   #   version: 2.x.x
   #   repository: https://charts.chaos-mesh.org
@@ -67,11 +53,3 @@ dependencies:
     version: 2024.x.x
     repository: https://helm.datalust.co
     condition: seq.enabled
-  - name: cert-manager
-    version: 1.x.x
-    repository: https://charts.jetstack.io
-    condition: cert-manager.enabled
-  - name: external-secrets
-    version: 2.x.x
-    repository: https://charts.external-secrets.io
-    condition: external-secrets.enabled

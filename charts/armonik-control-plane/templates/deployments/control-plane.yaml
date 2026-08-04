@@ -1,8 +1,11 @@
+{{- $init := .Values.init | default dict -}}
+{{- $deployment := .Values.deployment | default dict -}}
+{{- $sa := .Values.serviceAccount | default dict -}}
 {{- $conf := list
-    (not .Values.init.enabled | ternary (include "armonik.control.init.confHelper" .) "" | fromYaml)
+    (not $init.enabled | ternary (include "armonik.control.init.confHelper" .) "" | fromYaml)
     (include "armonik.control.confHelper" . | fromYaml)
     .Values.conf
-    .Values.deployment.conf
+    $deployment.conf
   | include "armonik.conf.merge" | fromYaml -}}
 {{- $conf = list $conf $ | include "armonik.conf.resolve" | fromYaml -}}
 {{- $image := list $ .Values.image | include "armonik.utils.imageConf" | fromYaml }}
@@ -32,6 +35,7 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/component: control-plane
+        armonik.fr/deployment: {{ include "armonik.conf.source" . | quote }}
         {{- include "armonik.selectorLabels" . | nindent 8 }}
     spec:
       containers:
@@ -65,7 +69,7 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}{{/* with $imagePullSecrets */}}
-      {{- if $.Values.serviceAccount.create }}
+      {{- if $sa.create }}
       serviceAccountName: {{ include "armonik.serviceAccountName" $ }}
       serviceAccount: {{ include "armonik.serviceAccountName" $ }}
       automountServiceAccountToken: true

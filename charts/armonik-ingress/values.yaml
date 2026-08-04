@@ -1,3 +1,5 @@
+# global.armonik.* comes from armonik-common via import-values; its defaults suit a standalone release.
+
 nameOverride: ""
 imagePullSecrets: []
 image:
@@ -60,13 +62,6 @@ tls:
     annotations: {}
     # Add extra labels to the Certificate resource
     labels: {}
-    waitJob:
-      enabled: true
-      image:
-        repository: alpine/k8s
-        tag: 1.31.0
-        pullPolicy: IfNotPresent
-      timeout: 300s
   customCert:
     certPem: ""
     keyPem: ""

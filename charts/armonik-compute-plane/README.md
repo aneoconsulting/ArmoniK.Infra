@@ -2,7 +2,7 @@
 
 ![Version: 0.1.0](https://img.shields.io/badge/Version-0.1.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.37.1](https://img.shields.io/badge/AppVersion-0.37.1-informational?style=flat-square)
 
-A Helm chart for Armonik
+A Helm chart for ArmoniK
 
 **Homepage:** <https://github.com/aneoconsulting/ArmoniK>
 
@@ -36,7 +36,6 @@ Kubernetes: `>=v1.23.0-0`
 | fluentBit.image.repository | string | `"fluent"` |  |
 | fluentBit.isDaemonSet | bool | `true` |  |
 | fullnameOverride | string | `""` |  |
-| global."dependencies.keda" | bool | `false` |  |
 | global.imageRegistry | string | `"public.ecr.aws"` |  |
 | imagePullSecrets | list | `[]` |  |
 | init.conf.envSecret[0] | string | `"{{ list \"core\" . | include \"armonik.conf.secretName\" }}"` |  |
@@ -55,7 +54,6 @@ Kubernetes: `>=v1.23.0-0`
 | init.nodeSelector | string | `nil` |  |
 | init.resources | string | `nil` |  |
 | init.tolerations | string | `nil` |  |
-| keda.enabled | bool | `true` |  |
 | nameOverride | string | `""` |  |
 | partitionCommon.agent.conf.envSecret[0] | string | `"{{ list \"core\" . | include \"armonik.conf.secretName\" }}"` |  |
 | partitionCommon.agent.conf.envSecret[1] | string | `"{{ list \"polling\" . | include \"armonik.conf.secretName\" }}"` |  |
@@ -114,12 +112,12 @@ Kubernetes: `>=v1.23.0-0`
 | partitionCommon.hpa.maxReplicaCount | int | `5` | Maximum count of replicas |
 | partitionCommon.hpa.minReplicaCount | int | `1` | Minimum count of replicas |
 | partitionCommon.hpa.pollingInterval | int | `15` | Polling interval in seconds |
-| partitionCommon.hpa.triggers[0].metadata.metricName | string | `"armonik_{{ .Values.partitionName }}_tasks_queued"` |  |
-| partitionCommon.hpa.triggers[0].metadata.namespace | string | `"{{ .Release.Namespace }}"` |  |
-| partitionCommon.hpa.triggers[0].metadata.query | string | `"armonik_{{ .Values.partitionName }}_tasks_queued{job=\"metrics-exporter\"}"` |  |
-| partitionCommon.hpa.triggers[0].metadata.serverAddress | string | `"http://prometheus-prometheus:9090"` |  |
-| partitionCommon.hpa.triggers[0].metadata.threshold | string | `"2"` |  |
-| partitionCommon.hpa.triggers[0].type | string | `"prometheus"` |  |
+| partitionCommon.hpa.triggers[0].metadata.activationTargetValue | string | `"0"` |  |
+| partitionCommon.hpa.triggers[0].metadata.format | string | `"prometheus"` |  |
+| partitionCommon.hpa.triggers[0].metadata.targetValue | string | `"2"` |  |
+| partitionCommon.hpa.triggers[0].metadata.url | string | `"{{ include \"armonik.monitoring.metricsExporterUrl\" . }}"` |  |
+| partitionCommon.hpa.triggers[0].metadata.valueLocation | string | `"armonik_{{ .Values.partitionName }}_tasks_queued"` |  |
+| partitionCommon.hpa.triggers[0].type | string | `"metrics-api"` |  |
 | partitionCommon.hpa.type | string | `"prometheus"` |  |
 | partitionCommon.labels.app | string | `"armonik"` |  |
 | partitionCommon.labels.service | string | `"compute-plane"` |  |

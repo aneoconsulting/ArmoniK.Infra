@@ -5,12 +5,9 @@ ingress: {{ include "armonik.utils.index" (list .Values "ingress" "enabled") | e
 activemq: {{ include "armonik.utils.index" (list .Values "dependencies" "activemq" "enabled") | empty | not }}
 redis: {{ include "armonik.utils.index" (list .Values "dependencies" "redis" "enabled") | empty | not }}
 mongodb: {{ include "armonik.utils.index" (list .Values "dependencies" "mongodb" "enabled") | empty | not }}
-kubePrometheus: {{ include "armonik.utils.index" (list .Values "dependencies" "kube-prometheus" "enabled") | empty | not }}
-keda: {{ include "armonik.utils.index" (list .Values "dependencies" "keda" "enabled") | empty | not }}
 rabbitmq: {{ include "armonik.utils.index" (list .Values "dependencies" "rabbitmq" "enabled") | empty | not }}
 grafana: {{ include "armonik.utils.index" (list .Values "dependencies" "grafana" "enabled") | empty | not }}
 fluentBit: {{ include "armonik.utils.index" (list .Values "dependencies" "fluent-bit" "enabled") | empty | not }}
 seq: {{ include "armonik.utils.index" (list .Values "dependencies" "seq" "enabled") | empty | not }}
-certManager: {{ include "armonik.utils.index" (list .Values "dependencies" "cert-manager" "enabled") | empty | not }}
-externalSecrets: {{ include "armonik.utils.index" (list .Values "dependencies" "external-secrets" "enabled") | empty | not }}
+{{- /* Operators are not listed here: see the armonik.operators helper. */}}
 {{- end }}

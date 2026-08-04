@@ -15,13 +15,27 @@ global:
     allowInsecureImages: true
   #imagePullSecrets: [{"name": "secret"}] # FOR BITNAMI IMAGES AND ARMONIK IMAGES
   environment:
-    name: "local"
-    description: "Armonik environment"
-  # DNS domain of the cluster. Defaults to "cluster.local"
+    description: "ArmoniK environment"
+  # Cluster DNS domain. Empty stops hostnames at ".svc"; callers needing an FQDN use cluster.local.
   clusterDomain: ""
   # Root dir for conf mount Secrets in pods; propagated to subcharts. env strings and volumeMounts derive from it.
   armonik:
     mountPath: /mounts
+    # Operator control (semantics in armonik-common/values.yaml). All-in-one default: this release
+    # installs every operator, through the armonik-operators subchart.
+    operators:
+      externalSecrets:
+        deploy: true
+      keda:
+        deploy: true
+      certManager:
+        deploy: true
+      mongodbOperator:
+        deploy: true
+      prometheusOperator:
+        deploy: true
+    # monitoring.{prometheusUrl,metricsExporterUrl} come from armonik-common (see its README); both derive
+    # from the operators namespaces above, which a layered install has to state.
 
 
 ############################################
@@ -45,27 +59,32 @@ control-plane:
     createBuiltInRoles: true
 
 compute-plane:
+  # Default partitions below make a plain `helm install` usable. enabled=false gives a base release
+  # (control-plane + storage + operators + conf) whose partitions come from separate
+  # armonik-compute-plane releases instead; see NOTES.txt. enabled=true requires at least one partition.
   enabled: true
   serviceAccount:
     create: true
   # Point the child at the conf Secrets this umbrella renders (overrides its "armonik" default).
   conf:
     source: '{{ .Release.Name }}'
-  # partitions:
-  #   default:
-  #     worker:
-  #       image:
-  #         name: "armonik-dynamic-dotnet-worker"
-  #         tag: "0.21.3-ppi.taskFail.1.geb3e9a8"
-  #   stream:
-  #     worker:
-  #       image:
-  #         name: "armonik_core_stream_test_worker"
-  #   htcmock:
-  #     socketType: "tcp"
-  #     worker:
-  #       image:
-  #         name: "armonik_core_htcmock_test_worker"
+  # Partitions accumulate across values files; drop one of these with
+  # `--set compute-plane.partitions.htcmock=null`.
+  partitions:
+    default:
+      worker:
+        image:
+          name: "armonik-dynamic-dotnet-worker"
+          tag: "0.21.2"
+    stream:
+      worker:
+        image:
+          name: "armonik_core_stream_test_worker"
+    htcmock:
+      socketType: "tcp"
+      worker:
+        image:
+          name: "armonik_core_htcmock_test_worker"
 
 conf:
   # Names every <source>-conf-<layer> Secret the umbrella renders (this release).
@@ -76,6 +95,21 @@ conf:
 ################## INGRESS ##################
 ingress:
   enabled: true
+
+# To bring your own MongoDB, set dependencies.mongodb.enabled=false and supply the connection via the
+# conf values (conf.core.env / conf.core.envFromSecret). The in-cluster psmdb-db (below) is the default.
+
+############################################
+############ CERT-MANAGER WAIT #############
+############################################
+# Job gating Certificate/Issuer CRs on the cert-manager webhook being Available with its CA injected.
+# Rendered only when this release installs cert-manager; covers every emitter (ingress, activemq).
+certManagerWait:
+  image:
+    repository: alpine/k8s
+    tag: 1.31.0
+    pullPolicy: IfNotPresent
+  timeout: 300s
 
 ############################################
 ############### DEPENDENCIES ###############
@@ -205,38 +239,9 @@ dependencies:
       tls: true
     finalizers: []
 
-  ################## KEDA ##################
-  keda:
-    enabled: true
-    crds:
-      install: true
-    prometheus:
-      metricServer:
-        enabled: true
-        serviceMonitor:
-          enabled: true
-    certificates:
-      certManager:
-        enabled: false
-        issuer:
-          {
-            "generate": false,
-            "group": "cert-manager.io",
-            "kind": "ClusterIssuer",
-            "name": "armonik-selfsigned-issuer",
-          }
-    image:
-      pullPolicy: IfNotPresent
-    #imagePullSecrets: []
+  # KEDA moved to charts/armonik-operators, configured at operators.keda.*.
 
-  ################## CERT-MANAGER ##################
-  cert-manager:
-    enabled: true
-    installCRDs: true
-    fullnameOverride: "cert-manager"
-    prometheus:
-      servicemonitor:
-        enabled: true
+  # cert-manager moved to charts/armonik-operators, configured at operators.cert-manager.*.
 
   ################## GRAFANA ##################
   grafana:
@@ -261,6 +266,13 @@ dependencies:
         enabled: true
         folderAnnotation: "grafana_dashboard_folder"
         label: "grafana_dashboard"
+        # -- Namespaces the sidecar watches: this release's plus the prometheusOperator namespace,
+        # where kps renders the standard k8s/node dashboards (the sidecar sees only its own by default;
+        # `rbac.namespaced=false` already grants the cluster-wide read).
+        # Beware `helm upgrade --reuse-values`: it replays the old coalesced values, where the grafana
+        # chart's own `searchNamespace: null` beats this default. Pass values explicitly.
+        searchNamespace:
+          - '{{ include "armonik.monitoring.dashboardNamespaces.default" . }}'
       datasources:
         enabled: true
 
@@ -580,61 +592,7 @@ dependencies:
     # imagePullSecrets: []
 
   ################## PROMETHEUS ##################
-  # TODO: Remove
-  # kube-prometheus:
-  #   kube-state-metrics:
-  #     image:
-  #       registry: public.ecr.aws
-  #       repository: bitnami/kube-state-metrics
-  #       tag: 2.18.0-debian-12-r3
-
-
-  #   node-exporter:
-  #       image:
-  #         registry: public.ecr.aws  
-      
-  #   enabled: true
-  #   operator.image.registry: ""
-  #   fullnameOverride: "prometheus"
-  #   alertmanager:
-  #     enabled: false
-  #   blackboxExporter:
-  #     enabled: false
-  #   prometheus:
-  #     image:
-  #       registry: public.ecr.aws
-  #     scrapeInterval: 10s
-  #     evaluationInterval: 30s
-  #     additionalScrapeConfigs:
-  #       enabled: true
-  #       type: external
-  #       external:
-  #         name: additional-scrape-configs
-  #         key: prometheus-additional.yaml
-# New :
-  prometheus-node-exporter:
-      # TODO: Temporarily disabled the root filesystem mount to fix the Docker Desktop crash
-    hostRootFsMount: false
-  kube-prometheus:
-    enabled: true
-    fullnameOverride: "prometheus"
-    prometheus-node-exporter:
-        # TODO: Temporarily disabled the root filesystem mount to fix the Docker Desktop crash
-      hostRootFsMount:
-        enabled: false
-    alertmanager:
-      enabled: false
-    grafana:
-      enabled: false #NOTE: We already have Grafana
-    prometheus:
-      prometheusSpec:
-        scrapeInterval: 10s
-        evaluationInterval: 30s
-        
-        additionalScrapeConfigsSecret:
-          enabled: true
-          name: additional-scrape-configs
-          key: prometheus-additional.yaml
-  external-secrets:
-    enabled: true
+  # kube-prometheus-stack moved to charts/armonik-operators, configured at operators.kube-prometheus.*.
+  # Its broken static additionalScrapeConfigs Secret is now first-party ServiceMonitor/PodMonitor.
+  # external-secrets moved to charts/armonik-operators.
 ############################################

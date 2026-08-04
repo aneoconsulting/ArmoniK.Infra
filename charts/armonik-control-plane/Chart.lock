@@ -2,5 +2,5 @@ dependencies:
 - name: armonik-common
   repository: file://../armonik-common
   version: 0.1.0
-digest: sha256:01a11be95ececad25c72007e13269a12d82df6c44433961e7aa33bb1d13851ca
-generated: "2025-03-26T21:42:39.701291698+01:00"
+digest: sha256:36e572764f285e5b08d3f0f5c7cb1582ea5950488620b01c5e5d29455cc39304
+generated: "2026-07-31T14:29:06.521647392+02:00"

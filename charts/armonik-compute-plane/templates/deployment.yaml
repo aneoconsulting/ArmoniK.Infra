@@ -1,7 +1,9 @@
-{{- range $partitionName, $config := .Values.partitions }}
+{{- range $partitionName, $config := include "armonik.compute.partitions" $ | fromYaml }}
+{{- $fluentBit := $.Values.fluentBit | default dict -}}
+{{- $sa := $.Values.serviceAccount | default dict -}}
+{{- $partitionCommon := $.Values.partitionCommon | default dict -}}
 {{- $partition := dict -}}
-{{/* Partition render context: the chart context minus .Values.partitions (no self-reference),
-     plus .Values.partitionName. Shallow omit-copies; originals untouched. */}}
+{{/* Partition render context: chart context minus .Values.partitions, plus .Values.partitionName. */}}
 {{- $context := omit $ "Values" -}}
 {{- $_ := omit $.Values "partitions" | set $context "Values" -}}
 {{- $_ := set $context.Values "partitionName" $partitionName -}}
@@ -28,9 +30,9 @@
   $commonConf
 | include "armonik.conf.merge" | fromYaml -}}
 {{- $workerConf = list $workerConf $ | include "armonik.conf.resolve" | fromYaml -}}
-{{- $agentImage := list $ $agent.image $.Values.partitionCommon.agent.image | include "armonik.utils.imageConf" | fromYaml }}
-{{- $workerImage := list $ $worker.image $.Values.partitionCommon.worker.image | include "armonik.utils.imageConf" | fromYaml }}
-{{- $fluentBitImage := list $ $.Values.fluentBit.image | include "armonik.utils.imageConf" | fromYaml }}
+{{- $agentImage := list $ $agent.image (list $partitionCommon "agent" "image" | include "armonik.utils.index" | fromYaml) | include "armonik.utils.imageConf" | fromYaml }}
+{{- $workerImage := list $ $worker.image (list $partitionCommon "worker" "image" | include "armonik.utils.index" | fromYaml) | include "armonik.utils.imageConf" | fromYaml }}
+{{- $fluentBitImage := list $ $fluentBit.image | include "armonik.utils.imageConf" | fromYaml }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -57,6 +59,7 @@ spec:
         app.kubernetes.io/component: {{ printf "compute-plane-%s" $partitionName | quote }}
         app.kubernetes.io/part-of: compute-plane
         armonik.fr/partition: {{ $partitionName | quote }}
+        armonik.fr/deployment: {{ include "armonik.conf.source" $ | quote }}
         {{- include "armonik.selectorLabels" $ | nindent 8 }}
       {{- with $partition.annotations}}
       annotations:
@@ -67,7 +70,7 @@ spec:
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- if $.Values.serviceAccount.create }}
+      {{- if $sa.create }}
       serviceAccountName: {{ include "armonik.serviceAccountName" $ }}
       serviceAccount: {{ include "armonik.serviceAccountName" $ }}
       automountServiceAccountToken: true
@@ -145,13 +148,13 @@ spec:
           - name: cache-volume
             mountPath: /cache
             mountPropagation: None
-      {{- if not $.Values.fluentBit.isDaemonSet }}
+      {{- if not $fluentBit.isDaemonSet }}
       - name: fluent-bit
         image: {{ $fluentBitImage.fullname }}
         imagePullPolicy: {{ $fluentBitImage.pullPolicy }}
         envFrom:
         - configMapRef:
-            name: {{ .Values.fluentBit.configMapName }}
+            name: {{ $fluentBit.configMapName | quote }}
         lifecycle:
           preStop:
             exec:
@@ -180,14 +183,14 @@ spec:
         {{- include "armonik.conf.generateVolumes" (list $agentConf $workerConf) | nindent 8 }}
         - name: cache-volume
           emptyDir: {}
-        {{- if not $.Values.fluentBit.isDaemonSet }}
+        {{- if not $fluentBit.isDaemonSet }}
         - name: dmesg
           hostPath:
             path: /var/log/dmesg
             type: ""
         - name: fluentbitconfig
           configMap:
-            name: {{ .Values.fluentBit.configMapName }}
+            name: {{ $fluentBit.configMapName | quote }}
             defaultMode: 420
             optional: false
         - name: runlogjournal

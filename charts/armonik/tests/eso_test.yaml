@@ -1,4 +1,6 @@
 suite: conf secrets and external-secrets channel
+# The ESO-unavailable guard lives in operators_test.yaml, with the rest of the
+# global.armonik.operators control surface.
 release:
   name: t
 templates:
@@ -20,14 +22,6 @@ tests:
       - equal:
           path: spec.target.template.data.Amqp__Host
           value: activemq
-  - it: fails when a layer needs a Secret but ESO is unavailable
-    set:
-      dependencies:
-        external-secrets:
-          enabled: false
-    asserts:
-      - failedTemplate:
-          errorPattern: "envSecret and envFromSecret require ExternalSecretsOperator"
   - it: materializes user conf env into the layer Secret
     values:
       - ../ci/minimal-values.yaml

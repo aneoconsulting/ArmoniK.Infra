@@ -3,11 +3,9 @@
 # no randAlphaNum redis-users Secret). Used by the render matrix
 # (test/matrix.sh), the umbrella unittest suites, and linted by ct.
 #
-# The operators block keeps the operator-gated resources (SecretStore,
-# ExternalSecrets, monitors, ScaledObjects) out of the render once the
-# operator split (PR #294) lands; inert until then, like its dependencies
-# counterparts (keda, cert-manager, kube-prometheus, external-secrets) are
-# after it.
+# The operators block keeps both the operator subcharts and the operator-gated
+# resources (SecretStore, ExternalSecrets, monitors, ScaledObjects) out of the
+# render: deploy=false drops the subchart, available=false the consumers.
 global:
   armonik:
     operators:
@@ -33,17 +31,9 @@ dependencies:
     enabled: false
   mongodb:
     enabled: false
-  keda:
-    enabled: false
-  cert-manager:
-    enabled: false
   grafana:
     enabled: false
   fluent-bit:
     enabled: false
   seq:
-    enabled: false
-  kube-prometheus:
-    enabled: false
-  external-secrets:
     enabled: false

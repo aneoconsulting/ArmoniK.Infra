@@ -5,9 +5,9 @@ templates:
 values:
   - ../ci/tls-mtls-values.yaml
 tests:
-  # The two wait-job tests below move to the umbrella (operators_test.yaml)
-  # when PR #294 relocates the wait job to armonik/templates/cert-manager-wait.yaml.
-  - it: renders the Certificate, its Issuer and the wait-job set
+  # The wait job for a self-installed cert-manager belongs to the umbrella,
+  # which renders it once for every emitter; covered by armonik/tests/operators_test.yaml.
+  - it: renders the Certificate and its Issuer
     template: certificate.yaml
     asserts:
       - containsDocument:
@@ -18,22 +18,6 @@ tests:
           kind: Issuer
           apiVersion: cert-manager.io/v1
           any: true
-      - containsDocument:
-          kind: Job
-          apiVersion: batch/v1
-          any: true
-  - it: puts helm hook annotations on the wait job only
-    template: certificate.yaml
-    documentSelector:
-      path: kind
-      value: Job
-    asserts:
-      - equal:
-          path: metadata.annotations["helm.sh/hook"]
-          value: post-install,post-upgrade
-      - matchRegex:
-          path: metadata.annotations["helm.sh/hook-delete-policy"]
-          pattern: before-hook-creation
   - it: references an existing issuer instead of creating one
     template: certificate.yaml
     set:
@@ -63,11 +47,6 @@ tests:
           path: data["armonik.conf"]
           pattern: ssl_verify_client on
   - it: fails TLS via cert-manager when the operator is unavailable and no issuer exists
-    skip:
-      reason: >-
-        Enable after PR #294 (operator split) merges: certificate.yaml gains a
-        guard requiring global.armonik.operators.certManager.available=true,
-        an existing issuer, or a user-supplied TLS Secret.
     template: certificate.yaml
     set:
       global:

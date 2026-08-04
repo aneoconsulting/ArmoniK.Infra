@@ -3,20 +3,10 @@ templates:
   - partitions-guard.yaml
 tests:
   - it: fails to render with no partition at all
-    skip:
-      reason: >-
-        Enable after PR #294 (operator split) merges: it adds
-        templates/partitions-guard.yaml, making a partition-less compute-plane
-        a render error (the compute-plane-defaults matrix case flips to a
-        fail_with on the same message at the same time).
     asserts:
       - failedTemplate:
           errorPattern: "requires at least one non-null partition"
   - it: fails to render when every partition is a null removal
-    skip:
-      reason: >-
-        Enable after PR #294 (operator split) merges: null partitions are
-        removals and must not count as deployable.
     set:
       partitions:
         default: null

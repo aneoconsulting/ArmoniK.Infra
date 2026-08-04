@@ -3,13 +3,6 @@ templates:
   - secrets/conf-secrets.yaml
 tests:
   - it: renders without the control plane
-    skip:
-      reason: >-
-        Broken render path: NOTES.txt dereferences the control-plane subchart
-        values unconditionally, so control-plane.enabled=false nil-pointers.
-        PR #294 (operator split) rewrites NOTES.txt nil-safe; enable after it
-        merges (also swap the umbrella-no-control-plane matrix skip for a
-        real ok case).
     set:
       control-plane:
         enabled: false

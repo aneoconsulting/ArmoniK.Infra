@@ -7,11 +7,6 @@ templates:
   - cert-manager-wait.yaml
 tests:
   - it: rejects an operator deployed but not available
-    skip:
-      reason: >-
-        Enable after PR #294 (operator split) merges: it adds
-        templates/operators-guard.yaml and the global.armonik.operators
-        control map.
     template: operators-guard.yaml
     set:
       global:
@@ -24,13 +19,6 @@ tests:
       - failedTemplate:
           errorPattern: "deploy=true but available=false"
   - it: fails secret-backed conf when the ESO operator is unavailable
-    skip:
-      reason: >-
-        Enable after PR #294 (operator split) merges: the ESO gate moves from
-        dependencies.external-secrets.enabled to
-        global.armonik.operators.externalSecrets.available (the fail_with
-        umbrella-envsecret-without-eso matrix case must move to this trigger
-        at the same time).
     template: secrets/conf-secrets.yaml
     set:
       global:
@@ -43,12 +31,6 @@ tests:
       - failedTemplate:
           errorPattern: "envSecret and envFromSecret require ExternalSecretsOperator"
   - it: hooks the cert-manager wait job with before-hook-creation
-    skip:
-      reason: >-
-        Enable after PR #294 (operator split) merges: the cert-manager wait
-        job moves from armonik-ingress/templates/certificate.yaml to the
-        umbrella's templates/cert-manager-wait.yaml (the ingress tls_test
-        wait-job assertions move here at the same time).
     template: cert-manager-wait.yaml
     documentSelector:
       path: kind

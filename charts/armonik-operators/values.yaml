@@ -40,7 +40,7 @@ keda:
         }
   image:
     pullPolicy: IfNotPresent
-  #imagePullSecrets: []
+  # imagePullSecrets: []
 
 # External Secrets Operator (https://charts.external-secrets.io) - chart defaults install the CRDs.
 external-secrets: {}

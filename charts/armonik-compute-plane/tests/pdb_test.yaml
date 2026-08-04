@@ -7,8 +7,8 @@ tests:
       reason: >-
         Broken render path: pdb.yaml calls armonik.compute.pdb.apiVersion, which is
         not defined (armonik-common defines armonik.pdb.apiVersion). Enable once
-        fixed; not fixed by PRs #294-#296. The partition below is required once
-        PR #294 lands (partitions-guard rejects a partition-less plane).
+        fixed. The partition below satisfies partitions-guard, which rejects a
+        partition-less plane.
     capabilities:
       apiVersions:
         - policy/v1

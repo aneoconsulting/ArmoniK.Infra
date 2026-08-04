@@ -199,6 +199,7 @@ networkPolicy:
       app.kubernetes.io/name: control-plane
 
   ingress:
+    namespace: "" 
     computePlaneLabels:
       app.kubernetes.io/component: compute-plane
     ingressLabels:
@@ -208,28 +209,30 @@ networkPolicy:
         port: 1080
       - protocol: TCP
         port: 1081
+    extraRules: []
 
   egress:
-    mongodb:
-      enabled: true
-      labels:
-        app.kubernetes.io/name: percona-server-mongodb
-      port: 27017
-    redis:
-      enabled: true
-      labels:
-        app.kubernetes.io/name: redis
-      port: 6379
-    activemq:
-      enabled: true
-      labels:
-        app.kubernetes.io/name: activemq
-      port: 5672
-    rabbitmq:
-      enabled: false
-      labels:
-        app.kubernetes.io/name: rabbitmq
-      port: 5672
+    services:
+      mongodb:
+        dependencyRef: mongodb           
+        labels:
+          app.kubernetes.io/name: percona-server-mongodb
+        port: 27017
+      redis:
+        dependencyRef: redis
+        labels:
+          app.kubernetes.io/name: redis
+        port: 6379
+      activemq:
+        dependencyRef: activemq
+        labels:
+          app.kubernetes.io/name: activemq
+        port: 5672
+      rabbitmq:
+        dependencyRef: rabbitmq
+        labels:
+          app.kubernetes.io/name: rabbitmq
+        port: 5672
     dns:
       enabled: true
       namespace: kube-system
@@ -240,5 +243,4 @@ networkPolicy:
           port: 53
         - protocol: TCP
           port: 53
-
-
+    extraRules: [] ### ---> maybe dns commun à activer de partout ?????

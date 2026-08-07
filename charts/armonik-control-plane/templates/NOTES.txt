@@ -4,3 +4,22 @@ To learn more about the release, try:
   $ helm status {{ .Release.Name }}
   $ helm get all {{ .Release.Name }}
   $ helm uninstall {{ .Release.Name }}
+
+{{- if .Values.networkPolicy.enabled }}
+
+NetworkPolicy status:
+  This chart ships a self-contained NetworkPolicy for its own pods (submitter and
+  metrics-exporter): fixed ingress rules (compute-plane, ingress-controller,
+  Prometheus), and DNS-only egress by default.
+
+  Only DNS egress is currently allowed. If this chart connects to mongodb,
+    a message broker (rabbitmq/activemq), or redis:
+      - deployed via the "armonik" umbrella chart: no action needed, the
+        matching egress rules are generated automatically from
+        armonik-dependencies.
+        
+      - deployed standalone: set networkPolicy.submitter.extraEgressRules
+        (and networkPolicy.metricsExporter.extraEgressRules for mongodb, if
+        used) to grant egress to your actual backends.
+
+{{- end }}

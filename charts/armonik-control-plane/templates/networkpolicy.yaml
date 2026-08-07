@@ -1,21 +1,57 @@
-{{- $egressRules := include "armonik.netpol.egressRulesFromServices" (list . .Values.networkPolicy.egress.services) | fromYamlArray -}}
-{{- if .Values.networkPolicy.egress.dns.enabled }}
-  {{- $egressRules = append $egressRules (include "armonik.netpol.dnsRule" .Values.networkPolicy.egress.dns | fromYaml) }}
+{{- $ops := include "armonik.operators" . | fromYaml -}}
+
+{{- $fromComputePlane := dict
+      "namespaceSelector" (dict)
+      "podSelector" (dict "matchLabels" (dict "app.kubernetes.io/component" "compute-plane")) -}}
+
+{{- $fromIngress := dict
+      "namespaceSelector" (dict)
+      "podSelector" (dict "matchLabels" (dict "app.kubernetes.io/name" "ingress")) -}}
+
+
+{{- $fromPrometheus := dict "namespaceSelector" (dict) -}}
+{{- if $ops.prometheusOperator.available }}
+  {{- $_ := set $fromPrometheus "podSelector" (dict "matchLabels" (dict "app.kubernetes.io/name" "prometheus")) -}}
+  {{- if $ops.prometheusOperator.namespace }}
+    {{- $_ := set $fromPrometheus "namespaceSelector" (dict "matchLabels" (dict "kubernetes.io/metadata.name" $ops.prometheusOperator.namespace)) -}}
+  {{- end }}
 {{- end }}
 
-{{- $ingressRules := list (dict
-      "from" (list
-        (dict "podSelector" (dict "matchLabels" .Values.networkPolicy.ingress.computePlaneLabels))
-        (dict
-          "namespaceSelector" (dict "matchLabels" (dict "kubernetes.io/metadata.name" (.Values.networkPolicy.ingress.namespace | default (include "armonik.namespace" .))))
-          "podSelector" (dict "matchLabels" .Values.networkPolicy.ingress.ingressLabels)))
-      "ports" .Values.networkPolicy.ingress.ports) -}}
+{{- $dnsEgress := list (include "armonik.netpol.dnsRule" dict | fromYaml) -}}
 
-{{- $cfg := dict
-      "enabled" .Values.networkPolicy.enabled
-      "podSelector" .Values.networkPolicy.podSelector
+{{- if and
+      (list .Values "networkPolicy" "enabled" | include "armonik.utils.index" | default false)
+      (list .Values "networkPolicy" "submitter" "enabled" | include "armonik.utils.index" | default false)
+}}
+{{- $submitterCfg := dict
+      "podSelector" (dict "matchLabels" (dict "app.kubernetes.io/component" "control-plane"))
       "policyTypes" (list "Ingress" "Egress")
-      "ingress" (dict "rules" $ingressRules "extraRules" (.Values.networkPolicy.ingress.extraRules | default list))
-      "egress" (dict "rules" $egressRules "extraRules" (.Values.networkPolicy.egress.extraRules | default list)) -}}
-
-{{ include "armonik.netpol.render" (dict "context" . "config" $cfg "component" "control-plane") }}
+      "ingress" (dict
+        "rules" (list
+          (dict "from" (list $fromComputePlane) "ports" (list (dict "protocol" "TCP" "port" 1080)))
+          (dict "from" (list $fromIngress)      "ports" (list (dict "protocol" "TCP" "port" 1080)))
+          (dict "from" (list $fromPrometheus)   "ports" (list (dict "protocol" "TCP" "port" 1081))))
+        "extraRules" (.Values.networkPolicy.submitter.extraIngressRules | default list))
+      "egress" (dict
+        "rules" $dnsEgress
+        "extraRules" (.Values.networkPolicy.submitter.extraEgressRules | default list)) -}}
+{{ include "armonik.netpol.render" (dict "context" . "config" $submitterCfg "component" "submitter") }}
+{{- end }}
+---
+{{- if and
+      (list .Values "networkPolicy" "enabled" | include "armonik.utils.index" | default false)
+      (list .Values "networkPolicy" "metricsExporter" "enabled" | include "armonik.utils.index" | default false)
+      (list .Values "metricsExporter" "enabled" | include "armonik.utils.index" | default false)
+}}
+{{- $meCfg := dict
+      "podSelector" (dict "matchLabels" (dict "app.kubernetes.io/component" "metrics-exporter"))
+      "policyTypes" (list "Ingress" "Egress")
+      "ingress" (dict
+        "rules" (list
+          (dict "from" (list $fromPrometheus) "ports" (list (dict "protocol" "TCP" "port" 9419))))
+        "extraRules" (.Values.networkPolicy.metricsExporter.extraIngressRules | default list))
+      "egress" (dict
+        "rules" $dnsEgress
+        "extraRules" (.Values.networkPolicy.metricsExporter.extraEgressRules | default list)) -}}
+{{ include "armonik.netpol.render" (dict "context" . "config" $meCfg "component" "metrics-exporter") }}
+{{- end }}

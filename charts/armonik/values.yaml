@@ -598,7 +598,14 @@ dependencies:
 ############################################
 
 # Network policies
-networkPolicies:
+networkPolicy:
+  control-plane:
+    enabled: false
+    submitter:
+      enabled: true
+    metricsExporter:
+      enabled: true
+      
   mongodb:
     operator:
       enabled: false

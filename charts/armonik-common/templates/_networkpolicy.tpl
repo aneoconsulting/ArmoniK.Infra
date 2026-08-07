@@ -25,6 +25,7 @@ spec:
   egress:
     {{- toYaml $egressRules | nindent 4 }}
   {{- end }}
+---
 {{- end }}
 
 

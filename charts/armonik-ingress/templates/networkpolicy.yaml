@@ -10,11 +10,15 @@
   {{- $egressRules = append $egressRules (include "armonik.netpol.dnsRule" .Values.networkPolicy.egress.dns | fromYaml) }}
 {{- end }}
 
+{{if and
+      (list .Values "networkPolicy" "enabled" | include "armonik.utils.index" | default false)
+      (list .Values "networkPolicy" "ingress" "enabled" | include "armonik.utils.index" | default false)
+}}
 {{- $cfg := dict
-      "enabled" .Values.networkPolicy.enabled
       "podSelector" .Values.networkPolicy.podSelector
       "policyTypes" (list "Ingress" "Egress")
       "ingress" (dict "rules" $ingressRules "extraRules" (.Values.networkPolicy.ingress.extraRules | default list))
       "egress" (dict "rules" $egressRules "extraRules" (.Values.networkPolicy.egress.extraRules | default list)) -}}
 
 {{ include "armonik.netpol.render" (dict "context" . "config" $cfg "component" "ingress") }}
+{{- end }}

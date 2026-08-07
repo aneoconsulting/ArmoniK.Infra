@@ -1,60 +1,112 @@
-{{- if list .Values "networkPolicies" "mongodb" "operator" "enabled" | include "armonik.utils.index" | default false }}
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: {{ include "armonik.fullname" . }}-mongodb-operator
-  namespace: {{ .Values.namespace | default (include "armonik.namespace" .) }}
-  labels:
-    app.kubernetes.io/component: mongodb-operator
-    {{- include "armonik.labels" . | nindent 4 }}
+{{- $operatorSelector := dict
+    "matchLabels" (dict
+      "app.kubernetes.io/name" "mongodb-operator")
+}}
 
-spec:
-  podSelector:
-    {{- list .Values "networkPolicies" "mongodb" "operator" "podSelector" | include "armonik.utils.index" | nindent 4 }}
+{{- $serverSelector := dict
+    "matchLabels" (dict
+      "app.kubernetes.io/name" "percona-server-mongodb")
+}}
 
-  policyTypes:
-    - Ingress
-    - Egress
+{{- $dnsRule := include "armonik.netpol.dnsRule" dict | fromYaml }}
 
-  ingress:
-    - from:
-        {{- list .Values "networkPolicies" "mongodb" "operator" "ingress" "from" | include "armonik.utils.index" | nindent 8 }}
+{{- if and
+      (list .Values "networkPolicy" "mongodb" "enabled" | include "armonik.utils.index" | default false)
+      (list .Values "networkPolicy" "mongodb" "operator" "enabled" | include "armonik.utils.index" | default false)
+}}
 
-  egress:
-    - to:
-        {{- list .Values "networkPolicies" "mongodb" "operator" "egress" "to" | include "armonik.utils.index" | nindent 8 }}
-      ports:
-        {{- list .Values "networkPolicies" "mongodb" "operator" "egress" "ports" | include "armonik.utils.index" | nindent 8 }}
+{{ include "armonik.netpol.render" (dict
+  "context" $
+  "component" "mongodb-operator"
+  "config" (dict
+    "podSelector" $operatorSelector
+    "policyTypes" (list "Ingress" "Egress")
+    "ingress" (dict
+      "rules" (list
+        (dict
+          "from" (list
+            (dict
+              "podSelector" $serverSelector
+            )
+          )
+        )
+      )
+    )
+    "egress" (dict
+      "rules" (list
+        (dict
+          "to" (list
+            (dict
+              "podSelector" $serverSelector
+            )
+            (dict
+              "podSelector" (dict
+                "matchLabels" (dict
+                  "app.kubernetes.io/name" "cert-manager"
+                )
+              )
+            )
+          )
+          "ports" (list (dict "protocol" "TCP" "port" (include "armonik.mongodb.port" . | trim | int)))
+        )
+        $dnsRule
+      )
+    )
+  )
+) }}
+
 {{- end }}
-
 ---
-{{- if list .Values "networkPolicies" "mongodb" "server" "enabled" | include "armonik.utils.index" | default false }}
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: {{ include "armonik.fullname" . }}-mongodb-server
-  namespace: {{ .Values.namespace | default (include "armonik.namespace" .) }}
-  labels:
-    app.kubernetes.io/component: mongodb
-    {{- include "armonik.labels" . | nindent 4 }}
+{{- if and
+      (list .Values "networkPolicy" "mongodb" "enabled" | include "armonik.utils.index" | default false)
+      (list .Values "networkPolicy" "mongodb" "server" "enabled" | include "armonik.utils.index" | default false)
+}}
 
-spec:
-  podSelector:
-    {{- list .Values "networkPolicies" "mongodb" "server" "podSelector" | include "armonik.utils.index" | nindent 4 }}
 
-  policyTypes:
-    - Ingress
-    - Egress
+{{ include "armonik.netpol.render" (dict
+  "context" $
+  "component" "mongodb-server"
+  "config" (dict
+    "podSelector" $serverSelector
+    "policyTypes" (list "Ingress" "Egress")
+    "ingress" (dict
+      "rules" (list
+        (dict
+          "from" (list
+            (dict
+              "podSelector" $operatorSelector
+            )
+            (dict
+              "podSelector" (dict
+                "matchLabels" (dict
+                  "app.kubernetes.io/name" "control-plane"
+                )
+              )
+            )
+            (dict
+              "podSelector" (dict
+                "matchLabels" (dict
+                  "app.kubernetes.io/name" "compute-plane"
+                )
+              )
+            )
+          )
+        )
+      )
+    )
+    "egress" (dict
+      "rules" (list
+        (dict
+          "to" (list
+            (dict
+              "podSelector" $operatorSelector
+            )
+          )
+        )
+        $dnsRule
+      )
+    )
+  )
+) }}
 
-  ingress:
-    - from:
-        {{- list .Values "networkPolicies" "mongodb" "server" "ingress" "from" | include "armonik.utils.index" | nindent 8 }}
-      ports:
-        {{- list .Values "networkPolicies" "mongodb" "server" "ingress" "ports" | include "armonik.utils.index" | nindent 8 }}
-
-  egress:
-    - to:
-        {{- list .Values "networkPolicies" "mongodb" "server" "egress" "to" | include "armonik.utils.index" | nindent 8 }}
-      ports:
-        {{- list .Values "networkPolicies" "mongodb" "server" "egress" "ports" | include "armonik.utils.index" | nindent 8 }}
 {{- end }}

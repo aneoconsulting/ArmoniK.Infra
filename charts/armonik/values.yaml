@@ -92,6 +92,17 @@ conf:
   log:
     minimumLevel: Information
 
+gcs:
+  enabled: false
+  projectId: ""
+  bucketName: ""
+  emulatorEndpoint: ""
+  credentialsFilePath: ""
+  # degreeOfParallelism: 0
+  # chunkDownloadSize: 2097152
+  # maxRetry: 5
+  # msAfterRetry: 500
+
 ################## INGRESS ##################
 ingress:
   enabled: true

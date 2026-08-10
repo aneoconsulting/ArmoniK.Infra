@@ -15,12 +15,14 @@ spec:
     {{- toYaml $cfg.podSelector | nindent 4 }}
   policyTypes:
     {{- toYaml ($cfg.policyTypes | default (list "Ingress" "Egress")) | nindent 4 }}
-  {{- $ingressRules := concat ($cfg.ingress.rules | default list) ($cfg.ingress.extraRules | default list) }}
+  {{- $ingressCfg := $cfg.ingress | default dict }}
+  {{- $ingressRules := concat ($ingressCfg.rules | default list) ($ingressCfg.extraRules | default list) }}
   {{- if $ingressRules }}
   ingress:
     {{- toYaml $ingressRules | nindent 4 }}
   {{- end }}
-  {{- $egressRules := concat ($cfg.egress.rules | default list) ($cfg.egress.extraRules | default list) }}
+  {{- $egressCfg := $cfg.egress | default dict }}
+  {{- $egressRules := concat ($egressCfg.rules | default list) ($egressCfg.extraRules | default list) }}
   {{- if $egressRules }}
   egress:
     {{- toYaml $egressRules | nindent 4 }}
@@ -41,6 +43,14 @@ to:
     podSelector:
       matchLabels:
         {{- toYaml $labels | nindent 8 }}
+ports:
+  {{- toYaml $ports | nindent 2 }}
+{{- end -}}
+
+
+{{- define "armonik.netpol.kubeApiRule" -}}
+{{- $cfg := . | default dict -}}
+{{- $ports := $cfg.ports | default (list (dict "protocol" "TCP" "port" 443) (dict "protocol" "TCP" "port" 6443)) -}}
 ports:
   {{- toYaml $ports | nindent 2 }}
 {{- end -}}

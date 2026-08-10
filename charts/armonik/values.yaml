@@ -627,3 +627,8 @@ networkPolicy:
       enabled: true
     server:
       enabled: true
+
+operators:
+  keda:
+    networkPolicy:
+      flavor: "kubernetes"

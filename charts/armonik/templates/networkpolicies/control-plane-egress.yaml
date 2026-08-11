@@ -49,7 +49,7 @@
       "egress" (dict "rules" $depRules "extraRules" list) -}}
 {{ include "armonik.netpol.render" (dict "context" . "config" $cfg "component" "control-plane-submitter-egress") }}
 {{- end }}
----
+
 {{- if and $meOn $mongoRule }}
 {{- $cfg := dict
       "podSelector" (dict "matchLabels" (dict "app.kubernetes.io/component" "metrics-exporter"))

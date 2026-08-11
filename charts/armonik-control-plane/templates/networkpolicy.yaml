@@ -37,7 +37,7 @@
         "extraRules" (.Values.networkPolicy.submitter.extraEgressRules | default list)) -}}
 {{ include "armonik.netpol.render" (dict "context" . "config" $submitterCfg "component" "submitter") }}
 {{- end }}
----
+
 {{- if and
       (list .Values "networkPolicy" "enabled" | include "armonik.utils.index" | default false)
       (list .Values "networkPolicy" "metricsExporter" "enabled" | include "armonik.utils.index" | default false)

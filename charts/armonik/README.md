@@ -158,6 +158,10 @@ Kubernetes: `>=v1.25.0-0`
 | global.image.registry | string | `""` |  |
 | global.imageRegistry | string | `""` |  |
 | global.security.allowInsecureImages | bool | `true` |  |
-| global.version.armonikCore | string | `"0.37.1"` |  |
+| global.version.armonikCore | string | `"0.40.1"` |  |
 | ingress.enabled | bool | `true` |  |
+| pubsub.enabled | bool | `false` |  |
+| pubsub.kmsKeyName | string | `""` |  |
+| pubsub.prefix | string | `""` |  |
+| pubsub.projectId | string | `""` |  |
 

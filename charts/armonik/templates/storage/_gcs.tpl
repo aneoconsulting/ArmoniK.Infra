@@ -1,3 +1,7 @@
+{{/*
+Configuration for GCS forwarded to ArmoniK Core.
+This configuration is used to configure the GCS object storage adapter.
+*/}}
 {{- define "armonik.gcs.conf" -}}
 {{- if .Values.gcs.enabled }}
 env:

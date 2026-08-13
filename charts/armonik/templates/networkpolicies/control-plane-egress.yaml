@@ -1,60 +1,37 @@
-{{- $mongoRule := dict -}}
-{{- with .Subcharts.dependencies.Subcharts.mongodb }}
-  {{- $mongoRule = dict
-        "to" (list (dict "podSelector" (dict "matchLabels" (dict "app.kubernetes.io/name" "percona-server-mongodb"))))
-        "ports" (list (dict "protocol" "TCP" "port" (include "armonik.mongodb.port" . | trim | int))) }}
+{{- $networkPolicyEnabled := list .Values "networkPolicy" "enabled"
+    | include "armonik.utils.index"
+    | default false
+-}}
+{{- $metricsExporterEnabled := list .Values "control-plane" "metricsExporter" "enabled"
+    | include "armonik.utils.index"
+    | default false
+-}}
+{{- $meOn := and $networkPolicyEnabled $metricsExporterEnabled -}}
+
+
+{{/*
+  Control-plane submitter egress NetworkPolicy.
+*/}}
+{{- $dependencyRules := include "armonik.netpol.dependencyRules" . | fromYaml -}}
+
+{{- if and $networkPolicyEnabled $dependencyRules }}
+{{- include "armonik.netpol.render" (dict
+      "context" .
+      "component" "control-plane-submitter-egress"
+      "config" (include "armonik.netpol.controlPlaneSubmitterEgress" . | fromYaml)
+  ) }}
 {{- end }}
 
-{{- $rabbitmqRule := dict -}}
-{{- with .Subcharts.dependencies.Subcharts.rabbitmq }}
-  {{- $rabbitmqRule = dict
-        "to" (list (dict "podSelector" (dict "matchLabels" (dict "app.kubernetes.io/name" "rabbitmq"))))
-        "ports" (list (dict "protocol" "TCP" "port" (include "armonik.rabbitmq.port" . | trim | int))) }}
-{{- end }}
 
-{{- $activemqRule := dict -}}
-{{- with .Subcharts.dependencies.Subcharts.activemq }}
-  {{- $activemqRule = dict
-        "to" (list (dict "podSelector" (dict "matchLabels" (dict "app.kubernetes.io/name" "activemq"))))
-        "ports" (list (dict "protocol" "TCP" "port" (.Values.containerPort.amqp | int))) }}
-{{- end }}
+{{/*
+  Control-plane metrics exporter egress NetworkPolicy.
+*/}}
+{{- $mongodbRule := include "armonik.netpol.rule.mongodb" . | fromYaml -}}
 
-{{- $redisRule := dict -}}
-{{- with .Subcharts.dependencies.Subcharts.redis }}
-  {{- $redisRule = dict
-        "to" (list (dict "podSelector" (dict "matchLabels" (dict "app.kubernetes.io/name" "redis"))))
-        "ports" (list (dict "protocol" "TCP" "port" (include "armonik.redis.port" . | trim | int))) }}
-{{- end }}
-
-{{- $depRules := list -}}
-{{- range $r := list $mongoRule $rabbitmqRule $activemqRule $redisRule }}
-  {{- if $r }}{{- $depRules = append $depRules $r }}{{- end }}
-{{- end }}
-
-{{- $networkPolicyEnabled := list .Values "networkPolicy" "control-plane" "enabled" | include "armonik.utils.index" | default false -}}
-{{- $submitterEnabled := list .Values "networkPolicy" "control-plane" "submitter" "enabled" | include "armonik.utils.index" | default false -}}
-{{- $metricsExporterNpEnabled := list .Values "networkPolicy" "control-plane" "metricsExporter" "enabled" | include "armonik.utils.index" | default false -}}
-{{- $metricsExporterEnabled := list .Values "control-plane" "metricsExporter" "enabled" | include "armonik.utils.index" | default false -}}
-
-
-{{- $subOn := and $networkPolicyEnabled $submitterEnabled -}}
-{{- $meOn := and $networkPolicyEnabled $metricsExporterNpEnabled $metricsExporterEnabled -}}
-
-
-{{- if and $subOn $depRules }}
-{{- $cfg := dict
-      "podSelector" (dict "matchLabels" (dict "app.kubernetes.io/name" "control-plane"))
-      "policyTypes" (list "Egress")
-      "ingress" (dict "rules" list "extraRules" list)
-      "egress" (dict "rules" $depRules "extraRules" list) -}}
-{{ include "armonik.netpol.render" (dict "context" . "config" $cfg "component" "control-plane-submitter-egress") }}
-{{- end }}
-
-{{- if and $meOn $mongoRule }}
-{{- $cfg := dict
-      "podSelector" (dict "matchLabels" (dict "app.kubernetes.io/component" "metrics-exporter"))
-      "policyTypes" (list "Egress")
-      "ingress" (dict "rules" list "extraRules" list)
-      "egress" (dict "rules" (list $mongoRule) "extraRules" list) -}}
-{{ include "armonik.netpol.render" (dict "context" . "config" $cfg "component" "control-plane-metrics-exporter-egress") }}
+{{- if and $meOn $mongodbRule }}
+{{- include "armonik.netpol.render" (dict
+      "context" .
+      "component" "control-plane-metrics-exporter-egress"
+      "config" (include "armonik.netpol.controlPlaneMetricsExporterEgress" . | fromYaml)
+  ) }}
 {{- end }}

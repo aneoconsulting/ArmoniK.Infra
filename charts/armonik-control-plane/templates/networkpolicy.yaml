@@ -1,49 +1,38 @@
-{{- $fromComputePlane := dict
-      "namespaceSelector" (dict)
-      "podSelector" (dict "matchLabels" (dict "app.kubernetes.io/name" "compute-plane")) -}}
-
-{{- $fromIngress := dict
-      "namespaceSelector" (dict)
-      "podSelector" (dict "matchLabels" (dict "app.kubernetes.io/name" "ingress")) -}}
-
-
-{{- $fromAnyPod := dict "namespaceSelector" (dict) -}}
-
-{{- $dnsEgress := list (include "armonik.netpol.dnsRule" dict | fromYaml) -}}
+{{- $networkPolicyEnabled := list .Values "networkPolicy" "enabled"
+    | include "armonik.utils.index"
+    | default false
+-}}
 
 {{- if and
-      (list .Values "networkPolicy" "enabled" | include "armonik.utils.index" | default false)
-      (list .Values "networkPolicy" "submitter" "enabled" | include "armonik.utils.index" | default false)
+      $networkPolicyEnabled
+      (list .Values "networkPolicy" "submitter" "enabled"
+        | include "armonik.utils.index"
+        | default false)
 }}
-{{- $submitterCfg := dict
-      "podSelector" (dict "matchLabels" (dict "app.kubernetes.io/name" "control-plane"))
-      "policyTypes" (list "Ingress" "Egress")
-      "ingress" (dict
-        "rules" (list
-          (dict "from" (list $fromComputePlane) "ports" (list (dict "protocol" "TCP" "port" 1080)))
-          (dict "from" (list $fromIngress)      "ports" (list (dict "protocol" "TCP" "port" 1080)))
-          (dict "from" (list $fromAnyPod)   "ports" (list (dict "protocol" "TCP" "port" 1081))))
-        "extraRules" (.Values.networkPolicy.submitter.extraIngressRules | default list))
-      "egress" (dict
-        "rules" $dnsEgress
-        "extraRules" (.Values.networkPolicy.submitter.extraEgressRules | default list)) -}}
-{{ include "armonik.netpol.render" (dict "context" . "config" $submitterCfg "component" "submitter") }}
+
+{{ include "armonik.netpol.render" (dict
+      "context" .
+      "component" "submitter"
+      "config" (include "armonik.netpol.submitter" . | fromYaml)
+) }}
+
 {{- end }}
 
+
 {{- if and
-      (list .Values "networkPolicy" "enabled" | include "armonik.utils.index" | default false)
-      (list .Values "networkPolicy" "metricsExporter" "enabled" | include "armonik.utils.index" | default false)
-      (list .Values "metricsExporter" "enabled" | include "armonik.utils.index" | default false)
+      $networkPolicyEnabled
+      (list .Values "networkPolicy" "metricsExporter" "enabled"
+        | include "armonik.utils.index"
+        | default false)
+      (list .Values "metricsExporter" "enabled"
+        | include "armonik.utils.index"
+        | default false)
 }}
-{{- $meCfg := dict
-      "podSelector" (dict "matchLabels" (dict "app.kubernetes.io/component" "metrics-exporter"))
-      "policyTypes" (list "Ingress" "Egress")
-      "ingress" (dict
-        "rules" (list
-          (dict "from" (list $fromAnyPod) "ports" (list (dict "protocol" "TCP" "port" 1080))))
-        "extraRules" (.Values.networkPolicy.metricsExporter.extraIngressRules | default list))
-      "egress" (dict
-        "rules" $dnsEgress
-        "extraRules" (.Values.networkPolicy.metricsExporter.extraEgressRules | default list)) -}}
-{{ include "armonik.netpol.render" (dict "context" . "config" $meCfg "component" "metrics-exporter") }}
+
+{{ include "armonik.netpol.render" (dict
+      "context" .
+      "component" "metrics-exporter"
+      "config" (include "armonik.netpol.metricsExporter" . | fromYaml)
+) }}
+
 {{- end }}

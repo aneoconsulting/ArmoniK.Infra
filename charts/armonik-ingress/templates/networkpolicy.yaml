@@ -1,53 +1,26 @@
-{{- $ingressRules := list -}}
-{{- if .Values.networkPolicy.healthCheck.enabled }}
-  {{- $ingressRules = append $ingressRules (dict
-        "from" .Values.networkPolicy.healthCheck.from
-        "ports" .Values.networkPolicy.healthCheck.ports) }}
-{{- end }}
-
-{{- $ingressRules = append $ingressRules (dict
-      "from" (list)
-      "ports" (list
-        (dict "protocol" "TCP" "port" 8080)
-        (dict "protocol" "TCP" "port" 9080))) -}}
-
-{{- $dnsEgress := list (include "armonik.netpol.dnsRule" dict | fromYaml) -}}
-
-{{- $backendEgress := list
-      (dict
-        "to" (list (dict "podSelector" (dict "matchLabels" (dict "app.kubernetes.io/name" "control-plane"))))
-        "ports" (list (dict "protocol" "TCP" "port" 1080)))
-      (dict
-        "to" (list (dict "podSelector" (dict "matchLabels"
-              (dict "app.kubernetes.io/name" "ingress" "app.kubernetes.io/component" "gui"))))
-        "ports" (list (dict "protocol" "TCP" "port" 1080)))
-      (dict
-        "to" (list (dict "podSelector" (dict "matchLabels" (dict "app.kubernetes.io/name" "grafana"))))
-        "ports" (list (dict "protocol" "TCP" "port" 3000)))
-      (dict
-        "to" (list (dict "podSelector" (dict "matchLabels" (dict "app" "seq"))))
-        "ports" (list (dict "protocol" "TCP" "port" "ui")))
+{{- $networkPolicyEnabled := list .Values "networkPolicy" "enabled"
+    | include "armonik.utils.index"
+    | default false
 -}}
 
-{{- if .Values.networkPolicy.enabled }}
-{{- $cfg := dict
-      "podSelector" (dict "matchLabels" (dict "app.kubernetes.io/name" "ingress"))
-      "policyTypes" (list "Ingress" "Egress")
-      "ingress" (dict "rules" $ingressRules "extraRules" (.Values.networkPolicy.ingress.extraRules | default list))
-      "egress" (dict
-        "rules" (concat $dnsEgress $backendEgress)
-        "extraRules" (.Values.networkPolicy.egress.extraRules | default list)) -}}
+{{- if $networkPolicyEnabled }}
 
-{{ include "armonik.netpol.render" (dict "context" . "config" $cfg "component" "ingress") }}
-{{- end }}
+{{/*
+  Ingress backend NetworkPolicy.
+*/}}
+{{- include "armonik.netpol.render" (dict
+      "context" .
+      "component" "ingress"
+      "config" (include "armonik.netpol.ingressBackend" . | fromYaml)
+  ) }}
 
-{{- if .Values.networkPolicy.enabled }}
-{{- $guiCfg := dict
-      "podSelector" (dict "matchLabels" (dict "app.kubernetes.io/name" "ingress" "app.kubernetes.io/component" "gui"))
-      "policyTypes" (list "Ingress")
-      "ingress" (dict "rules" (list (dict
-            "from" (list (dict "podSelector" (dict "matchLabels" (dict "app.kubernetes.io/name" "ingress" "app.kubernetes.io/component" "ingress"))))
-            "ports" (list (dict "protocol" "TCP" "port" 1080)))) "extraRules" list) -}}
+{{/*
+  Ingress GUI NetworkPolicy.
+*/}}
+{{- include "armonik.netpol.render" (dict
+      "context" .
+      "component" "gui"
+      "config" (include "armonik.netpol.ingressGui" . | fromYaml)
+  ) }}
 
-{{ include "armonik.netpol.render" (dict "context" . "config" $guiCfg "component" "ingress-gui") }}
 {{- end }}

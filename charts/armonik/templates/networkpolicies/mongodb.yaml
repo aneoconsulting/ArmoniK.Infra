@@ -9,6 +9,7 @@
 }}
 
 {{- $dnsRule := include "armonik.netpol.dnsRule" dict | fromYaml }}
+{{- $kubeApiRule := include "armonik.netpol.kubeApiRule" dict | fromYaml }}
 
 {{- if and
       (list .Values "networkPolicy" "mongodb" "enabled" | include "armonik.utils.index" | default false)
@@ -50,6 +51,7 @@
           "ports" (list (dict "protocol" "TCP" "port" (include "armonik.mongodb.port" . | trim | int)))
         )
         $dnsRule
+        $kubeApiRule
       )
     )
   )

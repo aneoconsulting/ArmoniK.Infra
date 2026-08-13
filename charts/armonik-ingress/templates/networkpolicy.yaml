@@ -31,6 +31,7 @@
 
 {{- if .Values.networkPolicy.enabled }}
 {{- $cfg := dict
+      "namespace" (.Values.namespace | default (include "armonik.namespace" .))
       "podSelector" (dict "matchLabels" (dict "app.kubernetes.io/name" "ingress"))
       "policyTypes" (list "Ingress" "Egress")
       "ingress" (dict "rules" $ingressRules "extraRules" (.Values.networkPolicy.ingress.extraRules | default list))
@@ -43,6 +44,7 @@
 
 {{- if .Values.networkPolicy.enabled }}
 {{- $guiCfg := dict
+      "namespace" (.Values.namespace | default (include "armonik.namespace" .))
       "podSelector" (dict "matchLabels" (dict "app.kubernetes.io/name" "ingress" "app.kubernetes.io/component" "gui"))
       "policyTypes" (list "Ingress")
       "ingress" (dict "rules" (list (dict

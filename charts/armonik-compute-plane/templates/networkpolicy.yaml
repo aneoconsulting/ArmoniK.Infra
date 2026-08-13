@@ -1,14 +1,3 @@
-{{- $fromComputePlane := dict
-      "namespaceSelector" (dict)
-      "podSelector" (dict "matchLabels" (dict "app.kubernetes.io/name" "compute-plane")) -}}
-
-{{- $fromIngress := dict
-      "namespaceSelector" (dict)
-      "podSelector" (dict "matchLabels" (dict "app.kubernetes.io/name" "ingress")) -}}
-
-
-{{- $fromAnyPod := dict "namespaceSelector" (dict) -}}
-
 {{- $dnsEgress := list (include "armonik.netpol.dnsRule" dict | fromYaml) -}}
 
 {{- if (list .Values "networkPolicy" "enabled" | include "armonik.utils.index" | default false) }}

@@ -19,10 +19,11 @@
 
 {{- if $networkPolicyEnabled }}
 {{- include "armonik.netpol.render" (dict
-  "podSelector" (dict "matchLabels" (dict "app.kubernetes.io/name" "fluent-bit"))
+
   "context" $
   "component" "fluent-bit"
   "config" (dict
+    "podSelector" (dict "matchLabels" (dict "app.kubernetes.io/name" "fluent-bit"))
     "policyTypes" (list "Egress")
     "egress" (dict
       "rules" (list

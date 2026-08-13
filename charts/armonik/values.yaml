@@ -312,11 +312,10 @@ dependencies:
         ports:
           - protocol: TCP
             port: 9090
-
-        to:
-          - podSelector:
-              matchLabels:
-                app.kubernetes.io/name: prometheus
+          - protocol: TCP
+            port: 443
+          - protocol: TCP
+            port: 6443
 
   ################## FLUENT-BIT ##################
   fluent-bit:
@@ -899,14 +898,19 @@ operators:
                     app.kubernetes.io/component: cainjector
                     app.kubernetes.io/name: cainjector
 
-          # Prometheus Operator
+          # Prometheus Operator, Kubelet and node-exporter
           - ports:
               - protocol: TCP
                 port: 10250
-            to:
-              - podSelector:
-                  matchLabels:
-                    app.kubernetes.io/component: prometheus-operator
+              - protocol: TCP
+                port: 9100
+
+          # Kubernetes API server
+          - ports:
+              - protocol: TCP
+                port: 443
+              - protocol: TCP
+                port: 6443
 
             # CoreDNS metrics
           - ports:

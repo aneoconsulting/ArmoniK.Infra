@@ -1,0 +1,36 @@
+{{- $dnsRule := include "armonik.netpol.dnsRule" dict | fromYaml }}
+{{- $kubeApiRule := include "armonik.netpol.kubeApiRule" dict | fromYaml }}
+
+{{- $seqRule := dict
+  "ports" (list (dict
+    "protocol" "TCP"
+    "port" 5341
+  ))
+  "to" (list (dict
+    "podSelector" (dict
+      "matchLabels" (dict
+        "app" "seq"
+      )
+    )
+  ))
+}}
+
+{{- $networkPolicyEnabled := list .Values "networkPolicy" "fluent-bit" "enabled" | include "armonik.utils.index" | default false -}}
+
+{{- if $networkPolicyEnabled }}
+{{- include "armonik.netpol.render" (dict
+  "podSelector" (dict "matchLabels" (dict "app.kubernetes.io/name" "fluent-bit"))
+  "context" $
+  "component" "fluent-bit"
+  "config" (dict
+    "policyTypes" (list "Egress")
+    "egress" (dict
+      "rules" (list
+        $dnsRule
+        $kubeApiRule
+        $seqRule
+      )
+    )
+  )
+) }}
+{{- end }}

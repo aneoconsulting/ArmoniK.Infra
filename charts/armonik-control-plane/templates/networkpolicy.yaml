@@ -1,21 +1,13 @@
-{{- $ops := include "armonik.operators" . | fromYaml -}}
-
 {{- $fromComputePlane := dict
       "namespaceSelector" (dict)
-      "podSelector" (dict "matchLabels" (dict "app.kubernetes.io/component" "compute-plane")) -}}
+      "podSelector" (dict "matchLabels" (dict "app.kubernetes.io/name" "compute-plane")) -}}
 
 {{- $fromIngress := dict
       "namespaceSelector" (dict)
       "podSelector" (dict "matchLabels" (dict "app.kubernetes.io/name" "ingress")) -}}
 
 
-{{- $fromPrometheus := dict "namespaceSelector" (dict) -}}
-{{- if $ops.prometheusOperator.available }}
-  {{- $_ := set $fromPrometheus "podSelector" (dict "matchLabels" (dict "app.kubernetes.io/name" "prometheus")) -}}
-  {{- if $ops.prometheusOperator.namespace }}
-    {{- $_ := set $fromPrometheus "namespaceSelector" (dict "matchLabels" (dict "kubernetes.io/metadata.name" $ops.prometheusOperator.namespace)) -}}
-  {{- end }}
-{{- end }}
+{{- $fromAnyPod := dict "namespaceSelector" (dict) -}}
 
 {{- $dnsEgress := list (include "armonik.netpol.dnsRule" dict | fromYaml) -}}
 
@@ -24,13 +16,13 @@
       (list .Values "networkPolicy" "submitter" "enabled" | include "armonik.utils.index" | default false)
 }}
 {{- $submitterCfg := dict
-      "podSelector" (dict "matchLabels" (dict "app.kubernetes.io/component" "control-plane"))
+      "podSelector" (dict "matchLabels" (dict "app.kubernetes.io/name" "control-plane"))
       "policyTypes" (list "Ingress" "Egress")
       "ingress" (dict
         "rules" (list
           (dict "from" (list $fromComputePlane) "ports" (list (dict "protocol" "TCP" "port" 1080)))
           (dict "from" (list $fromIngress)      "ports" (list (dict "protocol" "TCP" "port" 1080)))
-          (dict "from" (list $fromPrometheus)   "ports" (list (dict "protocol" "TCP" "port" 1081))))
+          (dict "from" (list $fromAnyPod)   "ports" (list (dict "protocol" "TCP" "port" 1081))))
         "extraRules" (.Values.networkPolicy.submitter.extraIngressRules | default list))
       "egress" (dict
         "rules" $dnsEgress
@@ -48,7 +40,7 @@
       "policyTypes" (list "Ingress" "Egress")
       "ingress" (dict
         "rules" (list
-          (dict "from" (list $fromPrometheus) "ports" (list (dict "protocol" "TCP" "port" 9419))))
+          (dict "from" (list $fromAnyPod) "ports" (list (dict "protocol" "TCP" "port" 1080))))
         "extraRules" (.Values.networkPolicy.metricsExporter.extraIngressRules | default list))
       "egress" (dict
         "rules" $dnsEgress

@@ -22,7 +22,7 @@
 {{- $redisRule := dict -}}
 {{- with .Subcharts.dependencies.Subcharts.redis }}
   {{- $redisRule = dict
-        "to" (list (dict "podSelector" (dict "matchLabels" (dict "app.kubernetes.io/name" "valkey"))))
+        "to" (list (dict "podSelector" (dict "matchLabels" (dict "app.kubernetes.io/name" "redis"))))
         "ports" (list (dict "protocol" "TCP" "port" (include "armonik.redis.port" . | trim | int))) }}
 {{- end }}
 
@@ -43,7 +43,7 @@
 
 {{- if and $subOn $depRules }}
 {{- $cfg := dict
-      "podSelector" (dict "matchLabels" (dict "app.kubernetes.io/component" "control-plane"))
+      "podSelector" (dict "matchLabels" (dict "app.kubernetes.io/name" "control-plane"))
       "policyTypes" (list "Egress")
       "ingress" (dict "rules" list "extraRules" list)
       "egress" (dict "rules" $depRules "extraRules" list) -}}

@@ -166,6 +166,21 @@ dependencies:
       serviceMonitor:
         enabled: true
         port: http-metrics
+    # networkPolicy:
+    #   ingress:
+    #     - from:
+    #         - podSelector:
+    #             matchLabels:
+    #               app.kubernetes.io/name: control-plane
+    #         - podSelector:
+    #             matchLabels:
+    #               app.kubernetes.io/name: compute-plane
+    #       ports:
+    #         - protocol: TCP
+    #           port: 6379
+
+    # NOTE: the upstream Redis (Valkey) chart does not expose a `networkPolicy.enabled`
+    # This block is provided as a reference only; apply it if network policies are required for this component.
 
   # Bitnami chart compatible values
   # redis:
@@ -212,6 +227,8 @@ dependencies:
     fullnameOverride: "activemq"
     image:
       registry: docker.io
+
+
 
   ################## MONGODB ##################
   # This default configuration is intended for a development/test cluster
@@ -275,6 +292,18 @@ dependencies:
           - '{{ include "armonik.monitoring.dashboardNamespaces.default" . }}'
       datasources:
         enabled: true
+    networkPolicy:
+      # Set networkPolicy.enabled: true to apply the default NetworkPolicy for this component.
+      egress:
+        enabled: true
+        blockDNSResolution: false
+        ports:
+          - protocol: TCP
+            port: 9090
+          - protocol: TCP
+            port: 443
+          - protocol: TCP
+            port: 6443
 
   ################## FLUENT-BIT ##################
   fluent-bit:
@@ -590,6 +619,25 @@ dependencies:
       SEQ_API_LISTENURI: "http://+:5341"
     #   repository: $REPO-NAME/datalust/seq
     # imagePullSecrets: []
+    networkPolicy:
+      # Set networkPolicy.enabled: true to apply the default NetworkPolicy for this component.
+      ingress:
+        - from:
+            - podSelector:
+                matchLabels:
+                  app.kubernetes.io/name: fluent-bit
+          ports:
+            - protocol: TCP
+              port: 5341
+        - from:
+            - namespaceSelector: {}
+              podSelector:
+                matchLabels:
+                  app.kubernetes.io/name: ingress
+          ports:
+            - protocol: TCP
+              port: 80
+
 
   ################## PROMETHEUS ##################
   # kube-prometheus-stack moved to charts/armonik-operators, configured at operators.kube-prometheus.*.
@@ -612,23 +660,263 @@ dependencies:
     prefix: ""
     kmsKeyName: ""
 
-# Network policies
-networkPolicy:
-  control-plane:
-    enabled: false
-    submitter:
-      enabled: true
-    metricsExporter:
-      enabled: true
-      
-  mongodb:
-    enabled: false
-    operator:
-      enabled: true
-    server:
-      enabled: true
+
+################## NETWORK POLICIES ##################
+# These settings are specific to the ArmoniK umbrella chart.
+# The policies declared for control-plane, compute-plane, and fluent-bit are egress
+# rules managed by ArmoniK itself. Ingress rules are generally defined by the
+# upstream dependency charts, with MongoDB as the main exception where the
+# ingress and egress policies are explicitly configured in this chart.
+#
+# By default, NetworkPolicy resources are disabled per component. To restrict
+# traffic for a given component, set its `networkPolicy.enabled: true` (naming
+# varies per chart, see each dependency's own values). 
 
 operators:
   keda:
     networkPolicy:
       flavor: "kubernetes"
+      kubernetes:
+        metricsServer:
+          extraEgressRules:
+            - ports:
+                - protocol: TCP
+                  port: 443
+                - protocol: TCP
+                  port: 6443
+        operator:
+          extraEgressRules:
+            - ports:
+                - protocol: TCP
+                  port: 443
+                - protocol: TCP
+                  port: 6443
+        webhooks:
+          extraEgressRules:
+            - ports:
+                - protocol: TCP
+                  port: 443
+                - protocol: TCP
+                  port: 6443
+
+  external-secrets:
+    networkPolicy:
+    # Set networkPolicy.enabled: true to apply the default NetworkPolicy for this component.
+      egress:
+        - to:
+            - namespaceSelector:
+                matchLabels:
+                  kubernetes.io/metadata.name: kube-system
+              podSelector:
+                matchLabels:
+                  k8s-app: kube-dns
+          ports:
+            - protocol: UDP
+              port: 53
+            - protocol: TCP
+              port: 53
+        - ports:
+          - protocol: TCP
+            port: 443
+        - ports:
+          - protocol: TCP
+            port: 6443
+    webhook:
+    # Set networkPolicy.enabled: true to apply the default NetworkPolicy for this component.
+      networkPolicy:
+        egress:
+          - to:
+              - namespaceSelector:
+                  matchLabels:
+                    kubernetes.io/metadata.name: kube-system
+                podSelector:
+                  matchLabels:
+                    k8s-app: kube-dns
+            ports:
+              - protocol: UDP
+                port: 53
+              - protocol: TCP
+                port: 53
+          - ports:
+            - protocol: TCP
+              port: 443
+          - ports:
+            - protocol: TCP
+              port: 6443          
+      
+    certController:
+    # Set networkPolicy.enabled: true to apply the default NetworkPolicy for this component.
+      networkPolicy:
+        egress:
+          - to:
+              - namespaceSelector:
+                  matchLabels:
+                    kubernetes.io/metadata.name: kube-system
+                podSelector:
+                  matchLabels:
+                    k8s-app: kube-dns
+            ports:
+              - protocol: UDP
+                port: 53
+              - protocol: TCP
+                port: 53
+          - ports:
+            - protocol: TCP
+              port: 443
+          - ports:
+            - protocol: TCP
+              port: 6443
+
+  kube-prometheus:
+    ### Network policy
+    # Minimum required for this deployment: enable the networkPolicy
+    # on prometheusOperator, kube-state-metrics and prometheus. 
+    
+    # prometheusOperator:
+    #   networkPolicy:
+    #     enabled: true
+    # kube-state-metrics:
+    #   networkPolicy:
+    #     enabled: true
+
+    # The prometheus component is already configured with ArmoniK-specific ingress/egress
+    # Set networkPolicy.enabled: true to apply the default NetworkPolicy for this component.
+    prometheus:
+      networkPolicy:
+        ingress:
+          - from:
+              - podSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: grafana
+            ports:
+              - protocol: TCP
+                port: 9090
+
+        egress:
+          - to:
+              - namespaceSelector:
+                  matchLabels:
+                    kubernetes.io/metadata.name: kube-system
+                podSelector:
+                  matchLabels:
+                    k8s-app: kube-dns
+            ports:
+              - protocol: UDP
+                port: 53
+              - protocol: TCP
+                port: 53
+
+          # Control plane
+          - ports:
+              - protocol: TCP
+                port: 1081
+            to:
+              - podSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: control-plane
+
+          # Metrics exporter
+          - ports:
+              - protocol: TCP
+                port: 1080
+            to:
+              - podSelector:
+                  matchLabels:
+                    app.kubernetes.io/component: metrics-exporter
+
+          # Kube-state-metrics
+          - ports:
+              - protocol: TCP
+                port: 8080
+            to:
+              - podSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: kube-state-metrics
+
+          # Grafana
+          - ports:
+              - protocol: TCP
+                port: 3000
+            to:
+              - podSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: grafana
+
+          # KEDA metrics API server
+          - ports:
+              - protocol: TCP
+                port: 8080
+            to:
+              - podSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: keda-operator-metrics-apiserver
+
+          # cert-manager controller
+          - ports:
+              - protocol: TCP
+                port: 9402
+            to:
+              - podSelector:
+                  matchLabels:
+                    app.kubernetes.io/component: controller
+                    app.kubernetes.io/name: cert-manager
+
+          # cert-manager webhook
+          - ports:
+              - protocol: TCP
+                port: 9402
+            to:
+              - podSelector:
+                  matchLabels:
+                    app.kubernetes.io/component: webhook
+                    app.kubernetes.io/name: webhook
+
+          # cert-manager cainjector
+          - ports:
+              - protocol: TCP
+                port: 9402
+            to:
+              - podSelector:
+                  matchLabels:
+                    app.kubernetes.io/component: cainjector
+                    app.kubernetes.io/name: cainjector
+
+          # Prometheus Operator, Kubelet and node-exporter
+          - ports:
+              - protocol: TCP
+                port: 10250
+              - protocol: TCP
+                port: 9100
+
+          # Kubernetes API server
+          - ports:
+              - protocol: TCP
+                port: 443
+              - protocol: TCP
+                port: 6443
+
+            # CoreDNS metrics
+          - ports:
+              - protocol: TCP
+                port: 9153
+            to:
+              - namespaceSelector:
+                  matchLabels:
+                    kubernetes.io/metadata.name: kube-system
+                podSelector:
+                  matchLabels:
+                    k8s-app: kube-dns
+
+  # cert-manager:
+  ### Network policy
+  # Minimum required for this deployment: enable the default networkPolicy on
+  # all three cert-manager sub-components below (controller, cainjector, webhook).
+
+  #   networkPolicy:
+  #     enabled: true
+  #   cainjector:
+  #     networkPolicy:
+  #       enabled: true
+  #   webhook:
+  #     networkPolicy:
+  #       enabled: true

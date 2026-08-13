@@ -171,7 +171,18 @@ networkPolicy:
   # If enabled, define ingress rules explicitly for the clients that may
   # access ActiveMQ and add any required egress rules for your environment.
  
-  ingress: []
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: control-plane
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: compute-plane
+      ports:
+        - protocol: TCP
+          port: 5672
+          
   egress:
     - to:
         - namespaceSelector:

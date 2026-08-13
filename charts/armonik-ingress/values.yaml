@@ -170,19 +170,14 @@ healthCheckPolicy:
 networkPolicy:
   enabled: false
 
-  podSelector: {}  
+  healthCheck:
+    enabled: false
+    from: []
+    ports: []
+  
   ingress:
-    healthCheck:
-      enabled: false
-      from: []
-      ports: []
     extraRules: []
 
-  egress:
-    dns:
-      enabled: false
-      namespace: ""   
-      labels: {}      
-      ports: []     
+  egress:     
     extraRules: []
 

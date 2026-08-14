@@ -27,6 +27,7 @@
         (dict
           "from" (list
             (dict
+              "namespaceSelector" (dict)
               "podSelector" $serverSelector
             )
           )
@@ -38,9 +39,11 @@
         (dict
           "to" (list
             (dict
+              "namespaceSelector" (dict)
               "podSelector" $serverSelector
             )
             (dict
+              "namespaceSelector" (dict)
               "podSelector" (dict
                 "matchLabels" (dict
                   "app.kubernetes.io/name" "cert-manager"
@@ -76,9 +79,11 @@
         (dict
           "from" (list
             (dict
+              "namespaceSelector" (dict)
               "podSelector" $operatorSelector
             )
             (dict
+              "namespaceSelector" (dict)
               "podSelector" (dict
                 "matchLabels" (dict
                   "app.kubernetes.io/name" "control-plane"
@@ -86,6 +91,7 @@
               )
             )
             (dict
+              "namespaceSelector" (dict)
               "podSelector" (dict
                 "matchLabels" (dict
                   "app.kubernetes.io/name" "compute-plane"
@@ -101,6 +107,7 @@
         (dict
           "to" (list
             (dict
+              "namespaceSelector" (dict)
               "podSelector" $operatorSelector
             )
           )

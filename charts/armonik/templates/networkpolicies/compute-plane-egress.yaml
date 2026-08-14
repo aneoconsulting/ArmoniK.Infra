@@ -1,28 +1,62 @@
 {{- $mongoRule := dict -}}
 {{- with .Subcharts.dependencies.Subcharts.mongodb }}
   {{- $mongoRule = dict
-        "to" (list (dict "podSelector" (dict "matchLabels" (dict "app.kubernetes.io/name" "percona-server-mongodb"))))
-        "ports" (list (dict "protocol" "TCP" "port" (include "armonik.mongodb.port" . | trim | int))) }}
+        "to" (list (dict
+          "namespaceSelector" (dict)
+          "podSelector" (dict
+            "matchLabels" (dict
+              "app.kubernetes.io/name" "percona-server-mongodb"
+            )
+          )
+        ))
+        "ports" (list (dict
+          "protocol" "TCP"
+          "port" (include "armonik.mongodb.port" . | trim | int)
+        )) }}
 {{- end }}
 
 {{- $rabbitmqRule := dict -}}
 {{- with .Subcharts.dependencies.Subcharts.rabbitmq }}
   {{- $rabbitmqRule = dict
-        "to" (list (dict "podSelector" (dict "matchLabels" (dict "app.kubernetes.io/name" "rabbitmq"))))
-        "ports" (list (dict "protocol" "TCP" "port" (include "armonik.rabbitmq.port" . | trim | int))) }}
+        "to" (list (dict
+          "namespaceSelector" (dict)
+          "podSelector" (dict
+            "matchLabels" (dict
+              "app.kubernetes.io/name" "rabbitmq"
+            )
+          )
+        ))
+        "ports" (list (dict
+          "protocol" "TCP"
+          "port" (include "armonik.rabbitmq.port" . | trim | int)
+        )) }}
 {{- end }}
 
 {{- $activemqRule := dict -}}
 {{- with .Subcharts.dependencies.Subcharts.activemq }}
   {{- $activemqRule = dict
-        "to" (list (dict "podSelector" (dict "matchLabels" (dict "app.kubernetes.io/name" "activemq"))))
+        "to" (list (dict
+          "namespaceSelector" (dict)
+          "podSelector" (dict
+            "matchLabels" (dict
+              "app.kubernetes.io/name" "activemq"
+            )
+          )
+        ))
         "ports" (list (dict "protocol" "TCP" "port" (.Values.containerPort.amqp | int))) }}
 {{- end }}
 
 {{- $redisRule := dict -}}
 {{- with .Subcharts.dependencies.Subcharts.redis }}
   {{- $redisRule = dict
-        "to" (list (dict "podSelector" (dict "matchLabels" (dict "app.kubernetes.io/name" "redis"))))
+        "to" (list (dict
+          "namespaceSelector" (dict)
+          "podSelector" (dict
+            "matchLabels" (dict
+              "app.kubernetes.io/name" "redis"
+            )
+          )
+        ))
         "ports" (list (dict "protocol" "TCP" "port" (include "armonik.redis.port" . | trim | int))) }}
 {{- end }}
 

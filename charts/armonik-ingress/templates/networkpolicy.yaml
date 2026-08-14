@@ -15,20 +15,51 @@
 
 {{- $backendEgress := list
       (dict
-        "to" (list (dict "podSelector" (dict "matchLabels" (dict "app.kubernetes.io/name" "control-plane"))))
-        "ports" (list (dict "protocol" "TCP" "port" 1080)))
-      (dict
         "to" (list (dict "podSelector" (dict "matchLabels"
               (dict "app.kubernetes.io/name" "ingress" "app.kubernetes.io/component" "gui"))))
         "ports" (list (dict "protocol" "TCP" "port" 1080)))
       (dict
-        "to" (list (dict "podSelector" (dict "matchLabels" (dict "app.kubernetes.io/name" "grafana"))))
-        "ports" (list (dict "protocol" "TCP" "port" 3000)))
-      (dict
-        "to" (list (dict "podSelector" (dict "matchLabels" (dict "app" "seq"))))
-        "ports" (list (dict "protocol" "TCP" "port" "ui")))
--}}
+        "to" (list (dict
+          "namespaceSelector" (dict)
+          "podSelector" (dict
+            "matchLabels" (dict
+              "app.kubernetes.io/name" "control-plane"
+            )
+          )
+        ))
+        "ports" (list (dict
+          "protocol" "TCP"
+          "port" 1080
+        )))
 
+      (dict
+        "to" (list (dict
+          "namespaceSelector" (dict)
+          "podSelector" (dict
+            "matchLabels" (dict
+              "app.kubernetes.io/name" "grafana"
+            )
+          )
+        ))
+        "ports" (list (dict
+          "protocol" "TCP"
+          "port" 3000
+        )))
+
+      (dict
+        "to" (list (dict
+          "namespaceSelector" (dict)
+          "podSelector" (dict
+            "matchLabels" (dict
+              "app" "seq"
+            )
+          )
+        ))
+        "ports" (list (dict
+          "protocol" "TCP"
+          "port" "ui"
+        )))
+-}}
 {{- if .Values.networkPolicy.enabled }}
 {{- $cfg := dict
       "namespace" (.Values.namespace | default (include "armonik.namespace" .))
@@ -39,10 +70,8 @@
         "rules" (concat $dnsEgress $backendEgress)
         "extraRules" (.Values.networkPolicy.egress.extraRules | default list)) -}}
 
-{{ include "armonik.netpol.render" (dict "context" . "config" $cfg "component" "ingress") }}
-{{- end }}
+{{ include "armonik.netpol.render" (dict "context" . "config" $cfg "component" "egress") }}
 
-{{- if .Values.networkPolicy.enabled }}
 {{- $guiCfg := dict
       "namespace" (.Values.namespace | default (include "armonik.namespace" .))
       "podSelector" (dict "matchLabels" (dict "app.kubernetes.io/name" "ingress" "app.kubernetes.io/component" "gui"))
@@ -51,5 +80,5 @@
             "from" (list (dict "podSelector" (dict "matchLabels" (dict "app.kubernetes.io/name" "ingress" "app.kubernetes.io/component" "ingress"))))
             "ports" (list (dict "protocol" "TCP" "port" 1080)))) "extraRules" list) -}}
 
-{{ include "armonik.netpol.render" (dict "context" . "config" $guiCfg "component" "ingress-gui") }}
+{{ include "armonik.netpol.render" (dict "context" . "config" $guiCfg "component" "gui") }}
 {{- end }}

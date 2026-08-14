@@ -7,6 +7,7 @@
     "port" 5341
   ))
   "to" (list (dict
+    "namespaceSelector" (dict)
     "podSelector" (dict
       "matchLabels" (dict
         "app" "seq"

@@ -110,7 +110,7 @@ data:
         location = /admin/en {
             rewrite ^ $scheme://$http_host/admin/en/;
         }
-        set $admin_app_upstream http://{{ $guiHost }}.{{ $svcSuffix }}:1080;
+        set $admin_app_upstream http://{{ $guiHost }}.{{ $svcIngressSuffix }}:1080;
         location /admin/ {
             proxy_pass $admin_app_upstream$uri$is_args$args;
         }

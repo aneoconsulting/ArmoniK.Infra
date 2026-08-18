@@ -31,7 +31,7 @@ Calculate port based on protocol and TLS status
 {{- end -}}
 
 {{- define "armonik.ingress.serviceType" -}}
-  {{- if .Values.gateway.enabled -}}
+  {{- if .Values.httpRoute.enabled -}}
     ClusterIP
   {{- else -}}
     {{ .Values.service.type }}

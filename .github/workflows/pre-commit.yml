@@ -23,17 +23,8 @@ jobs:
           mkdir -p "$HOME/.terraform.d/plugin-cache"
           echo 'plugin_cache_dir = "$HOME/.terraform.d/plugin-cache"' > "$HOME/.terraformrc"
 
-      - name: Install tfsec for static analysis of Terraform code to spot potential misconfigurations
-        run: |
-          curl -s https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash
-      
       - name: Install Terraform Linter
         uses: terraform-linters/setup-tflint@90f302c255ef959cbfb4bd10581afecdb7ece3e6 # v4
-      
-      - name: Install helm-docs
-        uses: envoy/install-helm-docs@05313083ef2cfaea27c4c3d7cb725242d22ea88b # v1.0.0
-        with:
-          version: 1.14.2
       
       - name: Install terraform-docs
         uses: jaxxstorm/action-install-gh-release@6096f2a2bbfee498ced520b6922ac2c06e990ed2 # v2.1.0

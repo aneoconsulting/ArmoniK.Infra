@@ -11,7 +11,7 @@ keywords:
 type: application
 home: https://github.com/aneoconsulting/ArmoniK
 sources:
-  - https://aneoconsulting.github.io/
+  - https://github.com/aneoconsulting/ArmoniK.Infra
 maintainers:
   - name: Aneo
     email: armonik@aneo.fr

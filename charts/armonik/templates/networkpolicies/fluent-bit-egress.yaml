@@ -16,7 +16,7 @@
   ))
 }}
 
-{{- $networkPolicyEnabled := list .Values "networkPolicy" "fluent-bit" "enabled" | include "armonik.utils.index" | default false -}}
+{{- $networkPolicyEnabled := list .Values "networkPolicy" "enabled" | include "armonik.utils.index" | default false -}}
 
 {{- if $networkPolicyEnabled }}
 {{- include "armonik.netpol.render" (dict

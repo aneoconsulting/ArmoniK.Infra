@@ -62,12 +62,9 @@
 
 {{- end }}
 ---
-{{- if and
-      (list .Values "networkPolicy" "mongodb" "enabled" | include "armonik.utils.index" | default false)
-      (list .Values "networkPolicy" "mongodb" "server" "enabled" | include "armonik.utils.index" | default false)
-}}
+{{- $networkPolicyEnabled := list .Values "networkPolicy" "enabled" | include "armonik.utils.index" | default false -}}
 
-
+{{- if $networkPolicyEnabled }}
 {{ include "armonik.netpol.render" (dict
   "context" $
   "component" "mongodb-server"

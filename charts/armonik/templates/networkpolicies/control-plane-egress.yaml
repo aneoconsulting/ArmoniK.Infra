@@ -66,17 +66,12 @@
   {{- if $r }}{{- $depRules = append $depRules $r }}{{- end }}
 {{- end }}
 
-{{- $networkPolicyEnabled := list .Values "networkPolicy" "control-plane" "enabled" | include "armonik.utils.index" | default false -}}
-{{- $submitterEnabled := list .Values "networkPolicy" "control-plane" "submitter" "enabled" | include "armonik.utils.index" | default false -}}
-{{- $metricsExporterNpEnabled := list .Values "networkPolicy" "control-plane" "metricsExporter" "enabled" | include "armonik.utils.index" | default false -}}
+{{- $networkPolicyEnabled := list .Values "networkPolicy" "enabled" | include "armonik.utils.index" | default false -}}
 {{- $metricsExporterEnabled := list .Values "control-plane" "metricsExporter" "enabled" | include "armonik.utils.index" | default false -}}
+{{- $meOn := and $networkPolicyEnabled $metricsExporterEnabled -}}
 
 
-{{- $subOn := and $networkPolicyEnabled $submitterEnabled -}}
-{{- $meOn := and $networkPolicyEnabled $metricsExporterNpEnabled $metricsExporterEnabled -}}
-
-
-{{- if and $subOn $depRules }}
+{{- if and $networkPolicyEnabled $depRules }}
 {{- $cfg := dict
       "podSelector" (dict "matchLabels" (dict "app.kubernetes.io/name" "control-plane"))
       "policyTypes" (list "Egress")

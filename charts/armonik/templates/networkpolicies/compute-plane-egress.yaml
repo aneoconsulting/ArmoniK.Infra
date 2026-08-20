@@ -65,7 +65,7 @@
   {{- if $r }}{{- $depRules = append $depRules $r }}{{- end }}
 {{- end }}
 
-{{- $networkPolicyEnabled := list .Values "networkPolicy" "compute-plane" "enabled" | include "armonik.utils.index" | default false -}}
+{{- $networkPolicyEnabled := list .Values "networkPolicy" "enabled" | include "armonik.utils.index" | default false -}}
 
 
 {{- if $networkPolicyEnabled }}

@@ -2,7 +2,7 @@
 {{- $kubeApiRule := include "armonik.netpol.kubeApiRule" dict | fromYaml }}
 
 
-{{- $networkPolicyEnabled := list .Values "networkPolicy" "wait-cert-manager" "enabled" | include "armonik.utils.index" | default false -}}
+{{- $networkPolicyEnabled := list .Values "networkPolicy" "enabled" | include "armonik.utils.index" | default false -}}
 
 {{- if $networkPolicyEnabled }}
 {{- include "armonik.netpol.render" (dict

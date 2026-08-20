@@ -3,7 +3,7 @@ apiVersion: gateway.networking.k8s.io/v1beta1
 kind: Gateway
 metadata:
   name: {{ .Values.gateway.name | default (include "armonik.fullname" .) | quote }}
-  namespace: {{ .Values.gateway.namespace | default (include "armonik.namespace" .) | quote }}
+  namespace: {{ include "armonik.namespace" . | quote }}
   labels:
     app.kubernetes.io/component: ingress
     {{- include "armonik.labels" . | nindent 4 }}

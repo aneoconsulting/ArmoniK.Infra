@@ -3,7 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ include "armonik.fullname" . | printf "%s-gui" | trunc 63 | trimSuffix "-" }}
-  namespace: {{ include "armonik.namespace" . }}
+  namespace: {{ include "armonik.namespace" . | quote }}
   labels:
     app.kubernetes.io/component: gui
     {{- include "armonik.labels" . | nindent 4 }}

@@ -1,11 +1,14 @@
-{{- $dnsEgress := list (include "armonik.netpol.dnsRule" dict | fromYaml) -}}
+{{- $networkPolicyEnabled := list .Values "networkPolicy" "enabled"
+    | include "armonik.utils.index"
+    | default false
+-}}
 
-{{- if (list .Values "networkPolicy" "enabled" | include "armonik.utils.index" | default false) }}
-{{- $workerCfg := dict
-      "podSelector" (dict "matchLabels" (dict "app.kubernetes.io/name" "compute-plane"))
-      "policyTypes" (list "Ingress" "Egress")
-      "egress" (dict
-        "rules" $dnsEgress
-        "extraRules" (.Values.networkPolicy.extraEgressRules | default list)) -}}
-{{ include "armonik.netpol.render" (dict "context" . "config" $workerCfg "component" "networkpolicy") }}
+{{- if $networkPolicyEnabled }}
+
+{{- include "armonik.netpol.render" (dict
+      "context" .
+      "component" "network-policy"
+      "config" (include "armonik.netpol.computePlane" . | fromYaml)
+  ) }}
+
 {{- end }}

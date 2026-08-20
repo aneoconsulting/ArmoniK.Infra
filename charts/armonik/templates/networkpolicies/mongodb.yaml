@@ -1,118 +1,27 @@
-{{- $operatorSelector := dict
-    "matchLabels" (dict
-      "app.kubernetes.io/name" "mongodb-operator")
-}}
-
-{{- $serverSelector := dict
-    "matchLabels" (dict
-      "app.kubernetes.io/name" "percona-server-mongodb")
-}}
-
-{{- $dnsRule := include "armonik.netpol.dnsRule" dict | fromYaml }}
-{{- $kubeApiRule := include "armonik.netpol.kubeApiRule" dict | fromYaml }}
-
-{{- if and
-      (list .Values "networkPolicy" "mongodb" "enabled" | include "armonik.utils.index" | default false)
-      (list .Values "networkPolicy" "mongodb" "operator" "enabled" | include "armonik.utils.index" | default false)
-}}
-
-{{ include "armonik.netpol.render" (dict
-  "context" $
-  "component" "mongodb-operator"
-  "config" (dict
-    "podSelector" $operatorSelector
-    "policyTypes" (list "Ingress" "Egress")
-    "ingress" (dict
-      "rules" (list
-        (dict
-          "from" (list
-            (dict
-              "namespaceSelector" (dict)
-              "podSelector" $serverSelector
-            )
-          )
-        )
-      )
-    )
-    "egress" (dict
-      "rules" (list
-        (dict
-          "to" (list
-            (dict
-              "namespaceSelector" (dict)
-              "podSelector" $serverSelector
-            )
-            (dict
-              "namespaceSelector" (dict)
-              "podSelector" (dict
-                "matchLabels" (dict
-                  "app.kubernetes.io/name" "cert-manager"
-                )
-              )
-            )
-          )
-          "ports" (list (dict "protocol" "TCP" "port" (include "armonik.mongodb.port" . | trim | int)))
-        )
-        $dnsRule
-        $kubeApiRule
-      )
-    )
-  )
-) }}
-
-{{- end }}
----
-{{- $networkPolicyEnabled := list .Values "networkPolicy" "enabled" | include "armonik.utils.index" | default false -}}
+{{- $networkPolicyEnabled := list .Values "networkPolicy" "enabled"
+    | include "armonik.utils.index"
+    | default false
+-}}
 
 {{- if $networkPolicyEnabled }}
-{{ include "armonik.netpol.render" (dict
-  "context" $
-  "component" "mongodb-server"
-  "config" (dict
-    "podSelector" $serverSelector
-    "policyTypes" (list "Ingress" "Egress")
-    "ingress" (dict
-      "rules" (list
-        (dict
-          "from" (list
-            (dict
-              "namespaceSelector" (dict)
-              "podSelector" $operatorSelector
-            )
-            (dict
-              "namespaceSelector" (dict)
-              "podSelector" (dict
-                "matchLabels" (dict
-                  "app.kubernetes.io/name" "control-plane"
-                )
-              )
-            )
-            (dict
-              "namespaceSelector" (dict)
-              "podSelector" (dict
-                "matchLabels" (dict
-                  "app.kubernetes.io/name" "compute-plane"
-                )
-              )
-            )
-          )
-        )
-      )
-    )
-    "egress" (dict
-      "rules" (list
-        (dict
-          "to" (list
-            (dict
-              "namespaceSelector" (dict)
-              "podSelector" $operatorSelector
-            )
-          )
-        )
-        $dnsRule
-      )
-    )
-  )
-) }}
 
+{{/*
+  MongoDB operator NetworkPolicy.
+*/}}
+
+{{- include "armonik.netpol.render" (dict
+      "context" .
+      "component" "mongodb-operator"
+      "config" (include "armonik.netpol.mongodbOperator" . | fromYaml)
+  ) }}
+
+{{/*
+  MongoDB server NetworkPolicy.
+*/}}
+
+{{- include "armonik.netpol.render" (dict
+      "context" .
+      "component" "mongodb-server"
+      "config" (include "armonik.netpol.mongodbServer" . | fromYaml)
+  ) }}
 {{- end }}

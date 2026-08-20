@@ -1,22 +1,18 @@
-{{- $dnsRule := include "armonik.netpol.dnsRule" dict | fromYaml }}
-{{- $kubeApiRule := include "armonik.netpol.kubeApiRule" dict | fromYaml }}
+{{- $ops := include "armonik.operators" $ | fromYaml }}
 
+{{- $networkPolicyEnabled := list .Values "networkPolicy" "enabled"
+    | include "armonik.utils.index"
+    | default false
+-}}
 
-{{- $networkPolicyEnabled := list .Values "networkPolicy" "enabled" | include "armonik.utils.index" | default false -}}
+{{/*
+  waitCertManagerEgress NetworkPolicy.
+*/}}
 
-{{- if $networkPolicyEnabled }}
+{{- if and $networkPolicyEnabled $ops.certManager.deploy }}
 {{- include "armonik.netpol.render" (dict
-
-  "context" $
-  "component" "wait-cert-manager"
-  "config" (dict
-    "policyTypes" (list "Egress")
-    "egress" (dict
-      "rules" (list
-        $dnsRule
-        $kubeApiRule
-      )
-    )
-  )
-) }}
+      "context" .
+      "component" "wait-cert-manager"
+      "config" (include "armonik.netpol.waitCertManagerEgress" . | fromYaml)
+  ) }}
 {{- end }}

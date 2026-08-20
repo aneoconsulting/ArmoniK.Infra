@@ -227,19 +227,7 @@ dependencies:
     fullnameOverride: "activemq"
     image:
       registry: docker.io
-    networkPolicy:
-      # Set networkPolicy.enabled: true to apply the default NetworkPolicy for this component.
-      ingress:
-        - from:
-            - podSelector:
-                matchLabels:
-                  app.kubernetes.io/name: control-plane
-            - podSelector:
-                matchLabels:
-                  app.kubernetes.io/name: compute-plane
-          ports:
-            - protocol: TCP
-              port: 5672
+
 
 
   ################## MONGODB ##################
@@ -668,26 +656,6 @@ dependencies:
 # By default, NetworkPolicy resources are disabled per component. To restrict
 # traffic for a given component, set its `networkPolicy.enabled: true` (naming
 # varies per chart, see each dependency's own values). 
-networkPolicy:
-  control-plane:
-    enabled: false
-    submitter:
-      enabled: true
-    metricsExporter:
-      enabled: true
-
-  compute-plane:
-    enabled: false
-
-  mongodb:
-    enabled: false
-    operator:
-      enabled: true
-    server:
-      enabled: true
-
-  fluent-bit:
-    enabled: false
 
 operators:
   keda:

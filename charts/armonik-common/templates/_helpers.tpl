@@ -12,6 +12,22 @@ Expand the namespace of the chart.
   {{-  .Values.namespaceOverride | default .Release.Namespace }}
 {{- end }}
 
+{{- define "armonik.namespaces" -}}
+{{- $namespaces := dict -}}
+{{- range $name, $subchart := .Subcharts }}
+  {{- $namespace := include "armonik.namespace" $subchart -}}
+  {{- $_ := set $namespaces $name $namespace -}}
+  {{/*
+    Recursively inspect children.
+  */}}
+  {{- $children := include "armonik.namespaces" $subchart | fromJson -}}
+  {{- range $childName, $childNamespace := $children }}
+    {{- $_ := set $namespaces $childName $childNamespace -}}
+  {{- end }}
+{{- end }}
+{{- $namespaces | toJson -}}
+{{- end }}
+
 {{/*
 Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).

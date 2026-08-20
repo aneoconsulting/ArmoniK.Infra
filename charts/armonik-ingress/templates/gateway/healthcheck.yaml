@@ -3,7 +3,7 @@ apiVersion: networking.gke.io/v1
 kind: HealthCheckPolicy
 metadata:
   name: {{ .Values.healthCheckPolicy.name | default (printf "%s-health-check" (include "armonik.fullname" .)) | quote }}
-  namespace: {{ .Values.gateway.namespace | default (include "armonik.namespace" .) | quote }}
+  namespace: {{ include "armonik.namespace" . | quote }}
 
   labels:
     app.kubernetes.io/component: healthcheckpolicy
@@ -39,5 +39,5 @@ spec:
     group: ""
     kind: Service
     name: {{ list .Values "healthCheckPolicy" "targetRef" "name" | include "armonik.utils.index" | default (include "armonik.fullname" .) | quote }}
-    namespace: {{ list .Values "healthCheckPolicy" "targetRef" "namespace" | include "armonik.utils.index" | default (include "armonik.namespace" .) | quote }}
+    namespace: {{ include "armonik.namespace" . | quote }}
 {{- end }}

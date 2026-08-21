@@ -35,6 +35,7 @@ thirdparty { next }
   line = $0
   if (kind == "ExternalSecret")
     gsub(/\{\{ *\.[A-Za-z0-9_]+ *\}\}/, "", line)
+    gsub(/\{\{ *index +\. +"[A-Za-z0-9_-]+" *\}\}/, "", line)
   if (src ~ /grafana-dashboard/)
     gsub(/\{\{ *[A-Za-z0-9_]+ *\}\}/, "", line)
   if (line ~ /\{\{/) {

@@ -1,5 +1,5 @@
 {{- /* The ingress injects Grafana's public prefix into its output (armonik-ingress
-       templates/configmaps/nginx.yaml) and needs an empty appSubUrl to do so. Breaking that
+       templates/externalsecret-nginx-conf.yaml) and needs an empty appSubUrl to do so. Breaking that
        breaks the UI with no error anywhere, hence a render-time guard. */ -}}
 {{- $grafanaEnabled := list .Values "dependencies" "grafana" "enabled" | include "armonik.utils.index" | empty | not -}}
 {{- $ingressEnabled := list .Values "ingress" "enabled" | include "armonik.utils.index" | empty | not -}}

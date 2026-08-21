@@ -1,7 +1,7 @@
 suite: tls and mtls
 templates:
   - certificate.yaml
-  - configmaps/nginx.yaml
+  - externalsecret-nginx-conf.yaml
 values:
   - ../ci/tls-mtls-values.yaml
 tests:
@@ -41,10 +41,10 @@ tests:
           path: kind
           value: Certificate
   - it: turns on client certificate verification with mTLS
-    template: configmaps/nginx.yaml
+    template: externalsecret-nginx-conf.yaml
     asserts:
       - matchRegex:
-          path: data["armonik.conf"]
+          path: spec.target.template.data["armonik.conf"]
           pattern: ssl_verify_client on
   - it: fails TLS via cert-manager when the operator is unavailable and no issuer exists
     template: certificate.yaml

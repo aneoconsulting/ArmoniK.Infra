@@ -49,13 +49,15 @@ spec:
   {{- else }}
   # Default HTTPRoute
   - matches:
-    - path: { type: PathPrefix, value: / }
+    - path:
+        type: PathPrefix
+        value: /
       headers:
         - type: Exact
           name: content-type
           value: application/grpc
     backendRefs:
-      - name: {{ include "armonik.fullname" . }}
+      - name: {{ include "armonik.fullname" . | quote }}
         port: 5001   
 
   - matches:

@@ -26,7 +26,7 @@ spec:
     port: {{ eq $.Values.service.type "HeadLess" | ternary (include "armonik.ingress.containerPort" (dict "protocol" .protocol "root" $)) .servicePort }}
     targetPort: {{ include "armonik.ingress.containerPort" (dict "protocol" .protocol "root" $) }}
     protocol: TCP
-    {{- if and (eq .protocol "grpc") (or $.Values.tls.enabled $.Values.gateway.tls.enabled) }}
+    {{- if and (eq .protocol "grpc") (not $.Values.tls.enabled) }}
     appProtocol: "kubernetes.io/h2c"
     {{- end }}
   {{- end }}

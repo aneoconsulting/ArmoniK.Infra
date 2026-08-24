@@ -82,7 +82,7 @@ policyTypes:
 ingress:
   rules: []
   extraRules:
-    {{- toYaml (.Values.networkPolicy.extraIngressRules | default list) | nindent 4 }}
+    {{- .Values.networkPolicy.extraIngressRules | default list | toYaml | nindent 4 }}
 
 egress:
   rules:
@@ -92,5 +92,5 @@ egress:
       | nindent 2
     }}
   extraRules:
-    {{- toYaml (.Values.networkPolicy.extraEgressRules | default list) | nindent 4 }}
+    {{- .Values.networkPolicy.extraEgressRules | default list | toYaml | nindent 4 }}
 {{- end -}}

@@ -1,10 +1,8 @@
 {{- $networkPolicyEnabled := list .Values "networkPolicy" "enabled"
     | include "armonik.utils.index"
-    | default false
 -}}
 {{- $metricsExporterEnabled := list .Values "control-plane" "metricsExporter" "enabled"
     | include "armonik.utils.index"
-    | default false
 -}}
 {{- $meOn := and $networkPolicyEnabled $metricsExporterEnabled -}}
 

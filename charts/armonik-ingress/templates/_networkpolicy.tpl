@@ -3,7 +3,7 @@
 {{- $name := .name -}}
 {{- range $port := $ports -}}
   {{- if eq $port.name $name -}}
-{{ $port.containerPort }}
+    {{- $port.containerPort -}}
   {{- end -}}
 {{- end -}}
 {{- end -}}
@@ -72,12 +72,12 @@ ingress:
 {{- $healthCheckPort := include "armonik.netpol.port" (dict
       "ports" .Values.ports
       "name" "health-check-port"
-    ) | trim -}}
+    ) | int -}}
 
 {{- $metricsPort := include "armonik.netpol.port" (dict
       "ports" .Values.ports
       "name" "metrics-port"
-    ) | trim -}}
+    ) | int -}}
 
 rules:
 
@@ -112,13 +112,9 @@ rules:
 {{- $controlPort := include "armonik.netpol.port" (dict
       "ports" .Values.ports
       "name" "control-port"
-    ) | trim | int -}}
+    ) | int -}}
 
-{{- list
-      (include "armonik.netpol.dnsRule" dict | fromYaml)
-      | toYaml
-      | nindent 2
-}}
+  - {{- include "armonik.netpol.dnsRule" dict | nindent 4 }}
 
   - to:
       - podSelector:
@@ -166,7 +162,7 @@ rules:
 {{- $guiPort := include "armonik.netpol.port" (dict
       "ports" .Values.ports
       "name" "gui-port"
-    ) | trim -}}
+    ) -}}
 
 - from:
     - podSelector:

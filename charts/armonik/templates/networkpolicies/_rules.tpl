@@ -254,7 +254,7 @@ policyTypes:
   - Egress
 egress:
   rules:
-    {{- list (include "armonik.netpol.rule.mongodb" . | fromYaml) | toYaml | nindent 4 }}
+    - {{- include "armonik.netpol.rule.mongodb" . | nindent 6 }}
   extraRules: []
 {{- end -}}
 

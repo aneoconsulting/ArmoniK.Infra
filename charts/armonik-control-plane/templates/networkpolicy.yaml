@@ -1,13 +1,11 @@
 {{- $networkPolicyEnabled := list .Values "networkPolicy" "enabled"
     | include "armonik.utils.index"
-    | default false
 -}}
 
 {{- if and
       $networkPolicyEnabled
       (list .Values "networkPolicy" "submitter" "enabled"
-        | include "armonik.utils.index"
-        | default false)
+        | include "armonik.utils.index")
 }}
 
 {{ include "armonik.netpol.render" (dict
@@ -22,11 +20,9 @@
 {{- if and
       $networkPolicyEnabled
       (list .Values "networkPolicy" "metricsExporter" "enabled"
-        | include "armonik.utils.index"
-        | default false)
+        | include "armonik.utils.index")
       (list .Values "metricsExporter" "enabled"
-        | include "armonik.utils.index"
-        | default false)
+        | include "armonik.utils.index")
 }}
 
 {{ include "armonik.netpol.render" (dict

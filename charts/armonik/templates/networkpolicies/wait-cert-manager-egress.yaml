@@ -2,7 +2,6 @@
 
 {{- $networkPolicyEnabled := list .Values "networkPolicy" "enabled"
     | include "armonik.utils.index"
-    | default false
 -}}
 
 {{/*

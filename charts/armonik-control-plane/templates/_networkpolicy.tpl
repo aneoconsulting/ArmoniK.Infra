@@ -3,7 +3,7 @@
 {{- $name := .name -}}
 {{- range $port := $ports -}}
   {{- if eq $port.name $name -}}
-{{ $port.containerPort }}
+    {{- $port.containerPort -}}
   {{- end -}}
 {{- end -}}
 {{- end -}}
@@ -17,12 +17,12 @@
 {{- $controlPort := include "armonik.netpol.port" (dict
       "ports" .Values.ports
       "name" "control-port"
-    ) | trim | int -}}
+    ) | int -}}
 
 {{- $metricsPort := include "armonik.netpol.port" (dict
       "ports" .Values.ports
       "name" "metrics-port"
-    ) | trim | int -}}
+    ) | int -}}
 
 rules:
   - from:
@@ -56,11 +56,7 @@ rules:
 */}}
 {{- define "armonik.netpol.rule.submitterEgress" -}}
 rules:
-  {{- list
-        (include "armonik.netpol.dnsRule" dict | fromYaml)
-      | toYaml
-      | nindent 2
-  }}
+  - {{- include "armonik.netpol.dnsRule" dict | nindent 4 }}
 {{- end -}}
 
 
@@ -72,7 +68,7 @@ rules:
 {{- $metricsPort := include "armonik.netpol.port" (dict
       "ports" .Values.metricsExporter.ports
       "name" "metrics-port"
-    ) | trim | int -}}
+    ) | int -}}
 
 rules:
   - from:
@@ -89,11 +85,7 @@ rules:
 */}}
 {{- define "armonik.netpol.rule.metricsExporterEgress" -}}
 rules:
-  {{- list
-        (include "armonik.netpol.dnsRule" dict | fromYaml)
-      | toYaml
-      | nindent 2
-  }}
+  - {{- include "armonik.netpol.dnsRule" dict | nindent 4 }}
 {{- end -}}
 
 {{- define "armonik.netpol.submitter" -}}

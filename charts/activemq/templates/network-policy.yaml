@@ -9,8 +9,8 @@ metadata:
 spec:
   podSelector:
     matchLabels:
-      app.kubernetes.io/name: {{ include "activemq.name" . }}
-      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/name: {{ include "activemq.name" . | quote }}
+      app.kubernetes.io/instance: {{ .Release.Name |  quote }}
   policyTypes:
     - Ingress
     - Egress

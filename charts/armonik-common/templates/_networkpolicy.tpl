@@ -1,20 +1,20 @@
 {{- define "armonik.netpol.render" -}}
-{{- $ctx := .context -}}
-{{- $component := .component -}}
-{{- $cfg := .config -}}
+{{- $ctx := .context | default dict -}}
+{{- $component := .component | default dict -}}
+{{- $cfg := .config | default dict -}}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: {{ include "armonik.fullname" $ctx }}-{{ $component }}
-  namespace: {{ $cfg.namespace | default (include "armonik.namespace" $ctx) }}
+  namespace: {{ $cfg.namespace | default (include "armonik.namespace" $ctx) | quote }}
   labels:
-    app.kubernetes.io/component: {{ $component }}
+    app.kubernetes.io/component: {{ $component | quote }}
     {{- include "armonik.labels" $ctx | nindent 4 }}
 spec:
   podSelector:
     {{- toYaml $cfg.podSelector | nindent 4 }}
   policyTypes:
-    {{- toYaml ($cfg.policyTypes | default (list "Ingress" "Egress")) | nindent 4 }}
+    {{- $cfg.policyTypes | default (list "Ingress" "Egress") | toYaml | nindent 4 }}
   {{- $ingressCfg := $cfg.ingress | default dict }}
   {{- $ingressRules := concat ($ingressCfg.rules | default list) ($ingressCfg.extraRules | default list) }}
   {{- if $ingressRules }}

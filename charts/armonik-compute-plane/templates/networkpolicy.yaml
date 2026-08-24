@@ -1,9 +1,4 @@
-{{- $networkPolicyEnabled := list .Values "networkPolicy" "enabled"
-    | include "armonik.utils.index"
-    | default false
--}}
-
-{{- if $networkPolicyEnabled }}
+{{- if list .Values "networkPolicy" "enabled" | include "armonik.utils.index" }}
 
 {{- include "armonik.netpol.render" (dict
       "context" .

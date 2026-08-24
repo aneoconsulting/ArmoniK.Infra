@@ -92,23 +92,6 @@ conf:
   log:
     minimumLevel: Information
 
-gcs:
-  enabled: false
-  projectId: ""
-  bucketName: ""
-  emulatorEndpoint: ""
-  credentialsFilePath: ""
-  # degreeOfParallelism: 0
-  # chunkDownloadSize: 2097152
-  # maxRetry: 5
-  # msAfterRetry: 500
-
-pubsub:
-  enabled: false
-  projectId: ""
-  prefix: ""
-  kmsKeyName: ""
-
 ################## INGRESS ##################
 ingress:
   enabled: true
@@ -613,3 +596,18 @@ dependencies:
   # Its broken static additionalScrapeConfigs Secret is now first-party ServiceMonitor/PodMonitor.
   # external-secrets moved to charts/armonik-operators.
 ############################################
+
+  ################## GCS ##################
+  gcs:
+    enabled: false
+    projectId: "" # required when gcs.enabled
+    bucketName: "" # required when gcs.enabled
+    emulatorEndpoint: ""
+    credentialsFilePath: ""
+
+  ################## PUBSUB ##################
+  pubsub:
+    enabled: false
+    projectId: "" # required when pubsub.enabled
+    prefix: ""
+    kmsKeyName: ""

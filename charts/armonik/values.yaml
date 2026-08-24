@@ -600,14 +600,14 @@ dependencies:
   ################## GCS ##################
   gcs:
     enabled: false
-    projectId: "" # required when gcs.enabled
-    bucketName: "" # required when gcs.enabled
+    projectId: ""  # required when gcs.enabled
+    bucketName: ""  # required when gcs.enabled
     emulatorEndpoint: ""
     credentialsFilePath: ""
 
   ################## PUBSUB ##################
   pubsub:
     enabled: false
-    projectId: "" # required when pubsub.enabled
+    projectId: ""  # required when pubsub.enabled
     prefix: ""
     kmsKeyName: ""

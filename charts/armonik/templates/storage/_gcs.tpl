@@ -3,7 +3,7 @@ Configuration for GCS forwarded to ArmoniK Core.
 This configuration is used to configure the GCS object storage adapter.
 */}}
 {{- define "armonik.gcs.conf" -}}
-{{- $gcs := list .Values "dependencies" "gcs" | include "armonik.utils.index" | fromYaml | default dict -}}
+{{- $gcs := list .Values "dependencies" "gcs" | include "armonik.utils.index" | fromYaml -}}
 {{- if $gcs.enabled }}
 env:
   Components__ObjectStorageAdaptorSettings__ClassName: "ArmoniK.Core.Adapters.Gcs.ObjectBuilder"

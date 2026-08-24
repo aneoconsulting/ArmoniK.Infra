@@ -3,7 +3,7 @@ Configuration for Pub/Sub forwarded to ArmoniK Core.
 This configuration is used to configure the Pub/Sub queue adapter.
 */}}
 {{- define "armonik.pubsub.conf" -}}
-{{- $pubsub := list .Values "dependencies" "pubsub" | include "armonik.utils.index" | fromYaml | default dict -}}
+{{- $pubsub := list .Values "dependencies" "pubsub" | include "armonik.utils.index" | fromYaml -}}
 {{- if $pubsub.enabled }}
 env:
   Components__QueueAdaptorSettings__ClassName: "ArmoniK.Core.Adapters.PubSub.QueueBuilder"

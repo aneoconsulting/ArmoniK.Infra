@@ -3,7 +3,7 @@ apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: {{ include "activemq.fullname" . }}
-  namespace: {{ include "activemq.namespace" . }}
+  namespace: {{ include "activemq.namespace" . | quote }}
   labels:
     {{- include "activemq.labels" . | nindent 4 }}
   {{- with .Values.service.labels -}}

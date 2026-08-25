@@ -54,3 +54,13 @@ ports:
 ports:
   {{- toYaml $ports | nindent 2 }}
 {{- end -}}
+
+{{- define "armonik.netpol.mergeRules" -}}
+  {{- $rules := list -}}
+  {{- range . -}}
+    {{- $name := index . 0 -}}
+    {{- $ctx := index . 1 -}}
+    {{- $rules = append $rules (include $name $ctx | fromYaml) -}}
+  {{- end -}}
+  {{- $rules | compact | toYaml -}}
+{{- end -}}

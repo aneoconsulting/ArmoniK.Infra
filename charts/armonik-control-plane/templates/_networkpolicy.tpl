@@ -8,47 +8,6 @@
 {{- end -}}
 {{- end -}}
 
-{{/*
-  Submitter ingress rules.
-  # TO FIX : namespaceSelector with secret namespaces
-*/}}
-{{- define "armonik.netpol.rule.submitterIngress" -}}
-
-{{- $controlPort := include "armonik.netpol.port" (dict
-      "ports" .Values.ports
-      "name" "control-port"
-    ) | int -}}
-
-{{- $metricsPort := include "armonik.netpol.port" (dict
-      "ports" .Values.ports
-      "name" "metrics-port"
-    ) | int -}}
-
-rules:
-  - from:
-      - namespaceSelector: {} 
-        podSelector:
-          matchLabels:
-            app.kubernetes.io/name: compute-plane
-    ports:
-      - protocol: TCP
-        port: {{ $controlPort }}
-
-  - from:
-      - namespaceSelector: {}
-        podSelector:
-          matchLabels:
-            app.kubernetes.io/name: ingress
-    ports:
-      - protocol: TCP
-        port: {{ $controlPort }}
-
-  - from:
-      - namespaceSelector: {}
-    ports:
-      - protocol: TCP
-        port: {{ $metricsPort }}
-{{- end -}}
 
 
 {{/*
@@ -96,7 +55,6 @@ policyTypes:
   - Ingress
   - Egress
 ingress:
-  {{- include "armonik.netpol.rule.submitterIngress" . | nindent 2 }}
   extraRules:
     {{- toYaml (.Values.networkPolicy.submitter.extraIngressRules | default list) | nindent 4 }}
 egress:
@@ -122,4 +80,3 @@ egress:
   extraRules:
     {{- toYaml (.Values.networkPolicy.metricsExporter.extraEgressRules | default list) | nindent 4 }}
 {{- end -}}
-

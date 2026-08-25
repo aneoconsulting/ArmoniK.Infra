@@ -87,8 +87,8 @@ ingress:
 egress:
   rules:
     {{- list
-        (include "armonik.netpol.dnsRule" dict | fromYaml)
-      | toYaml
+        (list "armonik.netpol.dnsRule" dict)
+      | include "armonik.netpol.mergeRules"
       | nindent 2
     }}
   extraRules:

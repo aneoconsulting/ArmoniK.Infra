@@ -3,7 +3,7 @@
 ############################################
 global:
   version:
-    armonikCore: "0.37.1"  ### TODO FIX VERSIONS GLOBAL IF NULL USE DEFAULT IN SUB CHARTS COMPUTE-PLANE
+    armonikCore: "0.40.1"  ### TODO FIX VERSIONS GLOBAL IF NULL USE DEFAULT IN SUB CHARTS COMPUTE-PLANE
     # armonikPollingagent: "0.35.0"
     # armonikGui: "0.14.5"
     # nginx: "1.27.4-alpine-slim"
@@ -596,3 +596,18 @@ dependencies:
   # Its broken static additionalScrapeConfigs Secret is now first-party ServiceMonitor/PodMonitor.
   # external-secrets moved to charts/armonik-operators.
 ############################################
+
+  ################## GCS ##################
+  gcs:
+    enabled: false
+    projectId: ""  # required when gcs.enabled
+    bucketName: ""  # required when gcs.enabled
+    emulatorEndpoint: ""
+    credentialsFilePath: ""
+
+  ################## PUBSUB ##################
+  pubsub:
+    enabled: false
+    projectId: ""  # required when pubsub.enabled
+    prefix: ""
+    kmsKeyName: ""

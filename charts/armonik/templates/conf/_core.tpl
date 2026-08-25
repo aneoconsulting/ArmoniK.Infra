@@ -7,6 +7,8 @@
         (include "armonik.activemq.conf" . | fromYaml)
         (include "armonik.rabbitmq.conf" . | fromYaml)
         (include "armonik.redis.conf" . | fromYaml)
+        (include "armonik.gcs.conf" . | fromYaml)
+        (include "armonik.pubsub.conf" . | fromYaml)
         (include "armonik.conf.coreHelper" . | fromYaml)
         (list .Values "conf" "core" | include "armonik.utils.index" | fromYaml)
       | include "armonik.conf.merge" -}}

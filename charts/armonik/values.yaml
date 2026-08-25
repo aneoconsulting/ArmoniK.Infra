@@ -242,7 +242,19 @@ dependencies:
       registry: docker.io
     # priorityClassName defaults to system-cluster-critical
     # priorityClassName:
-
+    networkPolicy:
+      # Set networkPolicy.enabled: true to apply the default NetworkPolicy for this component.
+      ingress:
+        - from:
+            - podSelector:
+                matchLabels:
+                  app.kubernetes.io/name: control-plane
+            - podSelector:
+                matchLabels:
+                  app.kubernetes.io/name: compute-plane
+          ports:
+            - protocol: TCP
+              port: 5672
 
 
   ################## MONGODB ##################
@@ -690,7 +702,7 @@ dependencies:
 #
 # By default, NetworkPolicy resources are disabled per component. To restrict
 # traffic for a given component, set its `networkPolicy.enabled: true` (naming
-# varies per chart, see each dependency's own values). 
+# varies per chart, see each dependency's own values).
 
 operators:
   keda:
@@ -762,8 +774,8 @@ operators:
               port: 443
           - ports:
             - protocol: TCP
-              port: 6443          
-      
+              port: 6443
+
     certController:
     # Set networkPolicy.enabled: true to apply the default NetworkPolicy for this component.
       networkPolicy:
@@ -790,8 +802,8 @@ operators:
   kube-prometheus:
     ### Network policy
     # Minimum required for this deployment: enable the networkPolicy
-    # on prometheusOperator, kube-state-metrics and prometheus. 
-    
+    # on prometheusOperator, kube-state-metrics and prometheus.
+
     # prometheusOperator:
     #   networkPolicy:
     #     enabled: true

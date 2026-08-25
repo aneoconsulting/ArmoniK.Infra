@@ -18,8 +18,18 @@ spec:
   ingress:
     {{- toYaml .Values.networkPolicy.ingress | nindent 4 }}
   {{- end }}
-  {{- if .Values.networkPolicy.egress }}
   egress:
-    {{- toYaml .Values.networkPolicy.egress | nindent 4 }}
-  {{- end }}
+    # Allow DNS resolution
+    - to:
+        - namespaceSelector: 
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
 {{- end }}

@@ -6,3 +6,9 @@
   Get the application URL by running these commands:
     kubectl port-forward -n armonik service/admin-gui 1080:1080
 ***********************************************************************
+{{- if list .Values "networkPolicy" "enabled" | include "armonik.utils.index" }}
+  NetworkPolicy is enabled for the ingress and GUI pods.
+  When deployed by the armonik umbrella, also set the umbrella's top-level
+  networkPolicy.enabled=true. Enabling the policy in this chart alone does not
+  enable the umbrella-owned cross-component egress rules.
+{{- end }}

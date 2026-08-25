@@ -219,23 +219,77 @@ to:
 */}}
 {{- define "armonik.netpol.dependencyRules" -}}
 {{- $rules := list
-      (include "armonik.netpol.rule.mongodb" . | fromYaml)
-      (include "armonik.netpol.rule.rabbitmq" . | fromYaml)
-      (include "armonik.netpol.rule.activemq" . | fromYaml)
-      (include "armonik.netpol.rule.redis" . | fromYaml)
+  (list "armonik.netpol.rule.mongodb" .)
+  (list "armonik.netpol.rule.rabbitmq" .)
+  (list "armonik.netpol.rule.activemq" .)
+  (list "armonik.netpol.rule.redis" .)
 -}}
-{{- $rules | compact | toYaml -}}
+{{- $rules | include "armonik.netpol.mergeRules" -}}
 {{- end -}}
 
 {{/*
-  Control-plane (submitter): egress to all dependencies.
+  Control plane Submitter ingress rules.
 */}}
-{{- define "armonik.netpol.controlPlaneSubmitterEgress" -}}
+{{- define "armonik.netpol.rule.submitterIngress" -}}
+
+{{- $controlPlaneValues := index .Values "control-plane" -}}
+
+{{- $controlPort := include "armonik.netpol.port" (dict
+      "ports" $controlPlaneValues.ports
+      "name" "control-port"
+    ) | int -}}
+
+{{- $metricsPort := include "armonik.netpol.port" (dict
+      "ports" $controlPlaneValues.ports
+      "name" "metrics-port"
+    ) | int -}}
+
+{{- list
+      (list "armonik.netpol.rule.computePlaneFrom" .)
+    | include "armonik.netpol.mergeRules"
+    | nindent 0
+-}}
+
+{{- with .Subcharts.ingress }}
+- from:
+    - namespaceSelector:
+        {{- include "armonik.netpol.namespaceSelector" . | nindent 8 }}
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/name: ingress
+  ports:
+    - protocol: TCP
+      port: {{ $controlPort }}
+{{- end }}
+
+- from:
+    - namespaceSelector:
+        {{- include "armonik.netpol.namespaceSelector" . | nindent 8 }}
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/name: prometheus
+  ports:
+    - protocol: TCP
+      port: {{ $metricsPort }}
+
+{{- end -}}
+
+
+{{/*
+  Control-plane (submitter): ingress from compute-plane/ingress/prometheus,
+  egress to all dependencies.
+*/}}
+{{- define "armonik.netpol.controlPlaneSubmitter" -}}
 podSelector:
   matchLabels:
     app.kubernetes.io/name: control-plane
 policyTypes:
+  - Ingress
   - Egress
+ingress:
+  rules:
+    {{- include "armonik.netpol.rule.submitterIngress" . | nindent 4 }}
+  extraRules: []
 egress:
   rules:
     {{- include "armonik.netpol.dependencyRules" . | nindent 4 }}
@@ -287,11 +341,11 @@ policyTypes:
 egress:
   rules:
     {{- list
-          (include "armonik.netpol.dnsRule" dict | fromYaml)
-          (include "armonik.netpol.kubeApiRule" dict | fromYaml)
-          (include "armonik.netpol.rule.seq" . | fromYaml)
-        | toYaml
-        | nindent 4
+          (list "armonik.netpol.dnsRule" dict)
+          (list "armonik.netpol.kubeApiRule" dict)
+          (list "armonik.netpol.rule.seq" .)
+      | include "armonik.netpol.mergeRules"
+      | nindent 4
     }}
 {{- end -}}
 
@@ -312,20 +366,18 @@ policyTypes:
 ingress:
   rules:
     {{- list
-          (include "armonik.netpol.rule.mongodbOperatorFrom" . | fromYaml)
-        | compact
-        | toYaml
+          (list "armonik.netpol.rule.mongodbOperatorFrom" .)
+        | include "armonik.netpol.mergeRules"
         | nindent 4
     }}
 
 egress:
   rules:
     {{- list
-          (include "armonik.netpol.rule.mongodbOperatorTo" . | fromYaml)
-          (include "armonik.netpol.dnsRule" dict | fromYaml)
-          (include "armonik.netpol.kubeApiRule" dict | fromYaml)
-        | compact
-        | toYaml
+          (list "armonik.netpol.rule.mongodbOperatorTo" .)
+          (list "armonik.netpol.dnsRule" dict)
+          (list "armonik.netpol.kubeApiRule" dict)
+        | include "armonik.netpol.mergeRules"
         | nindent 4
     }}
 {{- end -}}
@@ -347,21 +399,19 @@ policyTypes:
 ingress:
   rules:
     {{- list
-          (include "armonik.netpol.rule.mongodbServerFromOperator" . | fromYaml)
-          (include "armonik.netpol.rule.controlPlaneFrom" . | fromYaml)
-          (include "armonik.netpol.rule.computePlaneFrom" . | fromYaml)
-        | compact
-        | toYaml
+          (list "armonik.netpol.rule.mongodbServerFromOperator" .)
+          (list "armonik.netpol.rule.controlPlaneFrom" .)
+          (list "armonik.netpol.rule.computePlaneFrom" .)
+        | include "armonik.netpol.mergeRules"
         | nindent 4
     }}
 
 egress:
   rules:
     {{- list
-          (include "armonik.netpol.rule.mongodbServerToOperator" . | fromYaml)
-          (include "armonik.netpol.dnsRule" dict | fromYaml)
-        | compact
-        | toYaml
+          (list "armonik.netpol.rule.mongodbServerToOperator" .)
+          (list "armonik.netpol.dnsRule" dict)
+        | include "armonik.netpol.mergeRules"
         | nindent 4
     }}
 {{- end -}}
@@ -376,9 +426,9 @@ policyTypes:
 egress:
   rules:
     {{- list
-          (include "armonik.netpol.dnsRule" dict | fromYaml)
-          (include "armonik.netpol.kubeApiRule" dict | fromYaml)
-        | toYaml
+          (list "armonik.netpol.dnsRule" dict)
+          (list "armonik.netpol.kubeApiRule" dict)
+        | include "armonik.netpol.mergeRules"
         | nindent 4
     }}
 {{- end -}}

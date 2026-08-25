@@ -15,8 +15,8 @@
 {{- if and $networkPolicyEnabled $dependencyRules }}
 {{- include "armonik.netpol.render" (dict
       "context" .
-      "component" "control-plane-submitter-egress"
-      "config" (include "armonik.netpol.controlPlaneSubmitterEgress" . | fromYaml)
+      "component" "control-plane-submitter-connectivity"
+      "config" (include "armonik.netpol.controlPlaneSubmitter" . | fromYaml)
   ) }}
 {{- end }}
 

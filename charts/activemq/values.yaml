@@ -170,29 +170,4 @@ networkPolicy:
   # Network policy is disabled by default for this generic chart.
   # If enabled, define ingress rules explicitly for the clients that may
   # access ActiveMQ and add any required egress rules for your environment.
- 
-  ingress:
-    - from:
-        - podSelector:
-            matchLabels:
-              app.kubernetes.io/name: control-plane
-        - podSelector:
-            matchLabels:
-              app.kubernetes.io/name: compute-plane
-      ports:
-        - protocol: TCP
-          port: 5672
-          
-  egress:
-    - to:
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: kube-system
-          podSelector:
-            matchLabels:
-              k8s-app: kube-dns
-      ports:
-        - protocol: UDP
-          port: 53
-        - protocol: TCP
-          port: 53
+  ingress: []

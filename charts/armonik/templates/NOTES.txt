@@ -18,6 +18,22 @@ Operators:
   - {{ $op }}: {{ if $cfg.deploy }}managed (installed by this release){{ else if $cfg.available }}external (already present in the cluster){{ else }}absent (degraded){{ end }}
 {{- end }}
 **********************************************************
+{{- if list .Values "networkPolicy" "enabled" | include "armonik.utils.index" }}
+NetworkPolicy is enabled for this armonik umbrella release.
+The Service Installed list above shows which dependency policies may apply. The
+umbrella policy is separate from each subchart's policy. Enable the relevant
+subchart policy as well, using the default settings in charts/armonik/values.yaml
+as a reference:
+  - control-plane.networkPolicy.enabled=true
+  - ingress.networkPolicy.enabled=true
+  - dependencies.activemq.networkPolicy.enabled=true
+
+Attention: the upstream Redis (Valkey) chart does not provide a
+networkPolicy.enabled setting. The Redis rules shown in charts/armonik/values.yaml
+are reference rules only; apply an equivalent policy separately if Redis traffic
+must be restricted.
+{{- end }}
+**********************************************************
 {{- $cp := index .Values "compute-plane" }}
 {{- $workerPartitions := list }}
 {{- if and $cp $cp.enabled $cp.partitions }}{{ $workerPartitions = keys $cp.partitions | sortAlpha }}{{ end }}

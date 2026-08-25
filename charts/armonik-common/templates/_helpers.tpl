@@ -91,3 +91,16 @@ stop at ".svc" read global.clusterDomain and drop the suffix when it is empty.
   {{- $global := list .Values "global" "clusterDomain" | include "armonik.utils.index" -}}
   {{- coalesce $tls.clusterDomain .Values.clusterDomain $global "cluster.local" -}}
 {{- end -}}
+
+{{/*
+  Generic port lookup.
+*/}}
+{{- define "armonik.netpol.port" -}}
+{{- $ports := .ports | default list -}}
+{{- $name := .name -}}
+{{- range $port := $ports -}}
+  {{- if eq $port.name $name -}}
+    {{- $port.containerPort -}}
+  {{- end -}}
+{{- end -}}
+{{- end -}}

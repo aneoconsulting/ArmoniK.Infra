@@ -174,10 +174,9 @@ networkPolicy:
     enabled: false
     from: []
     ports: []
-  
+
   ingress:
     extraRules: []
 
-  egress:     
+  egress:
     extraRules: []
-

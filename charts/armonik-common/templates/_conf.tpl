@@ -184,14 +184,32 @@ and the mounted file in sync.
 {{- end -}}
 
 {{/*
-Name of the release SecretStore used by the conf ExternalSecrets.
+Name of the SecretStore used by the conf ExternalSecrets for a given remote namespace.
 
 # Usage
 
-{{ include "armonik.conf.storeName" $ }}
+{{ list "" $ | include "armonik.conf.storeName" }}
+{{ list "mongodb-ns" $ | include "armonik.conf.storeName" }}
 */}}
 {{- define "armonik.conf.storeName" -}}
-  {{- printf "%s-conf-store" .Release.Name | trunc 63 | trimSuffix "-" -}}
+  {{- $namespace := index . 0 -}}
+  {{- $root := index . 1 -}}
+  {{- if or (not $namespace) (eq $namespace (include "armonik.namespace" $root)) -}}
+    {{- printf "%s-conf-store" $root.Release.Name | trunc 63 | trimSuffix "-" -}}
+  {{- else -}}
+    {{- printf "%s-conf-store-%s" $root.Release.Name $namespace | trunc 63 | trimSuffix "-" -}}
+  {{- end -}}
+{{- end -}}
+
+{{/*
+Name of the per-namespace SecretStore to route one ESO data[]/dataFrom[] entry through
+*/}}
+{{- define "armonik.conf.storeNameOverride" -}}
+  {{- $namespace := index . 0 -}}
+  {{- $root := index . 1 -}}
+  {{- if and $namespace (ne $namespace (include "armonik.namespace" $root)) -}}
+    {{- list $namespace $root | include "armonik.conf.storeName" -}}
+  {{- end -}}
 {{- end -}}
 
 {{/*
@@ -219,9 +237,17 @@ the root. Idempotent on plain strings.
     {{- end -}}
     {{- $_ := set $conf "envConfigmap" $rendered -}}
   {{- end -}}
+  {{- range $name, $ref := $conf.envFromSecret | default dict -}}
+    {{- if $ref.namespace -}}
+      {{- $_ := set $ref "namespace" (tpl $ref.namespace $root) -}}
+    {{- end -}}
+  {{- end -}}
   {{- $mountPath := include "armonik.conf.mountPath" $root -}}
   {{- range $m := $conf.mountSecret | default list -}}
     {{- $_ := set $m "secret" (tpl $m.secret $root) -}}
+    {{- if $m.namespace -}}
+      {{- $_ := set $m "namespace" (tpl $m.namespace $root) -}}
+    {{- end -}}
     {{- if $m.subpath -}}
       {{- $_ := set $m "subpath" (tpl $m.subpath $root) -}}
     {{- end -}}

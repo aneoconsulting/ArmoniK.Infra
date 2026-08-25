@@ -5,6 +5,7 @@ global:
 
 nameOverride: ""
 fullnameOverride: activemq
+namespaceOverride: ""
 
 HorizontalPodAutoscaler:
   enabled: false

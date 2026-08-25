@@ -3,7 +3,7 @@ apiVersion: {{ include "activemq.pdb.apiVersion" . }}
 kind: PodDisruptionBudget
 metadata:
   name: {{ include "activemq.fullname" . }}
-  namespace: {{ .Release.Namespace }}
+  namespace: {{ include "activemq.namespace" . }}
   labels:
     {{- include "activemq.labels" . | nindent 4 }}
 spec:

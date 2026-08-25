@@ -12,5 +12,5 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: {{ include "activemq.serviceAccountName" . }}
-    namespace: {{ .Release.Namespace }}
+    namespace: {{ include "activemq.namespace" . }}
 {{- end -}}

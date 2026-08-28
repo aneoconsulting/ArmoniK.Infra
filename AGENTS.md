@@ -23,6 +23,15 @@ cd charts && ./update-charts.sh   # every chart, in dependency order, one layer 
 
 Any run that refreshes rewrites every repository index in the shared cache, whatever the chart depends on, and concurrent rewrites corrupt it. So `-r` serializes the charts that pull a dependency from an http(s) repository and runs the rest in parallel with `--skip-refresh`. Until those repositories are added locally (`helm repo add`), `-u -r` is the only mode that resolves them: helm fetches a repository it does not know only through `dependency update` while refreshing.
 
+Packaging is a separate step, run once the dependencies are vendored (`helm package` refuses a chart whose `charts/` lacks a declared dependency, and stamps the archive with what it finds there):
+
+```sh
+./charts/package-charts.sh              # dist/: one .tgz per release-root chart, plus index.yaml
+./charts/package-charts.sh -v 1.2.3     # stamp a version over the in-tree 0.1.0 (activemq keeps its own 1.x)
+```
+
+The archives carry their dependencies expanded, so they install with no network and no repository. `charts/airgap.md` documents the consumer side; the `Package charts` job of `test-helm.yml` publishes them per commit, and `make-release.yml` attaches them to the GitHub release.
+
 Day-to-day, from `charts/`:
 
 ```sh
@@ -157,6 +166,7 @@ Current state, not a wish list: check before assuming a path works, and prune an
 - PR titles follow Conventional Commits (`<type>(<scope>): <subject>`), enforced by the semantic-pull-request workflow and tied to semantic releases (see CONTRIBUTING.md).
 - Chart versions move in lockstep (currently all 0.1.0). Re-run `charts/update-charts.sh` after touching a chart: bare when only its content changed, since the local charts are re-packaged as they are, but with `-u` as soon as a `Chart.yaml` changed (a version bump, or a dependency added, removed or re-constrained). The default `build` reproduces the exact versions `Chart.lock` pins, so it fails on a bump that still satisfies the range, with `can't get a valid version for dependency <name>`.
 - `charts/best-practices.md` is the in-repo chart guideline (still a draft with open TODOs).
+- `charts/airgap.md` documents installing from the packaged archives (`charts/package-charts.sh`), including that `helm repo add` has no `file://` handler, so consuming the generated `index.yaml` means serving the directory over HTTP. Container images are explicitly out of its scope.
 - `charts/uninstall.md` documents teardown, which is not symmetric with install: CRDs outlive releases, and the CRs emitted with `global.armonik.operators.<op>.deploy=true` are Helm hooks, so `helm uninstall` leaves them behind and their CRDs wedge in `Terminating`. The umbrella and `armonik-operators` NOTES.txt render the matching procedure per install mode. Keep those three in sync when changing operator gating or hook annotations.
 - **`.Values` nil-safety.** Multi-key `.Values` reads must tolerate an absent/nil intermediate (a nested block the user didn't set). Use `armonik.utils.index` (`charts/armonik-common/templates/_utils.tpl`): `list .Values "a" "b" | include "armonik.utils.index"` short-circuits to `""` on any nil/false/empty step and never errors; decode the result by type (bool `| empty | not`, int `| int`, list `| fromYamlArray`, object `| fromYaml`; strings come back raw). Two rules on top:
   - **Single key: plain dot access + `default`, not the helper** (`.Values.foo | default dict`). A one-level read can't hit a nil intermediate, so the helper's toYaml/fromYaml round-trip is wasted; reserve the helper for 2+ keys. A hyphenated key that can't be dot-accessed (e.g. `control-plane`) uses the builtin `index .Values "control-plane" | default dict`.

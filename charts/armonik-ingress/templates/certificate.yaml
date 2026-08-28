@@ -1,10 +1,13 @@
 {{- $ops := include "armonik.operators" $ | fromYaml }}
 {{- $tls := .Values.tls | default dict }}
 {{- $certManager := $tls.certManager | default dict }}
-{{- $existingIssuer := (list $certManager "existingIssuer" "enabled" | include "armonik.utils.index") | empty | not }}
+{{- $globalIssuer := list $.Values "global" "armonik" "certManager" "issuer" | include "armonik.utils.index" | fromYaml }}
+{{- $localEnabled := (list $certManager "existingIssuer" "enabled" | include "armonik.utils.index") | empty | not }}
+{{- $useGlobal := and $globalIssuer.enabled (not $localEnabled) }}
+{{- $existingIssuer := or $localEnabled $useGlobal }}
 {{- if and $tls.enabled $certManager.enabled }}
 {{- if not (or $ops.certManager.available $existingIssuer) }}
-{{- fail "ingress TLS via cert-manager requires it: set global.armonik.operators.certManager.available=true, set tls.certManager.existingIssuer.enabled=true (asserting an external cert-manager), or disable tls.certManager and supply the TLS Secret directly." }}
+{{- fail "ingress TLS via cert-manager requires it: set global.armonik.operators.certManager.available=true, set tls.certManager.existingIssuer.enabled=true, set global.armonik.certManager.issuer.enabled=true, or disable tls.certManager and supply the TLS Secret directly." }}
 {{- end }}
 {{- if not $existingIssuer }}
 apiVersion: cert-manager.io/v1
@@ -53,12 +56,17 @@ spec:
   renewBefore: {{ . }}
   {{- end }}
   issuerRef:
-    {{- if list $certManager "existingIssuer" "enabled" | include "armonik.utils.index" }}
+    {{- if $localEnabled }}
     name: {{ list $certManager "existingIssuer" "name" | include "armonik.utils.index" }}
     kind: {{ list $certManager "existingIssuer" "kind" | include "armonik.utils.index" | default "Issuer" }}
+    group: {{ list $certManager "existingIssuer" "group" | include "armonik.utils.index" | default "cert-manager.io" }}
+    {{- else if $useGlobal }}
+    name: {{ $globalIssuer.name }}
+    kind: {{ $globalIssuer.kind }}
+    group: {{ $globalIssuer.group }}
     {{- else }}
     name: {{ include "armonik.fullname" . }}-issuer
     kind: Issuer
-    {{- end }}
     group: cert-manager.io
+    {{- end }}
 {{- end }}

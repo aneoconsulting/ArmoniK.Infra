@@ -1,0 +1,45 @@
+{{- $ops := include "armonik.operators" $ | fromYaml }}
+{{- $redis := .Values.dependencies.redis | default dict }}
+{{- $tls := $redis.tls | default dict }}
+{{- $certManager := $tls.certManager | default dict }}
+{{- if and $redis.enabled $tls.enabled $certManager.enabled }}
+{{- $globalIssuer := dig "armonik" "certManager" "issuer" dict .Values.global }}
+{{- if not $globalIssuer.enabled }}
+{{- fail "dependencies.redis.tls.certManager.enabled requires global.armonik.certManager.issuer.enabled=true: valkey has no native cert-manager integration, ArmoniK.Infra requests the Certificate itself against the shared issuer." }}
+{{- end }}
+{{- $svcName := printf "%s-redis" .Release.Name }}
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ $svcName }}-tls
+  namespace: {{ include "armonik.namespace" . }}
+  {{- if $ops.certManager.deploy }}
+  {{- /* Hooked only when this release installs the CRDs; otherwise a plain resource. */}}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "10"
+  {{- end }}
+spec:
+  commonName: {{ include "armonik.fullname" . }}-cert
+  dnsNames:
+  - {{ include "armonik.fullname" . }}.{{ include "armonik.namespace" . }}
+  - {{ include "armonik.fullname" . }}.{{ include "armonik.namespace" . }}.svc
+  - {{ include "armonik.fullname" . }}.{{ include "armonik.namespace" . }}.svc.{{ include "armonik.clusterDomain" . }}
+  secretName: {{ required "dependencies.redis.tls.existingSecret is required when certManager.enabled=true" $tls.existingSecret }}
+  usages:
+    - server auth
+    - client auth
+  privateKey:
+    algorithm: RSA
+    size: 2048
+  {{- with $certManager.duration }}
+  duration: {{ . }}
+  {{- end }}
+  {{- with $certManager.renewBefore }}
+  renewBefore: {{ . }}
+  {{- end }}
+  issuerRef:
+    name: {{ $globalIssuer.name }}
+    kind: {{ $globalIssuer.kind }}
+    group: {{ $globalIssuer.group }}
+{{- end }}

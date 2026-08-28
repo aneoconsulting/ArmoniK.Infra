@@ -44,6 +44,8 @@ global:
         deploy: true
     # monitoring.{prometheusUrl,metricsExporterUrl} come from armonik-common (see its README); both derive
     # from the operators namespaces above, which a layered install has to state.
+      googleCasIssuer:
+        deploy: true
 
 
 ############################################

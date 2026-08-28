@@ -9,7 +9,7 @@ false; namespace comes back tpl-rendered, empty when nobody stated where an exte
   {{- $ops.prometheusOperator.namespace }}
 */}}
 {{- define "armonik.operators" -}}
-{{- range list "externalSecrets" "keda" "certManager" "mongodbOperator" "prometheusOperator" }}
+{{- range list "externalSecrets" "keda" "certManager" "mongodbOperator" "prometheusOperator" "googleCasIssuer"}}
 {{ . }}:
   {{- $op := list $.Values "global" "armonik" "operators" . | include "armonik.utils.index" | fromYaml }}
   available: {{ $op.available | empty | not }}

@@ -39,6 +39,10 @@ global:
         deploy: false
         available: true
         namespace: '{{ .Values.global.armonik.operators.prometheusOperator.deploy | empty | ternary "" .Release.Namespace }}'
+      googleCasIssuer:
+        deploy: false
+        available: true
+        namespace: '{{ .Values.global.armonik.operators.googleCasIssuer.deploy | empty | ternary "" .Release.Namespace }}'
     monitoring:
       # -- Prometheus for the Grafana datasource and PromQL KEDA triggers. Defaults to the
       # `armonik.monitoring.prometheusUrl.default` derivation; a literal URL replaces it.

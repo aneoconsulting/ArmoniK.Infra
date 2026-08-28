@@ -46,3 +46,8 @@ dependencies:
     repository: https://prometheus-community.github.io/helm-charts
     alias: kube-prometheus
     condition: global.armonik.operators.prometheusOperator.deploy
+  - name: cert-manager-google-cas-issuer
+    version: "0.x.x"
+    repository: https://charts.jetstack.io
+    condition: global.armonik.operators.googleCasIssuer.deploy
+    alias: google-cas-issuer

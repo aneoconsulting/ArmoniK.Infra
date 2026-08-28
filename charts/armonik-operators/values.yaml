@@ -16,6 +16,8 @@ global:
         deploy: true
       prometheusOperator:
         deploy: true
+      googleCasIssuer:
+        deploy: true
 
 # --- Operator subchart configuration, at operators.<op>.* under the umbrella ---
 
@@ -67,6 +69,11 @@ cert-manager:
       enabled: true
   # global:
   #   priorityClassName:
+
+google-cas-issuer:
+  crds:
+    enabled: true
+    keep: false
 
 # Percona Server for MongoDB operator (https://percona.github.io/percona-helm-charts/). Chart defaults
 # install the CRDs; the PerconaServerMongoDB CR itself stays in armonik-dependencies.

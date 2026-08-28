@@ -44,6 +44,9 @@ charts/*/README.md
 # Doc generator binaries downloaded by the readthedocs pipeline
 /.bin/
 
+# Packaged charts, written by charts/package-charts.sh
+/dist/
+
 # others
 .idea
 kubeconfig_*

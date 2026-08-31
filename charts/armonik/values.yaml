@@ -21,6 +21,8 @@ global:
   # Root dir for conf mount Secrets in pods; propagated to subcharts. env strings and volumeMounts derive from it.
   armonik:
     mountPath: /mounts
+    # Point the child at the conf Secrets this umbrella renders (overrides its "armonik" default).
+    source: '{{ .Release.Name }}'
     # Operator control (semantics in armonik-common/values.yaml). All-in-one default: this release
     # installs every operator, through the armonik-operators subchart.
     operators:
@@ -50,9 +52,6 @@ control-plane:
     #   podReserved: 50
     #   preemptionPercentage: 20
     #   priority: 1
-  # Point the child at the conf Secrets this umbrella renders (overrides its "armonik" default).
-  conf:
-    source: '{{ .Release.Name }}'
   init:
     enabled: true
   rbac:
@@ -66,9 +65,6 @@ compute-plane:
   enabled: true
   serviceAccount:
     create: true
-  # Point the child at the conf Secrets this umbrella renders (overrides its "armonik" default).
-  conf:
-    source: '{{ .Release.Name }}'
   # partitionCommon:
   #   priorityClassName:
   # Partitions accumulate across values files; drop one of these with
@@ -91,7 +87,6 @@ compute-plane:
 
 conf:
   # Names every <source>-conf-<layer> Secret the umbrella renders (this release).
-  source: '{{ .Release.Name }}'
   log:
     minimumLevel: Information
 

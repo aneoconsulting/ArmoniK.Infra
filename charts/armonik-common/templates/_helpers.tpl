@@ -12,20 +12,19 @@ Expand the namespace of the chart.
   {{-  .Values.namespaceOverride | default .Release.Namespace }}
 {{- end }}
 
+{{/*
+  Collect namespaces for the ArmoniK components.
+  The recursive traversal allows resolving components declared as
+  dependencies.
+*/}}
 {{- define "armonik.namespaces" -}}
-{{- $namespaces := dict -}}
+{{- $components := list "ingress" "control-plane" "grafana" "seq" -}}
 {{- range $name, $subchart := .Subcharts }}
-  {{- $namespace := include "armonik.namespace" $subchart -}}
-  {{- $_ := set $namespaces $name $namespace -}}
-  {{/*
-    Recursively inspect children.
-  */}}
-  {{- $children := include "armonik.namespaces" $subchart | fromJson -}}
-  {{- range $childName, $childNamespace := $children }}
-    {{- $_ := set $namespaces $childName $childNamespace -}}
-  {{- end }}
+{{- if has $name $components }}
+{{ $name }}: {{ include "armonik.namespace" $subchart | quote }}
 {{- end }}
-{{- $namespaces | toJson -}}
+{{- include "armonik.namespaces" $subchart }}
+{{- end }}
 {{- end }}
 
 {{/*

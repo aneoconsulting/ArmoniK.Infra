@@ -3,11 +3,11 @@ terraform {
   required_providers {
     random = {
       source  = "hashicorp/random"
-      version = ">= 3.4.3"
+      version = ">= 3.9.0"
     }
     null = {
       source  = "hashicorp/null"
-      version = ">= 3.2.1"
+      version = ">= 3.3.1"
     }
   }
 }

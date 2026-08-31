@@ -58,7 +58,7 @@ spec:
           value: application/grpc
     backendRefs:
       - name: {{ include "armonik.fullname" . | quote }}
-        port: 5001   
+        port: {{ include "armonik.httpRoute.port" (dict "protocol" "grpc" "root" .) }}
 
   - matches:
     - path:
@@ -67,6 +67,6 @@ spec:
 
     backendRefs:
     - name: {{ include "armonik.fullname" . }}
-      port: 5000
+      port: {{ include "armonik.httpRoute.port" (dict "protocol" "http" "root" .) }}
   {{- end }}
 {{- end }}

@@ -103,8 +103,9 @@ Prefix of every conf Secret name: .Values.conf.source (tpl-rendered), default .R
 {{ include "armonik.conf.source" $ }}
 */}}
 {{- define "armonik.conf.source" -}}
+  {{- $global := list .Values "global" "armonik" "source" | include "armonik.utils.index" -}}
   {{- $conf := list .Values "conf" | include "armonik.utils.index" | fromYaml -}}
-  {{- $source := $conf.source | default .Release.Name -}}
+  {{- $source := ($conf.source | default $global | default "armonik") -}}
   {{- tpl $source . -}}
 {{- end -}}
 

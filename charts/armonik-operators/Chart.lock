@@ -7,7 +7,7 @@ dependencies:
   version: 2.20.2
 - name: external-secrets
   repository: https://charts.external-secrets.io
-  version: 2.9.0
+  version: 2.10.0
 - name: cert-manager
   repository: https://charts.jetstack.io
   version: v1.21.1
@@ -17,5 +17,5 @@ dependencies:
 - name: kube-prometheus-stack
   repository: https://prometheus-community.github.io/helm-charts
   version: 82.18.0
-digest: sha256:181107d629a9cf6d5b691bc0d15cf9b4e6dfe9ba3afa58b8a99fd7a2ff2f7535
-generated: "2026-08-19T14:38:21.047131908+02:00"
+digest: sha256:b882ab5421fa1fc0158c3f0c9970ac05fba7eadadd8cd06855e9fc4fb4fc2d09
+generated: "2026-08-28T15:58:07.058669199+02:00"

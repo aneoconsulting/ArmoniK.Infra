@@ -13,21 +13,6 @@ Expand the namespace of the chart.
 {{- end }}
 
 {{/*
-  Collect namespaces for the ArmoniK components.
-  The recursive traversal allows resolving components declared as
-  dependencies.
-*/}}
-{{- define "armonik.namespaces" -}}
-{{- $components := list "ingress" "control-plane" "grafana" "seq" -}}
-{{- range $name, $subchart := .Subcharts }}
-{{- if has $name $components }}
-{{ $name }}: {{ include "armonik.namespace" $subchart | quote }}
-{{- end }}
-{{- include "armonik.namespaces" $subchart }}
-{{- end }}
-{{- end }}
-
-{{/*
 Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 If release name contains chart name it will be used as a full name.
@@ -106,3 +91,14 @@ stop at ".svc" read global.clusterDomain and drop the suffix when it is empty.
   {{- $global := list .Values "global" "clusterDomain" | include "armonik.utils.index" -}}
   {{- coalesce $tls.clusterDomain .Values.clusterDomain $global "cluster.local" -}}
 {{- end -}}
+
+{{- define "armonik.controlPlane.servicePort" -}}
+	{{- $ports := list .Values "control-plane" "service" "ports" | include "armonik.utils.index" | fromYamlArray -}}
+	{{- $port := 0 -}}
+	{{- range $servicePort := $ports -}}
+		{{- if eq (get $servicePort "name") "control-port" -}}
+			{{- $port = int (get $servicePort "port") -}}
+		{{- end -}}
+	{{- end -}}
+	{{- $port -}}
+{{- end }}

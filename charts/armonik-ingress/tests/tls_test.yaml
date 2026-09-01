@@ -1,7 +1,7 @@
 suite: tls and mtls
 templates:
   - certificate.yaml
-  - externalsecret-nginx-conf.yaml
+  - armonik-nginx-conf.yaml
 values:
   - ../ci/tls-mtls-values.yaml
 tests:
@@ -41,7 +41,7 @@ tests:
           path: kind
           value: Certificate
   - it: turns on client certificate verification with mTLS
-    template: externalsecret-nginx-conf.yaml
+    template: armonik-nginx-conf.yaml
     asserts:
       - matchRegex:
           path: spec.target.template.data["armonik.conf"]

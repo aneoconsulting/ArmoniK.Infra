@@ -23,6 +23,8 @@ global:
     mountPath: /mounts
     # Point the child at the conf Secrets this umbrella renders (overrides its "armonik" default).
     source: '{{ .Release.Name }}'
+    # Control plane release name
+    controlPlane: '{{ .Release.Name }}'
     # Operator control (semantics in armonik-common/values.yaml). All-in-one default: this release
     # installs every operator, through the armonik-operators subchart.
     operators:
@@ -94,6 +96,7 @@ conf:
 ingress:
   enabled: true
   # priorityClassName:
+  urlsSecretName: '{{ .Release.Name }}-urls'
 
 # To bring your own MongoDB, set dependencies.mongodb.enabled=false and supply the connection via the
 # conf values (conf.core.env / conf.core.envFromSecret). The in-cluster psmdb-db (below) is the default.
@@ -263,7 +266,7 @@ dependencies:
     grafana.ini:
       server:
         # Keep root_url path-less and serve_from_sub_path false: the ingress publishes Grafana
-        # under a prefix it injects itself (armonik-ingress templates/externalsecret-nginx-conf.yaml),
+        # under a prefix it injects itself (armonik-ingress templates/armonik-nginx-conf.yaml),
         # which needs an empty appSubUrl. Enforced by armonik/templates/validate.yaml.
         domain: grafana.local
         root_url: http://grafana

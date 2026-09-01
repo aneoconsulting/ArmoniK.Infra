@@ -105,7 +105,7 @@ Prefix of every conf Secret name: .Values.conf.source (tpl-rendered), default .R
 {{- define "armonik.conf.source" -}}
   {{- $global := list .Values "global" "armonik" "source" | include "armonik.utils.index" -}}
   {{- $conf := list .Values "conf" | include "armonik.utils.index" | fromYaml -}}
-  {{- $source := ($conf.source | default $global | default "armonik") -}}
+  {{- $source := ($global | default $conf.source | default .Release.Name) -}}
   {{- tpl $source . -}}
 {{- end -}}
 
@@ -432,3 +432,10 @@ the root. Idempotent on plain strings.
       {{- end }}
 {{- end }}
 {{- end -}}{{/* define "armonik.conf.generateVolumes" */}}
+
+{{- define "armonik.controlPlane.source" -}}
+  {{- $global := list .Values "global" "armonik" "controlPlane" | include "armonik.utils.index" -}}
+  {{- $conf := list .Values "controlPlane" | include "armonik.utils.index" | fromYaml -}}
+  {{- $source := ($global | default $conf.source | default .Release.Name) -}}
+  {{- tpl $source . -}}
+{{- end -}}

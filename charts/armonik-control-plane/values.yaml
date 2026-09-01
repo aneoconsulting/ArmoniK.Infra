@@ -80,7 +80,7 @@ priorityClassName: ""
 conf:
   # Release name of the umbrella that owns the conf Secrets (defaults to "armonik").
   # Overrides the umbrella's global.armonik.source for this release.
-  # source: armonik
+  source: armonik
   # Overrides the umbrella's global.armonik.mountPath for this release (default "/mounts").
   # mountPath: /mounts
   # A workload mounts the mount-aggregate of each layer it uses (same layers as envSecret), all at

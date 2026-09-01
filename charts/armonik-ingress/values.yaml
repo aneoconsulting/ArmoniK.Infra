@@ -1,5 +1,9 @@
 # global.armonik.* comes from armonik-common via import-values; its defaults suit a standalone release.
 
+global:
+  environment:
+    description: "ArmoniK ingress environment"
+
 nameOverride: ""
 imagePullSecrets: []
 image:
@@ -112,6 +116,21 @@ loadBalancer:
   tolerations: []
   priorityClassName: ""
   annotations: {}
+
+# Set to the key of a Secret in an ESO SecretStore to source ingress conf URLs via ExternalSecret.
+# Leave empty to fall back to a plain Kubernetes Secret instead.
+#
+# WARNING: only matters if you flip this value on an EXISTING release, in place (helm upgrade,
+# same release name and namespace). Both modes render a Secret under the same name, and Helm
+# refuses to adopt one it doesn't already own. A fresh install, or changing this on a different
+# release or namespace, is unaffected - there's no prior resource to conflict with.
+#
+# To switch in place: delete the old ExternalSecret first (it also owns and deletes the Secret
+# it produced), then upgrade:
+#   kubectl delete externalsecrets.external-secrets.io -n <namespace> <release>-ingress-conf
+#   helm upgrade <release-name> ...
+urlsSecretName: ""
+urlsSecretNamespace: ""
 
 ###########################################################
 # Admin GUI

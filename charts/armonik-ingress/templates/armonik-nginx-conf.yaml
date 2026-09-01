@@ -1,0 +1,46 @@
+{{- $ops := include "armonik.operators" . | fromYaml -}}
+{{- $urlsSecretKey := tpl (.Values.urlsSecretName | default "") $ -}}
+{{- $useEso := and $ops.externalSecrets.available (ne $urlsSecretKey "") -}}
+{{- if $useEso }}
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: {{ include "armonik.fullname" . }}-conf
+  namespace: {{ include "armonik.namespace" . | quote }}
+  {{- if $ops.externalSecrets.deploy }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "10"
+  {{- end }}
+  labels:
+    {{- include "armonik.labels" . | nindent 4 }}
+spec:
+  refreshInterval: 1m
+  secretStoreRef:
+    kind: SecretStore
+    name: {{ list "" $ | include "armonik.conf.storeName" }}
+  target:
+    name: {{ include "armonik.fullname" . }}-conf
+    creationPolicy: Owner
+    template:
+      engineVersion: v2
+      type: Opaque
+      data:
+        armonik.conf: |
+          {{- dict "root" . "useEso" true |include "armonik.conf.render" | nindent 10 }}
+  dataFrom:
+    - extract:
+        key: {{ $urlsSecretKey }}
+{{- else }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ include "armonik.fullname" . }}-conf
+  namespace: {{ include "armonik.namespace" . | quote }}
+  labels:
+    {{- include "armonik.labels" . | nindent 4 }}
+type: Opaque
+stringData:
+  armonik.conf: |
+    {{- dict "root" . "useEso" false | include "armonik.conf.render" | nindent 4 }}
+{{- end }}

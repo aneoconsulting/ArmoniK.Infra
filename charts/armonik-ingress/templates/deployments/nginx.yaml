@@ -97,6 +97,9 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}{{/* with .Values.tolerations */}}
+      {{- with .Values.priorityClassName }}
+      priorityClassName: {{ . | quote }}
+      {{- end }}{{/* with .Values.priorityClassName */}}
       enableServiceLinks: true
       volumes:
       {{- if list .Values "tls" "enabled" | include "armonik.utils.index" }}

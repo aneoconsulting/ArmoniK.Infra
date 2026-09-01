@@ -74,6 +74,7 @@ nodeSelector: {}
 tolerations: []
 annotations: {}
 affinity: {}
+priorityClassName: ""
 
 # Base conf merged into every control-plane workload: core + log layers + core TLS mounts.
 conf:
@@ -132,6 +133,7 @@ metricsExporter:
   tolerations:
   annotations:
   affinity:
+  priorityClassName:
   livenessProbe:
     httpGet:
       path: /liveness
@@ -184,6 +186,7 @@ init:
   tolerations:
   annotations:
   affinity:
+  priorityClassName:
   # On top of the base conf: jobs layer.
   conf:
     envSecret:

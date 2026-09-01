@@ -41,9 +41,16 @@ keda:
   image:
     pullPolicy: IfNotPresent
   # imagePullSecrets: []
+  # priorityClassName:
 
 # External Secrets Operator (https://charts.external-secrets.io) - chart defaults install the CRDs.
 external-secrets: {}
+# external-secrets:
+#   priorityClassName:
+#   webhook:
+#     priorityClassName:
+#   certController:
+#     priorityClassName:
 
 # cert-manager (https://charts.jetstack.io). fullnameOverride keeps the webhook Deployment named
 # "cert-manager-webhook" so the ingress cert wait-Job can find it.
@@ -58,6 +65,8 @@ cert-manager:
   prometheus:
     servicemonitor:
       enabled: true
+  # global:
+  #   priorityClassName:
 
 # Percona Server for MongoDB operator (https://percona.github.io/percona-helm-charts/). Chart defaults
 # install the CRDs; the PerconaServerMongoDB CR itself stays in armonik-dependencies.
@@ -66,6 +75,7 @@ mongodb-operator:
   # release's namespace with a namespaced Role, and a CR in any other namespace is silently ignored.
   # true also switches the RBAC to ClusterRole/ClusterRoleBinding.
   watchAllNamespaces: true
+# WARNING: mongodb-operator: no priorityClassName support in this chart
 
 # kube-prometheus-stack (https://prometheus-community.github.io/helm-charts): the shared cluster
 # monitoring stack, one per cluster. Grafana stays per-release, in armonik-dependencies.
@@ -91,3 +101,6 @@ kube-prometheus:
       serviceMonitorNamespaceSelector: {}
       podMonitorSelectorNilUsesHelmValues: false
       podMonitorNamespaceSelector: {}
+      # priorityClassName:
+  # prometheusOperator:
+  #   priorityClassName:

@@ -51,6 +51,7 @@ init:
   resources:
   nodeSelector:
   tolerations:
+  priorityClassName:
   # Init Job: core + log + jobs layers + core TLS mounts.
   conf:
     envSecret:
@@ -128,6 +129,7 @@ partitionCommon:
   annotations: {}
   nodeSelector: {}
   tolerations: []
+  priorityClassName: ""
   terminationGracePeriodSeconds: 30
   # Default worker, will be overridden per partition
   worker:

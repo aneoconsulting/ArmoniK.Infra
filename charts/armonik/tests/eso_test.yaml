@@ -21,7 +21,7 @@ tests:
       # storage partials feed the core layer from the enabled backends
       - equal:
           path: spec.target.template.data.Amqp__Host
-          value: activemq
+          value: activemq.NAMESPACE.svc.cluster.local
   - it: materializes user conf env into the layer Secret
     values:
       - ../ci/minimal-values.yaml

@@ -3,7 +3,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: {{ include "activemq.fullname" . }}-jolokia-configs
-  namespace: {{ .Release.Namespace }}
+  namespace: {{ include "activemq.namespace" . | quote }}
   labels:
     {{- include "activemq.labels" . | nindent 4 }}
 data:

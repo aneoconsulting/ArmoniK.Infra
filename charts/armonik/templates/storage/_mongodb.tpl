@@ -45,6 +45,13 @@ By default set to 27017.
   {{- $config := list .Values "replsets" "rs0" "configuration" | include "armonik.utils.index" | fromYaml }}
   {{- list $config "net" "port" | include "armonik.utils.index" | default "27017" -}}
 {{- end }}
+
+{{/*
+Expand the namespace of the psmdb-db instance.
+*/}}
+{{- define "armonik.mongodb.namespace" -}}
+  {{- include "psmdb-database.namespace" . -}}
+{{- end }}
 {{/*
 MongoDB configuration forwarded to ArmoniK Core, derived from the in-cluster Percona MongoDB (the
 psmdb-db dependency). Skipped when that dependency is disabled: to bring your own MongoDB, set
@@ -59,6 +66,7 @@ psmdb-db instance's own rendered values.
 {{/* Live subchart scope via .Subcharts (armonik-dependencies is aliased "dependencies"); skipped when the dep is disabled. */}}
 {{- with .Subcharts.dependencies.Subcharts.mongodb -}}
 {{- $requireTls := (include "armonik.mongodb.requireTls" . | fromYaml).enabled -}}
+{{- $namespace := include "armonik.mongodb.namespace" . -}}
 env:
   Components__TableStorage:  "ArmoniK.Adapters.MongoDB.TableStorage"
   MongoDB__Host:             {{ include "armonik.mongodb.host" . | quote }}
@@ -76,14 +84,17 @@ envFromSecret:
   MongoDB__User:
     secret: {{ include "armonik.mongodb.secretName" . }}
     field: MONGODB_DATABASE_ADMIN_USER
+    namespace: {{ $namespace | quote }}
   MongoDB__Password:
     secret: {{ include "armonik.mongodb.secretName" . }}
     field: MONGODB_DATABASE_ADMIN_PASSWORD
+    namespace: {{ $namespace | quote }}
 mountSecret:
 {{- $internalTlsSecret := list .Values "secrets" "sslInternal" | include "armonik.utils.index" -}}
 {{- if and $requireTls $internalTlsSecret }}
   - secret: {{ $internalTlsSecret | quote }}
     prefix: {{ $prefix | quote }}
+    namespace: {{ $namespace | quote }}
 {{- end }}
 {{- end }}
 {{- end }}

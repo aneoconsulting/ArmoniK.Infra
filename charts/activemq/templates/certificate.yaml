@@ -17,7 +17,7 @@ metadata:
     {{- toYaml . | nindent 4 }}
     {{- end }}
   name: {{ include "activemq.fullname" . }}-issuer
-  namespace: {{ .Release.Namespace }}
+  namespace: {{ include "activemq.namespace" . | quote }}
 spec:
   selfSigned: {}
 {{- end }}
@@ -26,7 +26,7 @@ apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: {{ include "activemq.fullname" . }}
-  namespace: {{ .Release.Namespace }}
+  namespace: {{ include "activemq.namespace" . | quote }}
   {{- if dig "armonik" "operators" "certManager" "deploy" false .Values.global }}
   {{- /* Hooked only when this release installs the CRDs; otherwise a plain resource. */}}
   annotations:
@@ -36,9 +36,9 @@ metadata:
 spec:
   commonName: {{ include "activemq.fullname" . }}
   dnsNames:
-  - {{ include "activemq.fullname" . }}.{{ .Release.Namespace }}
-  - {{ include "activemq.fullname" . }}.{{ .Release.Namespace }}.svc
-  - {{ include "activemq.fullname" . }}.{{ .Release.Namespace }}.svc.{{ .Values.tls.clusterDomain }}
+  - {{ include "activemq.fullname" . }}.{{ include "activemq.namespace" . }}
+  - {{ include "activemq.fullname" . }}.{{ include "activemq.namespace" . }}.svc
+  - {{ include "activemq.fullname" . }}.{{ include "activemq.namespace" . }}.svc.{{ .Values.tls.clusterDomain }}
   secretName: {{ include "activemq.fullname" . }}
   usages:
     - server auth

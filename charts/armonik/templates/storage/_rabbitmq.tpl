@@ -13,6 +13,13 @@ Gets the port from rabbitmq context.
 {{- end -}}
 
 {{/*
+Expand the namespace of the rabbitmq instance
+*/}}
+{{- define "armonik.rabbitmq.namespace" -}}
+  {{- include "common.names.namespace" . -}}
+{{- end }}
+
+{{/*
 Gets the configuration from rabbitmq forwarded to ArmoniK Core.
 */}}
 {{- define "armonik.rabbitmq.conf" -}}
@@ -20,6 +27,7 @@ Gets the configuration from rabbitmq forwarded to ArmoniK Core.
 {{- $prefix := "rabbitmq-" -}}
 {{/* Live subchart scope via .Subcharts (armonik-dependencies is aliased "dependencies"); skipped when the dep is disabled. */}}
 {{- with .Subcharts.dependencies.Subcharts.rabbitmq -}}
+{{- $namespace := include "armonik.rabbitmq.namespace" . -}}
 env:
   Components__QueueAdaptorSettings__AdapterAbsolutePath: /adapters/queue/amqp/ArmoniK.Core.Adapters.Amqp.dll
   Components__QueueAdaptorSettings__ClassName: ArmoniK.Core.Adapters.Amqp.QueueBuilder
@@ -40,10 +48,12 @@ envFromSecret:
   Amqp__Password:
     secret: {{ include "rabbitmq.secretPasswordName" . }}
     field: {{ include "rabbitmq.secretPasswordKey" . }}
+    namespace: {{ $namespace | quote }}
 mountSecret:
 {{- if .Values.auth.tls.enabled }}
   - secret: {{ include "rabbitmq.tlsSecretName" . }}
     prefix: {{ $prefix | quote }}
+    namespace: {{ $namespace | quote }}
 {{- end }}
 {{- end }}
 {{- end }}

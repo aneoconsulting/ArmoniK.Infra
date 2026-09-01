@@ -1,0 +1,10 @@
+{{- /* Guards that control-plane and compute-plane render into the same namespace as the release */ -}}
+{{- $currentNamespace := include "armonik.namespace" $ -}}
+{{- range $alias := list "control-plane" "compute-plane" -}}
+  {{- with index $.Subcharts $alias -}}
+    {{- $overridedNamespace := include "armonik.namespace" . -}}
+    {{- if ne $overridedNamespace $currentNamespace -}}
+      {{- printf "%s.namespaceOverride resolves to %q but this release renders into %q: set the namespaces of control-plane and compute-plane to the same as the release namespace" $alias $overridedNamespace $currentNamespace | fail -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}

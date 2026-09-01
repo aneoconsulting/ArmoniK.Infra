@@ -13,6 +13,13 @@ Gets the port from redis context.
 {{- end -}}
 
 {{/*
+Expand the namespace of the valkey instance.
+*/}}
+{{- define "armonik.redis.namespace" -}}
+  {{- .Release.Namespace -}}
+{{- end }}
+
+{{/*
 Gets the configuration from redis forwarded to ArmoniK Core.
 */}}
 {{- define "armonik.redis.conf" -}}
@@ -20,6 +27,7 @@ Gets the configuration from redis forwarded to ArmoniK Core.
 {{- $prefix := "redis-" -}}
 {{/* Live subchart scope via .Subcharts (armonik-dependencies is aliased "dependencies"); skipped when the dep is disabled. */}}
 {{- with .Subcharts.dependencies.Subcharts.redis -}}
+{{- $namespace := include "armonik.redis.namespace" . -}}
 env:
   Components__ObjectStorageAdaptorSettings__AdapterAbsolutePath: /adapters/object/redis/ArmoniK.Core.Adapters.Redis.dll
   Components__ObjectStorageAdaptorSettings__ClassName: ArmoniK.Core.Adapters.Redis.ObjectBuilder
@@ -37,10 +45,12 @@ envFromSecret:
   Redis__Password:
     secret: redis-users
     field: default
+    namespace: {{ $namespace | quote }}
 mountSecret:
 {{- if .Values.tls.enabled }}
   - secret: {{ .Values.tls.existingSecret }}
     prefix: {{ $prefix | quote }}
+    namespace: {{ $namespace | quote }}
 {{- end }}
 {{- end }}
 {{- end }}

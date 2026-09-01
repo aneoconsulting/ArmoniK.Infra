@@ -1,0 +1,35 @@
+{{- $networkPolicyEnabled := list .Values "networkPolicy" "enabled"
+    | include "armonik.utils.index"
+-}}
+{{- $metricsExporterEnabled := list .Values "control-plane" "metricsExporter" "enabled"
+    | include "armonik.utils.index"
+-}}
+{{- $meOn := and $networkPolicyEnabled $metricsExporterEnabled -}}
+
+
+{{/*
+  Control-plane submitter egress NetworkPolicy.
+*/}}
+{{- $dependencyRules := include "armonik.netpol.dependencyRules" . | fromYaml -}}
+
+{{- if and $networkPolicyEnabled $dependencyRules }}
+{{- include "armonik.netpol.render" (dict
+      "context" .
+      "component" "control-plane-submitter-connectivity"
+      "config" (include "armonik.netpol.controlPlaneSubmitter" . | fromYaml)
+  ) }}
+{{- end }}
+
+
+{{/*
+  Control-plane metrics exporter egress NetworkPolicy.
+*/}}
+{{- $mongodbRule := include "armonik.netpol.rule.mongodb" . | fromYaml -}}
+
+{{- if and $meOn $mongodbRule }}
+{{- include "armonik.netpol.render" (dict
+      "context" .
+      "component" "control-plane-metrics-exporter-egress"
+      "config" (include "armonik.netpol.controlPlaneMetricsExporterEgress" . | fromYaml)
+  ) }}
+{{- end }}

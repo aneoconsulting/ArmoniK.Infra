@@ -190,3 +190,15 @@ init:
       - '{{ list "init" . | include "armonik.conf.secretName" }}'
     mountSecret:
       - secret: '{{ list "init" . | include "armonik.conf.mountSecretName" }}'
+
+networkPolicy:
+  enabled: false
+  submitter:
+    enabled: true
+    extraIngressRules: []
+    extraEgressRules: []
+
+  metricsExporter:
+    enabled: true
+    extraIngressRules: []
+    extraEgressRules: []

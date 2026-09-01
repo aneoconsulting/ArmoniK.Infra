@@ -1,0 +1,22 @@
+{{- if list .Values "networkPolicy" "enabled" | include "armonik.utils.index"}}
+
+{{/*
+  MongoDB operator NetworkPolicy.
+*/}}
+
+{{- include "armonik.netpol.render" (dict
+      "context" .
+      "component" "mongodb-operator"
+      "config" (include "armonik.netpol.mongodbOperator" . | fromYaml)
+  ) }}
+
+{{/*
+  MongoDB server NetworkPolicy.
+*/}}
+
+{{- include "armonik.netpol.render" (dict
+      "context" .
+      "component" "mongodb-server"
+      "config" (include "armonik.netpol.mongodbServer" . | fromYaml)
+  ) }}
+{{- end }}

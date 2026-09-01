@@ -166,3 +166,17 @@ httpRoute:
 # HEALTHCHECKPOLICY
 healthCheckPolicy:
   enabled: false
+
+networkPolicy:
+  enabled: false
+
+  healthCheck:
+    enabled: false
+    from: []
+    ports: []
+
+  ingress:
+    extraRules: []
+
+  egress:
+    extraRules: []

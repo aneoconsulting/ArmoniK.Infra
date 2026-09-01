@@ -1,0 +1,21 @@
+{{- if list .Values "networkPolicy" "enabled" | include "armonik.utils.index"}}
+
+{{/*
+  NGINX front NetworkPolicy (ingress + egress).
+*/}}
+{{- include "armonik.netpol.render" (dict
+      "context" .
+      "component" "nginx"
+      "config" (include "armonik.netpol.ingressNginx" . | fromYaml)
+  ) }}
+
+{{/*
+  GUI backend NetworkPolicy (ingress + egress).
+*/}}
+{{- include "armonik.netpol.render" (dict
+      "context" .
+      "component" "gui"
+      "config" (include "armonik.netpol.ingressGui" . | fromYaml)
+  ) }}
+
+{{- end }}

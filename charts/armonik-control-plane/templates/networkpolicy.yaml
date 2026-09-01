@@ -1,0 +1,34 @@
+{{- $networkPolicyEnabled := list .Values "networkPolicy" "enabled"
+    | include "armonik.utils.index"
+-}}
+
+{{- if and
+      $networkPolicyEnabled
+      (list .Values "networkPolicy" "submitter" "enabled"
+        | include "armonik.utils.index")
+}}
+
+{{ include "armonik.netpol.render" (dict
+      "context" .
+      "component" "submitter"
+      "config" (include "armonik.netpol.submitter" . | fromYaml)
+) }}
+
+{{- end }}
+
+
+{{- if and
+      $networkPolicyEnabled
+      (list .Values "networkPolicy" "metricsExporter" "enabled"
+        | include "armonik.utils.index")
+      (list .Values "metricsExporter" "enabled"
+        | include "armonik.utils.index")
+}}
+
+{{ include "armonik.netpol.render" (dict
+      "context" .
+      "component" "metrics-exporter"
+      "config" (include "armonik.netpol.metricsExporter" . | fromYaml)
+) }}
+
+{{- end }}

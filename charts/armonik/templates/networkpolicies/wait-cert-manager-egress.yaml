@@ -1,0 +1,17 @@
+{{- $ops := include "armonik.operators" $ | fromYaml }}
+
+{{- $networkPolicyEnabled := list .Values "networkPolicy" "enabled"
+    | include "armonik.utils.index"
+-}}
+
+{{/*
+  waitCertManagerEgress NetworkPolicy.
+*/}}
+
+{{- if and $networkPolicyEnabled $ops.certManager.deploy }}
+{{- include "armonik.netpol.render" (dict
+      "context" .
+      "component" "wait-cert-manager"
+      "config" (include "armonik.netpol.waitCertManagerEgress" . | fromYaml)
+  ) }}
+{{- end }}

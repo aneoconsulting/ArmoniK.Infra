@@ -1,0 +1,9 @@
+{{- if list .Values "networkPolicy" "enabled" | include "armonik.utils.index" }}
+
+{{- include "armonik.netpol.render" (dict
+      "context" .
+      "component" "network-policy"
+      "config" (include "armonik.netpol.computePlane" . | fromYaml)
+  ) }}
+
+{{- end }}

@@ -1,0 +1,16 @@
+{{- $networkPolicyEnabled := list .Values "networkPolicy" "enabled"
+    | include "armonik.utils.index"
+    | default false
+-}}
+
+{{/*
+  Compute-plane egress NetworkPolicy.
+*/}}
+
+{{- if $networkPolicyEnabled }}
+{{- include "armonik.netpol.render" (dict
+      "context" .
+      "component" "compute-plane-egress"
+      "config" (include "armonik.netpol.computePlaneEgress" . | fromYaml)
+  ) }}
+{{- end }}

@@ -1,0 +1,66 @@
+{{- define "armonik.netpol.render" -}}
+{{- $ctx := .context | default dict -}}
+{{- $component := .component | default dict -}}
+{{- $cfg := .config | default dict -}}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "armonik.fullname" $ctx }}-{{ $component }}
+  namespace: {{ $cfg.namespace | default (include "armonik.namespace" $ctx) | quote }}
+  labels:
+    app.kubernetes.io/component: {{ $component | quote }}
+    {{- include "armonik.labels" $ctx | nindent 4 }}
+spec:
+  podSelector:
+    {{- toYaml $cfg.podSelector | nindent 4 }}
+  policyTypes:
+    {{- $cfg.policyTypes | default (list "Ingress" "Egress") | toYaml | nindent 4 }}
+  {{- $ingressCfg := $cfg.ingress | default dict }}
+  {{- $ingressRules := concat ($ingressCfg.rules | default list) ($ingressCfg.extraRules | default list) }}
+  {{- if $ingressRules }}
+  ingress:
+    {{- toYaml $ingressRules | nindent 4 }}
+  {{- end }}
+  {{- $egressCfg := $cfg.egress | default dict }}
+  {{- $egressRules := concat ($egressCfg.rules | default list) ($egressCfg.extraRules | default list) }}
+  {{- if $egressRules }}
+  egress:
+    {{- toYaml $egressRules | nindent 4 }}
+  {{- end }}
+---
+{{- end }}
+
+
+{{- define "armonik.netpol.dnsRule" -}}
+{{- $cfg := . | default dict -}}
+{{- $namespace := $cfg.namespace | default "kube-system" -}}
+{{- $labels := $cfg.labels | default (dict "k8s-app" "kube-dns") -}}
+{{- $ports := $cfg.ports | default (list (dict "protocol" "UDP" "port" 53) (dict "protocol" "TCP" "port" 53)) -}}
+to:
+  - namespaceSelector:
+      matchLabels:
+        kubernetes.io/metadata.name: {{ $namespace }}
+    podSelector:
+      matchLabels:
+        {{- toYaml $labels | nindent 8 }}
+ports:
+  {{- toYaml $ports | nindent 2 }}
+{{- end -}}
+
+
+{{- define "armonik.netpol.kubeApiRule" -}}
+{{- $cfg := . | default dict -}}
+{{- $ports := $cfg.ports | default (list (dict "protocol" "TCP" "port" 443) (dict "protocol" "TCP" "port" 6443)) -}}
+ports:
+  {{- toYaml $ports | nindent 2 }}
+{{- end -}}
+
+{{- define "armonik.netpol.mergeRules" -}}
+  {{- $rules := list -}}
+  {{- range . -}}
+    {{- $name := index . 0 -}}
+    {{- $ctx := index . 1 -}}
+    {{- $rules = append $rules (include $name $ctx | fromYaml) -}}
+  {{- end -}}
+  {{- $rules | compact | toYaml -}}
+{{- end -}}

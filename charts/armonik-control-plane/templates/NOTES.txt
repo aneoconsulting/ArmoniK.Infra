@@ -4,3 +4,20 @@ To learn more about the release, try:
   $ helm status {{ .Release.Name }}
   $ helm get all {{ .Release.Name }}
   $ helm uninstall {{ .Release.Name }}
+
+{{- if .Values.networkPolicy.enabled }}
+
+NetworkPolicy status:
+  This policy allows DNS traffic by default.
+
+  If you install this chart by itself, add extra egress rules for mongodb,
+  rabbitmq/activemq, or redis under:
+    networkPolicy.submitter.extraEgressRules
+    networkPolicy.metricsExporter.extraEgressRules (mongodb only)
+
+  If you install it with the armonik umbrella, enable both settings:
+    networkPolicy.enabled=true                 (umbrella)
+    control-plane.networkPolicy.enabled=true   (this chart)
+  The umbrella setting adds the ingress/egress rules for the dependencies.
+
+{{- end }}

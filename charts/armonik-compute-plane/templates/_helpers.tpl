@@ -66,3 +66,31 @@ env:
   {{- $i = add $i 1 }}
   {{- end }}
 {{- end -}}
+
+{{/*
+  Compute-plane NetworkPolicy configuration.
+*/}}
+{{- define "armonik.netpol.computePlane" -}}
+podSelector:
+  matchLabels:
+    app.kubernetes.io/name: compute-plane
+
+policyTypes:
+  - Ingress
+  - Egress
+
+ingress:
+  rules: []
+  extraRules:
+    {{- .Values.networkPolicy.extraIngressRules | default list | toYaml | nindent 4 }}
+
+egress:
+  rules:
+    {{- list
+        (list "armonik.netpol.dnsRule" dict)
+      | include "armonik.netpol.mergeRules"
+      | nindent 2
+    }}
+  extraRules:
+    {{- .Values.networkPolicy.extraEgressRules | default list | toYaml | nindent 4 }}
+{{- end -}}

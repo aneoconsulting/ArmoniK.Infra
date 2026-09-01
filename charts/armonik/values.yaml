@@ -57,6 +57,7 @@ control-plane:
     enabled: true
   rbac:
     createBuiltInRoles: true
+  # priorityClassName:
 
 compute-plane:
   # Default partitions below make a plain `helm install` usable. enabled=false gives a base release
@@ -68,6 +69,8 @@ compute-plane:
   # Point the child at the conf Secrets this umbrella renders (overrides its "armonik" default).
   conf:
     source: '{{ .Release.Name }}'
+  # partitionCommon:
+  #   priorityClassName:
   # Partitions accumulate across values files; drop one of these with
   # `--set compute-plane.partitions.htcmock=null`.
   partitions:
@@ -95,6 +98,7 @@ conf:
 ################## INGRESS ##################
 ingress:
   enabled: true
+  # priorityClassName:
 
 # To bring your own MongoDB, set dependencies.mongodb.enabled=false and supply the connection via the
 # conf values (conf.core.env / conf.core.envFromSecret). The in-cluster psmdb-db (below) is the default.
@@ -139,6 +143,7 @@ dependencies:
       enabled: true
       serviceMonitor:
         enabled: true
+    # priorityClassName:
 
   ################## REDIS ##################
   redis:
@@ -170,6 +175,8 @@ dependencies:
       # Disable AOF persistence and RDB snapshots for performance reasons
       save ""
       appendonly no
+    # priorityClassName:
+
 
   # Bitnami chart compatible values
   # redis:
@@ -216,6 +223,8 @@ dependencies:
     fullnameOverride: "activemq"
     image:
       registry: docker.io
+    # priorityClassName defaults to system-cluster-critical
+    # priorityClassName:
 
   ################## MONGODB ##################
   # This default configuration is intended for a development/test cluster
@@ -230,6 +239,7 @@ dependencies:
     replsets:
       rs0:
         size: 1
+        # priorityClass:
     # existingConfigmap: "mongodb-armonik-scripts"
     tls:
       mode: preferTLS
@@ -279,11 +289,14 @@ dependencies:
           - '{{ include "armonik.monitoring.dashboardNamespaces.default" . }}'
       datasources:
         enabled: true
+    # priorityClassName:
+
 
   ################## FLUENT-BIT ##################
   fluent-bit:
     enabled: true
     fullnameOverride: "fluent-bit"
+    # priorityClassName:
     daemonSetVolumes:
       - name: runlogjournal
         hostPath:
@@ -594,6 +607,7 @@ dependencies:
       SEQ_API_LISTENURI: "http://+:5341"
     #   repository: $REPO-NAME/datalust/seq
     # imagePullSecrets: []
+    # priorityClassName:
 
   ################## PROMETHEUS ##################
   # kube-prometheus-stack moved to charts/armonik-operators, configured at operators.kube-prometheus.*.

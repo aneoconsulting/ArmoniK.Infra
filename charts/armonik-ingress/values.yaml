@@ -15,6 +15,7 @@ nodeSelector: {}
 tolerations: []
 annotations: {}
 affinity: {}
+priorityClassName: ""
 
 resources:
   limits:
@@ -109,6 +110,7 @@ loadBalancer:
   extraEnvFrom: []
   nodeSelector: {}
   tolerations: []
+  priorityClassName: ""
   annotations: {}
 
 ###########################################################
@@ -140,6 +142,7 @@ gui:
   tolerations: []
   annotations: {}
   affinity: {}
+  priorityClassName: ""
 
 static:
   environment.json:

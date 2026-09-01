@@ -66,6 +66,9 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      {{- with coalesce .Values.init.priorityClassName .Values.partitionCommon.priorityClassName }}
+      priorityClassName: {{ . | quote }}
+      {{- end }}
       enableServiceLinks: true
       dnsPolicy: ClusterFirst
       restartPolicy: OnFailure

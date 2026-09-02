@@ -166,6 +166,10 @@ dependencies:
       serviceMonitor:
         enabled: true
         port: http-metrics
+    valkeyConfig: |
+      # Disable AOF persistence and RDB snapshots for performance reasons
+      save ""
+      appendonly no
 
   # Bitnami chart compatible values
   # redis:

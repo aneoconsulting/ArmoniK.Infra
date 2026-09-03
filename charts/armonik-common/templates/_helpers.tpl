@@ -96,11 +96,11 @@ stop at ".svc" read global.clusterDomain and drop the suffix when it is empty.
   Generic port lookup.
 */}}
 {{- define "armonik.netpol.port" -}}
-{{- $ports := .ports | default list -}}
-{{- $name := .name -}}
-{{- range $port := $ports -}}
-  {{- if eq $port.name $name -}}
-    {{- $port.containerPort -}}
+  {{- $ports := .ports | default list -}}
+  {{- $name := .name -}}
+  {{- range $port := $ports -}}
+    {{- if eq $port.name $name -}}
+      {{- $port.containerPort -}}
+    {{- end -}}
   {{- end -}}
-{{- end -}}
 {{- end -}}

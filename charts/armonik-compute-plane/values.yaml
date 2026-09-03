@@ -11,6 +11,9 @@ imagePullSecrets: []
 # (external operators, KEDA trigger URL derived from conf.source).
 global:
   imageRegistry: "public.ecr.aws"
+  # Release name of the umbrella that owns the conf Secrets (defaults to "armonik").
+  armonik:
+    source: armonik
 
 serviceAccount:
   create: false
@@ -35,9 +38,6 @@ podDisruptionBudget:
 
 # Base conf, merged into the init Job only (agent/worker build theirs from partitionCommon).
 conf:
-  # Release name of the umbrella that owns the conf Secrets (defaults to "armonik").
-  # Overrides the umbrella's global.armonik.source for this release.
-  source: armonik
   # Overrides the umbrella's global.armonik.mountPath for this release (default "/mounts").
   # mountPath: /mounts
 

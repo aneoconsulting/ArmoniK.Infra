@@ -206,24 +206,24 @@ server {
 
     proxy_buffering off;
     proxy_request_buffering off;
-    {{- if $useEso }}
+    {{- if $root.Values.seq_url }}
+    set $seq_upstream {{ $root.Values.seq_url | quote }};
+    {{ include "armonik.seq.locations" $root }}
+    {{- else if $useEso }}
     {{`{{- if .seq }}`}}
     set $seq_upstream {{`{{ .seq | quote }}`}};
     {{ include "armonik.seq.locations" $root }}
     {{`{{- end }}`}}
-    {{- else if $root.Values.seq_url }}
-    set $seq_upstream {{ $root.Values.seq_url | quote }};
-    {{ include "armonik.seq.locations" $root }}
     {{- end }}
 
-    {{- if $useEso }}
+    {{- if $root.Values.grafana_url }}
+    set $grafana_upstream {{ $root.Values.grafana_url | quote }};
+    {{ include "armonik.grafana.locations" $root }}
+    {{- else if $useEso }}
     {{`{{- if .grafana }}`}}
     set $grafana_upstream {{`{{ .grafana | quote }}`}};
     {{ include "armonik.grafana.locations" $root }}
     {{`{{- end }}`}}
-    {{- else if $root.Values.grafana_url }}
-    set $grafana_upstream {{ $root.Values.grafana_url | quote }};
-    {{ include "armonik.grafana.locations" $root }}
     {{- end }}
 }
 {{- end -}}

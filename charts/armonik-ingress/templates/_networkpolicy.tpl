@@ -1,14 +1,4 @@
 {{/*
-  Generic namespace selector: matches the current namespace of the subchart
-  passed in context.
-*/}}
-{{- define "armonik.netpol.namespaceSelector" -}}
-matchLabels:
-  kubernetes.io/metadata.name: {{ include "armonik.namespace" . | quote }}
-{{- end -}}
-
-
-{{/*
   Nginx -> GUI
 */}}
 {{- define "armonik.netpol.rule.guiTo" -}}
@@ -21,56 +11,11 @@ to:
       {{- include "armonik.netpol.namespaceSelector" . | nindent 6 }}
     podSelector:
       matchLabels:
-        app.kubernetes.io/name: ingress
         app.kubernetes.io/component: gui
+        {{- include "armonik.selectorLabels" . | nindent 8 }}
 ports:
   - protocol: TCP
     port: {{ $guiPort }}
-{{- end -}}
-
-
-{{/*
-  Nginx -> control-plane.
-*/}}
-{{- define "armonik.netpol.rule.controlPlaneTo" -}}
-to:
-  - namespaceSelector: {}
-    podSelector:
-      matchLabels:
-        app.kubernetes.io/name: control-plane
-ports:
-  - protocol: TCP
-    port: 1080
-{{- end -}}
-
-
-{{/*
-  Nginx -> grafana.
-*/}}
-{{- define "armonik.netpol.rule.grafanaTo" -}}
-to:
-  - namespaceSelector: {}
-    podSelector:
-      matchLabels:
-        app.kubernetes.io/name: grafana
-ports:
-  - protocol: TCP
-    port: 3000 
-{{- end -}}
-
-
-{{/*
-  Nginx -> seq.
-*/}}
-{{- define "armonik.netpol.rule.seqTo" -}}
-to:
-  - namespaceSelector: {}
-    podSelector:
-      matchLabels:
-        app: seq
-ports:
-  - protocol: TCP
-    port: "ui"
 {{- end -}}
 
 
@@ -83,8 +28,8 @@ from:
       {{- include "armonik.netpol.namespaceSelector" . | nindent 6 }}
     podSelector:
       matchLabels:
-        app.kubernetes.io/name: ingress
         app.kubernetes.io/component: ingress
+        {{- include "armonik.selectorLabels" . | nindent 8 }}
 {{- end -}}
 
 
@@ -102,61 +47,24 @@ ports:
 
 
 {{/*
-  Optional extra health-check ingress rule only rendered when networkPolicy.healthCheck.enabled is true.
-*/}}
-{{- define "armonik.netpol.rule.ingressHealthCheck" -}}
-{{- $healthCheckEnabled := .Values.networkPolicy.healthCheck.enabled | default false -}}
-{{- if $healthCheckEnabled }}
-from:
-  {{- toYaml .Values.networkPolicy.healthCheck.from | nindent 2 }}
-ports:
-  {{- toYaml .Values.networkPolicy.healthCheck.ports | nindent 2 }}
-{{- end -}}
-{{- end -}}
-
-
-{{/*
-  Egress rules for the NGINX front pod:
-  nginx -> DNS
-  nginx -> GUI            (same namespace, precise selector)
-  nginx -> control-plane   (namespaceSelector: {})
-  nginx -> grafana         (namespaceSelector: {})
-  nginx -> seq             (namespaceSelector: {})
+  Egress rules for the NGINX front pod: DNS, GUI .
 */}}
 {{- define "armonik.netpol.nginxEgress" -}}
 {{- list
       (list "armonik.netpol.dnsRule" dict)
       (list "armonik.netpol.rule.guiTo" .)
-      (list "armonik.netpol.rule.controlPlaneTo" .)
-      (list "armonik.netpol.rule.grafanaTo" .)
-      (list "armonik.netpol.rule.seqTo" .)
     | include "armonik.netpol.mergeRules"
 -}}
 {{- end -}}
 
 
 {{/*
-  Ingress rules for the NGINX front pod:
-  - external client -> nginx (8080/9080)
-  - optional health-check
+  Ingress rules for the NGINX front pod: external client -> nginx (8080/9080). Wrapped in a
+  single list directly (not mergeRules) since nginxExternal always renders - mergeRules' merge
+  and null-filtering machinery is only needed for multiple or conditionally-empty rules.
 */}}
 {{- define "armonik.netpol.nginxIngress" -}}
-{{- list
-      (list "armonik.netpol.rule.nginxExternal" .)
-      (list "armonik.netpol.rule.ingressHealthCheck" .)
-    | include "armonik.netpol.mergeRules"
--}}
-{{- end -}}
-
-
-{{/*
-  Egress rules for the GUI pod: DNS only
-*/}}
-{{- define "armonik.netpol.guiEgress" -}}
-{{- list
-      (list "armonik.netpol.dnsRule" dict)
-    | include "armonik.netpol.mergeRules"
--}}
+{{- list (include "armonik.netpol.rule.nginxExternal" . | fromYaml) | toYaml -}}
 {{- end -}}
 
 
@@ -166,24 +74,28 @@ ports:
 {{- define "armonik.netpol.ingressNginx" -}}
 podSelector:
   matchLabels:
-    app.kubernetes.io/name: ingress
     app.kubernetes.io/component: ingress
-
-policyTypes:
-  - Ingress
-  - Egress
+    {{- include "armonik.selectorLabels" . | nindent 4 }}
 
 ingress:
-  rules:
-    {{- include "armonik.netpol.nginxIngress" . | nindent 4 }}
-  extraRules:
-    {{- toYaml (.Values.networkPolicy.ingress.extraRules | default list) | nindent 4 }}
+  {{- include "armonik.netpol.mergeExtra" (dict
+        "rules" (include "armonik.netpol.nginxIngress" .)
+        "extra" .Values.networkPolicy.nginx.extraIngressRules
+    ) | nindent 2 }}
 
 egress:
-  rules:
-    {{- include "armonik.netpol.nginxEgress" . | nindent 4 }}
-  extraRules:
-    {{- toYaml (.Values.networkPolicy.egress.extraRules | default list) | nindent 4 }}
+  {{- include "armonik.netpol.mergeExtra" (dict
+        "rules" (include "armonik.netpol.nginxEgress" .)
+        "extra" .Values.networkPolicy.nginx.extraEgressRules
+    ) | nindent 2 }}
+{{- end -}}
+
+
+{{- define "armonik.netpol.ingressHealthCheck" -}}
+podSelector:
+  {{- .Values.networkPolicy.healthCheckPodSelector | default dict | toYaml | nindent 2 }}
+ingress:
+  {{- .Values.networkPolicy.healthCheckRules | default list | toYaml | nindent 2 }}
 {{- end -}}
 
 
@@ -193,26 +105,18 @@ egress:
 {{- define "armonik.netpol.ingressGui" -}}
 podSelector:
   matchLabels:
-    app.kubernetes.io/name: ingress
     app.kubernetes.io/component: gui
-
-policyTypes:
-  - Ingress
-  - Egress
+    {{- include "armonik.selectorLabels" . | nindent 4 }}
 
 ingress:
-  rules:
-    {{- list
-          (list "armonik.netpol.rule.guiFrom" .)
-        | include "armonik.netpol.mergeRules"
-        | nindent 4
-    }}
-  extraRules:
-    {{- toYaml (.Values.networkPolicy.ingress.extraRules | default list) | nindent 4 }}
+  {{- include "armonik.netpol.mergeExtra" (dict
+        "rules" (list (include "armonik.netpol.rule.guiFrom" . | fromYaml) | toYaml)
+        "extra" .Values.networkPolicy.gui.extraIngressRules
+    ) | nindent 2 }}
 
 egress:
-  rules:
-    {{- include "armonik.netpol.guiEgress" . | nindent 4 }}
-  extraRules:
-    {{- toYaml (.Values.networkPolicy.egress.extraRules | default list) | nindent 4 }}
+  {{- include "armonik.netpol.mergeExtra" (dict
+        "rules" (list (include "armonik.netpol.dnsRule" dict | fromYaml) | toYaml)
+        "extra" .Values.networkPolicy.gui.extraEgressRules
+    ) | nindent 2 }}
 {{- end -}}

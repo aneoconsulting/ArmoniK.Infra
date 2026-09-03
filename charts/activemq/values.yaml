@@ -170,7 +170,8 @@ tls:
 
 networkPolicy:
   enabled: false
-  # Network policy is disabled by default for this generic chart.
-  # If enabled, define ingress rules explicitly for the clients that may
-  # access ActiveMQ and add any required egress rules for your environment.
-  ingress: []
+  extraIngressRules: []
+  extraEgressRules: []
+  # Namespace shared by control-plane, init and compute-plane pods.
+  # Empty matches any namespace via namespaceSelector: {}.
+  namespaceSelector: ""

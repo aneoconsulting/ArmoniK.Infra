@@ -192,13 +192,55 @@ healthCheckPolicy:
 networkPolicy:
   enabled: false
 
-  healthCheck:
-    enabled: false
-    from: []
-    ports: []
+  # Only rendered when gateway.enabled or httpRoute.enabled is true
+  healthCheckPodSelector: {}
+  # Ingress rules for the health-check policy: at minimum a "from" and a "ports" key
+  healthCheckRules: []
 
-  ingress:
-    extraRules: []
+  # NetworkPolicy for the nginx front pod.
+  nginx:
+    # Extra ingress rules appended to the chart's own rules. Each entry is
+    # a full NetworkPolicy rule: at minimum a "from" and a "ports" key.
+    extraIngressRules: []
+    # The chart's own egress rule only covers DNS + the GUI backend. In the
+    # umbrella, a separate precise NetworkPolicy covers this instead. Installed standalone, add
+    # your own egress rules here, e.g.:
+    # extraEgressRules:
+    #   - to:
+    #       - namespaceSelector:
+    #           matchLabels:
+    #             kubernetes.io/metadata.name: <namespace>
+    #         podSelector:
+    #           matchLabels:
+    #             app.kubernetes.io/component: control-plane
+    #     ports:
+    #       - protocol: TCP
+    #         port: 1080
+    #   - to:
+    #       - namespaceSelector:
+    #           matchLabels:
+    #             kubernetes.io/metadata.name: <namespace>
+    #         podSelector:
+    #           matchLabels:
+    #             app.kubernetes.io/name: grafana
+    #     ports:
+    #       - protocol: TCP
+    #         port: 3000
+    #   - to:
+    #       - namespaceSelector:
+    #           matchLabels:
+    #             kubernetes.io/metadata.name: <namespace>
+    #         podSelector:
+    #           matchLabels:
+    #             app: seq
+    #     ports:
+    #       - protocol: TCP
+    #         port: 80
+    extraEgressRules: []
 
-  egress:
-    extraRules: []
+  # NetworkPolicy for the GUI backend pod.
+  gui:
+    # Extra ingress rules appended to the chart's own rules (nginx only, by default).
+    extraIngressRules: []
+    # Extra egress rules appended to the chart's own rules (DNS).
+    extraEgressRules: []

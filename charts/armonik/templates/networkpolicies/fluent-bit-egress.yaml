@@ -1,7 +1,11 @@
-{{- if  list .Values "networkPolicy" "enabled" | include "armonik.utils.index" }}
+{{- $networkPolicyEnabled := list .Values "networkPolicy" "enabled" | include "armonik.utils.index" -}}
+
+{{- $fluentBitEgress := include "armonik.netpol.fluentBitEgress" . | fromYaml -}}
+
+{{- if and $networkPolicyEnabled $fluentBitEgress }}
 {{- include "armonik.netpol.render" (dict
       "context" .
       "component" "fluent-bit"
-      "config" (include "armonik.netpol.fluentBitEgress" . | fromYaml)
+      "config" $fluentBitEgress
   ) }}
 {{- end }}

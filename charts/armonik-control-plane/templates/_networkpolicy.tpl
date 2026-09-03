@@ -1,66 +1,41 @@
-{{- define "armonik.netpol.port" -}}
-{{- $ports := .ports | default list -}}
-{{- $name := .name -}}
-{{- range $port := $ports -}}
-  {{- if eq $port.name $name -}}
-    {{- $port.containerPort -}}
-  {{- end -}}
-{{- end -}}
-{{- end -}}
-
-
-
 {{/*
-  Submitter egress rules.
+  Ingress from Prometheus (the submitter's own /metrics), derived from
+  global.armonik.monitoring.prometheusUrl (see armonik.netpol.rule.prometheusIngress in
+  armonik-common). Ingress from nginx (grpc/http) needs .Subcharts visibility this chart doesn't
+  have, so it stays umbrella-only (armonik.netpol.controlPlaneSubmitter).
 */}}
-{{- define "armonik.netpol.rule.submitterEgress" -}}
-rules:
-  - {{- include "armonik.netpol.dnsRule" dict | nindent 4 }}
+{{- define "armonik.netpol.submitter.prometheusIngress" -}}
+{{- $port := include "armonik.netpol.port" (dict "ports" .Values.ports "name" "metrics-port") | int -}}
+{{- list . $port .Values.networkPolicy.submitter.prometheusPodSelector | include "armonik.netpol.rule.prometheusIngress" -}}
 {{- end -}}
 
-
-{{/*
-  Metrics-exporter ingress rules.
-*/}}
-{{- define "armonik.netpol.rule.metricsExporterIngress" -}}
-
-{{- $metricsPort := include "armonik.netpol.port" (dict
-      "ports" .Values.metricsExporter.ports
-      "name" "metrics-port"
-    ) | int -}}
-
-rules:
-  - from:
-      - namespaceSelector: {}
-    ports:
-      - protocol: TCP
-        port: {{ $metricsPort }}
-
-{{- end -}}
-
-
-{{/*
-  Metrics-exporter egress rules.
-*/}}
-{{- define "armonik.netpol.rule.metricsExporterEgress" -}}
-rules:
-  - {{- include "armonik.netpol.dnsRule" dict | nindent 4 }}
-{{- end -}}
 
 {{- define "armonik.netpol.submitter" -}}
 podSelector:
   matchLabels:
-    app.kubernetes.io/name: control-plane
-policyTypes:
-  - Ingress
-  - Egress
+    {{- include "armonik.selectorLabels" $ | nindent 4 }}
 ingress:
-  extraRules:
-    {{- toYaml (.Values.networkPolicy.submitter.extraIngressRules | default list) | nindent 4 }}
+  {{- include "armonik.netpol.mergeExtra" (dict
+        "rules" (list (list "armonik.netpol.submitter.prometheusIngress" .) | include "armonik.netpol.mergeRules")
+        "extra" .Values.networkPolicy.submitter.extraIngressRules
+    ) | nindent 2 }}
 egress:
-  {{- include "armonik.netpol.rule.submitterEgress" . | nindent 2 }}
-  extraRules:
-    {{- toYaml (.Values.networkPolicy.submitter.extraEgressRules | default list) | nindent 4 }}
+  {{- include "armonik.netpol.mergeExtra" (dict
+        "rules" (list (include "armonik.netpol.dnsRule" dict | fromYaml) | toYaml)
+        "extra" .Values.networkPolicy.submitter.extraEgressRules
+    ) | nindent 2 }}
+{{- end -}}
+
+
+{{/*
+  Ingress from Prometheus, derived from global.armonik.monitoring.prometheusUrl (see
+  armonik.netpol.rule.prometheusIngress in armonik-common) - resolves the same whether installed
+  standalone or through the umbrella. KEDA's own ingress needs .Subcharts visibility this chart
+  doesn't have, so it stays umbrella-only (armonik.netpol.controlPlaneMetricsExporter).
+*/}}
+{{- define "armonik.netpol.metricsExporter.prometheusIngress" -}}
+{{- $port := include "armonik.netpol.port" (dict "ports" .Values.metricsExporter.ports "name" "metrics-port") | int -}}
+{{- list . $port .Values.networkPolicy.metricsExporter.prometheusPodSelector | include "armonik.netpol.rule.prometheusIngress" -}}
 {{- end -}}
 
 
@@ -68,15 +43,14 @@ egress:
 podSelector:
   matchLabels:
     app.kubernetes.io/component: metrics-exporter
-policyTypes:
-  - Ingress
-  - Egress
 ingress:
-  {{- include "armonik.netpol.rule.metricsExporterIngress" . | nindent 2 }}
-  extraRules:
-    {{- toYaml (.Values.networkPolicy.metricsExporter.extraIngressRules | default list) | nindent 4 }}
+  {{- include "armonik.netpol.mergeExtra" (dict
+        "rules" (list (list "armonik.netpol.metricsExporter.prometheusIngress" .) | include "armonik.netpol.mergeRules")
+        "extra" .Values.networkPolicy.metricsExporter.extraIngressRules
+    ) | nindent 2 }}
 egress:
-  {{- include "armonik.netpol.rule.metricsExporterEgress" . | nindent 2 }}
-  extraRules:
-    {{- toYaml (.Values.networkPolicy.metricsExporter.extraEgressRules | default list) | nindent 4 }}
+  {{- include "armonik.netpol.mergeExtra" (dict
+        "rules" (list (include "armonik.netpol.dnsRule" dict | fromYaml) | toYaml)
+        "extra" .Values.networkPolicy.metricsExporter.extraEgressRules
+    ) | nindent 2 }}
 {{- end -}}

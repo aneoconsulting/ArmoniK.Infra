@@ -68,29 +68,32 @@ env:
 {{- end -}}
 
 {{/*
+  Ingress from Prometheus (poll-agent metrics), derived from global.armonik.monitoring.prometheusUrl
+  (see armonik.netpol.rule.prometheusIngress in armonik-common) - resolves the same whether
+  installed standalone or through the umbrella.
+*/}}
+{{- define "armonik.netpol.computePlane.prometheusIngress" -}}
+{{- list . (.Values.partitionCommon.agent.ports.containerPort | int) .Values.networkPolicy.prometheusPodSelector | include "armonik.netpol.rule.prometheusIngress" -}}
+{{- end -}}
+
+
+{{/*
   Compute-plane NetworkPolicy configuration.
 */}}
 {{- define "armonik.netpol.computePlane" -}}
 podSelector:
   matchLabels:
-    app.kubernetes.io/name: compute-plane
-
-policyTypes:
-  - Ingress
-  - Egress
+    {{- include "armonik.selectorLabels" $ | nindent 4 }}
 
 ingress:
-  rules: []
-  extraRules:
-    {{- .Values.networkPolicy.extraIngressRules | default list | toYaml | nindent 4 }}
+  {{- include "armonik.netpol.mergeExtra" (dict
+        "rules" (list (list "armonik.netpol.computePlane.prometheusIngress" .) | include "armonik.netpol.mergeRules")
+        "extra" .Values.networkPolicy.extraIngressRules
+    ) | nindent 2 }}
 
 egress:
-  rules:
-    {{- list
-        (list "armonik.netpol.dnsRule" dict)
-      | include "armonik.netpol.mergeRules"
-      | nindent 2
-    }}
-  extraRules:
-    {{- .Values.networkPolicy.extraEgressRules | default list | toYaml | nindent 4 }}
+  {{- include "armonik.netpol.mergeExtra" (dict
+        "rules" (list (include "armonik.netpol.dnsRule" dict | fromYaml) | toYaml)
+        "extra" .Values.networkPolicy.extraEgressRules
+    ) | nindent 2 }}
 {{- end -}}

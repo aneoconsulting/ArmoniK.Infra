@@ -58,13 +58,16 @@ spec:
       serviceAccount: {{ include "armonik.serviceAccountName" $ }}
       {{- end }}
       shareProcessNamespace: false
-      {{- with coalesce .Values.init.nodeSelector .Values.partitionCommon.nodeSelector }}
+      {{- with .Values.init.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with coalesce .Values.init.tolerations .Values.partitionCommon.tolerations }}
+      {{- with .Values.init.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.init.priorityClassName }}
+      priorityClassName: {{ . | quote }}
       {{- end }}
       enableServiceLinks: true
       dnsPolicy: ClusterFirst

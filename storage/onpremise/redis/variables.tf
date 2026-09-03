@@ -14,6 +14,7 @@ variable "redis" {
     image_pull_secrets = string
     max_memory         = string
     max_memory_samples = number
+    enable_persistence = optional(bool, false)
   })
 }
 

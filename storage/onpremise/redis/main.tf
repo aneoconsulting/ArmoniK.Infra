@@ -63,7 +63,10 @@ resource "kubernetes_deployment" "redis" {
             "--requirepass ${random_password.redis_password.result}",
             "--maxmemory ${var.redis.max_memory}",
             var.redis.max_memory_samples != null ? "--maxmemory-samples ${var.redis.max_memory_samples}" : null,
-            "--maxmemory-policy allkeys-lru"
+            "--maxmemory-policy allkeys-lru",
+            # Disable AOF persistence and RDB snapshots for performance reasons
+            var.redis.enable_persistence ? null : "--save \"\"",
+            var.redis.enable_persistence ? null : "--appendonly no",
           ])
           port {
             container_port = 6379

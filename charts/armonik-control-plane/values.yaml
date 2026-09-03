@@ -201,10 +201,49 @@ networkPolicy:
   enabled: false
   submitter:
     enabled: true
+    # Pod selector matching Prometheus, for the built-in ingress rule below. Defaults to
+    # app.kubernetes.io/name: prometheus (kube-prometheus-stack's own label).
+    prometheusPodSelector:
     extraIngressRules: []
+    # DNS-only by default. Add your own rules below.
+    # extraEgressRules:
+    #   - to:
+    #       - namespaceSelector:
+    #           matchLabels:
+    #             kubernetes.io/metadata.name: <namespace>   # MongoDB's namespace
+    #         podSelector:
+    #           matchLabels:
+    #             app.kubernetes.io/name: percona-server-mongodb
+    #     ports:
+    #       - protocol: TCP
+    #         port: 27017
+    #   - to:
+    #       - namespaceSelector:
+    #           matchLabels:
+    #             kubernetes.io/metadata.name: <namespace>   # ActiveMQ's namespace
+    #         podSelector:
+    #           matchLabels:
+    #             app.kubernetes.io/name: activemq
+    #     ports:
+    #       - protocol: TCP
+    #         port: 5672
+    #   - to:
+    #       - namespaceSelector:
+    #           matchLabels:
+    #             kubernetes.io/metadata.name: <namespace>   # Redis's namespace
+    #         podSelector:
+    #           matchLabels:
+    #             app.kubernetes.io/name: redis
+    #     ports:
+    #       - protocol: TCP
+    #         port: 6379
     extraEgressRules: []
 
   metricsExporter:
     enabled: true
+    # Pod selector matching Prometheus, for the built-in ingress rule below. Defaults to
+    # app.kubernetes.io/name: prometheus (kube-prometheus-stack's own label).
+    prometheusPodSelector:
     extraIngressRules: []
+    # DNS-only by default, same as submitter.extraEgressRules above (MongoDB only).
     extraEgressRules: []

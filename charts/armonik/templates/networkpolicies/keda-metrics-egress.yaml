@@ -1,0 +1,13 @@
+{{- $ops := include "armonik.operators" $ | fromYaml }}
+
+{{- $networkPolicyEnabled := list .Values "networkPolicy" "enabled"
+    | include "armonik.utils.index"
+-}}
+
+{{- if and $networkPolicyEnabled $ops.keda.available $ops.keda.namespace }}
+{{- include "armonik.netpol.render" (dict
+      "context" .
+      "component" "keda-metrics-egress"
+      "config" (include "armonik.netpol.kedaMetricsEgress" . | fromYaml)
+  ) }}
+{{- end }}

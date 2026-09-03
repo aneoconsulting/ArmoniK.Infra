@@ -8,11 +8,11 @@
         | include "armonik.utils.index")
 }}
 
-{{ include "armonik.netpol.render" (dict
+{{- include "armonik.netpol.render" (dict
       "context" .
       "component" "submitter"
       "config" (include "armonik.netpol.submitter" . | fromYaml)
-) }}
+  ) }}
 
 {{- end }}
 
@@ -25,10 +25,10 @@
         | include "armonik.utils.index")
 }}
 
-{{ include "armonik.netpol.render" (dict
+{{- include "armonik.netpol.render" (dict
       "context" .
       "component" "metrics-exporter"
       "config" (include "armonik.netpol.metricsExporter" . | fromYaml)
-) }}
+  ) }}
 
 {{- end }}

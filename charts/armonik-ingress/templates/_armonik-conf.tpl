@@ -210,8 +210,8 @@ server {
     set $seq_upstream {{ $root.Values.seq_url | quote }};
     {{ include "armonik.seq.locations" $root }}
     {{- else if $useEso }}
-    {{`{{- if .seq }}`}}
-    set $seq_upstream {{`{{ .seq | quote }}`}};
+    {{`{{- if index . "seq" }}`}}
+    set $seq_upstream {{`{{ index . "seq" | quote }}`}};
     {{ include "armonik.seq.locations" $root }}
     {{`{{- end }}`}}
     {{- end }}
@@ -220,8 +220,8 @@ server {
     set $grafana_upstream {{ $root.Values.grafana_url | quote }};
     {{ include "armonik.grafana.locations" $root }}
     {{- else if $useEso }}
-    {{`{{- if .grafana }}`}}
-    set $grafana_upstream {{`{{ .grafana | quote }}`}};
+    {{`{{- if index . "grafana" }}`}}
+    set $grafana_upstream {{`{{ index . "grafana" | quote }}`}};
     {{ include "armonik.grafana.locations" $root }}
     {{`{{- end }}`}}
     {{- end }}

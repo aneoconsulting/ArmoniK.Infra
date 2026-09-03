@@ -1,0 +1,17 @@
+{{- $networkPolicyEnabled := list .Values "networkPolicy" "enabled"
+    | include "armonik.utils.index"
+-}}
+
+{{/*
+  Nginx front pod egress to control-plane, grafana and seq. Requires the umbrella, since only
+  it can resolve their real namespace/selector via .Subcharts.
+*/}}
+{{- $ingressEgress := include "armonik.netpol.ingressEgress" . | fromYaml -}}
+
+{{- if and $networkPolicyEnabled $ingressEgress }}
+{{- include "armonik.netpol.render" (dict
+      "context" .
+      "component" "nginx-egress"
+      "config" $ingressEgress
+  ) }}
+{{- end }}

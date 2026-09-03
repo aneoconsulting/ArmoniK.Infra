@@ -18,4 +18,17 @@
       "config" (include "armonik.netpol.ingressGui" . | fromYaml)
   ) }}
 
+{{/*
+  Gateway/httpRoute health-check NetworkPolicy: standalone, not scoped to nginx (see
+  armonik.netpol.ingressHealthCheck). Only rendered when there is an actual health-checker to
+  allow in.
+*/}}
+{{- if or .Values.gateway.enabled .Values.httpRoute.enabled }}
+{{- include "armonik.netpol.render" (dict
+      "context" .
+      "component" "healthcheck"
+      "config" (include "armonik.netpol.ingressHealthCheck" . | fromYaml)
+  ) }}
+{{- end }}
+
 {{- end }}

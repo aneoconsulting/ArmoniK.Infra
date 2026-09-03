@@ -1,9 +1,11 @@
 {{- if .Values.networkPolicy.enabled }}
+{{- $namespaceSelector := .Values.networkPolicy.namespaceSelector | default "" -}}
+{{- $clientsNamespaceSelector := $namespaceSelector | empty | ternary dict (dict "matchLabels" (dict "kubernetes.io/metadata.name" $namespaceSelector)) -}}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: {{ include "activemq.fullname" . }}-network-policy
-  namespace: {{ .Release.Namespace }}
+  namespace: {{ include "activemq.namespace" . | quote }}
   labels:
     {{- include "activemq.labels" . | nindent 4 }}
 spec:
@@ -14,10 +16,30 @@ spec:
   policyTypes:
     - Ingress
     - Egress
-  {{- if .Values.networkPolicy.ingress }}
   ingress:
-    {{- toYaml .Values.networkPolicy.ingress | nindent 4 }}
-  {{- end }}
+    # ArmoniK's own control-plane (submitter + init job) and compute-plane pods, assumed to all
+    # share one namespace - see networkPolicy.namespaceSelector in values.yaml.
+    - from:
+        - namespaceSelector:
+            {{- $clientsNamespaceSelector | toYaml | nindent 12 }}
+          podSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/component
+                operator: In
+                values:
+                  - control-plane
+                  - init
+        - namespaceSelector:
+            {{- $clientsNamespaceSelector | toYaml | nindent 12 }}
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/part-of: compute-plane
+      ports:
+        - protocol: TCP
+          port: {{ .Values.containerPort.amqp }}
+    {{- with .Values.networkPolicy.extraIngressRules }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
   egress:
     # Allow DNS resolution
     - to:
@@ -32,4 +54,7 @@ spec:
           port: 53
         - protocol: TCP
           port: 53
+    {{- with .Values.networkPolicy.extraEgressRules }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
 {{- end }}

@@ -8,16 +8,21 @@ To learn more about the release, try:
 {{- if .Values.networkPolicy.enabled }}
 
 NetworkPolicy status:
-  This policy allows DNS traffic by default.
+  This chart's own rule allows DNS only. Sharing a namespace with an armonik umbrella release
+  that also has networkPolicy.enabled true and already covers this egress - nothing to do.
+  Otherwise, add your own rule (networkPolicy.submitter.extraEgressRules;
+  networkPolicy.metricsExporter.extraEgressRules for MongoDB only), e.g. for MongoDB:
 
-  If you install this chart by itself, add extra egress rules for mongodb,
-  rabbitmq/activemq, or redis under:
-    networkPolicy.submitter.extraEgressRules
-    networkPolicy.metricsExporter.extraEgressRules (mongodb only)
-
-  If you install it with the armonik umbrella, enable both settings:
-    networkPolicy.enabled=true                 (umbrella)
-    control-plane.networkPolicy.enabled=true   (this chart)
-  The umbrella setting adds the ingress/egress rules for the dependencies.
+    networkPolicy.submitter.extraEgressRules:
+      - to:
+          - namespaceSelector:
+              matchLabels:
+                kubernetes.io/metadata.name: <namespace>
+            podSelector:
+              matchLabels:
+                app.kubernetes.io/name: percona-server-mongodb
+        ports:
+          - protocol: TCP
+            port: 27017
 
 {{- end }}

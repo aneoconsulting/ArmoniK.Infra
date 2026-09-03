@@ -4,6 +4,7 @@ global:
   environment:
     name: ci
     description: ArmoniK CI environment
+urlsSecretName: example-urls
 gateway:
   enabled: true
   # No chart default; the Gateway is invalid without it.

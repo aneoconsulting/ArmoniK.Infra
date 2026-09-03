@@ -13,9 +13,9 @@ dependencies:
   version: v1.21.1
 - name: psmdb-operator
   repository: https://percona.github.io/percona-helm-charts/
-  version: 1.23.0
+  version: 1.23.1
 - name: kube-prometheus-stack
   repository: https://prometheus-community.github.io/helm-charts
   version: 82.18.0
-digest: sha256:b882ab5421fa1fc0158c3f0c9970ac05fba7eadadd8cd06855e9fc4fb4fc2d09
-generated: "2026-08-28T15:58:07.058669199+02:00"
+digest: sha256:d05b90207f877ad56370b3e2d14ec3384a1d80e35ce4405fcd7723b22bbe9c75
+generated: "2026-09-04T15:43:36.877728168+02:00"

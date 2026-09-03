@@ -27,7 +27,7 @@ spec:
       type: Opaque
       data:
         armonik.conf: |
-          {{- dict "root" . "useEso" true |include "armonik.conf.render" | nindent 10 }}
+          {{- dict "root" . "useEso" true | include "armonik.conf.render" | nindent 10 }}
   dataFrom:
     - extract:
         key: {{ $urlsSecretKey }}

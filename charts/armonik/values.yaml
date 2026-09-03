@@ -23,7 +23,11 @@ global:
     mountPath: /mounts
     # Point the child at the conf Secrets this umbrella renders (overrides its "armonik" default).
     source: '{{ .Release.Name }}'
-    # Control plane release name
+    # Release name of the control-plane, used to build the control-plane URL.
+    # Only needed when the control plane is installed as its own release, separate from this umbrella:
+    # Set it to that release's name, e.g. --set global.armonik.controlPlane=my-cp.
+    # A top-level controlPlane.source on this chart (e.g. --set controlPlane.source=my-cp) takes precedence
+    # over this global if both are set.
     controlPlane: '{{ .Release.Name }}'
     # Operator control (semantics in armonik-common/values.yaml). All-in-one default: this release
     # installs every operator, through the armonik-operators subchart.

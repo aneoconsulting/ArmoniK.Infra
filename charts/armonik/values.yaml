@@ -21,6 +21,14 @@ global:
   # Root dir for conf mount Secrets in pods; propagated to subcharts. env strings and volumeMounts derive from it.
   armonik:
     mountPath: /mounts
+    # Point the child at the conf Secrets this umbrella renders (overrides its "armonik" default).
+    source: '{{ .Release.Name }}'
+    # Release name of the control-plane, used to build the control-plane URL.
+    # Only needed when the control plane is installed as its own release, separate from this umbrella:
+    # Set it to that release's name, e.g. --set global.armonik.controlPlane=my-cp.
+    # A top-level controlPlane.source on this chart (e.g. --set controlPlane.source=my-cp) takes precedence
+    # over this global if both are set.
+    controlPlane: '{{ .Release.Name }}'
     # Operator control (semantics in armonik-common/values.yaml). All-in-one default: this release
     # installs every operator, through the armonik-operators subchart.
     operators:
@@ -50,9 +58,6 @@ control-plane:
     #   podReserved: 50
     #   preemptionPercentage: 20
     #   priority: 1
-  # Point the child at the conf Secrets this umbrella renders (overrides its "armonik" default).
-  conf:
-    source: '{{ .Release.Name }}'
   init:
     enabled: true
   rbac:
@@ -66,9 +71,6 @@ compute-plane:
   enabled: true
   serviceAccount:
     create: true
-  # Point the child at the conf Secrets this umbrella renders (overrides its "armonik" default).
-  conf:
-    source: '{{ .Release.Name }}'
   # partitionCommon:
   #   priorityClassName:
   # Partitions accumulate across values files; drop one of these with
@@ -91,7 +93,6 @@ compute-plane:
 
 conf:
   # Names every <source>-conf-<layer> Secret the umbrella renders (this release).
-  source: '{{ .Release.Name }}'
   log:
     minimumLevel: Information
 
@@ -99,6 +100,7 @@ conf:
 ingress:
   enabled: true
   # priorityClassName:
+  urlsSecretName: '{{ .Release.Name }}-urls'
 
 # To bring your own MongoDB, set dependencies.mongodb.enabled=false and supply the connection via the
 # conf values (conf.core.env / conf.core.envFromSecret). The in-cluster psmdb-db (below) is the default.
@@ -268,7 +270,7 @@ dependencies:
     grafana.ini:
       server:
         # Keep root_url path-less and serve_from_sub_path false: the ingress publishes Grafana
-        # under a prefix it injects itself (armonik-ingress templates/configmaps/nginx.yaml),
+        # under a prefix it injects itself (armonik-ingress templates/armonik-nginx-conf.yaml),
         # which needs an empty appSubUrl. Enforced by armonik/templates/validate.yaml.
         domain: grafana.local
         root_url: http://grafana

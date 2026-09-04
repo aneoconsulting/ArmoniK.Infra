@@ -7,15 +7,15 @@ dependencies:
   version: 2.20.2
 - name: external-secrets
   repository: https://charts.external-secrets.io
-  version: 2.9.0
+  version: 2.10.0
 - name: cert-manager
   repository: https://charts.jetstack.io
   version: v1.21.1
 - name: psmdb-operator
   repository: https://percona.github.io/percona-helm-charts/
-  version: 1.23.0
+  version: 1.23.1
 - name: kube-prometheus-stack
   repository: https://prometheus-community.github.io/helm-charts
   version: 82.18.0
-digest: sha256:181107d629a9cf6d5b691bc0d15cf9b4e6dfe9ba3afa58b8a99fd7a2ff2f7535
-generated: "2026-08-11T17:24:56.161359231+02:00"
+digest: sha256:d05b90207f877ad56370b3e2d14ec3384a1d80e35ce4405fcd7723b22bbe9c75
+generated: "2026-09-04T15:43:36.877728168+02:00"

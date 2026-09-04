@@ -3,7 +3,7 @@ apiVersion: gateway.networking.k8s.io/v1beta1
 kind: HTTPRoute
 metadata:
   name: {{ .Values.httpRoute.name | default (printf "%s-route" (include "armonik.fullname" .)) | quote }}
-  namespace: {{ .Values.httpRoute.namespace | default (include "armonik.namespace" .) | quote }}
+  namespace: {{ include "armonik.namespace" . | quote }}
   labels:
     app.kubernetes.io/component: ingress
     {{- include "armonik.labels" . | nindent 4 }}
@@ -52,9 +52,21 @@ spec:
     - path:
         type: PathPrefix
         value: /
+      headers:
+        - type: Exact
+          name: content-type
+          value: application/grpc
+    backendRefs:
+      - name: {{ include "armonik.fullname" . | quote }}
+        port: {{ dict "protocol" "grpc" "root" . | include "armonik.httpRoute.port" }}
+
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
 
     backendRefs:
     - name: {{ include "armonik.fullname" . }}
-      port: 5000
+      port: {{ dict "protocol" "http" "root" . | include "armonik.httpRoute.port" }}
   {{- end }}
 {{- end }}

@@ -4,6 +4,7 @@ global:
   environment:
     name: ci
     description: ArmoniK CI environment
+urlsSecretName: example-urls
 loadBalancer:
   enabled: true
   defaultCluster: cluster-a

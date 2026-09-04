@@ -1,9 +1,12 @@
 {{- $image := list $ .Values.image | include "armonik.utils.imageConf" | fromYaml }}
+{{- $ops := include "armonik.operators" . | fromYaml -}}
+{{- $urlsSecretKey := .Values.urlsSecretName | default "" -}}
+{{- $useEso := and $ops.externalSecrets.available (ne $urlsSecretKey "") -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ include "armonik.fullname" . }}
-  namespace: {{ include "armonik.namespace" . }}
+  namespace: {{ include "armonik.namespace" . | quote }}
   labels:
     app.kubernetes.io/component: ingress
     {{- include "armonik.labels" . | nindent 4 }}
@@ -21,7 +24,7 @@ spec:
     metadata:
       annotations:
         # Roll the pod when the nginx conf changes so config updates
-        checksum/config: {{ include (print $.Template.BasePath "/configmaps/nginx.yaml") . | sha256sum }}
+        checksum/config: {{ include (print $.Template.BasePath "/armonik-nginx-conf.yaml") . | sha256sum }}
       labels:
         app.kubernetes.io/component: ingress
         {{- include "armonik.selectorLabels" . | nindent 8 }}
@@ -117,8 +120,8 @@ spec:
           secretName: {{ include "armonik.fullname" . }}-mtls-ca
       {{- end}}
       - name: conf
-        configMap:
-          name: {{ include "armonik.fullname" . }}-conf
+        secret:
+          secretName: {{ include "armonik.fullname" . }}-conf
           defaultMode: 420
           optional: false
       - name: static

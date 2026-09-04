@@ -7,3 +7,4 @@ global:
   environment:
     name: ci
     description: ArmoniK CI environment
+urlsSecretName: example-urls

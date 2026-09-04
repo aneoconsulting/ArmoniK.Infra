@@ -17,6 +17,28 @@ Calculate port based on protocol and TLS status
 {{- end -}}
 {{- end -}}
 
+{{/*
+  Resolve the service port for the requested protocol.
+  For headless services, use the container port instead.
+*/}}
+{{- define "armonik.httpRoute.port" -}}
+{{- $protocol := .protocol -}}
+{{- $root := .root -}}
+
+{{- range $root.Values.ports }}
+  {{- if eq .protocol $protocol }}
+    {{- if eq $root.Values.service.type "HeadLess" }}
+      {{- include "armonik.ingress.containerPort" (dict
+        "protocol" .protocol
+        "root" $root
+      ) -}}
+    {{- else }}
+      {{- .servicePort -}}
+    {{- end }}
+  {{- end }}
+{{- end }}
+{{- end }}
+
 {{- define "armonik.ingress.mtlsCnPattern" -}}
   {{- $mtls := .mtls | default dict -}}
   {{- if $mtls.enabled -}}
@@ -31,7 +53,7 @@ Calculate port based on protocol and TLS status
 {{- end -}}
 
 {{- define "armonik.ingress.serviceType" -}}
-  {{- if .Values.gateway.enabled -}}
+  {{- if .Values.httpRoute.enabled -}}
     ClusterIP
   {{- else -}}
     {{ .Values.service.type }}

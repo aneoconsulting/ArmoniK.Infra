@@ -91,3 +91,14 @@ stop at ".svc" read global.clusterDomain and drop the suffix when it is empty.
   {{- $global := list .Values "global" "clusterDomain" | include "armonik.utils.index" -}}
   {{- coalesce $tls.clusterDomain .Values.clusterDomain $global "cluster.local" -}}
 {{- end -}}
+
+{{- define "armonik.controlPlane.servicePort" -}}
+	{{- $ports := list .Values "control-plane" "service" "ports" | include "armonik.utils.index" | fromYamlArray -}}
+	{{- $port := 0 -}}
+	{{- range $servicePort := $ports -}}
+		{{- if eq (get $servicePort "name") "control-port" -}}
+			{{- $port = int (get $servicePort "port") -}}
+		{{- end -}}
+	{{- end -}}
+	{{- $port -}}
+{{- end }}

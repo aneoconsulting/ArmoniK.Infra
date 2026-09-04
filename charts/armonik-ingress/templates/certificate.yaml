@@ -17,7 +17,7 @@ metadata:
     "helm.sh/hook-weight": "0"
   {{- end }}
   name: {{ include "armonik.fullname" . }}-issuer
-  namespace: {{ include "armonik.namespace" . }}
+  namespace: {{ include "armonik.namespace" . | quote }}
 spec:
   selfSigned: {}
 {{- end }}
@@ -26,7 +26,7 @@ apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: {{ include "armonik.fullname" . }}
-  namespace: {{ include "armonik.namespace" . }}
+  namespace: {{ include "armonik.namespace" . | quote }}
   {{- if $ops.certManager.deploy }}
   {{- /* Hooked only when this release installs the CRDs; otherwise a plain resource. */}}
   annotations:

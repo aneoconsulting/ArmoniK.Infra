@@ -1,0 +1,43 @@
+suite: operator control surface
+release:
+  name: t
+templates:
+  - operators-guard.yaml
+  - secrets/conf-secrets.yaml
+  - cert-manager-wait.yaml
+tests:
+  - it: rejects an operator deployed but not available
+    template: operators-guard.yaml
+    set:
+      global:
+        armonik:
+          operators:
+            keda:
+              deploy: true
+              available: false
+    asserts:
+      - failedTemplate:
+          errorPattern: "deploy=true but available=false"
+  - it: fails secret-backed conf when the ESO operator is unavailable
+    template: secrets/conf-secrets.yaml
+    set:
+      global:
+        armonik:
+          operators:
+            externalSecrets:
+              deploy: false
+              available: false
+    asserts:
+      - failedTemplate:
+          errorPattern: "envSecret and envFromSecret require ExternalSecretsOperator"
+  - it: hooks the cert-manager wait job with before-hook-creation
+    template: cert-manager-wait.yaml
+    documentSelector:
+      path: kind
+      value: Job
+    asserts:
+      - exists:
+          path: metadata.annotations["helm.sh/hook"]
+      - matchRegex:
+          path: metadata.annotations["helm.sh/hook-delete-policy"]
+          pattern: before-hook-creation

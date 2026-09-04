@@ -1,0 +1,24 @@
+dependencies:
+- name: activemq
+  repository: file://../activemq
+  version: 1.0.0
+- name: valkey
+  repository: https://valkey.io/valkey-helm/
+  version: 0.9.4
+- name: psmdb-db
+  repository: https://percona.github.io/percona-helm-charts/
+  version: 1.23.0
+- name: rabbitmq
+  repository: https://charts.bitnami.com/bitnami
+  version: 15.5.3
+- name: grafana
+  repository: https://grafana.github.io/helm-charts
+  version: 8.15.0
+- name: fluent-bit
+  repository: https://fluent.github.io/helm-charts
+  version: 0.58.1
+- name: seq
+  repository: https://helm.datalust.co
+  version: 2024.3.2
+digest: sha256:4029712459ff7c25055c0f13f5f53d1b5680bcdcf4998723c4eae288dd94306b
+generated: "2026-08-19T14:38:05.825013498+02:00"

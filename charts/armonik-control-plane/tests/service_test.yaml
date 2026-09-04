@@ -1,0 +1,46 @@
+suite: services and init job gates
+templates:
+  - services/control-plane.yaml
+  - services/metrics-exporter.yaml
+  - jobs/init.yaml
+tests:
+  - it: renders a ClusterIP service by default
+    template: services/control-plane.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: spec.type
+          value: ClusterIP
+  - it: renders a headless service on demand
+    template: services/control-plane.yaml
+    set:
+      service:
+        serviceType: HeadLess
+    asserts:
+      - equal:
+          path: spec.clusterIP
+          value: None
+  - it: renders no metrics-exporter service when the exporter is disabled
+    template: services/metrics-exporter.yaml
+    set:
+      metricsExporter:
+        enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+  - it: renders no init job by default (standalone)
+    template: jobs/init.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+  - it: renders the init job when enabled
+    template: jobs/init.yaml
+    set:
+      init:
+        enabled: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: Job

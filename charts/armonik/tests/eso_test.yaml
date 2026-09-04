@@ -1,0 +1,39 @@
+suite: conf secrets and external-secrets channel
+# The ESO-unavailable guard lives in operators_test.yaml, with the rest of the
+# global.armonik.operators control surface.
+release:
+  name: t
+templates:
+  - secrets/conf-secrets.yaml
+tests:
+  - it: aggregates credentialed layers into an ExternalSecret with defaults
+    documentSelector:
+      path: metadata.name
+      value: t-conf-core
+    asserts:
+      - isKind:
+          of: ExternalSecret
+      - isAPIVersion:
+          of: external-secrets.io/v1
+      - equal:
+          path: spec.secretStoreRef.name
+          value: t-conf-store
+      # storage partials feed the core layer from the enabled backends
+      - equal:
+          path: spec.target.template.data.Amqp__Host
+          value: activemq.NAMESPACE.svc.cluster.local
+  - it: materializes user conf env into the layer Secret
+    values:
+      - ../ci/minimal-values.yaml
+    set:
+      conf:
+        control:
+          env:
+            MyTestKey: my-value
+    documentSelector:
+      path: metadata.name
+      value: t-conf-control
+    asserts:
+      - equal:
+          path: stringData.MyTestKey
+          value: my-value

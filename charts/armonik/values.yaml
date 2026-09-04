@@ -2,432 +2,632 @@
 ################## GLOBAL ##################
 ############################################
 global:
-  version:   
-    armonikCore: "0.31.2" ### TODO FIX VERSIONS GLOBAL IF NULL USE DEFAULT IN SUB CHARTS COMPUTE-PLANE
-    #armonikPollingagent: "0.31.2"
-    #armonikGui: "0.13.40"
-    #nginx: "1.27.4-alpine-slim"
+  version:
+    armonikCore: "0.40.1"  ### TODO FIX VERSIONS GLOBAL IF NULL USE DEFAULT IN SUB CHARTS COMPUTE-PLANE
+    # armonikPollingagent: "0.35.0"
+    # armonikGui: "0.14.5"
+    # nginx: "1.27.4-alpine-slim"
   image:
-    pullPolicy: IfNotPresent # FOR KEDA IMAGES
-    registry: "" # FOR KEDA IMAGES
-  imageRegistry: "" # FOR BITNAMI IMAGES AND ARMONIK IMAGES
-  #imagePullSecrets: [{"name": "secret"}] # FOR BITNAMI IMAGES AND ARMONIK IMAGES
-  dependencies:
-    controlPlane: true
-    computePlane: true
-    ingress: true
-    activemq: false
-    redis: true
-    mongodb: true
-    kubePrometheus: true
-    keda: true
-    rabbitmq: true
-    grafana: true
-    fluentBit: true
-    seq: true
-    certManager: true
+    pullPolicy: IfNotPresent  # FOR KEDA IMAGES
+    registry: ""  # FOR KEDA IMAGES
+  imageRegistry: ""  # "public.ecr.aws" # FOR BITNAMI IMAGES AND ARMONIK IMAGES
+  security:
+    allowInsecureImages: true
+  # imagePullSecrets: [{"name": "secret"}] # FOR BITNAMI IMAGES AND ARMONIK IMAGES
   environment:
-    name: "local"
-    description: "Armonik environment"
+    description: "ArmoniK environment"
+  # Cluster DNS domain. Empty stops hostnames at ".svc"; callers needing an FQDN use cluster.local.
+  clusterDomain: ""
+  # Root dir for conf mount Secrets in pods; propagated to subcharts. env strings and volumeMounts derive from it.
+  armonik:
+    mountPath: /mounts
+    # Point the child at the conf Secrets this umbrella renders (overrides its "armonik" default).
+    source: '{{ .Release.Name }}'
+    # Release name of the control-plane, used to build the control-plane URL.
+    # Only needed when the control plane is installed as its own release, separate from this umbrella:
+    # Set it to that release's name, e.g. --set global.armonik.controlPlane=my-cp.
+    # A top-level controlPlane.source on this chart (e.g. --set controlPlane.source=my-cp) takes precedence
+    # over this global if both are set.
+    controlPlane: '{{ .Release.Name }}'
+    # Operator control (semantics in armonik-common/values.yaml). All-in-one default: this release
+    # installs every operator, through the armonik-operators subchart.
+    operators:
+      externalSecrets:
+        deploy: true
+      keda:
+        deploy: true
+      certManager:
+        deploy: true
+      mongodbOperator:
+        deploy: true
+      prometheusOperator:
+        deploy: true
+    # monitoring.{prometheusUrl,metricsExporterUrl} come from armonik-common (see its README); both derive
+    # from the operators namespaces above, which a layered install has to state.
+
 
 ############################################
 ### ARMONIK APPLICATION CONFIGURATION #####
 ############################################
-# control-plane: []
-# compute-plane: []
+control-plane:
+  enabled: true
+  defaultPartition: default
+  extraPartitions:
+    # default:
+    #   podMax: 100
+    #   podReserved: 50
+    #   preemptionPercentage: 20
+    #   priority: 1
+  init:
+    enabled: true
+  rbac:
+    createBuiltInRoles: true
+  # priorityClassName:
 
-### TODO FIX CONFIG CORE AND LOG IF NULL USE DEFAULT IN CM TEMPLATES
-config:
-  core:
-    data:
-      #Amqp__AllowHostMismatch: "true"
-      #Amqp__CaPath: /amqp/tls-combined.pem
-      Amqp__MaxPriority: "10"
-      #Amqp__MaxRetries: "5"
-      Amqp__Port: "5672"
-      Amqp__QueueStorage__LockRefreshExtension: "00:02:00"
-      Amqp__QueueStorage__LockRefreshPeriodicity: "00:00:45"
-      Amqp__QueueStorage__PollPeriodicity: "00:00:10"
-      Amqp__Scheme: AMQP
-      Amqp__Password: admin
-      Amqp__User: admin
-      Authenticator__RequireAuthentication: "false"
-      Authenticator__RequireAuthorization: "false"
-      # Components__ObjectStorageAdaptorSettings__ClassName: ArmoniK.Core.Adapters.Embed.ObjectBuilder
-      # Components__ObjectStorageAdaptorSettings__AdapterAbsolutePath: /adapters/object/embed/ArmoniK.Core.Adapters.Embed.dll
-      Components__ObjectStorageAdaptorSettings__ClassName: ArmoniK.Core.Adapters.Redis.ObjectBuilder
-      Components__ObjectStorageAdaptorSettings__AdapterAbsolutePath: /adapters/object/redis/ArmoniK.Core.Adapters.Redis.dll
-      Components__ObjectStorage: ArmoniK.Adapters.Redis.ObjectStorage
-      Components__QueueAdaptorSettings__AdapterAbsolutePath: /adapters/queue/amqp/ArmoniK.Core.Adapters.Amqp.dll
-      Components__QueueAdaptorSettings__ClassName: ArmoniK.Core.Adapters.Amqp.QueueBuilder
-      Components__TableStorage: ArmoniK.Adapters.MongoDB.TableStorage
-      MongoDB__User: root
-      MongoDB__AllowInsecureTls: "true"
-      MongoDB__AuthSource: admin
-      #MongoDB__CAFile: /mongodb/certs/mongodb-ca-key
-      MongoDB__DataRetention: 1.00:00:00
-      MongoDB__DatabaseName: database
-      MongoDB__DirectConnection: "true"
-      MongoDB__Host: mongodb-headless
-      MongoDB__Port: "27017"
-      MongoDB__ReplicaSet: rs0
-      #MongoDB__Sharding: "true"
-      MongoDB__TableStorage__PollingDelay: "00:00:01"
-      MongoDB__TableStorage__PollingDelayMax: "00:00:10"
-      MongoDB__TableStorage__PollingDelayMin: "00:00:01"
-      MongoDB__Tls: "false"
-      Redis__User: ""
-      #Redis__CaPath: /redis/ca.crt
-      Redis__ClientName: ArmoniK.Core
-      Redis__EndpointUrl: redis-master:6379
-      #Redis__EndpointUrl: redis-headless:6379
-      Redis__InstanceName: ArmoniKRedis
-      Redis__Ssl: "false"
-      #Redis__SslHost: 127.0.0.1
-      Redis__Timeout: "30000"
-      Redis__TtlTimeSpan: 1.00:00:00  
+compute-plane:
+  # Default partitions below make a plain `helm install` usable. enabled=false gives a base release
+  # (control-plane + storage + operators + conf) whose partitions come from separate
+  # armonik-compute-plane releases instead; see NOTES.txt. enabled=true requires at least one partition.
+  enabled: true
+  serviceAccount:
+    create: true
+  # partitionCommon:
+  #   priorityClassName:
+  # Partitions accumulate across values files; drop one of these with
+  # `--set compute-plane.partitions.htcmock=null`.
+  partitions:
+    default:
+      worker:
+        image:
+          name: "armonik-dynamic-dotnet-worker"
+          tag: "0.21.2"
+    stream:
+      worker:
+        image:
+          name: "armonik_core_stream_test_worker"
+    htcmock:
+      socketType: "tcp"
+      worker:
+        image:
+          name: "armonik_core_htcmock_test_worker"
+
+conf:
+  # Names every <source>-conf-<layer> Secret the umbrella renders (this release).
   log:
-    name: log-configmap
-    data:
-      minimumLevel: Information
-      overrides:
-        ArmoniK.Core.Common.Auth.Authentication.Authenticator: Warning
-        Grpc.AspNetCore.Server.ServerCallHandler: Warning
-        Microsoft.AspNetCore.Authorization: Warning
-        Microsoft.AspNetCore.Hosting.Diagnostics: Warning
-        Microsoft.AspNetCore.Routing: Warning
-        Microsoft.AspNetCore.Routing.EndpointMiddleware: Warning
-        Microsoft.AspNetCore.Server.Kestrel: Warning
-        Microsoft.Extensions.Diagnostics.HealthChecks: Warning
-        Microsoft.Extensions.Http.DefaultHttpClientFactory: Warning
-        Serilog.AspNetCore.RequestLoggingMiddleware: Warning
+    minimumLevel: Information
+
+################## INGRESS ##################
+ingress:
+  enabled: true
+  # priorityClassName:
+  urlsSecretName: '{{ .Release.Name }}-urls'
+
+# To bring your own MongoDB, set dependencies.mongodb.enabled=false and supply the connection via the
+# conf values (conf.core.env / conf.core.envFromSecret). The in-cluster psmdb-db (below) is the default.
+
+############################################
+############ CERT-MANAGER WAIT #############
+############################################
+# Job gating Certificate/Issuer CRs on the cert-manager webhook being Available with its CA injected.
+# Rendered only when this release installs cert-manager; covers every emitter (ingress, activemq).
+certManagerWait:
+  image:
+    repository: alpine/k8s
+    tag: 1.31.0
+    pullPolicy: IfNotPresent
+  timeout: 300s
 
 ############################################
 ############### DEPENDENCIES ###############
 ############################################
 
-################# RABBITMQ #################
-rabbitmq:
-  fullnameOverride: "rabbitmq"
-  auth:
-    username: "admin"
-    password: "admin"
-    # tls:
-    #   enabled: false
-    #   autoGenerated: false
-  #esourcesPreset: nano
-  persistence:
+dependencies:
+  ################# RABBITMQ #################
+  rabbitmq:
+    image:
+      registry: bitnamilegacy
+      repository: rabbitmq
+      tag: 4.1.3
     enabled: false
-  metrics:
-    enabled: true
-    serviceMonitor:
-      enabled: true
-
-################## REDIS ##################
-redis:
-  useStatefulSet: true
-  replica:
-    replicaCount: 1
+    fullnameOverride: "rabbitmq"
+    auth:
+      username: "admin"
+      password: "admin"
+      # tls:
+      #   enabled: false
+      #   autoGenerated: false
+    # esourcesPreset: nano
     persistence:
       enabled: false
-    autoscaling:
-      enabled: false
-      targetCPU: "80"
-      targetMemory: "80"
-  fullnameOverride: "redis"
-  tls: #BUG CHART https://github.com/bitnami/charts/issues/29616
-    enabled: false
-    autoGenerated: false
-    authClients: false
-    # existingSecret: redis-crt
-    # certFilename: "tls-combined.pem"
-    # certKeyFilename: "tls.key"
-    # certCAFilename: "ca.crt"
-  usernames:
-    admin: admin
-  master:
-    resourcesPreset: nano
-    persistence:
-      enabled: false
-    containerPorts:
-      redis: 6379
-  metrics:
-    enabled: true
-    serviceMonitor:
-      enabled: true
-
-################## ACTIVEMQ ##################
-activemq:
-  replicas: 1
-  fullnameOverride: "activemq"
-
-################## MONGODB ##################
-mongodb:
-  replicas: 2
-  metrics:
-    enabled: true
-    serviceMonitor:
-      enabled: true
-  architecture: "replicaset"
-  fullnameOverride: "mongodb"
-  useStatefulSet: true
-  replicaCount: 1
-  persistence:
-    enabled: false
-  #existingConfigmap: "mongodb-armonik-scripts"
-  tls:
-    enabled: false
-    mode: allowTLS
-    autoGenerated: true
-    replicaset:
-      existingSecret: mongodb-crt
-
-################## KEDA ##################
-keda:
-  crds:
-    install: true
-  prometheus:
-    metricServer:
+    metrics:
+      image:
+        registry: public.ecr.aws
       enabled: true
       serviceMonitor:
         enabled: true
-  certificates:
-    certManager:
+    # priorityClassName:
+
+  ################## REDIS ##################
+  redis:
+    enabled: true
+    image:
+      registry: public.ecr.aws
+    auth:
+      enabled: true
+      usersExistingSecret: "redis-users"
+      aclUsers:
+        default:
+          permissions: "~* &* +@all"
+    replica:
       enabled: false
-      issuer: {"generate":false,"group":"cert-manager.io","kind":"ClusterIssuer","name":"armonik-selfsigned-issuer"}
-  image:
-    pullPolicy: IfNotPresent
-  #imagePullSecrets: []
+    tls:
+      enabled: false
+      existingSecret: ""
+      serverPublicKey: ""
+      serverKey: ""
+      caPublicKey: ""
+    metrics:
+      enabled: true
+      image:
+        registry: public.ecr.aws
+      serviceMonitor:
+        enabled: true
+        port: http-metrics
+    valkeyConfig: |
+      # Disable AOF persistence and RDB snapshots for performance reasons
+      save ""
+      appendonly no
+    # priorityClassName:
 
-################## CERT-MANAGER ##################
-cert-manager:
-  installCRDs: true
-  fullnameOverride: "cert-manager"
-  prometheus:
-    servicemonitor:
-      enabled : true
 
-################## GRAFANA ##################
-grafana:
-  serviceMonitor:
+  # Bitnami chart compatible values
+  # redis:
+  #   enabled: true
+  #   image:
+  #     registry: public.ecr.aws
+  #   useStatefulSet: true
+  #   replica:
+  #     replicaCount: 1
+  #     persistence:
+  #       enabled: false
+  #     autoscaling:
+  #       enabled: false
+  #       targetCPU: "80"
+  #       targetMemory: "80"
+  #   fullnameOverride: "redis"
+  #   tls: #BUG CHART https://github.com/bitnami/charts/issues/29616
+  #     enabled: false
+  #     autoGenerated: false
+  #     authClients: false
+  #     # existingSecret: redis-crt
+  #     # certFilename: "tls-combined.pem"
+  #     # certKeyFilename: "tls.key"
+  #     # certCAFilename: "ca.crt"
+  #   usernames:
+  #     admin: admin
+  #   master:
+  #     resourcesPreset: nano
+  #     persistence:
+  #       enabled: false
+  #     containerPorts:
+  #       redis: 6379
+  #   metrics:
+  #     image:
+  #         registry: public.ecr.aws
+  #     enabled: true
+  #     serviceMonitor:
+  #       enabled: true
+
+  ################## ACTIVEMQ ##################
+  activemq:
     enabled: true
-  fullnameOverride: "grafana"
-  grafana.ini:
-    server:
-      domain: grafana.local
-      root_url: http://grafana
-      serve_from_sub_path: true
-    anonymous:
-      enabled: true
-    auth.anonymous:
-      enabled: true
-  sidecar:
-    dashboards:
-      enabled: true
-      folderAnnotation: "grafana_dashboard_folder"
-      label: "grafana_dashboard"
-    datasources:
-      enabled: true
+    replicas: 1
+    fullnameOverride: "activemq"
+    image:
+      registry: docker.io
+    # priorityClassName defaults to system-cluster-critical
+    # priorityClassName:
 
-################## FLUENT-BIT ##################
-fluent-bit:
-  fullnameOverride: "fluent-bit"
-  daemonset:
+  ################## MONGODB ##################
+  # This default configuration is intended for a development/test cluster
+  # Sharding is not supported yet
+  # Please check Percona's MongoDB Helm chart documentation @ https://github.com/percona/percona-helm-charts/tree/main/charts/psmdb-db
+  mongodb:
     enabled: true
-  metrics:
+    sharding:
+      enabled: false
+    backup:
+      enabled: false
+    replsets:
+      rs0:
+        size: 1
+        # priorityClass:
+    # existingConfigmap: "mongodb-armonik-scripts"
+    tls:
+      mode: preferTLS
+      allowInvalidCertificates: true
+      # issuerConf:
+      #   name: armonik-selfsigned-issuer
+      #   kind: ClusterIssuer
+      #   group: cert-manager.io
+    unsafeFlags:
+      replsetSize: true
+      tls: true
+    finalizers: []
+
+  # KEDA moved to charts/armonik-operators, configured at operators.keda.*.
+
+  # cert-manager moved to charts/armonik-operators, configured at operators.cert-manager.*.
+
+  ################## GRAFANA ##################
+  grafana:
+    image:
+      registry: docker.io
     enabled: true
     serviceMonitor:
       enabled: true
-  #existingConfigMap: "fluent-bit-config-armonik" # Bug chart Bitnami
-  extraVolumes: |
-    - name: runlogjournal
-      hostPath:
-        path: /run/log/journal
-        type: ''
-    - name: dmesg
-      hostPath:
-        path: /var/log/dmesg
-        type: ''
-  extraVolumeMounts: |
-    - name: runlogjournal
-      readOnly: true
-      mountPath: /run/log/journal
-      mountPropagation: None
-    - name: dmesg
-      readOnly: true
-      mountPath: /var/log/dmesg
-      mountPropagation: None
-  config:
-    filters: |
-      [FILTER]
-          Name                kubernetes
-          Match               *
-          Kube_URL            https://kubernetes.default.svc:443
-          Kube_CA_File        /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-          Kube_Token_File     /var/run/secrets/kubernetes.io/serviceaccount/token
-          Kube_Tag_Prefix     kube.var.log.containers.
-          Merge_Log           On
-          Merge_Log_Key       log
-          Merge_Log_Trim      On
-          Merge_Parser        json
-          Keep_Log            Off
-          Annotations         On
-          Labels              On
-          K8S-Logging.Parser  On
-          K8S-Logging.Exclude Off
-          Buffer_Size         0
-      [FILTER]
-          Name                    parser
-          Match                   *
-          key_name                message
-          Parser                  json
-      [FILTER]
-          Name                    nest
-          Match                   *
-          Operation               lift
-          Nested_under            kubernetes
-          Add_prefix              kubernetes_
-      [FILTER]
-          Name                    nest
-          Match                   *
-          Operation               lift
-          Nested_under            message
-      [FILTER]
-          Name                    modify
-          Match                   *
-          Condition               Key_exists message
-          Rename                  message @m
-          Add                     sourcetype renamelog
-    inputs: |
-      [INPUT]
-          Name               tail
-          Tag                kube.*
-          Path               /var/log/containers/control-plane*.log, /var/log/containers/compute-plane*.log
-          Parser             cri
-          Docker_Mode        On
-          Buffer_Chunk_Size  512KB
-          Buffer_Max_Size    5M
-          Rotate_Wait        30
-          Mem_Buf_Limit      30MB
-          Skip_Long_Lines    Off
-          Refresh_Interval   10
-          READ_FROM_HEAD     On
-      [INPUT]
-          Name               tail
-          Tag                application.*
-          Path               /var/log/containers/control-plane*.log, /var/log/containers/compute-plane*.log, /var/log/containers/ingress*.log, /var/log/containers/mongodb*.log, /var/log/containers/keda*.log
-          Parser             cri
-          Docker_Mode        On
-          Buffer_Chunk_Size  512KB
-          Buffer_Max_Size    5M
-          Rotate_Wait        30
-          Mem_Buf_Limit      30MB
-          Skip_Long_Lines    Off
-          Refresh_Interval   10
-          READ_FROM_HEAD     On
-      [INPUT]
-          Name               tail
-          Tag                s3-application.*
-          Path               /var/log/containers/control-plane*.log, /var/log/containers/compute-plane*.log, /var/log/containers/ingress*.log, /var/log/containers/mongodb*.log, /var/log/containers/keda*.log
-          Parser             cri
-          Docker_Mode        On
-          Buffer_Chunk_Size  512KB
-          Buffer_Max_Size    5M
-          Rotate_Wait        30
-          Mem_Buf_Limit      30MB
-          Skip_Long_Lines    Off
-          Refresh_Interval   10
-          READ_FROM_HEAD     On
-    outputs: |
-      [OUTPUT]
-          Name                    http
-          Match                   kube.*
-          Host                    seq
-          Port                    5341
-          URI                     /api/events/raw?clef
-          Header                  ContentType application/vnd.serilog.clef
-          Format                  json_lines
-          json_date_key           @t
-          json_date_format        iso8601
-    customParsers: |
-      [PARSER]
-          Name   apache
-          Format regex
-          Regex  ^(?<host>[^ ]*) [^ ]* (?<user>[^ ]*) \[(?<time>[^\]]*)\] "(?<method>\S+)(?: +(?<path>[^\"]*?)(?: +\S*)?)?" (?<code>[^ ]*) (?<size>[^ ]*)(?: "(?<referer>[^\"]*)" "(?<agent>[^\"]*)")?$
-          Time_Key time
-          Time_Format %d/%b/%Y:%H:%M:%S %z
-      [PARSER]
-          Name   apache2
-          Format regex
-          Regex  ^(?<host>[^ ]*) [^ ]* (?<user>[^ ]*) \[(?<time>[^\]]*)\] "(?<method>\S+)(?: +(?<path>[^ ]*) +\S*)?" (?<code>[^ ]*) (?<size>[^ ]*)(?: "(?<referer>[^\"]*)" "(?<agent>[^\"]*)")?$
-          Time_Key time
-          Time_Format %d/%b/%Y:%H:%M:%S %z
-      [PARSER]
-          Name   apache_error
-          Format regex
-          Regex  ^\[[^ ]* (?<time>[^\]]*)\] \[(?<level>[^\]]*)\](?: \[pid (?<pid>[^\]]*)\])?( \[client (?<client>[^\]]*)\])? (?<message>.*)$
-      [PARSER]
-          Name   nginx
-          Format regex
-          Regex ^(?<remote>[^ ]*) (?<host>[^ ]*) (?<user>[^ ]*) \[(?<time>[^\]]*)\] "(?<method>\S+)(?: +(?<path>[^\"]*?)(?: +\S*)?)?" (?<code>[^ ]*) (?<size>[^ ]*)(?: "(?<referer>[^\"]*)" "(?<agent>[^\"]*)")?$
-          Time_Key time
-          Time_Format %d/%b/%Y:%H:%M:%S %z
-      [PARSER]
-          Name   json
-          Format json
-          Time_Key time
-          Time_Format %d/%b/%Y:%H:%M:%S %z
-      [PARSER]
-          Name        docker
-          Format      json
-          Time_Key    time
-          Time_Format %Y-%m-%dT%H:%M:%S.%L
-          Time_Keep   On
-      [PARSER]
-          Name cri
-          Format regex
-          Regex ^(?:(?<time>[^\s]+)\s+(?<stream>\w+)\s+(?<logtag>\w+)\s+)?(?<message>\{.*\})$
-          Time_Key time
-          Time_Format %Y-%m-%dT%H:%M:%S.%L
-          Time_Keep On
-      [PARSER]
-          Name        syslog
-          Format      regex
-          Regex       ^\<(?<pri>[0-9]+)\>(?<time>[^ ]* {1,2}[^ ]* [^ ]*) (?<host>[^ ]*) (?<ident>[a-zA-Z0-9_\/\.\-]*)(?:\[(?<pid>[0-9]+)\])?(?:[^\:]*\:)? *(?<message>.*)$
-          Time_Key    time
-          Time_Format %b %d %H:%M:%S
+    fullnameOverride: "grafana"
+    grafana.ini:
+      server:
+        # Keep root_url path-less and serve_from_sub_path false: the ingress publishes Grafana
+        # under a prefix it injects itself (armonik-ingress templates/armonik-nginx-conf.yaml),
+        # which needs an empty appSubUrl. Enforced by armonik/templates/validate.yaml.
+        domain: grafana.local
+        root_url: http://grafana
+        serve_from_sub_path: false
+      auth.anonymous:
+        enabled: true
+    sidecar:
+      dashboards:
+        enabled: true
+        folderAnnotation: "grafana_dashboard_folder"
+        label: "grafana_dashboard"
+        # -- Namespaces the sidecar watches: this release's plus the prometheusOperator namespace,
+        # where kps renders the standard k8s/node dashboards (the sidecar sees only its own by default;
+        # `rbac.namespaced=false` already grants the cluster-wide read).
+        # Beware `helm upgrade --reuse-values`: it replays the old coalesced values, where the grafana
+        # chart's own `searchNamespace: null` beats this default. Pass values explicitly.
+        searchNamespace:
+          - '{{ include "armonik.monitoring.dashboardNamespaces.default" . }}'
+      datasources:
+        enabled: true
+    # priorityClassName:
 
-################## SEQ ##################
-seq:
-  fullnameOverride: "seq"
-  persistence:
-    enabled: false
-  image:
-    pullPolicy: IfNotPresent
-  #   repository: $REPO-NAME/datalust/seq
-  # imagePullSecrets: []
 
-################## INGRESS ##################
-ingress:
-  ingress:
-    type: LoadBalancer
+  ################## FLUENT-BIT ##################
+  fluent-bit:
+    enabled: true
+    fullnameOverride: "fluent-bit"
+    # priorityClassName:
+    daemonSetVolumes:
+      - name: runlogjournal
+        hostPath:
+          path: /run/log/journal
+          type: ''
+      - name: dmesg
+        hostPath:
+          path: /var/log/dmesg
+          type: ''
+      - name: varlog
+        hostPath:
+          path: /var/log
+          type: ''
+      - name: varlibdockercontainers
+        hostPath:
+          path: /var/lib/docker/containers
+          type: ''
+    daemonSetVolumeMounts:
+      - name: runlogjournal
+        readOnly: true
+        mountPath: /run/log/journal
+      - name: dmesg
+        readOnly: true
+        mountPath: /var/log/dmesg
+      - name: varlog
+        readOnly: true
+        mountPath: /var/log
+      - name: varlibdockercontainers
+        readOnly: true
+        mountPath: /var/lib/docker/containers
 
-################## PROMETHEUS ##################
-kube-prometheus:
-  operator.image.registry: ""
-  fullnameOverride: "prometheus"
-  alertmanager:
-    enabled: false
-  blackboxExporter:
-    enabled: false
-  prometheus:
-    scrapeInterval: 10s
-    evaluationInterval: 30s
-    additionalScrapeConfigs:
-      enabled: true
-      type: external
-      external:
-        name: additional-scrape-configs
-        key: prometheus-additional.yaml
+    config:
+            # Parsers_File  /fluent-bit/etc/parsers.conf
+      service: |
+        [SERVICE]
+            Daemon        Off
+            Flush         1
+            Log_Level     info
+            Parsers_File  /fluent-bit/etc/conf/custom_parsers.conf
+            HTTP_Server   On
+            HTTP_Listen   0.0.0.0
+            HTTP_Port     2020
+            Health_Check  On
+      inputs: |
+        [INPUT]
+            Name               tail
+            Tag                kube.*
+            Path               /var/log/containers/*control-plane*.log, /var/log/containers/*compute-plane*.log
+            Parser             cri
+            Docker_Mode        On
+            Buffer_Chunk_Size  512KB
+            Buffer_Max_Size    5M
+            Rotate_Wait        30
+            Mem_Buf_Limit      30MB
+            Skip_Long_Lines    Off
+            Refresh_Interval   10
+            Read_from_Head     On
+        [INPUT]
+            Name               tail
+            Tag                application.*
+            Path               /var/log/containers/*control-plane*.log, /var/log/containers/*compute-plane*.log, /var/log/containers/*ingress*.log, /var/log/containers/mongodb*.log, /var/log/containers/keda*.log
+            Parser             cri
+            Buffer_Chunk_Size  512KB
+            Buffer_Max_Size    5M
+            Rotate_Wait        30
+            Mem_Buf_Limit      30MB
+            Skip_Long_Lines    Off
+            Refresh_Interval   10
+            Read_from_Head     On
+      filters: |
+        [FILTER]
+            Name                kubernetes
+            Match               *
+            Kube_URL            https://kubernetes.default.svc:443
+            Kube_CA_File        /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+            Kube_Token_File     /var/run/secrets/kubernetes.io/serviceaccount/token
+            Kube_Tag_Prefix     kube.var.log.containers.
+            Merge_Log           On
+            Merge_Log_Trim      On
+            Merge_Parser        json
+            Keep_Log            Off
+            Annotations         On
+            Labels              On
+            K8S-Logging.Parser  On
+            K8S-Logging.Exclude Off
+            Buffer_Size         0
+        [FILTER]
+            Name                    nest
+            Match                   *
+            Operation               lift
+            Nested_under            kubernetes
+            Add_prefix              kubernetes_
+        [FILTER]
+            Name                    modify
+            Match                   *
+            Condition               Key_exists log
+            Rename                  log @m
+            Add                     sourcetype renamelog
+      outputs: |
+        [OUTPUT]
+            Name                    http
+            Match                   kube.*
+            Host                    seq
+            Port                    5341
+            URI                     /api/events/raw?clef
+            Header                  Content-Type application/vnd.serilog.clef
+            Format                  json_lines
+            json_date_key           @t
+            json_date_format        iso8601
+        [OUTPUT]
+            Name                    stdout
+            Match                   kube.*
+      customParsers: |
+        [PARSER]
+            Name   json
+            Format json
+            Time_Key time
+            Time_Format %Y-%m-%dT%H:%M:%S.%L%z
+        [PARSER]
+            Name cri
+            Format regex
+            Regex ^(?<time>[^ ]+) (?<stream>stdout|stderr) (?<logtag>[^ ]*) (?<log>.*)$
+            Time_Key time
+            Time_Format %Y-%m-%dT%H:%M:%S.%L%z
+            Time_Keep On
 
+    # Regex ^(?:(?<time>[^\s]+)\s+(?<stream>\w+)\s+(?<logtag>\w+)\s+)?(?<log>\{.*\})$
+  # fluent-bit:
+  #   image:
+  #       registry: public.ecr.aws
+  #   enabled: true
+  #   fullnameOverride: "fluent-bit"
+  #   daemonset:
+  #     enabled: true
+  #   metrics:
+  #     enabled: true
+  #     serviceMonitor:
+  #       enabled: true
+  #   #existingConfigMap: "fluent-bit-config-armonik" # Bug chart Bitnami
+  #   extraVolumes: |
+  #     - name: runlogjournal
+  #       hostPath:
+  #         path: /run/log/journal
+  #         type: ''
+  #     - name: dmesg
+  #       hostPath:
+  #         path: /var/log/dmesg
+  #         type: ''
+  #   extraVolumeMounts: |
+  #     - name: runlogjournal
+  #       readOnly: true
+  #       mountPath: /run/log/journal
+  #       mountPropagation: None
+  #     - name: dmesg
+  #       readOnly: true
+  #       mountPath: /var/log/dmesg
+  #       mountPropagation: None
+  #   config:
+  #     filters: |
+  #       [FILTER]
+  #           Name                kubernetes
+  #           Match               *
+  #           Kube_URL            https://kubernetes.default.svc:443
+  #           Kube_CA_File        /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+  #           Kube_Token_File     /var/run/secrets/kubernetes.io/serviceaccount/token
+  #           Kube_Tag_Prefix     kube.var.log.containers.
+  #           Merge_Log           On
+  #           Merge_Log_Key       log
+  #           Merge_Log_Trim      On
+  #           Merge_Parser        json
+  #           Keep_Log            Off
+  #           Annotations         On
+  #           Labels              On
+  #           K8S-Logging.Parser  On
+  #           K8S-Logging.Exclude Off
+  #           Buffer_Size         0
+  #       [FILTER]
+  #           Name                    parser
+  #           Match                   *
+  #           key_name                message
+  #           Parser                  json
+  #       [FILTER]
+  #           Name                    nest
+  #           Match                   *
+  #           Operation               lift
+  #           Nested_under            kubernetes
+  #           Add_prefix              kubernetes_
+  #       [FILTER]
+  #           Name                    nest
+  #           Match                   *
+  #           Operation               lift
+  #           Nested_under            message
+  #       [FILTER]
+  #           Name                    modify
+  #           Match                   *
+  #           Condition               Key_exists message
+  #           Rename                  message @m
+  #           Add                     sourcetype renamelog
+  #     inputs: |
+  #       [INPUT]
+  #           Name               tail
+  #           Tag                kube.*
+  #           Path               /var/log/containers/control-plane*.log, /var/log/containers/compute-plane*.log
+  #           Parser             cri
+  #           Docker_Mode        On
+  #           Buffer_Chunk_Size  512KB
+  #           Buffer_Max_Size    5M
+  #           Rotate_Wait        30
+  #           Mem_Buf_Limit      30MB
+  #           Skip_Long_Lines    Off
+  #           Refresh_Interval   10
+  #           READ_FROM_HEAD     On
+  #       [INPUT]
+  #           Name               tail
+  #           Tag                application.*
+  #           Path               /var/log/containers/control-plane*.log, /var/log/containers/compute-plane*.log, /var/log/containers/ingress*.log, /var/log/containers/mongodb*.log, /var/log/containers/keda*.log
+  #           Parser             cri
+  #           Docker_Mode        On
+  #           Buffer_Chunk_Size  512KB
+  #           Buffer_Max_Size    5M
+  #           Rotate_Wait        30
+  #           Mem_Buf_Limit      30MB
+  #           Skip_Long_Lines    Off
+  #           Refresh_Interval   10
+  #           READ_FROM_HEAD     On
+  #       [INPUT]
+  #           Name               tail
+  #           Tag                s3-application.*
+  #           Path               /var/log/containers/control-plane*.log, /var/log/containers/compute-plane*.log, /var/log/containers/ingress*.log, /var/log/containers/mongodb*.log, /var/log/containers/keda*.log
+  #           Parser             cri
+  #           Docker_Mode        On
+  #           Buffer_Chunk_Size  512KB
+  #           Buffer_Max_Size    5M
+  #           Rotate_Wait        30
+  #           Mem_Buf_Limit      30MB
+  #           Skip_Long_Lines    Off
+  #           Refresh_Interval   10
+  #           READ_FROM_HEAD     On
+  #     outputs: |
+  #       [OUTPUT]
+  #           Name                    http
+  #           Match                   kube.*
+  #           Host                    seq
+  #           Port                    5341
+  #           URI                     /api/events/raw?clef
+  #           Header                  ContentType application/vnd.serilog.clef
+  #           Format                  json_lines
+  #           json_date_key           @t
+  #           json_date_format        iso8601
+  #     customParsers: |
+  #       [PARSER]
+  #           Name   apache
+  #           Format regex
+  #           Regex  ^(?<host>[^ ]*) [^ ]* (?<user>[^ ]*) \[(?<time>[^\]]*)\] "(?<method>\S+)(?: +(?<path>[^\"]*?)(?: +\S*)?)?" (?<code>[^ ]*) (?<size>[^ ]*)(?: "(?<referer>[^\"]*)" "(?<agent>[^\"]*)")?$
+  #           Time_Key time
+  #           Time_Format %d/%b/%Y:%H:%M:%S %z
+  #       [PARSER]
+  #           Name   apache2
+  #           Format regex
+  #           Regex  ^(?<host>[^ ]*) [^ ]* (?<user>[^ ]*) \[(?<time>[^\]]*)\] "(?<method>\S+)(?: +(?<path>[^ ]*) +\S*)?" (?<code>[^ ]*) (?<size>[^ ]*)(?: "(?<referer>[^\"]*)" "(?<agent>[^\"]*)")?$
+  #           Time_Key time
+  #           Time_Format %d/%b/%Y:%H:%M:%S %z
+  #       [PARSER]
+  #           Name   apache_error
+  #           Format regex
+  #           Regex  ^\[[^ ]* (?<time>[^\]]*)\] \[(?<level>[^\]]*)\](?: \[pid (?<pid>[^\]]*)\])?( \[client (?<client>[^\]]*)\])? (?<message>.*)$
+  #       [PARSER]
+  #           Name   nginx
+  #           Format regex
+  #           Regex ^(?<remote>[^ ]*) (?<host>[^ ]*) (?<user>[^ ]*) \[(?<time>[^\]]*)\] "(?<method>\S+)(?: +(?<path>[^\"]*?)(?: +\S*)?)?" (?<code>[^ ]*) (?<size>[^ ]*)(?: "(?<referer>[^\"]*)" "(?<agent>[^\"]*)")?$
+  #           Time_Key time
+  #           Time_Format %d/%b/%Y:%H:%M:%S %z
+  #       [PARSER]
+  #           Name   json
+  #           Format json
+  #           Time_Key time
+  #           Time_Format %d/%b/%Y:%H:%M:%S %z
+  #       [PARSER]
+  #           Name        docker
+  #           Format      json
+  #           Time_Key    time
+  #           Time_Format %Y-%m-%dT%H:%M:%S.%L
+  #           Time_Keep   On
+  #       [PARSER]
+  #           Name cri
+  #           Format regex
+  #           Regex ^(?:(?<time>[^\s]+)\s+(?<stream>\w+)\s+(?<logtag>\w+)\s+)?(?<log>\{.*\})$
+  #           Time_Key time
+  #           Time_Format %Y-%m-%dT%H:%M:%S.%L
+  #           Time_Keep On
+  #           Decode_Field_As json log
+  #       [PARSER]
+  #           Name        syslog
+  #           Format      regex
+  #           Regex       ^\<(?<pri>[0-9]+)\>(?<time>[^ ]* {1,2}[^ ]* [^ ]*) (?<host>[^ ]*) (?<ident>[a-zA-Z0-9_\/\.\-]*)(?:\[(?<pid>[0-9]+)\])?(?:[^\:]*\:)? *(?<message>.*)$
+  #           Time_Key    time
+  #           Time_Format %b %d %H:%M:%S
+
+  ################## SEQ ##################
+  seq:
+    enabled: true
+    fullnameOverride: "seq"
+    persistence:
+      enabled: false
+    image:
+      pullPolicy: IfNotPresent
+    env:
+      SEQ_API_LISTENURI: "http://+:5341"
+    #   repository: $REPO-NAME/datalust/seq
+    # imagePullSecrets: []
+    # priorityClassName:
+
+  ################## PROMETHEUS ##################
+  # kube-prometheus-stack moved to charts/armonik-operators, configured at operators.kube-prometheus.*.
+  # Its broken static additionalScrapeConfigs Secret is now first-party ServiceMonitor/PodMonitor.
+  # external-secrets moved to charts/armonik-operators.
 ############################################
+
+  ################## GCS ##################
+  gcs:
+    enabled: false
+    projectId: ""  # required when gcs.enabled
+    bucketName: ""  # required when gcs.enabled
+    emulatorEndpoint: ""
+    credentialsFilePath: ""
+
+  ################## PUBSUB ##################
+  pubsub:
+    enabled: false
+    projectId: ""  # required when pubsub.enabled
+    prefix: ""
+    kmsKeyName: ""

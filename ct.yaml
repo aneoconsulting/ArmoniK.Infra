@@ -1,3 +1,23 @@
+# Shared chart-testing config, used by .github/workflows/linter-helm.yml and
+# local runs (ct lint --config ct.yaml). Charts are linted once per
+# ci/*-values.yaml fixture they ship.
+# The chart-repos list is duplicated in test/vendor.sh; keep in sync.
 chart-dirs:
   - charts
+target-branch: main
 validate-maintainers: true
+# Chart versions move in lockstep (all 0.1.0); no per-chart bump on change.
+check-version-increment: false
+lint-conf: lintconf.yaml
+chart-yaml-schema: chart-schema.yaml
+chart-repos:
+  - valkey=https://valkey.io/valkey-helm/
+  - percona=https://percona.github.io/percona-helm-charts/
+  - prometheus-community=https://prometheus-community.github.io/helm-charts
+  - kedacore=https://kedacore.github.io/charts
+  - bitnami=https://charts.bitnami.com/bitnami
+  - grafana=https://grafana.github.io/helm-charts
+  - fluent=https://fluent.github.io/helm-charts
+  - datalust=https://helm.datalust.co
+  - jetstack=https://charts.jetstack.io
+  - external-secrets=https://charts.external-secrets.io

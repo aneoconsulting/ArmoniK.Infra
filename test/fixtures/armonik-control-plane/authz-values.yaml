@@ -1,0 +1,6 @@
+# Expected failure: authorization requires authentication.
+rbac:
+  authentication:
+    required: false
+  authorization:
+    required: true

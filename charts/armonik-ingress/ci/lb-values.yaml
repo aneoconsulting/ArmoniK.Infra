@@ -1,0 +1,23 @@
+# Multi-cluster gRPC load balancer: Deployment + Service + ConfigMap, and the
+# cluster-certs Secret for the cluster that brings its own cert material.
+global:
+  environment:
+    name: ci
+    description: ArmoniK CI environment
+urlsSecretName: example-urls
+loadBalancer:
+  enabled: true
+  defaultCluster: cluster-a
+  clusters:
+    cluster-a:
+      controlPlaneUrl: http://control-plane.cluster-a.svc:5001
+    cluster-b:
+      controlPlaneUrl: https://control-plane.cluster-b.example.com:5001
+      certPem: |
+        -----BEGIN CERTIFICATE-----
+        MIIBszCCAVmgAwIBAgIUfake0000000000000000000000000000
+        -----END CERTIFICATE-----
+      keyPem: |
+        -----BEGIN PRIVATE KEY-----
+        MIIEvfake000000000000000000000000000000000000000000000
+        -----END PRIVATE KEY-----

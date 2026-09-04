@@ -1,0 +1,20 @@
+suite: prometheus-operator monitors
+templates:
+  - podmonitor.yaml
+  - servicemonitor.yaml
+tests:
+  - it: renders the monitors when the prometheus-operator CRDs are present
+    asserts:
+      - hasDocuments:
+          count: 1
+  - it: renders no monitor when the prometheus operator is unavailable
+    set:
+      global:
+        armonik:
+          operators:
+            prometheusOperator:
+              deploy: false
+              available: false
+    asserts:
+      - hasDocuments:
+          count: 0

@@ -1,0 +1,13 @@
+{{- with .Values.merge }}
+  {{- $call := deepCopy . }}
+  {{- $_ := set $call "print" false }}
+  {{- $_ := set $call "context" $ }}
+  {{- include "armonik.utils.merge" $call }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: merge-result
+data:
+  # JSON keeps the assertion exact: key order is sorted, nil is "null".
+  result: {{ $call.dst | toJson | quote }}
+{{- end }}

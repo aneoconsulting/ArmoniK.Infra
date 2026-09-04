@@ -1,0 +1,31 @@
+suite: validation guards
+templates:
+  - validate.yaml
+  - gateway/httproute.yaml
+set:
+  global:
+    environment:
+      name: ci
+      description: ArmoniK CI environment
+tests:
+  - it: fails when mTLS is enabled without TLS
+    template: validate.yaml
+    set:
+      tls:
+        enabled: false
+      mtls:
+        enabled: true
+    asserts:
+      - failedTemplate:
+          errorPattern: "mTLS requires TLS to be enabled"
+  - it: fails when httpRoute is enabled without a gateway or parentRefs
+    # a render error is reported on the template that raised it
+    template: gateway/httproute.yaml
+    set:
+      gateway:
+        enabled: false
+      httpRoute:
+        enabled: true
+    asserts:
+      - failedTemplate:
+          errorPattern: "httpRoute.enabled=true requires either gateway.enabled=true or httpRoute.parentRefs"

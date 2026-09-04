@@ -1,0 +1,27 @@
+apiVersion: v2
+appVersion: 0.40.1
+version: 0.1.0
+name: armonik-control-plane
+description: A Helm chart for ArmoniK
+icon: https://25070129.fs1.hubspotusercontent-eu1.net/hubfs/25070129/Website/Images%20-%20Website/ArmoniK/logo_armonik_by_aneo%201.svg
+kubeVersion: ">=v1.23.0-0"
+keywords:
+  - armonik
+  - helm
+type: application
+home: https://github.com/aneoconsulting/ArmoniK
+sources:
+  - https://github.com/aneoconsulting/ArmoniK.Infra
+maintainers:
+  - name: Aneo
+    email: armonik@aneo.fr
+    url: armonik.fr
+
+dependencies:
+  - name: armonik-common
+    version: 0.1.x
+    repository: file://../armonik-common
+    # Cross-chart global.armonik defaults, defined once in armonik-common/values.yaml.
+    import-values:
+      - child: global.armonik
+        parent: global.armonik

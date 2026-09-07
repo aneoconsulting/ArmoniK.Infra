@@ -1,6 +1,5 @@
 {{- range $partitionName, $config := include "armonik.compute.partitions" $ | fromYaml }}
 {{- $fluentBit := $.Values.fluentBit | default dict -}}
-{{- $sa := $.Values.serviceAccount | default dict -}}
 {{- $partitionCommon := $.Values.partitionCommon | default dict -}}
 {{- $partition := dict -}}
 {{/* Partition render context: chart context minus .Values.partitions, plus .Values.partitionName. */}}
@@ -76,11 +75,9 @@ spec:
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- if $sa.create }}
       serviceAccountName: {{ include "armonik.serviceAccountName" $ }}
       serviceAccount: {{ include "armonik.serviceAccountName" $ }}
       automountServiceAccountToken: true
-      {{- end }}
       {{- with $partition.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}

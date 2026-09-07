@@ -38,13 +38,14 @@ Create chart name and version as used by the chart label.
 {{- end }}
 
 {{/*
-Returns the name of the service account to use
+Returns the name of the service account to use. 
+When create=false, this must instead name an existing ServiceAccount to use.
 */}}
 {{- define "armonik.serviceAccountName" -}}
   {{- if .Values.serviceAccount.create }}
     {{- default (include "armonik.fullname" .) .Values.serviceAccount.name }}
   {{- else }}
-    {{- default "default" .Values.serviceAccount.name }}
+    {{- .Values.serviceAccount.name | required "serviceAccount.name is required when serviceAccount.create is false: set it to the name of the existing ServiceAccount to use" }}
   {{- end }}
 {{- end }}
 

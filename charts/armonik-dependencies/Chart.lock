@@ -7,7 +7,7 @@ dependencies:
   version: 0.9.4
 - name: psmdb-db
   repository: https://percona.github.io/percona-helm-charts/
-  version: 1.23.0
+  version: 1.23.2
 - name: rabbitmq
   repository: https://charts.bitnami.com/bitnami
   version: 15.5.3
@@ -20,5 +20,5 @@ dependencies:
 - name: seq
   repository: https://helm.datalust.co
   version: 2024.3.2
-digest: sha256:4029712459ff7c25055c0f13f5f53d1b5680bcdcf4998723c4eae288dd94306b
-generated: "2026-08-19T14:38:05.825013498+02:00"
+digest: sha256:05ccfcf6501431d4c6a45565d0d8e8751f6674ac056f29c495577e1b4fddec28
+generated: "2026-09-07T15:05:56.230825288+02:00"

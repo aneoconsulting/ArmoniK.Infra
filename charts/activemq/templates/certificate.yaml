@@ -1,4 +1,4 @@
-{{- if eq .Values.tls.type "cert-manager" }}
+{{- if and .Values.tls.enabled (eq .Values.tls.type "cert-manager") }}
 {{- if and (not (dig "armonik" "operators" "certManager" "available" true .Values.global)) (not .Values.tls.certManager.existingIssuer.enabled) }}
 {{- fail "activemq TLS via cert-manager requires it: set global.armonik.operators.certManager.available=true, set tls.certManager.existingIssuer.enabled=true, or use a tls.type other than cert-manager." }}
 {{- end }}

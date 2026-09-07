@@ -41,6 +41,8 @@ rbac:
 
 serviceAccount:
   create: true
+  # Name of the ServiceAccount.
+  # When create=false, this must instead name an existing ServiceAccount to use.
   name: control-plane
   annotations: {}
   secrets: []

@@ -17,6 +17,8 @@ global:
 
 serviceAccount:
   create: false
+  # Name of the ServiceAccount.
+  # When create=false, this must instead name an existing ServiceAccount to use.
   name: compute-plane
   annotations: {}
   secrets: []

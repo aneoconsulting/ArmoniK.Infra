@@ -1,6 +1,5 @@
 {{- $init := .Values.init | default dict -}}
 {{- $deployment := .Values.deployment | default dict -}}
-{{- $sa := .Values.serviceAccount | default dict -}}
 {{- $conf := list
     (not $init.enabled | ternary (include "armonik.control.init.confHelper" .) "" | fromYaml)
     (include "armonik.control.confHelper" . | fromYaml)
@@ -69,11 +68,9 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}{{/* with $imagePullSecrets */}}
-      {{- if $sa.create }}
       serviceAccountName: {{ include "armonik.serviceAccountName" $ }}
       serviceAccount: {{ include "armonik.serviceAccountName" $ }}
       automountServiceAccountToken: true
-      {{- end }}{{/* if .Values.serviceAccount.create */}}
       shareProcessNamespace: false
       {{- with .Values.nodeSelector }}
       nodeSelector:

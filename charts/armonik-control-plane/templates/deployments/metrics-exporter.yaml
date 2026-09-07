@@ -65,11 +65,9 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}{{/* with $imagePullSecrets */}}
-      {{- if $.Values.serviceAccount.create }}
       serviceAccountName: {{ include "armonik.serviceAccountName" $ }}
       serviceAccount: {{ include "armonik.serviceAccountName" $ }}
       automountServiceAccountToken: true
-      {{- end }}{{/* if .Values.serviceAccount.create */}}
       shareProcessNamespace: false
       {{- with coalesce .Values.metricsExporter.nodeSelector .Values.nodeSelector }}
       nodeSelector:

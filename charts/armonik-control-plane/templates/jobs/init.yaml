@@ -53,10 +53,8 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}{{/* with $imagePullSecrets */}}
-      {{- if $.Values.serviceAccount.create }}
       serviceAccountName: {{ include "armonik.serviceAccountName" $ }}
       serviceAccount: {{ include "armonik.serviceAccountName" $ }}
-      {{- end }}{{/* if .Values.serviceAccount.create */}}
       shareProcessNamespace: false
       {{- with coalesce .Values.init.nodeSelector .Values.nodeSelector }}
       nodeSelector:

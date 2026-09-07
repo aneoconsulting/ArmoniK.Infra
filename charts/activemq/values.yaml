@@ -144,7 +144,9 @@ tmpVolume:
   emptyDir: {}
 
 tls:
-  type: "metrics-server"
+  # Enable TLS certificate management for activemq (only takes effect when tls.type is "cert-manager").
+  enabled: false
+  type: "cert-manager"
   clusterDomain: cluster.local
   certManager:
     addInjectorAnnotations: true

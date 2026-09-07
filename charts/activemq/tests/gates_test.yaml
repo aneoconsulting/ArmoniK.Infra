@@ -68,6 +68,7 @@ tests:
     template: certificate.yaml
     set:
       tls:
+        enabled: true
         type: "cert-manager"
         certManager:
           existingIssuer:
@@ -84,6 +85,7 @@ tests:
     template: certificate.yaml
     set:
       tls:
+        enabled: true
         type: "cert-manager"
       global:
         armonik:

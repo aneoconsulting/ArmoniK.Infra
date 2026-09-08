@@ -1,0 +1,99 @@
+suite: GCS and Pub/Sub tests
+release:
+  name: t
+templates:
+  - secrets/conf-secrets.yaml
+tests:
+  - it: injects no GCS or Pub/Sub env when both are disabled (default)
+    documentSelector:
+      path: metadata.name
+      value: t-conf-core
+    asserts:
+      - notExists:
+          path: spec.target.template.data.Gcs__BucketName
+      - notExists:
+          path: spec.target.template.data.PubSub__ProjectId
+  - it: renders the GCS object storage adapter env when enabled
+    values:
+      - ../ci/minimal-values.yaml
+    set:
+      dependencies:
+        gcs:
+          enabled: true
+          projectId: my-project
+          bucketName: my-bucket
+          credentialsFilePath: /var/secrets/gcs.json
+    documentSelector:
+      path: metadata.name
+      value: t-conf-core
+    asserts:
+      - isKind:
+          of: Secret
+      - equal:
+          path: stringData.Components__ObjectStorageAdaptorSettings__ClassName
+          value: "ArmoniK.Core.Adapters.Gcs.ObjectBuilder"
+      - equal:
+          path: stringData.Gcs__ProjectId
+          value: my-project
+      - equal:
+          path: stringData.Gcs__BucketName
+          value: my-bucket
+      - equal:
+          path: stringData.Gcs__CredentialsFilePath
+          value: /var/secrets/gcs.json
+  - it: renders the Pub/Sub queue adapter env when enabled
+    values:
+      - ../ci/minimal-values.yaml
+    set:
+      dependencies:
+        pubsub:
+          enabled: true
+          projectId: my-project
+          prefix: "armonik-"
+          kmsKeyName: my-key
+    documentSelector:
+      path: metadata.name
+      value: t-conf-core
+    asserts:
+      - isKind:
+          of: Secret
+      - equal:
+          path: stringData.Components__QueueAdaptorSettings__ClassName
+          value: "ArmoniK.Core.Adapters.PubSub.QueueBuilder"
+      - equal:
+          path: stringData.PubSub__ProjectId
+          value: my-project
+      - equal:
+          path: stringData.PubSub__Prefix
+          value: "armonik-"
+  - it: renders both GCS and Pub/Sub env when both are enabled
+    values:
+      - ../ci/minimal-values.yaml
+    set:
+      dependencies:
+        gcs:
+          enabled: true
+          projectId: my-project
+          bucketName: my-bucket
+        pubsub:
+          enabled: true
+          projectId: my-project
+          prefix: "armonik-"
+    documentSelector:
+      path: metadata.name
+      value: t-conf-core
+    asserts:
+      - isKind:
+          of: Secret
+      - equal:
+          path: stringData.Components__ObjectStorageAdaptorSettings__ClassName
+          value: "ArmoniK.Core.Adapters.Gcs.ObjectBuilder"
+      - equal:
+          path: stringData.Components__QueueAdaptorSettings__ClassName
+          value: "ArmoniK.Core.Adapters.PubSub.QueueBuilder"
+      - equal:
+          path: stringData.Gcs__BucketName
+          value: my-bucket
+      - equal:
+          path: stringData.PubSub__Prefix
+          value: "armonik-"

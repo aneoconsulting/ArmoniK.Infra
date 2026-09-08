@@ -1,6 +1,7 @@
 #!/bin/sh
 # POSIX-compliant script to create symlinks for ReadTheDocs
 # Maps module READMEs to .docs/<provider>/<category>/<module>/index.md
+# and chart READMEs to .docs/charts/<chart>/index.md
 set -eu
 
 is_provider() {
@@ -8,8 +9,11 @@ is_provider() {
     return 1
 }
 
+# symlink_readme <readme> [keep-path]
+# keep-path maps the README to its own path, for trees with no provider segment
 symlink_readme() {
     readme="$1"
+    keep_path="${2:-}"
     link=""
     target="$readme"
 
@@ -19,7 +23,7 @@ symlink_readme() {
         [ "$part" != "$readme" ] || break
         readme="${readme#*/}"
 
-        if is_provider "$part"; then
+        if [ -z "$keep_path" ] && is_provider "$part"; then
             link="$part${link:+/}$link"  # Provider goes first
         else
             link="${link:+$link/}$part"  # Others append
@@ -76,8 +80,15 @@ find . -name "README.md" \
         symlink_readme "${f#./}"
     done
 
+# Chart READMEs keep charts/<chart>, "armonik" being a chart name and not a provider
+find charts -mindepth 2 -maxdepth 2 -name "README.md" |
+    while read -r f; do
+        symlink_readme "$f" keep-path
+    done
+
 # Generate category index files (bottom-up for nested structure)
-find .docs -depth -type d -not -path '*examples*' |
+# .docs/charts is left out, index.md lists the charts itself to order them
+find .docs -depth -type d -not -path '*examples*' -not -path '.docs/charts' |
     while read -r d; do
         generate_index "$d"
     done

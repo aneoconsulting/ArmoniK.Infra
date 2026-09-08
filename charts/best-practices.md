@@ -5,7 +5,7 @@ Helm charts. Most of the best practices are described in the [Helm docs](https:/
 [Codefresh](https://codefresh.io/docs/docs/ci-cd-guides/helm-best-practices/)
 [Itnext](https://itnext.io/helm-3-umbrella-charts-standalone-chart-image-tags-an-alternative-approach-78a218d74e2d)).
 
-This guide will be used by [Aneo](https://www.aneo.eu/) to write Helm charts for the [Armonik plateform](https://www.armonik.fr/).
+This guide will be used by [Aneo](https://www.aneo.eu/) to write Helm charts for the [ArmoniK platform](https://www.armonik.fr/).
 
 ## Coding standart
 

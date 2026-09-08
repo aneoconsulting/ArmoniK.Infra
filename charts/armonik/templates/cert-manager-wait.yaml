@@ -1,0 +1,112 @@
+{{- $ops := include "armonik.operators" $ | fromYaml }}
+{{- if $ops.certManager.deploy }}
+{{- /* Blocks dependent CRs until the cert-manager webhook this release installs is Available with its
+       CA injected: hook-weight -10, ahead of the Certificates at 10. Rendered by the umbrella so it
+       covers every emitter (ingress, activemq) once; skipped for an external cert-manager. */}}
+{{- $wait := .Values.certManagerWait | default dict }}
+{{- $image := $wait.image | default dict }}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ include "armonik.fullname" . }}-cert-manager-wait
+  namespace: {{ include "armonik.namespace" . | quote }}
+  labels:
+    {{- include "armonik.labels" . | nindent 4 }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "armonik.fullname" . }}-cert-manager-wait
+  namespace: {{ include "armonik.namespace" . | quote }}
+  labels:
+    {{- include "armonik.labels" . | nindent 4 }}
+rules:
+- apiGroups: ["apps"]
+  resources: ["deployments"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "armonik.fullname" . }}-cert-manager-wait
+  namespace: {{ include "armonik.namespace" . | quote }}
+  labels:
+    {{- include "armonik.labels" . | nindent 4 }}
+subjects:
+- kind: ServiceAccount
+  name: {{ include "armonik.fullname" . }}-cert-manager-wait
+  namespace: {{ include "armonik.namespace" . | quote }}
+roleRef:
+  kind: Role
+  name: {{ include "armonik.fullname" . }}-cert-manager-wait
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "armonik.fullname" . }}-cert-manager-wait
+  labels:
+    {{- include "armonik.labels" . | nindent 4 }}
+rules:
+- apiGroups: ["admissionregistration.k8s.io"]
+  resources: ["validatingwebhookconfigurations"]
+  verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "armonik.fullname" . }}-cert-manager-wait
+  labels:
+    {{- include "armonik.labels" . | nindent 4 }}
+subjects:
+- kind: ServiceAccount
+  name: {{ include "armonik.fullname" . }}-cert-manager-wait
+  namespace: {{ include "armonik.namespace" . | quote }}
+roleRef:
+  kind: ClusterRole
+  name: {{ include "armonik.fullname" . }}-cert-manager-wait
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "armonik.fullname" . }}-wait-cert-manager
+  namespace: {{ include "armonik.namespace" . | quote }}
+  labels:
+    {{- include "armonik.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "-10"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 3
+  ttlSecondsAfterFinished: 30
+  template:
+    spec:
+      restartPolicy: Never
+      serviceAccountName: {{ include "armonik.fullname" . }}-cert-manager-wait
+      containers:
+        - name: wait
+          image: "{{ $image.repository | default "alpine/k8s" }}:{{ $image.tag | default "1.31.0" }}"
+          imagePullPolicy: {{ $image.pullPolicy | default "IfNotPresent" }}
+          command:
+            - sh
+            - -c
+            - |
+              set -e
+              echo "Waiting for cert-manager webhook deployment..."
+              kubectl wait \
+                --for=condition=Available \
+                deployment/cert-manager-webhook \
+                -n {{ include "armonik.namespace" . }} \
+                --timeout={{ $wait.timeout | default "300s" }}
+              echo "Waiting for webhook CA injection..."
+              until kubectl get validatingwebhookconfiguration cert-manager-webhook \
+                -o jsonpath='{.webhooks[0].clientConfig.caBundle}' | grep -q .;
+              do
+                echo "CA bundle not injected yet..."
+                sleep 5
+              done
+              echo "cert-manager webhook ready"
+{{- end }}

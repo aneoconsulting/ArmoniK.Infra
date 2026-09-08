@@ -1,0 +1,11 @@
+# cert-manager TLS: Certificate issued by an existing issuer, plus the
+# certificates.enable gate.
+certificates:
+  enable: true
+tls:
+  type: "cert-manager"
+  certManager:
+    existingIssuer:
+      enabled: true
+      kind: ClusterIssuer
+      name: my-issuer

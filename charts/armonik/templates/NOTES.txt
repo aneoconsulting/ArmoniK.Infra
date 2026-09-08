@@ -8,9 +8,154 @@
  Chart Version: {{ .Chart.Version }}  Core Version: {{ .Chart.AppVersion }}    Enjoy ♪ ♫
 **********************************************************
 Service Installed:
-{{- range $key, $value := .Values.global.dependencies }}
+{{- range $key, $value := include "armonik.dependencies" $ | fromYaml }}
 {{- if $value }}
-  - {{- $key }} 
+  - {{- $key }}
 {{- end }}
+{{- end }}
+Operators:
+{{- range $op, $cfg := include "armonik.operators" $ | fromYaml }}
+  - {{ $op }}: {{ if $cfg.deploy }}managed (installed by this release){{ else if $cfg.available }}external (already present in the cluster){{ else }}absent (degraded){{ end }}
 {{- end }}
 **********************************************************
+{{- $cp := index .Values "compute-plane" }}
+{{- $workerPartitions := list }}
+{{- if and $cp $cp.enabled $cp.partitions }}{{ $workerPartitions = keys $cp.partitions | sortAlpha }}{{ end }}
+{{- if gt (len $workerPartitions) 0 }}
+This release deployed {{ len $workerPartitions }} compute-plane partition(s): {{ join ", " $workerPartitions }}.
+{{- else }}
+
+NOTE: this release deploys NO compute-plane, so there are no worker pods (and no KEDA ScaledObjects)
+to execute tasks. To run work, either enable the bundled compute-plane (set compute-plane.enabled=true
+AND define compute-plane.partitions - an empty compute-plane is rejected at render time), or install
+one or more separate armonik-compute-plane releases pointed at this release (see the recipe below).
+Reminder: a submission may still be ACCEPTED for any partition already registered in the database
+(seeded by a prior release, or persisted in a reused MongoDB volume). Such tasks will queue with
+nothing to run them, so an accepted submission is NOT proof that a worker exists.
+{{- end }}
+**********************************************************
+
+{{- $cp := index .Values "control-plane" | default dict }}
+{{- $cpRbac := $cp.rbac | default dict }}
+{{- $cpAuth := $cpRbac.authentication | default dict }}
+{{- if and (not $cpRbac.userCertificates) $cpAuth.required }}
+Authentication in ArmoniK is enabled{{ if $cpRbac.createBuiltinRoles }}, default roles "Submitter" and "Monitoring" were created{{ end }}.
+Since authentication inside ArmoniK in enabled, you must apply the following steps to be able to query your ArmoniK cluster :
+
+  1. Make sure your users hold a x509 certificate
+  2. For each user, check their certificate common name and fingerprint (keep them for the next step)
+  3. Create a YAML file with the following structure (replace brackets-wrapped values with your own): 
+  
+### YAML start ###
+init:
+  enabled: true
+  rbac:
+{{- if not $cpRbac.createBuiltinRoles }}
+    roles:
+      <Role1>: [<Permission1>, <PermissionN>]
+      <Role2>: [<Permission1>, <PermissionN>]
+{{- end }}
+    users:
+      <username1>: [<RoleName1>, <RolesNameN>]
+      <usernameN>: [<RoleName1>, <RolesNameN>]
+    userCertificates:
+      <username1>:
+        commonName: <user1commonName>
+        fingerprint: <user1fingerprint>
+      <usernameN>:
+        commonName: <userNcommonName>
+        fingerprint <userNfingerprint>
+### YAML end ###
+  4. Make sure userCertificates and users maps share the same keys.
+  5. Use this YAML file as a values file for a standalone control-plane (further details below)
+{{- end }}
+
+{{- $mountPath := include "armonik.conf.mountPath" $ }}
+The configuration Secrets are owned by this release ({{ .Release.Name }}) and live in namespace
+{{ .Release.Namespace }}. To install a plane as a separate release, point it at those Secrets with
+--set conf.source={{ .Release.Name }} and install it in the SAME namespace. (A plane in another
+namespace needs the Secrets mirrored there, e.g. via an ESO remoteNamespace ExternalSecret.)
+{{- if ne $mountPath "/mounts" }}
+This release overrides the conf mount path; a standalone plane must also set
+--set conf.mountPath={{ $mountPath }} so it mounts the config where the Secrets expect it.
+{{- end }}
+
+Standalone planes assume the cluster already provides the operators (KEDA, External Secrets,
+cert-manager, psmdb-operator, prometheus-operator): global.armonik.operators.<op>.available defaults
+to true. Pass --set global.armonik.operators.<op>.available=false for any operator NOT installed.
+
+To add a standalone compute-plane with new partitions:
+
+     helm install <release-name> ./charts/armonik-compute-plane \
+       -n {{ .Release.Namespace }} \
+       --set conf.source={{ .Release.Name }} \
+      {{- if ne $mountPath "/mounts" }}
+       --set conf.mountPath={{ $mountPath }} \
+      {{- end }}
+       -f <your-partitions>.yaml
+
+To add a standalone control-plane (with optional external partitions):
+
+     helm install <release-name> ./charts/armonik-control-plane \
+       -n {{ .Release.Namespace }} \
+       --set conf.source={{ .Release.Name }} \
+      {{- if ne $mountPath "/mounts" }}
+       --set conf.mountPath={{ $mountPath }} \
+      {{- end }}
+      {{- if $cpAuth.required }}
+       -f <your-authentication-data>.yaml \
+      {{- end }}
+       [-f <your-control-plane>.yaml]
+**********************************************************
+UNINSTALLING (full procedure and recovery steps: charts/uninstall.md)
+
+{{- /* Operators installed BY this release render their CRs as post-install hooks (the CRD does not
+       exist yet when the main manifest is applied). Helm does not track hook resources, so those CRs
+       outlive `helm uninstall` and wedge the CRD deletion. Types listed only when hooked. */}}
+{{- $ops := include "armonik.operators" $ | fromYaml }}
+{{- $drain := list }}
+{{- if $ops.keda.deploy }}{{ $drain = append $drain "scaledobjects.keda.sh" }}{{ end }}
+{{- if $ops.externalSecrets.deploy }}{{ $drain = concat $drain (list "externalsecrets.external-secrets.io" "secretstores.external-secrets.io") }}{{ end }}
+{{- if $ops.certManager.deploy }}{{ $drain = concat $drain (list "certificates.cert-manager.io" "issuers.cert-manager.io") }}{{ end }}
+{{- if $drain }}
+This release installs its own operators, so the custom resources below are applied as Helm hooks, and
+Helm does NOT delete hook resources on uninstall. Delete them FIRST, while the operators are still
+running, otherwise their CRDs hang in Terminating with orphaned resources no controller can finalize:
+
+     for t in {{ join " " $drain }}; do
+       kubectl delete "$t" -n {{ .Release.Namespace }} \
+         -l app.kubernetes.io/instance={{ .Release.Name }} --ignore-not-found
+     done
+
+     helm uninstall {{ .Release.Name }} -n {{ .Release.Namespace }}
+
+Deleting the ExternalSecrets also removes the conf Secrets they own; deleting the Certificates removes
+the TLS Secrets they own.
+{{- else }}
+Every operator used here comes from another release, so no custom resource is applied as a Helm hook
+and a plain uninstall is complete:
+
+     helm uninstall {{ .Release.Name }} -n {{ .Release.Namespace }}
+
+Uninstall the operators release only AFTER this one: its CRDs are cluster-scoped, and removing them
+cascade-deletes the custom resources of every ArmoniK release in the cluster.
+{{- end }}
+
+{{- $managedAny := false }}
+{{- range $op, $cfg := $ops }}{{ if $cfg.deploy }}{{ $managedAny = true }}{{ end }}{{ end }}
+Left behind on purpose: the MongoDB PVCs (mongodb.finalizers carries no percona.com/delete-psmdb-pvc)
+and the Secrets the operators generate themselves, which no release owns.
+{{- if $managedAny }}
+{{- if or $ops.mongodbOperator.deploy $ops.prometheusOperator.deploy }}
+Also the CRDs Helm never manages: psmdb-operator and kube-prometheus-stack ship them in an untemplated
+crds/ directory, so they are neither upgraded nor deleted by any release.
+{{- end }}
+{{- if $ops.certManager.deploy }}
+The cert-manager CRDs, in contrast, DO go away with this release (operators.cert-manager.crds.keep is
+false), and that deletes every Certificate and Issuer in the cluster, ArmoniK's or not.
+{{- end }}
+{{- else }}
+The operator CRDs belong to the operators release and are untouched by this one.
+{{- end }}
+A reinstall reuses the old MongoDB volume, so partitions from a previous release stay registered in the
+database.

@@ -1,0 +1,106 @@
+# armonik-operators control surface. The deploy/available semantics are documented once in
+# armonik-common/values.yaml; only `deploy` matters here and defaults to true, installing the operators
+# being this chart's whole purpose. Under the umbrella, the umbrella's global.armonik.operators.* wins.
+# Mind the two paths: global.armonik.operators.<op> are the control flags, <op> at the top level is the
+# operator subchart's own configuration.
+global:
+  armonik:
+    operators:
+      externalSecrets:
+        deploy: true
+      keda:
+        deploy: true
+      certManager:
+        deploy: true
+      mongodbOperator:
+        deploy: true
+      prometheusOperator:
+        deploy: true
+
+# --- Operator subchart configuration, at operators.<op>.* under the umbrella ---
+
+# KEDA (https://github.com/kedacore/charts)
+keda:
+  crds:
+    install: true
+  prometheus:
+    metricServer:
+      enabled: true
+      serviceMonitor:
+        enabled: true
+  certificates:
+    certManager:
+      enabled: false
+      issuer:
+        {
+          "generate": false,
+          "group": "cert-manager.io",
+          "kind": "ClusterIssuer",
+          "name": "armonik-selfsigned-issuer",
+        }
+  image:
+    pullPolicy: IfNotPresent
+  # imagePullSecrets: []
+  # priorityClassName:
+
+# External Secrets Operator (https://charts.external-secrets.io) - chart defaults install the CRDs.
+external-secrets: {}
+# external-secrets:
+#   priorityClassName:
+#   webhook:
+#     priorityClassName:
+#   certController:
+#     priorityClassName:
+
+# cert-manager (https://charts.jetstack.io). fullnameOverride keeps the webhook Deployment named
+# "cert-manager-webhook" so the ingress cert wait-Job can find it.
+cert-manager:
+  crds:
+    # enabled+keep replace the deprecated installCRDs (defined as enabled=true plus keep=true).
+    enabled: true
+    # keep=false so uninstall removes the six cert-manager.io CRDs (charts/uninstall.md). That also
+    # deletes every Certificate and Issuer CLUSTER-WIDE: keep=true on a shared cluster.
+    keep: false
+  fullnameOverride: "cert-manager"
+  prometheus:
+    servicemonitor:
+      enabled: true
+  # global:
+  #   priorityClassName:
+
+# Percona Server for MongoDB operator (https://percona.github.io/percona-helm-charts/). Chart defaults
+# install the CRDs; the PerconaServerMongoDB CR itself stays in armonik-dependencies.
+mongodb-operator:
+  # The one operator here that is namespaced by default: otherwise WATCH_NAMESPACE is pinned to this
+  # release's namespace with a namespaced Role, and a CR in any other namespace is silently ignored.
+  # true also switches the RBAC to ClusterRole/ClusterRoleBinding.
+  watchAllNamespaces: true
+# WARNING: mongodb-operator: no priorityClassName support in this chart
+
+# kube-prometheus-stack (https://prometheus-community.github.io/helm-charts): the shared cluster
+# monitoring stack, one per cluster. Grafana stays per-release, in armonik-dependencies.
+kube-prometheus:
+  fullnameOverride: "prometheus"
+  prometheus-node-exporter:
+    # TODO: root filesystem mount disabled to avoid a Docker Desktop crash
+    hostRootFsMount:
+      enabled: false
+  alertmanager:
+    enabled: false
+  grafana:
+    # kps's own Grafana stays off, but forceDeployDashboards still ships its dashboard ConfigMaps for the
+    # per-release Grafana sidecar to collect: our source for the standard k8s/node dashboards.
+    enabled: false
+    forceDeployDashboards: true
+  prometheus:
+    prometheusSpec:
+      scrapeInterval: 10s
+      evaluationInterval: 30s
+      # Scrape ServiceMonitors/PodMonitors from every namespace and any release, not just kps's own.
+      serviceMonitorSelectorNilUsesHelmValues: false
+      serviceMonitorNamespaceSelector: {}
+      podMonitorSelectorNilUsesHelmValues: false
+      podMonitorNamespaceSelector: {}
+      # priorityClassName:
+  # prometheusOperator:
+  #   priorityClassName:

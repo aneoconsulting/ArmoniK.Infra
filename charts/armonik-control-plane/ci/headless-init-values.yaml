@@ -1,0 +1,7 @@
+# HeadLess control-plane service, metrics-exporter disabled, init Job enabled.
+service:
+  serviceType: HeadLess
+metricsExporter:
+  enabled: false
+init:
+  enabled: true

@@ -1,0 +1,11 @@
+{{- if and .Values.mtls.enabled (not .Values.tls.enabled) -}}
+{{- fail "Invalid configuration: mTLS requires TLS to be enabled. Please set tls.enabled=true when enabling mTLS." -}}
+{{- end -}}
+
+{{- if and .Values.gateway.enabled (not .Values.gateway.gatewayClassName) -}}
+{{- fail "Invalid configuration: gateway.enabled=true requires gateway.gatewayClassName to be set. Please specify a valid GatewayClass (e.g. gateway.gatewayClassName=traefik). Run 'kubectl get gatewayclasses.gateway.networking.k8s.io -A' to list available GatewayClasses" -}}
+{{- end -}}
+
+{{- if and (empty .Values.urlsSecretName) (empty .Values.control_plane_url) (empty .Values.grafana_url) (empty .Values.seq_url) -}}
+{{- fail "Invalid configuration: specify urlsSecretName or at least one of control_plane_url, grafana_url, or seq_url." -}}
+{{- end -}}

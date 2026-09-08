@@ -1,0 +1,10 @@
+# Near-default render. The chart's own values ship no global.environment,
+# yet static."environment.json" tpl-renders global.environment.{name,description},
+# so plain defaults do not render (nil pointer; covered by the disabled
+# defaults test in tests/defaults_test.yaml). Drop this block once the chart
+# defaults those values.
+global:
+  environment:
+    name: ci
+    description: ArmoniK CI environment
+urlsSecretName: example-urls

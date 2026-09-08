@@ -1,0 +1,26 @@
+suite: grafana-behind-ingress guards
+templates:
+  - validate.yaml
+release:
+  name: t
+tests:
+  - it: fails when grafana root_url carries a path
+    set:
+      dependencies:
+        grafana:
+          grafana.ini:
+            server:
+              root_url: http://grafana/grafana
+    asserts:
+      - failedTemplate:
+          errorPattern: "must not carry a path"
+  - it: fails when grafana serve_from_sub_path is enabled
+    set:
+      dependencies:
+        grafana:
+          grafana.ini:
+            server:
+              serve_from_sub_path: true
+    asserts:
+      - failedTemplate:
+          errorPattern: "must stay false"

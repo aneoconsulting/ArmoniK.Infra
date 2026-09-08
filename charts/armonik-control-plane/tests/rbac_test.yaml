@@ -1,0 +1,50 @@
+suite: authentication and partitions
+templates:
+  - jobs/init.yaml
+  - deployments/control-plane.yaml
+values:
+  - ../ci/rbac-values.yaml
+tests:
+  - it: feeds custom roles, users and certificates to the init job as indexed env
+    template: jobs/init.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: Job
+      # built-in roles (builtin-roles/*.yaml) come first, custom roles after
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: InitServices__Authentication__Roles__2
+            value: '{"Name":"operator","Permissions":["GetPartition","ListPartitions"]}'
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: InitServices__Authentication__Users__0
+            value: '{"Name":"alice","Roles":["operator"]}'
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: InitServices__Authentication__UserCertificates__0
+            value: '{"Cn":"alice.armonik.local","Fingerprint":"AABBCCDD","User":"alice"}'
+  - it: feeds extra partitions to the init job as indexed env
+    template: jobs/init.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: InitServices__Partitioning__Partitions__0
+            value: '{"ParentPartitionIds":[],"PartitionId":"default","PodConfiguration":null,"PodMax":100,"PodReserved":50,"PreemptionPercentage":20,"Priority":1}'
+  - it: fails when authorization is required without authentication
+    # the guard is raised from the first template that calls the helper
+    template: deployments/control-plane.yaml
+    set:
+      rbac:
+        authentication:
+          required: false
+        authorization:
+          required: true
+    asserts:
+      - failedTemplate:
+          errorPattern: "Authorization requires authentication to be enabled"

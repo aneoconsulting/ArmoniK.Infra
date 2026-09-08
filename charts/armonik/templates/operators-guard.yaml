@@ -1,0 +1,30 @@
+{{- /* Guards on the operator control surface. Lives in the umbrella because that is where the CRs and
+       the operator subcharts meet. Renders nothing. */ -}}
+{{- $ops := include "armonik.operators" $ | fromYaml -}}
+
+{{- /* deploy=true with available=false: installed but nothing may use it. */ -}}
+{{- range $op, $cfg := $ops -}}
+  {{- if and $cfg.deploy (not $cfg.available) -}}
+    {{- printf "global.armonik.operators.%s: deploy=true but available=false (operator would be installed but unusable). Set available=true, or deploy=false to only consume an externally-installed operator." $op | fail -}}
+  {{- end -}}
+{{- end -}}
+
+{{- /* Drift: an operator subchart's own namespace override moves the operator, but consumers derive
+       hostnames from global.armonik.operators.<op>.namespace, so the two must agree. keda has no such
+       key. Only checked for operators this release installs. */ -}}
+{{- $overrides := dict
+      "externalSecrets"    (list "external-secrets" "namespaceOverride")
+      "certManager"        (list "cert-manager" "namespace")
+      "mongodbOperator"    (list "mongodb-operator" "namespaceOverride")
+      "prometheusOperator" (list "kube-prometheus" "namespaceOverride") -}}
+{{- range $op, $path := $overrides -}}
+  {{- $cfg := index $ops $op -}}
+  {{- if $cfg.deploy -}}
+    {{- $chart := index $path 0 -}}
+    {{- $key := index $path 1 -}}
+    {{- $override := list $.Values "operators" $chart $key | include "armonik.utils.index" -}}
+    {{- if and $override (ne $override $cfg.namespace) -}}
+      {{- printf "operators.%s.%s is %q but global.armonik.operators.%s.namespace resolves to %q: set the latter to match, or drop the override and install the operators in that namespace instead." $chart $key $override $op $cfg.namespace | fail -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}

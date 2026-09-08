@@ -1,0 +1,15 @@
+suite: partitions guard
+templates:
+  - partitions-guard.yaml
+tests:
+  - it: fails to render with no partition at all
+    asserts:
+      - failedTemplate:
+          errorPattern: "requires at least one non-null partition"
+  - it: fails to render when every partition is a null removal
+    set:
+      partitions:
+        default: null
+    asserts:
+      - failedTemplate:
+          errorPattern: "requires at least one non-null partition"

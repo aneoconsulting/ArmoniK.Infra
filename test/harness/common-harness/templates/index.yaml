@@ -1,0 +1,8 @@
+{{- with .Values.index }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: index-result
+data:
+  result: {{ concat (list .root) .path | include "armonik.utils.index" | quote }}
+{{- end }}

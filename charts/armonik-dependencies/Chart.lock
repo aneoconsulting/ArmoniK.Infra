@@ -21,4 +21,4 @@ dependencies:
   repository: https://helm.datalust.co
   version: 2024.3.2
 digest: sha256:05ccfcf6501431d4c6a45565d0d8e8751f6674ac056f29c495577e1b4fddec28
-generated: "2026-09-07T15:05:56.230825288+02:00"
+generated: "2026-09-08T14:21:25.281488728+02:00"

@@ -1,0 +1,37 @@
+{{- $networkPolicyEnabled := list .Values "networkPolicy" "enabled"
+    | include "armonik.utils.index"
+-}}
+{{- $metricsExporterEnabled := list .Values "control-plane" "metricsExporter" "enabled"
+    | include "armonik.utils.index"
+    | default "true"
+-}}
+{{- $meOn := and $networkPolicyEnabled $metricsExporterEnabled -}}
+
+
+{{/*
+  Control-plane submitter + init job connectivity NetworkPolicy
+*/}}
+{{- $dependencyRules := include "armonik.netpol.dependencyRules" . | fromYaml -}}
+
+{{- if and $networkPolicyEnabled $dependencyRules }}
+{{- include "armonik.netpol.render" (dict
+      "context" .
+      "component" "control-plane-submitter-connectivity"
+      "config" (include "armonik.netpol.controlPlaneSubmitter" . | fromYaml)
+  ) }}
+{{- end }}
+
+
+{{/*
+  Control-plane metrics-exporter NetworkPolicy: ingress from KEDA, egress to MongoDB. Ingress
+  from Prometheus is armonik-control-plane's own chart-local policy (see its config comment).
+*/}}
+{{- $mongodbRule := include "armonik.netpol.rule.mongodb" . | fromYaml -}}
+
+{{- if and $meOn $mongodbRule }}
+{{- include "armonik.netpol.render" (dict
+      "context" .
+      "component" "control-plane-metrics-exporter-connectivity"
+      "config" (include "armonik.netpol.controlPlaneMetricsExporter" . | fromYaml)
+  ) }}
+{{- end }}

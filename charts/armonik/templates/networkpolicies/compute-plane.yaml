@@ -1,0 +1,17 @@
+{{- $networkPolicyEnabled := list .Values "networkPolicy" "enabled"
+    | include "armonik.utils.index"
+    | default false
+-}}
+
+{{/*
+  Compute-plane connectivity NetworkPolicy: egress to dependencies + DNS. Ingress from Prometheus
+  is armonik-compute-plane's own chart-local policy (see its NetworkPolicy config comment).
+*/}}
+
+{{- if $networkPolicyEnabled }}
+{{- include "armonik.netpol.render" (dict
+      "context" .
+      "component" "compute-plane-connectivity"
+      "config" (include "armonik.netpol.computePlaneConnectivity" . | fromYaml)
+  ) }}
+{{- end }}

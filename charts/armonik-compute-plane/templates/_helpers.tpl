@@ -66,3 +66,34 @@ env:
   {{- $i = add $i 1 }}
   {{- end }}
 {{- end -}}
+
+{{/*
+  Ingress from Prometheus (poll-agent metrics), derived from global.armonik.monitoring.prometheusUrl
+  (see armonik.netpol.rule.prometheusIngress in armonik-common) - resolves the same whether
+  installed standalone or through the umbrella.
+*/}}
+{{- define "armonik.netpol.computePlane.prometheusIngress" -}}
+{{- list . (.Values.partitionCommon.agent.ports.containerPort | int) .Values.networkPolicy.prometheusPodSelector | include "armonik.netpol.rule.prometheusIngress" -}}
+{{- end -}}
+
+
+{{/*
+  Compute-plane NetworkPolicy configuration.
+*/}}
+{{- define "armonik.netpol.computePlane" -}}
+podSelector:
+  matchLabels:
+    {{- include "armonik.selectorLabels" $ | nindent 4 }}
+
+ingress:
+  {{- include "armonik.netpol.mergeExtra" (dict
+        "rules" (list (list "armonik.netpol.computePlane.prometheusIngress" .) | include "armonik.netpol.mergeRules")
+        "extra" .Values.networkPolicy.extraIngressRules
+    ) | nindent 2 }}
+
+egress:
+  {{- include "armonik.netpol.mergeExtra" (dict
+        "rules" (list (include "armonik.netpol.dnsRule" dict | fromYaml) | toYaml)
+        "extra" .Values.networkPolicy.extraEgressRules
+    ) | nindent 2 }}
+{{- end -}}

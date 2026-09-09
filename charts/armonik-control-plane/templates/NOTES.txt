@@ -4,3 +4,25 @@ To learn more about the release, try:
   $ helm status {{ .Release.Name }}
   $ helm get all {{ .Release.Name }}
   $ helm uninstall {{ .Release.Name }}
+
+{{- if .Values.networkPolicy.enabled }}
+
+NetworkPolicy status:
+  This chart's own rule allows DNS only. Sharing a namespace with an armonik umbrella release
+  that also has networkPolicy.enabled true and already covers this egress - nothing to do.
+  Otherwise, add your own rule (networkPolicy.submitter.extraEgressRules;
+  networkPolicy.metricsExporter.extraEgressRules for MongoDB only), e.g. for MongoDB:
+
+    networkPolicy.submitter.extraEgressRules:
+      - to:
+          - namespaceSelector:
+              matchLabels:
+                kubernetes.io/metadata.name: <namespace>
+            podSelector:
+              matchLabels:
+                app.kubernetes.io/name: percona-server-mongodb
+        ports:
+          - protocol: TCP
+            port: 27017
+
+{{- end }}

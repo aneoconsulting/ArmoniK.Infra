@@ -37,7 +37,7 @@ thirdparty { next }
     gsub(/\{\{ *\.[A-Za-z0-9_]+ *\}\}/, "", line)
     gsub(/\{\{ *\.[A-Za-z0-9_]+ *\| *quote *\}\}/, "", line)
     gsub(/\{\{ *index +\. +"[A-Za-z0-9_-]+" *\| *quote *\}\}/, "", line)
-    gsub(/\{\{-? *if *\.[A-Za-z0-9_]+ *\}\}/, "", line)
+    gsub(/\{\{-? *if *(\.[A-Za-z0-9_]+|index +\. +"[A-Za-z0-9_-]+") *\}\}/, "", line)
     gsub(/\{\{-? *end *\}\}/, "", line)
   if (src ~ /grafana-dashboard/)
     gsub(/\{\{ *[A-Za-z0-9_]+ *\}\}/, "", line)

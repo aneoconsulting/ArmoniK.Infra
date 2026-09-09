@@ -4,4 +4,11 @@
   Chart version: {{ .Chart.Version }}
   App version:   {{ .Chart.AppVersion }}
   Image tag:     {{ include "activemq.image" . }}
+{{- if .Values.networkPolicy.enabled }}
+
+  NetworkPolicy support is enabled for this release.
+  Configure ingress rules explicitly under `networkPolicy.ingress` and
+  egress rules under `networkPolicy.egress` in your values file to meet your needs
+
+{{- end }}
 ***********************************************************************

@@ -3,6 +3,10 @@
 # being this chart's whole purpose. Under the umbrella, the umbrella's global.armonik.operators.* wins.
 # Mind the two paths: global.armonik.operators.<op> are the control flags, <op> at the top level is the
 # operator subchart's own configuration.
+# googleCasIssuer is the one exception left at its armonik-common default (deploy=false): it is
+# GCP-specific, only needed for certManager.issuer.provider=googleCas, so installing it unconditionally
+# would pull in a cloud-specific CRD/controller.
+# Opt in explicitly with --set global.armonik.operators.googleCasIssuer.deploy=true.
 global:
   armonik:
     operators:
@@ -17,7 +21,7 @@ global:
       prometheusOperator:
         deploy: true
       googleCasIssuer:
-        deploy: true
+        deploy: false
 
 # --- Operator subchart configuration, at operators.<op>.* under the umbrella ---
 

@@ -42,10 +42,13 @@ global:
         deploy: true
       prometheusOperator:
         deploy: true
+      # googleCasIssuer is GCP-specific, only needed for
+      # certManager.issuer.provider=googleCas.
+      googleCasIssuer:
+        deploy: false
+
     # monitoring.{prometheusUrl,metricsExporterUrl} come from armonik-common (see its README); both derive
     # from the operators namespaces above, which a layered install has to state.
-      googleCasIssuer:
-        deploy: true
 
 
 ############################################
@@ -103,6 +106,32 @@ ingress:
   enabled: true
   # priorityClassName:
   urlsSecretName: '{{ .Release.Name }}-urls'
+
+############################################
+###### CERT-MANAGER ISSUER PROVIDERS ######
+############################################
+googleCas:
+  # Required when global.armonik.certManager.issuer.provider=googleCas.
+  project: ""
+  location: ""
+  caPoolId: ""
+  certificateAuthorityId: ""
+  credentials:
+    name: ""
+    key: credentials.json
+
+venafi:
+  # Required when global.armonik.certManager.issuer.provider=venafi.
+  zone: ""
+  tpp:
+    url: ""
+    credentialsRef:
+      name: ""
+    caBundle: ""
+  cloud:
+    apiTokenSecretRef:
+      name: ""
+      key: apikey
 
 # To bring your own MongoDB, set dependencies.mongodb.enabled=false and supply the connection via the
 # conf values (conf.core.env / conf.core.envFromSecret). The in-cluster psmdb-db (below) is the default.
@@ -165,9 +194,10 @@ dependencies:
     tls:
       enabled: false
       existingSecret: ""
-      serverPublicKey: ""
-      serverKey: ""
-      caPublicKey: ""
+      # cert-manager's default output Secret keys.
+      serverPublicKey: tls.crt
+      serverKey: tls.key
+      caPublicKey: ca.crt
     metrics:
       enabled: true
       image:

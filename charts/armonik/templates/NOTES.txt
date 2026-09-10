@@ -18,6 +18,23 @@ Operators:
   - {{ $op }}: {{ if $cfg.deploy }}managed (installed by this release){{ else if $cfg.available }}external (already present in the cluster){{ else }}absent (degraded){{ end }}
 {{- end }}
 **********************************************************
+{{- $sharedIssuer := include "armonik.certManager.issuer" $ | fromYaml }}
+{{- if and $sharedIssuer.enabled (eq $sharedIssuer.provider "googleCas") }}
+
+ACTION NEEDED for provider=googleCas: cert-manager only auto-approves signers listed in
+approveSignerNames, which does not cover Google CAS by default. Without this, CertificateRequests hang
+unapproved forever with no error. Set on the release installing cert-manager (armonik-operators, alias
+"operators" here) - this REPLACES the default, so keep the first two entries:
+
+     operators:
+       cert-manager:
+         approveSignerNames:
+           - issuers.cert-manager.io/*
+           - clusterissuers.cert-manager.io/*
+           - googlecasissuers.cas-issuer.jetstack.io/*
+           - googlecasclusterissuers.cas-issuer.jetstack.io/*
+**********************************************************
+{{- end }}
 {{- $cp := index .Values "compute-plane" }}
 {{- $workerPartitions := list }}
 {{- if and $cp $cp.enabled $cp.partitions }}{{ $workerPartitions = keys $cp.partitions | sortAlpha }}{{ end }}

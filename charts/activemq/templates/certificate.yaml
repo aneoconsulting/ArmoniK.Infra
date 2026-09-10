@@ -1,12 +1,12 @@
 {{- $tls := .Values.tls | default dict }}
 {{- $certManager := $tls.certManager | default dict }}
-{{- if eq $tls.type "cert-manager" }}
-{{- $globalIssuer := dig "armonik" "certManager" "issuer" dict .Values.global }}
+{{- if and ($tls.enabled | empty | not) (eq $tls.type "cert-manager") }}
+{{- $globalIssuer := include "armonik.certManager.issuer" $ | fromYaml }}
 {{- $localEnabled := (list $certManager "existingIssuer" "enabled" | include "armonik.utils.index") | empty | not }}
 {{- $useGlobal := and $globalIssuer.enabled (not $localEnabled) }}
 {{- $existingIssuer := or $localEnabled $useGlobal }}
 {{- if and (not (dig "armonik" "operators" "certManager" "available" true .Values.global)) (not $existingIssuer) }}
-{{- fail "activemq TLS via cert-manager requires it: set global.armonik.operators.certManager.available=true, set tls.certManager.existingIssuer.enabled=true, or use a tls.type other than cert-manager." }}
+{{- fail "activemq TLS via cert-manager requires it: set global.armonik.operators.certManager.available=true, set tls.certManager.existingIssuer.enabled=true, set global.armonik.certManager.issuer.enabled=true, or use a tls.type other than cert-manager." }}
 {{- end }}
 {{- if not $existingIssuer }}
 apiVersion: cert-manager.io/v1
@@ -42,9 +42,9 @@ metadata:
 spec:
   commonName: {{ include "activemq.fullname" . }}
   dnsNames:
-  - {{ include "activemq.fullname" . }}.{{ .Release.Namespace }}
-  - {{ include "activemq.fullname" . }}.{{ .Release.Namespace }}.svc
-  - {{ include "activemq.fullname" . }}.{{ .Release.Namespace }}.svc.{{ $tls.clusterDomain }}
+  - {{ include "activemq.fullname" . }}.{{ include "activemq.namespace" . }}
+  - {{ include "activemq.fullname" . }}.{{ include "activemq.namespace" . }}.svc
+  - {{ include "activemq.fullname" . }}.{{ include "activemq.namespace" . }}.svc.{{ $tls.clusterDomain }}
   secretName: {{ include "activemq.fullname" . }}
   usages:
     - server auth
@@ -52,10 +52,10 @@ spec:
   privateKey:
     algorithm: RSA
     size: 2048
-  {{- with $tls.certManager.duration }}
+  {{- with $certManager.duration }}
   duration: {{ . }}
   {{- end }}
-  {{- with $tls.certManager.renewBefore }}
+  {{- with $certManager.renewBefore }}
   renewBefore: {{ . }}
   {{- end }}
   issuerRef:

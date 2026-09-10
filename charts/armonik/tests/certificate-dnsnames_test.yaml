@@ -1,0 +1,166 @@
+suite: certificate SANs follow the real backend identity
+release:
+  name: t
+templates:
+  - certificate/redis-certificate.yaml
+  - certificate/mongodb-certificate.yaml
+  - charts/dependencies/charts/redis/templates/service.yaml
+  - charts/dependencies/charts/mongodb/templates/cluster.yaml
+tests:
+  # Regression guard: redis-certificate.yaml once hardcoded "<release>-redis" for commonName/dnsNames
+  # while the actual valkey Service name comes from its own fullname helper (nameOverride/
+  # fullnameOverride-aware), so the cert covered the wrong host and every ArmoniK client failed the
+  # TLS handshake with RemoteCertificateNameMismatch (the Certificate itself still reported Ready).
+  # fullnameOverride here would not move a hardcoded guess, so it proves the template calls the real
+  # helper instead. Covered under three cases: chart defaults, dependencies.redis.fullnameOverride,
+  # and a release namespaceOverride (the valkey Service has no metadata.namespace of its own, so it
+  # always lands in the release namespace that armonik.namespace resolves to).
+  - it: redis Service is named exactly what redis-certificate.yaml expects (defaults)
+    template: charts/dependencies/charts/redis/templates/service.yaml
+    asserts:
+      - equal:
+          path: metadata.name
+          value: t-redis
+  - it: redis Certificate commonName and dnsNames match that Service name (defaults)
+    template: certificate/redis-certificate.yaml
+    set:
+      global:
+        armonik:
+          certManager:
+            issuer:
+              enabled: true
+      dependencies:
+        redis:
+          tls:
+            enabled: true
+            existingSecret: redis-tls
+            certManager:
+              enabled: true
+    asserts:
+      - equal:
+          path: spec.commonName
+          value: t-redis
+      - contains:
+          path: spec.dnsNames
+          content: t-redis
+      - contains:
+          path: spec.dnsNames
+          content: t-redis.NAMESPACE
+
+  - it: redis Service is named exactly what redis-certificate.yaml expects (fullnameOverride)
+    template: charts/dependencies/charts/redis/templates/service.yaml
+    set:
+      dependencies:
+        redis:
+          fullnameOverride: custom-redis
+    asserts:
+      - equal:
+          path: metadata.name
+          value: custom-redis
+  - it: redis Certificate commonName and dnsNames match that Service name (fullnameOverride)
+    template: certificate/redis-certificate.yaml
+    set:
+      global:
+        armonik:
+          certManager:
+            issuer:
+              enabled: true
+      dependencies:
+        redis:
+          fullnameOverride: custom-redis
+          tls:
+            enabled: true
+            existingSecret: redis-tls
+            certManager:
+              enabled: true
+    asserts:
+      - equal:
+          path: spec.commonName
+          value: custom-redis
+      - contains:
+          path: spec.dnsNames
+          content: custom-redis
+      - contains:
+          path: spec.dnsNames
+          content: custom-redis.NAMESPACE
+
+  - it: redis Certificate namespace, commonName and dnsNames follow a release namespaceOverride
+    template: certificate/redis-certificate.yaml
+    set:
+      namespaceOverride: custom-ns
+      control-plane:
+        namespaceOverride: custom-ns
+      compute-plane:
+        namespaceOverride: custom-ns
+      global:
+        armonik:
+          certManager:
+            issuer:
+              enabled: true
+      dependencies:
+        redis:
+          tls:
+            enabled: true
+            existingSecret: redis-tls
+            certManager:
+              enabled: true
+    asserts:
+      - equal:
+          path: metadata.namespace
+          value: custom-ns
+      - equal:
+          path: spec.commonName
+          value: t-redis
+      - contains:
+          path: spec.dnsNames
+          content: t-redis
+      - contains:
+          path: spec.dnsNames
+          content: t-redis.custom-ns
+
+  # Regression guard: mongodb-certificate.yaml once guessed "<release>-mongodb" for the cluster name
+  # and read the namespace from the UMBRELLA's own armonik.namespace instead of the psmdb-db CR's own
+  # (independently overridable) name/namespace. nameOverride/namespaceOverride here would not move a
+  # hardcoded guess, so it proves the template reuses the CR's own helpers.
+  - it: mongodb CR is named and namespaced exactly what mongodb-certificate.yaml expects
+    template: charts/dependencies/charts/mongodb/templates/cluster.yaml
+    set:
+      dependencies:
+        mongodb:
+          nameOverride: custom-mongo
+          namespaceOverride: custom-ns
+    asserts:
+      - equal:
+          path: metadata.name
+          value: t-custom-mongo
+      - equal:
+          path: metadata.namespace
+          value: custom-ns
+  - it: mongodb Certificate namespace, commonName and first dnsName match that CR
+    template: certificate/mongodb-certificate.yaml
+    set:
+      global:
+        armonik:
+          certManager:
+            issuer:
+              enabled: true
+              provider: venafi
+      dependencies:
+        mongodb:
+          nameOverride: custom-mongo
+          namespaceOverride: custom-ns
+          certManager:
+            enabled: true
+    asserts:
+      - equal:
+          path: metadata.namespace
+          value: custom-ns
+        documentIndex: 0
+      - equal:
+          path: spec.commonName
+          value: t-custom-mongo-rs0
+        documentIndex: 0
+      - equal:
+          path: spec.dnsNames[0]
+          value: t-custom-mongo-rs0
+        documentIndex: 0

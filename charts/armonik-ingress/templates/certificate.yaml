@@ -1,7 +1,7 @@
 {{- $ops := include "armonik.operators" $ | fromYaml }}
 {{- $tls := .Values.tls | default dict }}
 {{- $certManager := $tls.certManager | default dict }}
-{{- $globalIssuer := list $.Values "global" "armonik" "certManager" "issuer" | include "armonik.utils.index" | fromYaml }}
+{{- $globalIssuer := include "armonik.certManager.issuer" $ | fromYaml }}
 {{- $localEnabled := (list $certManager "existingIssuer" "enabled" | include "armonik.utils.index") | empty | not }}
 {{- $useGlobal := and $globalIssuer.enabled (not $localEnabled) }}
 {{- $existingIssuer := or $localEnabled $useGlobal }}
@@ -42,6 +42,13 @@ spec:
   - {{ include "armonik.fullname" . }}.{{ include "armonik.namespace" . }}
   - {{ include "armonik.fullname" . }}.{{ include "armonik.namespace" . }}.svc
   - {{ include "armonik.fullname" . }}.{{ include "armonik.namespace" . }}.svc.{{ include "armonik.clusterDomain" . }}
+  {{- range $certManager.extraDnsNames }}
+  - {{ . | quote }}
+  {{- end }}
+  {{- with $certManager.ipAddresses }}
+  ipAddresses:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   secretName: {{ include "armonik.fullname" . }}
   usages:
     - server auth

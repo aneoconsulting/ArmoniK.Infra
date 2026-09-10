@@ -43,6 +43,20 @@ global:
         deploy: false
         available: true
         namespace: '{{ .Values.global.armonik.operators.googleCasIssuer.deploy | empty | ternary "" .Release.Namespace }}'
+    # Shared cert-manager issuer. Modes:
+    #   enabled=false              - no shared issuer; each component's own tls.enabled stays local.
+    #   enabled=true, create=true  - this release creates the issuer; provider selects what kind
+    #                                 (selfSigned default | venafi | googleCas, the latter requiring
+    #                                 operators.googleCasIssuer).
+    #   enabled=true, create=false - reference an already-existing Issuer/ClusterIssuer via name/kind/group.
+    certManager:
+      issuer:
+        enabled: false
+        create: false
+        provider: selfSigned
+        name: '{{.Release.Name}}-shared-issuer'
+        kind: Issuer
+        group: cert-manager.io
     monitoring:
       # -- Prometheus for the Grafana datasource and PromQL KEDA triggers. Defaults to the
       # `armonik.monitoring.prometheusUrl.default` derivation; a literal URL replaces it.

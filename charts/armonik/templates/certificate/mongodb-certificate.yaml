@@ -1,0 +1,80 @@
+{{- $ops := include "armonik.operators" $ | fromYaml }}
+{{- $mongo := .Values.dependencies.mongodb | default dict }}
+{{- /* dependencies.mongodb.tls passes straight into the PerconaServerMongoDB CR's spec.tls
+       (armonik-dependencies/charts/psmdb-db templates/cluster.yaml), whose CRD is a structural
+       schema: any key here beyond mode/allowInvalidCertificates/certManagementPolicy/
+       certValidityDuration/issuerConf makes server-side apply fail with "field not declared in
+       schema". ArmoniK's own trigger keys therefore live under the sibling dependencies.mongodb.certManager. */}}
+{{- $tls := $mongo.tls | default dict }}
+{{- $certManager := $mongo.certManager | default dict }}
+{{- if and $mongo.enabled $certManager.enabled }}
+{{- $globalIssuer := include "armonik.certManager.issuer" $ | fromYaml }}
+{{- if not $globalIssuer.enabled }}
+{{- fail "dependencies.mongodb.certManager.enabled requires global.armonik.certManager.issuer.enabled=true." }}
+{{- end }}
+{{- if eq ($globalIssuer.provider | default "selfSigned") "selfSigned" }}
+{{- fail "dependencies.mongodb.certManager.enabled cannot use a selfSigned shared issuer: replica set members must chain to a common CA. Use provider=venafi or provider=googleCas." }}
+{{- end }}
+
+{{- $domain := include "armonik.clusterDomain" . }}
+{{- /* Real CR name and namespace (charts/armonik-dependencies/charts/mongodb is psmdb-db, aliased
+       "mongodb"): the operator derives the replset Service/StatefulSet names from this CR's
+       metadata.name and creates them in the CR's own namespace, so reuse the chart's own helpers
+       through the live subchart scope rather than guessing "<release>-mongodb" or assuming the
+       umbrella's namespace. dependencies.mongodb.namespaceOverride and dependencies.mongodb.
+       {nameOverride,fullnameOverride} are real psmdb-db values independent of the umbrella's own
+       namespaceOverride/fullname, and diverge from them silently if read from the wrong scope (same
+       bug class as redis's hardcoded Service name). replsetName stays an ArmoniK-only convenience
+       defaulting to the chart's own default replset key "rs0"; it is not re-derived from
+       dependencies.mongodb.replsets.*.name, so a renamed replset needs it set explicitly. */}}
+{{- $cluster := include "psmdb-database.fullname" .Subcharts.dependencies.Subcharts.mongodb }}
+{{- $ns := include "psmdb-database.namespace" .Subcharts.dependencies.Subcharts.mongodb }}
+{{- $replset := $mongo.replsetName | default "rs0" }}
+{{- $svc := printf "%s-%s" $cluster $replset }}
+
+{{- range $purpose, $secret := dict "ssl" ($certManager.existingSecret | default (printf "%s-ssl" $cluster)) "ssl-internal" ($certManager.existingSecretInternal | default (printf "%s-ssl-internal" $cluster)) }}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ $cluster }}-{{ $purpose }}
+  namespace: {{ $ns }}
+  {{- if $ops.certManager.deploy }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "10"
+  {{- end }}
+  labels:
+    {{- include "armonik.labels" $ | nindent 4 }}
+spec:
+  secretName: {{ $secret }}
+  commonName: {{ $svc }}
+  dnsNames:
+  # Headless service and every pod behind it. The wildcard covers rs0-0, rs0-1, ...
+  - {{ $svc }}
+  - {{ $svc }}.{{ $ns }}
+  - {{ $svc }}.{{ $ns }}.svc
+  - {{ $svc }}.{{ $ns }}.svc.{{ $domain }}
+  - "*.{{ $svc }}"
+  - "*.{{ $svc }}.{{ $ns }}"
+  - "*.{{ $svc }}.{{ $ns }}.svc"
+  - "*.{{ $svc }}.{{ $ns }}.svc.{{ $domain }}"
+  usages:
+  # Replica set members act as both server and client towards each other.
+  - server auth
+  - client auth
+  privateKey:
+    algorithm: RSA
+    size: 2048
+  {{- with $certManager.duration }}
+  duration: {{ . }}
+  {{- end }}
+  {{- with $certManager.renewBefore }}
+  renewBefore: {{ . }}
+  {{- end }}
+  issuerRef:
+    name: {{ $globalIssuer.name }}
+    kind: {{ $globalIssuer.kind }}
+    group: {{ $globalIssuer.group }}
+{{- end }}
+{{- end }}

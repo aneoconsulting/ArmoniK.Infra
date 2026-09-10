@@ -64,6 +64,13 @@ tls:
     # How long before the currently issued certificate’s expiry cert-manager should renew the certificate.
     # See https://cert-manager.io/docs/reference/api-docs/#cert-manager.io/v1.CertificateSpec
     renewBefore: ""
+    # Extra DNS names for the Certificate, appended to the built-in in-cluster Service names (short,
+    # namespaced, svc, and FQDN). The ingress is the external entry point, so a client reaching it from
+    # outside the cluster by hostname needs that hostname listed here.
+    extraDnsNames: []
+    # IP SANs for the Certificate. A client connecting directly to the ingress
+    # Service's external IP needs that IP listed here.
+    ipAddresses: []
     # Add extra annotations to the Certificate resource
     annotations: {}
     # Add extra labels to the Certificate resource

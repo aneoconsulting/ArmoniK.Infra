@@ -46,7 +46,7 @@ spec:
   renewBefore: {{ . }}
   {{- end }}
   issuerRef:
-    name: {{ $globalIssuer.name }}
+    name: {{ required "global.armonik.certManager.issuer.name must not be empty" $globalIssuer.name }}
     kind: {{ $globalIssuer.kind }}
     group: {{ $globalIssuer.group }}
 {{- end }}

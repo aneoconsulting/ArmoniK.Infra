@@ -15,6 +15,9 @@
 {{- if eq ($globalIssuer.provider | default "selfSigned") "selfSigned" }}
 {{- fail "dependencies.mongodb.certManager.enabled cannot use a selfSigned shared issuer: replica set members must chain to a common CA. Use provider=venafi or provider=googleCas." }}
 {{- end }}
+{{- if eq ($tls.mode | default "preferTLS") "disabled" }}
+{{- fail "dependencies.mongodb.certManager.enabled cannot be combined with dependencies.mongodb.tls.mode=disabled: cert-manager would issue Certificates the replica set never uses. Set tls.mode to allowTLS, preferTLS or requireTLS, or turn certManager.enabled off." }}
+{{- end }}
 
 {{- $domain := include "armonik.clusterDomain" . }}
 {{- /* Real CR name and namespace (charts/armonik-dependencies/charts/mongodb is psmdb-db, aliased
@@ -73,7 +76,7 @@ spec:
   renewBefore: {{ . }}
   {{- end }}
   issuerRef:
-    name: {{ $globalIssuer.name }}
+    name: {{ required "global.armonik.certManager.issuer.name must not be empty" $globalIssuer.name }}
     kind: {{ $globalIssuer.kind }}
     group: {{ $globalIssuer.group }}
 {{- end }}

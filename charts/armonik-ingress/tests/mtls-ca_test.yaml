@@ -94,3 +94,18 @@ tests:
     asserts:
       - failedTemplate:
           errorPattern: 'mtls\.certificationAuthority\.pem.*mtls\.certificationAuthority\.existingSecret'
+  - it: "mtls enabled with tls disabled fails independently of validate.yaml, naming both keys"
+    set:
+      tls:
+        enabled: false
+      mtls:
+        enabled: true
+        certificationAuthority:
+          pem: |
+            -----BEGIN CERTIFICATE-----
+            MIIBszCCAVmgAwIBAgIUfake0000000000000000000000000000
+            -----END CERTIFICATE-----
+    template: secrets/mtls-ca.yaml
+    asserts:
+      - failedTemplate:
+          errorPattern: 'mtls\.enabled.*tls\.enabled'

@@ -16,7 +16,7 @@ dependencies:
   version: 8.15.0
 - name: fluent-bit
   repository: https://fluent.github.io/helm-charts
-  version: 0.58.2
+  version: 0.58.1
 - name: seq
   repository: https://helm.datalust.co
   version: 2024.3.2

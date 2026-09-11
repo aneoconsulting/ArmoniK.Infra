@@ -164,3 +164,67 @@ tests:
           path: spec.dnsNames[0]
           value: t-custom-mongo-rs0
         documentIndex: 0
+
+  # Regression guard: issuer.enabled=true, create=false and name explicitly blanked out used to
+  # render issuerRef.name: "" silently (Kubernetes accepts the object, cert-manager never issues
+  # it, nothing reports an error). Both consumers now `required` the name.
+  - it: redis Certificate fails when the shared issuer name is empty
+    template: certificate/redis-certificate.yaml
+    set:
+      global:
+        armonik:
+          certManager:
+            issuer:
+              enabled: true
+              create: false
+              name: ""
+      dependencies:
+        redis:
+          tls:
+            enabled: true
+            existingSecret: redis-tls
+            certManager:
+              enabled: true
+    asserts:
+      - failedTemplate:
+          errorPattern: "global.armonik.certManager.issuer.name must not be empty"
+
+  - it: mongodb Certificate fails when the shared issuer name is empty
+    template: certificate/mongodb-certificate.yaml
+    set:
+      global:
+        armonik:
+          certManager:
+            issuer:
+              enabled: true
+              create: false
+              provider: venafi
+              name: ""
+      dependencies:
+        mongodb:
+          certManager:
+            enabled: true
+    asserts:
+      - failedTemplate:
+          errorPattern: "global.armonik.certManager.issuer.name must not be empty"
+
+  # Regression guard: certManager.enabled issues Certificates regardless of tls.mode, so a replica
+  # set explicitly set to tls.mode=disabled would still get two unused Certificates and no error.
+  - it: mongodb Certificate fails when certManager is enabled but tls.mode=disabled
+    template: certificate/mongodb-certificate.yaml
+    set:
+      global:
+        armonik:
+          certManager:
+            issuer:
+              enabled: true
+              provider: venafi
+      dependencies:
+        mongodb:
+          tls:
+            mode: disabled
+          certManager:
+            enabled: true
+    asserts:
+      - failedTemplate:
+          errorPattern: "dependencies.mongodb.tls.mode=disabled"

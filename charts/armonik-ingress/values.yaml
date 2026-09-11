@@ -89,6 +89,7 @@ mtls:
   enabled: false
   certificationAuthority:
     pem: ""
+    existingSecret: ""
   trustedCommonNames: []
 
 volumes:

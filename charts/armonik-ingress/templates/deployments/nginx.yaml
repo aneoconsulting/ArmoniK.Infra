@@ -113,11 +113,12 @@ spec:
           secretName: {{ include "armonik.fullname" . | quote }}
       {{- end }}
       {{- if list .Values "mtls" "enabled" | include "armonik.utils.index" }}
+      {{- $mtlsCa := .Values.mtls.certificationAuthority | default dict }}
       - name: client-cert
         secret:
           defaultMode: 420
           optional: false
-          secretName: {{ include "armonik.fullname" . }}-mtls-ca
+          secretName: {{ $mtlsCa.existingSecret | default (printf "%s-mtls-ca" (include "armonik.fullname" .)) | quote }}
       {{- end}}
       - name: conf
         secret:

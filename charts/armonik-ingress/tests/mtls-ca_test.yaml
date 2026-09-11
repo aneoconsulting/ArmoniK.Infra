@@ -1,0 +1,96 @@
+suite: mtls client CA secret
+templates:
+  - secrets/mtls-ca.yaml
+  - deployments/nginx.yaml
+  - armonik-nginx-conf.yaml
+tests:
+  - it: renders neither the Secret nor a client-cert volume when mtls is disabled
+    asserts:
+      - hasDocuments:
+          count: 0
+        template: secrets/mtls-ca.yaml
+      - lengthEqual:
+          path: spec.template.spec.volumes
+          count: 2
+        template: deployments/nginx.yaml
+  - it: "pem only: renders the Secret from a literal pem, and the Deployment mounts that exact Secret"
+    set:
+      fullnameOverride: custom-ingress
+      tls:
+        enabled: true
+      mtls:
+        enabled: true
+        certificationAuthority:
+          pem: |
+            -----BEGIN CERTIFICATE-----
+            MIIBszCCAVmgAwIBAgIUfake0000000000000000000000000000
+            -----END CERTIFICATE-----
+    asserts:
+      - equal:
+          path: metadata.name
+          value: custom-ingress-mtls-ca
+        template: secrets/mtls-ca.yaml
+      - equal:
+          path: spec.template.spec.volumes[1].name
+          value: client-cert
+        template: deployments/nginx.yaml
+      - equal:
+          path: spec.template.spec.volumes[1].secret.secretName
+          value: custom-ingress-mtls-ca
+        template: deployments/nginx.yaml
+  - it: "existingSecret only: mounts it instead of rendering one"
+    set:
+      fullnameOverride: custom-ingress
+      tls:
+        enabled: true
+      mtls:
+        enabled: true
+        certificationAuthority:
+          existingSecret: my-corporate-client-ca
+    asserts:
+      - hasDocuments:
+          count: 0
+        template: secrets/mtls-ca.yaml
+      - equal:
+          path: spec.template.spec.volumes[1].name
+          value: client-cert
+        template: deployments/nginx.yaml
+      - equal:
+          path: spec.template.spec.volumes[1].secret.secretName
+          value: my-corporate-client-ca
+        template: deployments/nginx.yaml
+  - it: "both set: existingSecret wins deterministically, pem is ignored"
+    set:
+      fullnameOverride: custom-ingress
+      tls:
+        enabled: true
+      mtls:
+        enabled: true
+        certificationAuthority:
+          existingSecret: my-corporate-client-ca
+          pem: |
+            -----BEGIN CERTIFICATE-----
+            MIIBszCCAVmgAwIBAgIUfake0000000000000000000000000000
+            -----END CERTIFICATE-----
+    asserts:
+      - hasDocuments:
+          count: 0
+        template: secrets/mtls-ca.yaml
+      - equal:
+          path: spec.template.spec.volumes[1].name
+          value: client-cert
+        template: deployments/nginx.yaml
+      - equal:
+          path: spec.template.spec.volumes[1].secret.secretName
+          value: my-corporate-client-ca
+        template: deployments/nginx.yaml
+  - it: "neither set: fails naming both options"
+    set:
+      tls:
+        enabled: true
+      mtls:
+        enabled: true
+    template: secrets/mtls-ca.yaml
+    asserts:
+      - failedTemplate:
+          errorPattern: 'mtls\.certificationAuthority\.pem.*mtls\.certificationAuthority\.existingSecret'

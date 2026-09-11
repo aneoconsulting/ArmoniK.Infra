@@ -1,0 +1,52 @@
+{{- $ops := include "armonik.operators" $ | fromYaml }}
+{{- $redis := .Values.dependencies.redis | default dict }}
+{{- $tls := $redis.tls | default dict }}
+{{- $certManager := $tls.certManager | default dict }}
+{{- if and $redis.enabled $tls.enabled $certManager.enabled }}
+{{- $globalIssuer := include "armonik.certManager.issuer" $ | fromYaml }}
+{{- if not $globalIssuer.enabled }}
+{{- fail "dependencies.redis.tls.certManager.enabled requires global.armonik.certManager.issuer.enabled=true: valkey has no native cert-manager integration, ArmoniK.Infra requests the Certificate itself against the shared issuer." }}
+{{- end }}
+{{- /* Real valkey Service name: charts/armonik-dependencies/charts/redis is the valkey chart, aliased
+       "redis" (so its own .Chart.Name resolves to "redis" there, not "valkey"). Call its own fullname
+       helper through the live subchart scope, the same pattern armonik.redis.host in
+       storage/_redis.tpl already uses for the connection string, rather than hardcoding
+       "<release>-redis": a hardcoded guess silently diverges from nameOverride/fullnameOverride. */}}
+{{- $svcName := include "valkey.fullname" .Subcharts.dependencies.Subcharts.redis }}
+{{- $ns := include "armonik.namespace" . }}
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ $svcName }}-tls
+  namespace: {{ $ns }}
+  {{- if $ops.certManager.deploy }}
+  {{- /* Hooked only when this release installs the CRDs; otherwise a plain resource. */}}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "10"
+  {{- end }}
+spec:
+  commonName: {{ $svcName }}
+  dnsNames:
+  - {{ $svcName }}
+  - {{ $svcName }}.{{ $ns }}
+  - {{ $svcName }}.{{ $ns }}.svc
+  - {{ $svcName }}.{{ $ns }}.svc.{{ include "armonik.clusterDomain" . }}
+  secretName: {{ required "dependencies.redis.tls.existingSecret is required when certManager.enabled=true" $tls.existingSecret }}
+  usages:
+    - server auth
+    - client auth
+  privateKey:
+    algorithm: RSA
+    size: 2048
+  {{- with $certManager.duration }}
+  duration: {{ . }}
+  {{- end }}
+  {{- with $certManager.renewBefore }}
+  renewBefore: {{ . }}
+  {{- end }}
+  issuerRef:
+    name: {{ $globalIssuer.name }}
+    kind: {{ $globalIssuer.kind }}
+    group: {{ $globalIssuer.group }}
+{{- end }}

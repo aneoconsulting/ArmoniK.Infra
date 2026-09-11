@@ -1,0 +1,120 @@
+suite: cert-manager shared issuer providers
+release:
+  name: t
+templates:
+  - certmanager-issuer.yaml
+tests:
+  - it: selfSigned renders a plain Issuer
+    set:
+      global:
+        armonik:
+          certManager:
+            issuer:
+              enabled: true
+              create: true
+              provider: selfSigned
+              name: shared-issuer
+    asserts:
+      - isKind:
+          of: Issuer
+      - equal:
+          path: spec.selfSigned
+          value: {}
+
+  - it: googleCas renders the CR from the top-level googleCas values
+    set:
+      global:
+        armonik:
+          certManager:
+            issuer:
+              enabled: true
+              create: true
+              provider: googleCas
+              name: shared-issuer
+              kind: GoogleCASIssuer
+              group: cas-issuer.jetstack.io
+      googleCas:
+        project: my-project
+        location: europe-west1
+        caPoolId: my-pool
+    asserts:
+      - isKind:
+          of: GoogleCASIssuer
+      - equal:
+          path: spec.project
+          value: my-project
+      - equal:
+          path: spec.location
+          value: europe-west1
+      - equal:
+          path: spec.caPoolId
+          value: my-pool
+
+  - it: googleCas fails without the required top-level fields
+    set:
+      global:
+        armonik:
+          certManager:
+            issuer:
+              enabled: true
+              create: true
+              provider: googleCas
+              name: shared-issuer
+              kind: GoogleCASIssuer
+              group: cas-issuer.jetstack.io
+    asserts:
+      - failedTemplate:
+          errorPattern: "googleCas.project is required"
+
+  - it: venafi renders from the top-level venafi values
+    set:
+      global:
+        armonik:
+          certManager:
+            issuer:
+              enabled: true
+              create: true
+              provider: venafi
+              name: shared-issuer
+      venafi:
+        zone: my-zone
+        cloud:
+          apiTokenSecretRef:
+            name: venafi-token
+    asserts:
+      - isKind:
+          of: Issuer
+      - equal:
+          path: spec.venafi.zone
+          value: my-zone
+      - equal:
+          path: spec.venafi.cloud.apiTokenSecretRef.name
+          value: venafi-token
+
+  - it: venafi fails without the required zone
+    set:
+      global:
+        armonik:
+          certManager:
+            issuer:
+              enabled: true
+              create: true
+              provider: venafi
+              name: shared-issuer
+    asserts:
+      - failedTemplate:
+          errorPattern: "venafi.zone is required"
+
+  - it: fails on an unrecognized provider
+    set:
+      global:
+        armonik:
+          certManager:
+            issuer:
+              enabled: true
+              create: true
+              provider: bogus
+              name: shared-issuer
+    asserts:
+      - failedTemplate:
+          errorPattern: "is not recognized: use selfSigned, venafi or googleCas"

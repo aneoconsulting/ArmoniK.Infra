@@ -1,0 +1,43 @@
+suite: certificate SANs follow the actual Service
+templates:
+  - certificate.yaml
+  - service.yaml
+tests:
+  # Regression guard: dnsNames once hardcoded .Release.Namespace while metadata.namespace (and the
+  # actual Service) use activemq.namespace (namespaceOverride-aware), diverging whenever
+  # namespaceOverride is set.
+  - it: Service and Certificate land in the overridden namespace
+    set:
+      namespaceOverride: activemq-ns
+      tls:
+        enabled: true
+        type: cert-manager
+    asserts:
+      - equal:
+          path: metadata.namespace
+          value: activemq-ns
+        template: service.yaml
+      - equal:
+          path: metadata.namespace
+          value: activemq-ns
+        template: certificate.yaml
+        documentSelector:
+          path: kind
+          value: Certificate
+  - it: Certificate dnsNames use the same namespace as the Service, not the release namespace
+    set:
+      namespaceOverride: activemq-ns
+      tls:
+        enabled: true
+        type: cert-manager
+    template: certificate.yaml
+    documentSelector:
+      path: kind
+      value: Certificate
+    asserts:
+      - contains:
+          path: spec.dnsNames
+          content: activemq.activemq-ns
+      - contains:
+          path: spec.dnsNames
+          content: activemq.activemq-ns.svc

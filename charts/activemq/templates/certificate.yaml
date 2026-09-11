@@ -1,8 +1,14 @@
-{{- if and .Values.tls.enabled (eq .Values.tls.type "cert-manager") }}
-{{- if and (not (dig "armonik" "operators" "certManager" "available" true .Values.global)) (not .Values.tls.certManager.existingIssuer.enabled) }}
-{{- fail "activemq TLS via cert-manager requires it: set global.armonik.operators.certManager.available=true, set tls.certManager.existingIssuer.enabled=true, or use a tls.type other than cert-manager." }}
+{{- $tls := .Values.tls | default dict }}
+{{- $certManager := $tls.certManager | default dict }}
+{{- if and ($tls.enabled | empty | not) (eq $tls.type "cert-manager") }}
+{{- $globalIssuer := include "armonik.certManager.issuer" $ | fromYaml }}
+{{- $localEnabled := (list $certManager "existingIssuer" "enabled" | include "armonik.utils.index") | empty | not }}
+{{- $useGlobal := and $globalIssuer.enabled (not $localEnabled) }}
+{{- $existingIssuer := or $localEnabled $useGlobal }}
+{{- if and (not (dig "armonik" "operators" "certManager" "available" true .Values.global)) (not $existingIssuer) }}
+{{- fail "activemq TLS via cert-manager requires it: set global.armonik.operators.certManager.available=true, set tls.certManager.existingIssuer.enabled=true, set global.armonik.certManager.issuer.enabled=true, or use a tls.type other than cert-manager." }}
 {{- end }}
-{{- if not .Values.tls.certManager.existingIssuer.enabled }}
+{{- if not $existingIssuer }}
 apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
@@ -38,7 +44,7 @@ spec:
   dnsNames:
   - {{ include "activemq.fullname" . }}.{{ include "activemq.namespace" . }}
   - {{ include "activemq.fullname" . }}.{{ include "activemq.namespace" . }}.svc
-  - {{ include "activemq.fullname" . }}.{{ include "activemq.namespace" . }}.svc.{{ .Values.tls.clusterDomain }}
+  - {{ include "activemq.fullname" . }}.{{ include "activemq.namespace" . }}.svc.{{ $tls.clusterDomain }}
   secretName: {{ include "activemq.fullname" . }}
   usages:
     - server auth
@@ -46,21 +52,26 @@ spec:
   privateKey:
     algorithm: RSA
     size: 2048
-  {{- with .Values.tls.certManager.duration }}
+  {{- with $certManager.duration }}
   duration: {{ . }}
   {{- end }}
-  {{- with .Values.tls.certManager.renewBefore }}
+  {{- with $certManager.renewBefore }}
   renewBefore: {{ . }}
   {{- end }}
   issuerRef:
-    {{- if .Values.tls.certManager.existingIssuer.enabled }}
-    name: {{ .Values.tls.certManager.existingIssuer.name }}
-    kind: {{ .Values.tls.certManager.existingIssuer.kind }}
+    {{- if $localEnabled }}
+    name: {{ list $certManager "existingIssuer" "name" | include "armonik.utils.index" }}
+    kind: {{ list $certManager "existingIssuer" "kind" | include "armonik.utils.index" | default "Issuer" }}
+    group: {{ list $certManager "existingIssuer" "group" | include "armonik.utils.index" | default "cert-manager.io" }}
+    {{- else if $useGlobal }}
+    name: {{ $globalIssuer.name }}
+    kind: {{ $globalIssuer.kind }}
+    group: {{ $globalIssuer.group }}
     {{- else }}
     name: {{ include "activemq.fullname" . }}-issuer
     kind: Issuer
-    {{- end }}
     group: cert-manager.io
+    {{- end }}
   additionalOutputFormats:
     - type: CombinedPEM
 {{- end }}

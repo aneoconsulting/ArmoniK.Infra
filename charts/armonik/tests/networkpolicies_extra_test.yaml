@@ -1,0 +1,300 @@
+suite: umbrella network policies (extra)
+release:
+  name: t
+  namespace: default
+templates:
+  - templates/networkpolicies/extra.yaml
+  - templates/networkpolicies/fluent-bit-egress.yaml
+  - templates/networkpolicies/wait-cert-manager-egress.yaml
+tests:
+  # --- extra.yaml: freeform, user-supplied policies (networkPolicy.extraPolicies) ---
+  - it: renders nothing by default (networkPolicy.enabled=false)
+    template: templates/networkpolicies/extra.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: renders nothing when enabled with no extraPolicies entries
+    template: templates/networkpolicies/extra.yaml
+    set:
+      networkPolicy:
+        enabled: true
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: renders one document per extraPolicies entry
+    template: templates/networkpolicies/extra.yaml
+    set:
+      networkPolicy:
+        enabled: true
+        extraPolicies:
+          - name: custom-ingress
+            podSelector:
+              matchLabels:
+                app: my-app
+            ingress:
+              - ports:
+                  - protocol: TCP
+                    port: 9999
+          - podSelector:
+              matchLabels:
+                app: other-app
+            egress:
+              - ports:
+                  - protocol: TCP
+                    port: 8888
+    asserts:
+      - hasDocuments:
+          count: 2
+
+  - it: names a document after the entry's own name and passes its podSelector/ingress rule/policyTypes through unchanged
+    template: templates/networkpolicies/extra.yaml
+    set:
+      networkPolicy:
+        enabled: true
+        extraPolicies:
+          - name: custom-ingress
+            podSelector:
+              matchLabels:
+                app: my-app
+            ingress:
+              - from:
+                  - namespaceSelector:
+                      matchLabels:
+                        kubernetes.io/metadata.name: clients
+                    podSelector:
+                      matchLabels:
+                        role: client
+                ports:
+                  - protocol: TCP
+                    port: 9999
+    documentIndex: 0
+    asserts:
+      - equal:
+          path: metadata.name
+          value: t-armonik-custom-ingress
+      - equal:
+          path: spec.podSelector.matchLabels
+          value:
+            app: my-app
+      - equal:
+          path: spec.policyTypes
+          value:
+            - Ingress
+      - equal:
+          path: spec.ingress
+          value:
+            - from:
+                - namespaceSelector:
+                    matchLabels:
+                      kubernetes.io/metadata.name: clients
+                  podSelector:
+                    matchLabels:
+                      role: client
+              ports:
+                - protocol: TCP
+                  port: 9999
+      # negative case: no egress key and no unrequested Egress policyType
+      - notExists:
+          path: spec.egress
+
+  - it: falls back to an extra-<index> name when no name is given and passes the egress rule through unchanged
+    template: templates/networkpolicies/extra.yaml
+    set:
+      networkPolicy:
+        enabled: true
+        extraPolicies:
+          - podSelector:
+              matchLabels:
+                app: other-app
+            egress:
+              - to:
+                  - namespaceSelector:
+                      matchLabels:
+                        kubernetes.io/metadata.name: default
+                    podSelector:
+                      matchLabels:
+                        role: server
+                ports:
+                  - protocol: TCP
+                    port: 8888
+    documentIndex: 0
+    asserts:
+      - equal:
+          path: metadata.name
+          value: t-armonik-extra-0
+      - equal:
+          path: spec.policyTypes
+          value:
+            - Egress
+      - equal:
+          path: spec.egress
+          value:
+            - to:
+                - namespaceSelector:
+                    matchLabels:
+                      kubernetes.io/metadata.name: default
+                  podSelector:
+                    matchLabels:
+                      role: server
+              ports:
+                - protocol: TCP
+                  port: 8888
+      # negative case: no ingress key and no unrequested Ingress policyType
+      - notExists:
+          path: spec.ingress
+      - notContains:
+          path: spec.policyTypes
+          content: Ingress
+
+  # --- fluent-bit-egress.yaml: egress-only policy for the fluent-bit dependency ---
+  - it: renders nothing by default (networkPolicy.enabled=false)
+    template: templates/networkpolicies/fluent-bit-egress.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: renders nothing when the fluent-bit dependency itself is disabled
+    template: templates/networkpolicies/fluent-bit-egress.yaml
+    set:
+      networkPolicy:
+        enabled: true
+      dependencies:
+        fluent-bit:
+          enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: targets fluent-bit's own podSelector with an egress-only policyTypes when enabled
+    template: templates/networkpolicies/fluent-bit-egress.yaml
+    set:
+      networkPolicy:
+        enabled: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: metadata.name
+          value: t-armonik-fluent-bit
+      - equal:
+          path: spec.podSelector.matchLabels
+          value:
+            app.kubernetes.io/name: fluent-bit
+      - equal:
+          path: spec.policyTypes
+          value:
+            - Egress
+      - notExists:
+          path: spec.ingress
+
+  - it: grants exactly DNS, kube-api and Seq egress, with no additional or namespace-open rule
+    template: templates/networkpolicies/fluent-bit-egress.yaml
+    set:
+      networkPolicy:
+        enabled: true
+    asserts:
+      - equal:
+          path: spec.egress
+          value:
+            - to:
+                - namespaceSelector:
+                    matchLabels:
+                      kubernetes.io/metadata.name: kube-system
+                  podSelector:
+                    matchLabels:
+                      k8s-app: kube-dns
+              ports:
+                - protocol: UDP
+                  port: 53
+                - protocol: TCP
+                  port: 53
+            - ports:
+                - protocol: TCP
+                  port: 443
+                - protocol: TCP
+                  port: 6443
+            - to:
+                - namespaceSelector:
+                    matchLabels:
+                      kubernetes.io/metadata.name: default
+                  podSelector:
+                    matchLabels:
+                      app: seq
+              ports:
+                - protocol: TCP
+                  port: 5341
+
+  # --- wait-cert-manager-egress.yaml: egress-only policy for the cert-manager wait job ---
+  - it: renders nothing by default (networkPolicy.enabled=false)
+    template: templates/networkpolicies/wait-cert-manager-egress.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: renders nothing when cert-manager itself is not deployed
+    template: templates/networkpolicies/wait-cert-manager-egress.yaml
+    set:
+      networkPolicy:
+        enabled: true
+      global:
+        armonik:
+          operators:
+            certManager:
+              deploy: false
+              available: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: targets the wait-cert-manager podSelector with an egress-only policyTypes when enabled
+    template: templates/networkpolicies/wait-cert-manager-egress.yaml
+    set:
+      networkPolicy:
+        enabled: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: metadata.name
+          value: t-armonik-wait-cert-manager
+      - equal:
+          path: spec.podSelector.matchLabels
+          value:
+            app.kubernetes.io/component: wait-cert-manager
+            app.kubernetes.io/name: armonik
+            app.kubernetes.io/instance: t
+      - equal:
+          path: spec.policyTypes
+          value:
+            - Egress
+      - notExists:
+          path: spec.ingress
+
+  - it: grants exactly DNS and kube-api egress, with no additional or namespace-open rule
+    template: templates/networkpolicies/wait-cert-manager-egress.yaml
+    set:
+      networkPolicy:
+        enabled: true
+    asserts:
+      - equal:
+          path: spec.egress
+          value:
+            - to:
+                - namespaceSelector:
+                    matchLabels:
+                      kubernetes.io/metadata.name: kube-system
+                  podSelector:
+                    matchLabels:
+                      k8s-app: kube-dns
+              ports:
+                - protocol: UDP
+                  port: 53
+                - protocol: TCP
+                  port: 53
+            - ports:
+                - protocol: TCP
+                  port: 443
+                - protocol: TCP
+                  port: 6443

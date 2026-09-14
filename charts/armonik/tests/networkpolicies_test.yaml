@@ -1,0 +1,252 @@
+suite: umbrella network policies
+release:
+  name: t
+  namespace: default
+templates:
+  - templates/networkpolicies/mongodb.yaml
+  - templates/networkpolicies/redis.yaml
+  - templates/networkpolicies/keda-metrics-egress.yaml
+  - templates/networkpolicies/control-plane.yaml
+  - templates/networkpolicies/compute-plane.yaml
+  - templates/networkpolicies/nginx-egress.yaml
+tests:
+  - it: renders nothing by default (networkPolicy.enabled=false)
+    template: templates/networkpolicies/mongodb.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: allows control-plane/init, metrics-exporter and compute-plane to reach the MongoDB server
+    template: templates/networkpolicies/mongodb.yaml
+    set:
+      networkPolicy:
+        enabled: true
+    documentSelector:
+      path: metadata.name
+      value: t-armonik-mongodb-server
+    asserts:
+      - contains:
+          path: spec.ingress
+          content:
+            from:
+              - namespaceSelector:
+                  matchLabels:
+                    kubernetes.io/metadata.name: default
+                podSelector:
+                  matchExpressions:
+                    - key: app.kubernetes.io/component
+                      operator: In
+                      values:
+                        - control-plane
+                        - init
+      - contains:
+          path: spec.ingress
+          content:
+            from:
+              - namespaceSelector:
+                  matchLabels:
+                    kubernetes.io/metadata.name: default
+                podSelector:
+                  matchLabels:
+                    app.kubernetes.io/component: metrics-exporter
+      - contains:
+          path: spec.ingress
+          content:
+            from:
+              - namespaceSelector:
+                  matchLabels:
+                    kubernetes.io/metadata.name: default
+                podSelector:
+                  matchLabels:
+                    app.kubernetes.io/part-of: compute-plane
+
+  - it: shrinks the MongoDB operator's policyTypes instead of declaring an empty-bodied Ingress
+      when MongoDB itself is disabled (regression test for the hasKey-vs-non-empty fix in
+      armonik.netpol.render)
+    template: templates/networkpolicies/mongodb.yaml
+    set:
+      networkPolicy:
+        enabled: true
+      dependencies:
+        mongodb:
+          enabled: false
+    documentSelector:
+      path: metadata.name
+      value: t-armonik-mongodb-operator
+    asserts:
+      - notContains:
+          path: spec.policyTypes
+          content: Ingress
+      - contains:
+          path: spec.policyTypes
+          content: Egress
+      - notExists:
+          path: spec.ingress
+
+  - it: grants Redis ingress from control-plane/init and compute-plane (the valkey chart has no
+      NetworkPolicy of its own)
+    template: templates/networkpolicies/redis.yaml
+    set:
+      networkPolicy:
+        enabled: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: spec.podSelector.matchLabels
+          value:
+            app.kubernetes.io/name: redis
+      - contains:
+          path: spec.ingress
+          content:
+            from:
+              - namespaceSelector:
+                  matchLabels:
+                    kubernetes.io/metadata.name: default
+                podSelector:
+                  matchLabels:
+                    app.kubernetes.io/part-of: compute-plane
+
+  - it: grants KEDA egress to the control-plane metrics-exporter
+    template: templates/networkpolicies/keda-metrics-egress.yaml
+    set:
+      networkPolicy:
+        enabled: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - contains:
+          path: spec.egress
+          content:
+            ports:
+              - protocol: TCP
+                port: 1080
+            to:
+              - namespaceSelector:
+                  matchLabels:
+                    kubernetes.io/metadata.name: default
+                podSelector:
+                  matchLabels:
+                    app.kubernetes.io/component: metrics-exporter
+
+  - it: does not render the KEDA egress policy when KEDA is unavailable
+    template: templates/networkpolicies/keda-metrics-egress.yaml
+    set:
+      networkPolicy:
+        enabled: true
+      global:
+        armonik:
+          operators:
+            keda:
+              deploy: false
+              available: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: scopes the compute-plane-connectivity policy to ActiveMQ/Redis on their own port
+    template: templates/networkpolicies/compute-plane.yaml
+    set:
+      networkPolicy:
+        enabled: true
+    asserts:
+      - equal:
+          path: spec.podSelector.matchLabels
+          value:
+            app.kubernetes.io/part-of: compute-plane
+      - equal:
+          path: spec.egress[?(@.ports[0].port==5672)].to[0].podSelector.matchLabels
+          value:
+            app.kubernetes.io/name: activemq
+
+  - it: scopes the control-plane-submitter-connectivity policy to control-plane/init pods and
+      grants ingress from both compute-plane and nginx (standalone-release-friendly, label-based)
+    template: templates/networkpolicies/control-plane.yaml
+    set:
+      networkPolicy:
+        enabled: true
+    documentSelector:
+      path: metadata.name
+      value: t-armonik-control-plane-submitter-connectivity
+    asserts:
+      - equal:
+          path: spec.podSelector.matchExpressions
+          value:
+            - key: app.kubernetes.io/component
+              operator: In
+              values:
+                - control-plane
+                - init
+      - contains:
+          path: spec.ingress
+          content:
+            from:
+              - namespaceSelector:
+                  matchLabels:
+                    kubernetes.io/metadata.name: default
+                podSelector:
+                  matchLabels:
+                    app.kubernetes.io/part-of: compute-plane
+      - contains:
+          path: spec.ingress
+          content:
+            from:
+              - namespaceSelector:
+                  matchLabels:
+                    kubernetes.io/metadata.name: default
+                podSelector:
+                  matchLabels:
+                    app.kubernetes.io/component: ingress
+            ports:
+              - protocol: TCP
+                port: 1080
+
+  - it: still resolves the control-plane submitter/metrics-exporter ports when control-plane
+      itself is disabled (a standalone control-plane release sharing this namespace) - regression
+      test for .Values.control-plane losing its own chart defaults once disabled
+    template: templates/networkpolicies/control-plane.yaml
+    set:
+      networkPolicy:
+        enabled: true
+      control-plane:
+        enabled: false
+    documentSelector:
+      path: metadata.name
+      value: t-armonik-control-plane-submitter-connectivity
+    asserts:
+      - contains:
+          path: spec.ingress
+          content:
+            from:
+              - namespaceSelector:
+                  matchLabels:
+                    kubernetes.io/metadata.name: default
+                podSelector:
+                  matchLabels:
+                    app.kubernetes.io/component: ingress
+            ports:
+              - protocol: TCP
+                port: 1080
+
+  - it: scopes the nginx-egress-to-control-plane peer by component
+    template: templates/networkpolicies/nginx-egress.yaml
+    set:
+      networkPolicy:
+        enabled: true
+      ingress:
+        networkPolicy:
+          enabled: true
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            ports:
+              - protocol: TCP
+                port: 1080
+            to:
+              - namespaceSelector:
+                  matchLabels:
+                    kubernetes.io/metadata.name: default
+                podSelector:
+                  matchLabels:
+                    app.kubernetes.io/component: control-plane

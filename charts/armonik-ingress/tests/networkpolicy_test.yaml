@@ -1,0 +1,84 @@
+suite: network policy
+templates:
+  - networkpolicy.yaml
+values:
+  - ../ci/default-values.yaml
+tests:
+  - it: renders nothing by default (networkPolicy.enabled=false)
+    template: networkpolicy.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: renders the nginx and gui policies when enabled
+    template: networkpolicy.yaml
+    set:
+      networkPolicy:
+        enabled: true
+    asserts:
+      - hasDocuments:
+          count: 2
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-armonik-ingress-nginx
+        documentIndex: 0
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-armonik-ingress-gui
+        documentIndex: 1
+
+  - it: does not grant nginx a default cross-namespace egress to control-plane/grafana/seq
+    template: networkpolicy.yaml
+    set:
+      networkPolicy:
+        enabled: true
+    documentIndex: 0
+    asserts:
+      - lengthEqual:
+          path: spec.egress
+          count: 2
+      - notContains:
+          path: spec.egress
+          content:
+            namespaceSelector: {}
+
+  - it: lets a standalone install add its own egress to control-plane via extraEgressRules
+    template: networkpolicy.yaml
+    set:
+      networkPolicy:
+        enabled: true
+        nginx:
+          extraEgressRules:
+            - to:
+                - namespaceSelector: {}
+                  podSelector:
+                    matchLabels:
+                      app.kubernetes.io/component: control-plane
+              ports:
+                - protocol: TCP
+                  port: 1080
+    documentIndex: 0
+    asserts:
+      - lengthEqual:
+          path: spec.egress
+          count: 3
+      - contains:
+          path: spec.egress
+          content:
+            to:
+              - namespaceSelector: {}
+                podSelector:
+                  matchLabels:
+                    app.kubernetes.io/component: control-plane
+            ports:
+              - protocol: TCP
+                port: 1080
+
+  - it: renders the healthcheck policy only when a gateway/httpRoute is present
+    template: networkpolicy.yaml
+    set:
+      networkPolicy:
+        enabled: true
+    asserts:
+      - hasDocuments:
+          count: 2

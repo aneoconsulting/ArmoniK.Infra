@@ -1,3 +1,4 @@
+{{- $global := .Values.global | default dict -}}
 {{- if .Values.init.enabled }}
 {{- $conf := list
     (include "armonik.control.init.confHelper" $ | fromYaml)
@@ -49,7 +50,7 @@ spec:
         {{- end }}{{/* with .Values.resources */}}
       volumes: {{- include "armonik.conf.generateVolumes" (list $conf) | nindent 8 }}
 
-      {{- with (coalesce .Values.imagePullSecrets (include "armonik.utils.index" (list .Values "global" "imagePullSecrets")) list) }}
+      {{- with concat (.Values.init.imagePullSecrets | default list) (.Values.imagePullSecrets | default list) ($global.imagePullSecrets | default list) }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}{{/* with $imagePullSecrets */}}
@@ -60,6 +61,10 @@ spec:
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}{{/* with .Values.nodeSelector */}}
+      {{- with coalesce .Values.init.affinity .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}{{/* with .Values.affinity */}}
       {{- with coalesce .Values.init.tolerations .Values.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}

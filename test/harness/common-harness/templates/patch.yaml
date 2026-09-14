@@ -1,0 +1,10 @@
+{{- with .Values.patch }}
+  {{- $result := list (toYaml .base) .patch (.name | default "patch") | include "armonik.utils.patch" | fromYaml }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: patch-result
+data:
+  # JSON keeps the assertion exact: key order is sorted, nil is "null".
+  result: {{ $result | toJson | quote }}
+{{- end }}

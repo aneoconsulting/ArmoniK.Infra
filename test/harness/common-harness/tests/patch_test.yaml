@@ -1,0 +1,83 @@
+suite: armonik.utils.patch contract
+templates:
+  - patch.yaml
+tests:
+  - it: deep-merges maps and lets the patch win on a scalar
+    set:
+      patch:
+        base: {a: 1, nested: {x: 1, y: 2}}
+        patch: {a: 9, nested: {y: 9, z: 3}}
+    asserts:
+      - equal:
+          path: data.result
+          value: '{"a":9,"nested":{"x":1,"y":9,"z":3}}'
+
+  - it: adds a list key the base does not build
+    set:
+      patch:
+        base: {a: 1}
+        patch: {tolerations: [{key: gpu}]}
+    asserts:
+      - equal:
+          path: data.result
+          value: '{"a":1,"tolerations":[{"key":"gpu"}]}'
+
+  - it: refuses to replace a list the base builds
+    set:
+      patch:
+        base: {containers: [{name: agent}]}
+        patch: {containers: [{name: hijack}]}
+        name: podSpecPatch
+    asserts:
+      - failedTemplate:
+          errorPattern: "podSpecPatch.containers: the chart builds containers"
+
+  - it: exempts command and args, which exist to be replaced wholesale
+    set:
+      patch:
+        base: {command: ["a"], args: ["b"]}
+        patch: {command: ["c"], args: ["d"]}
+    asserts:
+      - equal:
+          path: data.result
+          value: '{"args":["d"],"command":["c"]}'
+
+  - it: passes a scalar the chart never sets straight through
+    set:
+      patch:
+        base: {a: 1}
+        patch: {hostNetwork: true}
+    asserts:
+      - equal:
+          path: data.result
+          value: '{"a":1,"hostNetwork":true}'
+
+  - it: cannot delete a key, null being absent to the merge
+    set:
+      patch:
+        base: {a: 1}
+        patch: {a: null}
+    asserts:
+      - equal:
+          path: data.result
+          value: '{"a":1}'
+
+  - it: leaves the base untouched when the patch is empty
+    set:
+      patch:
+        base: {a: 1, b: {c: 2}}
+        patch: {}
+    asserts:
+      - equal:
+          path: data.result
+          value: '{"a":1,"b":{"c":2}}'
+
+  - it: sets a bool in both directions
+    set:
+      patch:
+        base: {t: true, f: false}
+        patch: {t: false, f: true}
+    asserts:
+      - equal:
+          path: data.result
+          value: '{"f":true,"t":false}'

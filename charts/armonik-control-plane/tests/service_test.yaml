@@ -44,3 +44,21 @@ tests:
           count: 1
       - isKind:
           of: Job
+
+  - it: layers the init Job imagePullSecrets on the chart and global ones
+    template: jobs/init.yaml
+    set:
+      init.enabled: true
+      init.imagePullSecrets:
+        - name: from-init
+      imagePullSecrets:
+        - name: from-chart
+      global.imagePullSecrets:
+        - name: from-global
+    asserts:
+      - equal:
+          path: spec.template.spec.imagePullSecrets
+          value:
+            - name: from-init
+            - name: from-chart
+            - name: from-global

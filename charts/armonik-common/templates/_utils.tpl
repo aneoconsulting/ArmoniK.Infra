@@ -216,3 +216,26 @@ schema:
     {{- $.dst | toYaml -}}
   {{- end -}}
 {{- end -}}
+
+
+{{/*
+Merges a user patch over a rendered YAML fragment, the patch winning.
+
+A list replaces rather than merges by key, so a key the fragment already builds is refused: dropping
+what the chart put in `containers` or `env` would surface as a broken workload, not a render error.
+`command` and `args` are exempt. Null is absent to the merge, so a patch cannot delete.
+
+{{- $spec := list (include "armonik.compute.podSpec" $ctx) $partition.podSpecPatch "podSpecPatch" | include "armonik.utils.patch" -}}
+*/}}
+{{- define "armonik.utils.patch" -}}
+  {{- $base := index . 0 | fromYaml -}}
+  {{- $patch := index . 1 | default dict -}}
+  {{- $name := index . 2 -}}
+  {{- range $key, $value := $patch -}}
+    {{- if and (kindIs "slice" $value) (kindIs "slice" (index $base $key)) (has $key (list "command" "args") | not) -}}
+      {{- printf "%s.%s: the chart builds %s and a patch would replace it wholesale. Add to it with the matching extra* value, or change the chart value that builds it." $name $key $key | fail -}}
+    {{- end -}}
+  {{- end -}}
+  {{- dict "dst" $base "src" $patch "overwrite" true "print" false | include "armonik.utils.merge" -}}
+  {{- $base | toYaml -}}
+{{- end -}}

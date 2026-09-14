@@ -51,9 +51,11 @@ init:
     name: armonik_control
     tag:
     pullPolicy:
+  imagePullSecrets:
   resources:
   nodeSelector:
   tolerations:
+  affinity:
   priorityClassName:
   # Init Job: core + log + jobs layers + core TLS mounts.
   conf:
@@ -129,11 +131,44 @@ partitionCommon:
       mountSecret:
         - secret: '{{ list "core" . | include "armonik.conf.mountSecretName" }}'
         - secret: '{{ list "polling" . | include "armonik.conf.mountSecretName" }}'
+    # -- Extra env for the agent container, after the conf layers. `conf.env` is the shared channel,
+    # this is container-local.
+    extraEnv: []
+    # -- Extra envFrom for the agent container, after the conf layers.
+    extraEnvFrom: []
+    # -- Extra volumeMounts for the agent container, after the conf mounts.
+    extraVolumeMounts: []
+    # containerPatch:
+    #   securityContext:
+    #     readOnlyRootFilesystem: true
+    #
+    # -- Merged over the agent container, last. Lists the chart builds are refused: use extra*.
+    containerPatch: {}
   annotations: {}
   nodeSelector: {}
   tolerations: []
+  affinity: {}
   priorityClassName: ""
+  imagePullSecrets: []
   terminationGracePeriodSeconds: 30
+  # -- Extra containers, after agent, worker and the fluent-bit sidecar.
+  extraContainers: []
+  # -- Extra init containers.
+  extraInitContainers: []
+  # -- Extra volumes, after the conf mounts and the cache volume.
+  extraVolumes: []
+  # podSpecPatch:
+  #   hostAliases:
+  #     - ip: "10.0.0.1"
+  #       hostnames: ["legacy.internal"]
+  #   topologySpreadConstraints:
+  #     - maxSkew: 1
+  #       topologyKey: topology.kubernetes.io/zone
+  #       whenUnsatisfiable: ScheduleAnyway
+  #
+  # -- Merged over spec.template.spec, last. Pod metadata is out of reach: its labels must stay a
+  # superset of the immutable selector. Lists the chart builds are refused: use extra*.
+  podSpecPatch: {}
   # Default worker, will be overridden per partition
   worker:
     name: "worker"
@@ -183,6 +218,19 @@ partitionCommon:
         - '{{ list "worker" . | include "armonik.conf.secretName" }}'
       mountSecret:
         - secret: '{{ list "worker" . | include "armonik.conf.mountSecretName" }}'
+    # -- Extra env for the worker container, after the conf layers. `conf.env` is the shared channel,
+    # this is container-local.
+    extraEnv: []
+    # -- Extra envFrom for the worker container, after the conf layers.
+    extraEnvFrom: []
+    # -- Extra volumeMounts for the worker container, after the conf mounts.
+    extraVolumeMounts: []
+    # containerPatch:
+    #   securityContext:
+    #     readOnlyRootFilesystem: true
+    #
+    # -- Merged over the worker container, last. Lists the chart builds are refused: use extra*.
+    containerPatch: {}
   hpa:
     type: "prometheus"
     # -- Polling interval in seconds

@@ -1,8 +1,8 @@
 {{- $tls := .Values.tls | default dict }}
 {{- $certManager := $tls.certManager | default dict }}
-{{- if and ($tls.enabled | empty | not) (eq $tls.type "cert-manager") }}
+{{- if and $tls.enabled (eq $tls.type "cert-manager") }}
 {{- $globalIssuer := include "armonik.certManager.issuer" $ | fromYaml }}
-{{- $localEnabled := (list $certManager "existingIssuer" "enabled" | include "armonik.utils.index") | empty | not }}
+{{- $localEnabled := list $certManager "existingIssuer" "enabled" | include "armonik.utils.index" | empty | not }}
 {{- $useGlobal := and $globalIssuer.enabled (not $localEnabled) }}
 {{- $existingIssuer := or $localEnabled $useGlobal }}
 {{- if and (not (dig "armonik" "operators" "certManager" "available" true .Values.global)) (not $existingIssuer) }}

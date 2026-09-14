@@ -5,11 +5,14 @@
   have, so it stays umbrella-only (armonik.netpol.controlPlaneSubmitter).
 */}}
 {{- define "armonik.netpol.submitter.prometheusIngress" -}}
-{{- $port := include "armonik.netpol.port" (dict "ports" .Values.ports "name" "metrics-port") | int -}}
-{{- list . $port .Values.networkPolicy.submitter.prometheusPodSelector | include "armonik.netpol.rule.prometheusIngress" -}}
+  {{- $port := include "armonik.netpol.port" (dict "ports" .Values.ports "name" "metrics-port") | int -}}
+  {{- list . $port .Values.networkPolicy.submitter.prometheusPodSelector | include "armonik.netpol.rule.prometheusIngress" -}}
 {{- end -}}
 
 
+{{/*
+  Submitter (control-plane + init) NetworkPolicy configuration.
+*/}}
 {{- define "armonik.netpol.submitter" -}}
 podSelector:
   matchLabels:
@@ -34,11 +37,14 @@ egress:
   doesn't have, so it stays umbrella-only (armonik.netpol.controlPlaneMetricsExporter).
 */}}
 {{- define "armonik.netpol.metricsExporter.prometheusIngress" -}}
-{{- $port := include "armonik.netpol.port" (dict "ports" .Values.metricsExporter.ports "name" "metrics-port") | int -}}
-{{- list . $port .Values.networkPolicy.metricsExporter.prometheusPodSelector | include "armonik.netpol.rule.prometheusIngress" -}}
+  {{- $port := include "armonik.netpol.port" (dict "ports" .Values.metricsExporter.ports "name" "metrics-port") | int -}}
+  {{- list . $port .Values.networkPolicy.metricsExporter.prometheusPodSelector | include "armonik.netpol.rule.prometheusIngress" -}}
 {{- end -}}
 
 
+{{/*
+  Metrics-exporter NetworkPolicy configuration.
+*/}}
 {{- define "armonik.netpol.metricsExporter" -}}
 podSelector:
   matchLabels:

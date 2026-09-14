@@ -1,10 +1,33 @@
+{{/*
+  Renders a NetworkPolicy for a component.
+
+  Usage:
+    {{ include "armonik.netpol.render" (dict
+      "context" .
+      "component" "control-plane"
+      "config" $config
+    ) }}
+
+  Args:
+    context: Helm context.
+    component: Component name used in the policy name and labels.
+    config: NetworkPolicy configuration, including podSelector, ingress,
+            egress, namespace, and optional policyTypes.
+
+  If policyTypes is not set, it is inferred from the configured ingress
+  and egress rules.
+*/}}
 {{- define "armonik.netpol.render" -}}
 {{- $ctx := .context | default dict -}}
 {{- $component := .component | default dict -}}
 {{- $cfg := .config | default dict -}}
 {{- $policyType := list -}}
-{{- if and (hasKey $cfg "ingress") (not (empty $cfg.ingress)) -}}{{- $policyType = append $policyType "Ingress" -}}{{- end -}}
-{{- if and (hasKey $cfg "egress") (not (empty $cfg.egress)) -}}{{- $policyType = append $policyType "Egress" -}}{{- end -}}
+{{- if and (hasKey $cfg "ingress") (not (empty $cfg.ingress)) -}}
+{{- $policyType = append $policyType "Ingress" -}}
+{{- end -}}
+{{- if and (hasKey $cfg "egress") (not (empty $cfg.egress)) -}}
+{{- $policyType = append $policyType "Egress" -}}
+{{- end -}}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -45,10 +68,10 @@ matchLabels:
   Empty when the URL is unset or not in that shape (e.g. an external URL) - callers skip their rule.
 */}}
 {{- define "armonik.netpol.namespaceFromServiceUrl" -}}
-{{- $host := . | default "" | trimPrefix "http://" | trimPrefix "https://" -}}
-{{- if regexMatch "^[^./]+\\.[^./]+\\.svc([.:]|$)" $host -}}
-{{- regexReplaceAll "^[^./]+\\.([^./]+)\\.svc([.:].*)?$" $host "${1}" -}}
-{{- end -}}
+  {{- $host := . | default "" | trimPrefix "http://" | trimPrefix "https://" -}}
+  {{- if regexMatch "^[^./]+\\.[^./]+\\.svc([.:]|$)" $host -}}
+    {{- regexReplaceAll "^[^./]+\\.([^./]+)\\.svc([.:].*)?$" $host "${1}" -}}
+  {{- end -}}
 {{- end -}}
 
 
@@ -68,12 +91,29 @@ matchLabels:
   Args (list): [override, name]
 */}}
 {{- define "armonik.netpol.podSelector.default" -}}
-{{- $override := index . 0 -}}
-{{- $name := index . 1 -}}
-{{- $override | default (dict "matchLabels" (dict "app.kubernetes.io/name" $name)) | toYaml -}}
+  {{- $override := index . 0 -}}
+  {{- $name := index . 1 -}}
+  {{- $override | default (dict "matchLabels" (dict "app.kubernetes.io/name" $name)) | toYaml -}}
 {{- end -}}
 
 
+{{/*
+  Creates an ingress or egress rule for a pod in a namespace on a specific port.
+
+  Usage:
+    {{ include "armonik.netpol.rule.peerOnPort" (list
+      $namespaceSelector
+      $podSelector
+      5000
+      "from"
+    ) }}
+
+  Args:
+    namespaceSelector: Namespace selector for the peer.
+    podSelector: Pod selector for the peer.
+    port: Port allowed by the rule.
+    direction: "from" for ingress or "to" for egress.
+*/}}
 {{- define "armonik.netpol.rule.peerOnPort" -}}
 {{- $namespaceSelector := index . 0 -}}
 {{- $podSelector := index . 1 -}}
@@ -118,6 +158,9 @@ ports:
 {{- end -}}
 
 
+{{/*
+  Egress rule: DNS resolution via kube-dns in kube-system.
+*/}}
 {{- define "armonik.netpol.dnsRule" -}}
 to:
   - namespaceSelector:
@@ -134,6 +177,9 @@ ports:
 {{- end -}}
 
 
+{{/*
+  Egress ports rule: the Kubernetes API server (443 in-cluster, 6443 common external port).
+*/}}
 {{- define "armonik.netpol.kubeApiRule" -}}
 ports:
   - protocol: TCP
@@ -142,6 +188,10 @@ ports:
     port: 6443
 {{- end -}}
 
+{{/*
+  Merges a list of named rules into one rule list: each entry is [define name, context],
+  included and parsed back from YAML, nil results dropped.
+*/}}
 {{- define "armonik.netpol.mergeRules" -}}
   {{- $rules := list -}}
   {{- range . -}}
@@ -152,16 +202,20 @@ ports:
   {{- $rules | compact | toYaml -}}
 {{- end -}}
 
+{{/*
+  Concatenates the chart's own rules with the user's extra rules, dropping nils.
+  Args (dict): {rules, extra}
+*/}}
 {{- define "armonik.netpol.mergeExtra" -}}
-{{- $rules := .rules | default "" | fromYamlArray | default list -}}
-{{- $extra := .extra | default list -}}
-{{- concat $rules $extra | compact | toYaml -}}
+  {{- $rules := .rules | default "" | fromYamlArray | default list -}}
+  {{- $extra := .extra | default list -}}
+  {{- concat $rules $extra | compact | toYaml -}}
 {{- end -}}
 
 {{- define "armonik.netpol.controlPlane.port" -}}
-{{- $root := index . 0 -}}
-{{- $pathSegments := index . 1 -}}
-{{- $portName := index . 2 -}}
-{{- $ports := concat (list $root.Values) $pathSegments | include "armonik.utils.index" | fromYamlArray | default list -}}
-{{- include "armonik.netpol.port" (dict "ports" $ports "name" $portName) | trim | default "1080" -}}
+  {{- $root := index . 0 -}}
+  {{- $pathSegments := index . 1 -}}
+  {{- $portName := index . 2 -}}
+  {{- $ports := concat (list $root.Values) $pathSegments | include "armonik.utils.index" | fromYamlArray | default list -}}
+  {{- include "armonik.netpol.port" (dict "ports" $ports "name" $portName) | trim | default "1080" -}}
 {{- end -}}

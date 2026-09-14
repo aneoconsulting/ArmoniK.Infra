@@ -73,7 +73,7 @@ env:
   installed standalone or through the umbrella.
 */}}
 {{- define "armonik.netpol.computePlane.prometheusIngress" -}}
-{{- list . (.Values.partitionCommon.agent.ports.containerPort | int) .Values.networkPolicy.prometheusPodSelector | include "armonik.netpol.rule.prometheusIngress" -}}
+  {{- list . (.Values.partitionCommon.agent.ports.containerPort | int) .Values.networkPolicy.prometheusPodSelector | include "armonik.netpol.rule.prometheusIngress" -}}
 {{- end -}}
 
 

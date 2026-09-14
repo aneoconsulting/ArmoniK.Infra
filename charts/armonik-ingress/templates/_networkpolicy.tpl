@@ -50,11 +50,11 @@ ports:
   Egress rules for the NGINX front pod: DNS, GUI .
 */}}
 {{- define "armonik.netpol.nginxEgress" -}}
-{{- list
-      (list "armonik.netpol.dnsRule" dict)
-      (list "armonik.netpol.rule.guiTo" .)
-    | include "armonik.netpol.mergeRules"
--}}
+  {{- list
+        (list "armonik.netpol.dnsRule" dict)
+        (list "armonik.netpol.rule.guiTo" .)
+      | include "armonik.netpol.mergeRules"
+  -}}
 {{- end -}}
 
 
@@ -64,7 +64,7 @@ ports:
   and null-filtering machinery is only needed for multiple or conditionally-empty rules.
 */}}
 {{- define "armonik.netpol.nginxIngress" -}}
-{{- list (include "armonik.netpol.rule.nginxExternal" . | fromYaml) | toYaml -}}
+  {{- list (include "armonik.netpol.rule.nginxExternal" . | fromYaml) | toYaml -}}
 {{- end -}}
 
 

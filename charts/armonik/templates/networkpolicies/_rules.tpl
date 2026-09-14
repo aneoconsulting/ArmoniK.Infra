@@ -2,7 +2,7 @@
   Control-plane's control-port container port.
 */}}
 {{- define "armonik.netpol.controlPlane.controlPort" -}}
-{{- list . (list "control-plane" "ports") "control-port" | include "armonik.netpol.controlPlane.port" -}}
+  {{- list . (list "control-plane" "ports") "control-port" | include "armonik.netpol.controlPlane.port" -}}
 {{- end -}}
 
 
@@ -10,7 +10,7 @@
   Control-plane's metrics-exporter deployment's metrics-port container port.
 */}}
 {{- define "armonik.netpol.controlPlane.metricsExporterPort" -}}
-{{- list . (list "control-plane" "metricsExporter" "ports") "metrics-port" | include "armonik.netpol.controlPlane.port" -}}
+  {{- list . (list "control-plane" "metricsExporter" "ports") "metrics-port" | include "armonik.netpol.controlPlane.port" -}}
 {{- end -}}
 
 
@@ -19,10 +19,10 @@
   Args (list): [root, key, name]
 */}}
 {{- define "armonik.netpol.podSelector.override" -}}
-{{- $root := index . 0 -}}
-{{- $key := index . 1 -}}
-{{- $name := index . 2 -}}
-{{- list (index $root.Values.networkPolicy $key) $name | include "armonik.netpol.podSelector.default" -}}
+  {{- $root := index . 0 -}}
+  {{- $key := index . 1 -}}
+  {{- $name := index . 2 -}}
+  {{- list (index $root.Values.networkPolicy $key) $name | include "armonik.netpol.podSelector.default" -}}
 {{- end -}}
 
 
@@ -30,7 +30,7 @@
   MongoDB's pod selector.
 */}}
 {{- define "armonik.netpol.podSelector.mongodb" -}}
-{{- list . "mongodbPodSelector" "percona-server-mongodb" | include "armonik.netpol.podSelector.override" -}}
+  {{- list . "mongodbPodSelector" "percona-server-mongodb" | include "armonik.netpol.podSelector.override" -}}
 {{- end -}}
 
 
@@ -38,7 +38,7 @@
   KEDA operator's pod selector.
 */}}
 {{- define "armonik.netpol.podSelector.keda" -}}
-{{- list . "kedaPodSelector" "keda-operator" | include "armonik.netpol.podSelector.override" -}}
+  {{- list . "kedaPodSelector" "keda-operator" | include "armonik.netpol.podSelector.override" -}}
 {{- end -}}
 
 
@@ -61,10 +61,10 @@ from:
   Allows the control-plane submitter and init job as a source.
 */}}
 {{- define "armonik.netpol.rule.controlPlaneFrom" -}}
-{{- $podSelector := dict "matchExpressions" (list
+  {{- $podSelector := dict "matchExpressions" (list
       (dict "key" "app.kubernetes.io/component" "operator" "In" "values" (list "control-plane" "init"))
     ) -}}
-{{- list . $podSelector | include "armonik.netpol.rule.componentFrom" -}}
+  {{- list . $podSelector | include "armonik.netpol.rule.componentFrom" -}}
 {{- end -}}
 
 
@@ -72,8 +72,8 @@ from:
   Allows the metrics-exporter as a source.
 */}}
 {{- define "armonik.netpol.rule.metricsExporterFrom" -}}
-{{- $podSelector := dict "matchLabels" (dict "app.kubernetes.io/component" "metrics-exporter") -}}
-{{- list . $podSelector | include "armonik.netpol.rule.componentFrom" -}}
+  {{- $podSelector := dict "matchLabels" (dict "app.kubernetes.io/component" "metrics-exporter") -}}
+  {{- list . $podSelector | include "armonik.netpol.rule.componentFrom" -}}
 {{- end -}}
 
 
@@ -81,8 +81,8 @@ from:
   Allows the compute-plane as a source.
 */}}
 {{- define "armonik.netpol.rule.computePlaneFrom" -}}
-{{- $podSelector := dict "matchLabels" (dict "app.kubernetes.io/part-of" "compute-plane") -}}
-{{- list . $podSelector | include "armonik.netpol.rule.componentFrom" -}}
+  {{- $podSelector := dict "matchLabels" (dict "app.kubernetes.io/part-of" "compute-plane") -}}
+  {{- list . $podSelector | include "armonik.netpol.rule.componentFrom" -}}
 {{- end -}}
 
 {{/*
@@ -112,7 +112,7 @@ ports:
   Egress to MongoDB.
 */}}
 {{- define "armonik.netpol.rule.mongodb" -}}
-{{- list . "mongodb" (include "armonik.netpol.podSelector.mongodb" .) "armonik.mongodb.port" | include "armonik.netpol.rule.dependencyTo" -}}
+  {{- list . "mongodb" (include "armonik.netpol.podSelector.mongodb" .) "armonik.mongodb.port" | include "armonik.netpol.rule.dependencyTo" -}}
 {{- end -}}
 
 
@@ -120,7 +120,7 @@ ports:
   Egress to RabbitMQ.
 */}}
 {{- define "armonik.netpol.rule.rabbitmq" -}}
-{{- list . "rabbitmq" "" "armonik.rabbitmq.port" | include "armonik.netpol.rule.dependencyTo" -}}
+  {{- list . "rabbitmq" "" "armonik.rabbitmq.port" | include "armonik.netpol.rule.dependencyTo" -}}
 {{- end -}}
 
 
@@ -128,7 +128,7 @@ ports:
   Egress to ActiveMQ.
 */}}
 {{- define "armonik.netpol.rule.activemq" -}}
-{{- list . "activemq" "" "armonik.activemq.port" | include "armonik.netpol.rule.dependencyTo" -}}
+  {{- list . "activemq" "" "armonik.activemq.port" | include "armonik.netpol.rule.dependencyTo" -}}
 {{- end -}}
 
 
@@ -136,7 +136,7 @@ ports:
   Egress to Redis.
 */}}
 {{- define "armonik.netpol.rule.redis" -}}
-{{- list . "redis" "" "armonik.redis.port" | include "armonik.netpol.rule.dependencyTo" -}}
+  {{- list . "redis" "" "armonik.redis.port" | include "armonik.netpol.rule.dependencyTo" -}}
 {{- end -}}
 
 
@@ -144,13 +144,13 @@ ports:
   Egress to Seq on the given port.
 */}}
 {{- define "armonik.netpol.rule.seqTo" -}}
-{{- $root := index . 0 -}}
-{{- $port := index . 1 -}}
-{{- with $root.Subcharts.dependencies.Subcharts.seq -}}
-{{- $ns := include "armonik.netpol.namespaceSelector" . -}}
-{{- $podSelector := dict "matchLabels" (dict "app" (include "armonik.name" .)) | toYaml -}}
-{{- list $ns $podSelector $port "to" | include "armonik.netpol.rule.peerOnPort" -}}
-{{- end -}}
+  {{- $root := index . 0 -}}
+  {{- $port := index . 1 -}}
+  {{- with $root.Subcharts.dependencies.Subcharts.seq -}}
+    {{- $ns := include "armonik.netpol.namespaceSelector" . -}}
+    {{- $podSelector := dict "matchLabels" (dict "app" (include "armonik.name" .)) | toYaml -}}
+    {{- list $ns $podSelector $port "to" | include "armonik.netpol.rule.peerOnPort" -}}
+  {{- end -}}
 {{- end -}}
 
 
@@ -158,7 +158,7 @@ ports:
   Egress to Seq's ingest port (used by fluent-bit).
 */}}
 {{- define "armonik.netpol.rule.seq" -}}
-{{- list . 5341 | include "armonik.netpol.rule.seqTo" -}}
+  {{- list . 5341 | include "armonik.netpol.rule.seqTo" -}}
 {{- end -}}
 
 
@@ -166,12 +166,12 @@ ports:
   Egress rule: nginx -> control-plane control port.
 */}}
 {{- define "armonik.netpol.rule.ingressToControlPlane" -}}
-{{- with index .Subcharts "control-plane" -}}
-{{- $ns := include "armonik.netpol.namespaceSelector" . -}}
-{{- $podSelector := dict "matchLabels" (dict "app.kubernetes.io/component" "control-plane") | toYaml -}}
-{{- $controlPort := include "armonik.netpol.port" (dict "ports" .Values.ports "name" "control-port") | int -}}
-{{- list $ns $podSelector $controlPort "to" | include "armonik.netpol.rule.peerOnPort" -}}
-{{- end -}}
+  {{- with index .Subcharts "control-plane" -}}
+    {{- $ns := include "armonik.netpol.namespaceSelector" . -}}
+    {{- $podSelector := dict "matchLabels" (dict "app.kubernetes.io/component" "control-plane") | toYaml -}}
+    {{- $controlPort := include "armonik.netpol.port" (dict "ports" .Values.ports "name" "control-port") | int -}}
+    {{- list $ns $podSelector $controlPort "to" | include "armonik.netpol.rule.peerOnPort" -}}
+  {{- end -}}
 {{- end -}}
 
 
@@ -179,12 +179,12 @@ ports:
   Egress rule: nginx -> Grafana.
 */}}
 {{- define "armonik.netpol.rule.ingressToGrafana" -}}
-{{- with .Subcharts.dependencies.Subcharts.grafana -}}
-{{- $ns := include "armonik.netpol.namespaceSelector" . -}}
-{{- $podSelector := dict "matchLabels" (dict "app.kubernetes.io/name" "grafana") | toYaml -}}
-{{- $port := .Values.service.targetPort | default 3000 -}}
-{{- list $ns $podSelector $port "to" | include "armonik.netpol.rule.peerOnPort" -}}
-{{- end -}}
+  {{- with .Subcharts.dependencies.Subcharts.grafana -}}
+    {{- $ns := include "armonik.netpol.namespaceSelector" . -}}
+    {{- $podSelector := dict "matchLabels" (dict "app.kubernetes.io/name" "grafana") | toYaml -}}
+    {{- $port := .Values.service.targetPort | default 3000 -}}
+    {{- list $ns $podSelector $port "to" | include "armonik.netpol.rule.peerOnPort" -}}
+  {{- end -}}
 {{- end -}}
 
 
@@ -192,7 +192,7 @@ ports:
   Egress rule: nginx -> Seq UI port.
 */}}
 {{- define "armonik.netpol.rule.ingressToSeq" -}}
-{{- list . "ui" | include "armonik.netpol.rule.seqTo" -}}
+  {{- list . "ui" | include "armonik.netpol.rule.seqTo" -}}
 {{- end -}}
 
 
@@ -279,7 +279,7 @@ ports:
   Server ingress: from the MongoDB operator.
 */}}
 {{- define "armonik.netpol.rule.mongodbServerFromOperator" -}}
-{{- list . "from" | include "armonik.netpol.rule.mongodbServerOperator" -}}
+  {{- list . "from" | include "armonik.netpol.rule.mongodbServerOperator" -}}
 {{- end -}}
 
 
@@ -287,7 +287,7 @@ ports:
   Server egress: to the MongoDB operator.
 */}}
 {{- define "armonik.netpol.rule.mongodbServerToOperator" -}}
-{{- list . "to" | include "armonik.netpol.rule.mongodbServerOperator" -}}
+  {{- list . "to" | include "armonik.netpol.rule.mongodbServerOperator" -}}
 {{- end -}}
 
 
@@ -295,26 +295,26 @@ ports:
   Egress to mongo, rabbitmq, activemq, redis + DNS. Shared by control-plane and compute-plane.
 */}}
 {{- define "armonik.netpol.dependencyRules" -}}
-{{- $rules := list
-  (list "armonik.netpol.rule.mongodb" .)
-  (list "armonik.netpol.rule.rabbitmq" .)
-  (list "armonik.netpol.rule.activemq" .)
-  (list "armonik.netpol.rule.redis" .)
-  (list "armonik.netpol.dnsRule" dict)
--}}
-{{- $rules | include "armonik.netpol.mergeRules" -}}
+  {{- $rules := list
+    (list "armonik.netpol.rule.mongodb" .)
+    (list "armonik.netpol.rule.rabbitmq" .)
+    (list "armonik.netpol.rule.activemq" .)
+    (list "armonik.netpol.rule.redis" .)
+    (list "armonik.netpol.dnsRule" dict)
+  -}}
+  {{- $rules | include "armonik.netpol.mergeRules" -}}
 {{- end -}}
 
 {{/*
   Allows nginx as a source on the control-plane's control port.
 */}}
 {{- define "armonik.netpol.rule.ingressFrom" -}}
-{{- with .Subcharts.ingress -}}
-{{- $controlPort := include "armonik.netpol.controlPlane.controlPort" $ | int -}}
-{{- $ns := include "armonik.netpol.namespaceSelector" . -}}
-{{- $podSelector := dict "matchLabels" (dict "app.kubernetes.io/component" "ingress") | toYaml -}}
-{{- list $ns $podSelector $controlPort "from" | include "armonik.netpol.rule.peerOnPort" -}}
-{{- end -}}
+  {{- with .Subcharts.ingress -}}
+    {{- $controlPort := include "armonik.netpol.controlPlane.controlPort" $ | int -}}
+    {{- $ns := include "armonik.netpol.namespaceSelector" . -}}
+    {{- $podSelector := dict "matchLabels" (dict "app.kubernetes.io/component" "ingress") | toYaml -}}
+    {{- list $ns $podSelector $controlPort "from" | include "armonik.netpol.rule.peerOnPort" -}}
+  {{- end -}}
 {{- end -}}
 
 
@@ -323,11 +323,11 @@ ports:
   Prometheus scraping (/metrics) is handled separately, in control-plane's own chart-local policy.
 */}}
 {{- define "armonik.netpol.rule.submitterIngress" -}}
-{{- list
+  {{- list
       (list "armonik.netpol.rule.computePlaneFrom" .)
       (list "armonik.netpol.rule.ingressFrom" .)
     | include "armonik.netpol.mergeRules"
--}}
+  -}}
 {{- end -}}
 
 

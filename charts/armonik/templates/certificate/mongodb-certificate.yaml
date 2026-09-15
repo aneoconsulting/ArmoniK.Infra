@@ -8,15 +8,33 @@
 {{- $tls := $mongo.tls | default dict }}
 {{- $certManager := $mongo.certManager | default dict }}
 {{- if and $mongo.enabled $certManager.enabled }}
-{{- $globalIssuer := include "armonik.certManager.issuer" $ | fromYaml }}
-{{- if not $globalIssuer.enabled }}
-{{- fail "dependencies.mongodb.certManager.enabled requires global.armonik.certManager.issuer.enabled=true." }}
-{{- end }}
-{{- if eq ($globalIssuer.provider | default "selfSigned") "selfSigned" }}
-{{- fail "dependencies.mongodb.certManager.enabled cannot use a selfSigned shared issuer: replica set members must chain to a common CA. Use provider=venafi or provider=googleCas." }}
-{{- end }}
 {{- if eq ($tls.mode | default "preferTLS") "disabled" }}
 {{- fail "dependencies.mongodb.certManager.enabled cannot be combined with dependencies.mongodb.tls.mode=disabled: cert-manager would issue Certificates the replica set never uses. Set tls.mode to allowTLS, preferTLS or requireTLS, or turn certManager.enabled off." }}
+{{- end }}
+{{- /* Same local existingIssuer override as activemq/armonik-ingress/redis, but deliberately only
+       two tiers: unlike them, mongodb never falls back to a throwaway local selfSigned Issuer.
+       Replica set members validate each other against a common CA, and a per-Certificate throwaway
+       Issuer would give the two Certificates below (ssl, ssl-internal) independent roots - same
+       problem as the selfSigned shared issuer rejected below, worse, since even those two would not
+       trust each other. issuerName is intentionally empty: needsLocalIssuer always fails below, so
+       it is never rendered. */}}
+{{- $issuer := list $ $certManager.existingIssuer "" | include "armonik.certManager.getIssuer" | fromYaml }}
+{{- if $issuer.needsLocalIssuer }}
+{{- fail "dependencies.mongodb.certManager.enabled requires a configured issuer: set dependencies.mongodb.certManager.existingIssuer.enabled=true, or global.armonik.certManager.issuer.enabled=true. Replica set members must chain to a common CA, so ArmoniK.Infra never creates a throwaway local Issuer for MongoDB (unlike activemq/armonik-ingress/redis)." }}
+{{- end }}
+{{- if empty $issuer.name }}
+{{- fail "the cert-manager issuer has no name: set dependencies.mongodb.certManager.existingIssuer.name when existingIssuer.enabled=true, else global.armonik.certManager.issuer.name must not be empty." }}
+{{- end }}
+{{- $localEnabled := ($certManager.existingIssuer | default dict).enabled | empty | not }}
+{{- if not $localEnabled }}
+{{- /* certManagerIssuer.provider is a chart value and checkable here; a local existingIssuer's
+       actual backend is an out-of-cluster fact `lookup` cannot see at render time (GitOps-first
+       rendering forbids it), so this guard cannot cover that path - pointing existingIssuer at a
+       selfSigned Issuer silently reintroduces the same no-common-CA problem this guard exists for. */}}
+{{- $cmi := .Values.certManagerIssuer | default dict }}
+{{- if eq ($cmi.provider | default "selfSigned") "selfSigned" }}
+{{- fail "dependencies.mongodb.certManager.enabled cannot use a selfSigned shared issuer: replica set members must chain to a common CA. Use certManagerIssuer.provider=venafi or provider=googleCas, or point dependencies.mongodb.certManager.existingIssuer at an issuer backed by a real CA." }}
+{{- end }}
 {{- end }}
 
 {{- $domain := include "armonik.clusterDomain" . }}
@@ -43,6 +61,7 @@ metadata:
   name: {{ $cluster }}-{{ $purpose }}
   namespace: {{ $ns }}
   {{- if $ops.certManager.deploy }}
+  {{- /* Hooked only when this release installs the CRDs; otherwise a plain resource. */}}
   annotations:
     "helm.sh/hook": post-install,post-upgrade
     "helm.sh/hook-weight": "10"
@@ -52,8 +71,9 @@ metadata:
 spec:
   secretName: {{ $secret }}
   commonName: {{ $svc }}
-  dnsNames:
   # Headless service and every pod behind it. The wildcard covers rs0-0, rs0-1, ...
+  # Replica set members act as both server and client towards each other (usages below).
+  dnsNames:
   - {{ $svc }}
   - {{ $svc }}.{{ $ns }}
   - {{ $svc }}.{{ $ns }}.svc
@@ -62,22 +82,6 @@ spec:
   - "*.{{ $svc }}.{{ $ns }}"
   - "*.{{ $svc }}.{{ $ns }}.svc"
   - "*.{{ $svc }}.{{ $ns }}.svc.{{ $domain }}"
-  usages:
-  # Replica set members act as both server and client towards each other.
-  - server auth
-  - client auth
-  privateKey:
-    algorithm: RSA
-    size: 2048
-  {{- with $certManager.duration }}
-  duration: {{ . }}
-  {{- end }}
-  {{- with $certManager.renewBefore }}
-  renewBefore: {{ . }}
-  {{- end }}
-  issuerRef:
-    name: {{ required "global.armonik.certManager.issuer.name must not be empty" $globalIssuer.name }}
-    kind: {{ $globalIssuer.kind }}
-    group: {{ $globalIssuer.group }}
+  {{- include "armonik.certManager.certificateSpec" (dict "certManager" $certManager "issuer" $issuer) | nindent 2 }}
 {{- end }}
 {{- end }}

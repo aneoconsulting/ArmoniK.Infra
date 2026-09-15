@@ -144,7 +144,8 @@ tests:
           certManager:
             issuer:
               enabled: true
-              provider: venafi
+      certManagerIssuer:
+        provider: venafi
       dependencies:
         mongodb:
           nameOverride: custom-mongo
@@ -197,9 +198,9 @@ tests:
           certManager:
             issuer:
               enabled: true
-              create: false
-              provider: venafi
               name: ""
+      certManagerIssuer:
+        provider: venafi
       dependencies:
         mongodb:
           certManager:
@@ -218,7 +219,8 @@ tests:
           certManager:
             issuer:
               enabled: true
-              provider: venafi
+      certManagerIssuer:
+        provider: venafi
       dependencies:
         mongodb:
           tls:

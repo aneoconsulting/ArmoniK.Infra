@@ -11,9 +11,10 @@ tests:
           certManager:
             issuer:
               enabled: true
-              create: true
-              provider: selfSigned
               name: shared-issuer
+      certManagerIssuer:
+        create: true
+        provider: selfSigned
     asserts:
       - isKind:
           of: Issuer
@@ -21,22 +22,29 @@ tests:
           path: spec.selfSigned
           value: {}
 
-  - it: googleCas renders the CR from the top-level googleCas values
+  - it: googleCas renders the CR from certManagerIssuer.googleCas.spec forwarded as-is
     set:
       global:
         armonik:
           certManager:
             issuer:
               enabled: true
-              create: true
-              provider: googleCas
               name: shared-issuer
               kind: GoogleCASIssuer
               group: cas-issuer.jetstack.io
-      googleCas:
-        project: my-project
-        location: europe-west1
-        caPoolId: my-pool
+      certManagerIssuer:
+        create: true
+        provider: googleCas
+        googleCas:
+          spec:
+            project: my-project
+            location: europe-west1
+            caPoolId: my-pool
+      operators:
+        cert-manager:
+          approveSignerNames:
+            - "googlecasissuers.cas-issuer.jetstack.io/*"
+            - "googlecasclusterissuers.cas-issuer.jetstack.io/*"
     asserts:
       - isKind:
           of: GoogleCASIssuer
@@ -50,37 +58,119 @@ tests:
           path: spec.caPoolId
           value: my-pool
 
-  - it: googleCas fails without the required top-level fields
+  - it: googleCas fails when certManagerIssuer.googleCas.spec is empty
     set:
       global:
         armonik:
           certManager:
             issuer:
               enabled: true
-              create: true
-              provider: googleCas
               name: shared-issuer
               kind: GoogleCASIssuer
               group: cas-issuer.jetstack.io
+      certManagerIssuer:
+        create: true
+        provider: googleCas
+      operators:
+        cert-manager:
+          approveSignerNames:
+            - "googlecasissuers.cas-issuer.jetstack.io/*"
+            - "googlecasclusterissuers.cas-issuer.jetstack.io/*"
     asserts:
       - failedTemplate:
-          errorPattern: "googleCas.project is required"
+          errorPattern: "certManagerIssuer.googleCas.spec is required for provider=googleCas"
 
-  - it: venafi renders from the top-level venafi values
+  # Regression guard: approveSignerNames REPLACES the jetstack chart default instead of extending it,
+  # so a googleCas run that forgets to set it leaves CertificateRequests unapproved forever (this was
+  # discovered the hard way against a real GKE cluster: see charts/gcp-values.example.yaml).
+  - it: googleCas fails when operators.cert-manager.approveSignerNames is not set (this release deploys cert-manager)
     set:
       global:
         armonik:
           certManager:
             issuer:
               enabled: true
-              create: true
-              provider: venafi
               name: shared-issuer
-      venafi:
-        zone: my-zone
-        cloud:
-          apiTokenSecretRef:
-            name: venafi-token
+              kind: GoogleCASIssuer
+              group: cas-issuer.jetstack.io
+      certManagerIssuer:
+        create: true
+        provider: googleCas
+        googleCas:
+          spec:
+            project: my-project
+            location: europe-west1
+            caPoolId: my-pool
+    asserts:
+      - failedTemplate:
+          errorPattern: "operators.cert-manager.approveSignerNames"
+  - it: googleCas fails when operators.cert-manager.approveSignerNames is missing the clusterissuer entry
+    set:
+      global:
+        armonik:
+          certManager:
+            issuer:
+              enabled: true
+              name: shared-issuer
+              kind: GoogleCASIssuer
+              group: cas-issuer.jetstack.io
+      certManagerIssuer:
+        create: true
+        provider: googleCas
+        googleCas:
+          spec:
+            project: my-project
+            location: europe-west1
+            caPoolId: my-pool
+      operators:
+        cert-manager:
+          approveSignerNames:
+            - "googlecasissuers.cas-issuer.jetstack.io/*"
+    asserts:
+      - failedTemplate:
+          errorPattern: "operators.cert-manager.approveSignerNames"
+  - it: googleCas skips the approveSignerNames guard when cert-manager is not deployed by this release
+    set:
+      global:
+        armonik:
+          certManager:
+            issuer:
+              enabled: true
+              name: shared-issuer
+              kind: GoogleCASIssuer
+              group: cas-issuer.jetstack.io
+          operators:
+            certManager:
+              deploy: false
+              available: true
+      certManagerIssuer:
+        create: true
+        provider: googleCas
+        googleCas:
+          spec:
+            project: my-project
+            location: europe-west1
+            caPoolId: my-pool
+    asserts:
+      - notFailedTemplate: {}
+
+  - it: venafi renders from certManagerIssuer.venafi.spec forwarded as-is
+    set:
+      global:
+        armonik:
+          certManager:
+            issuer:
+              enabled: true
+              name: shared-issuer
+      certManagerIssuer:
+        create: true
+        provider: venafi
+        venafi:
+          spec:
+            zone: my-zone
+            cloud:
+              apiTokenSecretRef:
+                name: venafi-token
     asserts:
       - isKind:
           of: Issuer
@@ -91,19 +181,20 @@ tests:
           path: spec.venafi.cloud.apiTokenSecretRef.name
           value: venafi-token
 
-  - it: venafi fails without the required zone
+  - it: venafi fails when certManagerIssuer.venafi.spec is empty
     set:
       global:
         armonik:
           certManager:
             issuer:
               enabled: true
-              create: true
-              provider: venafi
               name: shared-issuer
+      certManagerIssuer:
+        create: true
+        provider: venafi
     asserts:
       - failedTemplate:
-          errorPattern: "venafi.zone is required"
+          errorPattern: "certManagerIssuer.venafi.spec is required for provider=venafi"
 
   - it: fails on an unrecognized provider
     set:
@@ -112,9 +203,10 @@ tests:
           certManager:
             issuer:
               enabled: true
-              create: true
-              provider: bogus
               name: shared-issuer
+      certManagerIssuer:
+        create: true
+        provider: bogus
     asserts:
       - failedTemplate:
-          errorPattern: "is not recognized: use selfSigned, venafi or googleCas"
+          errorPattern: "certManagerIssuer.provider \"bogus\" is not recognized: use selfSigned, venafi or googleCas"

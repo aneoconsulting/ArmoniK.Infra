@@ -28,7 +28,8 @@ you also want covered:
 {{- end }}
 **********************************************************
 {{- $sharedIssuer := include "armonik.certManager.issuer" $ | fromYaml }}
-{{- if and $sharedIssuer.enabled (eq $sharedIssuer.provider "googleCas") }}
+{{- $cmi := .Values.certManagerIssuer | default dict }}
+{{- if and $sharedIssuer.enabled (eq ($cmi.provider | default "selfSigned") "googleCas") }}
 
 ACTION NEEDED for provider=googleCas: cert-manager only auto-approves signers listed in
 approveSignerNames, which does not cover Google CAS by default. Without this, CertificateRequests hang

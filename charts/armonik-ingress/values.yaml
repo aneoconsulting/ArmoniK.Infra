@@ -88,6 +88,8 @@ tls:
 mtls:
   enabled: false
   certificationAuthority:
+    # pem or existingSecret. If neither is set, a CA is cert-manager-issued from the same issuer
+    # tls.certManager would use (tls.certManager.existingIssuer, else global.armonik.certManager.issuer).
     pem: ""
     existingSecret: ""
   trustedCommonNames: []

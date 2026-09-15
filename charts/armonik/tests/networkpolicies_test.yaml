@@ -5,6 +5,7 @@ release:
 templates:
   - templates/networkpolicies/mongodb.yaml
   - templates/networkpolicies/redis.yaml
+  - templates/networkpolicies/activemq.yaml
   - templates/networkpolicies/keda-metrics-egress.yaml
   - templates/networkpolicies/control-plane.yaml
   - templates/networkpolicies/compute-plane.yaml
@@ -96,6 +97,44 @@ tests:
           path: spec.podSelector.matchLabels
           value:
             app.kubernetes.io/name: redis
+      - contains:
+          path: spec.ingress
+          content:
+            from:
+              - namespaceSelector:
+                  matchLabels:
+                    kubernetes.io/metadata.name: default
+                podSelector:
+                  matchLabels:
+                    app.kubernetes.io/part-of: compute-plane
+
+  - it: grants ActiveMQ ingress from control-plane/init and compute-plane (the activemq chart's own
+      NetworkPolicy no longer carries this rule)
+    template: templates/networkpolicies/activemq.yaml
+    set:
+      networkPolicy:
+        enabled: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: spec.podSelector.matchLabels
+          value:
+            app.kubernetes.io/name: activemq
+      - contains:
+          path: spec.ingress
+          content:
+            from:
+              - namespaceSelector:
+                  matchLabels:
+                    kubernetes.io/metadata.name: default
+                podSelector:
+                  matchExpressions:
+                    - key: app.kubernetes.io/component
+                      operator: In
+                      values:
+                        - control-plane
+                        - init
       - contains:
           path: spec.ingress
           content:

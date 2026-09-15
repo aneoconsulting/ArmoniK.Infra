@@ -521,6 +521,27 @@ ingress:
 
 
 {{/*
+  ActiveMQ server: ingress from control-plane/init + compute-plane (the activemq chart's own
+  NetworkPolicy no longer carries this ArmoniK-specific rule - see armonik.netpol.redisServer).
+*/}}
+{{- define "armonik.netpol.activemqServer" -}}
+{{- $root := . -}}
+{{- with $root.Subcharts.dependencies.Subcharts.activemq -}}
+namespace: {{ include "armonik.namespace" . | quote }}
+podSelector:
+  {{- include "armonik.netpol.podSelector" . | nindent 2 }}
+ingress:
+  {{- list
+        (list "armonik.netpol.rule.controlPlaneFrom" $root)
+        (list "armonik.netpol.rule.computePlaneFrom" $root)
+    | include "armonik.netpol.mergeRules"
+    | nindent 2
+  }}
+{{- end -}}
+{{- end -}}
+
+
+{{/*
   KEDA operator egress: to this release's control-plane metrics-exporter (target of the
   default metrics-api ScaledObject). KEDA's chart already grants DNS + Kubernetes API by
   default; this adds the ArmoniK-specific target without touching that third-party chart.

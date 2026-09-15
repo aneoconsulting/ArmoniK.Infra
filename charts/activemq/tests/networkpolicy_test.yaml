@@ -8,7 +8,7 @@ tests:
       - hasDocuments:
           count: 0
 
-  - it: renders with the activemq podSelector and both Ingress/Egress policyTypes when enabled
+  - it: renders with the activemq podSelector and Egress-only policyTypes when enabled with no ingress rules
     template: network-policy.yaml
     set:
       networkPolicy:
@@ -26,55 +26,9 @@ tests:
       - equal:
           path: spec.policyTypes
           value:
-            - Ingress
             - Egress
-
-  - it: allows control-plane/init and compute-plane ingress on the AMQP port, open to any namespace by default
-    template: network-policy.yaml
-    set:
-      networkPolicy:
-        enabled: true
-    asserts:
-      # documented default: networkPolicy.namespaceSelector unset means "any namespace"
-      - equal:
-          path: spec.ingress[0].from[0].namespaceSelector
-          value: {}
-      - equal:
-          path: spec.ingress[0].from[0].podSelector.matchExpressions
-          value:
-            - key: app.kubernetes.io/component
-              operator: In
-              values:
-                - control-plane
-                - init
-      - equal:
-          path: spec.ingress[0].from[1].podSelector.matchLabels
-          value:
-            app.kubernetes.io/part-of: compute-plane
-      - equal:
-          path: spec.ingress[0].ports
-          value:
-            - protocol: TCP
-              port: 5672
-
-  - it: scopes ingress to a specific namespace instead of the open default when networkPolicy.namespaceSelector is set
-    template: network-policy.yaml
-    set:
-      networkPolicy:
-        enabled: true
-        namespaceSelector: clients
-    asserts:
-      # negative case: no more namespaceSelector: {} once a namespace is stated
-      - equal:
-          path: spec.ingress[0].from[0].namespaceSelector
-          value:
-            matchLabels:
-              kubernetes.io/metadata.name: clients
-      - equal:
-          path: spec.ingress[0].from[1].namespaceSelector
-          value:
-            matchLabels:
-              kubernetes.io/metadata.name: clients
+      - notExists:
+          path: spec.ingress
 
   - it: grants DNS-only egress by default
     template: network-policy.yaml
@@ -101,7 +55,7 @@ tests:
                 - protocol: TCP
                   port: 53
 
-  - it: appends extraIngressRules and extraEgressRules to the chart's own rules
+  - it: renders extraIngressRules as-is and appends extraEgressRules to the chart's own DNS rule
     template: network-policy.yaml
     set:
       networkPolicy:
@@ -117,10 +71,13 @@ tests:
     asserts:
       - lengthEqual:
           path: spec.ingress
-          count: 2
+          count: 1
       - lengthEqual:
           path: spec.egress
           count: 2
+      - contains:
+          path: spec.policyTypes
+          content: Ingress
       - contains:
           path: spec.ingress
           content:

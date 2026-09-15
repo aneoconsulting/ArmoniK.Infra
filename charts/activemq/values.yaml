@@ -172,6 +172,3 @@ networkPolicy:
   enabled: false
   extraIngressRules: []
   extraEgressRules: []
-  # Namespace shared by control-plane, init and compute-plane pods.
-  # Empty matches any namespace via namespaceSelector: {}.
-  namespaceSelector: ""

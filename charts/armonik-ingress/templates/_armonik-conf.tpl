@@ -1,4 +1,11 @@
 {{/*
+Name of the conf secret related resources
+*/}}
+{{- define "armonik.ingress.confName" -}}
+  {{- include "armonik.fullname" . | printf "%s-nginx-conf" | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+{{/*
 SEQ locations
 */}}
 {{- define "armonik.seq.locations" }}

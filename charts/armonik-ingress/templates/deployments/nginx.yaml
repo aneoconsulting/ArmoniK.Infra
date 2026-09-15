@@ -121,7 +121,7 @@ spec:
       {{- end}}
       - name: conf
         secret:
-          secretName: {{ include "armonik.fullname" . }}-conf
+          secretName: {{ include "armonik.ingress.confName" . | quote }}
           defaultMode: 420
           optional: false
       - name: static

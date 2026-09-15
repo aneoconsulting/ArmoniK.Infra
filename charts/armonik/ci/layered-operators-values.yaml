@@ -1,0 +1,35 @@
+# Layered install, the target layout: the operators release goes in first, this
+# release only consumes it. deploy=false drops the operator subcharts,
+# available=true still emits the CRs (ExternalSecret, SecretStore, ScaledObject,
+# Service/PodMonitor, PerconaServerMongoDB), unhooked since this release owns no CRD.
+#
+# Every namespace has to be stated: the `namespace` default only resolves to this
+# release's namespace when this release deploys the operator, and consumers that
+# derive a hostname from it (the Prometheus URL, the Grafana dashboard sidecar)
+# fail on an empty one.
+#
+# The third-party dependencies stay at their defaults, unlike minimal-values.yaml:
+# the point of this profile is that the real CRs get rendered.
+global:
+  armonik:
+    operators:
+      externalSecrets:
+        deploy: false
+        available: true
+        namespace: external-secrets
+      keda:
+        deploy: false
+        available: true
+        namespace: keda
+      certManager:
+        deploy: false
+        available: true
+        namespace: cert-manager
+      mongodbOperator:
+        deploy: false
+        available: true
+        namespace: mongodb-operator
+      prometheusOperator:
+        deploy: false
+        available: true
+        namespace: monitoring

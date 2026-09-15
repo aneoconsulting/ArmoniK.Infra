@@ -1,17 +1,14 @@
 # Layered install, the target layout: the operators release goes in first, this
 # release only consumes it. deploy=false drops the operator subcharts,
 # available=true still emits the CRs (ExternalSecret, SecretStore, ScaledObject,
-# Service/PodMonitor, PerconaServerMongoDB), unhooked since this release owns no CRD.
-#
-# Every namespace has to be stated: the `namespace` default only resolves to this
-# release's namespace when this release deploys the operator, and consumers that
-# derive a hostname from it (the Prometheus URL, the Grafana dashboard sidecar)
-# fail on an empty one.
+# Service/PodMonitor), unhooked since this release owns no CRD.
 #
 # The third-party dependencies stay at their defaults, unlike minimal-values.yaml:
 # the point of this profile is that the real CRs get rendered.
 global:
   armonik:
+    # Only prometheusOperator.namespace is read (the Prometheus URL and the Grafana dashboard sidecar
+    # derive a host from it, and fail on an empty one); the four others are stated for symmetry.
     operators:
       externalSecrets:
         deploy: false

@@ -207,10 +207,10 @@ podSelector:
     app.kubernetes.io/component: ingress
     {{- include "armonik.selectorLabels" . | nindent 4 }}
 egress:
-  {{- list
-        (list "armonik.netpol.rule.ingressToControlPlane" $)
-        (list "armonik.netpol.rule.ingressToGrafana" $)
-        (list "armonik.netpol.rule.ingressToSeq" $)
+  {{- dict
+        "armonik.netpol.rule.ingressToControlPlane" $
+        "armonik.netpol.rule.ingressToGrafana" $
+        "armonik.netpol.rule.ingressToSeq" $
     | include "armonik.netpol.mergeRules"
     | nindent 2
   }}
@@ -295,12 +295,12 @@ ports:
   Egress to mongo, rabbitmq, activemq, redis + DNS. Shared by control-plane and compute-plane.
 */}}
 {{- define "armonik.netpol.dependencyRules" -}}
-  {{- $rules := list
-    (list "armonik.netpol.rule.mongodb" .)
-    (list "armonik.netpol.rule.rabbitmq" .)
-    (list "armonik.netpol.rule.activemq" .)
-    (list "armonik.netpol.rule.redis" .)
-    (list "armonik.netpol.dnsRule" dict)
+  {{- $rules := dict
+    "armonik.netpol.rule.mongodb" .
+    "armonik.netpol.rule.rabbitmq" .
+    "armonik.netpol.rule.activemq" .
+    "armonik.netpol.rule.redis" .
+    "armonik.netpol.dnsRule" dict
   -}}
   {{- $rules | include "armonik.netpol.mergeRules" -}}
 {{- end -}}
@@ -323,9 +323,9 @@ ports:
   Prometheus scraping (/metrics) is handled separately, in control-plane's own chart-local policy.
 */}}
 {{- define "armonik.netpol.rule.submitterIngress" -}}
-  {{- list
-      (list "armonik.netpol.rule.computePlaneFrom" .)
-      (list "armonik.netpol.rule.ingressFrom" .)
+  {{- dict
+      "armonik.netpol.rule.computePlaneFrom" .
+      "armonik.netpol.rule.ingressFrom" .
     | include "armonik.netpol.mergeRules"
   -}}
 {{- end -}}
@@ -383,9 +383,9 @@ podSelector:
 ingress:
   {{- include "armonik.netpol.rule.controlPlaneMetricsExporterIngress" . | nindent 2 }}
 egress:
-  {{- list
-        (list "armonik.netpol.rule.mongodb" .)
-        (list "armonik.netpol.dnsRule" dict)
+  {{- dict
+        "armonik.netpol.rule.mongodb" .
+        "armonik.netpol.dnsRule" dict
     | include "armonik.netpol.mergeRules"
     | nindent 2
   }}
@@ -414,10 +414,10 @@ namespace: {{ include "armonik.namespace" . | quote }}
 podSelector:
   {{- include "armonik.netpol.podSelector" . | nindent 2 }}
 egress:
-  {{- list
-        (list "armonik.netpol.dnsRule" dict)
-        (list "armonik.netpol.kubeApiRule" dict)
-        (list "armonik.netpol.rule.seq" $root)
+  {{- dict
+        "armonik.netpol.dnsRule" dict
+        "armonik.netpol.kubeApiRule" dict
+        "armonik.netpol.rule.seq" $root
     | include "armonik.netpol.mergeRules"
     | nindent 2
   }}
@@ -436,13 +436,13 @@ podSelector:
   {{- include "armonik.netpol.podSelector" . | nindent 2 }}
 
 ingress:
-  {{- list (list "armonik.netpol.rule.mongodbOperatorFrom" $root) | include "armonik.netpol.mergeRules" | nindent 2 }}
+  {{- dict "armonik.netpol.rule.mongodbOperatorFrom" $root | include "armonik.netpol.mergeRules" | nindent 2 }}
 
 egress:
-  {{- list
-        (list "armonik.netpol.rule.mongodbOperatorTo" $root)
-        (list "armonik.netpol.dnsRule" dict)
-        (list "armonik.netpol.kubeApiRule" dict)
+  {{- dict
+        "armonik.netpol.rule.mongodbOperatorTo" $root
+        "armonik.netpol.dnsRule" dict
+        "armonik.netpol.kubeApiRule" dict
     | include "armonik.netpol.mergeRules"
     | nindent 2
   }}
@@ -462,19 +462,19 @@ podSelector:
   {{- include "armonik.netpol.podSelector.mongodb" $root | nindent 2 }}
 
 ingress:
-  {{- list
-        (list "armonik.netpol.rule.mongodbServerFromOperator" $root)
-        (list "armonik.netpol.rule.controlPlaneFrom" $root)
-        (list "armonik.netpol.rule.metricsExporterFrom" $root)
-        (list "armonik.netpol.rule.computePlaneFrom" $root)
+  {{- dict
+        "armonik.netpol.rule.mongodbServerFromOperator" $root
+        "armonik.netpol.rule.controlPlaneFrom" $root
+        "armonik.netpol.rule.metricsExporterFrom" $root
+        "armonik.netpol.rule.computePlaneFrom" $root
     | include "armonik.netpol.mergeRules"
     | nindent 2
   }}
 
 egress:
-  {{- list
-        (list "armonik.netpol.rule.mongodbServerToOperator" $root)
-        (list "armonik.netpol.dnsRule" dict)
+  {{- dict
+        "armonik.netpol.rule.mongodbServerToOperator" $root
+        "armonik.netpol.dnsRule" dict
     | include "armonik.netpol.mergeRules"
     | nindent 2
   }}
@@ -491,9 +491,9 @@ podSelector:
     app.kubernetes.io/component: wait-cert-manager
     {{- include "armonik.selectorLabels" . | nindent 4 }}
 egress:
-  {{- list
-        (list "armonik.netpol.dnsRule" dict)
-        (list "armonik.netpol.kubeApiRule" dict)
+  {{- dict
+        "armonik.netpol.dnsRule" dict
+        "armonik.netpol.kubeApiRule" dict
     | include "armonik.netpol.mergeRules"
     | nindent 2
   }}
@@ -510,9 +510,9 @@ namespace: {{ include "armonik.namespace" . | quote }}
 podSelector:
   {{- include "armonik.netpol.podSelector" . | nindent 2 }}
 ingress:
-  {{- list
-        (list "armonik.netpol.rule.controlPlaneFrom" $root)
-        (list "armonik.netpol.rule.computePlaneFrom" $root)
+  {{- dict
+        "armonik.netpol.rule.controlPlaneFrom" $root
+        "armonik.netpol.rule.computePlaneFrom" $root
     | include "armonik.netpol.mergeRules"
     | nindent 2
   }}
@@ -531,9 +531,9 @@ namespace: {{ include "armonik.namespace" . | quote }}
 podSelector:
   {{- include "armonik.netpol.podSelector" . | nindent 2 }}
 ingress:
-  {{- list
-        (list "armonik.netpol.rule.controlPlaneFrom" $root)
-        (list "armonik.netpol.rule.computePlaneFrom" $root)
+  {{- dict
+        "armonik.netpol.rule.controlPlaneFrom" $root
+        "armonik.netpol.rule.computePlaneFrom" $root
     | include "armonik.netpol.mergeRules"
     | nindent 2
   }}

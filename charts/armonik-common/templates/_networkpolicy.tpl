@@ -189,15 +189,13 @@ ports:
 {{- end -}}
 
 {{/*
-  Merges a list of named rules into one rule list: each entry is [define name, context],
-  included and parsed back from YAML, nil results dropped.
+  Merges a dict of named rules into one rule list: each entry maps a define name to its render
+  context, included and parsed back from YAML, nil results dropped.
 */}}
 {{- define "armonik.netpol.mergeRules" -}}
   {{- $rules := list -}}
-  {{- range . -}}
-    {{- $name := index . 0 -}}
-    {{- $ctx := index . 1 -}}
-    {{- $rules = append $rules (include $name $ctx | fromYaml) -}}
+  {{- range $name, $ctx := . -}}
+    {{- $rules = include $name $ctx | fromYaml | append $rules -}}
   {{- end -}}
   {{- $rules | compact | toYaml -}}
 {{- end -}}

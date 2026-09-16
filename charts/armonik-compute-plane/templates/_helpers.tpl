@@ -87,7 +87,7 @@ podSelector:
 
 ingress:
   {{- include "armonik.netpol.mergeExtra" (dict
-        "rules" (list (list "armonik.netpol.computePlane.prometheusIngress" .) | include "armonik.netpol.mergeRules")
+        "rules" (dict "armonik.netpol.computePlane.prometheusIngress" . | include "armonik.netpol.mergeRules")
         "extra" .Values.networkPolicy.extraIngressRules
     ) | nindent 2 }}
 

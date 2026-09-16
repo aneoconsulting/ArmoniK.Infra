@@ -3,7 +3,6 @@
 -}}
 {{- $metricsExporterEnabled := list .Values "control-plane" "metricsExporter" "enabled"
     | include "armonik.utils.index"
-    | default "true"
 -}}
 {{- $meOn := and $networkPolicyEnabled $metricsExporterEnabled -}}
 

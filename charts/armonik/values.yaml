@@ -737,6 +737,7 @@ operators:
   external-secrets:
     networkPolicy:
     # Set networkPolicy.enabled: true to apply the default NetworkPolicy for this component.
+      enabled: false
       egress:
         - to:
             - namespaceSelector:
@@ -759,6 +760,7 @@ operators:
     webhook:
     # Set networkPolicy.enabled: true to apply the default NetworkPolicy for this component.
       networkPolicy:
+        enabled: false
         egress:
           - to:
               - namespaceSelector:
@@ -782,6 +784,7 @@ operators:
     certController:
     # Set networkPolicy.enabled: true to apply the default NetworkPolicy for this component.
       networkPolicy:
+        enabled: false
         egress:
           - to:
               - namespaceSelector:
@@ -818,6 +821,7 @@ operators:
     # Set networkPolicy.enabled: true to apply the default NetworkPolicy for this component.
     prometheus:
       networkPolicy:
+        enabled: false
         # Open to any namespace by default on every peer below. Restrict to the peer's actual
         # namespace once known.
         ingress:
@@ -863,6 +867,16 @@ operators:
                 podSelector:
                   matchLabels:
                     app.kubernetes.io/component: metrics-exporter
+
+          # Compute plane
+          - ports:
+              - protocol: TCP
+                port: 1080
+            to:
+              - namespaceSelector: {}
+                podSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: compute-plane
 
           # Kube-state-metrics
           - ports:

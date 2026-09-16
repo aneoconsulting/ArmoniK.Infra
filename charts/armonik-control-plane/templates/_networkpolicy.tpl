@@ -19,7 +19,7 @@ podSelector:
     {{- include "armonik.selectorLabels" $ | nindent 4 }}
 ingress:
   {{- include "armonik.netpol.mergeExtra" (dict
-        "rules" (list (list "armonik.netpol.submitter.prometheusIngress" .) | include "armonik.netpol.mergeRules")
+        "rules" (dict "armonik.netpol.submitter.prometheusIngress" . | include "armonik.netpol.mergeRules")
         "extra" .Values.networkPolicy.submitter.extraIngressRules
     ) | nindent 2 }}
 egress:
@@ -51,7 +51,7 @@ podSelector:
     app.kubernetes.io/component: metrics-exporter
 ingress:
   {{- include "armonik.netpol.mergeExtra" (dict
-        "rules" (list (list "armonik.netpol.metricsExporter.prometheusIngress" .) | include "armonik.netpol.mergeRules")
+        "rules" (dict "armonik.netpol.metricsExporter.prometheusIngress" . | include "armonik.netpol.mergeRules")
         "extra" .Values.networkPolicy.metricsExporter.extraIngressRules
     ) | nindent 2 }}
 egress:

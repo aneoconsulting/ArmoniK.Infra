@@ -25,15 +25,14 @@
 {{- if empty $issuer.name }}
 {{- fail "the cert-manager issuer has no name: set dependencies.mongodb.certManager.existingIssuer.name when existingIssuer.enabled=true, else global.armonik.certManager.issuer.name must not be empty." }}
 {{- end }}
-{{- $localEnabled := ($certManager.existingIssuer | default dict).enabled | empty | not }}
-{{- if not $localEnabled }}
+{{- if list $certManager "existingIssuer" "enabled" | include "armonik.utils.index" | empty }}
 {{- /* certManagerIssuer.provider is a chart value and checkable here; a local existingIssuer's
        actual backend is an out-of-cluster fact `lookup` cannot see at render time (GitOps-first
        rendering forbids it), so this guard cannot cover that path - pointing existingIssuer at a
        selfSigned Issuer silently reintroduces the same no-common-CA problem this guard exists for. */}}
 {{- $cmi := .Values.certManagerIssuer | default dict }}
 {{- if eq ($cmi.provider | default "selfSigned") "selfSigned" }}
-{{- fail "dependencies.mongodb.certManager.enabled cannot use a selfSigned shared issuer: replica set members must chain to a common CA. Use certManagerIssuer.provider=venafi or provider=googleCas, or point dependencies.mongodb.certManager.existingIssuer at an issuer backed by a real CA." }}
+{{- fail "dependencies.mongodb.certManager.enabled cannot use a selfSigned shared issuer: replica set members must chain to a common CA. Use certManagerIssuer.provider=ca, vault, acme, venafi or googleCas, or point dependencies.mongodb.certManager.existingIssuer at an issuer backed by a real CA." }}
 {{- end }}
 {{- end }}
 

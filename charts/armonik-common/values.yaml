@@ -48,8 +48,8 @@ global:
       issuer:
         enabled: false
         name: '{{.Release.Name}}-shared-issuer'
-        kind: Issuer
-        group: cert-manager.io
+        # kind: Issuer
+        # group: cert-manager.io
     monitoring:
       # -- Prometheus for the Grafana datasource and PromQL KEDA triggers. Defaults to the
       # `armonik.monitoring.prometheusUrl.default` derivation; a literal URL replaces it.

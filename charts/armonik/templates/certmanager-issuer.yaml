@@ -2,14 +2,20 @@
 {{- $cmi := .Values.certManagerIssuer | default dict -}}
 {{- $create := $cmi.create | empty | not -}}
 {{- $provider := $cmi.provider | default "selfSigned" -}}
+{{- /* All map to spec.<provider> uniformly; see values.yaml. googleCas is a separate CRD, handled below. */ -}}
+{{- $nativeProviders := list "selfSigned" "ca" "vault" "acme" "venafi" -}}
 {{- if and $issuer.enabled $create -}}
 {{- $ops := include "armonik.operators" $ | fromYaml -}}
 {{- $name := required "global.armonik.certManager.issuer.name is required when certManagerIssuer.create=true" $issuer.name -}}
-{{- if eq $provider "selfSigned" -}}
+{{- if has $provider $nativeProviders -}}
+{{- $payload := index $cmi $provider | default dict -}}
+{{- if and ($payload | empty) (ne $provider "selfSigned") -}}
+{{- fail (printf "certManagerIssuer.%s is required for provider=%s: forward the Issuer.spec.%s fields as-is." $provider $provider $provider) -}}
+{{- end -}}
 apiVersion: cert-manager.io/v1
-kind: {{ $issuer.kind }}
+kind: {{ $issuer.kind | quote }}
 metadata:
-  name: {{ $name }}
+  name: {{ $name | quote }}
   {{- if eq $issuer.kind "Issuer" }}
   namespace: {{ include "armonik.namespace" . }}
   {{- end }}
@@ -21,7 +27,8 @@ metadata:
   labels:
     {{- include "armonik.labels" . | nindent 4 }}
 spec:
-  selfSigned: {}
+  {{ $provider }}:
+    {{- toYaml $payload | nindent 4 }}
 {{- else if eq $provider "googleCas" -}}
 {{- if not (or $ops.googleCasIssuer.deploy $ops.googleCasIssuer.available) -}}
 {{- fail "certManagerIssuer.provider=googleCas requires the Google CAS Issuer operator: set global.armonik.operators.googleCasIssuer.deploy=true (this release installs it) or .available=true (installed by another release)." -}}
@@ -40,17 +47,16 @@ spec:
 {{- fail (printf "global.armonik.certManager.issuer.kind %q is invalid for provider=googleCas: set it to GoogleCASIssuer or GoogleCASClusterIssuer." $issuer.kind) -}}
 {{- end -}}
 {{- if ne $issuer.group "cas-issuer.jetstack.io" -}}
-{{- fail (printf "global.armonik.certManager.issuer.group %q is invalid for provider=googleCas: set it to cas-issuer.jetstack.io (the default cert-manager.io only fits selfSigned/venafi)." $issuer.group) -}}
+{{- fail (printf "global.armonik.certManager.issuer.group %q is invalid for provider=googleCas: set it to cas-issuer.jetstack.io (the default cert-manager.io only fits the native providers: selfSigned, ca, vault, acme, venafi)." $issuer.group) -}}
 {{- end -}}
-{{- $googleCas := $cmi.googleCas | default dict -}}
-{{- $payload := $googleCas.spec | default dict -}}
+{{- $payload := $cmi.googleCas | default dict -}}
 {{- if $payload | empty -}}
-{{- fail "certManagerIssuer.googleCas.spec is required for provider=googleCas: forward the GoogleCASIssuer/GoogleCASClusterIssuer spec fields (project, location, caPoolId, ...) as-is." -}}
+{{- fail "certManagerIssuer.googleCas is required for provider=googleCas: forward the GoogleCASIssuer/GoogleCASClusterIssuer spec fields (project, location, caPoolId, ...) as-is." -}}
 {{- end -}}
 apiVersion: cas-issuer.jetstack.io/v1beta1
-kind: {{ $issuer.kind }}
+kind: {{ $issuer.kind | quote }}
 metadata:
-  name: {{ $name }}
+  name: {{ $name | quote }}
   {{- if eq $issuer.kind "GoogleCASIssuer" }}
   namespace: {{ include "armonik.namespace" . }}
   {{- end }}
@@ -63,30 +69,7 @@ metadata:
     {{- include "armonik.labels" . | nindent 4 }}
 spec:
   {{- toYaml $payload | nindent 2 }}
-{{- else if eq $provider "venafi" -}}
-{{- $venafi := $cmi.venafi | default dict -}}
-{{- $payload := $venafi.spec | default dict -}}
-{{- if $payload | empty -}}
-{{- fail "certManagerIssuer.venafi.spec is required for provider=venafi: forward the Issuer.spec.venafi fields (zone, tpp or cloud, ...) as-is." -}}
-{{- end -}}
-apiVersion: cert-manager.io/v1
-kind: {{ $issuer.kind }}
-metadata:
-  name: {{ $name }}
-  {{- if eq $issuer.kind "Issuer" }}
-  namespace: {{ include "armonik.namespace" . }}
-  {{- end }}
-  {{- if $ops.certManager.deploy }}
-  annotations:
-    "helm.sh/hook": post-install,post-upgrade
-    "helm.sh/hook-weight": "0"
-  {{- end }}
-  labels:
-    {{- include "armonik.labels" . | nindent 4 }}
-spec:
-  venafi:
-    {{- toYaml $payload | nindent 4 }}
 {{- else -}}
-{{- fail (printf "certManagerIssuer.provider %q is not recognized: use selfSigned, venafi or googleCas." $provider) -}}
+{{- fail (printf "certManagerIssuer.provider %q is not recognized: use selfSigned, ca, vault, acme, venafi or googleCas." $provider) -}}
 {{- end -}}
 {{- end -}}

@@ -2,7 +2,7 @@
 {{- $tls := .Values.tls | default dict }}
 {{- $certManager := $tls.certManager | default dict }}
 {{- if and $tls.enabled $certManager.enabled }}
-{{- $issuerName := printf "%s-issuer" (include "armonik.fullname" .) }}
+{{- $issuerName := include "armonik.fullname" . | printf "%s-issuer" }}
 {{- $issuer := list $ $certManager.existingIssuer $issuerName | include "armonik.certManager.getIssuer" | fromYaml }}
 {{- if and (not $ops.certManager.available) $issuer.needsLocalIssuer }}
 {{- fail "ingress TLS via cert-manager requires it: set global.armonik.operators.certManager.available=true, set tls.certManager.existingIssuer.enabled=true, set global.armonik.certManager.issuer.enabled=true, or disable tls.certManager and supply the TLS Secret directly." }}
@@ -47,6 +47,6 @@ spec:
   ipAddresses:
     {{- toYaml . | nindent 4 }}
   {{- end }}
-  secretName: {{ include "armonik.fullname" . }}
+  secretName: {{ include "armonik.fullname" . | quote }}
   {{- include "armonik.certManager.certificateSpec" (dict "certManager" $certManager "issuer" $issuer) | nindent 2 }}
 {{- end }}

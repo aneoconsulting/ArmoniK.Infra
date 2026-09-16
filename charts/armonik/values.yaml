@@ -113,32 +113,48 @@ ingress:
 # Settings to create the Issuer named by global.armonik.certManager.issuer: whether
 # this release creates it (create) and with which cert-manager backend (provider).
 # create=false: nothing below is used, the Issuer must already exist.
+#
+# Every provider block is forwarded as-is. selfSigned/ca/vault/acme/venafi map to
+# Issuer.spec.<provider> (https://cert-manager.io/docs/configuration/); googleCas is a
+# separate CRD (cas-issuer.jetstack.io) whose block IS the CR's spec directly.
 certManagerIssuer:
   create: false
   provider: selfSigned
-  googleCas:
-    # Forwarded as-is into GoogleCASIssuer/GoogleCASClusterIssuer's spec. Required when provider=googleCas.
-    spec: {}
-      # project: ""
-      # location: ""
-      # caPoolId: ""
-      # certificateAuthorityId: ""
-      # credentials:
-      #   name: ""
-      #   key: credentials.json
-  venafi:
-    # Forwarded as-is into Issuer.spec.venafi. caBundle must already be base64. Required when provider=venafi.
-    spec: {}
-      # zone: ""
-      # tpp:
-      #   url: ""
-      #   credentialsRef:
-      #     name: ""
-      #   caBundle: ""
-      # cloud:
-      #   apiTokenSecretRef:
-      #     name: ""
-      #     key: apikey
+  selfSigned: {}
+    # crlDistributionPoints: []
+  ca: {}
+    # secretName: ""
+  vault: {}
+    # server: ""
+    # path: ""
+    # caBundle: ""
+    # auth: {}
+  acme: {}
+    # server: ""
+    # email: ""
+    # privateKeySecretRef:
+    #   name: ""
+    # solvers: []
+  venafi: {}
+    # caBundle must already be base64.
+    # zone: ""
+    # tpp:
+    #   url: ""
+    #   credentialsRef:
+    #     name: ""
+    #   caBundle: ""
+    # cloud:
+    #   apiTokenSecretRef:
+    #     name: ""
+    #     key: apikey
+  googleCas: {}
+    # project: ""
+    # location: ""
+    # caPoolId: ""
+    # certificateAuthorityId: ""
+    # credentials:
+    #   name: ""
+    #   key: credentials.json
 
 # To bring your own MongoDB, set dependencies.mongodb.enabled=false and supply the connection via the
 # conf values (conf.core.env / conf.core.envFromSecret). The in-cluster psmdb-db (below) is the default.

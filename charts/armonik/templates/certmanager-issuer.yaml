@@ -16,9 +16,7 @@ apiVersion: cert-manager.io/v1
 kind: {{ $issuer.kind | quote }}
 metadata:
   name: {{ $name | quote }}
-  {{- if eq $issuer.kind "Issuer" }}
-  namespace: {{ include "armonik.namespace" . }}
-  {{- end }}
+  namespace: {{ include "armonik.namespace" . | quote }}
   {{- if $ops.certManager.deploy }}
   annotations:
     "helm.sh/hook": post-install,post-upgrade
@@ -57,9 +55,7 @@ apiVersion: cas-issuer.jetstack.io/v1beta1
 kind: {{ $issuer.kind | quote }}
 metadata:
   name: {{ $name | quote }}
-  {{- if eq $issuer.kind "GoogleCASIssuer" }}
-  namespace: {{ include "armonik.namespace" . }}
-  {{- end }}
+  namespace: {{ include "armonik.namespace" . | quote }}
   {{- if $ops.googleCasIssuer.deploy }}
   annotations:
     "helm.sh/hook": post-install,post-upgrade

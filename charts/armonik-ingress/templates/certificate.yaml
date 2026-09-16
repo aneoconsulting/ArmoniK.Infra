@@ -47,6 +47,6 @@ spec:
   ipAddresses:
     {{- toYaml . | nindent 4 }}
   {{- end }}
-  secretName: {{ include "armonik.fullname" . | quote }}
+  secretName: {{ include "armonik.fullname" . | printf "%s-tls" | quote }}
   {{- include "armonik.certManager.certificateSpec" (dict "certManager" $certManager "issuer" $issuer) | nindent 2 }}
 {{- end }}

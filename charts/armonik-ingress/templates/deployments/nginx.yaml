@@ -110,7 +110,7 @@ spec:
         secret:
           defaultMode: 420
           optional: false
-          secretName: {{ include "armonik.fullname" . | quote }}
+          secretName: {{ include "armonik.fullname" . | printf "%s-tls" | quote }}
       {{- end }}
       {{- if list .Values "mtls" "enabled" | include "armonik.utils.index" }}
       {{- $mtlsCa := .Values.mtls.certificationAuthority | default dict }}

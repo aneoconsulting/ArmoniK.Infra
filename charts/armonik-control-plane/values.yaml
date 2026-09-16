@@ -81,18 +81,17 @@ annotations: {}
 affinity: {}
 priorityClassName: ""
 
-# -- Extra env for the control-plane container, after the conf layers. `conf.env` is the shared
-# channel, this is container-local.
+# -- Extra env for the control-plane container. Shared vars go in conf.env.
 extraEnv: []
-# -- Extra envFrom for the control-plane container, after the conf layers.
+# -- Extra envFrom for the control-plane container.
 extraEnvFrom: []
-# -- Extra volumeMounts for the control-plane container, after the conf mounts.
+# -- Extra volumeMounts for the control-plane container.
 extraVolumeMounts: []
 # -- Extra containers, after the control-plane container.
 extraContainers: []
 # -- Extra init containers.
 extraInitContainers: []
-# -- Extra volumes, after the conf mounts.
+# -- Extra volumes.
 extraVolumes: []
 # containerPatch:
 #   securityContext:
@@ -109,8 +108,8 @@ containerPatch: {}
 #       topologyKey: topology.kubernetes.io/zone
 #       whenUnsatisfiable: ScheduleAnyway
 #
-# -- Merged over spec.template.spec, last. Pod metadata is out of reach: its labels must stay a
-# superset of the immutable selector. Lists the chart builds are refused: use extra*.
+# -- Merged over spec.template.spec, last. Lists the chart builds are refused: use extra*.
+# Pod labels are out of reach: the selector is immutable.
 podSpecPatch: {}
 
 # Base conf merged into every control-plane workload: core + log layers + core TLS mounts.
@@ -199,6 +198,23 @@ metricsExporter:
       - name: metrics-port
         port: 9419
         targetPort: 1080
+  # -- Extra env for the metrics-exporter container. Shared vars go in conf.env.
+  extraEnv: []
+  # -- Extra envFrom for the metrics-exporter container.
+  extraEnvFrom: []
+  # -- Extra volumeMounts for the metrics-exporter container.
+  extraVolumeMounts: []
+  # -- Extra volumes.
+  extraVolumes: []
+  # -- Extra init containers.
+  extraInitContainers: []
+  # -- Extra containers, after the metrics-exporter container.
+  extraContainers: []
+  # -- Merged over the metrics-exporter container, last. Lists the chart builds are refused: use extra*.
+  containerPatch: {}
+  # -- Merged over spec.template.spec, last. Lists the chart builds are refused: use extra*.
+  # Pod labels are out of reach: the selector is immutable.
+  podSpecPatch: {}
   # On top of the base conf: metrics layer.
   conf:
     envSecret:
@@ -222,6 +238,22 @@ init:
   annotations:
   affinity:
   priorityClassName:
+  # -- Extra env for the init container. Shared vars go in conf.env.
+  extraEnv: []
+  # -- Extra envFrom for the init container.
+  extraEnvFrom: []
+  # -- Extra volumeMounts for the init container.
+  extraVolumeMounts: []
+  # -- Extra volumes.
+  extraVolumes: []
+  # -- Extra init containers. There is no extraContainers on a Job: a sidecar that never
+  # exits keeps it from finishing.
+  extraInitContainers: []
+  # -- Merged over the init container, last. Lists the chart builds are refused: use extra*.
+  containerPatch: {}
+  # -- Merged over spec.template.spec, last. Lists the chart builds are refused: use extra*.
+  # Pod labels are out of reach: the selector is immutable.
+  podSpecPatch: {}
   # On top of the base conf: jobs layer.
   conf:
     envSecret:

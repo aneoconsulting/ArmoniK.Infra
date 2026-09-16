@@ -8,7 +8,6 @@
   | include "armonik.conf.merge" | fromYaml -}}
 {{- $conf = list $conf $ | include "armonik.conf.resolve" | fromYaml -}}
 {{- $image := list $ .Values.image | include "armonik.utils.imageConf" | fromYaml -}}
-{{/* Context of the _deployment.tpl fragments. */}}
 {{- $ctx := dict "root" $ "conf" $conf "image" $image -}}
 {{- $podSpec := list (include "armonik.control.podSpec" $ctx) .Values.podSpecPatch "podSpecPatch" | include "armonik.utils.patch" -}}
 apiVersion: apps/v1
@@ -39,5 +38,4 @@ spec:
         app.kubernetes.io/component: control-plane
         armonik.fr/deployment: {{ include "armonik.conf.source" . | quote }}
         {{- include "armonik.selectorLabels" . | nindent 8 }}
-    {{/* podSpecPatch reaches spec only: pod labels must stay a superset of the immutable selector. */}}
     spec: {{- $podSpec | nindent 6 }}

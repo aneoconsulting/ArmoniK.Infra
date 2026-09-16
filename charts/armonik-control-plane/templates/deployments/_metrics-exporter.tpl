@@ -1,71 +1,68 @@
-{{/*
-Pod-template fragments, split one per patchable object: armonik.utils.patch parses what it patches,
-and printed text cannot be patched.
+{{/* Pod-template fragments: armonik.utils.patch parses what it patches, so each is a define.
+     Scheduling and sizing coalesce over the chart-level values; patches and extras do not. */}}
 
-Each takes the context built in deployments/control-plane.yaml: root, conf, image.
-*/}}
-
-{{/* Control-plane container, before containerPatch. */}}
-{{- define "armonik.control.container" -}}
+{{/* Metrics-exporter container; sizing and probes fall back to the chart-level values. */}}
+{{- define "armonik.control.metrics.container" -}}
 {{- $v := .root.Values -}}
-name: control-plane
+{{- $me := $v.metricsExporter -}}
+name: metrics-exporter
 image: {{ .image.fullname | quote }}
 imagePullPolicy: {{ .image.pullPolicy | quote }}
 ports:
-  {{- range $v.ports }}
+  {{- range $me.ports }}
   - name: {{ .name | quote }}
     containerPort: {{ .containerPort }}
     protocol: {{ .protocol | quote }}
   {{- end }}
 env:
   {{- include "armonik.conf.generateEnv" .conf | nindent 2 }}
-  {{- with $v.extraEnv }}
+  {{- with $me.extraEnv }}
   {{- toYaml . | nindent 2 }}
   {{- end }}
 envFrom:
   {{- include "armonik.conf.generateEnvFrom" .conf | nindent 2 }}
-  {{- with $v.extraEnvFrom }}
+  {{- with $me.extraEnvFrom }}
   {{- toYaml . | nindent 2 }}
   {{- end }}
-{{- with $v.resources }}
+{{- with coalesce $me.resources $v.resources }}
 resources:
   {{- toYaml . | nindent 2 }}
 {{- end }}
-{{- with $v.livenessProbe }}
+{{- with coalesce $me.livenessProbe $v.livenessProbe }}
 livenessProbe:
   {{- toYaml . | nindent 2 }}
 {{- end }}
-{{- with $v.startupProbe }}
+{{- with coalesce $me.startupProbe $v.startupProbe }}
 startupProbe:
   {{- toYaml . | nindent 2 }}
 {{- end }}
 volumeMounts:
   {{- include "armonik.conf.generateVolumeMounts" .conf | nindent 2 }}
-  {{- with $v.extraVolumeMounts }}
+  {{- with $me.extraVolumeMounts }}
   {{- toYaml . | nindent 2 }}
   {{- end }}
 {{- end -}}
 
 
-{{/* spec.template.spec of the control-plane Deployment, before podSpecPatch. */}}
-{{- define "armonik.control.podSpec" -}}
+{{/* Metrics-exporter pod spec; scheduling falls back to the chart-level values. */}}
+{{- define "armonik.control.metrics.podSpec" -}}
 {{- $root := .root -}}
 {{- $v := $root.Values -}}
+{{- $me := $v.metricsExporter -}}
 {{- $global := $v.global | default dict -}}
-{{- $container := list (include "armonik.control.container" .) $v.containerPatch "containerPatch" | include "armonik.utils.patch" | fromYaml -}}
-{{/* Extras go last: container 0 is what `kubectl logs` picks by default. */}}
-{{- $containers := $v.extraContainers | default list | concat (list $container) -}}
-{{- with $v.extraInitContainers }}
+{{- $container := list (include "armonik.control.metrics.container" .) $me.containerPatch "metricsExporter.containerPatch" | include "armonik.utils.patch" | fromYaml -}}
+{{- $containers := $me.extraContainers | default list | concat (list $container) -}}
+{{- with $me.extraInitContainers }}
 initContainers:
   {{- toYaml . | nindent 2 }}
 {{- end }}
 containers: {{- $containers | toYaml | nindent 2 }}
 volumes:
   {{- include "armonik.conf.generateVolumes" (list .conf) | nindent 2 }}
-  {{- with $v.extraVolumes }}
+  {{- with $me.extraVolumes }}
   {{- toYaml . | nindent 2 }}
   {{- end }}
-{{- with concat ($v.imagePullSecrets | default list) ($global.imagePullSecrets | default list) }}
+{{- with concat ($me.imagePullSecrets | default list) ($v.imagePullSecrets | default list) ($global.imagePullSecrets | default list) }}
 imagePullSecrets:
   {{- toYaml . | nindent 2 }}
 {{- end }}
@@ -73,20 +70,21 @@ serviceAccountName: {{ include "armonik.serviceAccountName" $root | quote }}
 serviceAccount: {{ include "armonik.serviceAccountName" $root | quote }}
 automountServiceAccountToken: true
 shareProcessNamespace: false
-{{- with $v.nodeSelector }}
+{{- with coalesce $me.nodeSelector $v.nodeSelector }}
 nodeSelector:
   {{- toYaml . | nindent 2 }}
 {{- end }}
-{{- with $v.affinity }}
+{{- with coalesce $me.affinity $v.affinity }}
 affinity:
   {{- toYaml . | nindent 2 }}
 {{- end }}
-{{- with $v.tolerations }}
+{{- with coalesce $me.tolerations $v.tolerations }}
 tolerations:
   {{- toYaml . | nindent 2 }}
 {{- end }}
-{{- with $v.priorityClassName }}
+{{- with coalesce $me.priorityClassName $v.priorityClassName }}
 priorityClassName: {{ . | quote }}
 {{- end }}
 enableServiceLinks: true
+dnsPolicy: ClusterFirst
 {{- end -}}

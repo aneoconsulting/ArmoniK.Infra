@@ -40,6 +40,9 @@ tests:
                       values:
                         - control-plane
                         - init
+            ports:
+              - protocol: TCP
+                port: 27017
       - contains:
           path: spec.ingress
           content:
@@ -50,6 +53,9 @@ tests:
                 podSelector:
                   matchLabels:
                     app.kubernetes.io/component: metrics-exporter
+            ports:
+              - protocol: TCP
+                port: 27017
       - contains:
           path: spec.ingress
           content:
@@ -60,6 +66,46 @@ tests:
                 podSelector:
                   matchLabels:
                     app.kubernetes.io/part-of: compute-plane
+            ports:
+              - protocol: TCP
+                port: 27017
+
+  - it: allows MongoDB replset members to reach each other on both ingress and egress
+      (needed for heartbeat/oplog replication once replsets.rs0.size > 1)
+    template: templates/networkpolicies/mongodb.yaml
+    set:
+      networkPolicy:
+        enabled: true
+    documentSelector:
+      path: metadata.name
+      value: t-armonik-mongodb-server
+    asserts:
+      - contains:
+          path: spec.ingress
+          content:
+            from:
+              - namespaceSelector:
+                  matchLabels:
+                    kubernetes.io/metadata.name: default
+                podSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: percona-server-mongodb
+            ports:
+              - protocol: TCP
+                port: 27017
+      - contains:
+          path: spec.egress
+          content:
+            to:
+              - namespaceSelector:
+                  matchLabels:
+                    kubernetes.io/metadata.name: default
+                podSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: percona-server-mongodb
+            ports:
+              - protocol: TCP
+                port: 27017
 
   - it: shrinks the MongoDB operator's policyTypes instead of declaring an empty-bodied Ingress
       when MongoDB itself is disabled (regression test for the hasKey-vs-non-empty fix in
@@ -107,6 +153,9 @@ tests:
                 podSelector:
                   matchLabels:
                     app.kubernetes.io/part-of: compute-plane
+            ports:
+              - protocol: TCP
+                port: 6379
 
   - it: grants ActiveMQ ingress from control-plane/init and compute-plane (the activemq chart's own
       NetworkPolicy no longer carries this rule)
@@ -135,6 +184,9 @@ tests:
                       values:
                         - control-plane
                         - init
+            ports:
+              - protocol: TCP
+                port: 5672
       - contains:
           path: spec.ingress
           content:
@@ -145,6 +197,9 @@ tests:
                 podSelector:
                   matchLabels:
                     app.kubernetes.io/part-of: compute-plane
+            ports:
+              - protocol: TCP
+                port: 5672
 
   - it: grants KEDA egress to the control-plane metrics-exporter
     template: templates/networkpolicies/keda-metrics-egress.yaml
@@ -226,6 +281,9 @@ tests:
                 podSelector:
                   matchLabels:
                     app.kubernetes.io/part-of: compute-plane
+            ports:
+              - protocol: TCP
+                port: 1080
       - contains:
           path: spec.ingress
           content:

@@ -1,11 +1,12 @@
 {{- $ops := include "armonik.operators" . | fromYaml -}}
 {{- $urlsSecretKey := tpl (.Values.urlsSecretName | default "") $ -}}
 {{- $useEso := and $ops.externalSecrets.available (ne $urlsSecretKey "") -}}
+{{- $name := include "armonik.ingress.confName" . -}}
 {{- if $useEso }}
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
-  name: {{ include "armonik.fullname" . }}-conf
+  name: {{ $name | quote }}
   namespace: {{ include "armonik.namespace" . | quote }}
   {{- if $ops.externalSecrets.deploy }}
   annotations:
@@ -18,9 +19,9 @@ spec:
   refreshInterval: 1m
   secretStoreRef:
     kind: SecretStore
-    name: {{ list "" $ | include "armonik.conf.storeName" }}
+    name: {{ $name | quote }}
   target:
-    name: {{ include "armonik.fullname" . }}-conf
+    name: {{ $name | quote }}
     creationPolicy: Owner
     template:
       engineVersion: v2
@@ -35,7 +36,7 @@ spec:
 apiVersion: v1
 kind: Secret
 metadata:
-  name: {{ include "armonik.fullname" . }}-conf
+  name: {{ $name | quote }}
   namespace: {{ include "armonik.namespace" . | quote }}
   labels:
     {{- include "armonik.labels" . | nindent 4 }}

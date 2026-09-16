@@ -1,0 +1,25 @@
+suite: mongod logs reach Seq
+release:
+  name: t
+templates:
+  - charts/dependencies/charts/fluent-bit/templates/configmap.yaml
+  - charts/dependencies/charts/mongodb/templates/cluster.yaml
+tests:
+  - it: logs mongod to stdout rather than to a file a sidecar re-ships
+    template: charts/dependencies/charts/mongodb/templates/cluster.yaml
+    asserts:
+      - equal:
+          path: spec.logcollector.enabled
+          value: false
+
+  - it: collects mongod on kube.*, the only tag the Seq output subscribes to
+    template: charts/dependencies/charts/fluent-bit/templates/configmap.yaml
+    asserts:
+      # Path is anchored to the line after Tag: on application.* it would be dropped.
+      - matchRegex:
+          path: data["fluent-bit.conf"]
+          pattern: 'Tag +kube\.\* *\n +Path .*\*_mongod-\*\.log'
+      # Without the rename, mongod's id overwrites ArmoniK's own root-level property.
+      - matchRegex:
+          path: data["fluent-bit.conf"]
+          pattern: 'Rename +id +MongoEventId'

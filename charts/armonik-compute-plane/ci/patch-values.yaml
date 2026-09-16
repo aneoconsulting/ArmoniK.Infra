@@ -1,0 +1,50 @@
+# Escape hatches: the additive extra* values and the podSpec/container patches, at partitionCommon
+# level and overridden per partition (patches merge, lists replace, as everywhere else in the merge).
+partitionCommon:
+  extraVolumes:
+    - name: scratch
+      emptyDir: {}
+  extraInitContainers:
+    - name: warmup
+      image: busybox:1.37.0
+      command: ["/bin/sh", "-c", "true"]
+  extraContainers:
+    - name: debug
+      image: busybox:1.37.0
+      command: ["/bin/sh", "-c", "sleep infinity"]
+  podSpecPatch:
+    # A key the chart does not build at all.
+    hostAliases:
+      - ip: "10.0.0.1"
+        hostnames: ["legacy.internal"]
+    # A scalar the chart does build: the patch wins.
+    terminationGracePeriodSeconds: 120
+  agent:
+    extraEnv:
+      - name: AGENT_LOCAL
+        value: "1"
+    extraVolumeMounts:
+      - name: scratch
+        mountPath: /scratch
+    containerPatch:
+      imagePullPolicy: Always
+      # A nested scalar the chart does build: deep-merges, siblings survive.
+      securityContext:
+        readOnlyRootFilesystem: true
+  worker:
+    extraEnvFrom:
+      - configMapRef:
+          name: worker-extra
+          optional: true
+    containerPatch:
+      terminationMessagePolicy: FallbackToLogsOnError
+
+partitions:
+  default: {}
+  gpu:
+    # Patches merge per partition over partitionCommon; lists replace.
+    podSpecPatch:
+      runtimeClassName: nvidia
+    agent:
+      containerPatch:
+        imagePullPolicy: IfNotPresent

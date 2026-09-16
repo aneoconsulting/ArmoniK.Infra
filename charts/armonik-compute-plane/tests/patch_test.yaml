@@ -1,0 +1,136 @@
+suite: podSpecPatch, containerPatch and the extra* values
+templates:
+  - deployment.yaml
+values:
+  - ../ci/patch-values.yaml
+release:
+  name: t
+tests:
+  - it: lets a patch win over the value the chart renders
+    documentSelector:
+      path: metadata.name
+      value: "t-armonik-compute-plane-default"
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 120
+
+  - it: adds a pod field the chart does not build at all
+    documentSelector:
+      path: metadata.name
+      value: "t-armonik-compute-plane-default"
+    asserts:
+      - equal:
+          path: spec.template.spec.hostAliases[0].ip
+          value: "10.0.0.1"
+
+  - it: deep-merges a container patch, leaving the chart's siblings in place
+    documentSelector:
+      path: metadata.name
+      value: "t-armonik-compute-plane-default"
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[?(@.name == "agent")].securityContext.readOnlyRootFilesystem
+          value: true
+      - equal:
+          path: spec.template.spec.containers[?(@.name == "agent")].securityContext.privileged
+          value: false
+      - equal:
+          path: spec.template.spec.containers[?(@.name == "agent")].imagePullPolicy
+          value: Always
+
+  - it: keeps extraContainers last, so container 0 stays the chart's own
+    documentSelector:
+      path: metadata.name
+      value: "t-armonik-compute-plane-default"
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].name
+          value: agent
+      - equal:
+          path: spec.template.spec.containers[2].name
+          value: debug
+      - equal:
+          path: spec.template.spec.initContainers[0].name
+          value: warmup
+
+  - it: appends extraEnv after the conf layers and extra mounts after the conf mounts
+    documentSelector:
+      path: metadata.name
+      value: "t-armonik-compute-plane-default"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[?(@.name == "agent")].env
+          content:
+            name: AGENT_LOCAL
+            value: "1"
+      - contains:
+          path: spec.template.spec.containers[?(@.name == "agent")].volumeMounts
+          content:
+            name: scratch
+            mountPath: /scratch
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: scratch
+            emptyDir: {}
+
+  - it: scopes a per-partition patch to that partition
+    asserts:
+      - equal:
+          path: spec.template.spec.runtimeClassName
+          value: nvidia
+        documentSelector:
+          path: metadata.name
+          value: "t-armonik-compute-plane-gpu"
+      - notExists:
+          path: spec.template.spec.runtimeClassName
+        documentSelector:
+          path: metadata.name
+          value: "t-armonik-compute-plane-default"
+      - equal:
+          path: spec.template.spec.containers[?(@.name == "agent")].imagePullPolicy
+          value: IfNotPresent
+        documentSelector:
+          path: metadata.name
+          value: "t-armonik-compute-plane-gpu"
+
+  - it: refuses a patch that would replace a list the chart builds
+    set:
+      partitionCommon.podSpecPatch.containers:
+        - name: hijack
+          image: busybox:1.37.0
+    asserts:
+      - failedTemplate:
+          errorPattern: "podSpecPatch.containers: the chart builds containers"
+
+  - it: refuses a container patch that would replace the conf-built env
+    set:
+      partitionCommon.worker.containerPatch.env:
+        - name: Bogus
+          value: "1"
+    asserts:
+      - failedTemplate:
+          errorPattern: "worker.containerPatch.env: the chart builds env"
+
+  - it: passes hostNetwork through, the caller owning the consequences
+    set:
+      partitionCommon.podSpecPatch.hostNetwork: true
+    asserts:
+      - equal:
+          path: spec.template.spec.hostNetwork
+          value: true
+        documentSelector:
+          path: metadata.name
+          value: "t-armonik-compute-plane-default"
+
+  - it: sets command, which these containers leave unset
+    set:
+      partitionCommon.worker.containerPatch.command: ["/bin/sh", "-c", "sleep 1"]
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[?(@.name == "worker")].command[2]
+          value: "sleep 1"
+        documentSelector:
+          path: metadata.name
+          value: "t-armonik-compute-plane-default"

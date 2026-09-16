@@ -7,3 +7,5 @@ merge:
 index:
 # conf: one or more conf objects for the armonik.conf.* generators
 conf:
+# patch: input for armonik.utils.patch (base object, patch object, name used in errors)
+patch:

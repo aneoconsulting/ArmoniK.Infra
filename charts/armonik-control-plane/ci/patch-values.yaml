@@ -1,0 +1,34 @@
+# Escape hatches: the additive extra* values and the podSpec/container patches.
+extraVolumes:
+  - name: scratch
+    emptyDir: {}
+extraVolumeMounts:
+  - name: scratch
+    mountPath: /scratch
+extraEnv:
+  - name: CONTROL_LOCAL
+    value: "1"
+extraEnvFrom:
+  - configMapRef:
+      name: control-extra
+      optional: true
+extraInitContainers:
+  - name: warmup
+    image: busybox:1.37.0
+    command: ["/bin/sh", "-c", "true"]
+extraContainers:
+  - name: debug
+    image: busybox:1.37.0
+    command: ["/bin/sh", "-c", "sleep infinity"]
+containerPatch:
+  imagePullPolicy: Always
+  # A nested scalar the chart does build: deep-merges, siblings survive.
+  startupProbe:
+    failureThreshold: 40
+podSpecPatch:
+  # A key the chart does not build at all.
+  hostAliases:
+    - ip: "10.0.0.1"
+      hostnames: ["legacy.internal"]
+  # A scalar the chart does build: the patch wins.
+  shareProcessNamespace: true

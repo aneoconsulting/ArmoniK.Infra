@@ -71,3 +71,18 @@ tests:
       - equal:
           path: spec.triggers[0].metadata.metricName
           value: armonik_htcmock_tasks_queued
+
+  - it: renders the agent readinessProbe, which ships empty and so never rendered before
+    template: deployment.yaml
+    set:
+      partitionCommon.agent.readinessProbe:
+        httpGet:
+          path: /ready
+          port: 1080
+    documentSelector:
+      path: metadata.name
+      value: "t-armonik-compute-plane-bench"
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[?(@.name == "agent")].readinessProbe.httpGet.path
+          value: /ready

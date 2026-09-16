@@ -1,0 +1,8 @@
+# Expected failure: podSpecPatch may not replace a list the chart builds itself.
+partitions:
+  default: {}
+partitionCommon:
+  podSpecPatch:
+    containers:
+      - name: hijack
+        image: busybox:1.37.0

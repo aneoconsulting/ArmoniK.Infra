@@ -1,0 +1,95 @@
+suite: affinity and imagePullSecrets, per partition and on the init Job
+templates:
+  - deployment.yaml
+  - init.yaml
+values:
+  - ../ci/partitions-values.yaml
+release:
+  name: t
+tests:
+  - it: renders partitionCommon affinity on every partition
+    template: deployment.yaml
+    set:
+      partitionCommon.affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: role
+                    operator: In
+                    values: [compute]
+    asserts:
+      - equal:
+          path: spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].values[0]
+          value: compute
+
+  - it: lets a partition override the common affinity
+    template: deployment.yaml
+    set:
+      partitionCommon.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[0].weight: 1
+      partitions.htcmock.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[0].weight: 99
+    asserts:
+      - equal:
+          path: spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[0].weight
+          value: 99
+        documentSelector:
+          path: metadata.name
+          value: "t-armonik-compute-plane-htcmock"
+      - equal:
+          path: spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[0].weight
+          value: 1
+        documentSelector:
+          path: metadata.name
+          value: "t-armonik-compute-plane-bench"
+
+  - it: layers the partition imagePullSecrets on the chart and global ones
+    template: deployment.yaml
+    set:
+      partitionCommon.imagePullSecrets:
+        - name: from-partition
+      imagePullSecrets:
+        - name: from-chart
+      global.imagePullSecrets:
+        - name: from-global
+    asserts:
+      - equal:
+          path: spec.template.spec.imagePullSecrets
+          value:
+            - name: from-partition
+            - name: from-chart
+            - name: from-global
+        documentSelector:
+          path: metadata.name
+          value: "t-armonik-compute-plane-bench"
+
+  - it: renders affinity on the init Job
+    template: init.yaml
+    set:
+      init.affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: role
+                    operator: Exists
+    asserts:
+      - equal:
+          path: spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].key
+          value: role
+
+  - it: layers the init Job imagePullSecrets on the chart and global ones
+    template: init.yaml
+    set:
+      init.imagePullSecrets:
+        - name: from-init
+      imagePullSecrets:
+        - name: from-chart
+      global.imagePullSecrets:
+        - name: from-global
+    asserts:
+      - equal:
+          path: spec.template.spec.imagePullSecrets
+          value:
+            - name: from-init
+            - name: from-chart
+            - name: from-global

@@ -7,7 +7,10 @@
     $deployment.conf
   | include "armonik.conf.merge" | fromYaml -}}
 {{- $conf = list $conf $ | include "armonik.conf.resolve" | fromYaml -}}
-{{- $image := list $ .Values.image | include "armonik.utils.imageConf" | fromYaml }}
+{{- $image := list $ .Values.image | include "armonik.utils.imageConf" | fromYaml -}}
+{{/* Context of the _deployment.tpl fragments. */}}
+{{- $ctx := dict "root" $ "conf" $conf "image" $image -}}
+{{- $podSpec := list (include "armonik.control.podSpec" $ctx) .Values.podSpecPatch "podSpecPatch" | include "armonik.utils.patch" -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -36,51 +39,5 @@ spec:
         app.kubernetes.io/component: control-plane
         armonik.fr/deployment: {{ include "armonik.conf.source" . | quote }}
         {{- include "armonik.selectorLabels" . | nindent 8 }}
-    spec:
-      containers:
-        - name: control-plane
-          image: {{ $image.fullname }}
-          imagePullPolicy: {{ $image.pullPolicy }}
-          #command: ["/bin/bash", "-c", "sleep 3600"]
-          ports:
-            {{- range .Values.ports }}
-            - name: {{ .name }}
-              containerPort: {{ .containerPort }}
-              protocol: {{ .protocol }}
-            {{- end }}{{/* range .Values.ports */}}
-          env: {{- include "armonik.conf.generateEnv" $conf | nindent 12 }}
-          envFrom: {{- include "armonik.conf.generateEnvFrom" $conf | nindent 12 }}
-          {{- with .Values.resources }}
-          resources:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}{{/* with .Values.resources */}}
-          {{- with .Values.livenessProbe }}
-          livenessProbe:
-          {{- toYaml . | nindent 12 }}
-          {{- end }}{{/* with .Values.livenessProbe */}}
-          {{- with .Values.startupProbe }}
-          startupProbe:
-          {{- toYaml . | nindent 12 }}
-          {{- end }}{{/* with .Values.startupProbe */}}
-          volumeMounts: {{- include "armonik.conf.generateVolumeMounts" $conf | nindent 12 }}
-      volumes: {{- include "armonik.conf.generateVolumes" (list $conf) | nindent 8 }}
-      {{- with (include "armonik.utils.index" (list .Values "global" "imagePullSecrets")) | default .Values.imagePullSecrets }}
-      imagePullSecrets:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}{{/* with $imagePullSecrets */}}
-      serviceAccountName: {{ include "armonik.serviceAccountName" $ }}
-      serviceAccount: {{ include "armonik.serviceAccountName" $ }}
-      automountServiceAccountToken: true
-      shareProcessNamespace: false
-      {{- with .Values.nodeSelector }}
-      nodeSelector:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}{{/* with .Values.nodeSelector */}}
-      {{- with .Values.tolerations }}
-      tolerations:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}{{/* with .Values.tolerations */}}
-      {{- with .Values.priorityClassName }}
-      priorityClassName: {{ . | quote }}
-      {{- end }}{{/* with .Values.priorityClassName */}}
-      enableServiceLinks: true
+    {{/* podSpecPatch reaches spec only: pod labels must stay a superset of the immutable selector. */}}
+    spec: {{- $podSpec | nindent 6 }}

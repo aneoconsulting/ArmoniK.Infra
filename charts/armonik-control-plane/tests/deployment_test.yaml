@@ -36,3 +36,61 @@ tests:
     asserts:
       - hasDocuments:
           count: 0
+
+  - it: renders affinity, which ships empty and so never rendered before
+    set:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: role
+                    operator: In
+                    values: [compute]
+    asserts:
+      - equal:
+          path: spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].key
+          value: role
+
+  - it: applies both the chart and the global imagePullSecrets, not one or the other
+    set:
+      imagePullSecrets:
+        - name: from-chart
+      global.imagePullSecrets:
+        - name: from-global
+    asserts:
+      - equal:
+          path: spec.template.spec.imagePullSecrets[0].name
+          value: from-chart
+      - equal:
+          path: spec.template.spec.imagePullSecrets[1].name
+          value: from-global
+
+  - it: takes the global imagePullSecrets alone, which the string-typed read used to mangle
+    set:
+      global.imagePullSecrets:
+        - name: from-global
+    asserts:
+      - lengthEqual:
+          path: spec.template.spec.imagePullSecrets
+          count: 1
+      - equal:
+          path: spec.template.spec.imagePullSecrets[0].name
+          value: from-global
+
+  - it: layers the metrics-exporter imagePullSecrets on the chart and global ones
+    template: deployments/metrics-exporter.yaml
+    set:
+      metricsExporter.imagePullSecrets:
+        - name: from-exporter
+      imagePullSecrets:
+        - name: from-chart
+      global.imagePullSecrets:
+        - name: from-global
+    asserts:
+      - equal:
+          path: spec.template.spec.imagePullSecrets
+          value:
+            - name: from-exporter
+            - name: from-chart
+            - name: from-global

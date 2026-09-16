@@ -108,6 +108,8 @@ ok activemq-tls           activemq              -f charts/activemq/ci/tls-values
 ok activemq-psp-k8s124    activemq --kube-version 1.24.17 -f test/fixtures/activemq/psp-values.yaml
 ok activemq-psp-k8s131    activemq              -f test/fixtures/activemq/psp-values.yaml
 ok umbrella-no-control-plane armonik -f charts/armonik/ci/minimal-values.yaml --set control-plane.enabled=false
+ok compute-patches        armonik-compute-plane -f charts/armonik-compute-plane/ci/patch-values.yaml
+ok control-patches        armonik-control-plane -f charts/armonik-control-plane/ci/patch-values.yaml
 
 # --- render-time guards ------------------------------------------------
 fail_with ingress-mtls-without-tls armonik-ingress \
@@ -126,6 +128,12 @@ fail_with umbrella-envsecret-without-eso armonik \
 fail_with umbrella-bad-loglevel armonik \
   "conf.log.minimumLevel \"Bogus\" is invalid" \
   -f charts/armonik/ci/minimal-values.yaml --set conf.log.minimumLevel=Bogus
+fail_with compute-patch-builds-list armonik-compute-plane \
+  "podSpecPatch.containers: the chart builds containers" \
+  -f test/fixtures/armonik-compute-plane/patch-list-values.yaml
+fail_with control-patch-builds-list armonik-control-plane \
+  "containerPatch.env: the chart builds env" \
+  -f test/fixtures/armonik-control-plane/patch-list-values.yaml
 
 echo
 echo "matrix: $skips case(s) skipped"

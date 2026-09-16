@@ -1,0 +1,87 @@
+suite: podSpecPatch, containerPatch and the extra* values
+templates:
+  - deployments/control-plane.yaml
+values:
+  - ../ci/patch-values.yaml
+release:
+  name: t
+tests:
+  - it: lets a patch win over the value the chart renders
+    asserts:
+      - equal:
+          path: spec.template.spec.shareProcessNamespace
+          value: true
+
+  - it: adds a pod field the chart does not build at all
+    asserts:
+      - equal:
+          path: spec.template.spec.hostAliases[0].ip
+          value: "10.0.0.1"
+
+  - it: deep-merges a container patch, leaving the chart's siblings in place
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].startupProbe.failureThreshold
+          value: 40
+      - equal:
+          path: spec.template.spec.containers[0].startupProbe.httpGet.path
+          value: /startup
+      - equal:
+          path: spec.template.spec.containers[0].imagePullPolicy
+          value: Always
+
+  - it: keeps extraContainers last, so container 0 stays the chart's own
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].name
+          value: control-plane
+      - equal:
+          path: spec.template.spec.containers[1].name
+          value: debug
+      - equal:
+          path: spec.template.spec.initContainers[0].name
+          value: warmup
+
+  - it: appends extraEnv after the conf layers and extra mounts after the conf mounts
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: CONTROL_LOCAL
+            value: "1"
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: scratch
+            mountPath: /scratch
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: scratch
+            emptyDir: {}
+
+  - it: refuses a patch that would replace a list the chart builds
+    set:
+      podSpecPatch.containers:
+        - name: hijack
+          image: busybox:1.37.0
+    asserts:
+      - failedTemplate:
+          errorPattern: "podSpecPatch.containers: the chart builds containers"
+
+  - it: refuses a container patch that would replace the conf-built env
+    set:
+      containerPatch.env:
+        - name: Bogus
+          value: "1"
+    asserts:
+      - failedTemplate:
+          errorPattern: "containerPatch.env: the chart builds env"
+
+  - it: passes hostNetwork through, the caller owning the consequences
+    set:
+      podSpecPatch.hostNetwork: true
+    asserts:
+      - equal:
+          path: spec.template.spec.hostNetwork
+          value: true

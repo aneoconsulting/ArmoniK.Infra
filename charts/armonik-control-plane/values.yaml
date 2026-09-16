@@ -81,6 +81,38 @@ annotations: {}
 affinity: {}
 priorityClassName: ""
 
+# -- Extra env for the control-plane container, after the conf layers. `conf.env` is the shared
+# channel, this is container-local.
+extraEnv: []
+# -- Extra envFrom for the control-plane container, after the conf layers.
+extraEnvFrom: []
+# -- Extra volumeMounts for the control-plane container, after the conf mounts.
+extraVolumeMounts: []
+# -- Extra containers, after the control-plane container.
+extraContainers: []
+# -- Extra init containers.
+extraInitContainers: []
+# -- Extra volumes, after the conf mounts.
+extraVolumes: []
+# containerPatch:
+#   securityContext:
+#     readOnlyRootFilesystem: true
+#
+# -- Merged over the control-plane container, last. Lists the chart builds are refused: use extra*.
+containerPatch: {}
+# podSpecPatch:
+#   hostAliases:
+#     - ip: "10.0.0.1"
+#       hostnames: ["legacy.internal"]
+#   topologySpreadConstraints:
+#     - maxSkew: 1
+#       topologyKey: topology.kubernetes.io/zone
+#       whenUnsatisfiable: ScheduleAnyway
+#
+# -- Merged over spec.template.spec, last. Pod metadata is out of reach: its labels must stay a
+# superset of the immutable selector. Lists the chart builds are refused: use extra*.
+podSpecPatch: {}
+
 # Base conf merged into every control-plane workload: core + log layers + core TLS mounts.
 conf:
   # Overrides the umbrella's global.armonik.mountPath for this release (default "/mounts").

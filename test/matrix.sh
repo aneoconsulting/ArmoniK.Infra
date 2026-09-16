@@ -93,6 +93,7 @@ skip ingress-defaults "broken: chart values lack global.environment, static.envi
 # --- conditional variants --------------------------------------------------
 ok umbrella-minimal       armonik               -f charts/armonik/ci/minimal-values.yaml
 ok umbrella-mountpath     armonik               -f charts/armonik/ci/minimal-values.yaml --set global.armonik.mountPath=/etc/armonik
+ok umbrella-layered-operators armonik           -f charts/armonik/ci/layered-operators-values.yaml
 ok compute-partitions     armonik-compute-plane -f charts/armonik-compute-plane/ci/partitions-values.yaml
 ok compute-keda-off       armonik-compute-plane -f charts/armonik-compute-plane/ci/keda-off-values.yaml
 skip compute-pdb "broken: pdb.yaml calls the undefined helper armonik.compute.pdb.apiVersion; enable when fixed"

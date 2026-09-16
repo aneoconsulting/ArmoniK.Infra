@@ -1,4 +1,6 @@
 {{- $image := list . .Values.gui.image | include "armonik.utils.imageConf" | fromYaml }}
+{{- $ctx := dict "root" $ "image" $image -}}
+{{- $podSpec := list (include "armonik.ingress.gui.podSpec" $ctx) .Values.gui.podSpecPatch "gui.podSpecPatch" | include "armonik.utils.patch" -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -21,63 +23,4 @@ spec:
       labels:
         app.kubernetes.io/component: gui
         {{- include "armonik.selectorLabels" . | nindent 8 }}
-    spec:
-      automountServiceAccountToken: true
-      containers:
-      - name: gui
-        image: {{ $image.fullname }}
-        imagePullPolicy: {{ $image.pullPolicy }}
-        ports:
-          {{- range .Values.gui.ports }}
-          - name: {{ .name }}
-            containerPort: {{ .containerPort }}
-            protocol: TCP
-          {{- end }}{{/* range .Values.ports */}}
-        terminationMessagePath: /dev/termination-log
-        terminationMessagePolicy: File
-        {{- with coalesce .Values.gui.resources .Values.resources }}
-        resources:
-          {{- toYaml . | nindent 10 }}
-        {{- end }}{{/* with .Values.resources */}}
-        {{- with coalesce .Values.gui.livenessProbe .Values.livenessProbe }}
-        livenessProbe:
-          {{- toYaml . | nindent 10 }}
-        {{- end }}{{/* with .Values.livenessProbe */}}
-        {{- with coalesce .Values.gui.startupProbe .Values.startupProbe }}
-        startupProbe:
-          {{- toYaml . | nindent 10 }}
-        {{- end }}{{/* with .Values.startupProbe */}}
-        {{- with coalesce .Values.gui.readinessProbe .Values.readinessProbe }}
-        readinessProbe:
-          {{- toYaml . | nindent 10 }}
-        {{- end }}{{/* with .Values.readinessProbe */}}
-        {{- with .extraEnv }}
-        env:
-          {{- .extraEnv | toYaml | nindent 10 }}
-        {{- end }}
-        {{- with .extraEnvFrom }}
-        envFrom:
-          {{- .extraEnvFrom | toYaml | nindent 10 }}
-        {{- end }}
-        {{- with .extraVolumeMounts }}
-        volumeMounts:
-          {{ . | toYaml | nindent 10 }}
-        {{- end }}
-      dnsPolicy: ClusterFirst
-      shareProcessNamespace: false
-      {{- with coalesce .Values.gui.nodeSelector .Values.nodeSelector }}
-      nodeSelector:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}{{/* with .Values.nodeSelector */}}
-      {{- with coalesce .Values.gui.tolerations .Values.tolerations }}
-      tolerations:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}{{/* with .Values.tolerations */}}
-      {{- with coalesce .Values.gui.priorityClassName .Values.priorityClassName }}
-      priorityClassName: {{ . | quote }}
-      {{- end }}{{/* with .Values.priorityClassName */}}
-      enableServiceLinks: true
-      {{- with coalesce .Values.gui.extraVolumeMounts .Values.extraVolumeMounts }}
-      volumes:
-        {{ . | toYaml | nindent 8 }}
-      {{- end }}
+    spec: {{- $podSpec | nindent 6 }}

@@ -237,10 +237,7 @@ dependencies:
       enabled: false
     backup:
       enabled: false
-    # mongod logs logv2 JSON to stdout, like every other component, and the fluent-bit
-    # DaemonSet collects it from there. Percona's collector would instead add two
-    # sidecars, redirect mongod to a file on the data volume, and re-emit every line
-    # wrapped in a second JSON envelope.
+    # mongod logs logv2 JSON to stdout, we don't need the sidecar from the Percona's collector.
     logcollector:
       enabled: false
     replsets:
@@ -408,11 +405,7 @@ dependencies:
             Operation               lift
             Nested_under            kubernetes
             Add_prefix              kubernetes_
-        # MongoDB speaks logv2, not CLEF: s severity, c component, id message id,
-        # ctx thread, msg message, attr properties. The kubernetes filter has already
-        # merged them into the record root and the cri parser has already set the event
-        # time, which json_date_key emits as @t. Serilog omits @l for Information, so
-        # mongod's "I" is deliberately left unmapped.
+        # MongoDB speaks logv2, not CLEF so we have to do some mapping
         [FILTER]
             Name                    modify
             Match                   kube.var.log.containers.*_mongo*
@@ -433,9 +426,7 @@ dependencies:
             Match                   kube.var.log.containers.*_mongo*
             Condition               Key_Value_Matches s ^D
             Set                     @l Debug
-        # Application is Set, not renamed, so it reaches entrypoint noise too. Renaming
-        # id is not cosmetic: ArmoniK's Serilog properties are flat at the root and
-        # include one. t goes because @t already carries the same instant.
+        # t is removed because @t already carries the same instant.
         [FILTER]
             Name                    modify
             Match                   kube.var.log.containers.*_mongo*

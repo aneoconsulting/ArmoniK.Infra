@@ -10,12 +10,12 @@ dependencies:
   version: 2.10.0
 - name: cert-manager
   repository: https://charts.jetstack.io
-  version: v1.21.1
+  version: v1.21.2
 - name: psmdb-operator
   repository: https://percona.github.io/percona-helm-charts/
   version: 1.23.1
 - name: kube-prometheus-stack
   repository: https://prometheus-community.github.io/helm-charts
   version: 82.18.0
-digest: sha256:d05b90207f877ad56370b3e2d14ec3384a1d80e35ce4405fcd7723b22bbe9c75
-generated: "2026-09-04T15:43:36.877728168+02:00"
+digest: sha256:c19015c39ad5da82e287b1ef6612d2f4fed7c24b55ce5a59bdb193530a953dfb
+generated: "2026-09-15T15:20:49.925136427+02:00"

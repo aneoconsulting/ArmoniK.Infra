@@ -1,0 +1,92 @@
+suite: network policy
+templates:
+  - network-policy.yaml
+tests:
+  - it: renders nothing by default (networkPolicy.enabled=false)
+    template: network-policy.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: renders with the activemq podSelector and Egress-only policyTypes when enabled with no ingress rules
+    template: network-policy.yaml
+    set:
+      networkPolicy:
+        enabled: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: NetworkPolicy
+      - equal:
+          path: spec.podSelector.matchLabels
+          value:
+            app.kubernetes.io/name: activemq
+            app.kubernetes.io/instance: RELEASE-NAME
+      - equal:
+          path: spec.policyTypes
+          value:
+            - Egress
+      - notExists:
+          path: spec.ingress
+
+  - it: grants DNS-only egress by default
+    template: network-policy.yaml
+    set:
+      networkPolicy:
+        enabled: true
+    asserts:
+      - lengthEqual:
+          path: spec.egress
+          count: 1
+      - equal:
+          path: spec.egress
+          value:
+            - to:
+                - namespaceSelector:
+                    matchLabels:
+                      kubernetes.io/metadata.name: kube-system
+                  podSelector:
+                    matchLabels:
+                      k8s-app: kube-dns
+              ports:
+                - protocol: UDP
+                  port: 53
+                - protocol: TCP
+                  port: 53
+
+  - it: renders extraIngressRules as-is and appends extraEgressRules to the chart's own DNS rule
+    template: network-policy.yaml
+    set:
+      networkPolicy:
+        enabled: true
+        extraIngressRules:
+          - ports:
+              - protocol: TCP
+                port: 8161
+        extraEgressRules:
+          - ports:
+              - protocol: TCP
+                port: 61616
+    asserts:
+      - lengthEqual:
+          path: spec.ingress
+          count: 1
+      - lengthEqual:
+          path: spec.egress
+          count: 2
+      - contains:
+          path: spec.policyTypes
+          content: Ingress
+      - contains:
+          path: spec.ingress
+          content:
+            ports:
+              - protocol: TCP
+                port: 8161
+      - contains:
+          path: spec.egress
+          content:
+            ports:
+              - protocol: TCP
+                port: 61616

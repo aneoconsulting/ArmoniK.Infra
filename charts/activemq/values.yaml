@@ -167,3 +167,8 @@ tls:
     annotations: {}
     # Add extra labels to the Certificate resource
     labels: {}
+
+networkPolicy:
+  enabled: false
+  extraIngressRules: []
+  extraEgressRules: []

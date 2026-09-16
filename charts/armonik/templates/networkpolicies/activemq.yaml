@@ -1,0 +1,11 @@
+{{- $networkPolicyEnabled := list .Values "networkPolicy" "enabled" | include "armonik.utils.index" -}}
+
+{{- $activemqServer := include "armonik.netpol.activemqServer" . | fromYaml -}}
+
+{{- if and $networkPolicyEnabled $activemqServer }}
+{{- include "armonik.netpol.render" (dict
+      "context" .
+      "component" "activemq-server"
+      "config" $activemqServer
+  ) }}
+{{- end }}

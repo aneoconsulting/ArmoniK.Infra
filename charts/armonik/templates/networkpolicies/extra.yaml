@@ -1,0 +1,21 @@
+{{- $networkPolicyEnabled := list .Values "networkPolicy" "enabled"
+    | include "armonik.utils.index"
+-}}
+
+{{/*
+  Freeform extra NetworkPolicy resources: each entry owns its own podSelector and rules,
+  independent from every dependency-wiring policy this chart renders elsewhere. See
+  networkPolicy.extraPolicies in values.yaml.
+*/}}
+{{- if $networkPolicyEnabled }}
+{{- range $i, $policy := .Values.networkPolicy.extraPolicies }}
+{{- if hasKey $policy "podSelector" | not }}
+{{- printf "networkPolicy.extraPolicies[%d] needs a podSelector (use {} to match every pod in the namespace)" $i | fail }}
+{{- end }}
+{{- include "armonik.netpol.render" (dict
+      "context" $
+      "component" ($policy.name | default (printf "extra-%d" $i))
+      "config" $policy
+  ) }}
+{{- end }}
+{{- end }}

@@ -18,6 +18,15 @@ Operators:
   - {{ $op }}: {{ if $cfg.deploy }}managed (installed by this release){{ else if $cfg.available }}external (already present in the cluster){{ else }}absent (degraded){{ end }}
 {{- end }}
 **********************************************************
+{{- if list .Values "networkPolicy" "enabled" | include "armonik.utils.index" }}
+NetworkPolicy is enabled for this release. Turn on the same flag on every subchart/dependency
+you also want covered:
+  - control-plane.networkPolicy.enabled=true
+  - compute-plane.networkPolicy.enabled=true
+  - ingress.networkPolicy.enabled=true
+  - dependencies.<activemq|grafana|seq|fluent-bit>.networkPolicy.enabled=true (Redis is covered above)
+{{- end }}
+**********************************************************
 {{- $cp := index .Values "compute-plane" }}
 {{- $workerPartitions := list }}
 {{- if and $cp $cp.enabled $cp.partitions }}{{ $workerPartitions = keys $cp.partitions | sortAlpha }}{{ end }}

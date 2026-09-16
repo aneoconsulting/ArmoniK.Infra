@@ -1,0 +1,58 @@
+suite: network policy
+templates:
+  - networkpolicy.yaml
+tests:
+  - it: renders nothing by default (networkPolicy.enabled=false)
+    template: networkpolicy.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: renders both policies with instance-scoped podSelectors when enabled
+    template: networkpolicy.yaml
+    set:
+      networkPolicy:
+        enabled: true
+    asserts:
+      - hasDocuments:
+          count: 2
+      - equal:
+          path: spec.podSelector.matchLabels
+          value:
+            app.kubernetes.io/name: armonik-control-plane
+            app.kubernetes.io/instance: RELEASE-NAME
+        documentIndex: 0
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-armonik-control-plane-metrics-exporter
+        documentIndex: 1
+
+  - it: appends extraEgressRules to each policy's own rules
+    template: networkpolicy.yaml
+    set:
+      networkPolicy:
+        enabled: true
+        submitter:
+          extraEgressRules:
+            - ports:
+                - protocol: TCP
+                  port: 27017
+        metricsExporter:
+          extraEgressRules:
+            - ports:
+                - protocol: TCP
+                  port: 27017
+    asserts:
+      - hasDocuments:
+          count: 2
+
+  - it: skips the metrics-exporter policy when the metrics-exporter itself is disabled
+    template: networkpolicy.yaml
+    set:
+      networkPolicy:
+        enabled: true
+      metricsExporter:
+        enabled: false
+    asserts:
+      - hasDocuments:
+          count: 1

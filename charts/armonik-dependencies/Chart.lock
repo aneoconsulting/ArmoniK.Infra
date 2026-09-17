@@ -10,15 +10,15 @@ dependencies:
   version: 1.23.2
 - name: rabbitmq
   repository: https://charts.bitnami.com/bitnami
-  version: 15.5.3
+  version: 16.0.14
 - name: grafana
   repository: https://grafana.github.io/helm-charts
-  version: 8.15.0
+  version: 10.5.15
 - name: fluent-bit
   repository: https://fluent.github.io/helm-charts
   version: 0.58.2
 - name: seq
   repository: https://helm.datalust.co
-  version: 2024.3.2
-digest: sha256:94e49eb480c8c04084f1b29a980d5aa6254648e36f71ca36f38ec85988ce9f6f
-generated: "2026-09-15T15:20:31.313423462+02:00"
+  version: 2026.1.1
+digest: sha256:7d56b5ed5f4bf6b0447570385ecd204bb4241bd9ec764b314f0ec7806671b7a2
+generated: "2026-09-17T08:09:08.535157541Z"

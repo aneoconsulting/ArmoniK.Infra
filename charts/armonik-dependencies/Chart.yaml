@@ -40,11 +40,11 @@ dependencies:
   #   condition: global.dependencies.chaos-mesh
   #   alias: chaosMesh
   - name: rabbitmq
-    version: 15.x.x
+    version: 16.0.14
     repository: https://charts.bitnami.com/bitnami
     condition: rabbitmq.enabled
   - name: grafana
-    version: 8.x.x
+    version: 10.5.15
     repository: https://grafana.github.io/helm-charts
     condition: grafana.enabled
   - name: fluent-bit
@@ -52,6 +52,6 @@ dependencies:
     repository: https://fluent.github.io/helm-charts
     condition: fluent-bit.enabled
   - name: seq
-    version: 2024.x.x
+    version: 2026.1.1
     repository: https://helm.datalust.co
     condition: seq.enabled

@@ -16,9 +16,9 @@ dependencies:
   version: 1.23.1
 - name: kube-prometheus-stack
   repository: https://prometheus-community.github.io/helm-charts
-  version: 82.18.0
+  version: 91.4.1
 - name: cert-manager-google-cas-issuer
   repository: https://charts.jetstack.io
   version: v0.12.0
-digest: sha256:9af015e9658403aa5202ca7525862657c48aa2e6d69f3a55b9dd9a4202ad24c5
-generated: "2026-09-15T15:56:20.389420765+02:00"
+digest: sha256:cdd2d1fb285b0b83375af8aed92de5a9b87a817e367ab216303c0a2d5628b915
+generated: "2026-09-17T08:09:56.390185738Z"

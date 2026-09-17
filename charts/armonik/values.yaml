@@ -167,7 +167,7 @@ certManagerIssuer:
 certManagerWait:
   image:
     repository: alpine/k8s
-    tag: 1.31.0
+    tag: 1.37.0
     pullPolicy: IfNotPresent
   timeout: 300s
 

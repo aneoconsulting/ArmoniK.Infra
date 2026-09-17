@@ -92,7 +92,7 @@ spec:
       serviceAccountName: {{ include "armonik.fullname" . }}-cert-manager-wait
       containers:
         - name: wait
-          image: "{{ $image.repository | default "alpine/k8s" }}:{{ $image.tag | default "1.31.0" }}"
+          image: "{{ $image.repository | default "alpine/k8s" }}:{{ $image.tag | default "1.37.0" }}"
           imagePullPolicy: {{ $image.pullPolicy | default "IfNotPresent" }}
           command:
             - sh

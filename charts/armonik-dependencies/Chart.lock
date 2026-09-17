@@ -19,6 +19,6 @@ dependencies:
   version: 0.58.2
 - name: seq
   repository: https://helm.datalust.co
-  version: 2024.3.2
-digest: sha256:d85c3dde0a7234c942ba0c32b3b6984d417dfcd40a15ef13115579f0c29693a7
-generated: "2026-09-17T10:47:53.156167906+02:00"
+  version: 2026.1.1
+digest: sha256:79e87b236af54f45c97ebabb758cd96280790c2c4a03b8adcca5a3207944c0c4
+generated: "2026-09-17T10:53:47.497116778+02:00"

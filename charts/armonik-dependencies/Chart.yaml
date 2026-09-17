@@ -52,6 +52,6 @@ dependencies:
     repository: https://fluent.github.io/helm-charts
     condition: fluent-bit.enabled
   - name: seq
-    version: 2024.x.x
+    version: 2026.x.x
     repository: https://helm.datalust.co
     condition: seq.enabled

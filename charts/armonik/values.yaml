@@ -676,6 +676,10 @@ dependencies:
     #   repository: $REPO-NAME/datalust/seq
     # imagePullSecrets: []
     # priorityClassName:
+    # Seq requires a default admin password in order to initialize a fresh container. Either
+    # specify this here, or opt out using `firstRunNoAuthentication: true` (not suitable for production
+    # deployment). See the `firstRunAdminPasswordHash` variant for better confidentiality. (https://github.com/datalust/helm.datalust.co/blob/main/charts/seq/values.yaml)
+    firstRunNoAuthentication: true
     networkPolicy:
       # Set networkPolicy.enabled: true to apply the default NetworkPolicy for this component.
       ingress:

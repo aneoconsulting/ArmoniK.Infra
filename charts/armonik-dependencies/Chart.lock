@@ -8,6 +8,9 @@ dependencies:
 - name: psmdb-db
   repository: https://percona.github.io/percona-helm-charts/
   version: 1.23.2
+- name: prometheus-mongodb-exporter
+  repository: https://prometheus-community.github.io/helm-charts
+  version: 3.22.0
 - name: rabbitmq
   repository: https://charts.bitnami.com/bitnami
   version: 16.0.14

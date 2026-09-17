@@ -98,6 +98,23 @@ ports:
   {{- list $root $podSelector $port | include "armonik.netpol.rule.componentFrom" -}}
 {{- end -}}
 
+
+{{/*
+  Allows the mongodb-exporter as a source, on the given port. Helm's dependency alias becomes
+  that subchart instance's own .Chart.Name, so its labels read "mongodb-exporter" (our alias),
+  not the chart's real name (prometheus-mongodb-exporter).
+  Args (list): [root, port]
+*/}}
+{{- define "armonik.netpol.rule.mongodbExporterFrom" -}}
+  {{- $root := index . 0 -}}
+  {{- $port := index . 1 -}}
+  {{- $podSelector := dict "matchLabels" (dict
+      "app.kubernetes.io/name" "mongodb-exporter"
+      "app.kubernetes.io/instance" $root.Release.Name
+    ) -}}
+  {{- list $root $podSelector $port | include "armonik.netpol.rule.componentFrom" -}}
+{{- end -}}
+
 {{/*
   Generic egress rule to a dependency subchart: its namespace + podSelector (override or chart default) 
   + port from portHelper.
@@ -514,6 +531,7 @@ ingress:
         "armonik.netpol.rule.controlPlaneFrom" (list $root $mongoPort)
         "armonik.netpol.rule.metricsExporterFrom" (list $root $mongoPort)
         "armonik.netpol.rule.computePlaneFrom" (list $root $mongoPort)
+        "armonik.netpol.rule.mongodbExporterFrom" (list $root $mongoPort)
     | include "armonik.netpol.mergeRules"
     | nindent 2
   }}
@@ -522,6 +540,53 @@ egress:
   {{- dict
         "armonik.netpol.rule.mongodbServerToOperator" $root
         "armonik.netpol.rule.mongodbServerPeersTo" $root
+        "armonik.netpol.dnsRule" dict
+    | include "armonik.netpol.mergeRules"
+    | nindent 2
+  }}
+{{- end -}}
+{{- end -}}
+
+
+{{/*
+  MongoDB exporter egress: to the MongoDB server it scrapes.
+*/}}
+{{- define "armonik.netpol.rule.mongodbExporterTo" -}}
+{{- $root := . -}}
+{{- with $root.Subcharts.dependencies.Subcharts.mongodb -}}
+{{- $ns := include "armonik.netpol.namespaceSelector" . -}}
+{{- $podSelector := include "armonik.netpol.podSelector.mongodb" $root -}}
+{{- $port := include "armonik.mongodb.port" . | trim | int -}}
+{{- list $ns $podSelector $port "to" | include "armonik.netpol.rule.peerOnPort" -}}
+{{- end -}}
+{{- end -}}
+
+
+{{/*
+  MongoDB exporter ingress: from the cluster's shared Prometheus, on its metrics port.
+*/}}
+{{- define "armonik.netpol.rule.mongodbExporterIngress" -}}
+  {{- list . 9216 nil | include "armonik.netpol.rule.prometheusIngress" -}}
+{{- end -}}
+
+
+{{/*
+  MongoDB exporter NetworkPolicy: ingress from Prometheus, egress to MongoDB + DNS.
+*/}}
+{{- define "armonik.netpol.mongodbExporter" -}}
+{{- $root := . -}}
+{{- with index $root.Subcharts.dependencies.Subcharts "mongodb-exporter" -}}
+podSelector:
+  matchLabels:
+    {{/* Helm's dependency alias becomes this subchart instance's own .Chart.Name, so its labels
+         read "mongodb-exporter" (our alias), not the chart's real name. */}}
+    app.kubernetes.io/name: mongodb-exporter
+    app.kubernetes.io/instance: {{ $root.Release.Name | quote }}
+ingress:
+  {{- dict "armonik.netpol.rule.mongodbExporterIngress" $root | include "armonik.netpol.mergeRules" | nindent 2 }}
+egress:
+  {{- dict
+        "armonik.netpol.rule.mongodbExporterTo" $root
         "armonik.netpol.dnsRule" dict
     | include "armonik.netpol.mergeRules"
     | nindent 2

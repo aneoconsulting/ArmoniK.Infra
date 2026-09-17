@@ -97,6 +97,8 @@ skip ingress-defaults "broken: chart values lack global.environment, static.envi
 ok umbrella-minimal       armonik               -f charts/armonik/ci/minimal-values.yaml
 ok umbrella-mountpath     armonik               -f charts/armonik/ci/minimal-values.yaml --set global.armonik.mountPath=/etc/armonik
 ok umbrella-layered-operators armonik           -f charts/armonik/ci/layered-operators-values.yaml
+ok umbrella-mongodb-exporter     armonik        -f charts/armonik/ci/mongodb-exporter-values.yaml
+ok umbrella-mongodb-exporter-tls armonik        -f charts/armonik/ci/mongodb-exporter-tls-values.yaml
 ok compute-partitions     armonik-compute-plane -f charts/armonik-compute-plane/ci/partitions-values.yaml
 ok compute-keda-off       armonik-compute-plane -f charts/armonik-compute-plane/ci/keda-off-values.yaml
 skip compute-pdb "broken: pdb.yaml calls the undefined helper armonik.compute.pdb.apiVersion; enable when fixed"
@@ -128,6 +130,16 @@ fail_with control-authz-without-authn armonik-control-plane \
   -f test/fixtures/armonik-control-plane/authz-values.yaml
 fail_with umbrella-envsecret-without-eso armonik \
   "envSecret and envFromSecret require ExternalSecretsOperator" \
+  --set global.armonik.operators.externalSecrets.available=false \
+  --set global.armonik.operators.externalSecrets.deploy=false \
+  --set dependencies.mongodb-exporter.enabled=false
+fail_with mongodb-exporter-without-mongo armonik \
+  "requires dependencies.mongodb (psmdb-db) to be enabled" \
+  --set dependencies.mongodb-exporter.enabled=true \
+  --set dependencies.mongodb.enabled=false
+fail_with mongodb-exporter-without-eso armonik \
+  "requires the ExternalSecrets operator" \
+  --set dependencies.mongodb-exporter.enabled=true \
   --set global.armonik.operators.externalSecrets.available=false \
   --set global.armonik.operators.externalSecrets.deploy=false
 fail_with umbrella-bad-loglevel armonik \

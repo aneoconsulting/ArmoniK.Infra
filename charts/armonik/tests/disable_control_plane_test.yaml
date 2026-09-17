@@ -1,0 +1,10 @@
+suite: subchart toggles
+templates:
+  - secrets/conf-secrets.yaml
+tests:
+  - it: renders without the control plane
+    set:
+      control-plane:
+        enabled: false
+    asserts:
+      - notFailedTemplate: {}

@@ -1,0 +1,31 @@
+{{- $ops := include "armonik.operators" $ | fromYaml }}
+{{- if $ops.prometheusOperator.available }}
+{{/* Control-plane pod metrics (1081), when the prometheus-operator CRDs are present. */}}
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: {{ include "armonik.fullname" . | printf "%s-control-plane" | trunc 63 | trimSuffix "-" | quote }}
+  namespace: {{ include "armonik.namespace" . | quote }}
+  labels:
+    app.kubernetes.io/component: control-plane
+    {{- include "armonik.labels" . | nindent 4 }}
+spec:
+  namespaceSelector:
+    matchNames:
+      - {{ include "armonik.namespace" . | quote }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: control-plane
+      {{- include "armonik.selectorLabels" . | nindent 6 }}
+  {{/* Release discriminator, matching the metrics-exporter ServiceMonitor and compute-plane PodMonitor. */}}
+  podTargetLabels:
+    - app.kubernetes.io/instance
+    - armonik.fr/deployment
+  podMetricsEndpoints:
+    - port: metrics-port
+      path: /metrics
+      {{/* Legacy job name for the bundled Grafana dashboards (releases stay distinct via namespace/pod). */}}
+      relabelings:
+        - targetLabel: job
+          replacement: metrics-control-plane
+{{- end }}

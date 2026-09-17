@@ -1,0 +1,49 @@
+suite: armonik.utils.index nil-safety
+templates:
+  - index.yaml
+tests:
+  - it: resolves a nested string
+    set:
+      index:
+        root: {a: {b: hello}}
+        path: [a, b]
+    asserts:
+      - equal:
+          path: data.result
+          value: hello
+  - it: short-circuits to empty on a null intermediate
+    set:
+      index:
+        root: {a: null}
+        path: [a, b]
+    asserts:
+      - equal:
+          path: data.result
+          value: ""
+  - it: short-circuits to empty on a missing key
+    set:
+      index:
+        root: {}
+        path: [x, y]
+    asserts:
+      - equal:
+          path: data.result
+          value: ""
+  - it: short-circuits to empty on a false intermediate
+    set:
+      index:
+        root: {a: false}
+        path: [a, b]
+    asserts:
+      - equal:
+          path: data.result
+          value: ""
+  - it: yaml-encodes non-string leaves (bool decoded by the caller)
+    set:
+      index:
+        root: {a: {b: true}}
+        path: [a, b]
+    asserts:
+      - equal:
+          path: data.result
+          value: "true"

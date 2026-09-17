@@ -1,0 +1,257 @@
+# global.armonik.* comes from armonik-common via import-values; its defaults suit a standalone release.
+
+global:
+  environment:
+    description: "ArmoniK ingress environment"
+
+nameOverride: ""
+imagePullSecrets: []
+image:
+  registry:
+  repository: nginxinc
+  name: nginx-unprivileged
+  tag: 1.27.4-alpine-slim
+  pullPolicy: IfNotPresent
+
+replicas: 1
+
+nodeSelector: {}
+tolerations: []
+annotations: {}
+affinity: {}
+priorityClassName: ""
+
+resources:
+  limits:
+    cpu: 1
+    memory: 1Gi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+ports:
+  - name: ingress-grpc
+    protocol: grpc
+    servicePort: 5001
+    http2: true
+  - name: ingress-http
+    protocol: http
+    servicePort: 5000
+
+service:
+  type: LoadBalancer
+  annotations: {}
+
+# DNS domain of the cluster
+clusterDomain: ""
+
+tls:
+  enabled: false
+  certManager:
+    enabled: true
+    addInjectorAnnotations: true
+    existingIssuer:
+      # Use an existing cert-manager issuer
+      enabled: false
+      # Kind of the existing cert-manager issuer (Issuer or ClusterIssuer)
+      kind: "Issuer"
+      # Name of the existing cert-manager issuer
+      name: "my-issuer"
+      group: ""
+    # Set the requested duration (i.e. lifetime) of the Certificate.
+    # See https://cert-manager.io/docs/reference/api-docs/#cert-manager.io/v1.CertificateSpec
+    duration: ""
+    # How long before the currently issued certificate’s expiry cert-manager should renew the certificate.
+    # See https://cert-manager.io/docs/reference/api-docs/#cert-manager.io/v1.CertificateSpec
+    renewBefore: ""
+    # Extra DNS names for the Certificate, appended to the built-in in-cluster Service names (short,
+    # namespaced, svc, and FQDN). The ingress is the external entry point, so a client reaching it from
+    # outside the cluster by hostname needs that hostname listed here.
+    extraDnsNames: []
+    # IP SANs for the Certificate. A client connecting directly to the ingress
+    # Service's external IP needs that IP listed here.
+    ipAddresses: []
+    # Add extra annotations to the Certificate resource
+    annotations: {}
+    # Add extra labels to the Certificate resource
+    labels: {}
+  customCert:
+    certPem: ""
+    keyPem: ""
+  ssl:
+    protocols: "TLSv1.2 TLSv1.3"
+    ciphers: "EECDH+AESGCM:EECDH+AES256"
+    cipherSuites: "TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256"
+    certificatePath: "/ingress/tls.crt"
+    keyPath: "/ingress/tls.key"
+
+mtls:
+  enabled: false
+  certificationAuthority:
+    # pem or existingSecret. If neither is set, a CA is cert-manager-issued from the same issuer
+    # tls.certManager would use (tls.certManager.existingIssuer, else global.armonik.certManager.issuer).
+    pem: ""
+    existingSecret: ""
+  trustedCommonNames: []
+
+volumes:
+  # ingressSecret: ingress-crt
+  mongodbSecret: mongodb
+  # mongodbSecretCrt: mongodb-ca
+  nginxConfigMap: armonik-ingress-conf
+  nginxStaticConfigMap: armonik-ingress-static
+
+# Load Balancer (multi-cluster gRPC load balancer)
+loadBalancer:
+  enabled: false
+  clusters: {}
+  defaultCluster: ""
+  image:
+    registry:
+    repository: dockerhubaneo
+    name: armonik_load_balancer
+    tag: "0.3.1"
+    pullPolicy: IfNotPresent
+  replicas: 1
+  conf:
+    listenPort: 8081
+  service:
+    type: HeadLess
+    port: 8080
+    annotations: {}
+  resources: {}
+
+  extraEnv: []
+  extraEnvFrom: []
+  nodeSelector: {}
+  tolerations: []
+  priorityClassName: ""
+  annotations: {}
+
+# Set to the key of a Secret in an ESO SecretStore to source ingress conf URLs via ExternalSecret.
+# Leave empty to fall back to a plain Kubernetes Secret instead.
+#
+# WARNING: only matters if you flip this value on an EXISTING release, in place (helm upgrade,
+# same release name and namespace). Both modes render a Secret under the same name, and Helm
+# refuses to adopt one it doesn't already own. A fresh install, or changing this on a different
+# release or namespace, is unaffected - there's no prior resource to conflict with.
+#
+# To switch in place: delete the old ExternalSecret first (it also owns and deletes the Secret
+# it produced), then upgrade:
+#   kubectl delete externalsecrets.external-secrets.io -n <namespace> <release>-ingress-conf
+#   helm upgrade <release-name> ...
+urlsSecretName: ""
+urlsSecretNamespace: ""
+
+###########################################################
+# Admin GUI
+###########################################################
+gui:
+  image:
+    registry:
+    repository: dockerhubaneo
+    name: armonik_admin_app
+    tag:
+    pullPolicy: IfNotPresent
+  ports:
+    - name: gui
+      containerPort: 1080
+      servicePort: 1080
+  service:
+    type: ClusterIP
+    annotations:
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+  nodeSelector: {}
+  tolerations: []
+  annotations: {}
+  affinity: {}
+  priorityClassName: ""
+
+static:
+  environment.json:
+    color: "#80ff80"
+    description: "{{ .Values.global.environment.description }}"
+    name: "{{ .Values.global.environment.name }}"
+    version: "{{ .Chart.AppVersion }}"
+  guiConfiguration: {}
+
+
+# GATEWAY
+gateway:
+  enabled: false
+  tls:
+    enabled: false
+  allowedRoutes:
+    namespaces:
+      from: Same
+
+# HTTPROUTE
+httpRoute:
+  enabled: false
+
+# HEALTHCHECKPOLICY
+healthCheckPolicy:
+  enabled: false
+
+networkPolicy:
+  enabled: false
+
+  # Only rendered when gateway.enabled or httpRoute.enabled is true
+  healthCheckPodSelector: {}
+  # Ingress rules for the health-check policy: at minimum a "from" and a "ports" key
+  healthCheckRules: []
+
+  # NetworkPolicy for the nginx front pod.
+  nginx:
+    # Extra ingress rules appended to the chart's own rules. Each entry is
+    # a full NetworkPolicy rule: at minimum a "from" and a "ports" key.
+    extraIngressRules: []
+    # The chart's own egress rule only covers DNS + the GUI backend. In the
+    # umbrella, a separate precise NetworkPolicy covers this instead. Installed standalone, add
+    # your own egress rules here, e.g.:
+    # extraEgressRules:
+    #   - to:
+    #       - namespaceSelector:
+    #           matchLabels:
+    #             kubernetes.io/metadata.name: <namespace>
+    #         podSelector:
+    #           matchLabels:
+    #             app.kubernetes.io/component: control-plane
+    #     ports:
+    #       - protocol: TCP
+    #         port: 1080
+    #   - to:
+    #       - namespaceSelector:
+    #           matchLabels:
+    #             kubernetes.io/metadata.name: <namespace>
+    #         podSelector:
+    #           matchLabels:
+    #             app.kubernetes.io/name: grafana
+    #     ports:
+    #       - protocol: TCP
+    #         port: 3000
+    #   - to:
+    #       - namespaceSelector:
+    #           matchLabels:
+    #             kubernetes.io/metadata.name: <namespace>
+    #         podSelector:
+    #           matchLabels:
+    #             app: seq
+    #     ports:
+    #       - protocol: TCP
+    #         port: 80
+    extraEgressRules: []
+
+  # NetworkPolicy for the GUI backend pod.
+  gui:
+    # Extra ingress rules appended to the chart's own rules (nginx only, by default).
+    extraIngressRules: []
+    # Extra egress rules appended to the chart's own rules (DNS).
+    extraEgressRules: []

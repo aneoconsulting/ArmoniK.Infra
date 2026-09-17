@@ -1,0 +1,19 @@
+suite: keda gate
+templates:
+  - deployment.yaml
+  - scaledobject.yaml
+values:
+  - ../ci/keda-off-values.yaml
+tests:
+  - it: still deploys partitions when keda is unavailable
+    template: deployment.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: Deployment
+  - it: renders no scaled object when keda is unavailable
+    template: scaledobject.yaml
+    asserts:
+      - hasDocuments:
+          count: 0

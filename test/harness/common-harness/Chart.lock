@@ -1,0 +1,6 @@
+dependencies:
+- name: armonik-common
+  repository: file://../../../charts/armonik-common
+  version: 0.1.0
+digest: sha256:9218ce364fb421b2cc366210a9a151091c0dd30d45b77fd9ba8edbd1f9cbfc3b
+generated: "2026-08-02T14:34:03.811247861+02:00"

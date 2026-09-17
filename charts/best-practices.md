@@ -5,7 +5,7 @@ Helm charts. Most of the best practices are described in the [Helm docs](https:/
 [Codefresh](https://codefresh.io/docs/docs/ci-cd-guides/helm-best-practices/)
 [Itnext](https://itnext.io/helm-3-umbrella-charts-standalone-chart-image-tags-an-alternative-approach-78a218d74e2d)).
 
-This guide will be used by [Aneo](https://www.aneo.eu/) to write Helm charts for the [Armonik plateform](https://www.armonik.fr/).
+This guide will be used by [Aneo](https://www.aneo.eu/) to write Helm charts for the [ArmoniK platform](https://www.armonik.fr/).
 
 ## Coding standart
 
@@ -92,6 +92,60 @@ By employing resource-policy annotations,
 you can carefully manage the lifecycle of your resources 
 and ensure that important data is not inadvertently 
 lost during the uninstallation process. (Quotation marks are required)
+
+## Exposing arbitrary parameters
+
+No chart enumerates every field its users need. Three mechanisms cover the gap, and the line between
+them is what keeps them predictable:
+
+> **`extra*` owns lists the chart builds. `*Patch` owns scalars and maps. Anything else is a
+> post-renderer.**
+
+### extra* (additive)
+
+`extraEnv`, `extraEnvFrom`, `extraVolumes`, `extraVolumeMounts`, `extraContainers`,
+`extraInitContainers`. Appended to the list the chart builds, never replacing it, so they add but
+never change. Extras go last: container 0 is what `kubectl logs` picks by default.
+
+`extraEnv` exists because the name is universal in the Helm ecosystem, not because it is the
+preferred channel. A var several workloads share belongs in a `conf` block (`conf.env` on a plane
+chart, `conf.<layer>.env` on the umbrella), which reaches every workload consuming it; `extraEnv` is
+for a var local to one container. Setting a name the conf already sets emits it twice: the API
+accepts that, but `name` is the patchMergeKey, so later patches handle the pair badly.
+
+### podSpecPatch and containerPatch (overriding)
+
+A map merged over the rendered fragment, last and winning. The names mirror the API types: you patch
+a `PodSpec`, and a `Container`, which has no `.spec` sub-object (there is no `ContainerSpec` type).
+
+`podSpecPatch` targets `spec.template.spec`, never `spec.template`: pod labels must stay a superset
+of the immutable `spec.selector.matchLabels`, so metadata stays owned by the chart's `labels` and
+`annotations`.
+
+Three limits follow from `armonik.utils.merge`, the first two enforced by `armonik.utils.patch`:
+
+- **A list replaces, it does not merge by key.** A patch may introduce a list key the fragment does
+  not build, but replacing one it does is a render error naming the additive value instead. The
+  check reads the fragment rather than a hand-kept deny list, so a list is protected the day the
+  chart starts building it. `command` and `args` are exempt.
+- **A patch cannot delete a key**, null and "" being absent to the merge.
+
+### Post-renderer (everything else)
+
+`helm --post-renderer` or ArgoCD's kustomize post-render give real strategic-merge semantics,
+merge-by-key included. A documented answer rather than a missing feature: it does not compose with
+per-partition values, so it stays the last resort.
+
+### Implementing a patch point
+
+`armonik.utils.patch` parses what it patches, and printed text cannot be patched. So the patchable
+object moves into a `define` of literal YAML and the template file keeps only the envelope plus one
+bound variable per seam (`armonik-compute-plane/templates/_deployment.tpl`). Two consequences:
+
+- `toYaml` sorts keys, so rendered manifests are alphabetical rather than `name`-first. Cosmetic,
+  and what `kubectl get -o yaml` shows anyway.
+- A statement ending in `-}}` eats the newline before the next document. Where a `range` emits
+  several, the last binding before the `---` keeps a plain `}}` or the documents merge.
 
 ## Umbrella charts
 

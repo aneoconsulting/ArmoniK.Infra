@@ -1,0 +1,24 @@
+dependencies:
+- name: armonik-common
+  repository: file://../armonik-common
+  version: 0.1.0
+- name: keda
+  repository: https://kedacore.github.io/charts
+  version: 2.20.2
+- name: external-secrets
+  repository: https://charts.external-secrets.io
+  version: 2.10.0
+- name: cert-manager
+  repository: https://charts.jetstack.io
+  version: v1.21.2
+- name: psmdb-operator
+  repository: https://percona.github.io/percona-helm-charts/
+  version: 1.23.1
+- name: kube-prometheus-stack
+  repository: https://prometheus-community.github.io/helm-charts
+  version: 82.18.0
+- name: cert-manager-google-cas-issuer
+  repository: https://charts.jetstack.io
+  version: v0.12.0
+digest: sha256:9af015e9658403aa5202ca7525862657c48aa2e6d69f3a55b9dd9a4202ad24c5
+generated: "2026-09-15T15:56:20.389420765+02:00"

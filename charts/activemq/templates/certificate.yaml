@@ -1,0 +1,50 @@
+{{- $tls := .Values.tls | default dict }}
+{{- $certManager := $tls.certManager | default dict }}
+{{- if and $tls.enabled (eq $tls.type "cert-manager") }}
+{{- $issuerName := printf "%s-issuer" (include "activemq.fullname" .) }}
+{{- $issuer := list $ $certManager.existingIssuer $issuerName | include "armonik.certManager.getIssuer" | fromYaml }}
+{{- if and (not (dig "armonik" "operators" "certManager" "available" true .Values.global)) $issuer.needsLocalIssuer }}
+{{- fail "activemq TLS via cert-manager requires it: set global.armonik.operators.certManager.available=true, set tls.certManager.existingIssuer.enabled=true, set global.armonik.certManager.issuer.enabled=true, or use a tls.type other than cert-manager." }}
+{{- end }}
+{{- if $issuer.needsLocalIssuer }}
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  annotations:
+    {{- if dig "armonik" "operators" "certManager" "deploy" false .Values.global }}
+    {{- /* CRD-ordering hook only when THIS release installs cert-manager; external/absent -> no hook.
+           Weight 0 keeps the Issuer ahead of the Certificate below, hooked at weight 10. */}}
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "0"
+    {{- end }}
+    {{- with .Values.additionalAnnotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  name: {{ $issuer.name | quote }}
+  namespace: {{ include "activemq.namespace" . | quote }}
+spec:
+  selfSigned: {}
+{{- end }}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "activemq.fullname" . }}
+  namespace: {{ include "activemq.namespace" . | quote }}
+  {{- if dig "armonik" "operators" "certManager" "deploy" false .Values.global }}
+  {{- /* Hooked only when this release installs the CRDs; otherwise a plain resource. */}}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "10"
+  {{- end }}
+spec:
+  commonName: {{ include "activemq.fullname" . }}
+  dnsNames:
+  - {{ include "activemq.fullname" . }}.{{ include "activemq.namespace" . }}
+  - {{ include "activemq.fullname" . }}.{{ include "activemq.namespace" . }}.svc
+  - {{ include "activemq.fullname" . }}.{{ include "activemq.namespace" . }}.svc.{{ $tls.clusterDomain }}
+  secretName: {{ include "activemq.fullname" . }}
+  {{- include "armonik.certManager.certificateSpec" (dict "certManager" $certManager "issuer" $issuer) | nindent 2 }}
+  additionalOutputFormats:
+    - type: CombinedPEM
+{{- end }}

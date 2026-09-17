@@ -28,7 +28,7 @@ appVersion: "0.1.0"
 
 home: https://github.com/aneoconsulting/ArmoniK.Infra/tree/main/charts/keda-hpa
 sources:
-  - https://github.com/aneoconsulting/ArmoniK.Infra/tree/main/charts/keda-hpa
+  - https://github.com/aneoconsulting/ArmoniK.Infra
 
 # Maintainers
 maintainers:

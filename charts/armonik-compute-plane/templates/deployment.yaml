@@ -1,0 +1,89 @@
+{{- range $partitionName, $config := include "armonik.compute.partitions" $ | fromYaml }}
+{{- $fluentBit := $.Values.fluentBit | default dict -}}
+{{- $partitionCommon := $.Values.partitionCommon | default dict -}}
+{{- $partition := dict -}}
+{{/* Partition render context: chart context minus .Values.partitions, plus .Values.partitionName. */}}
+{{- $context := omit $ "Values" -}}
+{{- $_ := omit $.Values "partitions" | set $context "Values" -}}
+{{- $_ := set $context.Values "partitionName" $partitionName -}}
+{{- dict "dst" $partition "srcs" (list $config $.Values.partitionCommon) "print" false "render" true "context" $context | include "armonik.utils.merge" -}}
+{{- $registry := $.Values.global.imageRegistry | default $.Values.registry -}}
+{{- $agent := $partition.agent -}}
+{{- $worker := $partition.worker -}}
+{{/* Layer secrets shared by both agent and worker (log + compute); no credentials. */}}
+{{- $commonConf := list
+    (list $partitionName $partition | include "armonik.compute.confHelper" | fromYaml)
+    $partition.conf
+  | include "armonik.conf.merge" | fromYaml -}}
+{{/* Agent additionally gets core (credentials) + polling + cert mounts. */}}
+{{- $agentConf := list
+  (list $partitionName $partition | include "armonik.compute.agent.confHelper" | fromYaml)
+  $agent.conf
+  $commonConf
+| include "armonik.conf.merge" | fromYaml -}}
+{{- $agentConf = list $agentConf $ | include "armonik.conf.resolve" | fromYaml -}}
+{{/* Worker (user code) never references the core secret: stays credential-free. */}}
+{{- $workerConf := list
+  (list $partitionName $partition | include "armonik.compute.worker.confHelper" | fromYaml)
+  $worker.conf
+  $commonConf
+| include "armonik.conf.merge" | fromYaml -}}
+{{- $workerConf = list $workerConf $ | include "armonik.conf.resolve" | fromYaml -}}
+{{- $agentImage := list $ $agent.image (list $partitionCommon "agent" "image" | include "armonik.utils.index" | fromYaml) | include "armonik.utils.imageConf" | fromYaml -}}
+{{- $workerImage := list $ $worker.image (list $partitionCommon "worker" "image" | include "armonik.utils.index" | fromYaml) | include "armonik.utils.imageConf" | fromYaml -}}
+{{- $fluentBitImage := list $ $fluentBit.image | include "armonik.utils.imageConf" | fromYaml -}}
+{{/* Context of the _deployment.tpl fragments. */}}
+{{- $ctx := dict
+    "root" $
+    "name" $partitionName
+    "partition" $partition
+    "agentConf" $agentConf
+    "workerConf" $workerConf
+    "agentImage" $agentImage
+    "workerImage" $workerImage
+    "fluentBit" $fluentBit
+    "fluentBitImage" $fluentBitImage
+-}}
+{{/* Trailing `}}` keeps the newline that separates this document from the previous partition's. */}}
+{{- $podSpec := list (include "armonik.compute.podSpec" $ctx) $partition.podSpecPatch "podSpecPatch" | include "armonik.utils.patch" }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ printf "%s-%s" (include "armonik.fullname" $) $partitionName | trunc 63 | trimSuffix "-" | quote }}
+  namespace: {{ include "armonik.namespace" $ }}
+  labels:
+    app.kubernetes.io/component: {{ printf "compute-plane-%s" $partitionName | quote }}
+    app.kubernetes.io/part-of: compute-plane
+    armonik.fr/partition: {{ $partitionName | quote }}
+    {{- include "armonik.labels" $ | nindent 4 }}
+    {{- with $partition.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  replicas: {{ $partition.replicas }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: {{ printf "compute-plane-%s" $partitionName | quote }}
+      app.kubernetes.io/part-of: compute-plane
+      armonik.fr/partition: {{ $partitionName | quote }}
+      {{- include "armonik.selectorLabels" $ | nindent 6 }}
+  template:
+    metadata:
+      name: {{ $partitionName | quote }}
+      labels:
+        app.kubernetes.io/component: {{ printf "compute-plane-%s" $partitionName | quote }}
+        app.kubernetes.io/part-of: compute-plane
+        armonik.fr/partition: {{ $partitionName | quote }}
+        armonik.fr/deployment: {{ include "armonik.conf.source" $ | quote }}
+        {{- include "armonik.selectorLabels" $ | nindent 8 }}
+        {{- with $partition.labels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with $partition.annotations}}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    {{/* podSpecPatch reaches spec only: pod labels must stay a superset of the immutable selector. */}}
+    spec: {{- $podSpec | nindent 6 }}
+{{- end }}

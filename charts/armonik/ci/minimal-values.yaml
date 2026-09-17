@@ -1,0 +1,39 @@
+# Deterministic minimal profile: every third-party dependency disabled.
+# Keeps the render small, offline-friendly and reproducible (no operator CRs,
+# no randAlphaNum redis-users Secret). Used by the render matrix
+# (test/matrix.sh), the umbrella unittest suites, and linted by ct.
+#
+# The operators block keeps both the operator subcharts and the operator-gated
+# resources (SecretStore, ExternalSecrets, monitors, ScaledObjects) out of the
+# render: deploy=false drops the subchart, available=false the consumers.
+global:
+  armonik:
+    operators:
+      externalSecrets:
+        deploy: false
+        available: false
+      keda:
+        deploy: false
+        available: false
+      certManager:
+        deploy: false
+        available: false
+      mongodbOperator:
+        deploy: false
+        available: false
+      prometheusOperator:
+        deploy: false
+        available: false
+dependencies:
+  redis:
+    enabled: false
+  activemq:
+    enabled: false
+  mongodb:
+    enabled: false
+  grafana:
+    enabled: false
+  fluent-bit:
+    enabled: false
+  seq:
+    enabled: false

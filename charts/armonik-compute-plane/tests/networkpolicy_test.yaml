@@ -1,0 +1,54 @@
+suite: network policy
+templates:
+  - networkpolicy.yaml
+values:
+  - ../ci/keda-off-values.yaml
+tests:
+  - it: renders nothing by default (networkPolicy.enabled=false)
+    template: networkpolicy.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: renders with DNS-only egress and instance-scoped podSelector when enabled
+    template: networkpolicy.yaml
+    set:
+      networkPolicy:
+        enabled: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: NetworkPolicy
+      - equal:
+          path: spec.podSelector.matchLabels
+          value:
+            app.kubernetes.io/name: armonik-compute-plane
+            app.kubernetes.io/instance: RELEASE-NAME
+      - contains:
+          path: spec.policyTypes
+          content: Egress
+      - contains:
+          path: spec.egress[0].ports
+          content:
+            protocol: UDP
+            port: 53
+
+  - it: appends extraEgressRules to the chart's own rules
+    template: networkpolicy.yaml
+    set:
+      networkPolicy:
+        enabled: true
+        extraEgressRules:
+          - ports:
+              - protocol: TCP
+                port: 27017
+    asserts:
+      - hasDocuments:
+          count: 1
+      - contains:
+          path: spec.egress
+          content:
+            ports:
+              - protocol: TCP
+                port: 27017

@@ -1,0 +1,56 @@
+suite: umbrella minimal profile
+values:
+  - ../ci/minimal-values.yaml
+release:
+  name: t
+templates:
+  - secrets/conf-secrets.yaml
+  - secrets/conf-mounts.yaml
+  - configmaps/grafana-dashboard-armonik.yaml
+  - charts/control-plane/templates/deployments/control-plane.yaml
+tests:
+  - it: renders one env Secret per conf layer, all plain without ESO
+    template: secrets/conf-secrets.yaml
+    asserts:
+      - hasDocuments:
+          count: 8
+      - isKind:
+          of: Secret
+  - it: renders one mount Secret per conf layer
+    template: secrets/conf-mounts.yaml
+    asserts:
+      - hasDocuments:
+          count: 8
+      - isKind:
+          of: Secret
+  - it: materializes the log level into the log layer
+    template: secrets/conf-secrets.yaml
+    documentSelector:
+      path: metadata.name
+      value: t-conf-log
+    asserts:
+      - equal:
+          path: stringData.Serilog__MinimumLevel
+          value: Information
+  - it: injects no storage env when the backends are disabled
+    template: secrets/conf-secrets.yaml
+    documentSelector:
+      path: metadata.name
+      value: t-conf-core
+    asserts:
+      - notExists:
+          path: stringData.Amqp__Host
+      - notExists:
+          path: stringData.MongoDB__Host
+  - it: renders no grafana dashboards when grafana is disabled
+    template: configmaps/grafana-dashboard-armonik.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+  - it: still deploys the control plane subchart
+    template: charts/control-plane/templates/deployments/control-plane.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: Deployment

@@ -14,11 +14,16 @@ build:
         # Upgrade pip to latest version
         - pip install --upgrade pip
       pre_build:
-        # Download and extract terraform-docs binary
-        - wget -qO- https://github.com/terraform-docs/terraform-docs/releases/download/v0.19.0/terraform-docs-v0.19.0-linux-amd64.tar.gz | tar xz
-        - chmod +x terraform-docs
-        # Generate all terraform-docs READMEs using script (TFDOCS env var points to binary)
-        - TFDOCS="./terraform-docs" bash .docs/generate-tf-docs.sh
+        # Download and extract the doc generator binaries. Only the binary is
+        # extracted: both archives also ship a README.md (and helm-docs a
+        # CHANGELOG.md) that would overwrite the repository's own.
+        - mkdir -p .bin
+        - wget -qO- https://github.com/terraform-docs/terraform-docs/releases/download/v0.19.0/terraform-docs-v0.19.0-linux-amd64.tar.gz | tar xz -C .bin terraform-docs
+        - wget -qO- https://github.com/norwoodj/helm-docs/releases/download/v1.14.2/helm-docs_1.14.2_Linux_x86_64.tar.gz | tar xz -C .bin helm-docs
+        - chmod +x .bin/terraform-docs .bin/helm-docs
+        # Generate all module and chart READMEs using scripts (TFDOCS/HELMDOCS env vars point to binaries)
+        - TFDOCS="./.bin/terraform-docs" bash .docs/generate-tf-docs.sh
+        - HELMDOCS="./.bin/helm-docs" bash .docs/generate-helm-docs.sh
         - bash .docs/generate-docs-symlinks.sh
 
 # Move anchors out of the titles

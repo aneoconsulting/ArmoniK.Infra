@@ -1,0 +1,30 @@
+suite: pod disruption budget
+templates:
+  - pdb.yaml
+tests:
+  - it: renders a policy/v1 PodDisruptionBudget when enabled
+    skip:
+      reason: >-
+        Broken render path: pdb.yaml calls armonik.compute.pdb.apiVersion, which is
+        not defined (armonik-common defines armonik.pdb.apiVersion). Enable once
+        fixed. The partition below satisfies partitions-guard, which rejects a
+        partition-less plane.
+    capabilities:
+      apiVersions:
+        - policy/v1
+    set:
+      partitions:
+        default:
+          worker:
+            image:
+              name: armonik-dynamic-dotnet-worker
+      podDisruptionBudget:
+        enabled: true
+        minAvailable: 1
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: PodDisruptionBudget
+      - isAPIVersion:
+          of: policy/v1

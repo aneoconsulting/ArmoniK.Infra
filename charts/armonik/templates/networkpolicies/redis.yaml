@@ -1,0 +1,11 @@
+{{- $networkPolicyEnabled := list .Values "networkPolicy" "enabled" | include "armonik.utils.index" -}}
+
+{{- $redisServer := include "armonik.netpol.redisServer" . | fromYaml -}}
+
+{{- if and $networkPolicyEnabled $redisServer }}
+{{- include "armonik.netpol.render" (dict
+      "context" .
+      "component" "redis-server"
+      "config" $redisServer
+  ) }}
+{{- end }}

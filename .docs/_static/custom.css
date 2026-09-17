@@ -1,0 +1,18 @@
+/* The sphinx_rtd_theme caps the content area at 800px and forces table cells to
+   never wrap, which truncates the generated values and inputs tables well before
+   the edge of the screen. Widen the content and let the cells wrap instead. */
+
+.wy-nav-content {
+    max-width: 1400px;
+}
+
+.wy-table-responsive table td,
+.wy-table-responsive table th {
+    white-space: normal;
+}
+
+/* Keys and default values are the columns worth reading whole, descriptions can
+   take the remaining width. */
+.wy-table-responsive table td:first-child {
+    white-space: nowrap;
+}

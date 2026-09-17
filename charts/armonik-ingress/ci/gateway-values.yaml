@@ -1,0 +1,15 @@
+# Gateway API path: Gateway + HTTPRoute + (GKE) HealthCheckPolicy, and the
+# service type forced to ClusterIP by armonik.ingress.serviceType.
+global:
+  environment:
+    name: ci
+    description: ArmoniK CI environment
+urlsSecretName: example-urls
+gateway:
+  enabled: true
+  # No chart default; the Gateway is invalid without it.
+  gatewayClassName: example-gateway-class
+httpRoute:
+  enabled: true
+healthCheckPolicy:
+  enabled: true

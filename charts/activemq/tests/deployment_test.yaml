@@ -1,0 +1,49 @@
+suite: deployment and service defaults
+templates:
+  - activemq-deployment.yaml
+  - service.yaml
+tests:
+  - it: renders the deployment with the default image
+    template: activemq-deployment.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: Deployment
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: "symptoma/activemq:5.18.4"
+      - contains:
+          path: spec.template.spec.containers[0].ports
+          content:
+            containerPort: 5672
+            name: amqp
+            protocol: TCP
+  - it: prefixes the image with the global registry
+    template: activemq-deployment.yaml
+    set:
+      global:
+        imageRegistry: registry.example.com
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: "registry.example.com/symptoma/activemq:5.18.4"
+  - it: exposes amqp and dashboard through the service
+    template: service.yaml
+    asserts:
+      - isKind:
+          of: Service
+      - contains:
+          path: spec.ports
+          content:
+            name: amqp
+            port: 5672
+            protocol: TCP
+            targetPort: amqp
+      - contains:
+          path: spec.ports
+          content:
+            name: dashboard
+            port: 8161
+            protocol: TCP
+            targetPort: dashboard

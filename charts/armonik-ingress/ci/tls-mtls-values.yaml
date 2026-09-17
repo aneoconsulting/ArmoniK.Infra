@@ -1,0 +1,19 @@
+# TLS via cert-manager (default issuer generation + wait job) with mTLS on
+# top: Certificate + Issuer + wait-job hook set, nginx conf CN allow-list.
+global:
+  environment:
+    name: ci
+    description: ArmoniK CI environment
+urlsSecretName: example-urls
+tls:
+  enabled: true
+mtls:
+  enabled: true
+  certificationAuthority:
+    pem: |
+      -----BEGIN CERTIFICATE-----
+      MIIBszCCAVmgAwIBAgIUfake0000000000000000000000000000
+      -----END CERTIFICATE-----
+  trustedCommonNames:
+    - client.armonik.local
+    - admin.armonik.local

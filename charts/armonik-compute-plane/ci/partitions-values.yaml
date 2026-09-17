@@ -1,0 +1,22 @@
+# Partition fan-out: one Deployment (+ one ScaledObject with keda enabled) per
+# partition, per-partition values merged over partitionCommon: worker image,
+# unix-socket agent/worker channel, custom KEDA trigger threshold.
+partitions:
+  bench:
+    worker:
+      image:
+        name: armonik_core_bench_test_worker
+  htcmock:
+    socketType: "unix"
+    worker:
+      image:
+        name: armonik_core_htcmock_test_worker
+    hpa:
+      triggers:
+        - type: prometheus
+          metadata:
+            serverAddress: http://prometheus-prometheus:9090
+            metricName: "armonik_{{ .Values.partitionName }}_tasks_queued"
+            threshold: "5"
+            namespace: "{{ .Release.Namespace }}"
+            query: 'armonik_{{ .Values.partitionName }}_tasks_queued{job="metrics-exporter"}'

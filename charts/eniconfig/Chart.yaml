@@ -28,7 +28,7 @@ appVersion: "0.1.0"
 
 home: https://github.com/aneoconsulting/ArmoniK.Infra/tree/main/charts/eniconfig
 sources:
-  - https://github.com/aneoconsulting/ArmoniK.Infra/tree/main/charts/eniconfig
+  - https://github.com/aneoconsulting/ArmoniK.Infra
 
 # Maintainers
 maintainers:

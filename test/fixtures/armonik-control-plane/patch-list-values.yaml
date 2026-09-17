@@ -1,0 +1,5 @@
+# Expected failure: containerPatch may not replace the env list the conf layers build.
+containerPatch:
+  env:
+    - name: Bogus
+      value: "1"

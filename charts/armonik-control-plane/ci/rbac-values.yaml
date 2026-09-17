@@ -1,0 +1,30 @@
+# Full authentication surface: built-in roles (builtin-roles/*.yaml), custom
+# roles/users/user certificates (indexed InitServices__Authentication__* env in
+# the init Job), and extra partitions (indexed InitServices__Partitioning__*).
+init:
+  enabled: true
+extraPartitions:
+  default:
+    podMax: 100
+    podReserved: 50
+    preemptionPercentage: 20
+    priority: 1
+  gpu:
+    priority: 2
+rbac:
+  authentication:
+    required: true
+  authorization:
+    required: true
+  createBuiltInRoles: true
+  roles:
+    operator:
+      - GetPartition
+      - ListPartitions
+  users:
+    alice:
+      - operator
+  userCertificates:
+    alice:
+      commonName: alice.armonik.local
+      fingerprint: "AABBCCDD"

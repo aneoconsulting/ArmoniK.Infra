@@ -1,15 +1,7 @@
 {{/*
-Returns AK Core-compliant Json representation of an AK Role object.
+An AK Core Role as JSON, for the InitServices__Authentication__Roles__<i> env entries.
 
-Usage:
-  {{- include "armonik.control.rbac.role.format" (list <roleName> <permissions>) }}
-
-Schema: 
-  roleName: string
-  permissions: list of string
-  
-Example:
-  {{- include "armonik.control.rbac.role.format" (list "TaskCounter" (list "Tasks:GetTask" "Tasks:ListTasks" "Submitter:CountTasks") ) }}
+  {{- include "armonik.control.rbac.role.format" (list "TaskCounter" (list "Tasks:GetTask" "Tasks:ListTasks")) }}
 */}}
 {{- define "armonik.control.rbac.role.format" }}
   {{- $roleName := index . 0 }}
@@ -22,17 +14,9 @@ Example:
 {{- end }}
 
 {{/*
-Returns AK Core-compliant Json representation of an AK User object.
+An AK Core User as JSON, for the InitServices__Authentication__Users__<i> env entries.
 
-Usage:
-  {{- include "armonik.control.rbac.user.format" (list <username> <roles>) }}
-
-Schema: 
-  username: string
-  roles: list of string
-  
-Example:
-  {{- include "armonik.control.rbac.user.format" (list "admin" (list "Submitter") ) }}
+  {{- include "armonik.control.rbac.user.format" (list "admin" (list "Submitter")) }}
 */}}
 {{- define "armonik.control.rbac.user.format" }}
   {{- $username := index . 0}}
@@ -46,17 +30,9 @@ Example:
 
 
 {{/*
-Returns AK Core-compliant Json representation of an AK UserCertificate object.
+An AK Core UserCertificate as JSON, for the InitServices__Authentication__UserCertificates__<i>
+env entries.
 
-Usage:
-  {{- include "armonik.control.rbac.userCertificate.format" (list <username> <commonName> <fingerprint>) }}
-
-Schema: 
-  username: string
-  commonName: string
-  fingerprint: string
-
-Example:
   {{- include "armonik.control.rbac.userCertificate.format" (list "admin" "armonik.admin" "4rm0n1K4dm1n") }}
 */}}
 {{- define "armonik.control.rbac.userCertificate.format" }}
@@ -73,12 +49,9 @@ Example:
 
 
 {{/*
-Returns built-in roles defined under the "builtin-roles" folder as YAML.
-Files under "builtin-roles" can be either YAML or JSON
+The built-in roles, read from the chart's builtin-roles/ folder (YAML or JSON), as YAML.
 
-Usage:
   {{- include "armonik.control.rbac.builtInRoles" . | fromYaml }}
-  
 */}}
 {{- define "armonik.control.rbac.builtInRoles" }}
   {{- $builtInRoles := dict }}

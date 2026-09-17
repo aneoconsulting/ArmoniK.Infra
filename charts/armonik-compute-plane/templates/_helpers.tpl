@@ -2,8 +2,6 @@
 Live partitions: .Values.partitions minus null entries, which are removals from a lower-precedence
 values file ({} stays, being a real partition inheriting partitionCommon). Single source for "which
 partitions deploy": the guard and the Deployment / ScaledObject / init ranges all range over this.
-
-# Usage
 {{- $partitions := include "armonik.compute.partitions" . | fromYaml }}
 */}}
 {{- define "armonik.compute.partitions" -}}
@@ -77,9 +75,7 @@ env:
 {{- end -}}
 
 
-{{/*
-  Compute-plane NetworkPolicy configuration.
-*/}}
+{{/* Compute-plane NetworkPolicy configuration. */}}
 {{- define "armonik.netpol.computePlane" -}}
 podSelector:
   matchLabels:

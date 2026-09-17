@@ -66,8 +66,6 @@ items:
             properties:
               field: { "type": "string" }
               mode:  { "type": "string" }
-
-
 */}}
 {{- define "armonik.conf.merge" }}
   {{- $merged := dict
@@ -97,9 +95,6 @@ items:
 
 {{/*
 Prefix of every conf Secret name: .Values.conf.source (tpl-rendered), default .Release.Name.
-
-# Usage
-
 {{ include "armonik.conf.source" $ }}
 */}}
 {{- define "armonik.conf.source" -}}
@@ -111,9 +106,6 @@ Prefix of every conf Secret name: .Values.conf.source (tpl-rendered), default .R
 
 {{/*
 Name of a conf layer's Secret: <source>-conf-<layer>.
-
-# Usage
-
 {{ list "core" $ | include "armonik.conf.secretName" }}
 */}}
 {{- define "armonik.conf.secretName" -}}
@@ -124,9 +116,6 @@ Name of a conf layer's Secret: <source>-conf-<layer>.
 
 {{/*
 Name of a conf layer's mount Secret (TLS material): <source>-conf-<layer>-mount.
-
-# Usage
-
 {{ list "core" $ | include "armonik.conf.mountSecretName" }}
 */}}
 {{- define "armonik.conf.mountSecretName" -}}
@@ -140,9 +129,6 @@ Volume/volumeMount name for a group of conf mounts at one path. Content-addresse
 the path AND the group's mount specs, so the same (path + sources) always yields the same name in both
 generators, while different source sets at the same path (e.g. compute agent vs credential-free worker)
 get distinct volumes. Args: (list <path> <group>), group = list of { mount: <entry> }.
-
-# Usage
-
 {{ list $p $group | include "armonik.conf.mountVolumeName" }}
 */}}
 {{- define "armonik.conf.mountVolumeName" -}}
@@ -158,9 +144,6 @@ get distinct volumes. Args: (list <path> <group>), group = list of { mount: <ent
 Root dir for conf mount Secrets in pods; both the storage env strings and the volumeMounts derive
 from it. Precedence: .Values.conf.mountPath > .Values.global.armonik.mountPath > "/mounts" (trailing
 "/" trimmed). Root scope only, never inside a backend-subchart `with`.
-
-# Usage
-
 {{ include "armonik.conf.mountPath" $ }}
 */}}
 {{- define "armonik.conf.mountPath" -}}
@@ -172,9 +155,6 @@ from it. Precedence: .Values.conf.mountPath > .Values.global.armonik.mountPath >
 {{/*
 In-pod path of one mounted conf file: <mountPath>/<prefix><filename>. Keeps the storage env string
 and the mounted file in sync.
-
-# Usage
-
 {{ list "mongodb-" "ca.crt" $root | include "armonik.conf.mountFilePath" }}
 */}}
 {{- define "armonik.conf.mountFilePath" -}}
@@ -186,9 +166,6 @@ and the mounted file in sync.
 
 {{/*
 Name of the SecretStore used by the conf ExternalSecrets for a given remote namespace.
-
-# Usage
-
 {{ list "" $ | include "armonik.conf.storeName" }}
 {{ list "mongodb-ns" $ | include "armonik.conf.storeName" }}
 */}}
@@ -202,9 +179,7 @@ Name of the SecretStore used by the conf ExternalSecrets for a given remote name
   {{- end -}}
 {{- end -}}
 
-{{/*
-Name of the per-namespace SecretStore to route one ESO data[]/dataFrom[] entry through
-*/}}
+{{/* Name of the per-namespace SecretStore to route one ESO data[]/dataFrom[] entry through */}}
 {{- define "armonik.conf.storeNameOverride" -}}
   {{- $namespace := index . 0 -}}
   {{- $root := index . 1 -}}
@@ -216,9 +191,6 @@ Name of the per-namespace SecretStore to route one ESO data[]/dataFrom[] entry t
 {{/*
 tpl-renders a conf's name-bearing fields (envSecret/envConfigmap/mountSecret.secret/...) against
 the root. Idempotent on plain strings.
-
-# Usage
-
 {{ $conf := list $conf $ | include "armonik.conf.resolve" | fromYaml }}
 */}}
 {{- define "armonik.conf.resolve" -}}
@@ -278,25 +250,26 @@ the root. Idempotent on plain strings.
   {{- $conf | toYaml -}}
 {{- end -}}
 
+{{/* env[] entries from a conf's `env` map. Go ranges maps in key order, so the output is stable. */}}
 {{- define "armonik.conf.generateEnv" }}
 {{- range $name, $value := .env }}
 - name: {{ $name | quote }}
   value: {{ $value | quote }}
-{{- end }}{{/* range $name, $value := .env */}}
+{{- end }}
 {{- range $name, $value := .envFromConfigmap }}
 - name: {{ $name | quote }}
   valueFrom:
     configMapKeyRef:
       name: {{ $value.configmap | quote }}
       key: {{ $value.field | quote }}
-{{- end }}{{/* range $name, $value := .envFromConfigmap */}}
+{{- end }}
 {{- range $name, $value := .envFromSecret }}
 - name: {{ $name | quote }}
   valueFrom:
     secretKeyRef:
       name: {{ $value.secret | quote }}
       key: {{ $value.field | quote }}
-{{- end }}{{/* range $name, $value := .envFromSecret */}}
+{{- end }}
 {{- end -}}{{/* define "armonik.conf.generateEnv" */}}
 
 {{- define "armonik.conf.generateEnvFrom" }}
@@ -304,12 +277,12 @@ the root. Idempotent on plain strings.
 - configMapRef:
     name: {{ $name | quote }}
     optional: false
-{{- end }}{{/* range $name := .envConfigmap */}}
+{{- end }}
 {{- range $name := .envSecret }}
 - secretRef:
     name: {{ $name | quote }}
     optional: false
-{{- end }}{{/* range $name := .envSecret */}}
+{{- end }}
 {{- end -}}{{/* define "armonik.conf.generateEnvFrom" */}}
 
 {{/* Groups a conf's mountConfigmap + mountSecret entries by resolved path (entries sharing a path are

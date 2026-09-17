@@ -1,12 +1,8 @@
-{{/*
-Pod-template fragments, split one per patchable object: armonik.utils.patch parses what it patches,
-and printed text cannot be patched.
+{{/* Pod-template fragments: armonik.utils.patch parses what it patches, so each is a define.
+     Each takes the partition context built in deployment.yaml:
+     root, name, partition, agentConf, workerConf, agentImage, workerImage, fluentBit, fluentBitImage */}}
 
-Each takes the partition context built in deployment.yaml:
-  root, name, partition, agentConf, workerConf, agentImage, workerImage, fluentBit, fluentBitImage
-*/}}
-
-{{/* Polling agent container, before agent.containerPatch. */}}
+{{/* Polling agent container. Consumes the core layer, so it holds the storage credentials. */}}
 {{- define "armonik.compute.container.agent" -}}
 {{- $agent := .partition.agent -}}
 name: agent
@@ -55,7 +51,7 @@ volumeMounts:
 {{- end -}}
 
 
-{{/* Worker (user code) container, before worker.containerPatch. Never gets the core conf layer. */}}
+{{/* Worker container running user code. Never consumes the core layer, so it stays credential-free. */}}
 {{- define "armonik.compute.container.worker" -}}
 {{- $worker := .partition.worker -}}
 name: worker
@@ -98,7 +94,7 @@ volumeMounts:
 {{- end -}}
 
 
-{{/* Fluent-bit sidecar, rendered only when fluentBit.isDaemonSet is false. */}}
+{{/* Fluent-bit log sidecar, used only when it is not deployed as a DaemonSet. */}}
 {{- define "armonik.compute.container.fluentBit" -}}
 name: fluent-bit
 image: {{ .fluentBitImage.fullname | quote }}
@@ -132,7 +128,7 @@ volumeMounts:
 {{- end -}}
 
 
-{{/* spec.template.spec of a partition Deployment, before podSpecPatch. */}}
+{{/* Partition pod spec: the patched containers, the shared cache volume, and the fluent-bit mounts. */}}
 {{- define "armonik.compute.podSpec" -}}
 {{- $root := .root -}}
 {{- $partition := .partition -}}
@@ -144,7 +140,6 @@ volumeMounts:
 {{- if not $fluentBit.isDaemonSet -}}
   {{- $containers = append $containers (include "armonik.compute.container.fluentBit" . | fromYaml) -}}
 {{- end -}}
-{{/* Extras go last: container 0 is what `kubectl logs` picks by default. */}}
 {{- $containers = $partition.extraContainers | default list | concat $containers -}}
 {{- with $partition.nodeSelector }}
 nodeSelector:

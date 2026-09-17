@@ -32,7 +32,6 @@
 {{- $agentImage := list $ $agent.image (list $partitionCommon "agent" "image" | include "armonik.utils.index" | fromYaml) | include "armonik.utils.imageConf" | fromYaml -}}
 {{- $workerImage := list $ $worker.image (list $partitionCommon "worker" "image" | include "armonik.utils.index" | fromYaml) | include "armonik.utils.imageConf" | fromYaml -}}
 {{- $fluentBitImage := list $ $fluentBit.image | include "armonik.utils.imageConf" | fromYaml -}}
-{{/* Context of the _deployment.tpl fragments. */}}
 {{- $ctx := dict
     "root" $
     "name" $partitionName
@@ -44,7 +43,6 @@
     "fluentBit" $fluentBit
     "fluentBitImage" $fluentBitImage
 -}}
-{{/* Trailing `}}` keeps the newline that separates this document from the previous partition's. */}}
 {{- $podSpec := list (include "armonik.compute.podSpec" $ctx) $partition.podSpecPatch "podSpecPatch" | include "armonik.utils.patch" }}
 ---
 apiVersion: apps/v1
@@ -84,6 +82,5 @@ spec:
       annotations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-    {{/* podSpecPatch reaches spec only: pod labels must stay a superset of the immutable selector. */}}
     spec: {{- $podSpec | nindent 6 }}
 {{- end }}

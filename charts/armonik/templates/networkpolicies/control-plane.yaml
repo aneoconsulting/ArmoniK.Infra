@@ -7,9 +7,7 @@
 {{- $meOn := and $networkPolicyEnabled $metricsExporterEnabled -}}
 
 
-{{/*
-  Control-plane submitter + init job connectivity NetworkPolicy
-*/}}
+{{/* Control-plane submitter + init job connectivity NetworkPolicy */}}
 {{- $dependencyRules := include "armonik.netpol.dependencyRules" . | fromYaml -}}
 
 {{- if and $networkPolicyEnabled $dependencyRules }}

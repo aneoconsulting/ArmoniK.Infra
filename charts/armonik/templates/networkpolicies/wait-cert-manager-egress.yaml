@@ -4,9 +4,7 @@
     | include "armonik.utils.index"
 -}}
 
-{{/*
-  waitCertManagerEgress NetworkPolicy.
-*/}}
+{{/* waitCertManagerEgress NetworkPolicy. */}}
 
 {{- if and $networkPolicyEnabled $ops.certManager.deploy }}
 {{- include "armonik.netpol.render" (dict

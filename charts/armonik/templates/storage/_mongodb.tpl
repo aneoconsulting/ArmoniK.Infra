@@ -7,23 +7,17 @@ by the mongodb chart rather than global.clusterDomain.
   {{- include "psmdb-database.fullname" . }}-{{ list .Values "replsets" "rs0" "name" | include "armonik.utils.index" | default "rs0" }}.{{ include "psmdb-database.namespace" . }}.{{ .Values.clusterServiceDNSSuffix | default "svc.cluster.local" }}
 {{- end -}}
 
-{{/*
-Gets the database name from mongodb context.
-*/}}
+{{/* Gets the database name from mongodb context. */}}
 {{- define "armonik.mongodb.database" -}}
   database
 {{- end -}}
 
-{{/*
-Gets the authentication source from mongodb context.
-*/}}
+{{/* Gets the authentication source from mongodb context. */}}
 {{- define "armonik.mongodb.authSource" -}}
   admin
 {{- end -}}
 
-{{/*
-Returns whether MongoDB requires tls from mongodb context
-*/}}
+{{/* Returns whether MongoDB requires tls from mongodb context */}}
 {{- define "armonik.mongodb.requireTls" -}}
   enabled: {{ list .Values "unsafeFlags" "tls" | include "armonik.utils.index" | empty }}
 {{- end -}}
@@ -46,19 +40,15 @@ By default set to 27017.
   {{- list $config "net" "port" | include "armonik.utils.index" | default "27017" -}}
 {{- end }}
 
-{{/*
-Expand the namespace of the psmdb-db instance.
-*/}}
+{{/* Expand the namespace of the psmdb-db instance. */}}
 {{- define "armonik.mongodb.namespace" -}}
   {{- include "psmdb-database.namespace" . -}}
 {{- end }}
 {{/*
-MongoDB configuration forwarded to ArmoniK Core, derived from the in-cluster Percona MongoDB (the
-psmdb-db dependency). Skipped when that dependency is disabled: to bring your own MongoDB, set
-dependencies.mongodb.enabled=false and supply the connection through the conf values directly
-(conf.core.env / conf.core.envFromSecret). The mongodb OPERATOR may be managed here or external
-(global.armonik.operators.mongodbOperator) - it does not affect this derivation, which reads the
-psmdb-db instance's own rendered values.
+MongoDB connection env for ArmoniK Core, read off the live psmdb-db dependency. Skipped when that
+dependency is disabled, which is the bring-your-own path: supply the connection through
+conf.core.env / conf.core.envFromSecret instead. Whether the operator itself is local or external
+does not enter into it.
 */}}
 {{- define "armonik.mongodb.conf" -}}
 {{- $root := . -}}

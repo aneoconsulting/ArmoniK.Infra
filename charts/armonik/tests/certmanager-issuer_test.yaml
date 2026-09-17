@@ -1,0 +1,292 @@
+suite: cert-manager shared issuer providers
+release:
+  name: t
+templates:
+  - certmanager-issuer.yaml
+tests:
+  - it: selfSigned renders a plain Issuer
+    set:
+      global:
+        armonik:
+          certManager:
+            issuer:
+              enabled: true
+              name: shared-issuer
+      certManagerIssuer:
+        create: true
+        provider: selfSigned
+    asserts:
+      - isKind:
+          of: Issuer
+      - equal:
+          path: spec.selfSigned
+          value: {}
+
+  - it: googleCas renders the CR from certManagerIssuer.googleCas forwarded as-is
+    set:
+      global:
+        armonik:
+          certManager:
+            issuer:
+              enabled: true
+              name: shared-issuer
+              kind: GoogleCASIssuer
+              group: cas-issuer.jetstack.io
+      certManagerIssuer:
+        create: true
+        provider: googleCas
+        googleCas:
+          project: my-project
+          location: europe-west1
+          caPoolId: my-pool
+      operators:
+        cert-manager:
+          approveSignerNames:
+            - "googlecasissuers.cas-issuer.jetstack.io/*"
+            - "googlecasclusterissuers.cas-issuer.jetstack.io/*"
+    asserts:
+      - isKind:
+          of: GoogleCASIssuer
+      - equal:
+          path: spec.project
+          value: my-project
+      - equal:
+          path: spec.location
+          value: europe-west1
+      - equal:
+          path: spec.caPoolId
+          value: my-pool
+
+  - it: googleCas fails when certManagerIssuer.googleCas is empty
+    set:
+      global:
+        armonik:
+          certManager:
+            issuer:
+              enabled: true
+              name: shared-issuer
+              kind: GoogleCASIssuer
+              group: cas-issuer.jetstack.io
+      certManagerIssuer:
+        create: true
+        provider: googleCas
+      operators:
+        cert-manager:
+          approveSignerNames:
+            - "googlecasissuers.cas-issuer.jetstack.io/*"
+            - "googlecasclusterissuers.cas-issuer.jetstack.io/*"
+    asserts:
+      - failedTemplate:
+          errorPattern: "certManagerIssuer.googleCas is required for provider=googleCas"
+
+  # Regression guard: approveSignerNames REPLACES the jetstack chart default instead of extending it,
+  # so a googleCas run that forgets to set it leaves CertificateRequests unapproved forever (this was
+  # discovered the hard way against a real GKE cluster: see charts/gcp-values.example.yaml).
+  - it: googleCas fails when operators.cert-manager.approveSignerNames is not set (this release deploys cert-manager)
+    set:
+      global:
+        armonik:
+          certManager:
+            issuer:
+              enabled: true
+              name: shared-issuer
+              kind: GoogleCASIssuer
+              group: cas-issuer.jetstack.io
+      certManagerIssuer:
+        create: true
+        provider: googleCas
+        googleCas:
+          project: my-project
+          location: europe-west1
+          caPoolId: my-pool
+    asserts:
+      - failedTemplate:
+          errorPattern: "operators.cert-manager.approveSignerNames"
+  - it: googleCas fails when operators.cert-manager.approveSignerNames is missing the clusterissuer entry
+    set:
+      global:
+        armonik:
+          certManager:
+            issuer:
+              enabled: true
+              name: shared-issuer
+              kind: GoogleCASIssuer
+              group: cas-issuer.jetstack.io
+      certManagerIssuer:
+        create: true
+        provider: googleCas
+        googleCas:
+          project: my-project
+          location: europe-west1
+          caPoolId: my-pool
+      operators:
+        cert-manager:
+          approveSignerNames:
+            - "googlecasissuers.cas-issuer.jetstack.io/*"
+    asserts:
+      - failedTemplate:
+          errorPattern: "operators.cert-manager.approveSignerNames"
+  - it: googleCas skips the approveSignerNames guard when cert-manager is not deployed by this release
+    set:
+      global:
+        armonik:
+          certManager:
+            issuer:
+              enabled: true
+              name: shared-issuer
+              kind: GoogleCASIssuer
+              group: cas-issuer.jetstack.io
+          operators:
+            certManager:
+              deploy: false
+              available: true
+      certManagerIssuer:
+        create: true
+        provider: googleCas
+        googleCas:
+          project: my-project
+          location: europe-west1
+          caPoolId: my-pool
+    asserts:
+      - notFailedTemplate: {}
+
+  - it: venafi renders from certManagerIssuer.venafi forwarded as-is
+    set:
+      global:
+        armonik:
+          certManager:
+            issuer:
+              enabled: true
+              name: shared-issuer
+      certManagerIssuer:
+        create: true
+        provider: venafi
+        venafi:
+          zone: my-zone
+          cloud:
+            apiTokenSecretRef:
+              name: venafi-token
+    asserts:
+      - isKind:
+          of: Issuer
+      - equal:
+          path: spec.venafi.zone
+          value: my-zone
+      - equal:
+          path: spec.venafi.cloud.apiTokenSecretRef.name
+          value: venafi-token
+
+  - it: venafi fails when certManagerIssuer.venafi is empty
+    set:
+      global:
+        armonik:
+          certManager:
+            issuer:
+              enabled: true
+              name: shared-issuer
+      certManagerIssuer:
+        create: true
+        provider: venafi
+    asserts:
+      - failedTemplate:
+          errorPattern: "certManagerIssuer.venafi is required for provider=venafi"
+
+  - it: ca renders from certManagerIssuer.ca forwarded as-is
+    set:
+      global:
+        armonik:
+          certManager:
+            issuer:
+              enabled: true
+              name: shared-issuer
+      certManagerIssuer:
+        create: true
+        provider: ca
+        ca:
+          secretName: my-ca-key-pair
+    asserts:
+      - isKind:
+          of: Issuer
+      - equal:
+          path: spec.ca.secretName
+          value: my-ca-key-pair
+
+  - it: ca fails when certManagerIssuer.ca is empty
+    set:
+      global:
+        armonik:
+          certManager:
+            issuer:
+              enabled: true
+              name: shared-issuer
+      certManagerIssuer:
+        create: true
+        provider: ca
+    asserts:
+      - failedTemplate:
+          errorPattern: "certManagerIssuer.ca is required for provider=ca"
+
+  - it: vault renders from certManagerIssuer.vault forwarded as-is
+    set:
+      global:
+        armonik:
+          certManager:
+            issuer:
+              enabled: true
+              name: shared-issuer
+      certManagerIssuer:
+        create: true
+        provider: vault
+        vault:
+          server: https://vault.example.com
+          path: pki/sign/example
+    asserts:
+      - isKind:
+          of: Issuer
+      - equal:
+          path: spec.vault.server
+          value: https://vault.example.com
+      - equal:
+          path: spec.vault.path
+          value: pki/sign/example
+
+  - it: acme renders from certManagerIssuer.acme forwarded as-is
+    set:
+      global:
+        armonik:
+          certManager:
+            issuer:
+              enabled: true
+              name: shared-issuer
+      certManagerIssuer:
+        create: true
+        provider: acme
+        acme:
+          server: https://acme.example.com/directory
+          email: admin@example.com
+          privateKeySecretRef:
+            name: acme-account-key
+    asserts:
+      - isKind:
+          of: Issuer
+      - equal:
+          path: spec.acme.server
+          value: https://acme.example.com/directory
+      - equal:
+          path: spec.acme.email
+          value: admin@example.com
+
+  - it: fails on an unrecognized provider
+    set:
+      global:
+        armonik:
+          certManager:
+            issuer:
+              enabled: true
+              name: shared-issuer
+      certManagerIssuer:
+        create: true
+        provider: bogus
+    asserts:
+      - failedTemplate:
+          errorPattern: "certManagerIssuer.provider \"bogus\" is not recognized: use selfSigned, ca, vault, acme, venafi or googleCas"

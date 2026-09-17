@@ -3,6 +3,10 @@
 # being this chart's whole purpose. Under the umbrella, the umbrella's global.armonik.operators.* wins.
 # Mind the two paths: global.armonik.operators.<op> are the control flags, <op> at the top level is the
 # operator subchart's own configuration.
+# googleCasIssuer is the one exception left at its armonik-common default (deploy=false): it is
+# GCP-specific, only needed for certManager.issuer.provider=googleCas, so installing it unconditionally
+# would pull in a cloud-specific CRD/controller.
+# Opt in explicitly with --set global.armonik.operators.googleCasIssuer.deploy=true.
 global:
   armonik:
     operators:
@@ -16,6 +20,8 @@ global:
         deploy: true
       prometheusOperator:
         deploy: true
+      googleCasIssuer:
+        deploy: false
 
 # --- Operator subchart configuration, at operators.<op>.* under the umbrella ---
 
@@ -67,6 +73,11 @@ cert-manager:
       enabled: true
   # global:
   #   priorityClassName:
+
+google-cas-issuer:
+  crds:
+    enabled: true
+    keep: false
 
 # Percona Server for MongoDB operator (https://percona.github.io/percona-helm-charts/). Chart defaults
 # install the CRDs; the PerconaServerMongoDB CR itself stays in armonik-dependencies.

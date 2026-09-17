@@ -2,6 +2,7 @@ suite: tls and mtls
 templates:
   - certificate.yaml
   - armonik-nginx-conf.yaml
+  - services/ingress.yaml
 values:
   - ../ci/tls-mtls-values.yaml
 tests:
@@ -58,3 +59,30 @@ tests:
     asserts:
       - failedTemplate:
           errorPattern: "ingress TLS via cert-manager requires it"
+  - it: Service and Certificate share the same name and namespace under overrides
+    set:
+      fullnameOverride: custom-ingress
+      namespaceOverride: ingress-ns
+    asserts:
+      - equal:
+          path: metadata.name
+          value: custom-ingress
+        template: services/ingress.yaml
+      - equal:
+          path: metadata.namespace
+          value: ingress-ns
+        template: services/ingress.yaml
+      - equal:
+          path: metadata.namespace
+          value: ingress-ns
+        template: certificate.yaml
+        documentSelector:
+          path: kind
+          value: Certificate
+      - contains:
+          path: spec.dnsNames
+          content: custom-ingress.ingress-ns
+        template: certificate.yaml
+        documentSelector:
+          path: kind
+          value: Certificate

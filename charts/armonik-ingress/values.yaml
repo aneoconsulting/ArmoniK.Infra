@@ -10,7 +10,7 @@ image:
   registry:
   repository: nginxinc
   name: nginx-unprivileged
-  tag: 1.27.4-alpine-slim
+  tag: 1.31.6-alpine-slim
   pullPolicy: IfNotPresent
 
 replicas: 1

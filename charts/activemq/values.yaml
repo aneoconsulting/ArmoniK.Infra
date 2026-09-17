@@ -27,6 +27,25 @@ serviceAccount:
 activemqOptsMemory: "-Xms1g -Xmx1g"
 
 extraEnv: []
+# -- Extra envFrom for the activemq container.
+extraEnvFrom: []
+# -- Extra containers, after the activemq container, and extra init containers.
+extraContainers: []
+extraInitContainers: []
+# containerPatch:
+#   securityContext:
+#     readOnlyRootFilesystem: true
+#
+# -- Merged over the activemq container, last. Lists the chart builds are refused: use extra*.
+containerPatch: {}
+# podSpecPatch:
+#   hostAliases:
+#     - ip: "10.0.0.1"
+#       hostnames: ["legacy.internal"]
+#
+# -- Merged over spec.template.spec, last. Lists the chart builds are refused: use extra*.
+# Pod labels are out of reach: the selector is immutable.
+podSpecPatch: {}
   # - name: ACTIVEMQ_ENABLE_SCHEDULER
   #   value: "true"
 

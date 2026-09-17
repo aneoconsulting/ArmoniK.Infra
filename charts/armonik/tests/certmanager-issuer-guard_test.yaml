@@ -133,3 +133,70 @@ tests:
             enabled: true
     asserts:
       - notFailedTemplate: {}
+
+  - it: does not fire for a consumer with certManager.provider set even when its namespace diverges from the shared issuer
+    set:
+      global:
+        armonik:
+          certManager:
+            issuer:
+              enabled: true
+              name: shared-issuer
+      certManagerIssuer:
+        create: true
+        provider: venafi
+        venafi:
+          zone: my-zone
+      ingress:
+        namespaceOverride: other-ns-1
+        tls:
+          enabled: true
+          certManager:
+            enabled: true
+            provider: selfSigned
+      dependencies:
+        activemq:
+          namespaceOverride: other-ns-2
+          tls:
+            enabled: true
+            type: cert-manager
+            certManager:
+              provider: selfSigned
+        mongodb:
+          namespaceOverride: other-ns-3
+          certManager:
+            enabled: true
+            provider: ca
+            ca:
+              secretName: mongo-ca
+    asserts:
+      - notFailedTemplate: {}
+
+  - it: still fires for a consumer without certManager.provider set even when a sibling consumer sets it
+    set:
+      global:
+        armonik:
+          certManager:
+            issuer:
+              enabled: true
+              name: shared-issuer
+      certManagerIssuer:
+        create: true
+        provider: venafi
+        venafi:
+          zone: my-zone
+      dependencies:
+        activemq:
+          namespaceOverride: other-ns
+          tls:
+            enabled: true
+            type: cert-manager
+            certManager:
+              provider: selfSigned
+        mongodb:
+          namespaceOverride: other-ns-2
+          certManager:
+            enabled: true
+    asserts:
+      - failedTemplate:
+          errorPattern: 'dependencies.mongodb renders its Certificates into namespace "other-ns-2"'

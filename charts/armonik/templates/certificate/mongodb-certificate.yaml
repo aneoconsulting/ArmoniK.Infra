@@ -37,16 +37,11 @@
 {{- end }}
 
 {{- $domain := include "armonik.clusterDomain" . }}
-{{- /* Real CR name and namespace (charts/armonik-dependencies/charts/mongodb is psmdb-db, aliased
-       "mongodb"): the operator derives the replset Service/StatefulSet names from this CR's
-       metadata.name and creates them in the CR's own namespace, so reuse the chart's own helpers
-       through the live subchart scope rather than guessing "<release>-mongodb" or assuming the
-       umbrella's namespace. dependencies.mongodb.namespaceOverride and dependencies.mongodb.
-       {nameOverride,fullnameOverride} are real psmdb-db values independent of the umbrella's own
-       namespaceOverride/fullname, and diverge from them silently if read from the wrong scope (same
-       bug class as redis's hardcoded Service name). replsetName stays an ArmoniK-only convenience
-       defaulting to the chart's own default replset key "rs0"; it is not re-derived from
-       dependencies.mongodb.replsets.*.name, so a renamed replset needs it set explicitly. */}}
+{{- /* The operator derives the replset Service and StatefulSet names from this CR's metadata.name,
+       in the CR's own namespace, so resolve both through the live psmdb-db scope: its
+       {name,fullname,namespace}Override are its own values and diverge silently from the
+       umbrella's. replsetName is an ArmoniK convenience defaulting to "rs0", not derived from
+       dependencies.mongodb.replsets.*.name, so a renamed replset must set it. */}}
 {{- $cluster := include "psmdb-database.fullname" .Subcharts.dependencies.Subcharts.mongodb }}
 {{- $ns := include "psmdb-database.namespace" .Subcharts.dependencies.Subcharts.mongodb }}
 {{- $replset := $mongo.replsetName | default "rs0" }}

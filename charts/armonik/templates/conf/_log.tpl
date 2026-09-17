@@ -21,6 +21,7 @@ env:
 {{- end }}
 {{- end -}}
 
+{{/* The assembled layer: logHelper and the user's conf.log, merged in that order. */}}
 {{- define "armonik.conf.log" -}}
   {{- list
         (include "armonik.conf.logHelper" . | fromYaml)

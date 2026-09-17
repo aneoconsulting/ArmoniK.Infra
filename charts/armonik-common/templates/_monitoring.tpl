@@ -20,15 +20,11 @@ Resolves metricsExporterUrl. Its default reads chart-level conf.source, so this 
 {{- end -}}
 
 {{/*
-Control-plane metrics-exporter /metrics, KEDA's default scaling source:
+Metrics-exporter /metrics, KEDA's default scaling source:
 http://<conf.source>-control-plane-metrics-exporter.<release-ns>.svc[.<clusterDomain>]:9419/metrics.
-Correct as-is for the umbrella (control-plane installed as its "control-plane"-aliased subchart:
-<conf.source> is the umbrella's own release name, and Helm's alias mechanism makes that the exact
-service name armonik-control-plane renders). NOT correct for a standalone control-plane release
-whose own release name differs from conf.source (armonik.fullname has no alias to collapse
-against, so the real service name is <that release>-armonik-control-plane-metrics-exporter): set
-global.armonik.monitoring.metricsExporterUrl yourself in that case, same as
-global.armonik.controlPlane for the control-plane URL.
+The "control-plane" alias makes that the real service name under the umbrella. A standalone
+control-plane release whose name differs from conf.source has no alias to collapse against, so set
+global.armonik.monitoring.metricsExporterUrl there, as with global.armonik.controlPlane.
 */}}
 {{- define "armonik.monitoring.metricsExporterUrl.default" -}}
   {{- $src := include "armonik.conf.source" . -}}
@@ -37,9 +33,7 @@ global.armonik.controlPlane for the control-plane URL.
   {{- printf "http://%s-control-plane-metrics-exporter.%s.svc%s:9419/metrics" $src .Release.Namespace $suffix -}}
 {{- end -}}
 
-{{/*
-Resolves prometheusUrl: the Grafana datasource, and a PromQL KEDA trigger's endpoint.
-*/}}
+{{/* Resolves prometheusUrl: the Grafana datasource, and a PromQL KEDA trigger's endpoint. */}}
 {{- define "armonik.monitoring.prometheusUrl" -}}
   {{- $raw := list .Values "global" "armonik" "monitoring" "prometheusUrl" | include "armonik.utils.index" -}}
   {{- $url := tpl $raw . -}}

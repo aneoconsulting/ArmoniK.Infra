@@ -1,6 +1,4 @@
-{{/*
-  Nginx -> GUI
-*/}}
+{{/* Nginx -> GUI */}}
 {{- define "armonik.netpol.rule.guiTo" -}}
 {{- $guiPort := include "armonik.netpol.port" (dict
       "ports" .Values.gui.ports
@@ -19,9 +17,7 @@ ports:
 {{- end -}}
 
 
-{{/*
-  GUI ingress: from the nginx front pod only.
-*/}}
+{{/* GUI ingress: from the nginx front pod only. */}}
 {{- define "armonik.netpol.rule.guiFrom" -}}
 from:
   - namespaceSelector:
@@ -33,9 +29,7 @@ from:
 {{- end -}}
 
 
-{{/*
-  External entrypoint into nginx
-*/}}
+{{/* External entrypoint into nginx */}}
 {{- define "armonik.netpol.rule.nginxExternal" -}}
 from: []
 ports:
@@ -46,9 +40,7 @@ ports:
 {{- end -}}
 
 
-{{/*
-  Egress rules for the NGINX front pod: DNS, GUI .
-*/}}
+{{/* Egress rules for the NGINX front pod: DNS, GUI . */}}
 {{- define "armonik.netpol.nginxEgress" -}}
   {{- dict
         "armonik.netpol.dnsRule" dict
@@ -68,9 +60,7 @@ ports:
 {{- end -}}
 
 
-{{/*
-  NGINX front NetworkPolicy configuration.
-*/}}
+{{/* NGINX front NetworkPolicy configuration. */}}
 {{- define "armonik.netpol.ingressNginx" -}}
 podSelector:
   matchLabels:
@@ -91,6 +81,7 @@ egress:
 {{- end -}}
 
 
+{{/* NetworkPolicy body admitting the load balancer's health checks, which bypass the ingress rules. */}}
 {{- define "armonik.netpol.ingressHealthCheck" -}}
 podSelector:
   {{- .Values.networkPolicy.healthCheckPodSelector | default dict | toYaml | nindent 2 }}
@@ -99,9 +90,7 @@ ingress:
 {{- end -}}
 
 
-{{/*
-  GUI NetworkPolicy configuration.
-*/}}
+{{/* GUI NetworkPolicy configuration. */}}
 {{- define "armonik.netpol.ingressGui" -}}
 podSelector:
   matchLabels:

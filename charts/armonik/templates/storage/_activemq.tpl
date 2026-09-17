@@ -1,20 +1,14 @@
-{{/*
-Expand the namespace of the activemq instance.
-*/}}
+{{/* Expand the namespace of the activemq instance. */}}
 {{- define "armonik.activemq.namespace" -}}
   {{- include "activemq.namespace" . -}}
 {{- end }}
 
-{{/*
-ActiveMQ's AMQP port.
-*/}}
+{{/* ActiveMQ's AMQP port. */}}
 {{- define "armonik.activemq.port" -}}
   {{- .Values.containerPort.amqp -}}
 {{- end }}
 
-{{/*
-Gets the configuration from activemq forwarded to ArmoniK Core.
-*/}}
+{{/* Gets the configuration from activemq forwarded to ArmoniK Core. */}}
 {{- define "armonik.activemq.conf" -}}
 {{/* Live subchart scope via .Subcharts (armonik-dependencies is aliased "dependencies"); skipped when the dep is disabled. */}}
 {{- with .Subcharts.dependencies.Subcharts.activemq -}}

@@ -1,8 +1,6 @@
 {{- $networkPolicyEnabled := list .Values "networkPolicy" "enabled" | include "armonik.utils.index" -}}
 
-{{/*
-  MongoDB operator NetworkPolicy.
-*/}}
+{{/* MongoDB operator NetworkPolicy. */}}
 
 {{- $mongodbOperator := include "armonik.netpol.mongodbOperator" . | fromYaml -}}
 
@@ -14,9 +12,7 @@
   ) }}
 {{- end }}
 
-{{/*
-  MongoDB server NetworkPolicy.
-*/}}
+{{/* MongoDB server NetworkPolicy. */}}
 
 {{- $mongodbServer := include "armonik.netpol.mongodbServer" . | fromYaml -}}
 

@@ -1,13 +1,9 @@
-{{/*
-Expand the name of the chart.
-*/}}
+{{/* Expand the name of the chart. */}}
 {{- define "armonik.name" -}}
   {{-  .Values.nameOverride | default .Chart.Name | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
-{{/*
-Expand the namespace of the chart.
-*/}}
+{{/* Expand the namespace of the chart. */}}
 {{- define "armonik.namespace" -}}
   {{-  .Values.namespaceOverride | default .Release.Namespace }}
 {{- end }}
@@ -30,9 +26,7 @@ If release name contains chart name it will be used as a full name.
   {{- end }}
 {{- end }}
 
-{{/*
-Create chart name and version as used by the chart label.
-*/}}
+{{/* Create chart name and version as used by the chart label. */}}
 {{- define "armonik.chart" -}}
   {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
 {{- end }}
@@ -59,9 +53,7 @@ When create=false, this must instead name an existing ServiceAccount to use.
 {{- end -}}
 
 
-{{/*
-Common labels
-*/}}
+{{/* Common labels */}}
 {{- define "armonik.labels" -}}
 helm.sh/chart: {{ include "armonik.chart" . }}
 {{ include "armonik.selectorLabels" . }}
@@ -74,9 +66,7 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end }}
 {{- end }}
 
-{{/*
-Selector labels
-*/}}
+{{/* Selector labels */}}
 {{- define "armonik.selectorLabels" -}}
 app.kubernetes.io/name: {{ include "armonik.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
@@ -93,6 +83,7 @@ stop at ".svc" read global.clusterDomain and drop the suffix when it is empty.
   {{- coalesce $tls.clusterDomain .Values.clusterDomain $global "cluster.local" -}}
 {{- end -}}
 
+{{/* The control-plane Service port named `control-port`; 0 when the chart declares no such port. */}}
 {{- define "armonik.controlPlane.servicePort" -}}
 	{{- $ports := list .Values "control-plane" "service" "ports" | include "armonik.utils.index" | fromYamlArray -}}
 	{{- $port := 0 -}}
@@ -104,9 +95,7 @@ stop at ".svc" read global.clusterDomain and drop the suffix when it is empty.
 	{{- $port -}}
 {{- end }}
 
-{{/*
-  Generic port lookup.
-*/}}
+{{/* Generic port lookup. */}}
 {{- define "armonik.netpol.port" -}}
   {{- $ports := .ports | default list -}}
   {{- $name := .name -}}

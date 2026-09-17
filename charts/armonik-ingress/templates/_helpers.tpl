@@ -1,6 +1,4 @@
-{{/*
-Calculate port based on protocol and TLS status
-*/}}
+{{/* Calculate port based on protocol and TLS status */}}
 {{- define "armonik.ingress.containerPort" -}}
 {{- if eq .protocol "http" }}
   {{- if and .root.Values.tls.enabled (not .root.Values.gateway.enabled) -}}
@@ -39,6 +37,10 @@ Calculate port based on protocol and TLS status
 {{- end }}
 {{- end }}
 
+{{/*
+nginx regex alternation of mtls.trustedCommonNames, dots escaped. Empty when mTLS is off,
+which the caller reads as "accept any CN the CA signed".
+*/}}
 {{- define "armonik.ingress.mtlsCnPattern" -}}
   {{- $mtls := .mtls | default dict -}}
   {{- if $mtls.enabled -}}
@@ -52,6 +54,7 @@ Calculate port based on protocol and TLS status
   {{- end -}}
 {{- end -}}
 
+{{/* Service type: ClusterIP when an HTTPRoute fronts the ingress, otherwise service.type. */}}
 {{- define "armonik.ingress.serviceType" -}}
   {{- if .Values.httpRoute.enabled -}}
     ClusterIP

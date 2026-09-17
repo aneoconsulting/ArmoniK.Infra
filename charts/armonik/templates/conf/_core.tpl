@@ -1,6 +1,7 @@
 {{/* "core" layer: storage env + credentials (mongodb/activemq/rabbitmq/redis), coreHelper, conf.core. */}}
 {{- define "armonik.conf.coreHelper" -}}
 {{- end -}}
+{{/* The assembled layer: the storage fragments, coreHelper, and the user's conf.core, merged in that order. */}}
 {{- define "armonik.conf.core" -}}
   {{- list
         (include "armonik.mongodb.conf" . | fromYaml)

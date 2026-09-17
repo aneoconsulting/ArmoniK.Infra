@@ -44,7 +44,7 @@ dependencies:
     repository: https://charts.bitnami.com/bitnami
     condition: rabbitmq.enabled
   - name: grafana
-    version: 8.x.x
+    version: 10.x.x
     repository: https://grafana.github.io/helm-charts
     condition: grafana.enabled
   - name: fluent-bit

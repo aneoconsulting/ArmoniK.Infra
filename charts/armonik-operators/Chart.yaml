@@ -42,7 +42,7 @@ dependencies:
     alias: mongodb-operator
     condition: global.armonik.operators.mongodbOperator.deploy
   - name: kube-prometheus-stack
-    version: 82.x.x
+    version: 91.x.x
     repository: https://prometheus-community.github.io/helm-charts
     alias: kube-prometheus
     condition: global.armonik.operators.prometheusOperator.deploy

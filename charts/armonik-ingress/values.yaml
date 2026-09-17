@@ -10,7 +10,7 @@ image:
   registry:
   repository: nginxinc
   name: nginx-unprivileged
-  tag: 1.27.4-alpine-slim
+  tag: 1.31.6-alpine-slim
   pullPolicy: IfNotPresent
 
 replicas: 1
@@ -110,7 +110,7 @@ loadBalancer:
     registry:
     repository: dockerhubaneo
     name: armonik_load_balancer
-    tag: "0.3.1"
+    tag: "0.3.2"
     pullPolicy: IfNotPresent
   replicas: 1
   conf:

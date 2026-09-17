@@ -13,7 +13,7 @@ HorizontalPodAutoscaler:
 image:
   repository: symptoma
   name: activemq
-  tag: 5.18.4
+  tag: 5.19.10
   pullPolicy: IfNotPresent
   imagePullSecrets: []
   registry: ""

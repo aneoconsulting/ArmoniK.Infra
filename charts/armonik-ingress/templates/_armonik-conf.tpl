@@ -167,8 +167,9 @@ server {
     # ===== TLS DISABLED =====
     listen 8080;
     listen [::]:8080;
-    listen 9080 http2;
-    listen [::]:9080 http2;
+    listen 9080;
+    listen [::]:9080;
+    http2 on;
     {{- end }}
 
     sendfile on;

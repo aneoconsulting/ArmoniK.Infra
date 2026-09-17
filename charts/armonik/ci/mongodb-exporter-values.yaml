@@ -1,8 +1,7 @@
-# Exercises the mongodb-exporter dependency: its ExternalSecret, ServiceMonitor and NetworkPolicy
-# all need externalSecrets/prometheusOperator available, so this profile layers on the same
-# operators-available shape as layered-operators-values.yaml. MongoDB TLS stays at its umbrella
-# default (unsafeFlags.tls=true, i.e. not required) - see mongodb-exporter-tls-values.yaml for the
-# TLS-required combination.
+# Exercises the mongodb-exporter dependency. Its ExternalSecret, ServiceMonitor and NetworkPolicy
+# all need externalSecrets/prometheusOperator available, hence the operators-available shape of
+# layered-operators-values.yaml. MongoDB TLS stays at the umbrella default (not required);
+# mongodb-exporter-tls-values.yaml covers the other case.
 global:
   armonik:
     operators:

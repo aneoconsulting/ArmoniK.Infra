@@ -1,27 +1,19 @@
-{{/*
-Gets the hostname from redis context.
-*/}}
+{{/* Gets the hostname from redis context. */}}
 {{- define "armonik.redis.host" -}}
   {{- include "valkey.fullname" . }}.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain -}}
 {{- end -}}
 
-{{/*
-Gets the port from redis context.
-*/}}
+{{/* Gets the port from redis context. */}}
 {{- define "armonik.redis.port" -}}
   {{- .Values.service.port }}
 {{- end -}}
 
-{{/*
-Expand the namespace of the valkey instance.
-*/}}
+{{/* Expand the namespace of the valkey instance. */}}
 {{- define "armonik.redis.namespace" -}}
   {{- .Release.Namespace -}}
 {{- end }}
 
-{{/*
-Gets the configuration from redis forwarded to ArmoniK Core.
-*/}}
+{{/* Gets the configuration from redis forwarded to ArmoniK Core. */}}
 {{- define "armonik.redis.conf" -}}
 {{- $root := . -}}
 {{- $prefix := "redis-" -}}

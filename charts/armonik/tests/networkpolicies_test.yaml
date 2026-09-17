@@ -71,9 +71,8 @@ tests:
               - protocol: TCP
                 port: 27017
 
-  - it: allows the mongodb-exporter to reach the MongoDB server (unconditionally - a harmless
-      podSelector when the exporter is disabled, matching controlPlaneFrom/metricsExporterFrom/
-      computePlaneFrom)
+  - it: allows the mongodb-exporter to reach the MongoDB server (unconditionally, like the other
+      source rules; a podSelector matching nothing is harmless when the exporter is disabled)
     template: templates/networkpolicies/mongodb.yaml
     set:
       networkPolicy:

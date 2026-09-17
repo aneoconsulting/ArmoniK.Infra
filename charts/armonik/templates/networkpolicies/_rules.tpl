@@ -1,14 +1,10 @@
-{{/*
-  Control-plane's control-port container port.
-*/}}
+{{/* Control-plane's control-port container port. */}}
 {{- define "armonik.netpol.controlPlane.controlPort" -}}
   {{- list . (list "control-plane" "ports") "control-port" | include "armonik.netpol.controlPlane.port" -}}
 {{- end -}}
 
 
-{{/*
-  Control-plane's metrics-exporter deployment's metrics-port container port.
-*/}}
+{{/* Control-plane's metrics-exporter deployment's metrics-port container port. */}}
 {{- define "armonik.netpol.controlPlane.metricsExporterPort" -}}
   {{- list . (list "control-plane" "metricsExporter" "ports") "metrics-port" | include "armonik.netpol.controlPlane.port" -}}
 {{- end -}}
@@ -26,17 +22,13 @@
 {{- end -}}
 
 
-{{/*
-  MongoDB's pod selector.
-*/}}
+{{/* MongoDB's pod selector. */}}
 {{- define "armonik.netpol.podSelector.mongodb" -}}
   {{- list . "mongodbPodSelector" "percona-server-mongodb" | include "armonik.netpol.podSelector.override" -}}
 {{- end -}}
 
 
-{{/*
-  KEDA operator's pod selector.
-*/}}
+{{/* KEDA operator's pod selector. */}}
 {{- define "armonik.netpol.podSelector.keda" -}}
   {{- list . "kedaPodSelector" "keda-operator" | include "armonik.netpol.podSelector.override" -}}
 {{- end -}}
@@ -100,9 +92,8 @@ ports:
 
 
 {{/*
-  Allows the mongodb-exporter as a source, on the given port. Helm's dependency alias becomes
-  that subchart instance's own .Chart.Name, so its labels read "mongodb-exporter" (our alias),
-  not the chart's real name (prometheus-mongodb-exporter).
+  Allows the mongodb-exporter as a source, on the given port. Its labels carry the dependency
+  alias, not the chart name (prometheus-mongodb-exporter).
   Args (list): [root, port]
 */}}
 {{- define "armonik.netpol.rule.mongodbExporterFrom" -}}
@@ -114,6 +105,7 @@ ports:
     ) -}}
   {{- list $root $podSelector $port | include "armonik.netpol.rule.componentFrom" -}}
 {{- end -}}
+
 
 {{/*
   Generic egress rule to a dependency subchart: its namespace + podSelector (override or chart default) 
@@ -138,41 +130,31 @@ ports:
 {{- end -}}
 
 
-{{/*
-  Egress to MongoDB.
-*/}}
+{{/* Egress to MongoDB. */}}
 {{- define "armonik.netpol.rule.mongodb" -}}
   {{- list . "mongodb" (include "armonik.netpol.podSelector.mongodb" .) "armonik.mongodb.port" | include "armonik.netpol.rule.dependencyTo" -}}
 {{- end -}}
 
 
-{{/*
-  Egress to RabbitMQ.
-*/}}
+{{/* Egress to RabbitMQ. */}}
 {{- define "armonik.netpol.rule.rabbitmq" -}}
   {{- list . "rabbitmq" "" "armonik.rabbitmq.port" | include "armonik.netpol.rule.dependencyTo" -}}
 {{- end -}}
 
 
-{{/*
-  Egress to ActiveMQ.
-*/}}
+{{/* Egress to ActiveMQ. */}}
 {{- define "armonik.netpol.rule.activemq" -}}
   {{- list . "activemq" "" "armonik.activemq.port" | include "armonik.netpol.rule.dependencyTo" -}}
 {{- end -}}
 
 
-{{/*
-  Egress to Redis.
-*/}}
+{{/* Egress to Redis. */}}
 {{- define "armonik.netpol.rule.redis" -}}
   {{- list . "redis" "" "armonik.redis.port" | include "armonik.netpol.rule.dependencyTo" -}}
 {{- end -}}
 
 
-{{/*
-  Egress to Seq on the given port.
-*/}}
+{{/* Egress to Seq on the given port. */}}
 {{- define "armonik.netpol.rule.seqTo" -}}
   {{- $root := index . 0 -}}
   {{- $port := index . 1 -}}
@@ -184,17 +166,13 @@ ports:
 {{- end -}}
 
 
-{{/*
-  Egress to Seq's ingest port (used by fluent-bit).
-*/}}
+{{/* Egress to Seq's ingest port (used by fluent-bit). */}}
 {{- define "armonik.netpol.rule.seq" -}}
   {{- list . 5341 | include "armonik.netpol.rule.seqTo" -}}
 {{- end -}}
 
 
-{{/*
-  Egress rule: nginx -> control-plane control port.
-*/}}
+{{/* Egress rule: nginx -> control-plane control port. */}}
 {{- define "armonik.netpol.rule.ingressToControlPlane" -}}
   {{- with index .Subcharts "control-plane" -}}
     {{- $ns := include "armonik.netpol.namespaceSelector" . -}}
@@ -205,9 +183,7 @@ ports:
 {{- end -}}
 
 
-{{/*
-  Egress rule: nginx -> Grafana.
-*/}}
+{{/* Egress rule: nginx -> Grafana. */}}
 {{- define "armonik.netpol.rule.ingressToGrafana" -}}
   {{- with .Subcharts.dependencies.Subcharts.grafana -}}
     {{- $ns := include "armonik.netpol.namespaceSelector" . -}}
@@ -218,17 +194,13 @@ ports:
 {{- end -}}
 
 
-{{/*
-  Egress rule: nginx -> Seq UI port.
-*/}}
+{{/* Egress rule: nginx -> Seq UI port. */}}
 {{- define "armonik.netpol.rule.ingressToSeq" -}}
   {{- list . "ui" | include "armonik.netpol.rule.seqTo" -}}
 {{- end -}}
 
 
-{{/*
-  Ingress (nginx) NetworkPolicy: egress-only, to control-plane + Grafana + Seq.
-*/}}
+{{/* Ingress (nginx) NetworkPolicy: egress-only, to control-plane + Grafana + Seq. */}}
 {{- define "armonik.netpol.ingressEgress" -}}
 {{- with .Subcharts.ingress -}}
 namespace: {{ include "armonik.namespace" . | quote }}
@@ -248,9 +220,7 @@ egress:
 {{- end -}}
 
 
-{{/*
-  Operator ingress: from the MongoDB server.
-*/}}
+{{/* Operator ingress: from the MongoDB server. */}}
 {{- define "armonik.netpol.rule.mongodbOperatorFrom" -}}
 {{- $root := . -}}
 {{- with $root.Subcharts.dependencies.Subcharts.mongodb -}}
@@ -263,9 +233,7 @@ from:
 {{- end -}}
 
 
-{{/*
-  Operator egress: to the MongoDB server and to cert-manager.
-*/}}
+{{/* Operator egress: to the MongoDB server and to cert-manager. */}}
 {{- define "armonik.netpol.rule.mongodbOperatorTo" -}}
 {{- $root := . -}}
 to:
@@ -287,9 +255,7 @@ ports:
 {{- end -}}
 
 
-{{/*
-  Shared MongoDB operator<->server rule; direction ("from"/"to") passed as arg.
-*/}}
+{{/* Shared MongoDB operator<->server rule; direction ("from"/"to") passed as arg. */}}
 {{- define "armonik.netpol.rule.mongodbServerOperator" -}}
 {{- $root := index . 0 -}}
 {{- $direction := index . 1 -}}
@@ -305,25 +271,19 @@ ports:
 {{- end -}}
 
 
-{{/*
-  Server ingress: from the MongoDB operator.
-*/}}
+{{/* Server ingress: from the MongoDB operator. */}}
 {{- define "armonik.netpol.rule.mongodbServerFromOperator" -}}
   {{- list . "from" | include "armonik.netpol.rule.mongodbServerOperator" -}}
 {{- end -}}
 
 
-{{/*
-  Server egress: to the MongoDB operator.
-*/}}
+{{/* Server egress: to the MongoDB operator. */}}
 {{- define "armonik.netpol.rule.mongodbServerToOperator" -}}
   {{- list . "to" | include "armonik.netpol.rule.mongodbServerOperator" -}}
 {{- end -}}
 
 
-{{/*
-  Shared MongoDB server<->server rule.
-*/}}
+{{/* Shared MongoDB server<->server rule. */}}
 {{- define "armonik.netpol.rule.mongodbServerPeers" -}}
 {{- $root := index . 0 -}}
 {{- $direction := index . 1 -}}
@@ -336,25 +296,19 @@ ports:
 {{- end -}}
 
 
-{{/*
-  Server ingress: from another replset member.
-*/}}
+{{/* Server ingress: from another replset member. */}}
 {{- define "armonik.netpol.rule.mongodbServerPeersFrom" -}}
   {{- list . "from" | include "armonik.netpol.rule.mongodbServerPeers" -}}
 {{- end -}}
 
 
-{{/*
-  Server egress: to another replset member.
-*/}}
+{{/* Server egress: to another replset member. */}}
 {{- define "armonik.netpol.rule.mongodbServerPeersTo" -}}
   {{- list . "to" | include "armonik.netpol.rule.mongodbServerPeers" -}}
 {{- end -}}
 
 
-{{/*
-  Egress to mongo, rabbitmq, activemq, redis + DNS. Shared by control-plane and compute-plane.
-*/}}
+{{/* Egress to mongo, rabbitmq, activemq, redis + DNS. Shared by control-plane and compute-plane. */}}
 {{- define "armonik.netpol.dependencyRules" -}}
   {{- $rules := dict
     "armonik.netpol.rule.mongodb" .
@@ -366,9 +320,7 @@ ports:
   {{- $rules | include "armonik.netpol.mergeRules" -}}
 {{- end -}}
 
-{{/*
-  Allows nginx as a source on the control-plane's control port.
-*/}}
+{{/* Allows nginx as a source on the control-plane's control port. */}}
 {{- define "armonik.netpol.rule.ingressFrom" -}}
   {{- with .Subcharts.ingress -}}
     {{- $controlPort := include "armonik.netpol.controlPlane.controlPort" $ | int -}}
@@ -435,9 +387,7 @@ egress:
 {{- end -}}
 
 
-{{/*
-  Metrics-exporter: ingress from KEDA, egress to MongoDB + DNS.
-*/}}
+{{/* Metrics-exporter: ingress from KEDA, egress to MongoDB + DNS. */}}
 {{- define "armonik.netpol.controlPlaneMetricsExporter" -}}
 podSelector:
   matchLabels:
@@ -454,9 +404,7 @@ egress:
 {{- end -}}
 
 
-{{/*
-  Compute-plane: egress to dependencies + DNS.
-*/}}
+{{/* Compute-plane: egress to dependencies + DNS. */}}
 {{- define "armonik.netpol.computePlaneConnectivity" -}}
 podSelector:
   matchLabels:
@@ -466,9 +414,7 @@ egress:
 {{- end -}}
 
 
-{{/*
-  Fluent-bit: egress to DNS + kube-api + Seq.
-*/}}
+{{/* Fluent-bit: egress to DNS + kube-api + Seq. */}}
 {{- define "armonik.netpol.fluentBitEgress" -}}
 {{- $root := . -}}
 {{- with index $root.Subcharts.dependencies.Subcharts "fluent-bit" -}}
@@ -487,9 +433,7 @@ egress:
 {{- end -}}
 
 
-{{/*
-  MongoDB operator: ingress from the server, egress to the server + cert-manager + DNS + kube-api.
-*/}}
+{{/* MongoDB operator: ingress from the server, egress to the server + cert-manager + DNS + kube-api. */}}
 {{- define "armonik.netpol.mongodbOperator" -}}
 {{- $root := . -}}
 {{- with index $root.Subcharts.operators.Subcharts "mongodb-operator" -}}
@@ -548,9 +492,7 @@ egress:
 {{- end -}}
 
 
-{{/*
-  MongoDB exporter egress: to the MongoDB server it scrapes.
-*/}}
+{{/* MongoDB exporter egress: to the MongoDB server it scrapes. */}}
 {{- define "armonik.netpol.rule.mongodbExporterTo" -}}
   {{- $root := . -}}
   {{- with $root.Subcharts.dependencies.Subcharts.mongodb -}}
@@ -562,24 +504,19 @@ egress:
 {{- end -}}
 
 
-{{/*
-  MongoDB exporter ingress: from the cluster's shared Prometheus, on its metrics port.
-*/}}
+{{/* MongoDB exporter ingress: from the cluster's shared Prometheus, on its metrics port. */}}
 {{- define "armonik.netpol.rule.mongodbExporterIngress" -}}
   {{- list . 9216 nil | include "armonik.netpol.rule.prometheusIngress" -}}
 {{- end -}}
 
 
-{{/*
-  MongoDB exporter NetworkPolicy: ingress from Prometheus, egress to MongoDB + DNS.
-*/}}
+{{/* MongoDB exporter NetworkPolicy: ingress from Prometheus, egress to MongoDB + DNS. */}}
 {{- define "armonik.netpol.mongodbExporter" -}}
 {{- $root := . -}}
 {{- with index $root.Subcharts.dependencies.Subcharts "mongodb-exporter" -}}
 podSelector:
   matchLabels:
-    {{/* Helm's dependency alias becomes this subchart instance's own .Chart.Name, so its labels
-         read "mongodb-exporter" (our alias), not the chart's real name. */}}
+    {{/* Labelled by the dependency alias, not the chart name (prometheus-mongodb-exporter). */}}
     app.kubernetes.io/name: mongodb-exporter
     app.kubernetes.io/instance: {{ $root.Release.Name | quote }}
 ingress:
@@ -595,9 +532,7 @@ egress:
 {{- end -}}
 
 
-{{/*
-  wait-cert-manager job: egress to DNS + kube-api only.
-*/}}
+{{/* wait-cert-manager job: egress to DNS + kube-api only. */}}
 {{- define "armonik.netpol.waitCertManagerEgress" -}}
 podSelector:
   matchLabels:
@@ -613,9 +548,7 @@ egress:
 {{- end -}}
 
 
-{{/*
-  Redis/valkey server: ingress from control-plane/init + compute-plane.
-*/}}
+{{/* Redis/valkey server: ingress from control-plane/init + compute-plane. */}}
 {{- define "armonik.netpol.redisServer" -}}
 {{- $root := . -}}
 {{- with $root.Subcharts.dependencies.Subcharts.redis -}}

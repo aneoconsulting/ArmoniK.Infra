@@ -43,15 +43,12 @@ needsLocalIssuer: true
 {{- end -}}
 
 {{/*
-Renders the tail of a Certificate's spec that is identical everywhere one is emitted: usages (server
-auth + client auth - a leaf certificate used for both, never a CA), the privateKey block, duration/
-renewBefore passthrough, and issuerRef built from an already-fetched issuer (armonik.certManager.
-getIssuer's output, fromYaml'd). Callers keep metadata, labels, commonName, dnsNames and secretName
-local - those vary per component and are not this helper's concern.
-Input: dict "certManager" <the component's own certManager block, read for .duration/.renewBefore>
-       "issuer" <armonik.certManager.getIssuer's output, fromYaml'd>
-Usage: under spec:, after the component-specific fields:
-       {{- include "armonik.certManager.certificateSpec" (dict "certManager" $certManager "issuer" $issuer) | nindent 2 }}
+The invariant tail of a Certificate spec: usages (server + client auth, always a leaf, never a CA),
+privateKey, duration/renewBefore passthrough, and issuerRef from an armonik.certManager.getIssuer
+result. Callers keep the per-component fields (metadata, commonName, dnsNames, secretName).
+Goes under spec:, after those.
+
+  {{- include "armonik.certManager.certificateSpec" (dict "certManager" $certManager "issuer" $issuer) | nindent 2 }}
 */}}
 {{- define "armonik.certManager.certificateSpec" -}}
 usages:

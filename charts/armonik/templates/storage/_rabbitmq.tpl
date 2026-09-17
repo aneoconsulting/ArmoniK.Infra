@@ -1,27 +1,19 @@
-{{/*
-Gets the hostname from rabbitmq context.
-*/}}
+{{/* Gets the hostname from rabbitmq context. */}}
 {{- define "armonik.rabbitmq.host" -}}
   {{- include "common.names.fullname" . }}.{{ include "common.names.namespace" . }}.svc.{{ .Values.clusterDomain }}
 {{- end -}}
 
-{{/*
-Gets the port from rabbitmq context.
-*/}}
+{{/* Gets the port from rabbitmq context. */}}
 {{- define "armonik.rabbitmq.port" -}}
   {{- or (.Values.service.portEnabled) (not .Values.auth.tls.enabled) | ternary .Values.service.ports.amqp .Values.service.ports.amqpTls -}}
 {{- end -}}
 
-{{/*
-Expand the namespace of the rabbitmq instance
-*/}}
+{{/* Expand the namespace of the rabbitmq instance */}}
 {{- define "armonik.rabbitmq.namespace" -}}
   {{- include "common.names.namespace" . -}}
 {{- end }}
 
-{{/*
-Gets the configuration from rabbitmq forwarded to ArmoniK Core.
-*/}}
+{{/* Gets the configuration from rabbitmq forwarded to ArmoniK Core. */}}
 {{- define "armonik.rabbitmq.conf" -}}
 {{- $root := . -}}
 {{- $prefix := "rabbitmq-" -}}

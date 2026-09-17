@@ -10,9 +10,7 @@
 {{- end -}}
 
 
-{{/*
-  Submitter (control-plane + init) NetworkPolicy configuration.
-*/}}
+{{/* Submitter (control-plane + init) NetworkPolicy configuration. */}}
 {{- define "armonik.netpol.submitter" -}}
 podSelector:
   matchLabels:
@@ -42,9 +40,7 @@ egress:
 {{- end -}}
 
 
-{{/*
-  Metrics-exporter NetworkPolicy configuration.
-*/}}
+{{/* Metrics-exporter NetworkPolicy configuration. */}}
 {{- define "armonik.netpol.metricsExporter" -}}
 podSelector:
   matchLabels:

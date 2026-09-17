@@ -4,7 +4,7 @@ dependencies:
   version: 1.0.0
 - name: valkey
   repository: https://valkey.io/valkey-helm/
-  version: 0.9.4
+  version: 0.12.0
 - name: psmdb-db
   repository: https://percona.github.io/percona-helm-charts/
   version: 1.23.2
@@ -20,5 +20,5 @@ dependencies:
 - name: seq
   repository: https://helm.datalust.co
   version: 2024.3.2
-digest: sha256:94e49eb480c8c04084f1b29a980d5aa6254648e36f71ca36f38ec85988ce9f6f
-generated: "2026-09-15T15:20:31.313423462+02:00"
+digest: sha256:9ca79bf79653a2223e834601606ac20ff30192e4f3dbe5105e96a6db7352e304
+generated: "2026-09-17T10:38:41.471580063+02:00"

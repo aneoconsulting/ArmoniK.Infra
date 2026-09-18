@@ -35,7 +35,7 @@ jobs:
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
 
       - name: Remove old branch chart tags
-        uses: aneoconsulting/ArmoniK.Actions.CleanupArtifacts/remove-images@40131ac01ff60baea9e02612ced7ac9b69916a3d # main
+        uses: aneoconsulting/ArmoniK.Actions.CleanupArtifacts/remove-images@c83a887c5a27fef327098a89bce0a28a4e82168d # main
         with:
           org: dockerhubaneo
           image: ${{ matrix.chart }}

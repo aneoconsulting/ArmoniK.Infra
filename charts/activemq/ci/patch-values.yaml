@@ -1,0 +1,28 @@
+# Escape hatches on the activemq deployment.
+image:
+  imagePullSecrets:
+    - name: from-chart
+global:
+  imagePullSecrets:
+    - name: from-global
+
+extraEnvFrom:
+  - configMapRef:
+      name: activemq-extra
+      optional: true
+extraContainers:
+  - name: debug
+    image: busybox:1.37.0
+    command: ["/bin/sh", "-c", "sleep infinity"]
+extraInitContainers:
+  - name: warmup
+    image: busybox:1.37.0
+    command: ["/bin/sh", "-c", "true"]
+containerPatch:
+  imagePullPolicy: Always
+  securityContext:
+    readOnlyRootFilesystem: true
+podSpecPatch:
+  hostAliases:
+    - ip: "10.0.0.1"
+      hostnames: ["legacy.internal"]

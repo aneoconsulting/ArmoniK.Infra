@@ -1,0 +1,68 @@
+suite: podSpecPatch, containerPatch and the extra* values
+templates:
+  - activemq-deployment.yaml
+values:
+  - ../ci/patch-values.yaml
+release:
+  name: t
+tests:
+  - it: patches the pod and the container
+    asserts:
+      - equal:
+          path: spec.template.spec.hostAliases[0].ip
+          value: "10.0.0.1"
+      - equal:
+          path: spec.template.spec.containers[0].imagePullPolicy
+          value: Always
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.readOnlyRootFilesystem
+          value: true
+
+  - it: keeps the chart container first and its conf mount intact
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].name
+          value: activemq
+      - equal:
+          path: spec.template.spec.containers[1].name
+          value: debug
+      - equal:
+          path: spec.template.spec.initContainers[0].name
+          value: warmup
+      - equal:
+          path: spec.template.spec.containers[0].volumeMounts[0].mountPath
+          value: /opt/activemq/conf/
+
+  - it: keeps the ACTIVEMQ_OPTS_MEMORY env the chart builds
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ACTIVEMQ_OPTS_MEMORY
+            value: "-Xms1g -Xmx1g"
+
+  - it: applies both the chart and the global imagePullSecrets, not one or the other
+    asserts:
+      - equal:
+          path: spec.template.spec.imagePullSecrets
+          value:
+            - name: from-chart
+            - name: from-global
+
+  - it: refuses a patch that would replace a list the chart builds
+    set:
+      podSpecPatch.containers:
+        - name: hijack
+          image: busybox:1.37.0
+    asserts:
+      - failedTemplate:
+          errorPattern: "podSpecPatch.containers: the chart builds containers"
+
+  - it: refuses a container patch that would replace the chart-built env
+    set:
+      containerPatch.env:
+        - name: Bogus
+          value: "1"
+    asserts:
+      - failedTemplate:
+          errorPattern: "containerPatch.env: the chart builds env"

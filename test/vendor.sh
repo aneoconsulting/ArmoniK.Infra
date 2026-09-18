@@ -18,7 +18,7 @@ repo_add percona              https://percona.github.io/percona-helm-charts/
 repo_add prometheus-community https://prometheus-community.github.io/helm-charts
 repo_add kedacore             https://kedacore.github.io/charts
 repo_add bitnami              https://charts.bitnami.com/bitnami
-repo_add grafana              https://grafana.github.io/helm-charts
+repo_add grafana              https://grafana-community.github.io/helm-charts
 repo_add fluent               https://fluent.github.io/helm-charts
 repo_add datalust             https://helm.datalust.co
 repo_add jetstack             https://charts.jetstack.io

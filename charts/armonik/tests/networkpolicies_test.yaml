@@ -4,6 +4,7 @@ release:
   namespace: default
 templates:
   - templates/networkpolicies/mongodb.yaml
+  - templates/networkpolicies/mongodb-exporter.yaml
   - templates/networkpolicies/redis.yaml
   - templates/networkpolicies/activemq.yaml
   - templates/networkpolicies/keda-metrics-egress.yaml
@@ -70,6 +71,32 @@ tests:
               - protocol: TCP
                 port: 27017
 
+  - it: allows the mongodb-exporter to reach the MongoDB server (unconditionally - a harmless
+      podSelector when the exporter is disabled, matching controlPlaneFrom/metricsExporterFrom/
+      computePlaneFrom)
+    template: templates/networkpolicies/mongodb.yaml
+    set:
+      networkPolicy:
+        enabled: true
+    documentSelector:
+      path: metadata.name
+      value: t-armonik-mongodb-server
+    asserts:
+      - contains:
+          path: spec.ingress
+          content:
+            from:
+              - namespaceSelector:
+                  matchLabels:
+                    kubernetes.io/metadata.name: default
+                podSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: mongodb-exporter
+                    app.kubernetes.io/instance: t
+            ports:
+              - protocol: TCP
+                port: 27017
+
   - it: allows MongoDB replset members to reach each other on both ingress and egress
       (needed for heartbeat/oplog replication once replsets.rs0.size > 1)
     template: templates/networkpolicies/mongodb.yaml
@@ -117,6 +144,8 @@ tests:
       dependencies:
         mongodb:
           enabled: false
+        mongodb-exporter:
+          enabled: false
     documentSelector:
       path: metadata.name
       value: t-armonik-mongodb-operator
@@ -129,6 +158,60 @@ tests:
           content: Egress
       - notExists:
           path: spec.ingress
+
+  - it: renders nothing for mongodb-exporter when the dependency is disabled
+    template: templates/networkpolicies/mongodb-exporter.yaml
+    set:
+      networkPolicy:
+        enabled: true
+      dependencies:
+        mongodb-exporter:
+          enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: scopes the mongodb-exporter policy to its own pod, ingress from Prometheus and egress to
+      MongoDB + DNS
+    template: templates/networkpolicies/mongodb-exporter.yaml
+    set:
+      networkPolicy:
+        enabled: true
+      dependencies:
+        mongodb-exporter:
+          enabled: true
+    asserts:
+      - equal:
+          path: spec.podSelector.matchLabels
+          value:
+            app.kubernetes.io/name: mongodb-exporter
+            app.kubernetes.io/instance: t
+      - contains:
+          path: spec.ingress
+          content:
+            from:
+              - namespaceSelector:
+                  matchLabels:
+                    kubernetes.io/metadata.name: default
+                podSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: prometheus
+            ports:
+              - protocol: TCP
+                port: 9216
+      - contains:
+          path: spec.egress
+          content:
+            to:
+              - namespaceSelector:
+                  matchLabels:
+                    kubernetes.io/metadata.name: default
+                podSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: percona-server-mongodb
+            ports:
+              - protocol: TCP
+                port: 27017
 
   - it: grants Redis ingress from control-plane/init and compute-plane (the valkey chart has no
       NetworkPolicy of its own)

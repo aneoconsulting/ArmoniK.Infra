@@ -36,6 +36,7 @@ thirdparty { next }
   if (kind == "ExternalSecret")
     gsub(/\{\{ *\.[A-Za-z0-9_]+ *\}\}/, "", line)
     gsub(/\{\{ *\.[A-Za-z0-9_]+ *\| *quote *\}\}/, "", line)
+    gsub(/\{\{ *\.[A-Za-z0-9_]+ *\| *urlquery *\}\}/, "", line)
     gsub(/\{\{ *index +\. +"[A-Za-z0-9_-]+" *\| *quote *\}\}/, "", line)
     gsub(/\{\{-? *if *(\.[A-Za-z0-9_]+|index +\. +"[A-Za-z0-9_-]+") *\}\}/, "", line)
     gsub(/\{\{-? *end *\}\}/, "", line)

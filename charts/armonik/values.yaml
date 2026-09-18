@@ -329,6 +329,37 @@ dependencies:
       tls: true
     finalizers: []
 
+  ################## MONGODB-EXPORTER ##################
+  # Prometheus exporter for MongoDB metrics (https://github.com/percona/mongodb_exporter).
+  # existingSecret.name/key is the single source of truth for the Secret it reads its connection
+  # URI from: armonik/templates/secrets/mongodb-exporter-secret.yaml renders an ExternalSecret
+  # that reads these same values back, rather than deriving its own name, and composes that URI
+  # from the psmdb-db cluster-monitor credentials.
+  mongodb-exporter:
+    enabled: true
+    fullnameOverride: "mongodb-exporter"
+    existingSecret:
+      name: mongodb-exporter-secret
+      key: mongodb-uri
+    # This chart's own serviceMonitor value is static and can't be conditioned on the
+    # prometheusOperator CRD being available, so it stays off; the umbrella renders its own
+    # instead (armonik/templates/servicemonitors/mongodb-exporter.yaml).
+    serviceMonitor:
+      enabled: false
+    # Mounts the whole mongodb-exporter-secret at /mongodb/certificate for the MongoDB__CAFile
+    # case (no `items`: the ca.crt key only exists in that secret when MongoDB TLS is required,
+    # and an items entry for an absent key leaves the pod stuck in ContainerCreating).
+    # secretName must match existingSecret.name above.
+    volumes:
+      - name: mongodb-ca
+        secret:
+          secretName: mongodb-exporter-secret
+    volumeMounts:
+      - name: mongodb-ca
+        mountPath: /mongodb/certificate
+        readOnly: true
+    # priorityClassName:
+
   # KEDA moved to charts/armonik-operators, configured at operators.keda.*.
 
   # cert-manager moved to charts/armonik-operators, configured at operators.cert-manager.*.

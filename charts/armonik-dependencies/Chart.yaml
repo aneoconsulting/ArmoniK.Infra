@@ -34,6 +34,11 @@ dependencies:
     repository: https://percona.github.io/percona-helm-charts/
     alias: mongodb
     condition: mongodb.enabled
+  - name: prometheus-mongodb-exporter
+    version: 3.x.x
+    repository: https://prometheus-community.github.io/helm-charts
+    alias: mongodb-exporter
+    condition: mongodb-exporter.enabled
   # - name: chaos-mesh
   #   version: 2.x.x
   #   repository: https://charts.chaos-mesh.org

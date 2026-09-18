@@ -1,7 +1,7 @@
 dependencies:
 - name: activemq
   repository: file://../activemq
-  version: 1.0.0
+  version: 0.1.0
 - name: valkey
   repository: https://valkey.io/valkey-helm/
   version: 0.12.0
@@ -20,5 +20,5 @@ dependencies:
 - name: seq
   repository: https://helm.datalust.co
   version: 2026.1.1
-digest: sha256:41c8f7f60618cff8c0a1a5b520757cf3de36ea3335a51fb93ae0106627eb3c71
-generated: "2026-09-17T11:31:10.606546358+02:00"
+digest: sha256:1aa72769b0b38363ad85ae37250614c190ce7e9756119416637fbcc0df119fb1
+generated: "2026-09-18T15:31:12.090293715+02:00"

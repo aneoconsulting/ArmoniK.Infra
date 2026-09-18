@@ -17,7 +17,7 @@ maintainers:
 
 dependencies:
   - name: activemq
-    version: 1.x.x
+    version: 0.1.x
     repository: file://../activemq
     condition: activemq.enabled
   # - name: redis

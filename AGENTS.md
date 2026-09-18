@@ -27,7 +27,7 @@ Packaging is a separate step, run once the dependencies are vendored (`helm pack
 
 ```sh
 ./charts/package-charts.sh              # dist/: one .tgz per release-root chart, plus index.yaml
-./charts/package-charts.sh -v 1.2.3     # stamp a version over the in-tree 0.1.0 (activemq keeps its own 1.x)
+./charts/package-charts.sh -v 1.2.3     # stamp a version over the in-tree 0.1.0
 ```
 
 The archives carry their dependencies expanded, so they install with no network and no repository. `charts/airgap.md` documents the consumer side. `.github/workflows/publish.yml` is the only place the charts are packaged, on every channel (pull request, main, tag, manual dispatch): one packaging run feeds the `packaged-charts` artifact, the OCI push to `oci://registry-1.docker.io/dockerhubaneo/<chart>` and, on a tag, the GitHub release assets.

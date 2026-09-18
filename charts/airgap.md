@@ -30,9 +30,7 @@ reference are the other half, and this pipeline does not mirror them. See
   output directory. It packages the charts a user installs directly: `armonik`,
   `armonik-operators`, the three plane charts, `armonik-dependencies` and
   `activemq`. `armonik-common` is a library every consumer vendors, so it ships
-  inside the others rather than on its own. `activemq` is on its own version
-  track and keeps its `Chart.yaml` version whatever `-v` says, so it is the one
-  archive whose name does not carry the build version.
+  inside the others rather than on its own.
 
 ## Installing from an archive
 

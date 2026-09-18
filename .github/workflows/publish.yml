@@ -1,0 +1,424 @@
+name: Publish Charts
+
+# The only place the charts are packaged: one `helm package` run feeds the build
+# artifact, the OCI push and the release assets, so the release `index.yaml`
+# describes the archives the registry serves (helm package is not
+# byte-reproducible).
+#
+#   channel     trigger            version                pushes to Docker Hub
+#   ----------  -----------------  ---------------------  ----------------------
+#   release     push tag X.Y.Z     the tag, validated     yes
+#   prerelease  push on main       git-version snapshot   yes
+#   pr          pull request       git-version snapshot   same-repo branches only
+#   manual      workflow_dispatch  the `version` input    unless dry_run
+#
+# helm takes the repository and the tag from inside the archive, and a Docker
+# Hub repository is <namespace>/<name> with no deeper path, so chart names ARE
+# repository names: hyphenated armonik-* in dockerhubaneo is reserved for
+# charts, images keeping armonik_*.
+
+env:
+  HELM_VERSION: v3.18.4
+  # Not the docker.io alias: consumers are handed the host we push to.
+  REGISTRY: registry-1.docker.io
+  NAMESPACE: dockerhubaneo
+  # What reaches the registry. Per channel and independent: what a pull request
+  # publishes must not follow what main publishes.
+  PUSH_CHANNELS: release prerelease pr manual
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+    tags:
+      - "[0-9]+.[0-9]+.[0-9]+"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Pre-release version to publish, e.g. 0.2.0-dev.1"
+        required: true
+        type: string
+      dry_run:
+        description: "Dry run (package and check, push nothing)"
+        type: boolean
+        default: true
+
+# One head SHA can arrive twice, `synchronize` firing on a base move too, and
+# only those duplicates may share a group. No cancelling elsewhere: a cancelled
+# push loop is a partial set.
+concurrency:
+  group: publish-${{ github.ref }}-${{ github.event.pull_request.head.sha || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+# Not removable: this repository's default token permission is write.
+permissions: {}
+
+jobs:
+  context:
+    name: Context
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      channel: ${{ steps.resolve.outputs.channel }}
+      version: ${{ steps.resolve.outputs.version }}
+      dry_run: ${{ steps.resolve.outputs.dry_run }}
+      # The gate every registry step reads.
+      registry: ${{ steps.resolve.outputs.registry }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+        with:
+          # The triggering commit, not the branch, which moves while a run queues.
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0 # git-version walks the tag history
+
+      # git-version reads the branch from the repository and the checkout above
+      # is detached, so without this a pull request is labelled with a `git
+      # describe` string instead of its branch.
+      - name: Restore the branch name
+        if: github.event_name == 'pull_request'
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+        run: git checkout -B "$HEAD_REF"
+
+      # The three steps below are make-release.yml's `versionning`, read-only.
+      - name: Remove tag locally
+        # Present, the tag is read back instead of derived.
+        if: github.ref_type == 'tag'
+        run: git tag -d "$GITHUB_REF_NAME"
+
+      - name: Compute branch for codacy
+        id: rev
+        if: github.ref_type == 'tag'
+        run: echo "current-branch=$(git describe --tags)" >> "$GITHUB_OUTPUT"
+
+      - name: Generate release version
+        id: release
+        if: github.ref_type == 'tag'
+        uses: codacy/git-version@877bb11b7a2ee44dcd7c0a03882c7037356e64e9 # 2.8.6
+        with:
+          minor-identifier: "feat:"
+          # `git describe` as the release branch is what makes a detached HEAD
+          # resolve to the plain X.Y.Z the tag must equal.
+          release-branch: ${{ steps.rev.outputs.current-branch }}
+          dev-branch: main
+
+      # Chart versions never bump per change, so the in-tree 0.1.0 would name
+      # every build alike.
+      - name: Generate snapshot version
+        id: snapshot
+        if: github.event_name != 'workflow_dispatch' && github.ref_type != 'tag'
+        uses: codacy/git-version@877bb11b7a2ee44dcd7c0a03882c7037356e64e9 # 2.8.6
+        with:
+          minor-identifier: "feat:"
+          # Never the current branch as release-branch: a push to main would
+          # claim the version the next tag releases. main as dev-branch, so a
+          # branch build carries its name rather than the shared -SNAPSHOT form
+          # remove-artefacts.yml keeps forever.
+          release-branch: ${{ github.head_ref || github.ref_name }}-pre
+          dev-branch: main
+
+      - name: Resolve context
+        id: resolve
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+          INPUT_DRY_RUN: ${{ inputs.dry_run }}
+          RELEASE_VERSION: ${{ steps.release.outputs.version }}
+          SNAPSHOT_VERSION: ${{ steps.snapshot.outputs.version }}
+          OVERRIDE_RELEASE_VERSION: ${{ vars.OVERRIDE_RELEASE_VERSION }}
+          PR_HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+        run: |
+          # Only a manual run can be a dry run.
+          dry_run=false
+
+          if [ "$GITHUB_EVENT_NAME" = workflow_dispatch ]; then
+            channel="manual"
+            version=$INPUT_VERSION
+            # Anything but an explicit false fails towards publishing nothing.
+            if [ "$INPUT_DRY_RUN" != false ]; then
+              dry_run=true
+            fi
+            # Pre-release only: build metadata reaches the tag as `_`, and a
+            # stable version belongs to a tag, a reference with no --version
+            # resolving the highest semver tag.
+            if ! printf '%s\n' "$version" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*$'; then
+              echo "::error::A manual publish needs a SemVer pre-release version such as 0.2.0-dev.1, got '$version'"
+              exit 1
+            fi
+            # A dry run reaches no registry, so any ref may rehearse it.
+            if [ "$dry_run" = false ] && [ "$GITHUB_REF_NAME" != main ]; then
+              echo "::error::A manual push must be dispatched from main, got '$GITHUB_REF_NAME'"
+              exit 1
+            fi
+          elif [ "$GITHUB_REF_TYPE" = tag ]; then
+            channel="release"
+            version=$GITHUB_REF_NAME
+            # make-release.yml's check, repeated because nothing orders two
+            # workflows on one event and a push cannot be taken back. Deleting
+            # the tag stays its job, `git push -d` racing with itself otherwise.
+            if [ "$version" != "$RELEASE_VERSION" ] &&
+               [ "$version" != "$OVERRIDE_RELEASE_VERSION" ]; then
+              echo "::error::tag $version is not the version the history implies ($RELEASE_VERSION): nothing is published, and make-release.yml deletes the tag"
+              exit 1
+            fi
+          elif [ "$GITHUB_EVENT_NAME" = pull_request ]; then
+            channel="pr"
+            version=$SNAPSHOT_VERSION
+          else
+            channel="prerelease"
+            version=$SNAPSHOT_VERSION
+          fi
+
+          registry=true
+          case " $PUSH_CHANNELS " in
+            *" $channel "*) ;;
+            *) registry=false ;;
+          esac
+          # The credentials are organisation secrets: a fork never receives
+          # them, and neither does a pull request from one.
+          if [ "$GITHUB_REPOSITORY_OWNER" != aneoconsulting ]; then
+            registry=false
+          fi
+          if [ "$GITHUB_EVENT_NAME" = pull_request ] &&
+             [ "$PR_HEAD_REPO" != "$GITHUB_REPOSITORY" ]; then
+            registry=false
+          fi
+
+          # package-charts.sh validates the semver; these two reject what is not
+          # a tag at all (128 being the OCI tag limit, which a long branch name
+          # can reach).
+          if ! printf '%s\n' "$version" | grep -Eq '^[0-9A-Za-z.+-]+$'; then
+            echo "::error::Refusing to publish an unexpected version string '$version'"
+            exit 1
+          fi
+          if [ "${#version}" -gt 128 ]; then
+            echo "::error::version '$version' is longer than the 128 characters an OCI tag allows"
+            exit 1
+          fi
+
+          {
+            echo "channel=$channel"
+            echo "version=$version"
+            echo "dry_run=$dry_run"
+            echo "registry=$registry"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Summary
+        env:
+          CHANNEL: ${{ steps.resolve.outputs.channel }}
+          VERSION: ${{ steps.resolve.outputs.version }}
+          DRY_RUN: ${{ steps.resolve.outputs.dry_run }}
+          REGISTRY_ENABLED: ${{ steps.resolve.outputs.registry }}
+        run: |
+          {
+            echo "| | |"
+            echo "|-|-|"
+            echo "| Channel | $CHANNEL |"
+            echo "| Version | $VERSION |"
+            echo "| Registry | oci://$REGISTRY/$NAMESPACE |"
+            echo "| Dry run | $DRY_RUN |"
+            echo ""
+            if [ "$REGISTRY_ENABLED" != true ]; then
+              echo "Nothing reaches the registry: this channel does not publish, or the"
+              echo "run has no access to the organisation credentials. Every chart is"
+              echo "still packaged and the packaged umbrella still renders offline."
+            elif [ "$DRY_RUN" = true ]; then
+              echo "Dry run: every chart is packaged, the packaged umbrella is rendered"
+              echo "offline and the credentials are checked, but nothing is pushed."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  package:
+    name: Package charts
+    needs: [context]
+    runs-on: ubuntu-latest
+    # No write token and no credentials: this job vendors third-party archives.
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Set up Helm
+        uses: azure/setup-helm@1a275c3b69536ee54be43f2070a358922e12c8d4 # v4
+        with:
+          version: "${{ env.HELM_VERSION }}"
+
+      # test-helm.yml's key: same archives from the same locks, one entry.
+      - name: Cache helm repositories
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/helm/repository
+          key: helm-repo-${{ hashFiles('charts/*/Chart.lock', 'charts/*/Chart.yaml', 'test/harness/*/Chart.lock') }}
+          restore-keys: helm-repo-
+
+      # Vendored here rather than reused: `needs` cannot cross workflows.
+      - name: Vendor chart dependencies from Chart.lock
+        run: ./test/vendor.sh
+
+      - name: Package charts
+        env:
+          VERSION: ${{ needs.context.outputs.version }}
+        run: ./charts/package-charts.sh -v "$VERSION"
+
+      # The archive, not the source tree: this is what proves it carries its
+      # dependencies, and it runs before any push.
+      - name: Check the packaged umbrella renders offline
+        env:
+          VERSION: ${{ needs.context.outputs.version }}
+        run: helm template airgap "dist/armonik-$VERSION.tgz" >/dev/null
+
+      - name: Upload packaged charts
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: packaged-charts
+          if-no-files-found: error
+          retention-days: 14
+          path: |
+            dist/*.tgz
+            dist/index.yaml
+
+  dockerhub:
+    name: Push charts to Docker Hub
+    needs: [context, package]
+    if: needs.context.outputs.registry == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read # azure/setup-helm
+    # Far above the real duration: a timeout cancels mid-loop, which is the
+    # partial-set failure mode.
+    timeout-minutes: 30
+    steps:
+      - name: Set up Helm
+        uses: azure/setup-helm@1a275c3b69536ee54be43f2070a358922e12c8d4 # v4
+        with:
+          version: "${{ env.HELM_VERSION }}"
+
+      # dist/ is the artifact's common ancestor, so it holds bare file names.
+      - name: Download packaged charts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: packaged-charts
+          path: dist
+
+      # helm has its own registry config, so docker/login-action authenticates
+      # nothing here. A dry run logs in too, to check the credentials.
+      - name: Log in to Docker Hub
+        env:
+          DOCKER_HUB_LOGIN: ${{ secrets.DOCKER_HUB_LOGIN }}
+          DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
+        run: |
+          # An empty secret fails with an opaque EOF, and organisation secrets
+          # are shared per repository.
+          if [ -z "$DOCKER_HUB_LOGIN" ] || [ -z "$DOCKER_HUB_TOKEN" ]; then
+            echo "::error::DOCKER_HUB_LOGIN or DOCKER_HUB_TOKEN is empty: the organisation secrets are not shared with this repository"
+            exit 1
+          fi
+          # --password-stdin: an argument is readable in the process table.
+          printf '%s' "$DOCKER_HUB_TOKEN" |
+            helm registry login "$REGISTRY" -u "$DOCKER_HUB_LOGIN" --password-stdin
+
+      - name: Push the charts
+        env:
+          VERSION: ${{ needs.context.outputs.version }}
+          DRY_RUN: ${{ needs.context.outputs.dry_run }}
+        run: |
+          repo="oci://$REGISTRY/$NAMESPACE"
+          umbrella="dist/armonik-$VERSION.tgz"
+          if [ ! -f "$umbrella" ]; then
+            echo "::error::$umbrella is missing from the packaged charts"
+            exit 1
+          fi
+
+          # Rows are appended as the loop goes, so a run that dies mid-loop
+          # still says how far it got.
+          {
+            echo ""
+            echo "| Chart | Result |"
+            echo "|-|-|"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          failed=
+
+          push_one() { # push_one <archive>, retried: Docker Hub answers 429 and 5xx under load
+            attempt=1
+            while :; do
+              if helm push "$1" "$repo"; then
+                return 0
+              fi
+              [ "$attempt" -lt 3 ] || return 1
+              attempt=$((attempt + 1))
+              sleep 15
+            done
+          }
+
+          publish() { # publish <archive>
+            archive=$(basename "$1")
+            if [ "$DRY_RUN" = true ]; then
+              echo "dry run, would push: helm push $1 $repo"
+              printf '| `%s` | not pushed (dry run) |\n' "$archive" >> "$GITHUB_STEP_SUMMARY"
+            elif push_one "$1"; then
+              printf '| `%s` | pushed |\n' "$archive" >> "$GITHUB_STEP_SUMMARY"
+            else
+              failed="$failed $archive"
+              echo "::error::$archive was not pushed"
+              printf '| `%s` | NOT PUSHED |\n' "$archive" >> "$GITHUB_STEP_SUMMARY"
+            fi
+          }
+
+          # Umbrella last, so armonik:<version> marks a complete set. The chart
+          # list itself stays in charts/package-charts.sh.
+          for tgz in dist/*.tgz; do
+            [ "$tgz" = "$umbrella" ] || publish "$tgz"
+          done
+          publish "$umbrella"
+
+          if [ -n "$failed" ]; then
+            echo "::error::the published set is partial, missing:$failed. Re-run this job: a push replaces the tag it finds, so it is safe to repeat."
+            exit 1
+          fi
+
+      # For a self-hosted runner, whose home directory would keep the token.
+      - name: Log out of Docker Hub
+        if: always()
+        run: helm registry logout "$REGISTRY" || true
+
+  # Separate, so the job running the packaging scripts needs no write token.
+  release-assets:
+    name: Attach the packages to the release
+    needs: [context, package]
+    if: needs.context.outputs.channel == 'release'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # `gh release upload`
+    steps:
+      - name: Download packaged charts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: packaged-charts
+          path: dist
+
+      - name: Attach the packages to the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          # The release is published outside this workflow; wait for it rather
+          # than create a second one.
+          tries=0
+          until gh release view "$TAG" >/dev/null 2>&1; do
+            tries=$((tries + 1))
+            if [ "$tries" -ge 12 ]; then
+              echo "no release found for tag $TAG; publish it, then re-run this job" >&2
+              exit 1
+            fi
+            sleep 5
+          done
+          gh release upload "$TAG" dist/*.tgz dist/index.yaml --clobber

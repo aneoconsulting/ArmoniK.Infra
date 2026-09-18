@@ -20,8 +20,8 @@ Packages the release-root charts and writes the repository index next to them.
 
   -o DIR      output directory, created if absent, its *.tgz and index.yaml
               cleared first (default: the repo's dist/)
-  -v VERSION  semver to stamp over the in-tree chart versions; activemq keeps
-              its own (default: keep every in-tree version)
+  -v VERSION  semver to stamp over the in-tree chart versions
+              (default: keep every in-tree version)
   -h          show this help
 USAGE
 }
@@ -71,12 +71,7 @@ if [ -n "$version" ]; then
 fi
 
 for chart in $charts; do
-  case "$chart" in
-    # activemq is off the others' lockstep and ahead of them: a release version
-    # stamped on it would read as a downgrade.
-    activemq) helm package "$chart" --destination "$outdir" ;;
-    *)        helm package "$chart" --destination "$outdir" "$@" ;;
-  esac
+  helm package "$chart" --destination "$outdir" "$@"
 done
 
 # No --url: bare file names, resolved against whatever ends up serving the

@@ -312,6 +312,9 @@ dependencies:
       enabled: false
     backup:
       enabled: false
+    # mongod logs logv2 JSON to stdout, we don't need the sidecar from the Percona's collector.
+    logcollector:
+      enabled: false
     replsets:
       rs0:
         size: 1
@@ -432,7 +435,7 @@ dependencies:
         [INPUT]
             Name               tail
             Tag                kube.*
-            Path               /var/log/containers/*control-plane*.log, /var/log/containers/*compute-plane*.log
+            Path               /var/log/containers/*control-plane*.log, /var/log/containers/*compute-plane*.log, /var/log/containers/*_mongod-*.log, /var/log/containers/*_mongos-*.log
             Parser             cri
             Docker_Mode        On
             Buffer_Chunk_Size  512KB
@@ -445,7 +448,7 @@ dependencies:
         [INPUT]
             Name               tail
             Tag                application.*
-            Path               /var/log/containers/*control-plane*.log, /var/log/containers/*compute-plane*.log, /var/log/containers/*ingress*.log, /var/log/containers/mongodb*.log, /var/log/containers/keda*.log
+            Path               /var/log/containers/*control-plane*.log, /var/log/containers/*compute-plane*.log, /var/log/containers/*ingress*.log, /var/log/containers/keda*.log
             Parser             cri
             Buffer_Chunk_Size  512KB
             Buffer_Max_Size    5M
@@ -477,6 +480,39 @@ dependencies:
             Operation               lift
             Nested_under            kubernetes
             Add_prefix              kubernetes_
+        # MongoDB speaks logv2, not CLEF so we have to do some mapping
+        [FILTER]
+            Name                    modify
+            Match                   kube.var.log.containers.*_mongo*
+            Condition               Key_Value_Equals s F
+            Set                     @l Fatal
+        [FILTER]
+            Name                    modify
+            Match                   kube.var.log.containers.*_mongo*
+            Condition               Key_Value_Equals s E
+            Set                     @l Error
+        [FILTER]
+            Name                    modify
+            Match                   kube.var.log.containers.*_mongo*
+            Condition               Key_Value_Equals s W
+            Set                     @l Warning
+        [FILTER]
+            Name                    modify
+            Match                   kube.var.log.containers.*_mongo*
+            Condition               Key_Value_Matches s ^D
+            Set                     @l Debug
+        # t is removed because @t already carries the same instant.
+        [FILTER]
+            Name                    modify
+            Match                   kube.var.log.containers.*_mongo*
+            Set                     Application MongoDB
+            Rename                  msg  @m
+            Rename                  s    MongoSeverity
+            Rename                  c    MongoComponent
+            Rename                  ctx  MongoContext
+            Rename                  id   MongoEventId
+            Rename                  attr MongoAttributes
+            Remove                  t
         [FILTER]
             Name                    modify
             Match                   *

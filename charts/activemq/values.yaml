@@ -11,9 +11,9 @@ HorizontalPodAutoscaler:
   enabled: false
 
 image:
-  repository: symptoma
+  repository: apache
   name: activemq
-  tag: 5.19.10
+  tag: 6.3.1
   pullPolicy: IfNotPresent
   imagePullSecrets: []
   registry: ""
@@ -118,11 +118,21 @@ extraVolumeMounts:
   #   mountPropagation: None
   #   name: activemq-storage-secret-volume
   #   readOnly: true
-  - mountPath: /opt/activemq/conf/
+  # Single-file overrides: mounting the whole conf/ directory would hide the rest of
+  # the image's own conf/ tree (jetty-spring.xml, conf/jetty/*.xml, login.config,
+  # users.properties, ...), which this ActiveMQ version still needs to start.
+  - mountPath: /opt/apache-activemq/conf/activemq.xml
+    subPath: activemq.xml
     mountPropagation: None
-    name: activemq-jetty-xml
+    name: activemq-conf-xml
     readOnly: true
-  - mountPath: /opt/activemq/webapps/api/WEB-INF/classes/
+  - mountPath: /opt/apache-activemq/conf/log4j2.properties
+    subPath: log4j2.properties
+    mountPropagation: None
+    name: activemq-conf-xml
+    readOnly: true
+  - mountPath: /opt/apache-activemq/conf/jolokia-access.xml
+    subPath: jolokia-access.xml
     mountPropagation: None
     name: activemq-jolokia-xml
     readOnly: true
@@ -137,7 +147,7 @@ extraVolumes:
       defaultMode: 420
       name: activemq-configs
       optional: false
-    name: activemq-jetty-xml
+    name: activemq-conf-xml
   - configMap:
       defaultMode: 420
       name: activemq-jolokia-configs

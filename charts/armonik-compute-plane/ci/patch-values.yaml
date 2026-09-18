@@ -48,3 +48,25 @@ partitions:
     agent:
       containerPatch:
         imagePullPolicy: IfNotPresent
+
+# The init Job carries its own patches and extras.
+init:
+  extraEnv:
+    - name: INIT_LOCAL
+      value: "1"
+  extraVolumes:
+    - name: init-scratch
+      emptyDir: {}
+  extraVolumeMounts:
+    - name: init-scratch
+      mountPath: /scratch
+  extraInitContainers:
+    - name: init-warmup
+      image: busybox:1.37.0
+      command: ["/bin/sh", "-c", "true"]
+  containerPatch:
+    imagePullPolicy: Always
+  podSpecPatch:
+    hostAliases:
+      - ip: "10.0.0.2"
+        hostnames: ["init.internal"]

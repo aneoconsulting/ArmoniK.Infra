@@ -1,0 +1,78 @@
+# Escape hatches on all three ingress workloads. The global.environment block is required for any
+# standalone render of this chart (see ci/default-values.yaml).
+urlsSecretName: example-urls
+
+global:
+  environment:
+    name: "patch-fixture"
+    description: "escape hatch render"
+
+extraEnv:
+  - name: NGINX_LOCAL
+    value: "1"
+extraVolumes:
+  - name: nginx-scratch
+    emptyDir: {}
+extraVolumeMounts:
+  - name: nginx-scratch
+    mountPath: /scratch
+extraContainers:
+  - name: nginx-debug
+    image: busybox:1.37.0
+    command: ["/bin/sh", "-c", "sleep infinity"]
+containerPatch:
+  imagePullPolicy: Always
+podSpecPatch:
+  hostAliases:
+    - ip: "10.0.0.1"
+      hostnames: ["legacy.internal"]
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: role
+              operator: Exists
+imagePullSecrets:
+  - name: from-chart
+
+gui:
+  extraEnv:
+    - name: GUI_LOCAL
+      value: "1"
+  extraVolumes:
+    - name: gui-scratch
+      emptyDir: {}
+  extraVolumeMounts:
+    - name: gui-scratch
+      mountPath: /scratch
+  containerPatch:
+    imagePullPolicy: Always
+  podSpecPatch:
+    shareProcessNamespace: true
+
+loadBalancer:
+  enabled: true
+  defaultCluster: a
+  clusters:
+    a:
+      endpoint: "grpc://control-plane:5001"
+  extraEnv:
+    - name: LB_LOCAL
+      value: "1"
+  extraVolumes:
+    - name: lb-scratch
+      emptyDir: {}
+  extraVolumeMounts:
+    - name: lb-scratch
+      mountPath: /scratch
+  extraInitContainers:
+    - name: lb-warmup
+      image: busybox:1.37.0
+      command: ["/bin/sh", "-c", "true"]
+  containerPatch:
+    imagePullPolicy: Always
+  podSpecPatch:
+    hostAliases:
+      - ip: "10.0.0.3"
+        hostnames: ["lb.internal"]

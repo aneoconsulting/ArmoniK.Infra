@@ -20,6 +20,22 @@ tolerations: []
 annotations: {}
 affinity: {}
 priorityClassName: ""
+# -- Extra env for the nginx container.
+extraEnv: []
+# -- Extra envFrom for the nginx container.
+extraEnvFrom: []
+# -- Extra volumes and volumeMounts for the nginx container.
+extraVolumes: []
+extraVolumeMounts: []
+# -- Extra containers, after the nginx container, and extra init containers.
+extraContainers: []
+extraInitContainers: []
+# -- Merged over the nginx container, last. Lists the chart builds are refused: use extra*.
+containerPatch: {}
+# -- Merged over spec.template.spec, last. Lists the chart builds are refused: use extra*.
+# Pod labels are out of reach: the selector is immutable.
+podSpecPatch: {}
+
 
 resources:
   limits:
@@ -121,12 +137,27 @@ loadBalancer:
     annotations: {}
   resources: {}
 
-  extraEnv: []
-  extraEnvFrom: []
   nodeSelector: {}
   tolerations: []
+  affinity: {}
   priorityClassName: ""
+  imagePullSecrets: []
   annotations: {}
+  # -- Extra env for the load-balancer container.
+  extraEnv: []
+  # -- Extra envFrom for the load-balancer container.
+  extraEnvFrom: []
+  # -- Extra volumes and volumeMounts for the load-balancer container.
+  extraVolumes: []
+  extraVolumeMounts: []
+  # -- Extra containers, after the load-balancer container, and extra init containers.
+  extraContainers: []
+  extraInitContainers: []
+  # -- Merged over the load-balancer container, last. Lists the chart builds are refused: use extra*.
+  containerPatch: {}
+  # -- Merged over spec.template.spec, last. Lists the chart builds are refused: use extra*.
+  # Pod labels are out of reach: the selector is immutable.
+  podSpecPatch: {}
 
 # Set to the key of a Secret in an ESO SecretStore to source ingress conf URLs via ExternalSecret.
 # Leave empty to fall back to a plain Kubernetes Secret instead.
@@ -173,6 +204,22 @@ gui:
   annotations: {}
   affinity: {}
   priorityClassName: ""
+  imagePullSecrets: []
+  # -- Extra env for the gui container.
+  extraEnv: []
+  # -- Extra envFrom for the gui container.
+  extraEnvFrom: []
+  # -- Extra volumes and volumeMounts for the gui container.
+  extraVolumes: []
+  extraVolumeMounts: []
+  # -- Extra containers, after the gui container, and extra init containers.
+  extraContainers: []
+  extraInitContainers: []
+  # -- Merged over the gui container, last. Lists the chart builds are refused: use extra*.
+  containerPatch: {}
+  # -- Merged over spec.template.spec, last. Lists the chart builds are refused: use extra*.
+  # Pod labels are out of reach: the selector is immutable.
+  podSpecPatch: {}
 
 static:
   environment.json:

@@ -1,5 +1,7 @@
 {{- if .Values.loadBalancer.enabled }}
 {{- $image := list $ .Values.loadBalancer.image | include "armonik.utils.imageConf" | fromYaml }}
+{{- $ctx := dict "root" $ "image" $image -}}
+{{- $podSpec := list (include "armonik.ingress.lb.podSpec" $ctx) .Values.loadBalancer.podSpecPatch "loadBalancer.podSpecPatch" | include "armonik.utils.patch" -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -27,85 +29,5 @@ spec:
       labels:
         app.kubernetes.io/component: load-balancer
         {{- include "armonik.selectorLabels" . | nindent 8 }}
-    spec:
-      automountServiceAccountToken: true
-      {{- with .Values.imagePullSecrets }}
-      imagePullSecrets:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      containers:
-      - name: load-balancer
-        image: {{ $image.fullname }}
-        imagePullPolicy: {{ $image.pullPolicy }}
-        args: ["-c", "/conf/lb.yml"]
-        ports:
-          - name: grpc
-            containerPort: {{ .Values.loadBalancer.conf.listenPort }}
-            protocol: TCP
-        terminationMessagePath: /dev/termination-log
-        terminationMessagePolicy: File
-        {{- with coalesce .Values.loadBalancer.resources .Values.resources }}
-        resources:
-          {{- toYaml . | nindent 10 }}
-        {{- end }}{{/* with .Values.resources */}}
-        {{- with .Values.loadBalancer.livenessProbe }}
-        livenessProbe:
-          {{- toYaml . | nindent 10 }}
-        {{- end }}{{/* with .Values.livenessProbe */}}
-        {{- with .Values.loadBalancer.startupProbe }}
-        startupProbe:
-          {{- toYaml . | nindent 10 }}
-        {{- end }}{{/* with .Values.startupProbe */}}
-        {{- with .Values.loadBalancer.readinessProbe }}
-        readinessProbe:
-          {{- toYaml . | nindent 10 }}
-        {{- end }}{{/* with .Values.readinessProbe */}}
-        {{- with .Values.loadBalancer.extraEnv }}
-        env:
-          {{- toYaml . | nindent 10 }}
-        {{- end }}
-        {{- with .Values.loadBalancer.extraEnvFrom }}
-        envFrom:
-          {{- toYaml . | nindent 10 }}
-        {{- end }}
-        volumeMounts:
-        - name: cluster-certs
-          mountPath: /cluster-certs
-          mountPropagation: None
-          readOnly: true
-        - name: lb-conf
-          mountPath: /conf
-          mountPropagation: None
-          readOnly: true
-        {{- with .Values.loadBalancer.extraVolumeMounts }}
-        {{- toYaml . | nindent 8 }}
-        {{- end }}
-      dnsPolicy: ClusterFirst
-      shareProcessNamespace: false
-      {{- with coalesce .Values.loadBalancer.nodeSelector .Values.nodeSelector }}
-      nodeSelector:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}{{/* with .Values.nodeSelector */}}
-      {{- with coalesce .Values.loadBalancer.tolerations .Values.tolerations }}
-      tolerations:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}{{/* with .Values.tolerations */}}
-      {{- with coalesce .Values.loadBalancer.priorityClassName .Values.priorityClassName }}
-      priorityClassName: {{ . | quote }}
-      {{- end }}{{/* with .Values.priorityClassName */}}
-      enableServiceLinks: true
-      volumes:
-      - name: cluster-certs
-        secret:
-          secretName: {{ include "armonik.fullname" . | printf "%s-lb-cluster-certs" | trunc 63 | trimSuffix "-" | quote }}
-          defaultMode: 420
-          optional: false
-      - name: lb-conf
-        configMap:
-          name: {{ include "armonik.fullname" . | printf "%s-load-balancer-conf" | trunc 63 | trimSuffix "-" | quote }}
-          defaultMode: 420
-          optional: false
-      {{- with .Values.loadBalancer.extraVolumes }}
-      {{- toYaml . | nindent 6 }}
-      {{- end }}
+    spec: {{- $podSpec | nindent 6 }}
 {{- end }}

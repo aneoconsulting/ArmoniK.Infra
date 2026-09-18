@@ -106,6 +106,7 @@ ok ingress-near-default   armonik-ingress       -f charts/armonik-ingress/ci/def
 ok ingress-tls-mtls       armonik-ingress       -f charts/armonik-ingress/ci/tls-mtls-values.yaml
 ok ingress-gateway        armonik-ingress       -f charts/armonik-ingress/ci/gateway-values.yaml
 ok ingress-lb             armonik-ingress       -f charts/armonik-ingress/ci/lb-values.yaml
+ok ingress-patches        armonik-ingress       -f charts/armonik-ingress/ci/patch-values.yaml
 ok activemq-pdb-hpa       activemq              -f charts/activemq/ci/pdb-hpa-values.yaml
 ok activemq-tls           activemq              -f charts/activemq/ci/tls-values.yaml
 ok activemq-psp-k8s124    activemq --kube-version 1.24.17 -f test/fixtures/activemq/psp-values.yaml

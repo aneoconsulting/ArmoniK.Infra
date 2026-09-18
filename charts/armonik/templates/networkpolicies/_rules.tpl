@@ -552,13 +552,13 @@ egress:
   MongoDB exporter egress: to the MongoDB server it scrapes.
 */}}
 {{- define "armonik.netpol.rule.mongodbExporterTo" -}}
-{{- $root := . -}}
-{{- with $root.Subcharts.dependencies.Subcharts.mongodb -}}
-{{- $ns := include "armonik.netpol.namespaceSelector" . -}}
-{{- $podSelector := include "armonik.netpol.podSelector.mongodb" $root -}}
-{{- $port := include "armonik.mongodb.port" . | trim | int -}}
-{{- list $ns $podSelector $port "to" | include "armonik.netpol.rule.peerOnPort" -}}
-{{- end -}}
+  {{- $root := . -}}
+  {{- with $root.Subcharts.dependencies.Subcharts.mongodb -}}
+    {{- $ns := include "armonik.netpol.namespaceSelector" . -}}
+    {{- $podSelector := include "armonik.netpol.podSelector.mongodb" $root -}}
+    {{- $port := include "armonik.mongodb.port" . | trim | int -}}
+    {{- list $ns $podSelector $port "to" | include "armonik.netpol.rule.peerOnPort" -}}
+  {{- end -}}
 {{- end -}}
 
 

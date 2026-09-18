@@ -170,6 +170,26 @@ certManagerWait:
     tag: 1.37.0
     pullPolicy: IfNotPresent
   timeout: 300s
+  imagePullSecrets: []
+  resources:
+  # The hook gates the release: untolerated, it never schedules on a fully tainted cluster.
+  nodeSelector: {}
+  affinity: {}
+  tolerations: []
+  priorityClassName: ""
+  # -- Extra env for the wait container.
+  extraEnv: []
+  # -- Extra volumes and volumeMounts for the wait container.
+  extraVolumes: []
+  extraVolumeMounts: []
+  # -- Extra init containers. No extraContainers: a sidecar that never exits keeps the hook,
+  # and the release, waiting.
+  extraInitContainers: []
+  # -- Merged over the wait container, last. Lists the chart builds are refused: use extra*.
+  containerPatch: {}
+  # -- Merged over spec.template.spec, last. Lists the chart builds are refused: use extra*.
+  # Pod labels are out of reach: the selector is immutable.
+  podSpecPatch: {}
 
 ############################################
 ############### DEPENDENCIES ###############

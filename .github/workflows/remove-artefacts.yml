@@ -29,10 +29,10 @@ jobs:
           - activemq
     steps:
       - name: Checkout code
-        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Set up Python
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
 
       - name: Remove old branch chart tags
         uses: aneoconsulting/ArmoniK.Actions.CleanupArtifacts/remove-images@40131ac01ff60baea9e02612ced7ac9b69916a3d # main

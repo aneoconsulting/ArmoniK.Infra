@@ -12,13 +12,13 @@ dependencies:
   repository: https://charts.bitnami.com/bitnami
   version: 16.0.14
 - name: grafana
-  repository: https://grafana.github.io/helm-charts
-  version: 10.5.15
+  repository: https://grafana-community.github.io/helm-charts
+  version: 13.2.5
 - name: fluent-bit
   repository: https://fluent.github.io/helm-charts
   version: 0.58.2
 - name: seq
   repository: https://helm.datalust.co
   version: 2026.1.1
-digest: sha256:41c8f7f60618cff8c0a1a5b520757cf3de36ea3335a51fb93ae0106627eb3c71
-generated: "2026-09-17T11:31:10.606546358+02:00"
+digest: sha256:79689d9a14622fe69074cb19d642cb6884245869cc8a05d100743f801277d291
+generated: "2026-09-18T10:34:50.018864886+02:00"

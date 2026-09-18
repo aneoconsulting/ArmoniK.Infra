@@ -16,7 +16,7 @@ chart-repos:
   - prometheus-community=https://prometheus-community.github.io/helm-charts
   - kedacore=https://kedacore.github.io/charts
   - bitnami=https://charts.bitnami.com/bitnami
-  - grafana=https://grafana.github.io/helm-charts
+  - grafana=https://grafana-community.github.io/helm-charts
   - fluent=https://fluent.github.io/helm-charts
   - datalust=https://helm.datalust.co
   - jetstack=https://charts.jetstack.io

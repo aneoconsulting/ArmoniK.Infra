@@ -30,7 +30,7 @@ dependencies:
     condition: redis.enabled
     alias: redis
   - name: psmdb-db
-    version: 1.x.x
+    version: 1.23.2
     repository: https://percona.github.io/percona-helm-charts/
     alias: mongodb
     condition: mongodb.enabled
@@ -40,15 +40,15 @@ dependencies:
   #   condition: global.dependencies.chaos-mesh
   #   alias: chaosMesh
   - name: rabbitmq
-    version: 16.x.x
+    version: 16.0.14
     repository: https://charts.bitnami.com/bitnami
     condition: rabbitmq.enabled
   - name: grafana
-    version: 10.x.x
+    version: 10.5.15
     repository: https://grafana.github.io/helm-charts
     condition: grafana.enabled
   - name: fluent-bit
-    version: 0.x.x
+    version: 0.58.2
     repository: https://fluent.github.io/helm-charts
     condition: fluent-bit.enabled
   - name: seq

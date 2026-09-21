@@ -4,7 +4,7 @@ release:
 templates:
   - operators-guard.yaml
   - secrets/conf-secrets.yaml
-  - cert-manager-wait.yaml
+  - charts/operators/charts/cert-manager/templates/startupapicheck-job.yaml
 tests:
   - it: rejects an operator deployed but not available
     template: operators-guard.yaml
@@ -30,14 +30,22 @@ tests:
     asserts:
       - failedTemplate:
           errorPattern: "envSecret and envFromSecret require ExternalSecretsOperator"
-  - it: hooks the cert-manager wait job with before-hook-creation
-    template: cert-manager-wait.yaml
-    documentSelector:
-      path: kind
-      value: Job
+  - it: pulls the built-in cert-manager startupapicheck ahead of the shared Issuer and onto upgrades too
+    template: charts/operators/charts/cert-manager/templates/startupapicheck-job.yaml
+    set:
+      global:
+        armonik:
+          operators:
+            certManager:
+              deploy: true
+              available: true
     asserts:
-      - exists:
+      - equal:
           path: metadata.annotations["helm.sh/hook"]
+          value: post-install,post-upgrade
+      - equal:
+          path: metadata.annotations["helm.sh/hook-weight"]
+          value: "-1"
       - matchRegex:
           path: metadata.annotations["helm.sh/hook-delete-policy"]
           pattern: before-hook-creation

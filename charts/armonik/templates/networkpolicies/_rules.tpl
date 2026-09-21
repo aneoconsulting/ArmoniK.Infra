@@ -596,24 +596,6 @@ egress:
 
 
 {{/*
-  wait-cert-manager job: egress to DNS + kube-api only.
-*/}}
-{{- define "armonik.netpol.waitCertManagerEgress" -}}
-podSelector:
-  matchLabels:
-    app.kubernetes.io/component: wait-cert-manager
-    {{- include "armonik.selectorLabels" . | nindent 4 }}
-egress:
-  {{- dict
-        "armonik.netpol.dnsRule" dict
-        "armonik.netpol.kubeApiRule" dict
-    | include "armonik.netpol.mergeRules"
-    | nindent 2
-  }}
-{{- end -}}
-
-
-{{/*
   Redis/valkey server: ingress from control-plane/init + compute-plane.
 */}}
 {{- define "armonik.netpol.redisServer" -}}

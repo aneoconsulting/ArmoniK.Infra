@@ -70,7 +70,7 @@ jobs:
       registry: ${{ steps.resolve.outputs.registry }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           # The triggering commit, not the branch, which moves while a run queues.
           ref: ${{ github.event.pull_request.head.sha }}
@@ -99,7 +99,7 @@ jobs:
       - name: Generate release version
         id: release
         if: github.ref_type == 'tag'
-        uses: codacy/git-version@877bb11b7a2ee44dcd7c0a03882c7037356e64e9 # 2.8.6
+        uses: codacy/git-version@376c75fc90be05da2e5c3b7e54de18524b5226bd # 2.8.8
         with:
           minor-identifier: "feat:"
           # `git describe` as the release branch is what makes a detached HEAD
@@ -112,7 +112,7 @@ jobs:
       - name: Generate snapshot version
         id: snapshot
         if: github.event_name != 'workflow_dispatch' && github.ref_type != 'tag'
-        uses: codacy/git-version@877bb11b7a2ee44dcd7c0a03882c7037356e64e9 # 2.8.6
+        uses: codacy/git-version@376c75fc90be05da2e5c3b7e54de18524b5226bd # 2.8.8
         with:
           minor-identifier: "feat:"
           # Never the current branch as release-branch: a push to main would
@@ -241,7 +241,7 @@ jobs:
       contents: read
     steps:
       - name: Checkout code
-        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 

@@ -194,7 +194,8 @@ data:
     appender.console.type=Console
     appender.console.name=Console
     appender.console.layout.type=PatternLayout
-    appender.console.layout.pattern=%5p | %m%n
+    appender.console.layout.pattern={"@t":"%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX}{UTC}","@l":"%p","@m":"%enc{%m}{JSON}","SourceContext":"%c","thread":"%enc{%t}{JSON}"%notEmpty{,"@x":"%enc{%throwable}{JSON}"}}%n
+    appender.console.layout.alwaysWriteExceptions=false
 
     # File appender
     appender.logfile.type=RollingRandomAccessFile
@@ -219,7 +220,7 @@ data:
     # a classic issue with filebeat/logstash is about multiline exception. The following pattern
     # allows to work smoothly with filebeat/logstash
     #
-    # appender.logfile.layout.pattern=%d | %-5p | %m | %c | %t%n%replace(%throwable){\n}{ }
+    # appender.logfile.layout.pattern=%d | %-5p | %m | %c | %t%n%replace{%throwable}{\n}{ }
     #
 
     # use some of the following patterns to see MDC logging data

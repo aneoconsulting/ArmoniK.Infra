@@ -39,6 +39,61 @@ tests:
       - equal:
           path: stringData.MyTestKey
           value: my-value
+  - it: syncs every hour unless told otherwise, refreshPolicy left to ESO
+    values:
+      - ../ci/layered-operators-values.yaml
+    template: secrets/conf-secrets.yaml
+    documentSelector:
+      path: metadata.name
+      value: t-conf-core
+    asserts:
+      - equal:
+          path: spec.refreshInterval
+          value: 1h0m0s
+      - notExists:
+          path: spec.refreshPolicy
+  - it: takes the sync cadence and policy from the conf values
+    values:
+      - ../ci/layered-operators-values.yaml
+    template: secrets/conf-secrets.yaml
+    set:
+      conf:
+        refreshInterval: 6h
+        refreshPolicy: OnChange
+    documentSelector:
+      path: metadata.name
+      value: t-conf-core
+    asserts:
+      - equal:
+          path: spec.refreshInterval
+          value: 6h
+      - equal:
+          path: spec.refreshPolicy
+          value: OnChange
+  - it: keeps a bare zero, the one-shot sync
+    values:
+      - ../ci/layered-operators-values.yaml
+    template: secrets/conf-secrets.yaml
+    set:
+      conf:
+        refreshInterval: 0
+    documentSelector:
+      path: metadata.name
+      value: t-conf-core
+    asserts:
+      - equal:
+          path: spec.refreshInterval
+          value: "0"
+  - it: rejects a refreshPolicy outside the ESO enum
+    values:
+      - ../ci/layered-operators-values.yaml
+    template: secrets/conf-secrets.yaml
+    set:
+      conf:
+        refreshPolicy: Bogus
+    asserts:
+      - failedTemplate:
+          errorPattern: 'conf.refreshPolicy "Bogus" must be CreatedOnce, Periodic or OnChange'
   - it: routes a source to a pre-existing store, field and property then optional
     values:
       - ../ci/external-store-values.yaml

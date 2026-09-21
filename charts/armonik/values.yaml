@@ -100,6 +100,11 @@ conf:
   # Names every <source>-conf-<layer> Secret the umbrella renders (this release).
   log:
     minimumLevel: Information
+  # ESO sync of every conf layer, both Secrets. Defaults to 1h0m0s; 0 syncs once and never
+  # refreshes. Raise it behind a metered store (Secret Manager bills per access).
+  # refreshInterval: 1h0m0s
+  # CreatedOnce, Periodic (the ESO default) or OnChange.
+  # refreshPolicy: Periodic
   # A source reads this release's Kubernetes-provider SecretStore unless it names a store that
   # ALREADY exists (these charts create none but their own), which is how a value comes from Secret
   # Manager, Vault or any other ESO provider. Per-field rules: the conf schema in armonik-common.

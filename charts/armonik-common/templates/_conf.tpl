@@ -215,6 +215,45 @@ from it. Precedence: .Values.conf.mountPath > .Values.global.armonik.mountPath >
 {{- end -}}
 
 {{/*
+ESO sync cadence of the conf ExternalSecrets: .Values.conf.refreshInterval, else 1h0m0s. A 0 syncs
+once and never refreshes. Worth raising on a metered provider (Secret Manager bills per access); it
+cannot be per store, one layer being one ExternalSecret that may mix stores.
+
+# Usage
+
+{{ include "armonik.conf.refreshInterval" $ }}
+*/}}
+{{- define "armonik.conf.refreshInterval" -}}
+  {{- $conf := list .Values "conf" | include "armonik.utils.index" | fromYaml -}}
+  {{- $value := "1h0m0s" -}}
+  {{- /* Decoded, not `default`ed: a bare 0 is a legitimate value default would swallow. */ -}}
+  {{- if not (kindIs "invalid" $conf.refreshInterval) -}}
+    {{- $value = $conf.refreshInterval | toString | default $value -}}
+  {{- end -}}
+  {{- $value -}}
+{{- end -}}
+
+{{/*
+Optional refreshPolicy of the conf ExternalSecrets: .Values.conf.refreshPolicy, else empty, ESO
+then applying Periodic.
+
+# Usage
+
+{{- with (include "armonik.conf.refreshPolicy" $) }}
+refreshPolicy: {{ . | quote }}
+{{- end }}
+*/}}
+{{- define "armonik.conf.refreshPolicy" -}}
+  {{- $conf := list .Values "conf" | include "armonik.utils.index" | fromYaml -}}
+  {{- with $conf.refreshPolicy -}}
+    {{- if not (has . (list "CreatedOnce" "Periodic" "OnChange")) -}}
+      {{- printf "conf.refreshPolicy %q must be CreatedOnce, Periodic or OnChange" . | fail -}}
+    {{- end -}}
+    {{- . -}}
+  {{- end -}}
+{{- end -}}
+
+{{/*
 In-pod path of one mounted conf file: <mountPath>/<prefix><filename>. Keeps the storage env string
 and the mounted file in sync.
 

@@ -191,6 +191,12 @@ urlsSecretStoreName: ""
 urlsSecretStoreKind: ""
 urlsSecretVersion: ""
 
+# ESO sync of the URLs Secret. 1m converges quickly on a fresh install, where the Secret it reads
+# may not exist yet; raise it behind a metered store.
+conf:
+  refreshInterval: 1m0s
+  # refreshPolicy: Periodic
+
 ###########################################################
 # Admin GUI
 ###########################################################

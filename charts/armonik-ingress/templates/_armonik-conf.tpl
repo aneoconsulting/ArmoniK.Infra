@@ -154,7 +154,7 @@ server {
     {{- end }}
     {{- if $mtls }}
     ssl_verify_client on;
-    ssl_client_certificate /ingressclient/ca.pem;
+    ssl_client_certificate /ingressclient/ca.crt;
     {{- else }}
     ssl_verify_client off;
     proxy_hide_header X-Certificate-Client-CN;
@@ -167,8 +167,9 @@ server {
     # ===== TLS DISABLED =====
     listen 8080;
     listen [::]:8080;
-    listen 9080 http2;
-    listen [::]:9080 http2;
+    listen 9080;
+    listen [::]:9080;
+    http2 on;
     {{- end }}
 
     sendfile on;

@@ -1,0 +1,63 @@
+suite: patches and extra* on the init Job
+templates:
+  - init.yaml
+values:
+  - ../ci/patch-values.yaml
+release:
+  name: t
+tests:
+  - it: patches the init Job pod and container
+    asserts:
+      - equal:
+          path: spec.template.spec.hostAliases[0].ip
+          value: "10.0.0.2"
+      - equal:
+          path: spec.template.spec.containers[0].imagePullPolicy
+          value: Always
+
+  - it: appends the init extras
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].name
+          value: init-warmup
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INIT_LOCAL
+            value: "1"
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: init-scratch
+            mountPath: /scratch
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: init-scratch
+            emptyDir: {}
+
+  - it: does not take the partition patches, which are shaped to a different pod
+    asserts:
+      - notExists:
+          path: spec.template.spec.runtimeClassName
+      - lengthEqual:
+          path: spec.template.spec.containers
+          count: 1
+
+  - it: refuses a patch that would replace a list the chart builds
+    set:
+      init.podSpecPatch.containers:
+        - name: hijack
+          image: busybox:1.37.0
+    asserts:
+      - failedTemplate:
+          errorPattern: "init.podSpecPatch.containers: the chart builds containers"
+
+  - it: refuses a container patch that would replace the conf-built env
+    set:
+      init.containerPatch.env:
+        - name: Bogus
+          value: "1"
+    asserts:
+      - failedTemplate:
+          errorPattern: "init.containerPatch.env: the chart builds env"

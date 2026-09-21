@@ -5,6 +5,8 @@
        covers every emitter (ingress, activemq) once; skipped for an external cert-manager. */}}
 {{- $wait := .Values.certManagerWait | default dict }}
 {{- $image := $wait.image | default dict }}
+{{- $ctx := dict "root" $ "wait" $wait "image" $image }}
+{{- $podSpec := list (include "armonik.certManagerWait.podSpec" $ctx) $wait.podSpecPatch "certManagerWait.podSpecPatch" | include "armonik.utils.patch" }}
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -87,30 +89,6 @@ spec:
       labels:
         app.kubernetes.io/component: wait-cert-manager
         {{- include "armonik.selectorLabels" . | nindent 8 }}
-    spec:
-      restartPolicy: Never
-      serviceAccountName: {{ include "armonik.fullname" . }}-cert-manager-wait
-      containers:
-        - name: wait
-          image: "{{ $image.repository | default "alpine/k8s" }}:{{ $image.tag | default "1.31.0" }}"
-          imagePullPolicy: {{ $image.pullPolicy | default "IfNotPresent" }}
-          command:
-            - sh
-            - -c
-            - |
-              set -e
-              echo "Waiting for cert-manager webhook deployment..."
-              kubectl wait \
-                --for=condition=Available \
-                deployment/cert-manager-webhook \
-                -n {{ include "armonik.namespace" . }} \
-                --timeout={{ $wait.timeout | default "300s" }}
-              echo "Waiting for webhook CA injection..."
-              until kubectl get validatingwebhookconfiguration cert-manager-webhook \
-                -o jsonpath='{.webhooks[0].clientConfig.caBundle}' | grep -q .;
-              do
-                echo "CA bundle not injected yet..."
-                sleep 5
-              done
-              echo "cert-manager webhook ready"
+    {{/* The NetworkPolicy selects this pod by the labels above; podSpecPatch cannot reach them. */}}
+    spec: {{- $podSpec | nindent 6 }}
 {{- end }}

@@ -1,0 +1,57 @@
+{{- $issuer := include "armonik.certManager.issuer" $ | fromYaml -}}
+{{- $cmi := .Values.certManagerIssuer | default dict -}}
+{{- if and $issuer.enabled ($cmi.create | empty | not) (has $issuer.kind (list "Issuer" "GoogleCASIssuer")) -}}
+{{- $issuerNs := include "armonik.namespace" $ -}}
+
+{{- /* ingress: covers both the TLS server Certificate and the mTLS CA Certificate,
+       they share the same existingIssuer/namespaceOverride. */ -}}
+{{- $ingress := .Values.ingress | default dict -}}
+{{- if $ingress.enabled -}}
+  {{- $itls := $ingress.tls | default dict -}}
+  {{- $icm := $itls.certManager | default dict -}}
+  {{- $imtls := $ingress.mtls | default dict -}}
+  {{- $ica := $imtls.certificationAuthority | default dict -}}
+  {{- $noLocalIssuer := ($icm.existingIssuer | default dict).enabled | empty -}}
+  {{- $wantsShared := and $noLocalIssuer (or (and $itls.enabled $icm.enabled) (and $imtls.enabled (empty $ica.existingSecret) (empty $ica.pem))) -}}
+  {{- if $wantsShared -}}
+    {{- with .Subcharts.ingress -}}
+      {{- $ns := include "armonik.namespace" . -}}
+      {{- if ne $ns $issuerNs -}}
+        {{- fail (printf "ingress renders its Certificate into namespace %q but the shared issuer lives in %q: set ingress.namespaceOverride to %q, point ingress.tls.certManager.existingIssuer (or ingress.mtls.certificationAuthority) at a local issuer instead, or switch global.armonik.certManager.issuer.kind to a cluster-scoped ClusterIssuer/GoogleCASClusterIssuer." $ns $issuerNs $issuerNs) -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+
+{{- /* activemq */ -}}
+{{- $activemq := .Values.dependencies.activemq | default dict -}}
+{{- if $activemq.enabled -}}
+  {{- $atls := $activemq.tls | default dict -}}
+  {{- $acm := $atls.certManager | default dict -}}
+  {{- $noLocalIssuer := ($acm.existingIssuer | default dict).enabled | empty -}}
+  {{- if and $noLocalIssuer $atls.enabled (eq $atls.type "cert-manager") -}}
+    {{- with .Subcharts.dependencies.Subcharts.activemq -}}
+      {{- $ns := include "activemq.namespace" . -}}
+      {{- if ne $ns $issuerNs -}}
+        {{- fail (printf "dependencies.activemq renders its Certificate into namespace %q but the shared issuer lives in %q: set dependencies.activemq.namespaceOverride to %q, point dependencies.activemq.tls.certManager.existingIssuer at a local issuer instead, or switch global.armonik.certManager.issuer.kind to a cluster-scoped ClusterIssuer/GoogleCASClusterIssuer." $ns $issuerNs $issuerNs) -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+
+{{- /* mongodb */ -}}
+{{- $mongo := .Values.dependencies.mongodb | default dict -}}
+{{- if $mongo.enabled -}}
+  {{- $mcm := $mongo.certManager | default dict -}}
+  {{- $noLocalIssuer := ($mcm.existingIssuer | default dict).enabled | empty -}}
+  {{- if and $noLocalIssuer $mcm.enabled -}}
+    {{- with .Subcharts.dependencies.Subcharts.mongodb -}}
+      {{- $ns := include "psmdb-database.namespace" . -}}
+      {{- if ne $ns $issuerNs -}}
+        {{- fail (printf "dependencies.mongodb renders its Certificates into namespace %q but the shared issuer lives in %q: set dependencies.mongodb.namespaceOverride to %q, point dependencies.mongodb.certManager.existingIssuer at a local issuer instead, or switch global.armonik.certManager.issuer.kind to a cluster-scoped ClusterIssuer/GoogleCASClusterIssuer." $ns $issuerNs $issuerNs) -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+
+{{- end -}}

@@ -85,7 +85,10 @@ ok control-plane-defaults armonik-control-plane
 # chart has no valid default render; ci/partitions-values.yaml covers the rest.
 fail_with compute-plane-defaults armonik-compute-plane \
   "requires at least one non-null partition"
-ok dependencies-defaults  armonik-dependencies
+# seq >=2026.x fails the render unless one first-run auth option is set, and the chart carries no
+# defaults of its own (all configuration is done in the parent chart); set here the same value the
+# umbrella defaults to (see charts/armonik/values.yaml).
+ok dependencies-defaults  armonik-dependencies --set seq.firstRunNoAuthentication=true
 ok operators-defaults     armonik-operators
 ok umbrella-defaults      armonik
 skip ingress-defaults "broken: chart values lack global.environment, static.environment.json hits a nil pointer; enable when fixed"
@@ -103,8 +106,10 @@ ok ingress-near-default   armonik-ingress       -f charts/armonik-ingress/ci/def
 ok ingress-tls-mtls       armonik-ingress       -f charts/armonik-ingress/ci/tls-mtls-values.yaml
 ok ingress-gateway        armonik-ingress       -f charts/armonik-ingress/ci/gateway-values.yaml
 ok ingress-lb             armonik-ingress       -f charts/armonik-ingress/ci/lb-values.yaml
+ok ingress-patches        armonik-ingress       -f charts/armonik-ingress/ci/patch-values.yaml
 ok activemq-pdb-hpa       activemq              -f charts/activemq/ci/pdb-hpa-values.yaml
 ok activemq-tls           activemq              -f charts/activemq/ci/tls-values.yaml
+ok activemq-patches       activemq              -f charts/activemq/ci/patch-values.yaml
 ok activemq-psp-k8s124    activemq --kube-version 1.24.17 -f test/fixtures/activemq/psp-values.yaml
 ok activemq-psp-k8s131    activemq              -f test/fixtures/activemq/psp-values.yaml
 ok umbrella-no-control-plane armonik -f charts/armonik/ci/minimal-values.yaml --set control-plane.enabled=false

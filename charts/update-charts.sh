@@ -101,6 +101,7 @@ updatedeps() {
   fi
 }
 
-updatedeps activemq armonik-common
+updatedeps armonik-common
+updatedeps activemq
 updatedeps armonik-compute-plane armonik-control-plane armonik-dependencies armonik-operators armonik-ingress
 updatedeps armonik

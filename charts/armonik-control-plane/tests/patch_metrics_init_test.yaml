@@ -1,0 +1,89 @@
+suite: patches and extra* on the metrics-exporter and the init Job
+templates:
+  - deployments/metrics-exporter.yaml
+  - jobs/init.yaml
+values:
+  - ../ci/patch-values.yaml
+release:
+  name: t
+tests:
+  - it: patches the metrics-exporter pod and container
+    template: deployments/metrics-exporter.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.shareProcessNamespace
+          value: true
+      - equal:
+          path: spec.template.spec.containers[0].startupProbe.failureThreshold
+          value: 40
+      - equal:
+          path: spec.template.spec.containers[0].startupProbe.httpGet.path
+          value: /startup
+
+  - it: appends metrics-exporter extras, keeping the chart container first
+    template: deployments/metrics-exporter.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].name
+          value: metrics-exporter
+      - equal:
+          path: spec.template.spec.containers[1].name
+          value: exporter-debug
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: EXPORTER_LOCAL
+            value: "1"
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: exporter-scratch
+            emptyDir: {}
+
+  - it: patches the init Job pod and container
+    template: jobs/init.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.hostAliases[0].ip
+          value: "10.0.0.2"
+      - equal:
+          path: spec.template.spec.containers[0].imagePullPolicy
+          value: Always
+      - equal:
+          path: spec.template.spec.initContainers[0].name
+          value: init-warmup
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: INIT_LOCAL
+            value: "1"
+
+  - it: keeps each workload's patches to itself
+    asserts:
+      - notExists:
+          path: spec.template.spec.hostAliases
+        template: deployments/metrics-exporter.yaml
+      - equal:
+          path: spec.template.spec.shareProcessNamespace
+          value: false
+        template: jobs/init.yaml
+
+  - it: refuses a patch that would replace a list the chart builds
+    template: deployments/metrics-exporter.yaml
+    set:
+      metricsExporter.podSpecPatch.containers:
+        - name: hijack
+          image: busybox:1.37.0
+    asserts:
+      - failedTemplate:
+          errorPattern: "metricsExporter.podSpecPatch.containers: the chart builds containers"
+
+  - it: refuses an init container patch that would replace the conf-built env
+    template: jobs/init.yaml
+    set:
+      init.containerPatch.env:
+        - name: Bogus
+          value: "1"
+    asserts:
+      - failedTemplate:
+          errorPattern: "init.containerPatch.env: the chart builds env"

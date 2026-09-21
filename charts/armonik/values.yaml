@@ -3,9 +3,9 @@
 ############################################
 global:
   version:
-    armonikCore: "0.40.1"  ### TODO FIX VERSIONS GLOBAL IF NULL USE DEFAULT IN SUB CHARTS COMPUTE-PLANE
+    armonikCore: "0.41.0"  ### TODO FIX VERSIONS GLOBAL IF NULL USE DEFAULT IN SUB CHARTS COMPUTE-PLANE
     # armonikPollingagent: "0.35.0"
-    # armonikGui: "0.14.5"
+    # armonikGui: "0.15.3"
     # nginx: "1.27.4-alpine-slim"
   image:
     pullPolicy: IfNotPresent  # FOR KEDA IMAGES
@@ -42,6 +42,11 @@ global:
         deploy: true
       prometheusOperator:
         deploy: true
+      # googleCasIssuer is GCP-specific, only needed for
+      # certManager.issuer.provider=googleCas.
+      googleCasIssuer:
+        deploy: false
+
     # monitoring.{prometheusUrl,metricsExporterUrl} come from armonik-common (see its README); both derive
     # from the operators namespaces above, which a layered install has to state.
 
@@ -102,6 +107,55 @@ ingress:
   # priorityClassName:
   urlsSecretName: '{{ .Release.Name }}-urls'
 
+############################################
+###### CERT-MANAGER SHARED ISSUER ######
+############################################
+# Settings to create the Issuer named by global.armonik.certManager.issuer: whether
+# this release creates it (create) and with which cert-manager backend (provider).
+# create=false: nothing below is used, the Issuer must already exist.
+#
+# Every provider block is forwarded as-is. selfSigned/ca/vault/acme/venafi map to
+# Issuer.spec.<provider> (https://cert-manager.io/docs/configuration/); googleCas is a
+# separate CRD (cas-issuer.jetstack.io) whose block IS the CR's spec directly.
+certManagerIssuer:
+  create: false
+  provider: selfSigned
+  selfSigned: {}
+    # crlDistributionPoints: []
+  ca: {}
+    # secretName: ""
+  vault: {}
+    # server: ""
+    # path: ""
+    # caBundle: ""
+    # auth: {}
+  acme: {}
+    # server: ""
+    # email: ""
+    # privateKeySecretRef:
+    #   name: ""
+    # solvers: []
+  venafi: {}
+    # caBundle must already be base64.
+    # zone: ""
+    # tpp:
+    #   url: ""
+    #   credentialsRef:
+    #     name: ""
+    #   caBundle: ""
+    # cloud:
+    #   apiTokenSecretRef:
+    #     name: ""
+    #     key: apikey
+  googleCas: {}
+    # project: ""
+    # location: ""
+    # caPoolId: ""
+    # certificateAuthorityId: ""
+    # credentials:
+    #   name: ""
+    #   key: credentials.json
+
 # To bring your own MongoDB, set dependencies.mongodb.enabled=false and supply the connection via the
 # conf values (conf.core.env / conf.core.envFromSecret). The in-cluster psmdb-db (below) is the default.
 
@@ -113,9 +167,29 @@ ingress:
 certManagerWait:
   image:
     repository: alpine/k8s
-    tag: 1.31.0
+    tag: 1.37.0
     pullPolicy: IfNotPresent
   timeout: 300s
+  imagePullSecrets: []
+  resources:
+  # The hook gates the release: untolerated, it never schedules on a fully tainted cluster.
+  nodeSelector: {}
+  affinity: {}
+  tolerations: []
+  priorityClassName: ""
+  # -- Extra env for the wait container.
+  extraEnv: []
+  # -- Extra volumes and volumeMounts for the wait container.
+  extraVolumes: []
+  extraVolumeMounts: []
+  # -- Extra init containers. No extraContainers: a sidecar that never exits keeps the hook,
+  # and the release, waiting.
+  extraInitContainers: []
+  # -- Merged over the wait container, last. Lists the chart builds are refused: use extra*.
+  containerPatch: {}
+  # -- Merged over spec.template.spec, last. Lists the chart builds are refused: use extra*.
+  # Pod labels are out of reach: the selector is immutable.
+  podSpecPatch: {}
 
 ############################################
 ############### DEPENDENCIES ###############
@@ -163,9 +237,10 @@ dependencies:
     tls:
       enabled: false
       existingSecret: ""
-      serverPublicKey: ""
-      serverKey: ""
-      caPublicKey: ""
+      # cert-manager's default output Secret keys.
+      serverPublicKey: tls.crt
+      serverKey: tls.key
+      caPublicKey: ca.crt
     metrics:
       enabled: true
       image:
@@ -657,6 +732,10 @@ dependencies:
     #   repository: $REPO-NAME/datalust/seq
     # imagePullSecrets: []
     # priorityClassName:
+    # Seq requires a default admin password in order to initialize a fresh container. Either
+    # specify this here, or opt out using `firstRunNoAuthentication: true` (not suitable for production
+    # deployment). See the `firstRunAdminPasswordHash` variant for better confidentiality. (https://github.com/datalust/helm.datalust.co/blob/main/charts/seq/values.yaml)
+    firstRunNoAuthentication: true
     networkPolicy:
       # Set networkPolicy.enabled: true to apply the default NetworkPolicy for this component.
       ingress:

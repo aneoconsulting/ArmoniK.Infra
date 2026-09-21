@@ -1,4 +1,3 @@
-{{- $global := .Values.global | default dict -}}
 {{- if .Values.metricsExporter.enabled }}
 {{- $conf := list
     (include "armonik.control.metrics.confHelper" $ | fromYaml)
@@ -7,6 +6,8 @@
   | include "armonik.conf.merge" | fromYaml }}
 {{- $conf = list $conf $ | include "armonik.conf.resolve" | fromYaml }}
 {{- $image := list $ .Values.metricsExporter.image .Values.image | include "armonik.utils.imageConf" | fromYaml }}
+{{- $ctx := dict "root" $ "conf" $conf "image" $image -}}
+{{- $podSpec := list (include "armonik.control.metrics.podSpec" $ctx) .Values.metricsExporter.podSpecPatch "metricsExporter.podSpecPatch" | include "armonik.utils.patch" -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -34,57 +35,5 @@ spec:
       labels:
         app.kubernetes.io/component: metrics-exporter
         {{- include "armonik.selectorLabels" . | nindent 8 }}
-    spec:
-      containers:
-        - name: metrics-exporter
-          image: {{ $image.fullname }}
-          imagePullPolicy: {{ $image.pullPolicy }}
-          #command: ["/bin/bash", "-c", "sleep 3600"]
-          ports:
-            {{- range .Values.metricsExporter.ports }}
-            - name: {{ .name }}
-              containerPort: {{ .containerPort }}
-              protocol: {{ .protocol }}
-            {{- end }}{{/* range .Values.metricsExporter.ports */}}
-          env: {{- include "armonik.conf.generateEnv" $conf | nindent 12 }}
-          envFrom: {{- include "armonik.conf.generateEnvFrom" $conf | nindent 12 }}
-          {{- with coalesce .Values.metricsExporter.resources .Values.resources }}
-          resources:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}{{/* with .Values.resources */}}
-          {{- with coalesce .Values.metricsExporter.livenessProbe .Values.livenessProbe }}
-          livenessProbe:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}{{/* with .Values.livenessProbe */}}
-          {{- with coalesce .Values.metricsExporter.startupProbe .Values.startupProbe }}
-          startupProbe:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}{{/* with .Values.startupProbe */}}
-          volumeMounts: {{- include "armonik.conf.generateVolumeMounts" $conf | nindent 12 }}
-      volumes: {{- include "armonik.conf.generateVolumes" (list $conf) | nindent 8 }}
-      {{- with concat (.Values.metricsExporter.imagePullSecrets | default list) (.Values.imagePullSecrets | default list) ($global.imagePullSecrets | default list) }}
-      imagePullSecrets:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}{{/* with $imagePullSecrets */}}
-      serviceAccountName: {{ include "armonik.serviceAccountName" $ }}
-      serviceAccount: {{ include "armonik.serviceAccountName" $ }}
-      automountServiceAccountToken: true
-      shareProcessNamespace: false
-      {{- with coalesce .Values.metricsExporter.nodeSelector .Values.nodeSelector }}
-      nodeSelector:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}{{/* with .Values.nodeSelector */}}
-      {{- with coalesce .Values.metricsExporter.affinity .Values.affinity }}
-      affinity:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}{{/* with .Values.affinity */}}
-      {{- with coalesce .Values.metricsExporter.tolerations .Values.tolerations }}
-      tolerations:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}{{/* with .Values.tolerations */}}
-      {{- with coalesce .Values.metricsExporter.priorityClassName .Values.priorityClassName }}
-      priorityClassName: {{ . | quote }}
-      {{- end }}{{/* with .Values.priorityClassName */}}
-      enableServiceLinks: true
-      dnsPolicy: ClusterFirst
+    spec: {{- $podSpec | nindent 6 }}
 {{- end }}

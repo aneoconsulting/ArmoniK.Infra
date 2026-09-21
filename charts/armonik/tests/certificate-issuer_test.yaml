@@ -1,0 +1,181 @@
+suite: redis and mongodb Certificate issuer resolution
+release:
+  name: t
+templates:
+  - certificate/redis-certificate.yaml
+  - certificate/mongodb-certificate.yaml
+tests:
+  # redis: same three-tier fallback as activemq/armonik-ingress (mirrored from
+  # armonik-ingress/tests/tls_test.yaml), since a single valkey server has no
+  # common-CA constraint against a throwaway local issuer.
+  - it: "redis: renders the Certificate and its own throwaway Issuer when nothing else is configured"
+    template: certificate/redis-certificate.yaml
+    set:
+      dependencies:
+        redis:
+          tls:
+            enabled: true
+            existingSecret: redis-tls
+            certManager:
+              enabled: true
+    asserts:
+      - notFailedTemplate: {}
+      - containsDocument:
+          kind: Certificate
+          apiVersion: cert-manager.io/v1
+          any: true
+      - containsDocument:
+          kind: Issuer
+          apiVersion: cert-manager.io/v1
+          any: true
+      - equal:
+          path: spec.selfSigned
+          value: {}
+        documentSelector:
+          path: kind
+          value: Issuer
+      - equal:
+          path: spec.issuerRef.name
+          value: t-redis-issuer
+        documentSelector:
+          path: kind
+          value: Certificate
+      - equal:
+          path: metadata.name
+          value: t-redis-issuer
+        documentSelector:
+          path: kind
+          value: Issuer
+  - it: "redis: local existingIssuer wins over the shared issuer, and no throwaway Issuer is created"
+    template: certificate/redis-certificate.yaml
+    set:
+      dependencies:
+        redis:
+          tls:
+            enabled: true
+            existingSecret: redis-tls
+            certManager:
+              enabled: true
+              existingIssuer:
+                enabled: true
+                kind: ClusterIssuer
+                name: my-local-issuer
+      global:
+        armonik:
+          certManager:
+            issuer:
+              enabled: true
+              name: shared-issuer
+    asserts:
+      - notFailedTemplate: {}
+      - containsDocument:
+          kind: Issuer
+          apiVersion: cert-manager.io/v1
+          any: true
+        not: true
+      - equal:
+          path: spec.issuerRef
+          value:
+            name: my-local-issuer
+            kind: ClusterIssuer
+            group: cert-manager.io
+        documentSelector:
+          path: kind
+          value: Certificate
+  - it: "redis: fails naming availability when cert-manager is unavailable and no issuer exists"
+    template: certificate/redis-certificate.yaml
+    set:
+      dependencies:
+        redis:
+          tls:
+            enabled: true
+            existingSecret: redis-tls
+            certManager:
+              enabled: true
+      global:
+        armonik:
+          operators:
+            certManager:
+              available: false
+    asserts:
+      - failedTemplate:
+          errorPattern: "dependencies.redis.tls.certManager.enabled requires it"
+
+  # mongodb: deliberately only two tiers (no throwaway local Issuer) - replica set members must
+  # chain to a common CA, so ArmoniK.Infra never creates a per-Certificate throwaway root for it.
+  - it: "mongodb: local existingIssuer wins over the shared issuer for both Certificates"
+    template: certificate/mongodb-certificate.yaml
+    set:
+      dependencies:
+        mongodb:
+          certManager:
+            enabled: true
+            existingIssuer:
+              enabled: true
+              kind: ClusterIssuer
+              name: my-mongo-issuer
+      global:
+        armonik:
+          certManager:
+            issuer:
+              enabled: true
+              name: shared-issuer
+      certManagerIssuer:
+        provider: venafi
+    asserts:
+      - notFailedTemplate: {}
+      - equal:
+          path: spec.issuerRef
+          value:
+            name: my-mongo-issuer
+            kind: ClusterIssuer
+            group: cert-manager.io
+        documentIndex: 0
+      - equal:
+          path: spec.issuerRef
+          value:
+            name: my-mongo-issuer
+            kind: ClusterIssuer
+            group: cert-manager.io
+        documentIndex: 1
+  - it: "mongodb: existingIssuer bypasses the selfSigned-shared-issuer guard (its own backend cannot be checked at render time)"
+    template: certificate/mongodb-certificate.yaml
+    set:
+      dependencies:
+        mongodb:
+          certManager:
+            enabled: true
+            existingIssuer:
+              enabled: true
+              name: my-mongo-issuer
+      certManagerIssuer:
+        provider: selfSigned
+    asserts:
+      - notFailedTemplate: {}
+  - it: "mongodb: fails when neither existingIssuer nor the shared issuer is configured, and never creates a throwaway Issuer"
+    template: certificate/mongodb-certificate.yaml
+    set:
+      dependencies:
+        mongodb:
+          certManager:
+            enabled: true
+    asserts:
+      - failedTemplate:
+          errorPattern: "never creates a throwaway local Issuer for MongoDB"
+  - it: "mongodb: still fails on a selfSigned shared issuer when no existingIssuer is set (regression guard, unchanged)"
+    template: certificate/mongodb-certificate.yaml
+    set:
+      dependencies:
+        mongodb:
+          certManager:
+            enabled: true
+      global:
+        armonik:
+          certManager:
+            issuer:
+              enabled: true
+      certManagerIssuer:
+        provider: selfSigned
+    asserts:
+      - failedTemplate:
+          errorPattern: "replica set members must chain to a common CA"

@@ -11,12 +11,14 @@ reference are the other half, and this pipeline does not mirror them. See
 
 ## Getting the archives
 
-- **Per commit**: the `Package charts` job of the `Helm chart tests` workflow
+- **Per commit**: the `Package charts` job of the `Publish Charts` workflow
   uploads them as the `packaged-charts` artifact (14 days). The chart version is
   the git-version snapshot of the branch, not the in-tree `0.1.0`, so archives
   from two builds never collide.
-- **Per release**: the `Package Helm charts` job of the `Release` workflow
-  attaches them to the GitHub release, stamped with the tag.
+- **Per release**: the `Attach the packages to the release` job of the same
+  workflow attaches them to the GitHub release, stamped with the tag.
+- **From the registry**: `helm pull` returns the same archive, see [Installing
+  from the registry](#installing-from-the-registry).
 - **Locally**:
 
   ```sh
@@ -28,9 +30,7 @@ reference are the other half, and this pipeline does not mirror them. See
   output directory. It packages the charts a user installs directly: `armonik`,
   `armonik-operators`, the three plane charts, `armonik-dependencies` and
   `activemq`. `armonik-common` is a library every consumer vendors, so it ships
-  inside the others rather than on its own. `activemq` is on its own version
-  track and keeps its `Chart.yaml` version whatever `-v` says, so it is the one
-  archive whose name does not carry the build version.
+  inside the others rather than on its own.
 
 ## Installing from an archive
 
@@ -52,6 +52,29 @@ helm install armonik ./armonik-<version>.tgz -n armonik --create-namespace \
 
 `charts/armonik/templates/NOTES.txt` renders the per-mode recipes, and
 `uninstall.md` covers the teardown, which is not symmetric.
+
+## Installing from the registry
+
+The same archives are published as OCI artifacts on Docker Hub, so a cluster
+with network access needs neither the release assets nor a served directory:
+
+```sh
+helm install armonik oci://registry-1.docker.io/dockerhubaneo/armonik \
+  --version <version> -n armonik --create-namespace
+helm show values oci://registry-1.docker.io/dockerhubaneo/armonik --version <version>
+helm pull oci://registry-1.docker.io/dockerhubaneo/armonik --version <version>
+```
+
+One repository per chart, named after the chart: `armonik`,
+`armonik-operators`, the three plane charts, `armonik-dependencies` and
+`activemq`. Three things to know:
+
+- `helm repo add` takes no OCI registry, so there is no `index.yaml` and no
+  `helm search repo` here; the Docker Hub tag list is the catalogue.
+- Always pass `--version`: without one helm resolves the highest semver tag, and
+  these repositories also hold image tags.
+- Branch and pull-request builds publish snapshots there too, pruned after two
+  months, so only a released `X.Y.Z` is durable.
 
 ## Serving the directory as a repository
 

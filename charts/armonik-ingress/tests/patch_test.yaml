@@ -1,0 +1,141 @@
+suite: patches, extra* and the previously-dead pod fields
+templates:
+  - deployments/nginx.yaml
+  - deployments/gui.yaml
+  - deployments/load-balancer.yaml
+  # The deployments' checksum/* annotations include these, so they have to be loaded too.
+  - armonik-nginx-conf.yaml
+  - configmaps/load-balancer.yaml
+  - secrets/lb-cluster-certs.yaml
+values:
+  - ../ci/patch-values.yaml
+release:
+  name: t
+tests:
+  - it: renders nginx extraEnv, which was read off the wrong context and never applied
+    template: deployments/nginx.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: NGINX_LOCAL
+            value: "1"
+
+  - it: renders gui extraEnv, likewise
+    template: deployments/gui.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: GUI_LOCAL
+            value: "1"
+
+  - it: puts extraVolumes in volumes, where extraVolumeMounts used to be emitted
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: nginx-scratch
+            emptyDir: {}
+        template: deployments/nginx.yaml
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: gui-scratch
+            emptyDir: {}
+        template: deployments/gui.yaml
+
+  - it: renders affinity on all three, which no template read before
+    asserts:
+      - equal:
+          path: spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].key
+          value: role
+        template: deployments/nginx.yaml
+      - equal:
+          path: spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].key
+          value: role
+        template: deployments/gui.yaml
+      - equal:
+          path: spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].key
+          value: role
+        template: deployments/load-balancer.yaml
+
+  - it: renders imagePullSecrets on nginx and gui, which had none
+    asserts:
+      - equal:
+          path: spec.template.spec.imagePullSecrets[0].name
+          value: from-chart
+        template: deployments/nginx.yaml
+      - equal:
+          path: spec.template.spec.imagePullSecrets[0].name
+          value: from-chart
+        template: deployments/gui.yaml
+
+  - it: patches each pod and container independently
+    asserts:
+      - equal:
+          path: spec.template.spec.hostAliases[0].ip
+          value: "10.0.0.1"
+        template: deployments/nginx.yaml
+      - equal:
+          path: spec.template.spec.hostAliases[0].ip
+          value: "10.0.0.3"
+        template: deployments/load-balancer.yaml
+      - equal:
+          path: spec.template.spec.shareProcessNamespace
+          value: true
+        template: deployments/gui.yaml
+      - notExists:
+          path: spec.template.spec.hostAliases
+        template: deployments/gui.yaml
+
+  - it: keeps the chart container first and its own mounts intact
+    template: deployments/load-balancer.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].name
+          value: load-balancer
+      - equal:
+          path: spec.template.spec.containers[0].volumeMounts[0].name
+          value: cluster-certs
+      - equal:
+          path: spec.template.spec.initContainers[0].name
+          value: lb-warmup
+
+  - it: keeps the nginx conf and static mounts under a patch
+    template: deployments/nginx.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].name
+          value: ingress
+      - equal:
+          path: spec.template.spec.containers[1].name
+          value: nginx-debug
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: conf
+            secret:
+              secretName: t-armonik-ingress-nginx-conf
+              defaultMode: 420
+              optional: false
+
+  - it: refuses a patch that would replace a list the chart builds
+    template: deployments/nginx.yaml
+    set:
+      podSpecPatch.containers:
+        - name: hijack
+          image: busybox:1.37.0
+    asserts:
+      - failedTemplate:
+          errorPattern: "podSpecPatch.containers: the chart builds containers"
+
+  - it: refuses a load-balancer container patch replacing its volumeMounts
+    template: deployments/load-balancer.yaml
+    set:
+      loadBalancer.containerPatch.volumeMounts:
+        - name: bogus
+          mountPath: /bogus
+    asserts:
+      - failedTemplate:
+          errorPattern: "loadBalancer.containerPatch.volumeMounts: the chart builds volumeMounts"

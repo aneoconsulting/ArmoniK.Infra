@@ -13,7 +13,7 @@ HorizontalPodAutoscaler:
 image:
   repository: symptoma
   name: activemq
-  tag: 5.18.4
+  tag: 5.19.10
   pullPolicy: IfNotPresent
   imagePullSecrets: []
   registry: ""
@@ -27,6 +27,25 @@ serviceAccount:
 activemqOptsMemory: "-Xms1g -Xmx1g"
 
 extraEnv: []
+# -- Extra envFrom for the activemq container.
+extraEnvFrom: []
+# -- Extra containers, after the activemq container, and extra init containers.
+extraContainers: []
+extraInitContainers: []
+# containerPatch:
+#   securityContext:
+#     readOnlyRootFilesystem: true
+#
+# -- Merged over the activemq container, last. Lists the chart builds are refused: use extra*.
+containerPatch: {}
+# podSpecPatch:
+#   hostAliases:
+#     - ip: "10.0.0.1"
+#       hostnames: ["legacy.internal"]
+#
+# -- Merged over spec.template.spec, last. Lists the chart builds are refused: use extra*.
+# Pod labels are out of reach: the selector is immutable.
+podSpecPatch: {}
   # - name: ACTIVEMQ_ENABLE_SCHEDULER
   #   value: "true"
 
@@ -157,6 +176,7 @@ tls:
       kind: "Issuer"
       # Name of the existing cert-manager issuer
       name: "my-issuer"
+      group: ""
     # Set the requested duration (i.e. lifetime) of the Certificate.
     # See https://cert-manager.io/docs/reference/api-docs/#cert-manager.io/v1.CertificateSpec
     duration: ""

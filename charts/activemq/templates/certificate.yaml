@@ -1,8 +1,12 @@
-{{- if and .Values.tls.enabled (eq .Values.tls.type "cert-manager") }}
-{{- if and (not (dig "armonik" "operators" "certManager" "available" true .Values.global)) (not .Values.tls.certManager.existingIssuer.enabled) }}
-{{- fail "activemq TLS via cert-manager requires it: set global.armonik.operators.certManager.available=true, set tls.certManager.existingIssuer.enabled=true, or use a tls.type other than cert-manager." }}
+{{- $tls := .Values.tls | default dict }}
+{{- $certManager := $tls.certManager | default dict }}
+{{- if and $tls.enabled (eq $tls.type "cert-manager") }}
+{{- $issuerName := printf "%s-issuer" (include "activemq.fullname" .) }}
+{{- $issuer := list $ $certManager.existingIssuer $issuerName | include "armonik.certManager.getIssuer" | fromYaml }}
+{{- if and (not (dig "armonik" "operators" "certManager" "available" true .Values.global)) $issuer.needsLocalIssuer }}
+{{- fail "activemq TLS via cert-manager requires it: set global.armonik.operators.certManager.available=true, set tls.certManager.existingIssuer.enabled=true, set global.armonik.certManager.issuer.enabled=true, or use a tls.type other than cert-manager." }}
 {{- end }}
-{{- if not .Values.tls.certManager.existingIssuer.enabled }}
+{{- if $issuer.needsLocalIssuer }}
 apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
@@ -16,7 +20,7 @@ metadata:
     {{- with .Values.additionalAnnotations }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
-  name: {{ include "activemq.fullname" . }}-issuer
+  name: {{ $issuer.name | quote }}
   namespace: {{ include "activemq.namespace" . | quote }}
 spec:
   selfSigned: {}
@@ -38,29 +42,9 @@ spec:
   dnsNames:
   - {{ include "activemq.fullname" . }}.{{ include "activemq.namespace" . }}
   - {{ include "activemq.fullname" . }}.{{ include "activemq.namespace" . }}.svc
-  - {{ include "activemq.fullname" . }}.{{ include "activemq.namespace" . }}.svc.{{ .Values.tls.clusterDomain }}
+  - {{ include "activemq.fullname" . }}.{{ include "activemq.namespace" . }}.svc.{{ $tls.clusterDomain }}
   secretName: {{ include "activemq.fullname" . }}
-  usages:
-    - server auth
-    - client auth
-  privateKey:
-    algorithm: RSA
-    size: 2048
-  {{- with .Values.tls.certManager.duration }}
-  duration: {{ . }}
-  {{- end }}
-  {{- with .Values.tls.certManager.renewBefore }}
-  renewBefore: {{ . }}
-  {{- end }}
-  issuerRef:
-    {{- if .Values.tls.certManager.existingIssuer.enabled }}
-    name: {{ .Values.tls.certManager.existingIssuer.name }}
-    kind: {{ .Values.tls.certManager.existingIssuer.kind }}
-    {{- else }}
-    name: {{ include "activemq.fullname" . }}-issuer
-    kind: Issuer
-    {{- end }}
-    group: cert-manager.io
+  {{- include "armonik.certManager.certificateSpec" (dict "certManager" $certManager "issuer" $issuer) | nindent 2 }}
   additionalOutputFormats:
     - type: CombinedPEM
 {{- end }}

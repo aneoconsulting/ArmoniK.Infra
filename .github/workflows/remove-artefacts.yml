@@ -1,0 +1,43 @@
+name: Remove Old Branch Artefacts
+
+# Docker Hub has no tag retention and publish.yml pushes a chart tag per commit.
+# The action deletes pre-release tags older than `months` (2) and keeps plain
+# X.Y.Z and -SNAPSHOT*, so releases and main survive.
+
+on:
+  schedule:
+    - cron: '20 9 * * 1'   # 9:20 on Monday
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  charts:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # The repositories publish.yml creates, one per release-root chart of
+        # charts/package-charts.sh.
+        chart:
+          - armonik
+          - armonik-operators
+          - armonik-control-plane
+          - armonik-compute-plane
+          - armonik-ingress
+          - armonik-dependencies
+          - activemq
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+
+      - name: Remove old branch chart tags
+        uses: aneoconsulting/ArmoniK.Actions.CleanupArtifacts/remove-images@40131ac01ff60baea9e02612ced7ac9b69916a3d # main
+        with:
+          org: dockerhubaneo
+          image: ${{ matrix.chart }}
+          user: ${{ secrets.DOCKER_HUB_LOGIN }}
+          token: ${{ secrets.DOCKER_HUB_TOKEN }}

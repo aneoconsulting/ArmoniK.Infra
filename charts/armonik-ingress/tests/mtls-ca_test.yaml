@@ -1,0 +1,268 @@
+suite: mtls client CA secret
+templates:
+  - secrets/mtls-ca.yaml
+  - certificate.yaml
+  - deployments/nginx.yaml
+  - armonik-nginx-conf.yaml
+tests:
+  - it: renders neither the Secret nor a client-cert volume when mtls is disabled
+    asserts:
+      - hasDocuments:
+          count: 0
+        template: secrets/mtls-ca.yaml
+      - lengthEqual:
+          path: spec.template.spec.volumes
+          count: 2
+        template: deployments/nginx.yaml
+  - it: "pem only: renders the Secret from a literal pem, and the Deployment mounts that exact Secret"
+    set:
+      fullnameOverride: custom-ingress
+      tls:
+        enabled: true
+      mtls:
+        enabled: true
+        certificationAuthority:
+          pem: |
+            -----BEGIN CERTIFICATE-----
+            MIIBszCCAVmgAwIBAgIUfake0000000000000000000000000000
+            -----END CERTIFICATE-----
+    asserts:
+      - equal:
+          path: metadata.name
+          value: custom-ingress-mtls-ca
+        template: secrets/mtls-ca.yaml
+      - exists:
+          path: data["ca.crt"]
+        template: secrets/mtls-ca.yaml
+      - equal:
+          path: spec.template.spec.volumes[1].name
+          value: client-cert
+        template: deployments/nginx.yaml
+      - equal:
+          path: spec.template.spec.volumes[1].secret.secretName
+          value: custom-ingress-mtls-ca
+        template: deployments/nginx.yaml
+  - it: "existingSecret only: mounts it instead of rendering one"
+    set:
+      fullnameOverride: custom-ingress
+      tls:
+        enabled: true
+      mtls:
+        enabled: true
+        certificationAuthority:
+          existingSecret: my-corporate-client-ca
+    asserts:
+      - hasDocuments:
+          count: 0
+        template: secrets/mtls-ca.yaml
+      - equal:
+          path: spec.template.spec.volumes[1].name
+          value: client-cert
+        template: deployments/nginx.yaml
+      - equal:
+          path: spec.template.spec.volumes[1].secret.secretName
+          value: my-corporate-client-ca
+        template: deployments/nginx.yaml
+  - it: "both set: existingSecret wins deterministically, pem is ignored"
+    set:
+      fullnameOverride: custom-ingress
+      tls:
+        enabled: true
+      mtls:
+        enabled: true
+        certificationAuthority:
+          existingSecret: my-corporate-client-ca
+          pem: |
+            -----BEGIN CERTIFICATE-----
+            MIIBszCCAVmgAwIBAgIUfake0000000000000000000000000000
+            -----END CERTIFICATE-----
+    asserts:
+      - hasDocuments:
+          count: 0
+        template: secrets/mtls-ca.yaml
+      - equal:
+          path: spec.template.spec.volumes[1].name
+          value: client-cert
+        template: deployments/nginx.yaml
+      - equal:
+          path: spec.template.spec.volumes[1].secret.secretName
+          value: my-corporate-client-ca
+        template: deployments/nginx.yaml
+  # Follow-up to the review comment above: mTLS should fall back exactly like the TLS server cert
+  # does (local existingIssuer -> shared issuer -> throwaway local selfSigned Issuer), not stop one
+  # tier short of it.
+  - it: "neither set, cert-manager available: falls back to the same throwaway Issuer the TLS server cert creates"
+    set:
+      fullnameOverride: custom-ingress
+      tls:
+        enabled: true
+      mtls:
+        enabled: true
+    asserts:
+      - notFailedTemplate: {}
+        template: secrets/mtls-ca.yaml
+      # tls.certManager.enabled defaults to true, so certificate.yaml's own fallback creates the
+      # Issuer; mtls-ca.yaml must not create a second, redundant one for the same component.
+      - hasDocuments:
+          count: 1
+        template: secrets/mtls-ca.yaml
+      - isKind:
+          of: Certificate
+        template: secrets/mtls-ca.yaml
+      - equal:
+          path: spec.issuerRef
+          value:
+            name: custom-ingress-issuer
+            kind: Issuer
+            group: cert-manager.io
+        template: secrets/mtls-ca.yaml
+      - hasDocuments:
+          count: 2
+        template: certificate.yaml
+      - containsDocument:
+          kind: Issuer
+          apiVersion: cert-manager.io/v1
+          any: true
+        template: certificate.yaml
+      - equal:
+          path: metadata.name
+          value: custom-ingress-issuer
+        template: certificate.yaml
+        documentSelector:
+          path: kind
+          value: Issuer
+  - it: "neither set, cert-manager not available: fails naming availability, not just pem/existingSecret"
+    set:
+      tls:
+        enabled: true
+      mtls:
+        enabled: true
+      global:
+        armonik:
+          operators:
+            certManager:
+              deploy: false
+              available: false
+    template: secrets/mtls-ca.yaml
+    asserts:
+      - failedTemplate:
+          errorPattern: 'cert-manager is not available'
+  - it: "neither set, tls not using cert-manager: creates its own throwaway local Issuer since nothing else will"
+    set:
+      fullnameOverride: custom-ingress
+      tls:
+        enabled: true
+        certManager:
+          enabled: false
+      mtls:
+        enabled: true
+    asserts:
+      - notFailedTemplate: {}
+        template: secrets/mtls-ca.yaml
+      # certificate.yaml's cert-manager block is gated on tls.certManager.enabled and renders
+      # nothing here, so it is not a duplicate for mtls-ca.yaml to create its own Issuer.
+      - hasDocuments:
+          count: 0
+        template: certificate.yaml
+      - hasDocuments:
+          count: 2
+        template: secrets/mtls-ca.yaml
+      - equal:
+          path: spec.selfSigned
+          value: {}
+        template: secrets/mtls-ca.yaml
+        documentSelector:
+          path: kind
+          value: Issuer
+      - equal:
+          path: metadata.name
+          value: custom-ingress-issuer
+        template: secrets/mtls-ca.yaml
+        documentSelector:
+          path: kind
+          value: Issuer
+      - equal:
+          path: spec.issuerRef
+          value:
+            name: custom-ingress-issuer
+            kind: Issuer
+            group: cert-manager.io
+        template: secrets/mtls-ca.yaml
+        documentSelector:
+          path: kind
+          value: Certificate
+
+  # Regression guard for the review comment "mTLS could use the internal issuer if no CA is
+  # provided": falls back to a cert-manager-issued CA (isCA: true) from whichever issuer tls.certManager
+  # would use, rather than failing, but never auto-creates a throwaway local Issuer just for mTLS.
+  - it: "neither set, global shared issuer enabled: falls back to a cert-manager-issued CA"
+    set:
+      tls:
+        enabled: true
+      mtls:
+        enabled: true
+      global:
+        armonik:
+          certManager:
+            issuer:
+              enabled: true
+              name: shared-issuer
+              kind: ClusterIssuer
+    template: secrets/mtls-ca.yaml
+    asserts:
+      - notFailedTemplate: {}
+      - isKind:
+          of: Certificate
+      - equal:
+          path: spec.isCA
+          value: true
+      - equal:
+          path: spec.issuerRef
+          value:
+            name: shared-issuer
+            kind: ClusterIssuer
+            group: cert-manager.io
+  - it: "neither set, local existingIssuer enabled: falls back to a cert-manager-issued CA referencing it"
+    set:
+      fullnameOverride: custom-ingress
+      tls:
+        enabled: true
+        certManager:
+          existingIssuer:
+            enabled: true
+            name: my-local-issuer
+            kind: ClusterIssuer
+      mtls:
+        enabled: true
+    template: secrets/mtls-ca.yaml
+    asserts:
+      - notFailedTemplate: {}
+      - isKind:
+          of: Certificate
+      - equal:
+          path: metadata.name
+          value: custom-ingress-mtls-ca
+      - equal:
+          path: spec.secretName
+          value: custom-ingress-mtls-ca
+      - equal:
+          path: spec.issuerRef
+          value:
+            name: my-local-issuer
+            kind: ClusterIssuer
+            group: cert-manager.io
+  - it: "mtls enabled with tls disabled fails independently of validate.yaml, naming both keys"
+    set:
+      tls:
+        enabled: false
+      mtls:
+        enabled: true
+        certificationAuthority:
+          pem: |
+            -----BEGIN CERTIFICATE-----
+            MIIBszCCAVmgAwIBAgIUfake0000000000000000000000000000
+            -----END CERTIFICATE-----
+    template: secrets/mtls-ca.yaml
+    asserts:
+      - failedTemplate:
+          errorPattern: 'mtls\.enabled.*tls\.enabled'

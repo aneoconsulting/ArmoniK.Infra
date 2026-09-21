@@ -27,6 +27,24 @@ you also want covered:
   - dependencies.<activemq|grafana|seq|fluent-bit>.networkPolicy.enabled=true (Redis is covered above)
 {{- end }}
 **********************************************************
+{{- $sharedIssuer := include "armonik.certManager.issuer" $ | fromYaml }}
+{{- $cmi := .Values.certManagerIssuer | default dict }}
+{{- if and $sharedIssuer.enabled (eq ($cmi.provider | default "selfSigned") "googleCas") }}
+
+ACTION NEEDED for provider=googleCas: cert-manager only auto-approves signers listed in
+approveSignerNames, which does not cover Google CAS by default. Without this, CertificateRequests hang
+unapproved forever with no error. Set on the release installing cert-manager (armonik-operators, alias
+"operators" here) - this REPLACES the default, so keep the first two entries:
+
+     operators:
+       cert-manager:
+         approveSignerNames:
+           - issuers.cert-manager.io/*
+           - clusterissuers.cert-manager.io/*
+           - googlecasissuers.cas-issuer.jetstack.io/*
+           - googlecasclusterissuers.cas-issuer.jetstack.io/*
+**********************************************************
+{{- end }}
 {{- $cp := index .Values "compute-plane" }}
 {{- $workerPartitions := list }}
 {{- if and $cp $cp.enabled $cp.partitions }}{{ $workerPartitions = keys $cp.partitions | sortAlpha }}{{ end }}

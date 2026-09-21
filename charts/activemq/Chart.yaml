@@ -1,6 +1,6 @@
 apiVersion: v2
-appVersion: 5.18.4
-version: 1.0.0
+appVersion: 5.19.10
+version: 0.1.0
 name: activemq
 description: A Helm chart for ArmoniK
 icon: https://25070129.fs1.hubspotusercontent-eu1.net/hubfs/25070129/Website/Images%20-%20Website/ArmoniK/logo_armonik_by_aneo%201.svg
@@ -17,3 +17,11 @@ maintainers:
   - name: Aneo
     email: armonik@aneo.fr
     url: armonik.fr
+
+dependencies:
+  - name: armonik-common
+    version: 0.1.x
+    repository: file://../armonik-common
+    import-values:
+      - child: global.armonik
+        parent: global.armonik

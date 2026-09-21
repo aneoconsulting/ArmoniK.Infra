@@ -1,8 +1,9 @@
 # Chart tests
 
 Template-only verification of the Helm charts: nothing here needs a Kubernetes
-cluster. CI runs the same entrypoints (`.github/workflows/test-helm.yml` and
-`linter-helm.yml`).
+cluster. CI runs the same entrypoints (`.github/workflows/test-helm.yml`,
+`linter-helm.yml`, and `publish.yml`, which vendors the same way before
+packaging).
 
 ## Entrypoints
 

@@ -1,0 +1,135 @@
+suite: shared issuer namespace guard
+release:
+  name: t
+templates:
+  - certmanager-issuer-guard.yaml
+tests:
+  - it: passes when every consumer's namespace matches the shared issuer's namespace
+    set:
+      global:
+        armonik:
+          certManager:
+            issuer:
+              enabled: true
+              name: shared-issuer
+      certManagerIssuer:
+        create: true
+        provider: venafi
+        venafi:
+          zone: my-zone
+      ingress:
+        tls:
+          enabled: true
+          certManager:
+            enabled: true
+      dependencies:
+        activemq:
+          tls:
+            enabled: true
+            type: cert-manager
+        mongodb:
+          certManager:
+            enabled: true
+    asserts:
+      - notFailedTemplate: {}
+
+  - it: fails when ingress renders its Certificate into a different namespace than the shared issuer
+    set:
+      global:
+        armonik:
+          certManager:
+            issuer:
+              enabled: true
+              name: shared-issuer
+      certManagerIssuer:
+        create: true
+        provider: venafi
+        venafi:
+          zone: my-zone
+      ingress:
+        namespaceOverride: other-ns
+        tls:
+          enabled: true
+          certManager:
+            enabled: true
+    asserts:
+      - failedTemplate:
+          errorPattern: 'ingress renders its Certificate into namespace "other-ns"'
+
+  - it: fails when dependencies.activemq renders its Certificate into a different namespace than the shared issuer
+    set:
+      global:
+        armonik:
+          certManager:
+            issuer:
+              enabled: true
+              name: shared-issuer
+      certManagerIssuer:
+        create: true
+        provider: venafi
+        venafi:
+          zone: my-zone
+      dependencies:
+        activemq:
+          namespaceOverride: other-ns
+          tls:
+            enabled: true
+            type: cert-manager
+    asserts:
+      - failedTemplate:
+          errorPattern: 'dependencies.activemq renders its Certificate into namespace "other-ns"'
+
+  - it: fails when dependencies.mongodb renders its Certificates into a different namespace than the shared issuer
+    set:
+      global:
+        armonik:
+          certManager:
+            issuer:
+              enabled: true
+              name: shared-issuer
+      certManagerIssuer:
+        create: true
+        provider: venafi
+        venafi:
+          zone: my-zone
+      dependencies:
+        mongodb:
+          namespaceOverride: other-ns
+          certManager:
+            enabled: true
+    asserts:
+      - failedTemplate:
+          errorPattern: 'dependencies.mongodb renders its Certificates into namespace "other-ns"'
+
+  - it: does not fire for a cluster-scoped issuer kind even when every consumer's namespace diverges
+    set:
+      global:
+        armonik:
+          certManager:
+            issuer:
+              enabled: true
+              name: shared-issuer
+              kind: ClusterIssuer
+      certManagerIssuer:
+        create: true
+        provider: venafi
+        venafi:
+          zone: my-zone
+      ingress:
+        namespaceOverride: other-ns-1
+        tls:
+          enabled: true
+          certManager:
+            enabled: true
+      dependencies:
+        activemq:
+          namespaceOverride: other-ns-2
+          tls:
+            enabled: true
+            type: cert-manager
+        mongodb:
+          namespaceOverride: other-ns-3
+          certManager:
+            enabled: true
+    asserts:
+      - notFailedTemplate: {}

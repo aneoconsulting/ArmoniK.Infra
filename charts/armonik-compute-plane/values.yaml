@@ -98,6 +98,31 @@ init:
   tolerations:
   affinity:
   priorityClassName:
+  # -- Extra env for the init container. Shared vars go in conf.env.
+  extraEnv: []
+  # -- Extra envFrom for the init container.
+  extraEnvFrom: []
+  # -- Extra volumeMounts for the init container.
+  extraVolumeMounts: []
+  # -- Extra volumes.
+  extraVolumes: []
+  # -- Extra init containers. There is no extraContainers on a Job: a sidecar that never
+  # exits keeps it from finishing.
+  extraInitContainers: []
+  # containerPatch:
+  #   securityContext:
+  #     readOnlyRootFilesystem: true
+  #
+  # -- Merged over the init container, last. Lists the chart builds are refused: use extra*.
+  containerPatch: {}
+  # podSpecPatch:
+  #   hostAliases:
+  #     - ip: "10.0.0.1"
+  #       hostnames: ["legacy.internal"]
+  #
+  # -- Merged over spec.template.spec, last. Lists the chart builds are refused: use extra*.
+  # Pod labels are out of reach: the selector is immutable.
+  podSpecPatch: {}
   # Init Job: core + log + jobs layers + core TLS mounts.
   conf:
     envSecret:
@@ -172,17 +197,12 @@ partitionCommon:
       mountSecret:
         - secret: '{{ list "core" . | include "armonik.conf.mountSecretName" }}'
         - secret: '{{ list "polling" . | include "armonik.conf.mountSecretName" }}'
-    # -- Extra env for the agent container, after the conf layers. `conf.env` is the shared channel,
-    # this is container-local.
+    # -- Extra env for the agent container. Shared vars go in conf.env.
     extraEnv: []
-    # -- Extra envFrom for the agent container, after the conf layers.
+    # -- Extra envFrom for the agent container.
     extraEnvFrom: []
-    # -- Extra volumeMounts for the agent container, after the conf mounts.
+    # -- Extra volumeMounts for the agent container.
     extraVolumeMounts: []
-    # containerPatch:
-    #   securityContext:
-    #     readOnlyRootFilesystem: true
-    #
     # -- Merged over the agent container, last. Lists the chart builds are refused: use extra*.
     containerPatch: {}
   annotations: {}
@@ -198,17 +218,8 @@ partitionCommon:
   extraInitContainers: []
   # -- Extra volumes, after the conf mounts and the cache volume.
   extraVolumes: []
-  # podSpecPatch:
-  #   hostAliases:
-  #     - ip: "10.0.0.1"
-  #       hostnames: ["legacy.internal"]
-  #   topologySpreadConstraints:
-  #     - maxSkew: 1
-  #       topologyKey: topology.kubernetes.io/zone
-  #       whenUnsatisfiable: ScheduleAnyway
-  #
-  # -- Merged over spec.template.spec, last. Pod metadata is out of reach: its labels must stay a
-  # superset of the immutable selector. Lists the chart builds are refused: use extra*.
+  # -- Merged over spec.template.spec, last. Lists the chart builds are refused: use extra*.
+  # Pod labels are out of reach: the selector is immutable.
   podSpecPatch: {}
   # Default worker, will be overridden per partition
   worker:
@@ -259,17 +270,12 @@ partitionCommon:
         - '{{ list "worker" . | include "armonik.conf.secretName" }}'
       mountSecret:
         - secret: '{{ list "worker" . | include "armonik.conf.mountSecretName" }}'
-    # -- Extra env for the worker container, after the conf layers. `conf.env` is the shared channel,
-    # this is container-local.
+    # -- Extra env for the worker container. Shared vars go in conf.env.
     extraEnv: []
-    # -- Extra envFrom for the worker container, after the conf layers.
+    # -- Extra envFrom for the worker container.
     extraEnvFrom: []
-    # -- Extra volumeMounts for the worker container, after the conf mounts.
+    # -- Extra volumeMounts for the worker container.
     extraVolumeMounts: []
-    # containerPatch:
-    #   securityContext:
-    #     readOnlyRootFilesystem: true
-    #
     # -- Merged over the worker container, last. Lists the chart builds are refused: use extra*.
     containerPatch: {}
   hpa:

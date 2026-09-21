@@ -17,7 +17,7 @@ maintainers:
 
 dependencies:
   - name: activemq
-    version: 1.x.x
+    version: 0.1.x
     repository: file://../activemq
     condition: activemq.enabled
   # - name: redis
@@ -25,7 +25,7 @@ dependencies:
   #   repository: https://charts.bitnami.com/bitnami
   #   condition: redis.enabled
   - name: valkey
-    version: 0.9.x
+    version: 0.12.x
     repository: https://valkey.io/valkey-helm/
     condition: redis.enabled
     alias: redis
@@ -40,11 +40,11 @@ dependencies:
   #   condition: global.dependencies.chaos-mesh
   #   alias: chaosMesh
   - name: rabbitmq
-    version: 15.x.x
+    version: 16.x.x
     repository: https://charts.bitnami.com/bitnami
     condition: rabbitmq.enabled
   - name: grafana
-    version: 8.x.x
+    version: 10.x.x
     repository: https://grafana.github.io/helm-charts
     condition: grafana.enabled
   - name: fluent-bit
@@ -52,6 +52,6 @@ dependencies:
     repository: https://fluent.github.io/helm-charts
     condition: fluent-bit.enabled
   - name: seq
-    version: 2024.x.x
+    version: 2026.x.x
     repository: https://helm.datalust.co
     condition: seq.enabled

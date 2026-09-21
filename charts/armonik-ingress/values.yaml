@@ -10,7 +10,7 @@ image:
   registry:
   repository: nginxinc
   name: nginx-unprivileged
-  tag: 1.27.4-alpine-slim
+  tag: 1.31.6-alpine-slim
   pullPolicy: IfNotPresent
 
 replicas: 1
@@ -20,6 +20,22 @@ tolerations: []
 annotations: {}
 affinity: {}
 priorityClassName: ""
+# -- Extra env for the nginx container.
+extraEnv: []
+# -- Extra envFrom for the nginx container.
+extraEnvFrom: []
+# -- Extra volumes and volumeMounts for the nginx container.
+extraVolumes: []
+extraVolumeMounts: []
+# -- Extra containers, after the nginx container, and extra init containers.
+extraContainers: []
+extraInitContainers: []
+# -- Merged over the nginx container, last. Lists the chart builds are refused: use extra*.
+containerPatch: {}
+# -- Merged over spec.template.spec, last. Lists the chart builds are refused: use extra*.
+# Pod labels are out of reach: the selector is immutable.
+podSpecPatch: {}
+
 
 resources:
   limits:
@@ -53,16 +69,24 @@ tls:
     existingIssuer:
       # Use an existing cert-manager issuer
       enabled: false
-      # Kind of the existing cert-manager issuer
+      # Kind of the existing cert-manager issuer (Issuer or ClusterIssuer)
       kind: "Issuer"
       # Name of the existing cert-manager issuer
       name: "my-issuer"
+      group: ""
     # Set the requested duration (i.e. lifetime) of the Certificate.
     # See https://cert-manager.io/docs/reference/api-docs/#cert-manager.io/v1.CertificateSpec
     duration: ""
     # How long before the currently issued certificate’s expiry cert-manager should renew the certificate.
     # See https://cert-manager.io/docs/reference/api-docs/#cert-manager.io/v1.CertificateSpec
     renewBefore: ""
+    # Extra DNS names for the Certificate, appended to the built-in in-cluster Service names (short,
+    # namespaced, svc, and FQDN). The ingress is the external entry point, so a client reaching it from
+    # outside the cluster by hostname needs that hostname listed here.
+    extraDnsNames: []
+    # IP SANs for the Certificate. A client connecting directly to the ingress
+    # Service's external IP needs that IP listed here.
+    ipAddresses: []
     # Add extra annotations to the Certificate resource
     annotations: {}
     # Add extra labels to the Certificate resource
@@ -80,7 +104,10 @@ tls:
 mtls:
   enabled: false
   certificationAuthority:
+    # pem or existingSecret. If neither is set, a CA is cert-manager-issued from the same issuer
+    # tls.certManager would use (tls.certManager.existingIssuer, else global.armonik.certManager.issuer).
     pem: ""
+    existingSecret: ""
   trustedCommonNames: []
 
 volumes:
@@ -99,7 +126,7 @@ loadBalancer:
     registry:
     repository: dockerhubaneo
     name: armonik_load_balancer
-    tag: "0.3.1"
+    tag: "0.3.2"
     pullPolicy: IfNotPresent
   replicas: 1
   conf:
@@ -110,12 +137,27 @@ loadBalancer:
     annotations: {}
   resources: {}
 
-  extraEnv: []
-  extraEnvFrom: []
   nodeSelector: {}
   tolerations: []
+  affinity: {}
   priorityClassName: ""
+  imagePullSecrets: []
   annotations: {}
+  # -- Extra env for the load-balancer container.
+  extraEnv: []
+  # -- Extra envFrom for the load-balancer container.
+  extraEnvFrom: []
+  # -- Extra volumes and volumeMounts for the load-balancer container.
+  extraVolumes: []
+  extraVolumeMounts: []
+  # -- Extra containers, after the load-balancer container, and extra init containers.
+  extraContainers: []
+  extraInitContainers: []
+  # -- Merged over the load-balancer container, last. Lists the chart builds are refused: use extra*.
+  containerPatch: {}
+  # -- Merged over spec.template.spec, last. Lists the chart builds are refused: use extra*.
+  # Pod labels are out of reach: the selector is immutable.
+  podSpecPatch: {}
 
 # Set to the key of a Secret in an ESO SecretStore to source ingress conf URLs via ExternalSecret.
 # Leave empty to fall back to a plain Kubernetes Secret instead.
@@ -162,6 +204,22 @@ gui:
   annotations: {}
   affinity: {}
   priorityClassName: ""
+  imagePullSecrets: []
+  # -- Extra env for the gui container.
+  extraEnv: []
+  # -- Extra envFrom for the gui container.
+  extraEnvFrom: []
+  # -- Extra volumes and volumeMounts for the gui container.
+  extraVolumes: []
+  extraVolumeMounts: []
+  # -- Extra containers, after the gui container, and extra init containers.
+  extraContainers: []
+  extraInitContainers: []
+  # -- Merged over the gui container, last. Lists the chart builds are refused: use extra*.
+  containerPatch: {}
+  # -- Merged over spec.template.spec, last. Lists the chart builds are refused: use extra*.
+  # Pod labels are out of reach: the selector is immutable.
+  podSpecPatch: {}
 
 static:
   environment.json:

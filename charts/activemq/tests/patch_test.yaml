@@ -31,7 +31,7 @@ tests:
           value: warmup
       - equal:
           path: spec.template.spec.containers[0].volumeMounts[0].mountPath
-          value: /opt/activemq/conf/
+          value: /opt/apache-activemq/conf/activemq.xml
 
   - it: keeps the ACTIVEMQ_OPTS_MEMORY env the chart builds
     asserts:

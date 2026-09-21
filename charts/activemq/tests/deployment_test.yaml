@@ -12,7 +12,7 @@ tests:
           of: Deployment
       - equal:
           path: spec.template.spec.containers[0].image
-          value: "symptoma/activemq:5.19.10"
+          value: "apache/activemq:6.3.1"
       - contains:
           path: spec.template.spec.containers[0].ports
           content:
@@ -27,7 +27,7 @@ tests:
     asserts:
       - equal:
           path: spec.template.spec.containers[0].image
-          value: "registry.example.com/symptoma/activemq:5.19.10"
+          value: "registry.example.com/apache/activemq:6.3.1"
   - it: exposes amqp and dashboard through the service
     template: service.yaml
     asserts:

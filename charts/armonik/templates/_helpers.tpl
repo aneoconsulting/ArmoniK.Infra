@@ -1,3 +1,7 @@
+{{/*
+Which first-party subcharts and storage backends this release enables, as a bool map.
+Operators are not listed: see the armonik.operators helper.
+*/}}
 {{- define "armonik.dependencies" }}
 controlPlane: {{ include "armonik.utils.index" (list .Values "control-plane" "enabled") | empty | not }}
 computePlane: {{ include "armonik.utils.index" (list .Values "compute-plane" "enabled") | empty | not }}

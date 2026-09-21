@@ -1,6 +1,4 @@
-{{/*
-Expand the name of the chart.
-*/}}
+{{/* Expand the name of the chart. */}}
 {{- define "activemq.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
 {{- end }}
@@ -23,23 +21,17 @@ If release name contains chart name it will be used as a full name.
 {{- end }}
 {{- end }}
 
-{{/*
-Expand the namespace of the chart.
-*/}}
+{{/* Expand the namespace of the chart. */}}
 {{- define "activemq.namespace" -}}
 {{- .Values.namespaceOverride | default .Release.Namespace }}
 {{- end }}
 
-{{/*
-Create chart name and version as used by the chart label.
-*/}}
+{{/* Create chart name and version as used by the chart label. */}}
 {{- define "activemq.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
-{{/*
-Common labels
-*/}}
+{{/* Common labels */}}
 {{- define "activemq.labels" -}}
 helm.sh/chart: {{ include "activemq.chart" . }}
 {{ include "activemq.selectorLabels" . }}
@@ -52,17 +44,13 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end }}
 {{- end }}
 
-{{/*
-Selector labels
-*/}}
+{{/* Selector labels */}}
 {{- define "activemq.selectorLabels" -}}
 app.kubernetes.io/name: {{ include "activemq.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
-{{/*
-Create the name of the service account to use
-*/}}
+{{/* Create the name of the service account to use */}}
 {{- define "activemq.serviceAccountName" -}}
 {{- if .Values.serviceAccount.create }}
 {{- default (include "activemq.fullname" .) .Values.serviceAccount.name }}
@@ -71,30 +59,22 @@ Create the name of the service account to use
 {{- end }}
 {{- end }}
 
-{{/*
-The image to use
-*/}}
+{{/* The image to use */}}
 {{- define "activemq.image" -}}
 {{- printf "%s:%s" .Values.image.repository (default (printf "v%s" .Chart.AppVersion) .Values.image.tag) }}
 {{- end }}
 
-{{/*
-The image to use for the addon resizer
-*/}}
+{{/* The image to use for the addon resizer */}}
 {{- define "activemq.addonResizer.image" -}}
 {{- printf "%s:%s" .Values.addonResizer.image.repository .Values.addonResizer.image.tag }}
 {{- end }}
 
-{{/*
-ConfigMap name of addon resizer
-*/}}
+{{/* ConfigMap name of addon resizer */}}
 {{- define "activemq.addonResizer.configMap" -}}
 {{- printf "%s-%s" (include "activemq.fullname" .) "nanny-config" }}
 {{- end }}
 
-{{/*
-Role name of addon resizer
-*/}}
+{{/* Role name of addon resizer */}}
 {{- define "activemq.addonResizer.role" -}}
 {{ printf "system:%s-nanny" (include "activemq.fullname" .) }}
 {{- end }}

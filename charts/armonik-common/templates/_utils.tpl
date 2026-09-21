@@ -1,28 +1,9 @@
 {{/*
-Constructs and returns an image configuration object (see schema below) representing the most complete image configuration
-given a context and one or more image configuration objects.
+Coalesces {registry, repository, name, tag, pullPolicy} left to right and adds `fullname`. An absent
+tag falls back to the context's .Chart.AppVersion, then "latest", so for a dependency's image pass
+that dependency's scope (.Subcharts.dependencies.Subcharts.<dep>), not the umbrella's.
 
-Here, "the most complete image configuration" means that the template retrieves each 
-attribute from the first image object passed to it (i.e. with precedence from left to right).
-
-If no tag is found in the provided image configuration objects, the templates looks into the `appVersion`  defined in Chart.yaml
-and ultimately sets it to "latest" if no `appVersion` was found.
-
-Thus, when calling this template for a third-party image deployed with the armonik-dependencies chart,
-it is advised to set the context to that dependency's scope (.Subcharts.dependencies.Subcharts.<dep>),
-especially if you know no tag is provided.
-
-Usage:
- {{- include "armonik.utils.imageConf" (list <context> <imageConf1> <imageConf2> ...)| fromYaml }}
-Example:
 {{- $imageConf := list $ .Values.image | include "armonik.utils.imageConf" | fromYaml }}
-
-image configuration object schema:
-  registry: string
-  repository: string
-  name: string
-  tag: string
-  pullPolicy: string in ['IfNotPresent', 'Always', 'Never']
 */}}
 {{- define "armonik.utils.imageConf" -}}
   {{- $ctx := first . -}}
@@ -82,33 +63,22 @@ Any other value is toYaml-encoded and needs a conversion function to get the pro
 
 
 {{/* 
-Usage:
 {{- $call := dict "src" $src "dst" $dst "render" true -}}
 {{- include "armonik.utils.merge" $call -}}
 {{- $dst := $call.dst -}}
 
 schema:
-  # destination of the merge. If dst is a dict or a list, it will be modified in-place
-  dst: any
-  # value to merge into dst
-  src: any
-  # values to merge into dst, if both src and srcs are set, src is first merged before each elements of srcs are merged
-  srcs: list
-  # if overwrite is enabled, src values will have precedence over dst
-  overwrite: bool = false
-  # if nullIsAbsent, null values will be considered as if the key does not exist at all
-  nullIsAbsent: bool = true
-  # if emptyStringIsAbsent, empty values will be considered as if the key does not exist at all
+  dst: any                        # merged into in place when a dict or a list
+  src: any                        # merged first, before srcs
+  srcs: list                      # merged in order after src
+  overwrite: bool = false         # src wins over dst
+  nullIsAbsent: bool = true       # null reads as "key not set"
   emptyStringIsAbsent: bool = true
-  # if render, string values will be rendered before being merged
-  render: bool = false
-  # if concatList, when both src and dst are non-empty list, they will be concatenated together instead of one replacing the other
-  concatList: bool = false
-  # Context passed to rendering
+  render: bool = false            # tpl string values before merging, against `context`
+  concatList: bool = false        # two non-empty lists concatenate instead of replacing
   context: any
-  # Prints the result as yaml
-  print: bool = true
- */}}
+  print: bool = true              # emit the result as yaml
+*/}}
 {{- define "armonik.utils.merge" -}}
   {{/* Default options */}}
   {{- $overwrite := eq $.overwrite nil | ternary false $.overwrite -}}

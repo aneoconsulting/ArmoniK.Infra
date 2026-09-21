@@ -1,3 +1,7 @@
+{{/*
+Control-plane env: the auth flags (authorization without authentication fails here) and the
+default partition, resolved against extraPartitions and falling back to the first one declared.
+*/}}
 {{- define "armonik.control.confHelper" }}
 {{- $defaultPartition := .Values.defaultPartition }}
 {{- $partitionNames := .Values.extraPartitions | default dict | keys | default list }}
@@ -17,6 +21,10 @@ env:
   InitServices__StopAfterInit: "false"
 {{- end }}
 
+{{/*
+Init Job env: the InitServices flags, plus partitions, roles, users and user certificates as
+.NET indexed lists.
+*/}}
 {{- define "armonik.control.init.confHelper" }}
 env:
   Submitter__DefaultPartition: ""
@@ -38,12 +46,13 @@ env:
   InitServices__Authentication__Roles__{{ $i }}: {{ include "armonik.control.rbac.role.format" (list $role $permissions) | quote }}
     {{- $i = add $i 1 }}
   {{- end }}
-  {{- $i = 0 }} {{/* Necessary ? */}}
+  {{/* Each InitServices list is indexed from 0, and $i survives the range above. */}}
+  {{- $i = 0 }}
   {{- range $user, $roles := .Values.rbac.users }}
   InitServices__Authentication__Users__{{ $i }}: {{ include "armonik.control.rbac.user.format" (list $user $roles) | quote }}
       {{- $i = add $i 1 }}
     {{- end }}
-  {{- $i = 0 }} {{/* Necessary ? */}}
+  {{- $i = 0 }}
   {{- range $user, $certData := .Values.rbac.userCertificates }}
     {{- $commonName := $certData.commonName }}
     {{- $fingerprint := $certData.fingerprint }}
@@ -52,6 +61,7 @@ env:
   {{- end }}
 {{- end }}
 
+{{/* Metrics-exporter env: every InitServices flag off, so it never touches storage on startup. */}}
 {{- define "armonik.control.metrics.confHelper" }}
 env:
   Submitter__DefaultPartition: ""

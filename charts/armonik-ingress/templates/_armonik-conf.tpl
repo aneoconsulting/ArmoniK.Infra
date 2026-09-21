@@ -1,13 +1,9 @@
-{{/*
-Name of the conf secret related resources
-*/}}
+{{/* Name of the conf secret related resources */}}
 {{- define "armonik.ingress.confName" -}}
   {{- include "armonik.fullname" . | printf "%s-nginx-conf" | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
-{{/*
-SEQ locations
-*/}}
+{{/* SEQ locations */}}
 {{- define "armonik.seq.locations" }}
 location = /seq {
     rewrite ^ $scheme://$http_host/seq/ permanent;
@@ -26,9 +22,7 @@ location /seq/ {
 {{- end }}
 
 
-{{/*
-Grafana locations
-*/}}
+{{/* Grafana locations */}}
 {{- /* Grafana runs with a path-less root_url and never learns its public path: we inject it
         below, so one Grafana serves under any prefix. Per-cluster: derive from the cluster key. */}}
 {{- define "armonik.grafana.locations" }}
@@ -74,11 +68,8 @@ location {{ $grafanaPath }}/api/live {
 
 {{/*
 Renders the Nginx ingress configuration
-
-Usage:
 {{- dict "root" . "useEso" true |include "armonik.conf.render"}}
 {{- dict "root" . "useEso" false | include "armonik.conf.render"}}
-
 */}}
 {{- define "armonik.conf.render" -}}
 {{- $root := .root -}}

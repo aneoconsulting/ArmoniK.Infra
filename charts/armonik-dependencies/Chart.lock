@@ -8,6 +8,9 @@ dependencies:
 - name: psmdb-db
   repository: https://percona.github.io/percona-helm-charts/
   version: 1.23.2
+- name: prometheus-mongodb-exporter
+  repository: https://prometheus-community.github.io/helm-charts
+  version: 3.22.0
 - name: rabbitmq
   repository: https://charts.bitnami.com/bitnami
   version: 16.0.14
@@ -20,5 +23,5 @@ dependencies:
 - name: seq
   repository: https://helm.datalust.co
   version: 2026.1.1
-digest: sha256:21d4e4c1c75e931acdfdc72e736e8482bc25f9918ead8e772d98409e34d3fd2b
-generated: "2026-09-21T09:40:52.050857643+02:00"
+digest: sha256:2d9d42894f639d604466c569a0bec68ce296335b431ee466b9f097f6fe7343f9
+generated: "2026-09-21T12:41:16.114943993+02:00"

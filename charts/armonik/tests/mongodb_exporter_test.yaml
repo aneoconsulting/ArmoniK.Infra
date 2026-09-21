@@ -1,0 +1,133 @@
+suite: mongodb-exporter dependency
+release:
+  name: t
+  namespace: default
+templates:
+  - secrets/mongodb-exporter-secret.yaml
+  - servicemonitors/mongodb-exporter.yaml
+tests:
+  - it: renders the ExternalSecret and ServiceMonitor by default (dependencies.mongodb-exporter.enabled=true)
+    asserts:
+      - hasDocuments:
+          count: 1
+
+  - it: renders nothing when explicitly disabled
+    set:
+      dependencies:
+        mongodb-exporter:
+          enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: composes the connection URI with urlquery-escaped credentials when TLS is not required
+    set:
+      dependencies:
+        mongodb-exporter:
+          enabled: true
+    template: secrets/mongodb-exporter-secret.yaml
+    asserts:
+      - isKind:
+          of: ExternalSecret
+      - equal:
+          path: metadata.name
+          value: mongodb-exporter-secret
+      - equal:
+          path: spec.target.template.data.mongodb-uri
+          value: mongodb://{{ .user | urlquery }}:{{ .password | urlquery }}@t-mongodb-rs0.default.svc.cluster.local:27017/admin?replicaSet=rs0
+      - notExists:
+          path: spec.target.template.data["ca.crt"]
+      - lengthEqual:
+          path: spec.data
+          count: 2
+      - equal:
+          path: spec.data[0].remoteRef.property
+          value: MONGODB_CLUSTER_MONITOR_USER
+      - equal:
+          path: spec.data[1].remoteRef.property
+          value: MONGODB_CLUSTER_MONITOR_PASSWORD
+
+  - it: adds the ca.crt remoteRef and tls query params when MongoDB TLS is required
+    set:
+      dependencies:
+        mongodb-exporter:
+          enabled: true
+        mongodb:
+          unsafeFlags:
+            tls: false
+    template: secrets/mongodb-exporter-secret.yaml
+    asserts:
+      - equal:
+          path: spec.target.template.data.mongodb-uri
+          value: mongodb://{{ .user | urlquery }}:{{ .password | urlquery }}@t-mongodb-rs0.default.svc.cluster.local:27017/admin?replicaSet=rs0&tls=true&tlsCAFile=/mongodb/certificate/ca.crt
+      - equal:
+          path: spec.target.template.data["ca.crt"]
+          value: "{{ .cacrt }}"
+      - lengthEqual:
+          path: spec.data
+          count: 3
+      - equal:
+          path: spec.data[2].remoteRef.key
+          value: t-mongodb-ssl-internal
+      - equal:
+          path: spec.data[2].remoteRef.property
+          value: ca.crt
+
+  - it: reads its own existingSecret.name/key back as the single source of truth
+    set:
+      dependencies:
+        mongodb-exporter:
+          enabled: true
+          existingSecret:
+            name: custom-mongo-exporter-secret
+            key: custom-uri-key
+    template: secrets/mongodb-exporter-secret.yaml
+    asserts:
+      - equal:
+          path: metadata.name
+          value: custom-mongo-exporter-secret
+      - equal:
+          path: spec.target.name
+          value: custom-mongo-exporter-secret
+      - exists:
+          path: spec.target.template.data.custom-uri-key
+
+  - it: selects the exporter Service and relabels job when Prometheus is available
+    set:
+      dependencies:
+        mongodb-exporter:
+          enabled: true
+    template: servicemonitors/mongodb-exporter.yaml
+    asserts:
+      - isKind:
+          of: ServiceMonitor
+      - equal:
+          path: spec.selector.matchLabels
+          value:
+            app.kubernetes.io/name: mongodb-exporter
+            app.kubernetes.io/instance: t
+      - equal:
+          path: spec.targetLabels
+          value:
+            - app.kubernetes.io/instance
+      - equal:
+          path: spec.endpoints[0].relabelings[0]
+          value:
+            targetLabel: job
+            replacement: mongodb-exporter
+
+  - it: renders no ServiceMonitor when the prometheusOperator is unavailable
+    set:
+      dependencies:
+        mongodb-exporter:
+          enabled: true
+      global:
+        armonik:
+          operators:
+            prometheusOperator:
+              deploy: false
+              available: false
+    template: servicemonitors/mongodb-exporter.yaml
+    asserts:
+      - hasDocuments:
+          count: 0

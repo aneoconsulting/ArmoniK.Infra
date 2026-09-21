@@ -1,0 +1,22 @@
+# Same as mongodb-exporter-values.yaml, with MongoDB TLS required: the ExternalSecret must add
+# the ca.crt remoteRef (from the psmdb default <fullname>-ssl-internal, since secrets.sslInternal
+# is left unset) and the URI must carry &tls=true&tlsCAFile=/mongodb/certificate/ca.crt.
+global:
+  armonik:
+    operators:
+      externalSecrets:
+        deploy: false
+        available: true
+        namespace: external-secrets
+      prometheusOperator:
+        deploy: false
+        available: true
+        namespace: monitoring
+networkPolicy:
+  enabled: true
+dependencies:
+  mongodb-exporter:
+    enabled: true
+  mongodb:
+    unsafeFlags:
+      tls: false

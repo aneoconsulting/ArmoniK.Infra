@@ -31,6 +31,8 @@ dependencies:
     enabled: false
   mongodb:
     enabled: false
+  mongodb-exporter:
+    enabled: false
   grafana:
     enabled: false
   fluent-bit:

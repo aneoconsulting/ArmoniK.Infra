@@ -1,0 +1,11 @@
+{{- $networkPolicyEnabled := list .Values "networkPolicy" "enabled" | include "armonik.utils.index" -}}
+
+{{- $mongodbExporter := include "armonik.netpol.mongodbExporter" . | fromYaml -}}
+
+{{- if and $networkPolicyEnabled $mongodbExporter }}
+{{- include "armonik.netpol.render" (dict
+      "context" .
+      "component" "mongodb-exporter"
+      "config" $mongodbExporter
+  ) }}
+{{- end }}

@@ -1,0 +1,63 @@
+# Conf sources routed to ESO stores that exist outside this release (Secret Manager, Vault), next to
+# in-cluster ones: covers both remoteRef shapes, both store kinds, a version, a field-less reference
+# and a field-less mount item. Builds on layered-operators-values.yaml, which is what makes the
+# ExternalSecrets render at all.
+global:
+  armonik:
+    operators:
+      externalSecrets:
+        deploy: false
+        available: true
+        namespace: external-secrets
+      keda:
+        deploy: false
+        available: true
+        namespace: keda
+      certManager:
+        deploy: false
+        available: true
+        namespace: cert-manager
+      mongodbOperator:
+        deploy: false
+        available: true
+        namespace: mongodb-operator
+      prometheusOperator:
+        deploy: false
+        available: true
+        namespace: monitoring
+conf:
+  control:
+    envFromSecret:
+      Auth__ClientId:
+        storeName: gcp-secret-manager
+        storeKind: ClusterSecretStore
+        secret: armonik-auth
+        field: clientId
+      Auth__ClientSecret:
+        storeName: gcp-secret-manager
+        storeKind: ClusterSecretStore
+        secret: armonik-auth-client-secret
+        version: "4"
+      Auth__Token:
+        storeName: vault-backend
+        secret: armonik/auth
+        field: token
+    envSecret:
+      - secret: armonik/control-env
+        storeName: vault-backend
+    mountSecret:
+      - storeName: gcp-secret-manager
+        storeKind: ClusterSecretStore
+        secret: armonik-gcs-service-account
+        items:
+          credentials.json: {}
+  compute:
+    envFromSecret:
+      Sample__Key:
+        secret: in-cluster-secret
+        field: key
+        namespace: other-namespace
+    envSecret:
+      - in-cluster-env
+      - secret: cross-namespace-env
+        namespace: other-namespace

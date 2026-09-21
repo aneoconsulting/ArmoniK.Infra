@@ -100,6 +100,32 @@ conf:
   # Names every <source>-conf-<layer> Secret the umbrella renders (this release).
   log:
     minimumLevel: Information
+  # A source reads this release's Kubernetes-provider SecretStore unless it names a store that
+  # ALREADY exists (these charts create none but their own), which is how a value comes from Secret
+  # Manager, Vault or any other ESO provider. Per-field rules: the conf schema in armonik-common.
+  # core:
+  #   env:
+  #     MongoDB__Host: cluster0.example.mongodb.net
+  #   envFromSecret:
+  #     MongoDB__User:
+  #       storeName: gcp-secret-manager
+  #       storeKind: ClusterSecretStore
+  #       secret: armonik-mongodb
+  #       field: user
+  #     MongoDB__Password:
+  #       storeName: vault-backend
+  #       secret: armonik/mongodb
+  #       field: password
+  #       version: "3"
+  #   envSecret:
+  #     - secret: armonik/core-env
+  #       storeName: vault-backend
+  #   mountSecret:
+  #     - storeName: gcp-secret-manager
+  #       storeKind: ClusterSecretStore
+  #       secret: armonik-gcs-service-account
+  #       items:
+  #         credentials.json: {}
 
 ################## INGRESS ##################
 ingress:

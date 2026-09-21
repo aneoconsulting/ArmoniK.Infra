@@ -2,6 +2,12 @@
 {{- $urlsSecretKey := tpl (.Values.urlsSecretName | default "") $ -}}
 {{- $useEso := and $ops.externalSecrets.available (ne $urlsSecretKey "") -}}
 {{- $name := include "armonik.ingress.confName" . -}}
+{{- $storeName := tpl (.Values.urlsSecretStoreName | default "") $ -}}
+{{- if and $storeName .Values.urlsSecretNamespace -}}
+  {{- fail "urlsSecretStoreName excludes urlsSecretNamespace, which routes the Kubernetes provider only" -}}
+{{- end -}}
+{{- /* No namespace key: the fallback is this chart's own store, not a conf-store clone. */ -}}
+{{- $store := dict "storeName" $storeName "storeKind" (.Values.urlsSecretStoreKind | default "") "version" (.Values.urlsSecretVersion | default "") -}}
 {{- if $useEso }}
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret
@@ -18,8 +24,12 @@ metadata:
 spec:
   refreshInterval: 1m
   secretStoreRef:
-    kind: SecretStore
+    {{- with (list $store "ingress urls Secret" $ | include "armonik.conf.sourceRef") }}
+    {{- . | nindent 4 }}
+    {{- else }}
+    kind: "SecretStore"
     name: {{ $name | quote }}
+    {{- end }}
   target:
     name: {{ $name | quote }}
     creationPolicy: Owner
@@ -31,7 +41,10 @@ spec:
           {{- dict "root" . "useEso" true | include "armonik.conf.render" | nindent 10 }}
   dataFrom:
     - extract:
-        key: {{ $urlsSecretKey }}
+        key: {{ $urlsSecretKey | quote }}
+        {{- with .Values.urlsSecretVersion }}
+        version: {{ toString . | quote }}
+        {{- end }}
 {{- else }}
 apiVersion: v1
 kind: Secret

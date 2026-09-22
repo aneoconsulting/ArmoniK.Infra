@@ -3,10 +3,12 @@
 # being this chart's whole purpose. Under the umbrella, the umbrella's global.armonik.operators.* wins.
 # Mind the two paths: global.armonik.operators.<op> are the control flags, <op> at the top level is the
 # operator subchart's own configuration.
-# googleCasIssuer is the one exception left at its armonik-common default (deploy=false): it is
-# GCP-specific, only needed for certManager.issuer.provider=googleCas, so installing it unconditionally
-# would pull in a cloud-specific CRD/controller.
-# Opt in explicitly with --set global.armonik.operators.googleCasIssuer.deploy=true.
+# Two operators stay at their armonik-common default (deploy=false), their consumer being off by
+# default: installing them unconditionally would add a controller and CRDs nobody uses.
+# googleCasIssuer is GCP-specific, only needed for certManager.issuer.provider=googleCas.
+# postgresOperator backs dependencies.postgresql; its 11 CRDs are annotated
+# helm.sh/resource-policy: keep, so Helm can never take them back once installed.
+# Opt in explicitly with --set global.armonik.operators.<op>.deploy=true.
 global:
   armonik:
     operators:
@@ -18,6 +20,8 @@ global:
         deploy: true
       mongodbOperator:
         deploy: true
+      postgresOperator:
+        deploy: false
       prometheusOperator:
         deploy: true
       googleCasIssuer:
@@ -87,6 +91,19 @@ mongodb-operator:
   # true also switches the RBAC to ClusterRole/ClusterRoleBinding.
   watchAllNamespaces: true
 # WARNING: mongodb-operator: no priorityClassName support in this chart
+
+# CloudNativePG (https://cloudnative-pg.github.io/charts). Chart defaults install the CRDs;
+# the Cluster CR itself stays in armonik-dependencies.
+cnpg-operator:
+  monitoring:
+    # Off in this chart's defaults. Requires Prometheus Operator CRDs.
+    podMonitorEnabled: true
+    grafanaDashboard:
+      # Must stay stated: Helm resolves an aliased subchart's dependency condition at the alias path
+      # but files that subchart's defaults under its real name, so dropping this line yields true
+      # rather than the upstream false. Fix in progress : https://github.com/helm/helm/pull/31847
+      create: true
+  # priorityClassName:
 
 # kube-prometheus-stack (https://prometheus-community.github.io/helm-charts): the shared cluster
 # monitoring stack, one per cluster. Grafana stays per-release, in armonik-dependencies.

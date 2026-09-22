@@ -7,18 +7,21 @@ dependencies:
   version: 2.20.2
 - name: external-secrets
   repository: https://charts.external-secrets.io
-  version: 2.10.0
+  version: 2.11.0
 - name: cert-manager
   repository: https://charts.jetstack.io
   version: v1.21.2
 - name: psmdb-operator
   repository: https://percona.github.io/percona-helm-charts/
   version: 1.23.1
+- name: cloudnative-pg
+  repository: https://cloudnative-pg.github.io/charts
+  version: 0.29.0
 - name: kube-prometheus-stack
   repository: https://prometheus-community.github.io/helm-charts
   version: 91.4.1
 - name: cert-manager-google-cas-issuer
   repository: https://charts.jetstack.io
   version: v0.13.0
-digest: sha256:081b9c5440b79ca10aab175e0007dd5de36e733a96bdad3d66d9c164ceb00013
-generated: "2026-09-18T16:48:32.076524115+02:00"
+digest: sha256:dfeba7923d01c7edad31c63af253ba96acc58f53bf1405633f94bb0bbf11e9f8
+generated: "2026-09-21T17:06:14.348499949+02:00"

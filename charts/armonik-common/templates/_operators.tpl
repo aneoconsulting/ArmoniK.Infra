@@ -1,5 +1,5 @@
 {{/*
-Control map for the five install-once operators, from global.armonik.operators.<op>.{available,deploy,
+Control map for the install-once operators, from global.armonik.operators.<op>.{available,deploy,
 namespace} (semantics in armonik-common/values.yaml, which also ships the defaults). Absent flags read as
 false; namespace comes back tpl-rendered, empty when nobody stated where an external operator runs.
 
@@ -9,7 +9,7 @@ false; namespace comes back tpl-rendered, empty when nobody stated where an exte
   {{- $ops.prometheusOperator.namespace }}
 */}}
 {{- define "armonik.operators" -}}
-{{- range list "externalSecrets" "keda" "certManager" "mongodbOperator" "prometheusOperator" "googleCasIssuer" }}
+{{- range list "externalSecrets" "keda" "certManager" "mongodbOperator" "postgresOperator" "prometheusOperator" "googleCasIssuer" }}
 {{ . }}:
   {{- $op := list $.Values "global" "armonik" "operators" . | include "armonik.utils.index" | fromYaml }}
   available: {{ $op.available | empty | not }}

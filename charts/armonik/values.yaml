@@ -40,7 +40,8 @@ global:
         deploy: true
       mongodbOperator:
         deploy: true
-      # Mongo remain the default so Postgres stay at false for now
+      # MongoDB remains the default table storage, so Postgres stays off.
+      postgresOperator:
         deploy: false
       prometheusOperator:
         deploy: true

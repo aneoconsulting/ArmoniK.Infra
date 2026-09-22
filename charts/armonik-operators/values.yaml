@@ -3,8 +3,11 @@
 # global.armonik.operators.* win.
 # global.armonik.operators.<op> holds the control flags; <op> at the top level is the operator
 # subchart's own configuration.
-# googleCasIssuer keeps deploy=false: it is GCP-specific, needed only by a googleCas issuer provider.
-# Opt in with --set global.armonik.operators.googleCasIssuer.deploy=true.
+# googleCasIssuer and postgresOperator keep deploy=false, their consumer being off by default.
+# googleCasIssuer is GCP-specific, needed only by a googleCas issuer provider. postgresOperator backs
+# dependencies.postgresql; its 11 CRDs are annotated helm.sh/resource-policy: keep, so Helm can never
+# take them back once installed.
+# Opt in with --set global.armonik.operators.<op>.deploy=true.
 global:
   armonik:
     operators:
@@ -16,6 +19,8 @@ global:
         deploy: true
       mongodbOperator:
         deploy: true
+      postgresOperator:
+        deploy: false
       prometheusOperator:
         deploy: true
       googleCasIssuer:
@@ -97,6 +102,19 @@ mongodb-operator:
   # anywhere else. true watches every namespace, with ClusterRole/ClusterRoleBinding RBAC.
   watchAllNamespaces: true
 # The psmdb-operator chart has no priorityClassName value.
+
+# CloudNativePG (https://cloudnative-pg.github.io/charts). Chart defaults install the CRDs;
+# the Cluster CR itself stays in armonik-dependencies.
+cnpg-operator:
+  monitoring:
+    # Off in this chart's defaults. Requires Prometheus Operator CRDs.
+    podMonitorEnabled: true
+    grafanaDashboard:
+      # Must stay stated: Helm resolves an aliased subchart's dependency condition at the alias path
+      # but files that subchart's defaults under its real name, so dropping this line yields true
+      # rather than the upstream false. Fix in progress : https://github.com/helm/helm/pull/31847
+      create: true
+  # priorityClassName:
 
 # kube-prometheus-stack (https://prometheus-community.github.io/helm-charts): the shared monitoring
 # stack, one per cluster. Grafana stays per-release, in armonik-dependencies.

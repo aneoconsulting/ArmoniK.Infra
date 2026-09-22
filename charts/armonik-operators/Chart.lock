@@ -7,7 +7,7 @@ dependencies:
   version: 2.20.2
 - name: external-secrets
   repository: https://charts.external-secrets.io
-  version: 2.10.0
+  version: 2.11.0
 - name: cert-manager
   repository: https://charts.jetstack.io
   version: v1.21.2
@@ -20,5 +20,5 @@ dependencies:
 - name: cert-manager-google-cas-issuer
   repository: https://charts.jetstack.io
   version: v0.13.0
-digest: sha256:081b9c5440b79ca10aab175e0007dd5de36e733a96bdad3d66d9c164ceb00013
-generated: "2026-09-18T16:48:32.076524115+02:00"
+digest: sha256:a83199a838b63eab06bf366491fd814fa4906d54a5836cfa21e0ff85ae742fda
+generated: "2026-09-21T16:44:32.341807632+02:00"

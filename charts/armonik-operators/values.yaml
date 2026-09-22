@@ -58,8 +58,8 @@ external-secrets: {}
 #   certController:
 #     priorityClassName:
 
-# cert-manager (https://charts.jetstack.io). fullnameOverride keeps the webhook Deployment named
-# "cert-manager-webhook" so the ingress cert wait-Job can find it.
+# cert-manager (https://charts.jetstack.io). fullnameOverride keeps its resource names stable
+# and predictable ("cert-manager", "cert-manager-webhook", ...) across releases.
 cert-manager:
   crds:
     # enabled+keep replace the deprecated installCRDs (defined as enabled=true plus keep=true).

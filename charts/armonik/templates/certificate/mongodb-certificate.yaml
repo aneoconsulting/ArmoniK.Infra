@@ -11,31 +11,6 @@
 {{- if eq ($tls.mode | default "preferTLS") "disabled" }}
 {{- fail "dependencies.mongodb.certManager.enabled cannot be combined with dependencies.mongodb.tls.mode=disabled: cert-manager would issue Certificates the replica set never uses. Set tls.mode to allowTLS, preferTLS or requireTLS, or turn certManager.enabled off." }}
 {{- end }}
-{{- /* Same local existingIssuer override as activemq/armonik-ingress/redis, but deliberately only
-       two tiers: unlike them, mongodb never falls back to a throwaway local selfSigned Issuer.
-       Replica set members validate each other against a common CA, and a per-Certificate throwaway
-       Issuer would give the two Certificates below (ssl, ssl-internal) independent roots - same
-       problem as the selfSigned shared issuer rejected below, worse, since even those two would not
-       trust each other. issuerName is intentionally empty: needsLocalIssuer always fails below, so
-       it is never rendered. */}}
-{{- $issuer := list $ $certManager.existingIssuer "" | include "armonik.certManager.getIssuer" | fromYaml }}
-{{- if $issuer.needsLocalIssuer }}
-{{- fail "dependencies.mongodb.certManager.enabled requires a configured issuer: set dependencies.mongodb.certManager.existingIssuer.enabled=true, or global.armonik.certManager.issuer.enabled=true. Replica set members must chain to a common CA, so ArmoniK.Infra never creates a throwaway local Issuer for MongoDB (unlike activemq/armonik-ingress/redis)." }}
-{{- end }}
-{{- if empty $issuer.name }}
-{{- fail "the cert-manager issuer has no name: set dependencies.mongodb.certManager.existingIssuer.name when existingIssuer.enabled=true, else global.armonik.certManager.issuer.name must not be empty." }}
-{{- end }}
-{{- if list $certManager "existingIssuer" "enabled" | include "armonik.utils.index" | empty }}
-{{- /* certManagerIssuer.provider is a chart value and checkable here; a local existingIssuer's
-       actual backend is an out-of-cluster fact `lookup` cannot see at render time (GitOps-first
-       rendering forbids it), so this guard cannot cover that path - pointing existingIssuer at a
-       selfSigned Issuer silently reintroduces the same no-common-CA problem this guard exists for. */}}
-{{- $cmi := .Values.certManagerIssuer | default dict }}
-{{- if eq ($cmi.provider | default "selfSigned") "selfSigned" }}
-{{- fail "dependencies.mongodb.certManager.enabled cannot use a selfSigned shared issuer: replica set members must chain to a common CA. Use certManagerIssuer.provider=ca, vault, acme, venafi or googleCas, or point dependencies.mongodb.certManager.existingIssuer at an issuer backed by a real CA." }}
-{{- end }}
-{{- end }}
-
 {{- $domain := include "armonik.clusterDomain" . }}
 {{- /* Real CR name and namespace (charts/armonik-dependencies/charts/mongodb is psmdb-db, aliased
        "mongodb"): the operator derives the replset Service/StatefulSet names from this CR's
@@ -51,6 +26,49 @@
 {{- $ns := include "psmdb-database.namespace" .Subcharts.dependencies.Subcharts.mongodb }}
 {{- $replset := $mongo.replsetName | default "rs0" }}
 {{- $svc := printf "%s-%s" $cluster $replset }}
+
+{{- /* Same three-tier fallback as activemq/armonik-ingress/redis, but resolved ONCE, here, before
+       the range below: both Certificates (ssl, ssl-internal) reference this single $issuer, so a
+       local-fallback Issuer created from it is one shared object, never one per Certificate. */}}
+{{- $issuerName := printf "%s-issuer" $cluster }}
+{{- $provider := $certManager.provider | default "selfSigned" }}
+{{- $localRequested := hasKey $certManager "provider" }}
+{{- $issuer := list $ $certManager.existingIssuer $issuerName $provider $localRequested | include "armonik.certManager.getIssuer" | fromYaml }}
+{{- if and (not $ops.certManager.available) $issuer.needsLocalIssuer }}
+{{- fail "dependencies.mongodb.certManager.enabled requires it: set global.armonik.operators.certManager.available=true, set dependencies.mongodb.certManager.existingIssuer.enabled=true, set global.armonik.certManager.issuer.enabled=true, or disable certManager.enabled and bring your own ssl/ssl-internal Secrets via tls.certManagementPolicy=userProvidedOnly with secrets.ssl/secrets.sslInternal." }}
+{{- end }}
+{{- if empty $issuer.name }}
+{{- fail "the cert-manager issuer has no name: set dependencies.mongodb.certManager.existingIssuer.name when existingIssuer.enabled=true, else global.armonik.certManager.issuer.name must not be empty." }}
+{{- end }}
+{{- if and (list $certManager "existingIssuer" "enabled" | include "armonik.utils.index" | empty) (not $issuer.needsLocalIssuer) }}
+{{- /* certManagerIssuer.provider is a chart value and checkable here; a local existingIssuer's
+       actual backend is an out-of-cluster fact `lookup` cannot see at render time (GitOps-first
+       rendering forbids it), so this guard cannot cover that path - pointing existingIssuer at a
+       selfSigned Issuer silently reintroduces the same no-common-CA problem this guard exists for. */}}
+{{- $cmi := .Values.certManagerIssuer | default dict }}
+{{- if eq ($cmi.provider | default "selfSigned") "selfSigned" }}
+{{- fail "dependencies.mongodb.certManager.enabled cannot use a selfSigned shared issuer: replica set members must chain to a common CA. Use certManagerIssuer.provider=ca, vault, acme, venafi or googleCas, or point dependencies.mongodb.certManager.existingIssuer at an issuer backed by a real CA." }}
+{{- end }}
+{{- end }}
+{{- /* Same reasoning, for the local fallback: cert-manager's selfSigned issuer type has no
+       persistent signing key, so ssl and ssl-internal would each get an independently self-signed
+       root even though both reference the SAME local Issuer - worse than the shared-issuer case
+       above, since even those two would not trust each other. */}}
+{{- if and $issuer.needsLocalIssuer (eq $provider "selfSigned") }}
+{{- fail "dependencies.mongodb.certManager.enabled cannot use a local selfSigned fallback issuer: replica set members must chain to a common CA, and cert-manager's selfSigned issuer type has no persistent signing key, so ssl and ssl-internal would each get an independently self-signed root that does not trust the other. Set dependencies.mongodb.certManager.provider to ca, vault, acme, venafi or googleCas, point dependencies.mongodb.certManager.existingIssuer at an issuer backed by a real CA, or set global.armonik.certManager.issuer.enabled=true with certManagerIssuer.provider set to a real CA." }}
+{{- end }}
+{{- if $issuer.needsLocalIssuer }}
+{{- include "armonik.certManager.issuerManifest" (dict
+      "root" $
+      "name" $issuer.name
+      "namespace" $ns
+      "provider" $provider
+      "kind" $issuer.kind
+      "group" $issuer.group
+      "spec" (index $certManager $provider | default dict)
+      "labels" (include "armonik.labels" $)
+      "specValuesPath" "dependencies.mongodb.certManager") }}
+{{- end }}
 
 {{- range $purpose, $secret := dict "ssl" ($certManager.existingSecret | default (printf "%s-ssl" $cluster)) "ssl-internal" ($certManager.existingSecretInternal | default (printf "%s-ssl-internal" $cluster)) }}
 ---

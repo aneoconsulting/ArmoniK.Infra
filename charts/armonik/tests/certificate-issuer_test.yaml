@@ -100,9 +100,76 @@ tests:
     asserts:
       - failedTemplate:
           errorPattern: "dependencies.redis.tls.certManager.enabled requires it"
+  - it: "redis: local fallback Issuer honors certManager.provider=googleCas, forwarded as-is"
+    template: certificate/redis-certificate.yaml
+    set:
+      dependencies:
+        redis:
+          tls:
+            enabled: true
+            existingSecret: redis-tls
+            certManager:
+              enabled: true
+              provider: googleCas
+              googleCas:
+                project: my-project
+                location: europe-west1
+                caPoolId: my-pool
+    asserts:
+      - notFailedTemplate: {}
+      - isKind:
+          of: GoogleCASIssuer
+        documentIndex: 0
+      - equal:
+          path: spec.project
+          value: my-project
+        documentIndex: 0
+      - equal:
+          path: spec.issuerRef
+          value:
+            name: t-redis-issuer
+            kind: GoogleCASIssuer
+            group: cas-issuer.jetstack.io
+        documentSelector:
+          path: kind
+          value: Certificate
+  - it: "redis: local fallback fails when certManager.googleCas is empty (same guard as the shared issuer)"
+    template: certificate/redis-certificate.yaml
+    set:
+      dependencies:
+        redis:
+          tls:
+            enabled: true
+            existingSecret: redis-tls
+            certManager:
+              enabled: true
+              provider: googleCas
+    asserts:
+      - failedTemplate:
+          errorPattern: "dependencies.redis.tls.certManager.googleCas is required for provider=googleCas"
 
-  # mongodb: deliberately only two tiers (no throwaway local Issuer) - replica set members must
-  # chain to a common CA, so ArmoniK.Infra never creates a per-Certificate throwaway root for it.
+  # mongodb: same three-tier fallback as activemq/armonik-ingress/redis now, but the local fallback
+  # is rejected for provider=selfSigned (default) - replica set members must chain to a common CA,
+  # and cert-manager's selfSigned issuer type has no persistent signing key, so even a single local
+  # Issuer shared by both Certificates would give them independent, mutually-untrusted roots.
+  - it: "mongodb: fails naming availability when cert-manager is unavailable and no issuer exists (same guard as redis/activemq/ingress)"
+    template: certificate/mongodb-certificate.yaml
+    set:
+      dependencies:
+        mongodb:
+          certManager:
+            enabled: true
+            provider: ca
+            ca:
+              secretName: my-ca-key-pair
+      global:
+        armonik:
+          operators:
+            certManager:
+              available: false
+    asserts:
+      - failedTemplate:
+          errorPattern: "dependencies.mongodb.certManager.enabled requires it"
   - it: "mongodb: local existingIssuer wins over the shared issuer for both Certificates"
     template: certificate/mongodb-certificate.yaml
     set:
@@ -152,7 +219,7 @@ tests:
         provider: selfSigned
     asserts:
       - notFailedTemplate: {}
-  - it: "mongodb: fails when neither existingIssuer nor the shared issuer is configured, and never creates a throwaway Issuer"
+  - it: "mongodb: fails when neither existingIssuer nor the shared issuer is configured, defaulting the local fallback to the rejected selfSigned provider"
     template: certificate/mongodb-certificate.yaml
     set:
       dependencies:
@@ -161,7 +228,7 @@ tests:
             enabled: true
     asserts:
       - failedTemplate:
-          errorPattern: "never creates a throwaway local Issuer for MongoDB"
+          errorPattern: "cannot use a local selfSigned fallback issuer"
   - it: "mongodb: still fails on a selfSigned shared issuer when no existingIssuer is set (regression guard, unchanged)"
     template: certificate/mongodb-certificate.yaml
     set:
@@ -179,3 +246,165 @@ tests:
     asserts:
       - failedTemplate:
           errorPattern: "replica set members must chain to a common CA"
+  - it: "mongodb: local fallback with provider=ca creates exactly one Issuer shared by both Certificates"
+    template: certificate/mongodb-certificate.yaml
+    set:
+      dependencies:
+        mongodb:
+          certManager:
+            enabled: true
+            provider: ca
+            ca:
+              secretName: my-ca-key-pair
+    asserts:
+      - notFailedTemplate: {}
+      - containsDocument:
+          kind: Issuer
+          apiVersion: cert-manager.io/v1
+          any: true
+      - equal:
+          path: spec.ca.secretName
+          value: my-ca-key-pair
+        documentSelector:
+          path: kind
+          value: Issuer
+      - equal:
+          path: spec.issuerRef.name
+          value: t-mongodb-issuer
+        documentIndex: 1
+      - equal:
+          path: spec.issuerRef.name
+          value: t-mongodb-issuer
+        documentIndex: 2
+      - equal:
+          path: metadata.name
+          value: t-mongodb-issuer
+        documentSelector:
+          path: kind
+          value: Issuer
+  - it: "mongodb: local fallback rejects provider=selfSigned explicitly (same class of guard as the shared-issuer path)"
+    template: certificate/mongodb-certificate.yaml
+    set:
+      dependencies:
+        mongodb:
+          certManager:
+            enabled: true
+            provider: selfSigned
+    asserts:
+      - failedTemplate:
+          errorPattern: "cannot use a local selfSigned fallback issuer: replica set members must chain to a common CA"
+  - it: "mongodb: local fallback honors provider=googleCas, forwarded as-is, with a matching issuerRef on both Certificates"
+    template: certificate/mongodb-certificate.yaml
+    set:
+      dependencies:
+        mongodb:
+          certManager:
+            enabled: true
+            provider: googleCas
+            googleCas:
+              project: my-project
+              location: europe-west1
+              caPoolId: my-pool
+    asserts:
+      - notFailedTemplate: {}
+      - isKind:
+          of: GoogleCASIssuer
+        documentSelector:
+          path: kind
+          value: GoogleCASIssuer
+      - equal:
+          path: spec.issuerRef
+          value:
+            name: t-mongodb-issuer
+            kind: GoogleCASIssuer
+            group: cas-issuer.jetstack.io
+        documentIndex: 1
+      - equal:
+          path: spec.issuerRef
+          value:
+            name: t-mongodb-issuer
+            kind: GoogleCASIssuer
+            group: cas-issuer.jetstack.io
+        documentIndex: 2
+
+  # certManager.provider: a release-wide enabled shared issuer applies to every consumer without
+  # its own existingIssuer by default - setting provider on ONE consumer (present in the values at
+  # all, regardless of its resolved value) lets it opt back out and keep its own local fallback, so
+  # a release can mix "most consumers share the global issuer" with "this one doesn't", without
+  # needing a real pre-existing existingIssuer to point at.
+  - it: "redis: setting certManager.provider keeps its own local Issuer even though the shared issuer is enabled"
+    template: certificate/redis-certificate.yaml
+    set:
+      dependencies:
+        redis:
+          tls:
+            enabled: true
+            existingSecret: redis-tls
+            certManager:
+              enabled: true
+              provider: selfSigned
+      global:
+        armonik:
+          certManager:
+            issuer:
+              enabled: true
+              name: shared-issuer
+    asserts:
+      - notFailedTemplate: {}
+      - containsDocument:
+          kind: Issuer
+          apiVersion: cert-manager.io/v1
+          any: true
+      - equal:
+          path: spec.issuerRef.name
+          value: t-redis-issuer
+        documentSelector:
+          path: kind
+          value: Certificate
+  - it: "mongodb: setting certManager.provider keeps its own local Issuer (shared by both Certificates) even though the shared issuer is enabled"
+    template: certificate/mongodb-certificate.yaml
+    set:
+      dependencies:
+        mongodb:
+          certManager:
+            enabled: true
+            provider: ca
+            ca:
+              secretName: my-ca-key-pair
+      global:
+        armonik:
+          certManager:
+            issuer:
+              enabled: true
+              name: shared-issuer
+      certManagerIssuer:
+        provider: venafi
+    asserts:
+      - notFailedTemplate: {}
+      - equal:
+          path: spec.issuerRef.name
+          value: t-mongodb-issuer
+        documentIndex: 1
+      - equal:
+          path: spec.issuerRef.name
+          value: t-mongodb-issuer
+        documentIndex: 2
+  - it: "mongodb: setting certManager.provider=selfSigned still rejects it, even though the shared issuer is enabled with a real CA"
+    template: certificate/mongodb-certificate.yaml
+    set:
+      dependencies:
+        mongodb:
+          certManager:
+            enabled: true
+            provider: selfSigned
+      global:
+        armonik:
+          certManager:
+            issuer:
+              enabled: true
+              name: shared-issuer
+      certManagerIssuer:
+        provider: venafi
+    asserts:
+      - failedTemplate:
+          errorPattern: "cannot use a local selfSigned fallback issuer"

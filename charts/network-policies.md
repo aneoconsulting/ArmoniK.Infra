@@ -20,7 +20,6 @@ independent.
 | Redis/valkey | umbrella `.../redis.yaml` | - | control-plane, compute-plane |
 | ActiveMQ | `activemq/templates/network-policy.yaml` | DNS | control-plane/init, compute-plane |
 | fluent-bit | umbrella `.../fluent-bit-egress.yaml` | DNS, kube-api, Seq | - |
-| wait-cert-manager Job | umbrella `.../wait-cert-manager-egress.yaml` | DNS, kube-api | - |
 | KEDA operator | umbrella `.../keda-metrics-egress.yaml` | control-plane metrics-exporter | - |
 
 MongoDB and Redis/valkey are the only two dependencies whose upstream chart ships no

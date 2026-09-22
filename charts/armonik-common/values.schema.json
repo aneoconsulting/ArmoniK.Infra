@@ -1,0 +1,219 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ArmoniK cross-chart globals",
+  "description": "Applies to every chart depending on armonik-common, at any depth: helm validates a library chart's schema against its subchart values, which carry the coalesced `global`. Only what ArmoniK owns is described; `global` stays open for third-party subcharts. Nothing is required and every key is nullable, null reading as unset to every consumer (armonik.utils.index, default, coalesce) and the resolvers failing at render time with a better message than a schema could. Array ITEMS stay non-nullable, a null element being malformed rather than unset. No pattern or enum on a tpl-rendered value, which must validate unevaluated.",
+  "type": "object",
+  "properties": {
+    "global": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "armonik": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "operators": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "description": "Install-once operator control, read through `armonik.operators`.",
+              "properties": {
+                "externalSecrets": {
+                  "$ref": "#/definitions/operator"
+                },
+                "keda": {
+                  "$ref": "#/definitions/operator"
+                },
+                "certManager": {
+                  "$ref": "#/definitions/operator"
+                },
+                "mongodbOperator": {
+                  "$ref": "#/definitions/operator"
+                },
+                "prometheusOperator": {
+                  "$ref": "#/definitions/operator"
+                },
+                "googleCasIssuer": {
+                  "$ref": "#/definitions/operator"
+                }
+              }
+            },
+            "certManager": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "properties": {
+                "issuer": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "description": "Shared issuer Certificates reference by default. kind/group are not enums: an external issuer is a valid target.",
+                  "properties": {
+                    "enabled": {
+                      "type": [
+                        "boolean",
+                        "null"
+                      ]
+                    },
+                    "name": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "kind": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "group": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            "monitoring": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "properties": {
+                "prometheusUrl": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "metricsExporterUrl": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              }
+            },
+            "mountPath": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "pattern": "^(/.*)?$",
+              "description": "Not tpl-rendered, hence the absolute-path pattern; empty falls through to the default."
+            },
+            "source": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "controlPlane": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "clusterDomain": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Empty stops hostnames at `.svc`."
+        },
+        "environment": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "name": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "description": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "imagePullSecrets": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "description": "A bare string here used to be read as a list and mangled, hence the array assertion.",
+          "items": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name"
+                ]
+              }
+            ]
+          }
+        },
+        "imageRegistry": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    }
+  },
+  "definitions": {
+    "operator": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "deploy: this release installs the operator and its CRDs. available: the CRDs exist, so emit CRs. namespace: tpl-rendered, empty meaning not stated. deploy without available is rejected by charts/armonik/templates/operators-guard.yaml, which reports it better than a schema could.",
+      "properties": {
+        "deploy": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "available": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "namespace": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    }
+  }
+}

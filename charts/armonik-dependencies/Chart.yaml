@@ -39,6 +39,12 @@ dependencies:
     repository: https://prometheus-community.github.io/helm-charts
     alias: mongodb-exporter
     condition: mongodb-exporter.enabled
+  # The CloudNativePG Cluster CR; its operator is in armonik-operators (cnpg-operator).
+  - name: cluster
+    version: 0.x.x
+    repository: https://cloudnative-pg.github.io/charts
+    alias: postgresql
+    condition: postgresql.enabled
   # - name: chaos-mesh
   #   version: 2.x.x
   #   repository: https://charts.chaos-mesh.org

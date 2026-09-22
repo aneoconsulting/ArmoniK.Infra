@@ -32,6 +32,9 @@ partitionCommon:
       securityContext:
         readOnlyRootFilesystem: true
   worker:
+    # No default worker image name.
+    image:
+      name: armonik-dynamic-dotnet-worker
     extraEnvFrom:
       - configMapRef:
           name: worker-extra

@@ -10,7 +10,10 @@ global:
   image:
     pullPolicy: IfNotPresent  # FOR KEDA IMAGES
     registry: ""  # FOR KEDA IMAGES
-  imageRegistry: ""  # "public.ecr.aws" # FOR BITNAMI IMAGES AND ARMONIK IMAGES
+  # -- Registry every image is pulled from. Overrides whatever registry was chosen, so one value
+  # relocates the release to a mirror; may carry a path prefix. Dependencies honour it only if they
+  # implement the convention themselves.
+  imageRegistry: ""
   security:
     allowInsecureImages: true
   # imagePullSecrets: [{"name": "secret"}] # FOR BITNAMI IMAGES AND ARMONIK IMAGES
@@ -83,9 +86,9 @@ compute-plane:
   partitions:
     default:
       worker:
+        # Tag from global.armonik.versions.extCsharp.
         image:
           name: "armonik-dynamic-dotnet-worker"
-          tag: "0.22.0"
     stream:
       worker:
         image:

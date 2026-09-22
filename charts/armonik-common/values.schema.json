@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "ArmoniK cross-chart globals",
-  "description": "Applies to every chart depending on armonik-common, at any depth: helm validates a library chart's schema against its subchart values, which carry the coalesced `global`. Only what ArmoniK owns is described; `global` stays open for third-party subcharts. Nothing is required and every key is nullable, null reading as unset to every consumer (armonik.utils.index, default, coalesce) and the resolvers failing at render time with a better message than a schema could. Array ITEMS stay non-nullable, a null element being malformed rather than unset. No pattern or enum on a tpl-rendered value, which must validate unevaluated.",
+  "description": "Type-checks the coalesced `global` of every chart depending on armonik-common, at any depth. Only what ArmoniK owns is described; `global` stays open for third-party subcharts. Nothing is required and every key is nullable, null reading as unset everywhere. No pattern or enum on a tpl-rendered value, which must validate unevaluated.",
   "type": "object",
   "properties": {
     "global": {
@@ -54,7 +54,7 @@
                     "object",
                     "null"
                   ],
-                  "description": "Shared issuer Certificates reference by default. kind/group are not enums: an external issuer is a valid target.",
+                  "description": "Shared issuer Certificates reference by default. kind/group are not enums: an external issuer is valid.",
                   "properties": {
                     "enabled": {
                       "type": [
@@ -110,7 +110,7 @@
                 "null"
               ],
               "pattern": "^(/.*)?$",
-              "description": "Not tpl-rendered, hence the absolute-path pattern; empty falls through to the default."
+              "description": "Not tpl-rendered, hence the pattern; empty falls through to the default."
             },
             "source": {
               "type": [
@@ -158,7 +158,7 @@
             "array",
             "null"
           ],
-          "description": "A bare string here used to be read as a list and mangled, hence the array assertion.",
+          "description": "Array, not a bare string, which used to be read as a list and mangled.",
           "items": {
             "anyOf": [
               {
@@ -193,7 +193,7 @@
         "object",
         "null"
       ],
-      "description": "deploy: this release installs the operator and its CRDs. available: the CRDs exist, so emit CRs. namespace: tpl-rendered, empty meaning not stated. deploy without available is rejected by charts/armonik/templates/operators-guard.yaml, which reports it better than a schema could.",
+      "description": "deploy: this release installs the operator and its CRDs. available: the CRDs exist, so emit CRs. namespace: tpl-rendered, empty meaning not stated. deploy without available is rejected by charts/armonik/templates/operators-guard.yaml.",
       "properties": {
         "deploy": {
           "type": [

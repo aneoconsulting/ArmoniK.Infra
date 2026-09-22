@@ -133,11 +133,11 @@ loadBalancer:
   enabled: false
   clusters: {}
   defaultCluster: ""
+  # -- Tag from global.armonik.versions.infraPlugins.
   image:
     registry:
     repository: dockerhubaneo
     name: armonik_load_balancer
-    tag: "0.3.2"
     pullPolicy: IfNotPresent
   replicas: 1
   conf:

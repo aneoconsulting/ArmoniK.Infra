@@ -3,14 +3,11 @@ fullnameOverride: ""
 replicaCount: 1
 shareProcessNamespace: false
 restartPolicy: Always
-repository: dockerhubaneo
-registry: ""
 imagePullSecrets: []
 
 # global.armonik.* comes from armonik-common via import-values; its defaults suit a standalone plane
 # (external operators, KEDA trigger URL derived from conf.source).
 global:
-  imageRegistry: "public.ecr.aws"
   # Release name of the umbrella that owns the conf Secrets (defaults to "armonik").
   armonik:
     source: armonik
@@ -224,6 +221,8 @@ partitionCommon:
   # Default worker, will be overridden per partition
   worker:
     name: "worker"
+    # -- Worker image, as this object or a reference string. A string settles registry and repository
+    # too, so it never picks them up from here. The name has no default: each partition brings its own.
     image:
       registry:
       repository: dockerhubaneo
@@ -353,7 +352,8 @@ fluentBit:
     registry:
     repository: fluent
     name: fluent-bit
-    # tag: "2.0.9"
+    # Third party, so the tag is required. In step with the fluent-bit subchart used by the DaemonSet.
+    tag: "5.1.2"
     pullPolicy: IfNotPresent
   configMapRef: "fluent-bit-config"
 

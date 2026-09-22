@@ -1,0 +1,291 @@
+suite: armonik.utils image helpers
+templates:
+  - templates/image.yaml
+release:
+  name: t
+tests:
+  - it: falls back to the chart AppVersion for an ArmoniK image
+    set:
+      image:
+        path: image
+        confs:
+          - {repository: dockerhubaneo, name: armonik_control}
+    asserts:
+      - equal: {path: "data.fullname", value: "dockerhubaneo/armonik_control:9.9.9"}
+
+  - it: prefers an explicit tag over the AppVersion
+    set:
+      image:
+        path: image
+        confs:
+          - {repository: dockerhubaneo, name: armonik_control, tag: "1.2.3"}
+    asserts:
+      - equal: {path: "data.fullname", value: "dockerhubaneo/armonik_control:1.2.3"}
+
+  - it: takes each attribute from the leftmost conf providing it
+    set:
+      image:
+        path: image
+        confs:
+          - {name: armonik_control_metrics}
+          - {repository: dockerhubaneo, tag: "0.41.0", pullPolicy: Always}
+    asserts:
+      - equal: {path: "data.fullname", value: "dockerhubaneo/armonik_control_metrics:0.41.0"}
+      - equal: {path: "data.pullPolicy", value: "Always"}
+
+  - it: includes the registry when one is set
+    set:
+      image:
+        path: image
+        confs:
+          - {registry: my.registry.io, repository: dockerhubaneo, name: armonik_control}
+    asserts:
+      - equal: {path: "data.fullname", value: "my.registry.io/dockerhubaneo/armonik_control:9.9.9"}
+
+  - it: omits the repository segment when there is none
+    set:
+      image:
+        path: image
+        confs:
+          - {name: busybox, tag: "1.37.0"}
+    asserts:
+      - equal: {path: "data.fullname", value: "busybox:1.37.0"}
+
+  - it: fails, naming the values path, when no image name resolves
+    set:
+      image:
+        path: partitions.gpu.worker.image
+        confs:
+          - {repository: dockerhubaneo}
+    asserts:
+      - failedTemplate:
+          errorMessage: "partitions.gpu.worker.image.name is required: no image name resolved."
+
+  - it: does not give an unmapped image the chart AppVersion
+    set:
+      image:
+        path: fluentBit.image
+        confs:
+          - {repository: fluent, name: fluent-bit}
+    asserts:
+      - failedTemplate:
+          errorMessage: "fluentBit.image.tag is required: pin it, or map the image to a component in global.armonik.imageComponents."
+
+  - it: resolves an unmapped image whose tag is set
+    set:
+      image:
+        path: fluentBit.image
+        confs:
+          - {repository: fluent, name: fluent-bit, tag: "5.1.2"}
+    asserts:
+      - equal: {path: "data.fullname", value: "fluent/fluent-bit:5.1.2"}
+
+  - it: parses a plain reference string into repository, name and tag
+    set:
+      image:
+        path: image
+        confs: ["fluent/fluent-bit:5.1.2"]
+    asserts:
+      - equal: {path: "data.fullname", value: "fluent/fluent-bit:5.1.2"}
+      - equal: {path: "data.name", value: "fluent-bit"}
+      - equal: {path: "data.tag", value: "5.1.2"}
+
+  - it: reads the first segment as a registry when it carries a dot
+    set:
+      image:
+        path: image
+        confs: ["quay.io/me/worker:2.0"]
+    asserts:
+      - equal: {path: "data.fullname", value: "quay.io/me/worker:2.0"}
+
+  - it: reads the first segment as a registry when it carries a port
+    set:
+      image:
+        path: image
+        confs: ["localhost:5000/worker:2.0"]
+    asserts:
+      - equal: {path: "data.fullname", value: "localhost:5000/worker:2.0"}
+
+  - it: gives a tagless ArmoniK reference string the chart AppVersion
+    set:
+      image:
+        path: image
+        confs: ["dockerhubaneo/armonik_control"]
+    asserts:
+      - equal: {path: "data.fullname", value: "dockerhubaneo/armonik_control:9.9.9"}
+
+  - it: keeps a digest reference whole and appends no tag
+    set:
+      image:
+        path: image
+        confs: ["dockerhubaneo/armonik_control@sha256:abc123"]
+    asserts:
+      - equal: {path: "data.fullname", value: "dockerhubaneo/armonik_control@sha256:abc123"}
+
+  - it: keeps a digest reference whole, which needs no tag
+    set:
+      image:
+        path: fluentBit.image
+        confs: ["fluent/fluent-bit@sha256:abc123"]
+    asserts:
+      - equal: {path: "data.fullname", value: "fluent/fluent-bit@sha256:abc123"}
+
+  - it: does not let a bare reference string pick up a lower-precedence repository
+    set:
+      image:
+        path: image
+        confs:
+          - "busybox:1.37.0"
+          - {repository: dockerhubaneo, pullPolicy: Always}
+    asserts:
+      - equal: {path: "data.fullname", value: "busybox:1.37.0"}
+
+  - it: still takes pullPolicy from the chain when the image is a string
+    set:
+      image:
+        path: image
+        confs:
+          - "busybox:1.37.0"
+          - {repository: dockerhubaneo, pullPolicy: Always}
+    asserts:
+      - equal: {path: "data.pullPolicy", value: "Always"}
+
+  - it: lets a lower-precedence string fill the gaps an object left
+    set:
+      image:
+        path: metricsExporter.image
+        confs:
+          - {name: armonik_control_metrics}
+          - "dockerhubaneo/armonik_control:0.41.0"
+    asserts:
+      - equal: {path: "data.fullname", value: "dockerhubaneo/armonik_control_metrics:0.41.0"}
+
+  - it: fails on a tagless reference string for an unmapped image
+    set:
+      image:
+        path: fluentBit.image
+        confs: ["fluent/fluent-bit"]
+    asserts:
+      - failedTemplate:
+          errorMessage: "fluentBit.image.tag is required: pin it, or map the image to a component in global.armonik.imageComponents."
+
+  - it: lets global.imageRegistry override the registry a conf chose
+    set:
+      global.imageRegistry: mirror.io
+      image:
+        path: image
+        confs:
+          - {registry: quay.io, repository: me, name: worker, tag: "2.0"}
+    asserts:
+      - equal: {path: "data.fullname", value: "mirror.io/me/worker:2.0"}
+
+  - it: lets global.imageRegistry override a registry a reference string settled
+    set:
+      global.imageRegistry: mirror.io
+      image:
+        path: image
+        confs: ["quay.io/me/worker:2.0"]
+    asserts:
+      - equal: {path: "data.fullname", value: "mirror.io/me/worker:2.0"}
+
+  - it: prefixes an image that had no registry at all
+    set:
+      global.imageRegistry: mirror.io/armonik
+      image:
+        path: image
+        confs: ["dockerhubaneo/armonik_control:0.41.0"]
+    asserts:
+      - equal: {path: "data.fullname", value: "mirror.io/armonik/dockerhubaneo/armonik_control:0.41.0"}
+
+  - it: relocates a digest-pinned reference and invents no tag for it
+    set:
+      global.imageRegistry: mirror.io
+      image:
+        path: image
+        confs: ["dockerhubaneo/armonik_control@sha256:abc123"]
+    asserts:
+      - equal: {path: "data.fullname", value: "mirror.io/dockerhubaneo/armonik_control@sha256:abc123"}
+      - isNullOrEmpty: {path: "data.tag"}
+
+  - it: renders tag and digest together when both are set
+    set:
+      image:
+        path: image
+        confs:
+          - {repository: dockerhubaneo, name: armonik_control, tag: "1.2.3", digest: "sha256:abc123"}
+    asserts:
+      - equal: {path: "data.fullname", value: "dockerhubaneo/armonik_control:1.2.3@sha256:abc123"}
+
+  - it: accepts a digest instead of a tag on an unmapped image
+    set:
+      image:
+        path: fluentBit.image
+        confs:
+          - {repository: fluent, name: fluent-bit, digest: "sha256:abc123"}
+    asserts:
+      - equal: {path: "data.fullname", value: "fluent/fluent-bit@sha256:abc123"}
+
+  - it: gives an image mapped to a chart-versioned component the AppVersion
+    set:
+      global.armonik.versions: {core: ""}
+      global.armonik.imageComponents: {armonik_control: core}
+      image:
+        path: image
+        confs:
+          - {repository: dockerhubaneo, name: armonik_control}
+    asserts:
+      - equal: {path: "data.fullname", value: "dockerhubaneo/armonik_control:9.9.9"}
+
+  - it: gives an image mapped to an independently released component that version
+    set:
+      global.armonik.versions: {extCsharp: "0.22.0"}
+      global.armonik.imageComponents: {armonik-dynamic-dotnet-worker: extCsharp}
+      image:
+        path: partitions.gpu.worker.image
+        confs:
+          - {repository: dockerhubaneo, name: armonik-dynamic-dotnet-worker}
+    asserts:
+      - equal: {path: "data.fullname", value: "dockerhubaneo/armonik-dynamic-dotnet-worker:0.22.0"}
+
+  - it: requires a tag for an image the map does not know
+    set:
+      global.armonik.versions: {core: ""}
+      global.armonik.imageComponents: {armonik_control: core}
+      image:
+        path: partitions.gpu.worker.image
+        confs:
+          - {repository: myco, name: my-own-worker}
+    asserts:
+      - failedTemplate:
+          errorMessage: "partitions.gpu.worker.image.tag is required: pin it, or map the image to a component in global.armonik.imageComponents."
+
+  - it: lets an explicit tag win over the version map
+    set:
+      global.armonik.versions: {extCsharp: "0.22.0"}
+      global.armonik.imageComponents: {armonik-dynamic-dotnet-worker: extCsharp}
+      image:
+        path: image
+        confs: ["dockerhubaneo/armonik-dynamic-dotnet-worker:9.9.9-rc1"]
+    asserts:
+      - equal: {path: "data.fullname", value: "dockerhubaneo/armonik-dynamic-dotnet-worker:9.9.9-rc1"}
+
+  - it: treats a component absent from versions exactly like an empty one
+    set:
+      global.armonik.versions: {core: ""}
+      global.armonik.imageComponents: {my-worker: extRust}
+      image:
+        path: partitions.gpu.worker.image
+        confs:
+          - {repository: myco, name: my-worker}
+    asserts:
+      - equal: {path: "data.fullname", value: "myco/my-worker:9.9.9"}
+
+  - it: needs no versions entry at all to register an image
+    set:
+      global.armonik.imageComponents: {my-worker: mine}
+      image:
+        path: partitions.gpu.worker.image
+        confs:
+          - {repository: myco, name: my-worker}
+    asserts:
+      - equal: {path: "data.fullname", value: "myco/my-worker:9.9.9"}

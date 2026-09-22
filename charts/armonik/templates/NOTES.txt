@@ -196,6 +196,10 @@ percona.com/delete-psmdb-pvc) and the Secrets the operators generate, which no r
 Also the CRDs Helm never manages: psmdb-operator and kube-prometheus-stack ship them in an untemplated
 crds/ directory, which no release upgrades or deletes.
 {{- end }}
+{{- if $ops.postgresOperator.deploy }}
+The cloudnative-pg CRDs are release resources, but annotated helm.sh/resource-policy: keep by that
+chart, so they outlive this release too.
+{{- end }}
 {{- if $ops.certManager.deploy }}
 The cert-manager CRDs, however, DO go away with this release (operators.cert-manager.crds.keep is
 false), deleting every Certificate and Issuer in the cluster, ArmoniK's or not.

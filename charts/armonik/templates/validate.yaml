@@ -16,3 +16,12 @@
     {{- fail `dependencies.grafana."grafana.ini".server.serve_from_sub_path must stay false: armonik-ingress strips the prefix before proxying, so Grafana keeps serving at "/".` -}}
   {{- end -}}
 {{- end -}}
+
+{{- /* mongodb and postgresql are the same table storage slot: armonik.conf.core merges both fragments,
+       and whichever is listed last in _core.tpl silently wins Components__TableStorage. Reject instead
+       of leaving the choice to fragment order. */ -}}
+{{- $mongodbEnabled := list .Values "dependencies" "mongodb" "enabled" | include "armonik.utils.index" | empty | not -}}
+{{- $postgresqlEnabled := list .Values "dependencies" "postgresql" "enabled" | include "armonik.utils.index" | empty | not -}}
+{{- if and $mongodbEnabled $postgresqlEnabled -}}
+  {{- fail "dependencies.mongodb and dependencies.postgresql cannot both be enabled: they back the same table storage slot. Disable one." -}}
+{{- end -}}

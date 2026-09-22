@@ -23,6 +23,7 @@ repo_add fluent               https://fluent.github.io/helm-charts
 repo_add datalust             https://helm.datalust.co
 repo_add jetstack             https://charts.jetstack.io
 repo_add external-secrets     https://charts.external-secrets.io
+repo_add cnpg                 https://cloudnative-pg.github.io/charts
 
 # update-charts.sh resolves chart names relative to charts/.
 (cd charts && ./update-charts.sh "$@")

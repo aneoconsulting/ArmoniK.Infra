@@ -51,17 +51,20 @@ TODO: Core's PostgreSQL adaptor is still under development; re-check once it sta
 
 Ssl=true maps to Npgsql's SslMode.Require, which encrypts without validating the chain, so CNPG's own
 CA needs no mountSecret here. A verify-full setup would mount <cluster>-ca like MongoDB__CAFile does.
+
+Components__AuthenticationStorage must be stated: Core defaults it to the MongoDB table.
 */}}
 {{- define "armonik.postgresql.conf" -}}
 {{/* Live subchart scope via .Subcharts (armonik-dependencies is aliased "dependencies"); skipped when the dep is disabled. */}}
 {{- with .Subcharts.dependencies.Subcharts.postgresql -}}
 {{- $namespace := include "armonik.postgresql.namespace" . -}}
 env:
-  Components__TableStorage: "ArmoniK.Adapters.PostgresSQL.TableStorage"
-  PostgreSQL__Host:         {{ include "armonik.postgresql.host" . | quote }}
-  PostgreSQL__Port:         {{ include "armonik.postgresql.port" . | trim | quote }}
-  PostgreSQL__DatabaseName: {{ include "armonik.postgresql.database" . | quote }}
-  PostgreSQL__Ssl:          "true"
+  Components__TableStorage:          "ArmoniK.Adapters.PostgresSQL.TableStorage"
+  Components__AuthenticationStorage: "ArmoniK.Adapters.PostgresSQL.AuthenticationTable"
+  PostgreSQL__Host:                  {{ include "armonik.postgresql.host" . | quote }}
+  PostgreSQL__Port:                  {{ include "armonik.postgresql.port" . | trim | quote }}
+  PostgreSQL__DatabaseName:          {{ include "armonik.postgresql.database" . | quote }}
+  PostgreSQL__Ssl:                   "true"
 envFromSecret:
   PostgreSQL__User:
     secret: {{ include "armonik.postgresql.secretName" . }}

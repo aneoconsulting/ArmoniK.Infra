@@ -7,7 +7,7 @@ metadata:
 data:
   fullname: {{ $conf.fullname | quote }}
   tag: {{ $conf.tag | quote }}
-  name: {{ $conf.name | quote }}
+  repository: {{ $conf.repository | quote }}
   pullPolicy: {{ $conf.pullPolicy | quote }}
   digest: {{ $conf.digest | quote }}
 {{- end }}

@@ -8,8 +8,7 @@ nameOverride: ""
 imagePullSecrets: []
 image:
   registry:
-  repository: nginxinc
-  name: nginx-unprivileged
+  repository: nginxinc/nginx-unprivileged
   tag: 1.31.6-alpine-slim
   pullPolicy: IfNotPresent
 
@@ -136,8 +135,7 @@ loadBalancer:
   # -- Tag from global.armonik.versions.infraPlugins.
   image:
     registry:
-    repository: dockerhubaneo
-    name: armonik_load_balancer
+    repository: dockerhubaneo/armonik_load_balancer
     pullPolicy: IfNotPresent
   replicas: 1
   conf:
@@ -203,8 +201,7 @@ conf:
 gui:
   image:
     registry:
-    repository: dockerhubaneo
-    name: armonik_admin_app
+    repository: dockerhubaneo/armonik_admin_app
     tag:
     pullPolicy: IfNotPresent
   ports:

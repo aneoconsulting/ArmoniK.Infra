@@ -11,9 +11,9 @@ securityContext:
 {{- end }}
 {{- $tag := $v.image.tag | default .root.Chart.AppVersion }}
 {{- if $registry }}
-image: {{ printf "%s/%s/%s:%s" $registry $v.image.repository $v.image.name $tag | quote }}
+image: {{ printf "%s/%s:%s" $registry $v.image.repository $tag | quote }}
 {{- else }}
-image: {{ printf "%s/%s:%s" $v.image.repository $v.image.name $tag | quote }}
+image: {{ printf "%s:%s" $v.image.repository $tag | quote }}
 {{- end }}
 imagePullPolicy: {{ $v.image.pullPolicy | quote }}
 ports:

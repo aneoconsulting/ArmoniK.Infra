@@ -104,6 +104,29 @@
                 }
               }
             },
+            "versions": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "description": "Version per component. Empty or absent means the chart AppVersion. Strings, so an unquoted 1.10 cannot arrive as the float 1.1.",
+              "additionalProperties": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "imageComponents": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "description": "Image name -> component. An image absent here must carry a tag.",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
             "mountPath": {
               "type": [
                 "string",

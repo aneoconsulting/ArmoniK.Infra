@@ -88,16 +88,16 @@ compute-plane:
       worker:
         # Tag from global.armonik.versions.extCsharp.
         image:
-          name: "armonik-dynamic-dotnet-worker"
+          repository: "dockerhubaneo/armonik-dynamic-dotnet-worker"
     stream:
       worker:
         image:
-          name: "armonik_core_stream_test_worker"
+          repository: "dockerhubaneo/armonik_core_stream_test_worker"
     htcmock:
       socketType: "tcp"
       worker:
         image:
-          name: "armonik_core_htcmock_test_worker"
+          repository: "dockerhubaneo/armonik_core_htcmock_test_worker"
 
 conf:
   # Names every <source>-conf-<layer> Secret the umbrella renders (this release).

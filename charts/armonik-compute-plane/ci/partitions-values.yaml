@@ -10,7 +10,7 @@ partitions:
     socketType: "unix"
     worker:
       image:
-        name: armonik_core_htcmock_test_worker
+        repository: dockerhubaneo/armonik_core_htcmock_test_worker
     hpa:
       triggers:
         - type: prometheus

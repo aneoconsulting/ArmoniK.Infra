@@ -11,8 +11,7 @@ HorizontalPodAutoscaler:
   enabled: false
 
 image:
-  repository: apache
-  name: activemq
+  repository: apache/activemq
   tag: 6.3.1
   pullPolicy: IfNotPresent
   imagePullSecrets: []

@@ -85,8 +85,7 @@ init:
   enabled: true
   image:
     registry:
-    repository: dockerhubaneo
-    name: armonik_control
+    repository: dockerhubaneo/armonik_control
     tag:
     pullPolicy:
   imagePullSecrets:
@@ -141,8 +140,7 @@ partitionCommon:
     name: polling-agent
     image:
       registry:
-      repository: dockerhubaneo
-      name: armonik_pollingagent
+      repository: dockerhubaneo/armonik_pollingagent
       tag:
       pullPolicy: IfNotPresent
     ports:
@@ -221,12 +219,11 @@ partitionCommon:
   # Default worker, will be overridden per partition
   worker:
     name: "worker"
-    # -- Worker image, as this object or a reference string. A string settles registry and repository
-    # too, so it never picks them up from here. The name has no default: each partition brings its own.
+    # -- Worker image, as this object or a reference string. The repository has no default: each
+    # partition brings its own, as a full path (dockerhubaneo/armonik_core_stream_test_worker).
     image:
       registry:
-      repository: dockerhubaneo
-      name:
+      repository:
       tag:
       pullPolicy: IfNotPresent
     ports:
@@ -350,8 +347,7 @@ fluentBit:
   isDaemonSet: true
   image:
     registry:
-    repository: fluent
-    name: fluent-bit
+    repository: fluent/fluent-bit
     # Third party, so the tag is required. In step with the fluent-bit subchart used by the DaemonSet.
     tag: "5.1.2"
     pullPolicy: IfNotPresent

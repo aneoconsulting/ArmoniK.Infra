@@ -78,20 +78,20 @@ global:
       extCsharp: "0.22.0"
       extCpp: "0.5.4"
       extJava: "0.1.4"
-    # -- Component each image belongs to. Registering one gives it a default tag; leaving it out makes
-    # the tag required, the safer default for a user-supplied image.
+    # -- Component each image repository belongs to. Registering one gives it a default tag; leaving it
+    # out makes the tag required, the safer default for a user-supplied image.
     imageComponents:
-      armonik_control: core
-      armonik_control_metrics: core
-      armonik_pollingagent: core
-      armonik_core_stream_test_worker: core
-      armonik_core_htcmock_test_worker: core
-      armonik_core_bench_test_worker: core
-      armonik_admin_app: gui
-      armonik_load_balancer: infraPlugins
-      armonik-dynamic-dotnet-worker: extCsharp
-      armonik-sdk-cpp-dynamicworker: extCpp
-      armonik-dynamic-java-worker: extJava
+      dockerhubaneo/armonik_control: core
+      dockerhubaneo/armonik_control_metrics: core
+      dockerhubaneo/armonik_pollingagent: core
+      dockerhubaneo/armonik_core_stream_test_worker: core
+      dockerhubaneo/armonik_core_htcmock_test_worker: core
+      dockerhubaneo/armonik_core_bench_test_worker: core
+      dockerhubaneo/armonik_admin_app: gui
+      dockerhubaneo/armonik_load_balancer: infraPlugins
+      dockerhubaneo/armonik-dynamic-dotnet-worker: extCsharp
+      dockerhubaneo/armonik-sdk-cpp-dynamicworker: extCpp
+      dockerhubaneo/armonik-dynamic-java-worker: extJava
     # Declared, not defaulted: null documents the key without joining the precedence chain. Each
     # resolves in charts/armonik/values.yaml, else in the helper named below.
     # -- Root dir for conf mount Secrets in pods.

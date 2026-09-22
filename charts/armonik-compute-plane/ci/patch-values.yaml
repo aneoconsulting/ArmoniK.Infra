@@ -32,9 +32,9 @@ partitionCommon:
       securityContext:
         readOnlyRootFilesystem: true
   worker:
-    # No default worker image name.
+    # No default worker repository.
     image:
-      name: armonik-dynamic-dotnet-worker
+      repository: dockerhubaneo/armonik-dynamic-dotnet-worker
     extraEnvFrom:
       - configMapRef:
           name: worker-extra

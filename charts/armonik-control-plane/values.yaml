@@ -7,8 +7,7 @@ imagePullSecrets: []
 name: control-plane
 image:
   registry: ""
-  repository: dockerhubaneo
-  name: armonik_control
+  repository: dockerhubaneo/armonik_control
   tag:
   pullPolicy: IfNotPresent
 
@@ -157,8 +156,7 @@ metricsExporter:
   replicas: 1
   image:
     registry:
-    repository:
-    name: armonik_control_metrics
+    repository: dockerhubaneo/armonik_control_metrics
     tag:
     pullPolicy:
   imagePullSecrets:
@@ -228,7 +226,6 @@ init:
   image:
     registry:
     repository:
-    name:
     tag:
     pullPolicy:
   imagePullSecrets:

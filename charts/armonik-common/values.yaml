@@ -65,9 +65,9 @@ global:
       # -- Control-plane metrics-exporter `/metrics` scraped by KEDA (default scaling path). Defaults to
       # the `armonik.monitoring.metricsExporterUrl.default` derivation off `conf.source`; a literal URL replaces it.
       metricsExporterUrl: '{{ include "armonik.monitoring.metricsExporterUrl.default" . }}'
-    # Default tag of an ArmoniK image that sets none, keyed on the image rather than the values slot:
+    # Default tag of an image that sets none, keyed on the repository rather than the values slot:
     # a worker's identity is only known at render time. Components mirror ArmoniK's release trains
-    # (armonik_versions in versions.tfvars.json).
+    # (armonik_versions in versions.tfvars.json), plus one per chart whose AppVersion is its image's.
     # -- Version per component. Empty or absent means the AppVersion of the chart deploying the image,
     # keeping core and gui in lockstep with the charts. The rest release separately and need reviewing
     # per ArmoniK release.
@@ -78,6 +78,7 @@ global:
       extCsharp: "0.22.0"
       extCpp: "0.5.4"
       extJava: "0.1.4"
+      activemq: ""
     # -- Component each image repository belongs to. Registering one gives it a default tag; leaving it
     # out makes the tag required, the safer default for a user-supplied image.
     imageComponents:
@@ -92,6 +93,7 @@ global:
       dockerhubaneo/armonik-dynamic-dotnet-worker: extCsharp
       dockerhubaneo/armonik-sdk-cpp-dynamicworker: extCpp
       dockerhubaneo/armonik-dynamic-java-worker: extJava
+      apache/activemq: activemq
     # Declared, not defaulted: null documents the key without joining the precedence chain. Each
     # resolves in charts/armonik/values.yaml, else in the helper named below.
     # -- Root dir for conf mount Secrets in pods.

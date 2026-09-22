@@ -72,17 +72,10 @@ Create the name of the service account to use
 {{- end }}
 
 {{/*
-The image to use
+The image to use, resolved exactly as the container resolves it so NOTES.txt cannot drift from the pod.
 */}}
 {{- define "activemq.image" -}}
-{{- printf "%s:%s" .Values.image.repository (default (printf "v%s" .Chart.AppVersion) .Values.image.tag) }}
-{{- end }}
-
-{{/*
-The image to use for the addon resizer
-*/}}
-{{- define "activemq.addonResizer.image" -}}
-{{- printf "%s:%s" .Values.addonResizer.image.repository .Values.addonResizer.image.tag }}
+{{- list . "image" .Values.image | include "armonik.utils.imageConf" | fromYaml | dig "fullname" "" }}
 {{- end }}
 
 {{/*

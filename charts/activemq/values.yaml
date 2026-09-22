@@ -12,7 +12,9 @@ HorizontalPodAutoscaler:
 
 image:
   repository: apache/activemq
-  tag: 6.3.1
+  # -- Tag. Defaults to this chart's AppVersion, which tracks the ActiveMQ release it ships.
+  # @default -- `.Chart.AppVersion`
+  tag:
   pullPolicy: IfNotPresent
   imagePullSecrets: []
   registry: ""

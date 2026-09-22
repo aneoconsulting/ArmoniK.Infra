@@ -3,19 +3,14 @@
 {{/* ActiveMQ broker container: amqp and dashboard ports, JVM heap from activemqOptsMemory. */}}
 {{- define "activemq.container" -}}
 {{- $v := .root.Values -}}
-{{- $registry := $v.global.imageRegistry | default $v.image.registry -}}
+{{- $image := list .root "image" $v.image | include "armonik.utils.imageConf" | fromYaml -}}
 name: activemq
 {{- with $v.securityContext }}
 securityContext:
   {{- toYaml . | nindent 2 }}
 {{- end }}
-{{- $tag := $v.image.tag | default .root.Chart.AppVersion }}
-{{- if $registry }}
-image: {{ printf "%s/%s:%s" $registry $v.image.repository $tag | quote }}
-{{- else }}
-image: {{ printf "%s:%s" $v.image.repository $tag | quote }}
-{{- end }}
-imagePullPolicy: {{ $v.image.pullPolicy | quote }}
+image: {{ $image.fullname | quote }}
+imagePullPolicy: {{ $image.pullPolicy | quote }}
 ports:
   - containerPort: {{ $v.containerPort.amqp }}
     name: amqp

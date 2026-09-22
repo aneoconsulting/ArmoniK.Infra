@@ -85,7 +85,7 @@ compute-plane:
       worker:
         image:
           name: "armonik-dynamic-dotnet-worker"
-          tag: "0.21.2"
+          tag: "0.22.0"
     stream:
       worker:
         image:

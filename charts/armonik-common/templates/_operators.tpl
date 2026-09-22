@@ -9,7 +9,7 @@ tpl-rendered, empty when nobody stated where an external operator runs.
   {{- $ops.prometheusOperator.namespace }}
 */}}
 {{- define "armonik.operators" -}}
-{{- range list "externalSecrets" "keda" "certManager" "mongodbOperator" "prometheusOperator" "googleCasIssuer" }}
+{{- range list "externalSecrets" "keda" "certManager" "mongodbOperator" "postgresOperator" "prometheusOperator" "googleCasIssuer" }}
 {{ . }}:
   {{- $op := list $.Values "global" "armonik" "operators" . | include "armonik.utils.index" | fromYaml }}
   available: {{ $op.available | empty | not }}

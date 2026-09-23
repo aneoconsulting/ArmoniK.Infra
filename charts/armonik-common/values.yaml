@@ -79,7 +79,7 @@ global:
       # renovate: datasource=github-releases depName=aneoconsulting/ArmoniK.Extensions.CSharp.New
       extCsharp: "0.22.0"
       # renovate: datasource=github-releases depName=aneoconsulting/ArmoniK.Extensions.Cpp
-      extCpp: "0.5.4"
+      extCpp: "0.5.6"
       # renovate: datasource=github-releases depName=aneoconsulting/ArmoniK.Extensions.Java
       extJava: "0.1.4"
       activemq: ""

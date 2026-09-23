@@ -14,11 +14,14 @@ dependencies:
 - name: psmdb-operator
   repository: https://percona.github.io/percona-helm-charts/
   version: 1.23.1
+- name: cloudnative-pg
+  repository: https://cloudnative-pg.github.io/charts
+  version: 0.29.0
 - name: kube-prometheus-stack
   repository: https://prometheus-community.github.io/helm-charts
   version: 91.4.1
 - name: cert-manager-google-cas-issuer
   repository: https://charts.jetstack.io
   version: v0.13.0
-digest: sha256:a83199a838b63eab06bf366491fd814fa4906d54a5836cfa21e0ff85ae742fda
-generated: "2026-09-21T16:44:32.341807632+02:00"
+digest: sha256:3430cc21305646d06f8a6705432add2ba14dea02b22686ee0d83e32964424d1d
+generated: "2026-09-23T15:53:51.103897+02:00"

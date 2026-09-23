@@ -1,6 +1,6 @@
 apiVersion: v2
 name: armonik-operators
-description: Install-once cluster operators for ArmoniK (External Secrets, KEDA, cert-manager, Percona MongoDB operator, kube-prometheus-stack). Deploy once per cluster, ahead of the ArmoniK application release(s).
+description: Install-once cluster operators for ArmoniK (External Secrets, KEDA, cert-manager, Percona MongoDB operator, CloudNativePG, kube-prometheus-stack). Deploy once per cluster, ahead of the ArmoniK application release(s).
 icon: https://25070129.fs1.hubspotusercontent-eu1.net/hubfs/25070129/Website/Images%20-%20Website/ArmoniK/logo_armonik_by_aneo%201.svg
 kubeVersion: ">=v1.25.0-0"
 keywords:
@@ -41,6 +41,11 @@ dependencies:
     repository: https://percona.github.io/percona-helm-charts/
     alias: mongodb-operator
     condition: global.armonik.operators.mongodbOperator.deploy
+  - name: cloudnative-pg
+    version: 0.x.x
+    repository: https://cloudnative-pg.github.io/charts
+    alias: postgresql-operator
+    condition: global.armonik.operators.postgresOperator.deploy
   - name: kube-prometheus-stack
     version: 91.x.x
     repository: https://prometheus-community.github.io/helm-charts

@@ -43,6 +43,9 @@ global:
         deploy: true
       mongodbOperator:
         deploy: true
+      # MongoDB remains the default table storage, so Postgres stays off.
+      postgresOperator:
+        deploy: false
       prometheusOperator:
         deploy: true
       # googleCasIssuer is GCP-specific, only needed for
@@ -190,8 +193,9 @@ certManagerIssuer:
     #   name: ""
     #   key: credentials.json
 
-# To bring your own MongoDB, set dependencies.mongodb.enabled=false and supply the connection via the
-# conf values (conf.core.env / conf.core.envFromSecret). The in-cluster psmdb-db (below) is the default.
+# Table storage is MongoDB or PostgreSQL, whichever of dependencies.{mongodb,postgresql} is enabled;
+# the in-cluster psmdb-db (below) is the default. To bring your own, disable both and supply the
+# connection via the conf values (conf.core.env / conf.core.envFromSecret).
 
 ############################################
 ############### DEPENDENCIES ###############
@@ -364,6 +368,45 @@ dependencies:
         mountPath: /mongodb/certificate
         readOnly: true
     # priorityClassName:
+
+  ################## POSTGRESQL ##################
+  # This table storage is mutually exclusive with mongodb above.
+  # armonik/templates/validate.yaml rejects both at once.
+  # Everything under cluster.* is the Cluster CR's spec
+  postgresql:
+    enabled: false
+    version:
+      # What ArmoniK.Core tests the adaptor against, rather than this chart's own default of 16.
+      postgresql: "18"
+    cluster:
+      # Parity with the mongodb defaults above: a single instance, for a development/test cluster.
+      instances: 1
+      initdb:
+        # ArmoniK.Core's PostgreSQL.DatabaseName default. The owner role is the one ArmoniK
+        # authenticates as; the operator generates its password into the <cluster>-app Secret.
+        database: armonik
+        owner: armonik
+        postInitSQL:
+          # The task and result watchers read the WAL through pgoutput, as the MongoDB adaptor reads
+          # the oplog through change streams. The operator creates the owner with `CREATE ROLE <owner>
+          # LOGIN` and nothing else, so it lacks REPLICATION; postInitSQL runs as superuser right
+          # after, which is the only hook early enough to grant it.
+          - ALTER ROLE armonik WITH REPLICATION;
+      postgresql:
+        parameters:
+          # Already the CloudNativePG default, unlike upstream PostgreSQL. Stated because the watchers
+          # do not work without it.
+          wal_level: logical
+          # One replication slot and one WAL sender per watcher per subscribed process, so these scale
+          # with the number of control-plane and polling-agent replicas, not with the data.
+          max_replication_slots: "32"
+          max_wal_senders: "16"
+      # Nothing needs an external superuser: the operator reaches the server over its local socket,
+      # and ArmoniK connects as the database owner.
+      enableSuperuserAccess: false
+      monitoring:
+        # PodMonitor over the instances, as for the other dependencies here.
+        enabled: true
 
   # KEDA moved to charts/armonik-operators, configured at operators.keda.*.
 

@@ -2,6 +2,9 @@
 partitions:
   default: {}
 partitionCommon:
+  worker:
+    image:
+      repository: dockerhubaneo/armonik-dynamic-dotnet-worker
   podSpecPatch:
     containers:
       - name: hijack

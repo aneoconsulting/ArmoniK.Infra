@@ -1,5 +1,6 @@
 {{- if .Values.loadBalancer.enabled }}
-{{- $image := list $ .Values.loadBalancer.image | include "armonik.utils.imageConf" | fromYaml }}
+{{/* Own release train, not the chart AppVersion. */}}
+{{- $image := list $ "loadBalancer.image" .Values.loadBalancer.image | include "armonik.utils.imageConf" | fromYaml }}
 {{- $ctx := dict "root" $ "image" $image -}}
 {{- $podSpec := list (include "armonik.ingress.lb.podSpec" $ctx) .Values.loadBalancer.podSpecPatch "loadBalancer.podSpecPatch" | include "armonik.utils.patch" -}}
 apiVersion: apps/v1

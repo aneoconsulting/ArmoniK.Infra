@@ -8,6 +8,7 @@ keywords:
   - helm
 type: application
 version: 0.1.0
+# renovate: datasource=github-releases depName=aneoconsulting/ArmoniK.Admin.GUI extractVersion=^v(?<version>.*)$
 appVersion: "0.15.3"
 sources:
   - https://github.com/aneoconsulting/ArmoniK.Infra

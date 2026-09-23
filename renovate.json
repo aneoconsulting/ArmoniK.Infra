@@ -9,6 +9,28 @@
   "configMigration": true,
   "rangeStrategy": "bump",
   "ignorePaths": [],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "ArmoniK component versions in the chart image map, which carry no image reference of their own.",
+      "fileMatch": [
+        "^charts/armonik-common/values\\.yaml$"
+      ],
+      "matchStrings": [
+        "#\\s*renovate:\\s*datasource=(?<datasource>[a-z-]+)\\s+depName=(?<depName>\\S+)(\\s+extractVersion=(?<extractVersion>\\S+))?\\s*\\n\\s*\\w+:\\s*\"(?<currentValue>[^\"]+)\""
+      ]
+    },
+    {
+      "customType": "regex",
+      "description": "Chart appVersion, which is the tag of the images that chart deploys.",
+      "fileMatch": [
+        "^charts/[^/]+/Chart\\.yaml$"
+      ],
+      "matchStrings": [
+        "#\\s*renovate:\\s*datasource=(?<datasource>[a-z-]+)\\s+depName=(?<depName>\\S+)(\\s+extractVersion=(?<extractVersion>\\S+))?\\s*\\nappVersion:\\s*\"?(?<currentValue>[^\"\\s]+)\"?"
+      ]
+    }
+  ],
   "packageRules": [
     {
       "groupName": "other dependencies",
@@ -24,15 +46,15 @@
       ]
     },
     {
-      "groupName": "docker images",
-      "groupSlug": "docker",
+      "groupName": "third party images",
+      "groupSlug": "third-party-images",
       "matchDatasources": [
         "docker"
       ]
     },
     {
-      "groupName": "helm charts",
-      "groupSlug": "helm-charts",
+      "groupName": "third party charts",
+      "groupSlug": "third-party-charts",
       "matchDatasources": [
         "helm"
       ]
@@ -62,9 +84,15 @@
       ]
     },
     {
-      "groupName": "release packages Armonik",
+      "groupName": "ArmoniK components",
+      "groupSlug": "armonik",
+      "matchDatasources": [
+        "github-releases",
+        "docker"
+      ],
       "matchPackageNames": [
-        "ArmoniK{/,}**"
+        "aneoconsulting/**",
+        "dockerhubaneo/**"
       ]
     }
   ]

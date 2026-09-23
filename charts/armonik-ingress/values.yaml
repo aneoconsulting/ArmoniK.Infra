@@ -8,8 +8,7 @@ nameOverride: ""
 imagePullSecrets: []
 image:
   registry:
-  repository: nginxinc
-  name: nginx-unprivileged
+  repository: nginxinc/nginx-unprivileged
   tag: 1.31.6-alpine-slim
   pullPolicy: IfNotPresent
 
@@ -135,9 +134,10 @@ loadBalancer:
   defaultCluster: ""
   image:
     registry:
-    repository: dockerhubaneo
-    name: armonik_load_balancer
-    tag: "0.3.2"
+    repository: dockerhubaneo/armonik_load_balancer
+    # -- Tag. Bumped through global.armonik.versions.infraPlugins, not here.
+    # @default -- `global.armonik.versions.infraPlugins`
+    tag:
     pullPolicy: IfNotPresent
   replicas: 1
   conf:
@@ -203,8 +203,7 @@ conf:
 gui:
   image:
     registry:
-    repository: dockerhubaneo
-    name: armonik_admin_app
+    repository: dockerhubaneo/armonik_admin_app
     tag:
     pullPolicy: IfNotPresent
   ports:

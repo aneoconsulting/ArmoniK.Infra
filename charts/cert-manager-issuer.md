@@ -1,8 +1,8 @@
 # Shared cert-manager issuer
 
-Four consumers can get TLS material from cert-manager: `armonik-ingress` (server TLS and the mTLS
-client CA), `dependencies.redis`, `dependencies.activemq` and `dependencies.mongodb`. Each resolves
-its `Certificate`'s `issuerRef` in this order:
+Five consumers can get TLS material from cert-manager: `armonik-ingress` (server TLS and the mTLS
+client CA), `dependencies.redis`, `dependencies.activemq`, `dependencies.mongodb` and
+`dependencies.postgresql`. Each resolves its `Certificate`'s `issuerRef` in this order:
 
 1. its own `existingIssuer`;
 2. a local Issuer it creates itself, when its own `certManager.provider` key is present (any value,
@@ -30,9 +30,10 @@ dependencies:
         enabled: true
 ```
 
-Each consumer creates its **own** Issuer: four independent Issuers, no shared root (mongodb's one
-Issuer serves both its Certificates, see [MongoDB](#mongodb)). `provider` defaults to `selfSigned`;
-set it per consumer for another backend:
+Each consumer creates its **own** Issuer: five independent Issuers, no shared root (mongodb's and
+postgresql's one Issuer each serves both their Certificates, see [MongoDB](#mongodb) and
+[PostgreSQL](#postgresql)). `provider` defaults to `selfSigned`; set it per consumer for another
+backend:
 
 ```yaml
 dependencies:
@@ -42,7 +43,7 @@ dependencies:
       existingSecret: redis-tls
       certManager:
         enabled: true
-        provider: vault   # or ca / acme / venafi / googleCas; never selfSigned for mongodb
+        provider: vault   # or ca / acme / venafi / googleCas; never selfSigned for mongodb or postgresql
         vault:
           server: https://vault.example.com:8200
           path: pki_int/sign/redis
@@ -59,6 +60,7 @@ The block lives in each consumer's own `certManager`, next to `existingIssuer`:
 | activemq | `dependencies.activemq.tls.certManager` | `tls.certManager` |
 | ingress | `ingress.tls.certManager` | `tls.certManager` |
 | mongodb | `dependencies.mongodb.certManager` | - |
+| postgresql | `dependencies.postgresql.certManager` | - |
 
 Unlike `certManagerIssuer`, these are chart values of each consumer, so they also work when the
 consumer is its own release.
@@ -354,3 +356,54 @@ dependencies:
 
 Prefer (e) to keep issuance in the operator's reconciliation loop, (b) to (d) to issue from the
 charts alongside redis, activemq and ingress.
+
+## PostgreSQL
+
+Without `dependencies.postgresql.certManager`, `postgresql-certificate.yaml` renders nothing and the
+CloudNativePG operator generates its own self-signed CA per cluster, which signs the server
+certificate and the `streaming_replica` client certificate. `certManager.enabled` hands both to
+cert-manager, with the same issuer resolution as the other consumers:
+
+```yaml
+dependencies:
+  postgresql:
+    enabled: true
+    certManager:
+      enabled: true
+      # issuer: global shared issuer, existingIssuer or provider, as for the other consumers
+    cluster:
+      certificates:
+        serverTLSSecret: armonik-postgresql-server
+        serverCASecret: armonik-postgresql-server
+        replicationTLSSecret: armonik-postgresql-replication
+        clientCASecret: armonik-postgresql-replication
+```
+
+`cluster.certificates` is the Cluster CR's own `spec.certificates`, passed through as-is. The chart
+reads the Secret names from there instead of a separate `existingSecret`, so the Certificates and
+the CR cannot drift. All four are required: the operator fills any missing one with its own
+self-signed CA. Each CA Secret can be the matching TLS Secret, since cert-manager writes the issuing
+CA into `ca.crt` next to `tls.crt`/`tls.key`.
+
+Two Certificates are rendered against one issuer (a local fallback Issuer is created once):
+
+- `<cluster>-server`: `commonName` `<cluster>-rw`, `dnsNames` covering the `-rw`, `-ro` and `-r`
+  Services in their short, namespaced and FQDN forms. The operator checks server certificates
+  against the CA only, never the host name; these names serve clients that verify the host.
+- `<cluster>-replication`: `commonName` `streaming_replica`, the role replicas authenticate as.
+
+Both label their Secret `cnpg.io/reload` through `secretTemplate`, so the instances reload a renewed
+certificate on their own instead of waiting for `kubectl cnpg reload`.
+
+**selfSigned and acme fail at render time**, for the shared issuer and the local fallback alike.
+Unlike MongoDB, selfSigned would work: CNPG validates each half against its own Secret. It is
+refused because every certificate would sign itself, which gains nothing over the operator's own
+CA. acme only issues for DNS/IP identifiers, so it cannot issue `streaming_replica`.
+
+**Replication trusts the whole issuer.** `clientCASecret` holds the issuing CA, so any certificate
+with `CN=streaming_replica` signed by it authenticates as the replication role. On the global
+shared issuer, that means anyone allowed to request certificates from it. Give PostgreSQL its own
+issuer (`certManager.provider` or `existingIssuer`) when that is too wide.
+
+ArmoniK Core does not verify the chain yet: `PostgreSQL__Ssl=true` maps to Npgsql's
+`SslMode.Require`, which encrypts without validating the server certificate.

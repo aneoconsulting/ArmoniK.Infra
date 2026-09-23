@@ -1,0 +1,99 @@
+{{- $ops := include "armonik.operators" $ | fromYaml }}
+{{- $pg := .Values.dependencies.postgresql | default dict }}
+{{- $certManager := $pg.certManager | default dict }}
+{{- if and $pg.enabled $certManager.enabled }}
+{{- /* The Secret names are read from the Cluster CR's own spec.certificates rather than duplicated
+       here, so the Certificates and the CR cannot drift. Any name left out makes the operator
+       generate its own self-signed CA for that half. */}}
+{{- $certs := ($pg.cluster | default dict).certificates | default dict }}
+{{- range $key := list "serverTLSSecret" "serverCASecret" "replicationTLSSecret" "clientCASecret" }}
+{{- if index $certs $key | empty }}
+{{- printf "dependencies.postgresql.cluster.certificates.%s is required when dependencies.postgresql.certManager.enabled=true, otherwise the operator generates its own self-signed CA for it. Set serverTLSSecret and serverCASecret to one Secret name, replicationTLSSecret and clientCASecret to another." $key | fail }}
+{{- end }}
+{{- end }}
+{{- if eq $certs.serverTLSSecret $certs.replicationTLSSecret }}
+{{- fail "dependencies.postgresql.cluster.certificates.serverTLSSecret and replicationTLSSecret must differ: each is written by its own Certificate." }}
+{{- end }}
+{{- $cluster := include "cluster.fullname" .Subcharts.dependencies.Subcharts.postgresql }}
+{{- $ns := include "cluster.namespace" .Subcharts.dependencies.Subcharts.postgresql }}
+
+{{- /* Resolved once so a local fallback Issuer is shared by both Certificates.
+       selfSigned is refused: CNPG validates each half against its own Secret,
+       so it would work, but only swap the operator's self-signed CA for self-signed leaves. */}}
+{{- $issuerName := printf "%s-issuer" $cluster }}
+{{- $provider := $certManager.provider | default "selfSigned" }}
+{{- $localRequested := hasKey $certManager "provider" }}
+{{- $issuer := list $ $certManager.existingIssuer $issuerName $provider $localRequested | include "armonik.certManager.getIssuer" | fromYaml }}
+{{- $rejected := dict
+      "selfSigned" "every certificate would sign itself with no CA behind it, which gains nothing over the operator's own self-signed CA"
+      "acme" "ACME only issues for DNS/IP identifiers, so it cannot issue the streaming_replica client certificate" }}
+{{- if and (not $ops.certManager.available) $issuer.needsLocalIssuer }}
+{{- fail "dependencies.postgresql.certManager.enabled requires it: set global.armonik.operators.certManager.available=true, set dependencies.postgresql.certManager.existingIssuer.enabled=true, set global.armonik.certManager.issuer.enabled=true, or disable certManager.enabled and leave the certificates to the CloudNativePG operator." }}
+{{- end }}
+{{- if empty $issuer.name }}
+{{- fail "the cert-manager issuer has no name: set dependencies.postgresql.certManager.existingIssuer.name when existingIssuer.enabled=true, else global.armonik.certManager.issuer.name must not be empty." }}
+{{- end }}
+{{- if and (list $certManager "existingIssuer" "enabled" | include "armonik.utils.index" | empty) (not $issuer.needsLocalIssuer) }}
+{{- /* An existingIssuer's backend is out of reach at render time. */}}
+{{- $cmiProvider := (.Values.certManagerIssuer | default dict).provider | default "selfSigned" }}
+{{- with index $rejected $cmiProvider }}
+{{- printf "dependencies.postgresql.certManager.enabled cannot use a shared issuer with provider=%s: %s. Use certManagerIssuer.provider=ca, vault, venafi or googleCas, or point dependencies.postgresql.certManager.existingIssuer at an issuer backed by a real CA." $cmiProvider . | fail }}
+{{- end }}
+{{- end }}
+{{- if $issuer.needsLocalIssuer }}
+{{- with index $rejected $provider }}
+{{- printf "dependencies.postgresql.certManager.enabled cannot use a local fallback issuer with provider=%s: %s. Set dependencies.postgresql.certManager.provider to ca, vault, venafi or googleCas, point dependencies.postgresql.certManager.existingIssuer at an issuer backed by a real CA, or set global.armonik.certManager.issuer.enabled=true with certManagerIssuer.provider set to a real CA." $provider . | fail }}
+{{- end }}
+{{- include "armonik.certManager.issuerManifest" (dict
+      "root" $
+      "name" $issuer.name
+      "namespace" $ns
+      "provider" $provider
+      "kind" $issuer.kind
+      "group" $issuer.group
+      "spec" (index $certManager $provider | default dict)
+      "labels" (include "armonik.labels" $)
+      "specValuesPath" "dependencies.postgresql.certManager") }}
+{{- end }}
+
+{{- /* The operator checks server certificates against the CA only, never the host name, so these
+       names serve clients verifying the host. */}}
+{{- $domain := include "armonik.clusterDomain" . }}
+{{- $dnsNames := list }}
+{{- range $svc := list "rw" "ro" "r" }}
+{{- $host := printf "%s-%s" $cluster $svc }}
+{{- $dnsNames = concat $dnsNames (list $host (printf "%s.%s" $host $ns) (printf "%s.%s.svc" $host $ns) (printf "%s.%s.svc.%s" $host $ns $domain)) }}
+{{- end }}
+{{- /* Replicas authenticate to the primary as the streaming_replica role, matched on the CN. */}}
+{{- range $purpose, $spec := dict
+      "server" (dict "secretName" $certs.serverTLSSecret "commonName" (printf "%s-rw" $cluster) "dnsNames" $dnsNames)
+      "replication" (dict "secretName" $certs.replicationTLSSecret "commonName" "streaming_replica") }}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ $cluster }}-{{ $purpose }}
+  namespace: {{ $ns }}
+  {{- if $ops.certManager.deploy }}
+  {{- /* Hooked only when this release installs the CRDs; otherwise a plain resource. */}}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "10"
+  {{- end }}
+  labels:
+    {{- include "armonik.labels" $ | nindent 4 }}
+spec:
+  secretName: {{ $spec.secretName }}
+  # Instances reload a Secret carrying this label when it changes; without it a renewal needs
+  # `kubectl cnpg reload`.
+  secretTemplate:
+    labels:
+      cnpg.io/reload: ""
+  commonName: {{ $spec.commonName }}
+  {{- with $spec.dnsNames }}
+  dnsNames:
+  {{- toYaml . | nindent 2 }}
+  {{- end }}
+  {{- include "armonik.certManager.certificateSpec" (dict "certManager" $certManager "issuer" $issuer) | nindent 2 }}
+{{- end }}
+{{- end }}

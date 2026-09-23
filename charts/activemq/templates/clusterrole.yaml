@@ -2,9 +2,9 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: system:{{ include "activemq.fullname" . }}
+  name: system:{{ include "armonik.fullname" . }}
   labels:
-    {{- include "activemq.labels" . | nindent 4 }}
+    {{- include "armonik.labels" . | nindent 4 }}
 rules:
   - apiGroups:
     - ""
@@ -30,7 +30,7 @@ rules:
     resources:
       - podsecuritypolicies
     resourceNames:
-      - {{ printf "privileged-%s" (include "activemq.fullname" .) }}
+      - {{ printf "privileged-%s" (include "armonik.fullname" .) }}
     verbs:
       - use
   {{- end -}}

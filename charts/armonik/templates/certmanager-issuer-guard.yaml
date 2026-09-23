@@ -33,7 +33,7 @@
   {{- $notLocalRequested := not (hasKey $acm "provider") -}}
   {{- if and $noLocalIssuer $notLocalRequested $atls.enabled (eq $atls.type "cert-manager") -}}
     {{- with .Subcharts.dependencies.Subcharts.activemq -}}
-      {{- $ns := include "activemq.namespace" . -}}
+      {{- $ns := include "armonik.namespace" . -}}
       {{- if ne $ns $issuerNs -}}
         {{- fail (printf "dependencies.activemq renders its Certificate into namespace %q but the shared issuer lives in %q: set dependencies.activemq.namespaceOverride to %q, point dependencies.activemq.tls.certManager.existingIssuer at a local issuer instead, or switch global.armonik.certManager.issuer.kind to a cluster-scoped ClusterIssuer/GoogleCASClusterIssuer." $ns $issuerNs $issuerNs) -}}
       {{- end -}}

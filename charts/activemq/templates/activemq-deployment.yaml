@@ -3,10 +3,10 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "activemq.fullname" . }}
-  namespace: {{ include "activemq.namespace" . | quote }}
+  name: {{ include "armonik.fullname" . }}
+  namespace: {{ include "armonik.namespace" . | quote }}
   labels:
-    {{- include "activemq.labels" . | nindent 4 }}
+    {{- include "armonik.labels" . | nindent 4 }}
   {{- with .Values.deploymentAnnotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
@@ -22,11 +22,11 @@ spec:
   {{- end }}
   selector:
     matchLabels:
-      {{- include "activemq.selectorLabels" . | nindent 6 }}
+      {{- include "armonik.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        {{- include "activemq.selectorLabels" . | nindent 8 }}
+        {{- include "armonik.selectorLabels" . | nindent 8 }}
       {{- with .Values.podLabels }}
         {{- toYaml . | nindent 8 }}
       {{- end }}

@@ -2,10 +2,10 @@
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: {{ include "activemq.fullname" . }}
-  namespace: {{ include "activemq.namespace" . | quote }}
+  name: {{ include "armonik.fullname" . }}
+  namespace: {{ include "armonik.namespace" . | quote }}
   labels:
-    {{- include "activemq.labels" . | nindent 4 }}
+    {{- include "armonik.labels" . | nindent 4 }}
   {{- with .Values.service.labels -}}
     {{- toYaml . | nindent 4 }}
   {{- end }}
@@ -15,7 +15,7 @@ metadata:
   {{- end }}
 spec:
   scaleTargetRef:
-    name: {{ include "activemq.fullname" . }}
+    name: {{ include "armonik.fullname" . }}
     kind: Deployment
     apiVersion: apps/v1
   minReplicas: 1
@@ -35,7 +35,7 @@ spec:
 #       describedObject:
 #         apiVersion: v1
 #         kind: Service
-#         name: {{ include "activemq.fullname" . }}
+#         name: {{ include "armonik.fullname" . }}
 #       target:
 #         type: Value
 #         value: 1000

@@ -4,9 +4,8 @@
 # global.armonik.operators.<op> holds the control flags; <op> at the top level is the operator
 # subchart's own configuration.
 # googleCasIssuer and postgresOperator keep deploy=false, their consumer being off by default.
-# googleCasIssuer is GCP-specific, needed only by a googleCas issuer provider. postgresOperator backs
-# dependencies.postgresql; its 11 CRDs are annotated helm.sh/resource-policy: keep, so Helm can never
-# take them back once installed.
+# googleCasIssuer is GCP-specific, needed only by a googleCas issuer provider. postgresOperator is
+# needed only by dependencies.postgresql.
 # Opt in with --set global.armonik.operators.<op>.deploy=true.
 global:
   armonik:
@@ -114,9 +113,8 @@ cnpg-operator:
     # Off in this chart's defaults. Requires Prometheus Operator CRDs.
     podMonitorEnabled: true
     grafanaDashboard:
-      # Must stay stated: Helm resolves an aliased subchart's dependency condition at the alias path
-      # but files that subchart's defaults under its real name, so dropping this line yields true
-      # rather than the upstream false. Fix in progress : https://github.com/helm/helm/pull/31847
+      # Must stay stated: dropping this line yields true rather than the chart default false. 
+      # This is a Helm bug due to alias, fix in progress : https://github.com/helm/helm/pull/31847
       create: true
   # priorityClassName:
 

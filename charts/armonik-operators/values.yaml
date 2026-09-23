@@ -113,7 +113,7 @@ postgresql-operator:
     # Off in this chart's defaults. Requires Prometheus Operator CRDs.
     podMonitorEnabled: true
     grafanaDashboard:
-      # Must stay stated: dropping this line yields true rather than the chart default false. 
+      # Must stay stated: dropping this line yields true rather than the chart default false.
       # This is a Helm bug due to alias, fix in progress : https://github.com/helm/helm/pull/31847
       create: true
   # priorityClassName:

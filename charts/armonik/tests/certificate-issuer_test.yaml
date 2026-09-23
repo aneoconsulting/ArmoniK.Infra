@@ -580,7 +580,7 @@ tests:
     asserts:
       - failedTemplate:
           errorPattern: "cannot use a shared issuer with provider=acme"
-  - it: "postgresql: fails when neither existingIssuer nor the shared issuer is configured, the local fallback defaulting to selfSigned"
+  - it: "postgresql: bootstraps its own CA when neither existingIssuer, provider nor the shared issuer is configured"
     template: certificate/postgresql-certificate.yaml
     values:
       - ../ci/postgresql-certmanager-values.yaml
@@ -590,6 +590,62 @@ tests:
           certManager:
             issuer:
               enabled: false
+    asserts:
+      - hasDocuments:
+          count: 5
+      - equal:
+          path: spec.selfSigned
+          value: {}
+        documentSelector:
+          path: metadata.name
+          value: t-postgresql-selfsigned-issuer
+      - equal:
+          path: spec
+          value:
+            isCA: true
+            commonName: t-postgresql-ca
+            secretName: t-postgresql-ca-cert
+            duration: 87600h
+            usages:
+              - cert sign
+              - crl sign
+            privateKey:
+              algorithm: RSA
+              size: 2048
+            issuerRef:
+              name: t-postgresql-selfsigned-issuer
+              kind: Issuer
+              group: cert-manager.io
+        documentSelector:
+          path: metadata.name
+          value: t-postgresql-ca-cert
+      - equal:
+          path: spec.ca.secretName
+          value: t-postgresql-ca-cert
+        documentSelector:
+          path: metadata.name
+          value: t-postgresql-issuer
+      - equal:
+          path: spec.issuerRef.name
+          value: t-postgresql-issuer
+        documentSelector:
+          path: metadata.name
+          value: t-postgresql-server
+      - equal:
+          path: spec.issuerRef.name
+          value: t-postgresql-issuer
+        documentSelector:
+          path: metadata.name
+          value: t-postgresql-replication
+  - it: "postgresql: an explicit provider=selfSigned still fails"
+    template: certificate/postgresql-certificate.yaml
+    values:
+      - ../ci/postgresql-certmanager-values.yaml
+    set:
+      dependencies:
+        postgresql:
+          certManager:
+            provider: selfSigned
     asserts:
       - failedTemplate:
           errorPattern: "cannot use a local fallback issuer with provider=selfSigned"

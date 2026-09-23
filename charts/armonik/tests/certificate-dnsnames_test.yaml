@@ -4,8 +4,10 @@ release:
 templates:
   - certificate/redis-certificate.yaml
   - certificate/mongodb-certificate.yaml
+  - certificate/postgresql-certificate.yaml
   - charts/dependencies/charts/redis/templates/service.yaml
   - charts/dependencies/charts/mongodb/templates/cluster.yaml
+  - charts/dependencies/charts/postgresql/templates/cluster.yaml
 tests:
   # Regression guard: redis-certificate.yaml once hardcoded "<release>-redis" for commonName/dnsNames
   # while the actual valkey Service name comes from its own fullname helper (nameOverride/
@@ -230,3 +232,76 @@ tests:
     asserts:
       - failedTemplate:
           errorPattern: "dependencies.mongodb.tls.mode=disabled"
+
+  # Same guard for postgresql: fullnameOverride/namespaceOverride would not move a hardcoded guess, so
+  # it proves the template reuses the Cluster CR's own helpers. ClusterIssuer keeps the shared issuer's
+  # namespace guard out of the way.
+  - it: postgresql Cluster CR is named and namespaced exactly what postgresql-certificate.yaml expects
+    template: charts/dependencies/charts/postgresql/templates/cluster.yaml
+    values:
+      - ../ci/postgresql-certmanager-values.yaml
+    set:
+      global:
+        armonik:
+          certManager:
+            issuer:
+              kind: ClusterIssuer
+      dependencies:
+        postgresql:
+          fullnameOverride: custom-pg
+          namespaceOverride: custom-ns
+    asserts:
+      - equal:
+          path: metadata.name
+          value: custom-pg
+      - equal:
+          path: metadata.namespace
+          value: custom-ns
+  - it: postgresql server Certificate namespace, commonName and dnsNames match that CR
+    template: certificate/postgresql-certificate.yaml
+    values:
+      - ../ci/postgresql-certmanager-values.yaml
+    set:
+      global:
+        armonik:
+          certManager:
+            issuer:
+              kind: ClusterIssuer
+      dependencies:
+        postgresql:
+          fullnameOverride: custom-pg
+          namespaceOverride: custom-ns
+    documentSelector:
+      path: metadata.name
+      value: custom-pg-server
+    asserts:
+      - equal:
+          path: metadata.namespace
+          value: custom-ns
+      - equal:
+          path: spec.commonName
+          value: custom-pg-rw
+      - lengthEqual:
+          path: spec.dnsNames
+          count: 12
+      - contains:
+          path: spec.dnsNames
+          content: custom-pg-rw.custom-ns.svc.cluster.local
+      - contains:
+          path: spec.dnsNames
+          content: custom-pg-ro.custom-ns.svc
+      - contains:
+          path: spec.dnsNames
+          content: custom-pg-r.custom-ns
+  - it: postgresql Cluster CR gets the same four Secret names the Certificates write
+    template: charts/dependencies/charts/postgresql/templates/cluster.yaml
+    values:
+      - ../ci/postgresql-certmanager-values.yaml
+    asserts:
+      - equal:
+          path: spec.certificates
+          value:
+            serverTLSSecret: armonik-postgresql-server
+            serverCASecret: armonik-postgresql-server
+            replicationTLSSecret: armonik-postgresql-replication
+            clientCASecret: armonik-postgresql-replication

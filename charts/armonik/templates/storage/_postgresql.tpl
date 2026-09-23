@@ -49,8 +49,9 @@ Do not fix the mismatched spelling below: Components__TableStorage must equal
 Normalising either one silently unregisters the adaptor.
 TODO: Core's PostgreSQL adaptor is still under development; re-check once it stabilizes there.
 
-Ssl=true maps to Npgsql's SslMode.Require, which encrypts without validating the chain, so CNPG's own
-CA needs no mountSecret here. A verify-full setup would mount <cluster>-ca like MongoDB__CAFile does.
+Ssl=true maps to Npgsql's SslMode.Require, which encrypts without validating the chain, so the server
+CA needs no mountSecret here. A verify-full setup would mount it like MongoDB__CAFile does: from
+cluster.certificates.serverCASecret with certManager enabled, else from the operator's <cluster>-ca.
 
 Components__AuthenticationStorage must be stated: Core defaults it to the MongoDB table.
 */}}

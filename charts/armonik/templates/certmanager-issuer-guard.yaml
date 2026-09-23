@@ -57,4 +57,20 @@
   {{- end -}}
 {{- end -}}
 
+{{- /* postgresql */ -}}
+{{- $pg := .Values.dependencies.postgresql | default dict -}}
+{{- if $pg.enabled -}}
+  {{- $pcm := $pg.certManager | default dict -}}
+  {{- $noLocalIssuer := ($pcm.existingIssuer | default dict).enabled | empty -}}
+  {{- $notLocalRequested := not (hasKey $pcm "provider") -}}
+  {{- if and $noLocalIssuer $notLocalRequested $pcm.enabled -}}
+    {{- with .Subcharts.dependencies.Subcharts.postgresql -}}
+      {{- $ns := include "cluster.namespace" . -}}
+      {{- if ne $ns $issuerNs -}}
+        {{- fail (printf "dependencies.postgresql renders its Certificates into namespace %q but the shared issuer lives in %q: set dependencies.postgresql.namespaceOverride to %q, point dependencies.postgresql.certManager.existingIssuer at a local issuer instead, or switch global.armonik.certManager.issuer.kind to a cluster-scoped ClusterIssuer/GoogleCASClusterIssuer." $ns $issuerNs $issuerNs) -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+
 {{- end -}}

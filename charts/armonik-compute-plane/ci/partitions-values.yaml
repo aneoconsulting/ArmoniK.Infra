@@ -5,7 +5,7 @@ partitions:
   bench:
     worker:
       # Reference-string form, accepted anywhere an image object is.
-      image: dockerhubaneo/armonik_core_bench_test_worker:0.41.0
+      image: dockerhubaneo/armonik_core_bench_test_worker:0.0.0-test
   htcmock:
     socketType: "unix"
     worker:

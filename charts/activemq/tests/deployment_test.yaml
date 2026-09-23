@@ -1,4 +1,7 @@
 suite: deployment and service defaults
+# A sentinel, so the image tests follow AppVersion rather than the tag Renovate bumps.
+chart:
+  appVersion: 0.0.0-test
 templates:
   - activemq-deployment.yaml
   - service.yaml
@@ -12,7 +15,7 @@ tests:
           of: Deployment
       - equal:
           path: spec.template.spec.containers[0].image
-          value: "apache/activemq:6.3.1"
+          value: "apache/activemq:0.0.0-test"
       - contains:
           path: spec.template.spec.containers[0].ports
           content:
@@ -27,7 +30,7 @@ tests:
     asserts:
       - equal:
           path: spec.template.spec.containers[0].image
-          value: "registry.example.com/apache/activemq:6.3.1"
+          value: "registry.example.com/apache/activemq:0.0.0-test"
   - it: exposes amqp and dashboard through the service
     template: service.yaml
     asserts:

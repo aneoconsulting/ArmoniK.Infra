@@ -11,16 +11,16 @@ tests:
         confs:
           - {repository: dockerhubaneo/armonik_control}
     asserts:
-      - equal: {path: "data.fullname", value: "dockerhubaneo/armonik_control:9.9.9"}
+      - equal: {path: "data.fullname", value: "dockerhubaneo/armonik_control:0.0.0-appversion"}
 
   - it: prefers an explicit tag over the AppVersion
     set:
       image:
         path: image
         confs:
-          - {repository: dockerhubaneo/armonik_control, tag: "1.2.3"}
+          - {repository: dockerhubaneo/armonik_control, tag: "0.0.0-test"}
     asserts:
-      - equal: {path: "data.fullname", value: "dockerhubaneo/armonik_control:1.2.3"}
+      - equal: {path: "data.fullname", value: "dockerhubaneo/armonik_control:0.0.0-test"}
 
   - it: takes each attribute from the leftmost conf providing it
     set:
@@ -28,9 +28,9 @@ tests:
         path: image
         confs:
           - {repository: dockerhubaneo/armonik_control_metrics}
-          - {registry: quay.io, tag: "0.41.0", pullPolicy: Always}
+          - {registry: quay.io, tag: "0.0.0-test", pullPolicy: Always}
     asserts:
-      - equal: {path: "data.fullname", value: "quay.io/dockerhubaneo/armonik_control_metrics:0.41.0"}
+      - equal: {path: "data.fullname", value: "quay.io/dockerhubaneo/armonik_control_metrics:0.0.0-test"}
       - equal: {path: "data.pullPolicy", value: "Always"}
 
   - it: includes the registry when one is set
@@ -40,16 +40,16 @@ tests:
         confs:
           - {registry: my.registry.io, repository: dockerhubaneo/armonik_control}
     asserts:
-      - equal: {path: "data.fullname", value: "my.registry.io/dockerhubaneo/armonik_control:9.9.9"}
+      - equal: {path: "data.fullname", value: "my.registry.io/dockerhubaneo/armonik_control:0.0.0-appversion"}
 
   - it: omits the registry segment when there is none
     set:
       image:
         path: image
         confs:
-          - {repository: busybox, tag: "1.37.0"}
+          - {repository: busybox, tag: "0.0.0-test"}
     asserts:
-      - equal: {path: "data.fullname", value: "busybox:1.37.0"}
+      - equal: {path: "data.fullname", value: "busybox:0.0.0-test"}
 
   - it: fails, naming the values path, when no repository resolves
     set:
@@ -76,35 +76,35 @@ tests:
       image:
         path: fluentBit.image
         confs:
-          - {repository: fluent/fluent-bit, tag: "5.1.2"}
+          - {repository: fluent/fluent-bit, tag: "0.0.0-test"}
     asserts:
-      - equal: {path: "data.fullname", value: "fluent/fluent-bit:5.1.2"}
+      - equal: {path: "data.fullname", value: "fluent/fluent-bit:0.0.0-test"}
 
   - it: parses a plain reference string into repository and tag
     set:
       image:
         path: image
-        confs: ["fluent/fluent-bit:5.1.2"]
+        confs: ["fluent/fluent-bit:0.0.0-test"]
     asserts:
-      - equal: {path: "data.fullname", value: "fluent/fluent-bit:5.1.2"}
+      - equal: {path: "data.fullname", value: "fluent/fluent-bit:0.0.0-test"}
       - equal: {path: "data.repository", value: "fluent/fluent-bit"}
-      - equal: {path: "data.tag", value: "5.1.2"}
+      - equal: {path: "data.tag", value: "0.0.0-test"}
 
   - it: reads the first segment as a registry when it carries a dot
     set:
       image:
         path: image
-        confs: ["quay.io/me/worker:2.0"]
+        confs: ["quay.io/me/worker:0.0.0-test"]
     asserts:
-      - equal: {path: "data.fullname", value: "quay.io/me/worker:2.0"}
+      - equal: {path: "data.fullname", value: "quay.io/me/worker:0.0.0-test"}
 
   - it: reads the first segment as a registry when it carries a port
     set:
       image:
         path: image
-        confs: ["localhost:5000/worker:2.0"]
+        confs: ["localhost:5000/worker:0.0.0-test"]
     asserts:
-      - equal: {path: "data.fullname", value: "localhost:5000/worker:2.0"}
+      - equal: {path: "data.fullname", value: "localhost:5000/worker:0.0.0-test"}
 
   - it: gives a tagless ArmoniK reference string the chart AppVersion
     set:
@@ -112,7 +112,7 @@ tests:
         path: image
         confs: ["dockerhubaneo/armonik_control"]
     asserts:
-      - equal: {path: "data.fullname", value: "dockerhubaneo/armonik_control:9.9.9"}
+      - equal: {path: "data.fullname", value: "dockerhubaneo/armonik_control:0.0.0-appversion"}
 
   - it: keeps a digest reference whole and appends no tag
     set:
@@ -135,17 +135,17 @@ tests:
       image:
         path: image
         confs:
-          - "busybox:1.37.0"
+          - "busybox:0.0.0-test"
           - {registry: quay.io, pullPolicy: Always}
     asserts:
-      - equal: {path: "data.fullname", value: "busybox:1.37.0"}
+      - equal: {path: "data.fullname", value: "busybox:0.0.0-test"}
 
   - it: still takes pullPolicy from the chain when the image is a string
     set:
       image:
         path: image
         confs:
-          - "busybox:1.37.0"
+          - "busybox:0.0.0-test"
           - {registry: quay.io, pullPolicy: Always}
     asserts:
       - equal: {path: "data.pullPolicy", value: "Always"}
@@ -156,9 +156,9 @@ tests:
         path: metricsExporter.image
         confs:
           - {repository: dockerhubaneo/armonik_control_metrics}
-          - "quay.io/dockerhubaneo/armonik_control:0.41.0"
+          - "quay.io/dockerhubaneo/armonik_control:0.0.0-test"
     asserts:
-      - equal: {path: "data.fullname", value: "quay.io/dockerhubaneo/armonik_control_metrics:0.41.0"}
+      - equal: {path: "data.fullname", value: "quay.io/dockerhubaneo/armonik_control_metrics:0.0.0-test"}
 
   - it: fails on a tagless reference string for an unmapped image
     set:
@@ -175,27 +175,27 @@ tests:
       image:
         path: image
         confs:
-          - {registry: quay.io, repository: me/worker, tag: "2.0"}
+          - {registry: quay.io, repository: me/worker, tag: "0.0.0-test"}
     asserts:
-      - equal: {path: "data.fullname", value: "mirror.io/me/worker:2.0"}
+      - equal: {path: "data.fullname", value: "mirror.io/me/worker:0.0.0-test"}
 
   - it: lets global.imageRegistry override a registry a reference string settled
     set:
       global.imageRegistry: mirror.io
       image:
         path: image
-        confs: ["quay.io/me/worker:2.0"]
+        confs: ["quay.io/me/worker:0.0.0-test"]
     asserts:
-      - equal: {path: "data.fullname", value: "mirror.io/me/worker:2.0"}
+      - equal: {path: "data.fullname", value: "mirror.io/me/worker:0.0.0-test"}
 
   - it: prefixes an image that had no registry at all
     set:
       global.imageRegistry: mirror.io/armonik
       image:
         path: image
-        confs: ["dockerhubaneo/armonik_control:0.41.0"]
+        confs: ["dockerhubaneo/armonik_control:0.0.0-test"]
     asserts:
-      - equal: {path: "data.fullname", value: "mirror.io/armonik/dockerhubaneo/armonik_control:0.41.0"}
+      - equal: {path: "data.fullname", value: "mirror.io/armonik/dockerhubaneo/armonik_control:0.0.0-test"}
 
   - it: relocates a digest-pinned reference and invents no tag for it
     set:
@@ -212,9 +212,9 @@ tests:
       image:
         path: image
         confs:
-          - {repository: dockerhubaneo/armonik_control, tag: "1.2.3", digest: "sha256:abc123"}
+          - {repository: dockerhubaneo/armonik_control, tag: "0.0.0-test", digest: "sha256:abc123"}
     asserts:
-      - equal: {path: "data.fullname", value: "dockerhubaneo/armonik_control:1.2.3@sha256:abc123"}
+      - equal: {path: "data.fullname", value: "dockerhubaneo/armonik_control:0.0.0-test@sha256:abc123"}
 
   - it: accepts a digest instead of a tag on an unmapped image
     set:
@@ -234,18 +234,18 @@ tests:
         confs:
           - {repository: dockerhubaneo/armonik_control}
     asserts:
-      - equal: {path: "data.fullname", value: "dockerhubaneo/armonik_control:9.9.9"}
+      - equal: {path: "data.fullname", value: "dockerhubaneo/armonik_control:0.0.0-appversion"}
 
   - it: gives an image mapped to an independently released component that version
     set:
-      global.armonik.versions: {extCsharp: "0.22.0"}
+      global.armonik.versions: {extCsharp: "0.0.0-map"}
       global.armonik.imageComponents: {dockerhubaneo/armonik-dynamic-dotnet-worker: extCsharp}
       image:
         path: partitions.gpu.worker.image
         confs:
           - {repository: dockerhubaneo/armonik-dynamic-dotnet-worker}
     asserts:
-      - equal: {path: "data.fullname", value: "dockerhubaneo/armonik-dynamic-dotnet-worker:0.22.0"}
+      - equal: {path: "data.fullname", value: "dockerhubaneo/armonik-dynamic-dotnet-worker:0.0.0-map"}
 
   - it: requires a tag for an image the map does not know
     set:
@@ -261,13 +261,13 @@ tests:
 
   - it: lets an explicit tag win over the version map
     set:
-      global.armonik.versions: {extCsharp: "0.22.0"}
+      global.armonik.versions: {extCsharp: "0.0.0-map"}
       global.armonik.imageComponents: {dockerhubaneo/armonik-dynamic-dotnet-worker: extCsharp}
       image:
         path: image
-        confs: ["dockerhubaneo/armonik-dynamic-dotnet-worker:9.9.9-rc1"]
+        confs: ["dockerhubaneo/armonik-dynamic-dotnet-worker:0.0.0-test"]
     asserts:
-      - equal: {path: "data.fullname", value: "dockerhubaneo/armonik-dynamic-dotnet-worker:9.9.9-rc1"}
+      - equal: {path: "data.fullname", value: "dockerhubaneo/armonik-dynamic-dotnet-worker:0.0.0-test"}
 
   - it: treats a component absent from versions exactly like an empty one
     set:
@@ -278,7 +278,7 @@ tests:
         confs:
           - {repository: myco/my-worker}
     asserts:
-      - equal: {path: "data.fullname", value: "myco/my-worker:9.9.9"}
+      - equal: {path: "data.fullname", value: "myco/my-worker:0.0.0-appversion"}
 
   - it: needs no versions entry at all to register an image
     set:
@@ -288,4 +288,4 @@ tests:
         confs:
           - {repository: myco/my-worker}
     asserts:
-      - equal: {path: "data.fullname", value: "myco/my-worker:9.9.9"}
+      - equal: {path: "data.fullname", value: "myco/my-worker:0.0.0-appversion"}

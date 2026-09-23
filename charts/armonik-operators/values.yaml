@@ -92,9 +92,9 @@ mongodb-operator:
 
 # CloudNativePG (https://cloudnative-pg.github.io/charts). Chart defaults install the CRDs;
 # the Cluster CR itself stays in armonik-dependencies.
-cnpg-operator:
+postgresql-operator:
   # The operator's PKI setup looks its own Deployment up by a hardcoded
-  # app.kubernetes.io/name=cloudnative-pg selector; without this the alias puts cnpg-operator
+  # app.kubernetes.io/name=cloudnative-pg selector; without this the alias puts postgresql-operator
   # in that label and the operator exits before serving the webhooks.
   nameOverride: cloudnative-pg
   monitoring:

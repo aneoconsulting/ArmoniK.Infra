@@ -13,8 +13,8 @@
     {
       "customType": "regex",
       "description": "ArmoniK component versions in the chart image map, which carry no image reference of their own.",
-      "fileMatch": [
-        "^charts/armonik-common/values\\.yaml$"
+      "managerFilePatterns": [
+        "/^charts/armonik-common/values\\.yaml$/"
       ],
       "matchStrings": [
         "#\\s*renovate:\\s*datasource=(?<datasource>[a-z-]+)\\s+depName=(?<depName>\\S+)(\\s+extractVersion=(?<extractVersion>\\S+))?\\s*\\n\\s*\\w+:\\s*\"(?<currentValue>[^\"]+)\""
@@ -23,8 +23,8 @@
     {
       "customType": "regex",
       "description": "Chart appVersion, which is the tag of the images that chart deploys.",
-      "fileMatch": [
-        "^charts/[^/]+/Chart\\.yaml$"
+      "managerFilePatterns": [
+        "/^charts/[^/]+/Chart\\.yaml$/"
       ],
       "matchStrings": [
         "#\\s*renovate:\\s*datasource=(?<datasource>[a-z-]+)\\s+depName=(?<depName>\\S+)(\\s+extractVersion=(?<extractVersion>\\S+))?\\s*\\nappVersion:\\s*\"?(?<currentValue>[^\"\\s]+)\"?"

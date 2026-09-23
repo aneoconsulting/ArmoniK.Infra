@@ -44,7 +44,7 @@ dependencies:
   - name: cloudnative-pg
     version: 0.x.x
     repository: https://cloudnative-pg.github.io/charts
-    alias: cnpg-operator
+    alias: postgresql-operator
     condition: global.armonik.operators.postgresOperator.deploy
   - name: kube-prometheus-stack
     version: 91.x.x

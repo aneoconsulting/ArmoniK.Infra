@@ -101,6 +101,7 @@ ok umbrella-mountpath     armonik               -f charts/armonik/ci/minimal-val
 ok umbrella-layered-operators armonik           -f charts/armonik/ci/layered-operators-values.yaml
 ok umbrella-mongodb-exporter     armonik        -f charts/armonik/ci/mongodb-exporter-values.yaml
 ok umbrella-mongodb-exporter-tls armonik        -f charts/armonik/ci/mongodb-exporter-tls-values.yaml
+ok umbrella-postgresql-certmanager armonik       -f charts/armonik/ci/postgresql-certmanager-values.yaml
 ok compute-partitions     armonik-compute-plane -f charts/armonik-compute-plane/ci/partitions-values.yaml
 ok compute-keda-off       armonik-compute-plane -f charts/armonik-compute-plane/ci/keda-off-values.yaml
 ok compute-fluent-bit-sidecar armonik-compute-plane -f charts/armonik-compute-plane/ci/partitions-values.yaml \

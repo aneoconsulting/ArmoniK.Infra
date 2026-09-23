@@ -1,0 +1,27 @@
+# PostgreSQL as the table storage, its server and replication certificates issued by cert-manager
+# from the shared issuer instead of the CloudNativePG operator's own self-signed CA.
+global:
+  armonik:
+    certManager:
+      issuer:
+        enabled: true
+certManagerIssuer:
+  create: true
+  provider: ca
+  ca:
+    secretName: armonik-ca-key-pair
+dependencies:
+  mongodb:
+    enabled: false
+  mongodb-exporter:
+    enabled: false
+  postgresql:
+    enabled: true
+    certManager:
+      enabled: true
+    cluster:
+      certificates:
+        serverTLSSecret: armonik-postgresql-server
+        serverCASecret: armonik-postgresql-server
+        replicationTLSSecret: armonik-postgresql-replication
+        clientCASecret: armonik-postgresql-replication

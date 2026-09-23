@@ -1,0 +1,13 @@
+{{- with .Values.image }}
+{{- $conf := concat (list $ .path) (.confs | default list) | include "armonik.utils.imageConf" | fromYaml -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: image-result
+data:
+  fullname: {{ $conf.fullname | quote }}
+  tag: {{ $conf.tag | quote }}
+  repository: {{ $conf.repository | quote }}
+  pullPolicy: {{ $conf.pullPolicy | quote }}
+  digest: {{ $conf.digest | quote }}
+{{- end }}

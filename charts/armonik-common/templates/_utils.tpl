@@ -1,54 +1,111 @@
 {{/*
-Constructs and returns an image configuration object (see schema below) representing the most complete image configuration
-given a context and one or more image configuration objects.
+Parses `[registry/]repository[:tag][@digest]` into the image fields, where repository is the whole path
+under the registry, as the OCI spec defines it. The first segment is the registry when it carries a "."
+or ":", or is "localhost". The digest is split off first, so the rest still decomposes and a registry
+override reaches a digest-pinned reference.
 
-Here, "the most complete image configuration" means that the template retrieves each 
-attribute from the first image object passed to it (i.e. with precedence from left to right).
+  {{- $ref := include "armonik.utils.imageRef.parse" "fluent/fluent-bit:5.1.2" | fromYaml }}
+*/}}
+{{- define "armonik.utils.imageRef.parse" -}}
+  {{- $out := dict "registry" "" "repository" "" "tag" "" "digest" "" -}}
+  {{- $ref := . -}}
+  {{- if contains "@" $ref -}}
+    {{- $_ := splitList "@" $ref | last | set $out "digest" -}}
+    {{- $ref = splitList "@" $ref | first -}}
+  {{- end -}}
+  {{- if $ref -}}
+    {{- $parts := splitList "/" $ref -}}
+    {{- $last := last $parts -}}
+    {{- if contains ":" $last -}}
+      {{- $_ := splitList ":" $last | last | set $out "tag" -}}
+      {{- $parts = splitList ":" $last | first | list | concat (initial $parts) -}}
+    {{- end -}}
+    {{- $first := first $parts -}}
+    {{- if and (gt (len $parts) 1) (or (contains "." $first) (contains ":" $first) (eq $first "localhost")) -}}
+      {{- $_ := set $out "registry" $first -}}
+      {{- $_ := rest $parts | join "/" | set $out "repository" -}}
+    {{- else -}}
+      {{- $_ := join "/" $parts | set $out "repository" -}}
+    {{- end -}}
+  {{- end -}}
+  {{- $out | toYaml -}}
+{{- end -}}
 
-If no tag is found in the provided image configuration objects, the templates looks into the `appVersion`  defined in Chart.yaml
-and ultimately sets it to "latest" if no `appVersion` was found.
 
-Thus, when calling this template for a third-party image deployed with the armonik-dependencies chart,
-it is advised to set the context to that dependency's scope (.Subcharts.dependencies.Subcharts.<dep>),
-especially if you know no tag is provided.
+{{/*
+Merges partial image configs left to right into the schema below, plus `fullname`. Each may instead be
+a reference string; one that supplies the repository settles the registry too, so a bare
+`busybox:1.37.0` cannot pick up a registry from a lower-precedence config. pullPolicy, which no string
+carries, still merges.
 
-Usage:
- {{- include "armonik.utils.imageConf" (list <context> <imageConf1> <imageConf2> ...)| fromYaml }}
-Example:
-{{- $imageConf := list $ .Values.image | include "armonik.utils.imageConf" | fromYaml }}
+`repository` is the whole path under the registry (dockerhubaneo/armonik_control), as everywhere else
+in the ecosystem, which is also what lets renovate resolve it.
 
-image configuration object schema:
-  registry: string
-  repository: string
-  name: string
-  tag: string
-  pullPolicy: string in ['IfNotPresent', 'Always', 'Never']
+The tag defaults from the repository, not the call site, which is what a worker needs: a repository
+listed in global.armonik.imageComponents takes its component's version from global.armonik.versions,
+empty or absent meaning the chart AppVersion. Any other image must carry a tag. `latest` is never a
+fallback: it installs cleanly, then drifts per node under IfNotPresent and defeats an airgap mirror.
+
+global.imageRegistry overrides whatever registry was chosen, and may carry a path prefix. The values
+path argument makes a failure name the key to set.
+
+  {{- $image := list $ "metricsExporter.image" .Values.metricsExporter.image .Values.image | include "armonik.utils.imageConf" | fromYaml }}
+
+schema: registry, repository, tag, digest (rendered repository[:tag]@digest), pullPolicy
 */}}
 {{- define "armonik.utils.imageConf" -}}
   {{- $ctx := first . -}}
-  {{- $imageConfs := rest . -}}
-  {{- $image := dict
-    "registry" ""
-    "repository" ""
-    "name" ""
-    "tag" ""
-    "pullPolicy" ""
-  -}}
+  {{- $path := index . 1 -}}
+  {{- $imageConfs := slice . 2 -}}
+  {{- $image := dict "registry" "" "repository" "" "tag" "" "digest" "" "pullPolicy" "" -}}
+  {{/* Set once a reference string settled the repository, freezing the registry it spoke for. */}}
+  {{- $settled := false -}}
   {{- range $imageConf := $imageConfs -}}
-    {{- $_ := coalesce $image.registry $imageConf.registry | set $image "registry" -}}
-    {{- $_ := coalesce $image.repository $imageConf.repository | set $image "repository" -}}
-    {{- $_ := coalesce $image.name $imageConf.name | set $image "name" -}}
-    {{- $_ := coalesce $image.tag $imageConf.tag | set $image "tag" -}}
-    {{- $_ := coalesce $image.pullPolicy $imageConf.pullPolicy | set $image "pullPolicy" -}}
+    {{- $isRef := kindIs "string" $imageConf -}}
+    {{- $conf := $imageConf -}}
+    {{- if $isRef -}}
+      {{- $conf = include "armonik.utils.imageRef.parse" $imageConf | fromYaml -}}
+    {{- end -}}
+    {{- $conf = $conf | default dict -}}
+    {{- $unset := $image.repository | empty -}}
+    {{- if not $settled -}}
+      {{- $_ := coalesce $image.registry $conf.registry | set $image "registry" -}}
+    {{- end -}}
+    {{- $_ := coalesce $image.repository $conf.repository | set $image "repository" -}}
+    {{- $_ := coalesce $image.tag $conf.tag | set $image "tag" -}}
+    {{- $_ := coalesce $image.digest $conf.digest | set $image "digest" -}}
+    {{- $_ := coalesce $image.pullPolicy $conf.pullPolicy | set $image "pullPolicy" -}}
+    {{- if and $isRef $unset $conf.repository -}}
+      {{- $settled = true -}}
+    {{- end -}}
   {{- end -}}
-  {{- $_ := coalesce $image.tag $ctx.Chart.AppVersion "latest" | set $image "tag" -}}
-  {{- if $image.registry -}}
-    {{- $_ := printf "%s/%s/%s:%s" $image.registry $image.repository $image.name $image.tag | set $image "fullname" -}}
-  {{- else if $image.repository -}}
-    {{- $_ := printf "%s/%s:%s" $image.repository $image.name $image.tag | set $image "fullname" -}}
-  {{- else -}}
-    {{- $_ := printf "%s:%s" $image.name $image.tag | set $image "fullname" -}}
+  {{/* Overrides rather than defaults, as in every chart honouring it: relocation must beat what a
+       chart, a values file or a reference string chose. */}}
+  {{- with list $ctx.Values "global" "imageRegistry" | include "armonik.utils.index" -}}
+    {{- $_ := set $image "registry" . -}}
   {{- end -}}
+  {{- if $image.repository | empty -}}
+    {{- printf "%s.repository is required: no image repository resolved." $path | fail -}}
+  {{- end -}}
+  {{/* A digest pins the image, so no tag is invented for it. */}}
+  {{- if and ($image.digest | empty) ($image.tag | empty) -}}
+    {{- $components := list $ctx.Values "global" "armonik" "imageComponents" | include "armonik.utils.index" | fromYaml | default dict -}}
+    {{- if hasKey $components ($image.repository | toString) -}}
+      {{- $versions := list $ctx.Values "global" "armonik" "versions" | include "armonik.utils.index" | fromYaml | default dict -}}
+      {{- $_ := index $components ($image.repository | toString) | index $versions | default $ctx.Chart.AppVersion | set $image "tag" -}}
+    {{- end -}}
+  {{- end -}}
+  {{- if and ($image.digest | empty) ($image.tag | empty) -}}
+    {{- printf "%s.tag is required: pin it, or map the repository to a component in global.armonik.imageComponents." $path | fail -}}
+  {{- end -}}
+  {{- $fullname := list $image.registry $image.repository | compact | join "/" -}}
+  {{- with $image.tag -}}
+    {{- $fullname = printf "%s:%s" $fullname . -}}
+  {{- end -}}
+  {{- with $image.digest -}}
+    {{- $fullname = printf "%s@%s" $fullname . -}}
+  {{- end -}}
+  {{- $_ := set $image "fullname" $fullname -}}
   {{- $image | toYaml -}}
 {{- end -}}
 

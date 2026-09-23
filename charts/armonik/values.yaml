@@ -10,7 +10,10 @@ global:
   image:
     pullPolicy: IfNotPresent  # FOR KEDA IMAGES
     registry: ""  # FOR KEDA IMAGES
-  imageRegistry: ""  # "public.ecr.aws" # FOR BITNAMI IMAGES AND ARMONIK IMAGES
+  # -- Registry every image is pulled from. Overrides whatever registry was chosen, so one value
+  # relocates the release to a mirror; may carry a path prefix. Dependencies honour it only if they
+  # implement the convention themselves.
+  imageRegistry: ""
   security:
     allowInsecureImages: true
   # imagePullSecrets: [{"name": "secret"}] # FOR BITNAMI IMAGES AND ARMONIK IMAGES
@@ -86,23 +89,54 @@ compute-plane:
   partitions:
     default:
       worker:
+        # Tag from global.armonik.versions.extCsharp.
         image:
-          name: "armonik-dynamic-dotnet-worker"
-          tag: "0.21.2"
+          repository: "dockerhubaneo/armonik-dynamic-dotnet-worker"
     stream:
       worker:
         image:
-          name: "armonik_core_stream_test_worker"
+          repository: "dockerhubaneo/armonik_core_stream_test_worker"
     htcmock:
       socketType: "tcp"
       worker:
         image:
-          name: "armonik_core_htcmock_test_worker"
+          repository: "dockerhubaneo/armonik_core_htcmock_test_worker"
 
 conf:
   # Names every <source>-conf-<layer> Secret the umbrella renders (this release).
   log:
     minimumLevel: Information
+  # ESO sync of every conf layer, both Secrets. Defaults to 1h0m0s; 0 syncs once and never
+  # refreshes. Raise it behind a metered store (Secret Manager bills per access).
+  # refreshInterval: 1h0m0s
+  # CreatedOnce, Periodic (the ESO default) or OnChange.
+  # refreshPolicy: Periodic
+  # A source reads this release's Kubernetes-provider SecretStore unless it names a store that
+  # ALREADY exists (these charts create none but their own), which is how a value comes from Secret
+  # Manager, Vault or any other ESO provider. Per-field rules: the conf schema in armonik-common.
+  # core:
+  #   env:
+  #     MongoDB__Host: cluster0.example.mongodb.net
+  #   envFromSecret:
+  #     MongoDB__User:
+  #       storeName: gcp-secret-manager
+  #       storeKind: ClusterSecretStore
+  #       secret: armonik-mongodb
+  #       field: user
+  #     MongoDB__Password:
+  #       storeName: vault-backend
+  #       secret: armonik/mongodb
+  #       field: password
+  #       version: "3"
+  #   envSecret:
+  #     - secret: armonik/core-env
+  #       storeName: vault-backend
+  #   mountSecret:
+  #     - storeName: gcp-secret-manager
+  #       storeKind: ClusterSecretStore
+  #       secret: armonik-gcs-service-account
+  #       items:
+  #         credentials.json: {}
 
 ################## INGRESS ##################
 ingress:
@@ -162,38 +196,6 @@ certManagerIssuer:
 # Table storage is MongoDB or PostgreSQL, whichever of dependencies.{mongodb,postgresql} is enabled;
 # the in-cluster psmdb-db (below) is the default. To bring your own, disable both and supply the
 # connection via the conf values (conf.core.env / conf.core.envFromSecret).
-
-############################################
-############ CERT-MANAGER WAIT #############
-############################################
-# Job gating Certificate/Issuer CRs on the cert-manager webhook being Available with its CA injected.
-# Rendered only when this release installs cert-manager; covers every emitter (ingress, activemq).
-certManagerWait:
-  image:
-    repository: alpine/k8s
-    tag: 1.37.0
-    pullPolicy: IfNotPresent
-  timeout: 300s
-  imagePullSecrets: []
-  resources:
-  # The hook gates the release: untolerated, it never schedules on a fully tainted cluster.
-  nodeSelector: {}
-  affinity: {}
-  tolerations: []
-  priorityClassName: ""
-  # -- Extra env for the wait container.
-  extraEnv: []
-  # -- Extra volumes and volumeMounts for the wait container.
-  extraVolumes: []
-  extraVolumeMounts: []
-  # -- Extra init containers. No extraContainers: a sidecar that never exits keeps the hook,
-  # and the release, waiting.
-  extraInitContainers: []
-  # -- Merged over the wait container, last. Lists the chart builds are refused: use extra*.
-  containerPatch: {}
-  # -- Merged over spec.template.spec, last. Lists the chart builds are refused: use extra*.
-  # Pod labels are out of reach: the selector is immutable.
-  podSpecPatch: {}
 
 ############################################
 ############### DEPENDENCIES ###############
@@ -866,8 +868,8 @@ dependencies:
 # varies per chart, see each dependency's own values).
 networkPolicy:
   # Renders this chart's own NetworkPolicy resources (control-plane, compute-plane, MongoDB,
-  # Redis, fluent-bit, wait-cert-manager, KEDA egress) when true. Each dependency chart's own
-  # networkPolicy.enabled is independent.
+  # Redis, fluent-bit, KEDA egress) when true. Each dependency chart's own networkPolicy.enabled
+  # is independent.
   enabled: false
   # Add your own NetworkPolicy resources, independent of the rules above, e.g.:
   # extraPolicies:
@@ -1156,16 +1158,28 @@ operators:
                   matchLabels:
                     k8s-app: kube-dns
 
-  # cert-manager:
-  ### Network policy
-  # Minimum required for this deployment: enable the default networkPolicy on
-  # all three cert-manager sub-components below (controller, cainjector, webhook).
+  cert-manager:
+    # Reuses cert-manager's own startupapicheck Job as the webhook-readiness gate ahead of our
+    # shared Issuer (weight 0) and Certificates (weight 10). Two overrides on upstream's default
+    # (post-install only, weight 1): add post-upgrade, since upgrades touch those CRs too; and
+    # move the weight to -1, still after upstream's own ServiceAccount/RBAC hooks (weight -5) so
+    # the Job's pod can find them, but ahead of the Issuer/Certificates it is meant to gate.
+    startupapicheck:
+      timeout: 300s
+      jobAnnotations:
+        helm.sh/hook: post-install,post-upgrade
+        helm.sh/hook-weight: "-1"
+        helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
 
-  #   networkPolicy:
-  #     enabled: true
-  #   cainjector:
-  #     networkPolicy:
-  #       enabled: true
-  #   webhook:
-  #     networkPolicy:
-  #       enabled: true
+    ### Network policy
+    # Minimum required for this deployment: enable the default networkPolicy on
+    # all three cert-manager sub-components below (controller, cainjector, webhook).
+
+    #   networkPolicy:
+    #     enabled: true
+    #   cainjector:
+    #     networkPolicy:
+    #       enabled: true
+    #   webhook:
+    #     networkPolicy:
+    #       enabled: true

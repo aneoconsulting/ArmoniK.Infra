@@ -1,0 +1,242 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ArmoniK cross-chart globals",
+  "description": "Type-checks the coalesced `global` of every chart depending on armonik-common, at any depth. Only what ArmoniK owns is described; `global` stays open for third-party subcharts. Nothing is required and every key is nullable, null reading as unset everywhere. No pattern or enum on a tpl-rendered value, which must validate unevaluated.",
+  "type": "object",
+  "properties": {
+    "global": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "armonik": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "operators": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "description": "Install-once operator control, read through `armonik.operators`.",
+              "properties": {
+                "externalSecrets": {
+                  "$ref": "#/definitions/operator"
+                },
+                "keda": {
+                  "$ref": "#/definitions/operator"
+                },
+                "certManager": {
+                  "$ref": "#/definitions/operator"
+                },
+                "mongodbOperator": {
+                  "$ref": "#/definitions/operator"
+                },
+                "prometheusOperator": {
+                  "$ref": "#/definitions/operator"
+                },
+                "googleCasIssuer": {
+                  "$ref": "#/definitions/operator"
+                }
+              }
+            },
+            "certManager": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "properties": {
+                "issuer": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "description": "Shared issuer Certificates reference by default. kind/group are not enums: an external issuer is valid.",
+                  "properties": {
+                    "enabled": {
+                      "type": [
+                        "boolean",
+                        "null"
+                      ]
+                    },
+                    "name": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "kind": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "group": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            "monitoring": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "properties": {
+                "prometheusUrl": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "metricsExporterUrl": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              }
+            },
+            "versions": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "description": "Version per component. Empty or absent means the chart AppVersion. Strings, so an unquoted 1.10 cannot arrive as the float 1.1.",
+              "additionalProperties": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "imageComponents": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "description": "Image name -> component. An image absent here must carry a tag.",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "mountPath": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "pattern": "^(/.*)?$",
+              "description": "Not tpl-rendered, hence the pattern; empty falls through to the default."
+            },
+            "source": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "controlPlane": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "clusterDomain": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Empty stops hostnames at `.svc`."
+        },
+        "environment": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "name": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "description": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "imagePullSecrets": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "description": "Array, not a bare string, which used to be read as a list and mangled.",
+          "items": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name"
+                ]
+              }
+            ]
+          }
+        },
+        "imageRegistry": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    }
+  },
+  "definitions": {
+    "operator": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "deploy: this release installs the operator and its CRDs. available: the CRDs exist, so emit CRs. namespace: tpl-rendered, empty meaning not stated. deploy without available is rejected by charts/armonik/templates/operators-guard.yaml.",
+      "properties": {
+        "deploy": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "available": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "namespace": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    }
+  }
+}

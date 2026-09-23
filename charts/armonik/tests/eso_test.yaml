@@ -5,6 +5,8 @@ release:
   name: t
 templates:
   - secrets/conf-secrets.yaml
+  - secrets/conf-mounts.yaml
+  - secrets/secret-store.yaml
 tests:
   - it: aggregates credentialed layers into an ExternalSecret with defaults
     documentSelector:
@@ -37,3 +39,224 @@ tests:
       - equal:
           path: stringData.MyTestKey
           value: my-value
+  - it: syncs every hour unless told otherwise, refreshPolicy left to ESO
+    values:
+      - ../ci/layered-operators-values.yaml
+    template: secrets/conf-secrets.yaml
+    documentSelector:
+      path: metadata.name
+      value: t-conf-core
+    asserts:
+      - equal:
+          path: spec.refreshInterval
+          value: 1h0m0s
+      - notExists:
+          path: spec.refreshPolicy
+  - it: takes the sync cadence and policy from the conf values
+    values:
+      - ../ci/layered-operators-values.yaml
+    template: secrets/conf-secrets.yaml
+    set:
+      conf:
+        refreshInterval: 6h
+        refreshPolicy: OnChange
+    documentSelector:
+      path: metadata.name
+      value: t-conf-core
+    asserts:
+      - equal:
+          path: spec.refreshInterval
+          value: 6h
+      - equal:
+          path: spec.refreshPolicy
+          value: OnChange
+  - it: keeps a bare zero, the one-shot sync
+    values:
+      - ../ci/layered-operators-values.yaml
+    template: secrets/conf-secrets.yaml
+    set:
+      conf:
+        refreshInterval: 0
+    documentSelector:
+      path: metadata.name
+      value: t-conf-core
+    asserts:
+      - equal:
+          path: spec.refreshInterval
+          value: "0"
+  - it: rejects a refreshPolicy outside the ESO enum
+    values:
+      - ../ci/layered-operators-values.yaml
+    template: secrets/conf-secrets.yaml
+    set:
+      conf:
+        refreshPolicy: Bogus
+    asserts:
+      - failedTemplate:
+          errorPattern: 'conf.refreshPolicy "Bogus" must be CreatedOnce, Periodic or OnChange'
+  - it: routes a source to a pre-existing store, field and property then optional
+    values:
+      - ../ci/external-store-values.yaml
+    template: secrets/conf-secrets.yaml
+    documentSelector:
+      path: metadata.name
+      value: t-conf-control
+    asserts:
+      - equal:
+          path: spec.secretStoreRef.name
+          value: t-conf-store
+      - contains:
+          path: spec.data
+          content:
+            secretKey: Auth__ClientId
+            remoteRef:
+              key: armonik-auth
+              property: clientId
+            sourceRef:
+              storeRef:
+                kind: ClusterSecretStore
+                name: gcp-secret-manager
+      - contains:
+          path: spec.data
+          content:
+            secretKey: Auth__ClientSecret
+            remoteRef:
+              key: armonik-auth-client-secret
+              version: "4"
+            sourceRef:
+              storeRef:
+                kind: ClusterSecretStore
+                name: gcp-secret-manager
+      - contains:
+          path: spec.dataFrom
+          content:
+            extract:
+              key: armonik/control-env
+            sourceRef:
+              storeRef:
+                kind: SecretStore
+                name: vault-backend
+  - it: mounts a whole store entry into one file
+    values:
+      - ../ci/external-store-values.yaml
+    template: secrets/conf-mounts.yaml
+    documentSelector:
+      path: metadata.name
+      value: t-conf-control-mount
+    asserts:
+      - contains:
+          path: spec.data
+          content:
+            secretKey: credentials.json
+            remoteRef:
+              key: armonik-gcs-service-account
+            sourceRef:
+              storeRef:
+                kind: ClusterSecretStore
+                name: gcp-secret-manager
+  - it: keeps store-less sources on the release store, envSecret shorthand included
+    values:
+      - ../ci/external-store-values.yaml
+    template: secrets/conf-secrets.yaml
+    documentSelector:
+      path: metadata.name
+      value: t-conf-compute
+    asserts:
+      - contains:
+          path: spec.dataFrom
+          content:
+            extract:
+              key: in-cluster-env
+      - contains:
+          path: spec.dataFrom
+          content:
+            extract:
+              key: cross-namespace-env
+            sourceRef:
+              storeRef:
+                kind: SecretStore
+                name: t-conf-store-other-namespace
+  - it: clones the release store for a namespace an envSecret reaches into
+    values:
+      - ../ci/external-store-values.yaml
+    template: secrets/secret-store.yaml
+    documentSelector:
+      path: metadata.name
+      value: t-conf-store-other-namespace
+    asserts:
+      - isKind:
+          of: SecretStore
+      - equal:
+          path: spec.provider.kubernetes.remoteNamespace
+          value: other-namespace
+  - it: rejects a storeKind without a storeName
+    values:
+      - ../ci/layered-operators-values.yaml
+    template: secrets/conf-secrets.yaml
+    set:
+      conf:
+        control:
+          envFromSecret:
+            X:
+              secret: s
+              field: f
+              storeKind: ClusterSecretStore
+    asserts:
+      - failedTemplate:
+          errorPattern: 'env "X": storeKind "ClusterSecretStore" needs a storeName'
+  - it: rejects a version without a storeName
+    values:
+      - ../ci/layered-operators-values.yaml
+    template: secrets/conf-secrets.yaml
+    set:
+      conf:
+        control:
+          envSecret:
+            - secret: s
+              version: "2"
+    asserts:
+      - failedTemplate:
+          errorPattern: 'envSecret "s": version "2" needs a storeName'
+  - it: rejects a storeName combined with a namespace
+    values:
+      - ../ci/layered-operators-values.yaml
+    template: secrets/conf-secrets.yaml
+    set:
+      conf:
+        control:
+          envFromSecret:
+            X:
+              secret: s
+              field: f
+              storeName: st
+              namespace: ns
+    asserts:
+      - failedTemplate:
+          errorPattern: 'storeName "st" excludes namespace "ns"'
+  - it: rejects an unknown storeKind
+    values:
+      - ../ci/layered-operators-values.yaml
+    template: secrets/conf-mounts.yaml
+    set:
+      conf:
+        control:
+          mountSecret:
+            - secret: s
+              storeName: st
+              storeKind: Bogus
+    asserts:
+      - failedTemplate:
+          errorPattern: 'storeKind "Bogus" must be SecretStore or ClusterSecretStore'
+  - it: rejects a field-less reference on the release store
+    values:
+      - ../ci/layered-operators-values.yaml
+    template: secrets/conf-secrets.yaml
+    set:
+      conf:
+        control:
+          envFromSecret:
+            X:
+              secret: s
+    asserts:
+      - failedTemplate:
+          errorPattern: 'env "X": field is required unless storeName is set'

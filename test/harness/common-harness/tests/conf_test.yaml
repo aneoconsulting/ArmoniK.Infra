@@ -16,6 +16,17 @@ tests:
       - equal:
           path: data.envFrom
           value: '[{"secretRef":{"name":"my-secret","optional":false}}]'
+  - it: takes an envSecret object next to the string shorthand
+    set:
+      conf:
+        - envSecret:
+            - my-secret
+            - secret: other-secret
+              storeName: vault-backend
+    asserts:
+      - equal:
+          path: data.envFrom
+          value: '[{"secretRef":{"name":"my-secret","optional":false}},{"secretRef":{"name":"other-secret","optional":false}}]'
   - it: mounts a projected volume with a content-addressed name
     set:
       conf:

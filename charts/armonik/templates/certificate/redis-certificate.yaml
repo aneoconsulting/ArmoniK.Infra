@@ -11,10 +11,14 @@
 {{- $svcName := include "valkey.fullname" .Subcharts.dependencies.Subcharts.redis }}
 {{- $ns := include "armonik.namespace" . }}
 {{- /* Same three-tier fallback as activemq/armonik-ingress: local existingIssuer, else the shared
-       issuer, else a throwaway local selfSigned Issuer - redis is a single server with one
-       client-facing cert, so unlike mongodb it has no common-CA constraint against that. */}}
+       issuer, else a local Issuer this chart creates itself, backed by
+       dependencies.redis.tls.certManager.provider (default selfSigned, same as today) - redis is a
+       single server with one client-facing cert, so unlike mongodb it has no common-CA constraint
+       against that. */}}
 {{- $issuerName := printf "%s-issuer" $svcName }}
-{{- $issuer := list $ $certManager.existingIssuer $issuerName | include "armonik.certManager.getIssuer" | fromYaml }}
+{{- $provider := $certManager.provider | default "selfSigned" }}
+{{- $localRequested := hasKey $certManager "provider" }}
+{{- $issuer := list $ $certManager.existingIssuer $issuerName $provider $localRequested | include "armonik.certManager.getIssuer" | fromYaml }}
 {{- if and (not $ops.certManager.available) $issuer.needsLocalIssuer }}
 {{- fail "dependencies.redis.tls.certManager.enabled requires it: set global.armonik.operators.certManager.available=true, set dependencies.redis.tls.certManager.existingIssuer.enabled=true, set global.armonik.certManager.issuer.enabled=true, or disable certManager.enabled and bring your own TLS Secret via tls.existingSecret." }}
 {{- end }}
@@ -22,19 +26,15 @@
 {{- fail "the cert-manager issuer has no name: set dependencies.redis.tls.certManager.existingIssuer.name when existingIssuer.enabled=true, else global.armonik.certManager.issuer.name must not be empty." }}
 {{- end }}
 {{- if $issuer.needsLocalIssuer }}
-apiVersion: cert-manager.io/v1
-kind: Issuer
-metadata:
-  {{- if $ops.certManager.deploy }}
-  {{- /* Hooked only when this release installs the CRDs; otherwise a plain resource. */}}
-  annotations:
-    "helm.sh/hook": post-install,post-upgrade
-    "helm.sh/hook-weight": "0"
-  {{- end }}
-  name: {{ $issuer.name | quote }}
-  namespace: {{ $ns }}
-spec:
-  selfSigned: {}
+{{- include "armonik.certManager.issuerManifest" (dict
+      "root" $
+      "name" $issuer.name
+      "namespace" $ns
+      "provider" $provider
+      "kind" $issuer.kind
+      "group" $issuer.group
+      "spec" (index $certManager $provider | default dict)
+      "specValuesPath" "dependencies.redis.tls.certManager") }}
 ---
 {{- end }}
 apiVersion: cert-manager.io/v1

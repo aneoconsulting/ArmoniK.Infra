@@ -9,4 +9,4 @@ partitions:
   default:
     worker:
       image:
-        name: armonik-dynamic-dotnet-worker
+        repository: dockerhubaneo/armonik-dynamic-dotnet-worker

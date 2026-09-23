@@ -1,0 +1,72 @@
+suite: Certificate issuer resolution
+templates:
+  - certificate.yaml
+tests:
+  - it: local fallback Issuer honors tls.certManager.provider=googleCas, forwarded as-is
+    set:
+      tls:
+        enabled: true
+        type: cert-manager
+        certManager:
+          provider: googleCas
+          googleCas:
+            project: my-project
+            location: europe-west1
+            caPoolId: my-pool
+    asserts:
+      - notFailedTemplate: {}
+      - isKind:
+          of: GoogleCASIssuer
+        documentSelector:
+          path: kind
+          value: GoogleCASIssuer
+      - equal:
+          path: spec.project
+          value: my-project
+        documentSelector:
+          path: kind
+          value: GoogleCASIssuer
+      - equal:
+          path: spec.issuerRef
+          value:
+            name: activemq-issuer
+            kind: GoogleCASIssuer
+            group: cas-issuer.jetstack.io
+        documentSelector:
+          path: kind
+          value: Certificate
+  - it: local fallback fails when tls.certManager.googleCas is empty (same guard as the umbrella's shared issuer)
+    set:
+      tls:
+        enabled: true
+        type: cert-manager
+        certManager:
+          provider: googleCas
+    asserts:
+      - failedTemplate:
+          errorPattern: "tls.certManager.googleCas is required for provider=googleCas"
+  - it: setting certManager.provider keeps its own local Issuer even though the shared issuer is enabled
+    set:
+      tls:
+        enabled: true
+        type: cert-manager
+        certManager:
+          provider: selfSigned
+      global:
+        armonik:
+          certManager:
+            issuer:
+              enabled: true
+              name: shared-issuer
+    asserts:
+      - notFailedTemplate: {}
+      - containsDocument:
+          kind: Issuer
+          apiVersion: cert-manager.io/v1
+          any: true
+      - equal:
+          path: spec.issuerRef.name
+          value: activemq-issuer
+        documentSelector:
+          path: kind
+          value: Certificate

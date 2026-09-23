@@ -6,8 +6,13 @@ description: >-
   outside charts/ so ct and helm-docs ignore it.
 type: application
 version: 0.1.0
+# Distinctive, so an imageConf test can tell the AppVersion fallback from a literal tag.
+appVersion: "9.9.9"
 kubeVersion: ">=v1.25.0-0"
 dependencies:
   - name: armonik-common
     version: 0.1.x
     repository: file://../../../charts/armonik-common
+    import-values:
+      - child: global.armonik
+        parent: global.armonik

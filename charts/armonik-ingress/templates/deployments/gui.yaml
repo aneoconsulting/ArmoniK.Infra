@@ -1,4 +1,4 @@
-{{- $image := list . .Values.gui.image | include "armonik.utils.imageConf" | fromYaml }}
+{{- $image := list . "gui.image" .Values.gui.image | include "armonik.utils.imageConf" | fromYaml }}
 {{- $ctx := dict "root" $ "image" $image -}}
 {{- $podSpec := list (include "armonik.ingress.gui.podSpec" $ctx) .Values.gui.podSpecPatch "gui.podSpecPatch" | include "armonik.utils.patch" -}}
 apiVersion: apps/v1

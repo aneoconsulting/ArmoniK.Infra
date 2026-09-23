@@ -2,28 +2,27 @@
 {{- $certManager := $tls.certManager | default dict }}
 {{- if and $tls.enabled (eq $tls.type "cert-manager") }}
 {{- $issuerName := printf "%s-issuer" (include "activemq.fullname" .) }}
-{{- $issuer := list $ $certManager.existingIssuer $issuerName | include "armonik.certManager.getIssuer" | fromYaml }}
+{{- $provider := $certManager.provider | default "selfSigned" }}
+{{- $localRequested := hasKey $certManager "provider" }}
+{{- $issuer := list $ $certManager.existingIssuer $issuerName $provider $localRequested | include "armonik.certManager.getIssuer" | fromYaml }}
 {{- if and (not (dig "armonik" "operators" "certManager" "available" true .Values.global)) $issuer.needsLocalIssuer }}
 {{- fail "activemq TLS via cert-manager requires it: set global.armonik.operators.certManager.available=true, set tls.certManager.existingIssuer.enabled=true, set global.armonik.certManager.issuer.enabled=true, or use a tls.type other than cert-manager." }}
 {{- end }}
 {{- if $issuer.needsLocalIssuer }}
-apiVersion: cert-manager.io/v1
-kind: Issuer
-metadata:
-  annotations:
-    {{- if dig "armonik" "operators" "certManager" "deploy" false .Values.global }}
-    {{- /* CRD-ordering hook only when THIS release installs cert-manager; external/absent -> no hook.
-           Weight 0 keeps the Issuer ahead of the Certificate below, hooked at weight 10. */}}
-    "helm.sh/hook": post-install,post-upgrade
-    "helm.sh/hook-weight": "0"
-    {{- end }}
-    {{- with .Values.additionalAnnotations }}
-    {{- toYaml . | nindent 4 }}
-    {{- end }}
-  name: {{ $issuer.name | quote }}
-  namespace: {{ include "activemq.namespace" . | quote }}
-spec:
-  selfSigned: {}
+{{- $extraAnnotations := "" }}
+{{- with .Values.additionalAnnotations }}{{- $extraAnnotations = toYaml . }}{{- end }}
+{{- /* CRD-ordering hook only when THIS release installs cert-manager; external/absent -> no hook.
+       Weight 0 keeps the Issuer ahead of the Certificate below, hooked at weight 10. */}}
+{{- include "armonik.certManager.issuerManifest" (dict
+      "root" $
+      "name" $issuer.name
+      "namespace" (include "activemq.namespace" .)
+      "provider" $provider
+      "kind" $issuer.kind
+      "group" $issuer.group
+      "spec" (index $certManager $provider | default dict)
+      "extraAnnotations" $extraAnnotations
+      "specValuesPath" "tls.certManager") }}
 {{- end }}
 ---
 apiVersion: cert-manager.io/v1

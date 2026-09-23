@@ -1,4 +1,5 @@
 apiVersion: v2
+# renovate: datasource=github-releases depName=aneoconsulting/ArmoniK.Core
 appVersion: 0.41.0
 version: 0.1.0
 name: armonik-compute-plane

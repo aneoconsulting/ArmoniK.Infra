@@ -7,14 +7,24 @@
     "helpers:pinGitHubActionDigests"
   ],
   "configMigration": true,
+  "semanticCommits": "enabled",
+  "lockFileMaintenance": {
+    "enabled": true
+  },
+  "pre-commit": {
+    "enabled": true
+  },
+  "helmfile": {
+    "enabled": false
+  },
   "rangeStrategy": "bump",
   "ignorePaths": [],
   "customManagers": [
     {
       "customType": "regex",
       "description": "ArmoniK component versions in the chart image map, which carry no image reference of their own.",
-      "fileMatch": [
-        "^charts/armonik-common/values\\.yaml$"
+      "managerFilePatterns": [
+        "/^charts/armonik-common/values\\.yaml$/"
       ],
       "matchStrings": [
         "#\\s*renovate:\\s*datasource=(?<datasource>[a-z-]+)\\s+depName=(?<depName>\\S+)(\\s+extractVersion=(?<extractVersion>\\S+))?\\s*\\n\\s*\\w+:\\s*\"(?<currentValue>[^\"]+)\""
@@ -23,8 +33,8 @@
     {
       "customType": "regex",
       "description": "Chart appVersion, which is the tag of the images that chart deploys.",
-      "fileMatch": [
-        "^charts/[^/]+/Chart\\.yaml$"
+      "managerFilePatterns": [
+        "/^charts/[^/]+/Chart\\.yaml$/"
       ],
       "matchStrings": [
         "#\\s*renovate:\\s*datasource=(?<datasource>[a-z-]+)\\s+depName=(?<depName>\\S+)(\\s+extractVersion=(?<extractVersion>\\S+))?\\s*\\nappVersion:\\s*\"?(?<currentValue>[^\"\\s]+)\"?"
@@ -39,10 +49,24 @@
       ]
     },
     {
+      "description": "Hold third party releases for a few days, in case they get pulled or compromised; ArmoniK components opt out below.",
+      "matchPackageNames": [
+        "*"
+      ],
+      "minimumReleaseAge": "3 days"
+    },
+    {
       "groupName": "github actions",
       "groupSlug": "github-actions",
       "matchDatasources": [
         "github-tags"
+      ]
+    },
+    {
+      "groupName": "pre-commit hooks",
+      "groupSlug": "pre-commit",
+      "matchManagers": [
+        "pre-commit"
       ]
     },
     {
@@ -58,6 +82,13 @@
       "matchDatasources": [
         "helm"
       ]
+    },
+    {
+      "description": "Keep the Chart.yaml dependency ranges; in-range versions move through lock file maintenance of Chart.lock.",
+      "matchManagers": [
+        "helmv3"
+      ],
+      "rangeStrategy": "replace"
     },
     {
       "groupName": "terraform modules",
@@ -93,7 +124,8 @@
       "matchPackageNames": [
         "aneoconsulting/**",
         "dockerhubaneo/**"
-      ]
+      ],
+      "minimumReleaseAge": null
     }
   ]
 }

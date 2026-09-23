@@ -265,6 +265,11 @@ helm install armonik $REPO/armonik --version $VERSION -n armonik \
 `team-a.yaml`:
 
 ```yaml
+# compute-plane.enabled=false in Step 1 means no ServiceAccount either, so create one here
+serviceAccount:
+  create: true
+  name: compute-plane
+
 # One Deployment (+ one KEDA ScaledObject) per partition
 partitions:
   team-a-cpu:

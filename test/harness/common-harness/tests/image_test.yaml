@@ -28,9 +28,9 @@ tests:
         path: image
         confs:
           - {repository: dockerhubaneo/armonik_control_metrics}
-          - {registry: quay.io, tag: "0.41.0", pullPolicy: Always}
+          - {registry: quay.io, tag: "4.5.6", pullPolicy: Always}
     asserts:
-      - equal: {path: "data.fullname", value: "quay.io/dockerhubaneo/armonik_control_metrics:0.41.0"}
+      - equal: {path: "data.fullname", value: "quay.io/dockerhubaneo/armonik_control_metrics:4.5.6"}
       - equal: {path: "data.pullPolicy", value: "Always"}
 
   - it: includes the registry when one is set
@@ -47,9 +47,9 @@ tests:
       image:
         path: image
         confs:
-          - {repository: busybox, tag: "1.37.0"}
+          - {repository: busybox, tag: "1.2.3"}
     asserts:
-      - equal: {path: "data.fullname", value: "busybox:1.37.0"}
+      - equal: {path: "data.fullname", value: "busybox:1.2.3"}
 
   - it: fails, naming the values path, when no repository resolves
     set:
@@ -76,19 +76,19 @@ tests:
       image:
         path: fluentBit.image
         confs:
-          - {repository: fluent/fluent-bit, tag: "5.1.2"}
+          - {repository: fluent/fluent-bit, tag: "7.8.9"}
     asserts:
-      - equal: {path: "data.fullname", value: "fluent/fluent-bit:5.1.2"}
+      - equal: {path: "data.fullname", value: "fluent/fluent-bit:7.8.9"}
 
   - it: parses a plain reference string into repository and tag
     set:
       image:
         path: image
-        confs: ["fluent/fluent-bit:5.1.2"]
+        confs: ["fluent/fluent-bit:7.8.9"]
     asserts:
-      - equal: {path: "data.fullname", value: "fluent/fluent-bit:5.1.2"}
+      - equal: {path: "data.fullname", value: "fluent/fluent-bit:7.8.9"}
       - equal: {path: "data.repository", value: "fluent/fluent-bit"}
-      - equal: {path: "data.tag", value: "5.1.2"}
+      - equal: {path: "data.tag", value: "7.8.9"}
 
   - it: reads the first segment as a registry when it carries a dot
     set:
@@ -135,17 +135,17 @@ tests:
       image:
         path: image
         confs:
-          - "busybox:1.37.0"
+          - "busybox:1.2.3"
           - {registry: quay.io, pullPolicy: Always}
     asserts:
-      - equal: {path: "data.fullname", value: "busybox:1.37.0"}
+      - equal: {path: "data.fullname", value: "busybox:1.2.3"}
 
   - it: still takes pullPolicy from the chain when the image is a string
     set:
       image:
         path: image
         confs:
-          - "busybox:1.37.0"
+          - "busybox:1.2.3"
           - {registry: quay.io, pullPolicy: Always}
     asserts:
       - equal: {path: "data.pullPolicy", value: "Always"}
@@ -156,9 +156,9 @@ tests:
         path: metricsExporter.image
         confs:
           - {repository: dockerhubaneo/armonik_control_metrics}
-          - "quay.io/dockerhubaneo/armonik_control:0.41.0"
+          - "quay.io/dockerhubaneo/armonik_control:4.5.6"
     asserts:
-      - equal: {path: "data.fullname", value: "quay.io/dockerhubaneo/armonik_control_metrics:0.41.0"}
+      - equal: {path: "data.fullname", value: "quay.io/dockerhubaneo/armonik_control_metrics:4.5.6"}
 
   - it: fails on a tagless reference string for an unmapped image
     set:
@@ -193,9 +193,9 @@ tests:
       global.imageRegistry: mirror.io/armonik
       image:
         path: image
-        confs: ["dockerhubaneo/armonik_control:0.41.0"]
+        confs: ["dockerhubaneo/armonik_control:4.5.6"]
     asserts:
-      - equal: {path: "data.fullname", value: "mirror.io/armonik/dockerhubaneo/armonik_control:0.41.0"}
+      - equal: {path: "data.fullname", value: "mirror.io/armonik/dockerhubaneo/armonik_control:4.5.6"}
 
   - it: relocates a digest-pinned reference and invents no tag for it
     set:
@@ -238,14 +238,14 @@ tests:
 
   - it: gives an image mapped to an independently released component that version
     set:
-      global.armonik.versions: {extCsharp: "0.22.0"}
+      global.armonik.versions: {extCsharp: "8.8.8"}
       global.armonik.imageComponents: {dockerhubaneo/armonik-dynamic-dotnet-worker: extCsharp}
       image:
         path: partitions.gpu.worker.image
         confs:
           - {repository: dockerhubaneo/armonik-dynamic-dotnet-worker}
     asserts:
-      - equal: {path: "data.fullname", value: "dockerhubaneo/armonik-dynamic-dotnet-worker:0.22.0"}
+      - equal: {path: "data.fullname", value: "dockerhubaneo/armonik-dynamic-dotnet-worker:8.8.8"}
 
   - it: requires a tag for an image the map does not know
     set:
@@ -261,7 +261,7 @@ tests:
 
   - it: lets an explicit tag win over the version map
     set:
-      global.armonik.versions: {extCsharp: "0.22.0"}
+      global.armonik.versions: {extCsharp: "8.8.8"}
       global.armonik.imageComponents: {dockerhubaneo/armonik-dynamic-dotnet-worker: extCsharp}
       image:
         path: image

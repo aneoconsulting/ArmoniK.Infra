@@ -8,4 +8,4 @@ partitionCommon:
   podSpecPatch:
     containers:
       - name: hijack
-        image: busybox:1.37.0
+        image: busybox:0.0.0-test

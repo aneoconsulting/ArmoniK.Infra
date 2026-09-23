@@ -14,11 +14,11 @@ extraEnvFrom:
       optional: true
 extraInitContainers:
   - name: warmup
-    image: busybox:1.37.0
+    image: busybox:0.0.0-test
     command: ["/bin/sh", "-c", "true"]
 extraContainers:
   - name: debug
-    image: busybox:1.37.0
+    image: busybox:0.0.0-test
     command: ["/bin/sh", "-c", "sleep infinity"]
 containerPatch:
   imagePullPolicy: Always
@@ -47,7 +47,7 @@ init:
       mountPath: /scratch
   extraInitContainers:
     - name: init-warmup
-      image: busybox:1.37.0
+      image: busybox:0.0.0-test
       command: ["/bin/sh", "-c", "true"]
   containerPatch:
     imagePullPolicy: Always
@@ -72,7 +72,7 @@ metricsExporter:
       mountPath: /scratch
   extraContainers:
     - name: exporter-debug
-      image: busybox:1.37.0
+      image: busybox:0.0.0-test
       command: ["/bin/sh", "-c", "sleep infinity"]
   containerPatch:
     # A nested scalar the chart does build: deep-merges, siblings survive.

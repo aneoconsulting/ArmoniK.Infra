@@ -1,7 +1,7 @@
 {{- $tls := .Values.tls | default dict }}
 {{- $certManager := $tls.certManager | default dict }}
 {{- if and $tls.enabled (eq $tls.type "cert-manager") }}
-{{- $issuerName := printf "%s-issuer" (include "activemq.fullname" .) }}
+{{- $issuerName := printf "%s-issuer" (include "armonik.fullname" .) }}
 {{- $provider := $certManager.provider | default "selfSigned" }}
 {{- $localRequested := hasKey $certManager "provider" }}
 {{- $issuer := list $ $certManager.existingIssuer $issuerName $provider $localRequested | include "armonik.certManager.getIssuer" | fromYaml }}
@@ -16,7 +16,7 @@
 {{- include "armonik.certManager.issuerManifest" (dict
       "root" $
       "name" $issuer.name
-      "namespace" (include "activemq.namespace" .)
+      "namespace" (include "armonik.namespace" .)
       "provider" $provider
       "kind" $issuer.kind
       "group" $issuer.group
@@ -28,8 +28,8 @@
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: {{ include "activemq.fullname" . }}
-  namespace: {{ include "activemq.namespace" . | quote }}
+  name: {{ include "armonik.fullname" . }}
+  namespace: {{ include "armonik.namespace" . | quote }}
   {{- if dig "armonik" "operators" "certManager" "deploy" false .Values.global }}
   {{- /* Hooked only when this release installs the CRDs; otherwise a plain resource. */}}
   annotations:
@@ -37,12 +37,12 @@ metadata:
     "helm.sh/hook-weight": "10"
   {{- end }}
 spec:
-  commonName: {{ include "activemq.fullname" . }}
+  commonName: {{ include "armonik.fullname" . }}
   dnsNames:
-  - {{ include "activemq.fullname" . }}.{{ include "activemq.namespace" . }}
-  - {{ include "activemq.fullname" . }}.{{ include "activemq.namespace" . }}.svc
-  - {{ include "activemq.fullname" . }}.{{ include "activemq.namespace" . }}.svc.{{ $tls.clusterDomain }}
-  secretName: {{ include "activemq.fullname" . }}
+  - {{ include "armonik.fullname" . }}.{{ include "armonik.namespace" . }}
+  - {{ include "armonik.fullname" . }}.{{ include "armonik.namespace" . }}.svc
+  - {{ include "armonik.fullname" . }}.{{ include "armonik.namespace" . }}.svc.{{ $tls.clusterDomain }}
+  secretName: {{ include "armonik.fullname" . }}
   {{- include "armonik.certManager.certificateSpec" (dict "certManager" $certManager "issuer" $issuer) | nindent 2 }}
   additionalOutputFormats:
     - type: CombinedPEM

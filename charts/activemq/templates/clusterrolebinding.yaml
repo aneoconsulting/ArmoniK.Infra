@@ -2,15 +2,15 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: system:{{ include "activemq.fullname" . }}
+  name: system:{{ include "armonik.fullname" . }}
   labels:
-    {{- include "activemq.labels" . | nindent 4 }}
+    {{- include "armonik.labels" . | nindent 4 }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: system:{{ template "activemq.fullname" . }}
+  name: system:{{ template "armonik.fullname" . }}
 subjects:
   - kind: ServiceAccount
     name: {{ include "activemq.serviceAccountName" . }}
-    namespace: {{ include "activemq.namespace" . | quote }}
+    namespace: {{ include "armonik.namespace" . | quote }}
 {{- end -}}

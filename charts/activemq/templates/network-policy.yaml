@@ -4,14 +4,14 @@
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: {{ include "activemq.fullname" . }}-network-policy
-  namespace: {{ include "activemq.namespace" . | quote }}
+  name: {{ include "armonik.fullname" . }}-network-policy
+  namespace: {{ include "armonik.namespace" . | quote }}
   labels:
-    {{- include "activemq.labels" . | nindent 4 }}
+    {{- include "armonik.labels" . | nindent 4 }}
 spec:
   podSelector:
     matchLabels:
-      app.kubernetes.io/name: {{ include "activemq.name" . | quote }}
+      app.kubernetes.io/name: {{ include "armonik.name" . | quote }}
       app.kubernetes.io/instance: {{ .Release.Name |  quote }}
   policyTypes:
     {{- toYaml $policyTypes | nindent 4 }}

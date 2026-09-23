@@ -3,7 +3,7 @@
 # being this chart's whole purpose. Under the umbrella, the umbrella's global.armonik.operators.* wins.
 # Mind the two paths: global.armonik.operators.<op> are the control flags, <op> at the top level is the
 # operator subchart's own configuration.
-# Two operators stay at their armonik-common default (deploy=false), their consumer being off by default. 
+# Two operators stay at their armonik-common default (deploy=false), their consumer being off by default.
 # googleCasIssuer is GCP-specific, only needed for certManager.issuer.provider=googleCas.
 # postgresOperator is only needed if postgres is deployed.
 # Opt in explicitly with --set global.armonik.operators.<op>.deploy=true.
@@ -101,7 +101,7 @@ postgresql-operator:
     # Off in this chart's defaults. Requires Prometheus Operator CRDs.
     podMonitorEnabled: true
     grafanaDashboard:
-      # Must stay stated: dropping this line yields true rather than the chart default false. 
+      # Must stay stated: dropping this line yields true rather than the chart default false.
       # This is a Helm bug due to alias, fix in progress : https://github.com/helm/helm/pull/31847
       create: true
   # priorityClassName:

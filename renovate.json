@@ -46,15 +46,15 @@
       ]
     },
     {
-      "groupName": "docker images",
-      "groupSlug": "docker",
+      "groupName": "third party images",
+      "groupSlug": "third-party-images",
       "matchDatasources": [
         "docker"
       ]
     },
     {
-      "groupName": "helm charts",
-      "groupSlug": "helm-charts",
+      "groupName": "third party charts",
+      "groupSlug": "third-party-charts",
       "matchDatasources": [
         "helm"
       ]
@@ -84,9 +84,15 @@
       ]
     },
     {
-      "groupName": "release packages Armonik",
+      "groupName": "ArmoniK components",
+      "groupSlug": "armonik",
+      "matchDatasources": [
+        "github-releases",
+        "docker"
+      ],
       "matchPackageNames": [
-        "ArmoniK{/,}**"
+        "aneoconsulting/**",
+        "dockerhubaneo/**"
       ]
     }
   ]

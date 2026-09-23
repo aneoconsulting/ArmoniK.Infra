@@ -347,7 +347,7 @@ helm install my-cp $REPO/armonik-control-plane --version $VERSION -n armonik \
 
 ## 6. TLS: enable, disable, custom issuer
 
-TLS is **disabled by default**. Four components can get their certificates from cert-manager: ingress, Redis, ActiveMQ and MongoDB.
+TLS is **disabled by default**, except MongoDB (`tls.mode: preferTLS`). All four - ingress, Redis, ActiveMQ, MongoDB - can get their certificates from cert-manager.
 
 ### Which issuer is used? (priority order)
 

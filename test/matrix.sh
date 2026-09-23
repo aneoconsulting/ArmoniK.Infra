@@ -117,6 +117,10 @@ ok activemq-psp-k8s131    activemq              -f test/fixtures/activemq/psp-va
 ok umbrella-no-control-plane armonik -f charts/armonik/ci/minimal-values.yaml --set control-plane.enabled=false
 ok compute-patches        armonik-compute-plane -f charts/armonik-compute-plane/ci/patch-values.yaml
 ok control-patches        armonik-control-plane -f charts/armonik-control-plane/ci/patch-values.yaml
+ok umbrella-external-store armonik -f charts/armonik/ci/external-store-values.yaml
+ok ingress-external-store armonik-ingress -f charts/armonik-ingress/ci/default-values.yaml \
+  --set urlsSecretName=armonik/urls --set urlsSecretStoreName=vault-backend \
+  --set urlsSecretStoreKind=ClusterSecretStore --set urlsSecretVersion=7
 
 # --- render-time guards ------------------------------------------------
 fail_with ingress-mtls-without-tls armonik-ingress \
@@ -142,6 +146,12 @@ fail_with mongodb-exporter-without-eso armonik \
   --set dependencies.mongodb-exporter.enabled=true \
   --set global.armonik.operators.externalSecrets.available=false \
   --set global.armonik.operators.externalSecrets.deploy=false
+fail_with umbrella-store-kind-without-name armonik \
+  "storeKind \"ClusterSecretStore\" needs a storeName" \
+  -f charts/armonik/ci/layered-operators-values.yaml \
+  --set conf.control.envFromSecret.X.secret=s \
+  --set conf.control.envFromSecret.X.field=f \
+  --set conf.control.envFromSecret.X.storeKind=ClusterSecretStore
 fail_with umbrella-bad-loglevel armonik \
   "conf.log.minimumLevel \"Bogus\" is invalid" \
   -f charts/armonik/ci/minimal-values.yaml --set conf.log.minimumLevel=Bogus

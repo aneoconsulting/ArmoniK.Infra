@@ -184,6 +184,18 @@ loadBalancer:
 #   helm upgrade <release-name> ...
 urlsSecretName: ""
 urlsSecretNamespace: ""
+# Read the URLs from a pre-existing ESO store instead of the Kubernetes-provider one this chart
+# renders; urlsSecretName is then the key in that store. Kind defaults to SecretStore, in the
+# release namespace. Excludes urlsSecretNamespace; urlsSecretVersion needs a store name.
+urlsSecretStoreName: ""
+urlsSecretStoreKind: ""
+urlsSecretVersion: ""
+
+# ESO sync of the URLs Secret. 1m converges quickly on a fresh install, where the Secret it reads
+# may not exist yet; raise it behind a metered store.
+conf:
+  refreshInterval: 1m0s
+  # refreshPolicy: Periodic
 
 ###########################################################
 # Admin GUI

@@ -18,12 +18,15 @@
 {{- $ns := include "cluster.namespace" .Subcharts.dependencies.Subcharts.postgresql }}
 
 {{- /* Resolved once so a local fallback Issuer is shared by both Certificates.
-       selfSigned is refused: CNPG validates each half against its own Secret,
+       With nothing configured, the local fallback is a CA bootstrapped in-cluster, as the psmdb
+       operator does for mongodb, rather than a selfSigned Issuer.
+       An explicit selfSigned is refused: CNPG validates each half against its own Secret,
        so it would work, but only swap the operator's self-signed CA for self-signed leaves. */}}
 {{- $issuerName := printf "%s-issuer" $cluster }}
 {{- $provider := $certManager.provider | default "selfSigned" }}
 {{- $localRequested := hasKey $certManager "provider" }}
 {{- $issuer := list $ $certManager.existingIssuer $issuerName $provider $localRequested | include "armonik.certManager.getIssuer" | fromYaml }}
+{{- $bootstrap := and $issuer.needsLocalIssuer (not $localRequested) }}
 {{- $rejected := dict
       "selfSigned" "every certificate would sign itself with no CA behind it, which gains nothing over the operator's own self-signed CA"
       "acme" "ACME only issues for DNS/IP identifiers, so it cannot issue the streaming_replica client certificate" }}
@@ -41,17 +44,64 @@
 {{- end }}
 {{- end }}
 {{- if $issuer.needsLocalIssuer }}
-{{- with index $rejected $provider }}
-{{- printf "dependencies.postgresql.certManager.enabled cannot use a local fallback issuer with provider=%s: %s. Set dependencies.postgresql.certManager.provider to ca, vault, venafi or googleCas, point dependencies.postgresql.certManager.existingIssuer at an issuer backed by a real CA, or set global.armonik.certManager.issuer.enabled=true with certManagerIssuer.provider set to a real CA." $provider . | fail }}
-{{- end }}
+{{- $spec := index $certManager $provider | default dict }}
+{{- if $bootstrap }}
+{{- /* A selfSigned Issuer signs the CA Certificate, cert-manager generates its key, and the local
+       Issuer below becomes a ca Issuer over it. <cluster>-ca is the operator's own CA Secret. */}}
+{{- $caSecret := printf "%s-ca-cert" $cluster }}
+{{- $selfSignedName := printf "%s-selfsigned-issuer" $cluster }}
+{{- $provider = "ca" }}
+{{- $spec = dict "secretName" $caSecret }}
 {{- include "armonik.certManager.issuerManifest" (dict
+      "root" $
+      "name" $selfSignedName
+      "namespace" $ns
+      "provider" "selfSigned"
+      "labels" (include "armonik.labels" $)
+      "specValuesPath" "dependencies.postgresql.certManager") }}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ $caSecret }}
+  namespace: {{ $ns }}
+  {{- if $ops.certManager.deploy }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "10"
+  {{- end }}
+  labels:
+    {{- include "armonik.labels" $ | nindent 4 }}
+spec:
+  isCA: true
+  commonName: {{ $cluster }}-ca
+  secretName: {{ $caSecret }}
+  # Long-lived, so only the leaves below rotate.
+  duration: 87600h
+  usages:
+    - cert sign
+    - crl sign
+  privateKey:
+    algorithm: RSA
+    size: 2048
+  issuerRef:
+    name: {{ $selfSignedName | quote }}
+    kind: Issuer
+    group: cert-manager.io
+---
+{{- else }}
+{{- with index $rejected $provider }}
+{{- printf "dependencies.postgresql.certManager.enabled cannot use a local fallback issuer with provider=%s: %s. Leave dependencies.postgresql.certManager.provider unset to bootstrap a CA in-cluster, set it to ca, vault, venafi or googleCas, point dependencies.postgresql.certManager.existingIssuer at an issuer backed by a real CA, or set global.armonik.certManager.issuer.enabled=true with certManagerIssuer.provider set to a real CA." $provider . | fail }}
+{{- end }}
+{{- end }}
+{{ include "armonik.certManager.issuerManifest" (dict
       "root" $
       "name" $issuer.name
       "namespace" $ns
       "provider" $provider
       "kind" $issuer.kind
       "group" $issuer.group
-      "spec" (index $certManager $provider | default dict)
+      "spec" $spec
       "labels" (include "armonik.labels" $)
       "specValuesPath" "dependencies.postgresql.certManager") }}
 {{- end }}

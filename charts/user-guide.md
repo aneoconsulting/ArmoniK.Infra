@@ -312,9 +312,10 @@ partitionCommon:
   nodeSelector:
     workload: armonik
   worker:
-    limits:
-      cpu: "2000m"
-      memory: "4Gi"
+    resources:
+      limits:
+        cpu: "2000m"
+        memory: "4Gi"
 partitions:
   gpu:
     nodeSelector:

@@ -6,9 +6,13 @@ templates:
   - secrets/armonik-urls.yaml
   - secrets/redis-users.yaml
   - secrets/conf-secrets.yaml
+  - secrets/mongodb-exporter-secret.yaml
+  - secrets/secret-store.yaml
   - services/seq-ingestion.yaml
+  - servicemonitors/mongodb-exporter.yaml
   - configmaps/grafana-datasource-armonik.yaml
   - charts/dependencies/charts/fluent-bit/templates/configmap.yaml
+  - charts/compute-plane/templates/scaledobject.yaml
   - NOTES.txt
 tests:
   # Every name below is set by the dependency's own naming helpers; overriding it proves the umbrella
@@ -128,6 +132,101 @@ tests:
     asserts:
       - failedTemplate:
           errorPattern: "global.armonik.monitoring.prometheusUrl resolved empty"
+
+  # namespaceOverride moves ArmoniK's own resources; a dependency without a namespace key of its own
+  # stays in the release namespace, and what pairs with it follows it there.
+  - it: KEDA scrapes the metrics-exporter in the namespace the planes moved to
+    template: charts/compute-plane/templates/scaledobject.yaml
+    set:
+      namespaceOverride: app
+      control-plane:
+        namespaceOverride: app
+      compute-plane:
+        namespaceOverride: app
+    documentIndex: 0
+    asserts:
+      - equal:
+          path: spec.triggers[0].metadata.url
+          value: http://t-control-plane-metrics-exporter.app.svc:9419/metrics
+
+  - it: mongodb-exporter's ExternalSecret and ServiceMonitor stay with the exporter, next to a store set of their own
+    set:
+      namespaceOverride: app
+      control-plane:
+        namespaceOverride: app
+      compute-plane:
+        namespaceOverride: app
+    asserts:
+      - equal:
+          path: metadata.namespace
+          value: rel
+        template: secrets/mongodb-exporter-secret.yaml
+      - equal:
+          path: spec.secretStoreRef.name
+          value: t-conf-store
+        template: secrets/mongodb-exporter-secret.yaml
+      # MongoDB sits next to the exporter: its base store reads it, no routing.
+      - notExists:
+          path: spec.data[0].sourceRef
+        template: secrets/mongodb-exporter-secret.yaml
+      - containsDocument:
+          kind: SecretStore
+          apiVersion: external-secrets.io/v1
+          name: t-conf-store
+          namespace: rel
+          any: true
+        template: secrets/secret-store.yaml
+      - containsDocument:
+          kind: SecretStore
+          apiVersion: external-secrets.io/v1
+          name: t-conf-store
+          namespace: app
+          any: true
+        template: secrets/secret-store.yaml
+      - equal:
+          path: spec.namespaceSelector.matchNames
+          value:
+            - rel
+        template: servicemonitors/mongodb-exporter.yaml
+
+  # redis disabled so that MongoDB's namespace is the only one both ServiceAccounts read.
+  - it: routes mongodb-exporter through a store reading MongoDB's namespace, bound once for every reader
+    set:
+      namespaceOverride: app
+      control-plane:
+        namespaceOverride: app
+      compute-plane:
+        namespaceOverride: app
+      dependencies:
+        mongodb:
+          namespaceOverride: db
+        redis:
+          enabled: false
+    asserts:
+      - equal:
+          path: spec.data[0].sourceRef.storeRef.name
+          value: t-conf-store-db
+        template: secrets/mongodb-exporter-secret.yaml
+      - containsDocument:
+          kind: SecretStore
+          apiVersion: external-secrets.io/v1
+          name: t-conf-store-db
+          namespace: rel
+          any: true
+        template: secrets/secret-store.yaml
+      - equal:
+          path: metadata.namespace
+          value: db
+        template: secrets/secret-store.yaml
+        documentSelector:
+          path: subjects
+          value:
+            - kind: ServiceAccount
+              name: t-conf
+              namespace: app
+            - kind: ServiceAccount
+              name: t-conf
+              namespace: rel
 
   - it: warns that a second release in the namespace must rename mongodb-exporter's Secret
     template: NOTES.txt

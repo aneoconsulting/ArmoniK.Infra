@@ -269,17 +269,23 @@ and the mounted file in sync.
 {{- end -}}
 
 {{/*
-Name of the SecretStore used by the conf ExternalSecrets for a given remote namespace.
+Per-release SecretStore reading the given namespace, as seen from the namespace holding the
+ExternalSecret: this chart's, or the optional third argument (see secret-store.yaml).
 
 # Usage
 
 {{ list "" $ | include "armonik.conf.storeName" }}
 {{ list "mongodb-ns" $ | include "armonik.conf.storeName" }}
+{{ list "mongodb-ns" $ "exporter-ns" | include "armonik.conf.storeName" }}
 */}}
 {{- define "armonik.conf.storeName" -}}
   {{- $namespace := index . 0 -}}
   {{- $root := index . 1 -}}
-  {{- if or (not $namespace) (eq $namespace (include "armonik.namespace" $root)) -}}
+  {{- $consumer := include "armonik.namespace" $root -}}
+  {{- if gt (len .) 2 -}}
+    {{- $consumer = index . 2 -}}
+  {{- end -}}
+  {{- if or (not $namespace) (eq $namespace $consumer) -}}
     {{- printf "%s-conf-store" $root.Release.Name | trunc 63 | trimSuffix "-" -}}
   {{- else -}}
     {{- printf "%s-conf-store-%s" $root.Release.Name $namespace | trunc 63 | trimSuffix "-" -}}
@@ -287,13 +293,18 @@ Name of the SecretStore used by the conf ExternalSecrets for a given remote name
 {{- end -}}
 
 {{/*
-Name of the per-namespace SecretStore to route one ESO data[]/dataFrom[] entry through
+Store to route one data[]/dataFrom[] entry through, empty when the base store reads it. Arguments as
+armonik.conf.storeName.
 */}}
 {{- define "armonik.conf.storeNameOverride" -}}
   {{- $namespace := index . 0 -}}
   {{- $root := index . 1 -}}
-  {{- if and $namespace (ne $namespace (include "armonik.namespace" $root)) -}}
-    {{- list $namespace $root | include "armonik.conf.storeName" -}}
+  {{- $consumer := include "armonik.namespace" $root -}}
+  {{- if gt (len .) 2 -}}
+    {{- $consumer = index . 2 -}}
+  {{- end -}}
+  {{- if and $namespace (ne $namespace $consumer) -}}
+    {{- list $namespace $root $consumer | include "armonik.conf.storeName" -}}
   {{- end -}}
 {{- end -}}
 

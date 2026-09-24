@@ -46,6 +46,12 @@ tests:
         documentSelector:
           path: kind
           value: Issuer
+      - equal:
+          path: metadata.labels["app.kubernetes.io/instance"]
+          value: t
+        documentSelector:
+          path: kind
+          value: Issuer
   - it: "redis: local existingIssuer wins over the shared issuer, and no throwaway Issuer is created"
     template: certificate/redis-certificate.yaml
     set:

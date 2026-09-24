@@ -7,8 +7,11 @@
 # the point of this profile is that the real CRs get rendered.
 global:
   armonik:
-    # Only prometheusOperator.namespace is read (the Prometheus URL and the Grafana dashboard sidecar
-    # derive a host from it, and fail on an empty one); the four others are stated for symmetry.
+    # kube-prometheus-stack is in the operators release: its URL is stated, as armonik-operators NOTES print it.
+    monitoring:
+      prometheusUrl: http://ops-kube-prometheus-prometheus.monitoring.svc:9090
+    # Only prometheusOperator.namespace is read (the Grafana dashboard sidecar derives its watched
+    # namespaces from it, and fails on an empty one); the four others are stated for symmetry.
     operators:
       externalSecrets:
         deploy: false

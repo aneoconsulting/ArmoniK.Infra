@@ -44,25 +44,31 @@ Resolves prometheusUrl: the Grafana datasource, and a PromQL KEDA trigger's endp
   {{- $raw := list .Values "global" "armonik" "monitoring" "prometheusUrl" | include "armonik.utils.index" -}}
   {{- $url := tpl $raw . -}}
   {{- if empty $url -}}
-    {{- fail "global.armonik.monitoring.prometheusUrl resolved empty: set it, or check that this render context carries .Values.global (a fabricated one, like the partition merge, must pass the full .Values)." -}}
+    {{- fail "global.armonik.monitoring.prometheusUrl resolved empty: set it. It only derives where this release installs kube-prometheus-stack, never in a layered install nor in a plane chart." -}}
   {{- end -}}
   {{- $url -}}
 {{- end -}}
 
 {{/*
-Shared cluster Prometheus, http://prometheus-prometheus.<prometheusOperator ns>.svc[.<clusterDomain>]:9090;
-the service name is fixed by the kps fullnameOverride in armonik-operators. An empty namespace fails rather
-than emitting an unresolvable host. Override the value with a literal URL for a Prometheus we did not deploy.
+Prometheus of the kube-prometheus-stack this release installs, named by that chart's own helpers.
+Empty where kps is not in .Subcharts (layered install, plane chart), so the resolver fails: its name is
+unknowable there without lookup.
 */}}
 {{- define "armonik.monitoring.prometheusUrl.default" -}}
-  {{- $ops := include "armonik.operators" . | fromYaml -}}
-  {{- $ns := $ops.prometheusOperator.namespace -}}
-  {{- if empty $ns -}}
-    {{- fail "global.armonik.operators.prometheusOperator.namespace resolved empty: set it to the namespace of the release installing kube-prometheus-stack. It only defaults to this release's namespace when this release installs it." -}}
+  {{- $subcharts := .Subcharts | default dict -}}
+  {{- $kps := index $subcharts "kube-prometheus" -}}
+  {{- with index $subcharts "operators" -}}
+    {{- $kps = index (.Subcharts | default dict) "kube-prometheus" | default $kps -}}
   {{- end -}}
-  {{- $domain := list .Values "global" "clusterDomain" | include "armonik.utils.index" -}}
-  {{- $suffix := $domain | empty | ternary "" (printf ".%s" $domain) -}}
-  {{- printf "http://prometheus-prometheus.%s.svc%s:9090" $ns $suffix -}}
+  {{- with $kps -}}
+    {{- $domain := list $.Values "global" "clusterDomain" | include "armonik.utils.index" -}}
+    {{- $suffix := $domain | empty | ternary "" (printf ".%s" $domain) -}}
+    {{- printf "http://%s-prometheus.%s.svc%s:%d"
+          (include "kube-prometheus-stack.fullname" .)
+          (include "kube-prometheus-stack.namespace" .)
+          $suffix
+          (.Values.prometheus.service.port | int) -}}
+  {{- end -}}
 {{- end -}}
 
 {{/*

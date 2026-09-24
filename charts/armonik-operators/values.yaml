@@ -58,8 +58,7 @@ external-secrets: {}
 #   certController:
 #     priorityClassName:
 
-# cert-manager (https://charts.jetstack.io). fullnameOverride keeps its resource names stable
-# and predictable ("cert-manager", "cert-manager-webhook", ...) across releases.
+# cert-manager (https://charts.jetstack.io).
 cert-manager:
   crds:
     # enabled+keep replace the deprecated installCRDs (defined as enabled=true plus keep=true).
@@ -67,7 +66,6 @@ cert-manager:
     # keep=false so uninstall removes the six cert-manager.io CRDs (charts/uninstall.md). That also
     # deletes every Certificate and Issuer CLUSTER-WIDE: keep=true on a shared cluster.
     keep: false
-  fullnameOverride: "cert-manager"
   prometheus:
     servicemonitor:
       enabled: true
@@ -78,6 +76,20 @@ google-cas-issuer:
   crds:
     enabled: true
     keep: false
+  app:
+    approval:
+      # Upstream binds the literal cert-manager/cert-manager ServiceAccount; googleCasIssuerApproval
+      # renders it instead.
+      enabled: false
+
+# cert-manager's approval of Google CAS CertificateRequests, rendered when this release installs
+# google-cas-issuer (templates/google-cas-issuer-approval.yaml).
+googleCasIssuerApproval:
+  # -- false when approval is managed elsewhere, e.g. by approver-policy.
+  enabled: true
+  # -- Subjects allowed to approve. Empty means cert-manager's own ServiceAccount, which requires this
+  # release to install cert-manager.
+  subjects: []
 
 # Percona Server for MongoDB operator (https://percona.github.io/percona-helm-charts/). Chart defaults
 # install the CRDs; the PerconaServerMongoDB CR itself stays in armonik-dependencies.
@@ -90,8 +102,9 @@ mongodb-operator:
 
 # kube-prometheus-stack (https://prometheus-community.github.io/helm-charts): the shared cluster
 # monitoring stack, one per cluster. Grafana stays per-release, in armonik-dependencies.
+# global.armonik.monitoring.prometheusUrl derives from its naming helpers; other releases state it, as
+# this chart's NOTES print it.
 kube-prometheus:
-  fullnameOverride: "prometheus"
   prometheus-node-exporter:
     # TODO: root filesystem mount disabled to avoid a Docker Desktop crash
     hostRootFsMount:

@@ -7,6 +7,7 @@ templates:
   - secrets/redis-users.yaml
   - secrets/conf-secrets.yaml
   - services/seq-ingestion.yaml
+  - configmaps/grafana-datasource-armonik.yaml
   - charts/dependencies/charts/fluent-bit/templates/configmap.yaml
   - NOTES.txt
 tests:
@@ -91,6 +92,42 @@ tests:
     asserts:
       - hasDocuments:
           count: 0
+
+  - it: Grafana datasource targets the Prometheus Service of the kube-prometheus-stack this release installs
+    template: configmaps/grafana-datasource-armonik.yaml
+    set:
+      operators:
+        kube-prometheus:
+          fullnameOverride: kps
+    asserts:
+      - matchRegex:
+          path: data["datasources.yaml"]
+          pattern: 'url: "http://kps-prometheus\.rel\.svc:9090"'
+
+  - it: a stated prometheusUrl replaces the derivation
+    template: configmaps/grafana-datasource-armonik.yaml
+    set:
+      global:
+        armonik:
+          monitoring:
+            prometheusUrl: http://prom.mon.svc:9090
+    asserts:
+      - matchRegex:
+          path: data["datasources.yaml"]
+          pattern: 'url: "http://prom\.mon\.svc:9090"'
+
+  - it: fails rather than guess the Prometheus of a kube-prometheus-stack installed by another release
+    template: configmaps/grafana-datasource-armonik.yaml
+    set:
+      global:
+        armonik:
+          operators:
+            prometheusOperator:
+              deploy: false
+              namespace: mon
+    asserts:
+      - failedTemplate:
+          errorPattern: "global.armonik.monitoring.prometheusUrl resolved empty"
 
   - it: warns that a second release in the namespace must rename mongodb-exporter's Secret
     template: NOTES.txt

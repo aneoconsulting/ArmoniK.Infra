@@ -16,6 +16,13 @@ These operators and their CRDs are cluster-scoped and install-once. Every Armoni
 consumes them by setting global.armonik.operators.<op>.available=true with deploy=false (the default
 for the plane charts), which is also what keeps their custom resources out of Helm hooks and makes
 those releases cleanly uninstallable.
+{{- if $ops.prometheusOperator.deploy }}
+
+Those releases cannot see this Prometheus, so they need its URL stated:
+
+     --set global.armonik.operators.prometheusOperator.namespace={{ $ops.prometheusOperator.namespace }} \
+     --set global.armonik.monitoring.prometheusUrl={{ include "armonik.monitoring.prometheusUrl" $ }}
+{{- end }}
 
 **********************************************************
 UNINSTALLING (full procedure and recovery steps: charts/uninstall.md)

@@ -164,6 +164,10 @@ tolerations:
 {{- with $partition.priorityClassName }}
 priorityClassName: {{ . | quote }}
 {{- end }}
+{{- with $partition.podSecurityContext }}
+securityContext:
+  {{- toYaml . | nindent 2 }}
+{{- end }}
 terminationGracePeriodSeconds: {{ $partition.terminationGracePeriodSeconds }}
 shareProcessNamespace: {{ $root.Values.shareProcessNamespace }}
 enableServiceLinks: true

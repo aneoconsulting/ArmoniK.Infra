@@ -34,7 +34,7 @@ tests:
       - matchRegex:
           path: spec.template.spec.containers[?(@.name == "worker")].image
           pattern: armonik_core_htcmock_test_worker
-  - it: uses tcp channel addresses when socketType is tcp (partitionCommon default)
+  - it: uses unix socket addresses by default (partitionCommon)
     template: deployment.yaml
     documentSelector:
       path: metadata.name
@@ -43,10 +43,22 @@ tests:
       - contains:
           path: spec.template.spec.containers[?(@.name == "agent")].env
           content:
+            name: ComputePlane__AgentChannel__SocketType
+            value: unixdomainsocket
+      - contains:
+          path: spec.template.spec.containers[?(@.name == "agent")].env
+          content:
             name: ComputePlane__AgentChannel__Address
-            value: http://localhost:6667
-  - it: uses unix socket addresses when socketType is not tcp
+            value: /cache/armonik_agent.sock
+      - contains:
+          path: spec.template.spec.containers[?(@.name == "worker")].env
+          content:
+            name: ComputePlane__WorkerChannel__Address
+            value: /cache/armonik_worker.sock
+  - it: uses tcp channel addresses when socketType is tcp
     template: deployment.yaml
+    set:
+      partitions.htcmock.socketType: tcp
     documentSelector:
       path: metadata.name
       value: "t-armonik-compute-plane-htcmock"
@@ -55,7 +67,26 @@ tests:
           path: spec.template.spec.containers[?(@.name == "agent")].env
           content:
             name: ComputePlane__AgentChannel__Address
-            value: /cache/armonik_agent.sock
+            value: http://localhost:6667
+  - it: runs agent and worker under one uid so each can connect to the other's socket
+    template: deployment.yaml
+    documentSelector:
+      path: metadata.name
+      value: "t-armonik-compute-plane-bench"
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext.runAsUser
+          value: 5000
+  - it: drops the pod securityContext when runAsUser is nulled
+    template: deployment.yaml
+    set:
+      partitionCommon.podSecurityContext.runAsUser: null
+    documentSelector:
+      path: metadata.name
+      value: "t-armonik-compute-plane-bench"
+    asserts:
+      - notExists:
+          path: spec.template.spec.securityContext
   - it: replaces the default KEDA trigger with the partition override
     template: scaledobject.yaml
     documentSelector:

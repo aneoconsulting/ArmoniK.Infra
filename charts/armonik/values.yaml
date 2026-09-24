@@ -103,7 +103,6 @@ compute-plane:
         image:
           repository: "dockerhubaneo/armonik_core_stream_test_worker"
     htcmock:
-      socketType: "tcp"
       worker:
         image:
           repository: "dockerhubaneo/armonik_core_htcmock_test_worker"

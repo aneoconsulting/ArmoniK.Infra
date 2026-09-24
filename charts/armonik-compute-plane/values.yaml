@@ -137,7 +137,9 @@ init:
   configmaps:
 
 partitionCommon:
-  socketType: "tcp"  # TODO: things break without this, need to look into it later
+  socketType: "unixdomainsocket"
+  podSecurityContext:
+    runAsUser: 5000
   labels:
     app: "armonik"
     service: "compute-plane"

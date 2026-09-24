@@ -54,6 +54,15 @@ global:
     # from the operators namespaces above, which a layered install has to state.
 
 
+# -- Chart name used in this chart's resource names and labels (armonik.name).
+nameOverride: ""
+# -- Name prefix of this chart's resources (armonik.fullname).
+fullnameOverride: ""
+# -- Namespace of the ArmoniK-owned resources. control-plane.namespaceOverride and
+# compute-plane.namespaceOverride must equal it (templates/namespace-guard.yaml); a dependency follows
+# only through its own namespace key, and those without one stay in the release namespace.
+namespaceOverride: ""
+
 ############################################
 ### ARMONIK APPLICATION CONFIGURATION #####
 ############################################

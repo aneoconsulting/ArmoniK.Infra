@@ -159,6 +159,30 @@ tests:
       - notExists:
           path: spec.ingress
 
+  - it: lets the MongoDB operator reach the MongoDB server only, cert-manager being reached through
+      the API server
+    template: templates/networkpolicies/mongodb.yaml
+    set:
+      networkPolicy:
+        enabled: true
+    documentSelector:
+      path: metadata.name
+      value: t-armonik-mongodb-operator
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            ports:
+              - protocol: TCP
+                port: 27017
+            to:
+              - namespaceSelector:
+                  matchLabels:
+                    kubernetes.io/metadata.name: default
+                podSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: percona-server-mongodb
+
   - it: renders nothing for mongodb-exporter when the dependency is disabled
     template: templates/networkpolicies/mongodb-exporter.yaml
     set:

@@ -30,6 +30,9 @@ spec:
         # The LB reads lb.yml (and the cluster certs) only at startup, so roll the pod whenever either changes
         checksum/config: {{ include (print $.Template.BasePath "/configmaps/load-balancer.yaml") . | sha256sum }}
         checksum/certs: {{ include (print $.Template.BasePath "/secrets/lb-cluster-certs.yaml") . | sha256sum }}
+        {{- with .Values.loadBalancer.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
       labels:
         app.kubernetes.io/component: load-balancer
         {{- include "armonik.labels" . | nindent 8 }}

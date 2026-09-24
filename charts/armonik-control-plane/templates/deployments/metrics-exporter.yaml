@@ -44,5 +44,9 @@ spec:
         {{- with .Values.metricsExporter.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
+      {{- with .Values.metricsExporter.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
     spec: {{- $podSpec | nindent 6 }}
 {{- end }}

@@ -17,6 +17,10 @@ metadata:
     app.kubernetes.io/component: init
     app.kubernetes.io/part-of: control-plane
     {{- include "armonik.labels" . | nindent 4 }}
+  {{- with .Values.init.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   backoffLimit: 5
   ttlSecondsAfterFinished: 1
@@ -36,6 +40,10 @@ spec:
         {{- with .Values.init.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
+      {{- with .Values.init.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       name: init
     spec: {{- $podSpec | nindent 6 }}
 {{- end }}

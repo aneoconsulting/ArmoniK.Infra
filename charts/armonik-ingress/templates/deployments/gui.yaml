@@ -12,7 +12,7 @@ metadata:
     {{- with .Values.gui.labels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
-  {{- with .Values.annotations}}
+  {{- with coalesce .Values.gui.annotations .Values.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
@@ -32,4 +32,8 @@ spec:
         {{- with .Values.gui.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
+      {{- with .Values.gui.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
     spec: {{- $podSpec | nindent 6 }}

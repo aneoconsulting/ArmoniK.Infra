@@ -62,6 +62,10 @@ metadata:
     {{- with $partition.labels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
+  {{- with $partition.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   replicas: {{ $partition.replicas }}
   selector:
@@ -85,7 +89,7 @@ spec:
         {{- with $partition.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
-      {{- with $partition.annotations}}
+      {{- with $partition.podAnnotations }}
       annotations:
         {{- toYaml . | nindent 8 }}
       {{- end }}

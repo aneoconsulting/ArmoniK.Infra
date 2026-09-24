@@ -6,6 +6,9 @@ metadata:
   labels:
     app.kubernetes.io/component: control-plane
     {{- include "armonik.labels" . | nindent 4 }}
+    {{- with .Values.service.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
   {{- with coalesce .Values.service.annotations .Values.annotations}}
   annotations:
   {{- range $key, $value := . }}

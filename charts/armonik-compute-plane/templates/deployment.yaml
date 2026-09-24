@@ -78,8 +78,11 @@ spec:
         app.kubernetes.io/part-of: compute-plane
         armonik.fr/partition: {{ $partitionName | quote }}
         armonik.fr/deployment: {{ include "armonik.conf.source" $ | quote }}
-        {{- include "armonik.selectorLabels" $ | nindent 8 }}
+        {{- include "armonik.labels" $ | nindent 8 }}
         {{- with $partition.labels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with $partition.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
       {{- with $partition.annotations}}

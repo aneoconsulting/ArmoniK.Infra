@@ -4,7 +4,7 @@ dependencies:
   version: 0.1.0
 - name: keda
   repository: https://kedacore.github.io/charts
-  version: 2.20.2
+  version: 2.21.0
 - name: external-secrets
   repository: https://charts.external-secrets.io
   version: 2.11.0
@@ -16,9 +16,9 @@ dependencies:
   version: 1.23.1
 - name: kube-prometheus-stack
   repository: https://prometheus-community.github.io/helm-charts
-  version: 91.5.0
+  version: 91.5.1
 - name: cert-manager-google-cas-issuer
   repository: https://charts.jetstack.io
   version: v0.13.0
-digest: sha256:109b197c4f4f428df4e160c4a2973e98865c4949741d7adcdc19eed57ab9c48e
-generated: "2026-09-23T15:55:36.967124425+02:00"
+digest: sha256:30501056f8ea8631dba3a9d91da4fa254d077e9aae3a336a56c4a58963cae694
+generated: "2026-09-24T11:47:33.505398798+02:00"

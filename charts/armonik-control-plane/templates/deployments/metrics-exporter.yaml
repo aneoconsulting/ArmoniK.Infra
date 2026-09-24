@@ -16,6 +16,9 @@ metadata:
   labels:
     app.kubernetes.io/component: metrics-exporter
     {{- include "armonik.labels" . | nindent 4 }}
+    {{- with .Values.metricsExporter.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
   {{- with coalesce .Values.metricsExporter.annotations .Values.annotations}}
   annotations:
   {{- range $key, $value := . }}
@@ -34,6 +37,12 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/component: metrics-exporter
-        {{- include "armonik.selectorLabels" . | nindent 8 }}
+        {{- include "armonik.labels" . | nindent 8 }}
+        {{- with .Values.metricsExporter.labels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.metricsExporter.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
     spec: {{- $podSpec | nindent 6 }}
 {{- end }}

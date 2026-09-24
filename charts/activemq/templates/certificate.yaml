@@ -22,6 +22,7 @@
       "group" $issuer.group
       "spec" (index $certManager $provider | default dict)
       "extraAnnotations" $extraAnnotations
+      "labels" (include "armonik.labels" .)
       "specValuesPath" "tls.certManager") }}
 {{- end }}
 ---
@@ -36,6 +37,8 @@ metadata:
     "helm.sh/hook": post-install,post-upgrade
     "helm.sh/hook-weight": "10"
   {{- end }}
+  labels:
+    {{- include "armonik.labels" . | nindent 4 }}
 spec:
   commonName: {{ include "armonik.fullname" . }}
   dnsNames:

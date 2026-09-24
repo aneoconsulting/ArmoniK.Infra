@@ -178,7 +178,7 @@ ports:
   {{- $port := index . 1 -}}
   {{- with $root.Subcharts.dependencies.Subcharts.seq -}}
     {{- $ns := include "armonik.netpol.namespaceSelector" . -}}
-    {{- $podSelector := dict "matchLabels" (dict "app" (include "armonik.name" .)) | toYaml -}}
+    {{- $podSelector := dict "matchLabels" (dict "app" (include "seq.name" .)) | toYaml -}}
     {{- list $ns $podSelector $port "to" | include "armonik.netpol.rule.peerOnPort" -}}
   {{- end -}}
 {{- end -}}
@@ -188,7 +188,7 @@ ports:
   Egress to Seq's ingest port (used by fluent-bit).
 */}}
 {{- define "armonik.netpol.rule.seq" -}}
-  {{- list . 5341 | include "armonik.netpol.rule.seqTo" -}}
+  {{- list . "ingestion" | include "armonik.netpol.rule.seqTo" -}}
 {{- end -}}
 
 
@@ -211,7 +211,7 @@ ports:
 {{- define "armonik.netpol.rule.ingressToGrafana" -}}
   {{- with .Subcharts.dependencies.Subcharts.grafana -}}
     {{- $ns := include "armonik.netpol.namespaceSelector" . -}}
-    {{- $podSelector := dict "matchLabels" (dict "app.kubernetes.io/name" "grafana") | toYaml -}}
+    {{- $podSelector := dict "matchLabels" (dict "app.kubernetes.io/name" (include "grafana.name" .)) | toYaml -}}
     {{- $port := .Values.service.targetPort | default 3000 -}}
     {{- list $ns $podSelector $port "to" | include "armonik.netpol.rule.peerOnPort" -}}
   {{- end -}}

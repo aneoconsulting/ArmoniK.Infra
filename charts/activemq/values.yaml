@@ -6,7 +6,7 @@ global:
 # -- Chart name used in resource names and labels.
 nameOverride: ""
 # -- Name prefix of every resource.
-fullnameOverride: activemq
+fullnameOverride: ""
 # -- Namespace of every resource, the release namespace when empty.
 namespaceOverride: ""
 

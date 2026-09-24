@@ -9,7 +9,7 @@
        storage/_redis.tpl already uses for the connection string, rather than hardcoding
        "<release>-redis": a hardcoded guess silently diverges from nameOverride/fullnameOverride. */}}
 {{- $svcName := include "valkey.fullname" .Subcharts.dependencies.Subcharts.redis }}
-{{- $ns := include "armonik.namespace" . }}
+{{- $ns := include "armonik.redis.namespace" .Subcharts.dependencies.Subcharts.redis }}
 {{- /* Same three-tier fallback as activemq/armonik-ingress: local existingIssuer, else the shared
        issuer, else a local Issuer this chart creates itself, backed by
        dependencies.redis.tls.certManager.provider (default selfSigned, same as today) - redis is a

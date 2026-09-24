@@ -70,3 +70,15 @@ tests:
         documentSelector:
           path: kind
           value: Certificate
+      - equal:
+          path: metadata.labels["app.kubernetes.io/instance"]
+          value: RELEASE-NAME
+        documentSelector:
+          path: kind
+          value: Issuer
+      - equal:
+          path: metadata.labels["app.kubernetes.io/instance"]
+          value: RELEASE-NAME
+        documentSelector:
+          path: kind
+          value: Certificate

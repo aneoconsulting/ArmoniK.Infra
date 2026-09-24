@@ -10,6 +10,9 @@ metadata:
     app.kubernetes.io/component: metrics-exporter
     armonik.fr/deployment: {{ include "armonik.conf.source" . | quote }}
     {{- include "armonik.labels" . | nindent 4 }}
+    {{- with $svc.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
   {{- with coalesce $svc.annotations $me.annotations .Values.annotations}}
   annotations:
   {{- range $key, $value := . }}

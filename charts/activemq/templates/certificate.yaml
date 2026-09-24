@@ -1,11 +1,12 @@
 {{- $tls := .Values.tls | default dict }}
 {{- $certManager := $tls.certManager | default dict }}
 {{- if and $tls.enabled (eq $tls.type "cert-manager") }}
+{{- $ops := include "armonik.operators" $ | fromYaml }}
 {{- $issuerName := printf "%s-issuer" (include "armonik.fullname" .) }}
 {{- $provider := $certManager.provider | default "selfSigned" }}
 {{- $localRequested := hasKey $certManager "provider" }}
 {{- $issuer := list $ $certManager.existingIssuer $issuerName $provider $localRequested | include "armonik.certManager.getIssuer" | fromYaml }}
-{{- if and (not (dig "armonik" "operators" "certManager" "available" true .Values.global)) $issuer.needsLocalIssuer }}
+{{- if and (not $ops.certManager.available) $issuer.needsLocalIssuer }}
 {{- fail "activemq TLS via cert-manager requires it: set global.armonik.operators.certManager.available=true, set tls.certManager.existingIssuer.enabled=true, set global.armonik.certManager.issuer.enabled=true, or use a tls.type other than cert-manager." }}
 {{- end }}
 {{- if $issuer.needsLocalIssuer }}
@@ -22,6 +23,7 @@
       "group" $issuer.group
       "spec" (index $certManager $provider | default dict)
       "extraAnnotations" $extraAnnotations
+      "labels" (include "armonik.labels" .)
       "specValuesPath" "tls.certManager") }}
 {{- end }}
 ---
@@ -30,12 +32,22 @@ kind: Certificate
 metadata:
   name: {{ include "armonik.fullname" . }}
   namespace: {{ include "armonik.namespace" . | quote }}
-  {{- if dig "armonik" "operators" "certManager" "deploy" false .Values.global }}
-  {{- /* Hooked only when this release installs the CRDs; otherwise a plain resource. */}}
+  {{- if or $ops.certManager.deploy $certManager.annotations }}
   annotations:
+    {{- if $ops.certManager.deploy }}
+    {{- /* Hooked only when this release installs the CRDs; otherwise a plain resource. */}}
     "helm.sh/hook": post-install,post-upgrade
     "helm.sh/hook-weight": "10"
+    {{- end }}
+    {{- with $certManager.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
   {{- end }}
+  labels:
+    {{- include "armonik.labels" . | nindent 4 }}
+    {{- with $certManager.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
 spec:
   commonName: {{ include "armonik.fullname" . }}
   dnsNames:

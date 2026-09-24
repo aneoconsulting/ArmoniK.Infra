@@ -6,6 +6,9 @@ metadata:
   labels:
     app.kubernetes.io/component: gui
     {{- include "armonik.labels" . | nindent 4 }}
+    {{- with .Values.gui.service.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
   {{- with coalesce .Values.gui.service.annotations .Values.annotations}}
   annotations:
     {{- toYaml . | nindent 4 }}

@@ -9,6 +9,9 @@ metadata:
   labels:
     app.kubernetes.io/component: ingress
     {{- include "armonik.labels" . | nindent 4 }}
+    {{- with .Values.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
   {{- with .Values.annotations}}
   annotations:
     {{- toYaml . | nindent 4 }}
@@ -24,7 +27,16 @@ spec:
       annotations:
         # Roll the pod when the nginx conf changes so config updates
         checksum/config: {{ include (print $.Template.BasePath "/armonik-nginx-conf.yaml") . | sha256sum }}
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
       labels:
         app.kubernetes.io/component: ingress
-        {{- include "armonik.selectorLabels" . | nindent 8 }}
+        {{- include "armonik.labels" . | nindent 8 }}
+        {{- with .Values.labels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
     spec: {{- $podSpec | nindent 6 }}

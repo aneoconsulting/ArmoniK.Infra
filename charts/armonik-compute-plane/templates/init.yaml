@@ -32,7 +32,14 @@ spec:
         job-name: {{ include "armonik.fullname" . | printf "%s-init" | trunc 63 | trimSuffix "-" | quote }}
         app.kubernetes.io/component: init
         app.kubernetes.io/part-of: compute-plane
-        {{- include "armonik.selectorLabels" . | nindent 8 }}
+        {{- include "armonik.labels" . | nindent 8 }}
+        {{- with .Values.init.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.init.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       name: init
     spec: {{- $podSpec | nindent 6 }}
 {{- end }}

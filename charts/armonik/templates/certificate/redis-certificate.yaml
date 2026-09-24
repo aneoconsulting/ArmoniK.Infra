@@ -34,6 +34,7 @@
       "kind" $issuer.kind
       "group" $issuer.group
       "spec" (index $certManager $provider | default dict)
+      "labels" (include "armonik.labels" .)
       "specValuesPath" "dependencies.redis.tls.certManager") }}
 ---
 {{- end }}

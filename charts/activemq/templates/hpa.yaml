@@ -6,10 +6,10 @@ metadata:
   namespace: {{ include "armonik.namespace" . | quote }}
   labels:
     {{- include "armonik.labels" . | nindent 4 }}
-  {{- with .Values.service.labels -}}
+  {{- with .Values.HorizontalPodAutoscaler.labels }}
     {{- toYaml . | nindent 4 }}
   {{- end }}
-  {{- with .Values.service.annotations }}
+  {{- with .Values.HorizontalPodAutoscaler.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}

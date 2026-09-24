@@ -26,10 +26,10 @@ spec:
   template:
     metadata:
       labels:
-        {{- include "armonik.selectorLabels" . | nindent 8 }}
-      {{- with .Values.podLabels }}
+        {{- include "armonik.labels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
         {{- toYaml . | nindent 8 }}
-      {{- end }}
+        {{- end }}
       {{- with .Values.podAnnotations }}
       annotations:
         {{- toYaml . | nindent 8 }}

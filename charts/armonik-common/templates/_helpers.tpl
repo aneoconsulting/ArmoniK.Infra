@@ -38,14 +38,15 @@ Create chart name and version as used by the chart label.
 {{- end }}
 
 {{/*
-Returns the name of the service account to use. 
-When create=false, this must instead name an existing ServiceAccount to use.
+ServiceAccount name: serviceAccount.name, tpl-rendered so a chart can default it to a release-derived
+name, else armonik.fullname. Required when create=false.
 */}}
 {{- define "armonik.serviceAccountName" -}}
+  {{- $name := tpl (.Values.serviceAccount.name | default "") . -}}
   {{- if .Values.serviceAccount.create }}
-    {{- default (include "armonik.fullname" .) .Values.serviceAccount.name }}
+    {{- $name | default (include "armonik.fullname" .) }}
   {{- else }}
-    {{- .Values.serviceAccount.name | required "serviceAccount.name is required when serviceAccount.create is false: set it to the name of the existing ServiceAccount to use" }}
+    {{- $name | required "serviceAccount.name is required when serviceAccount.create is false: set it to the name of the existing ServiceAccount to use" }}
   {{- end }}
 {{- end }}
 
@@ -78,8 +79,8 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 Selector labels
 */}}
 {{- define "armonik.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "armonik.name" . }}
-app.kubernetes.io/instance: {{ .Release.Name }}
+app.kubernetes.io/name: {{ include "armonik.name" . | quote }}
+app.kubernetes.io/instance: {{ .Release.Name | quote }}
 {{- end }}
 
 {{/*

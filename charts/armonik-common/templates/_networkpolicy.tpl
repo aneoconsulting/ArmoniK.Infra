@@ -131,10 +131,10 @@ ports:
 
 
 {{/*
-  Ingress from the cluster's shared Prometheus (global.armonik.monitoring.prometheusUrl), on the
-  given port. Resolves the same whether the calling chart is standalone or installed through the
-  umbrella, since the URL is a global value. No rule when the operator is unavailable or its
-  namespace is unstated.
+  Ingress from the shared Prometheus on the given port, from the namespace of
+  global.armonik.monitoring.prometheusUrl, else of the operator where that URL does not derive (plane
+  charts): being scraped must not require it. No rule when the operator is unavailable or its
+  namespace unstated, nor for an out-of-cluster URL.
 */}}
 {{- define "armonik.netpol.rule.prometheusIngress" -}}
 {{- $ctx := index . 0 -}}
@@ -142,7 +142,9 @@ ports:
 {{- $podSelectorOverride := index . 2 -}}
 {{- $ops := include "armonik.operators" $ctx | fromYaml -}}
 {{- if and $ops.prometheusOperator.available $ops.prometheusOperator.namespace }}
-{{- $ns := include "armonik.monitoring.prometheusUrl" $ctx | include "armonik.netpol.namespaceFromServiceUrl" -}}
+{{- $raw := list $ctx.Values "global" "armonik" "monitoring" "prometheusUrl" | include "armonik.utils.index" -}}
+{{- $url := tpl $raw $ctx -}}
+{{- $ns := $url | empty | ternary $ops.prometheusOperator.namespace (include "armonik.netpol.namespaceFromServiceUrl" $url) -}}
 {{- if $ns }}
 from:
   - namespaceSelector:

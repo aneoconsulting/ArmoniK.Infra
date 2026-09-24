@@ -1,0 +1,48 @@
+{{- /* google-cas-issuer's approval RBAC, whose chart only takes literal subjects: bound here to
+       cert-manager's ServiceAccount as its own helpers name it. */ -}}
+{{- $approval := .Values.googleCasIssuerApproval | default dict -}}
+{{- with index .Subcharts "google-cas-issuer" -}}
+{{- if $approval.enabled -}}
+{{- $subjects := $approval.subjects | default list -}}
+{{- if not $subjects -}}
+  {{- with index $.Subcharts "cert-manager" -}}
+    {{- $subjects = list (dict
+          "kind" "ServiceAccount"
+          "name" (include "cert-manager.serviceAccountName" . | trim)
+          "namespace" (include "cert-manager.namespace" . | trim)) -}}
+  {{- else -}}
+    {{- fail "googleCasIssuerApproval.subjects is required when this release installs google-cas-issuer but not cert-manager: set it to the ServiceAccount of the external cert-manager controller, or set googleCasIssuerApproval.enabled=false if approval is managed elsewhere." -}}
+  {{- end -}}
+{{- end -}}
+{{- $name := include "cert-manager-google-cas-issuer.name" . | printf "%s:approval" }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ $name | quote }}
+  labels:
+    {{- include "armonik.labels" $ | nindent 4 }}
+rules:
+  - apiGroups:
+      - cert-manager.io
+    resourceNames:
+      - googlecasclusterissuers.cas-issuer.jetstack.io/*
+      - googlecasissuers.cas-issuer.jetstack.io/*
+    resources:
+      - signers
+    verbs:
+      - approve
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ $name | quote }}
+  labels:
+    {{- include "armonik.labels" $ | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ $name | quote }}
+subjects:
+  {{- toYaml $subjects | nindent 2 }}
+{{- end }}
+{{- end }}

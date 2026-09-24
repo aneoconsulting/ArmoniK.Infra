@@ -14,6 +14,7 @@ BEGIN {
   owned["compute-plane"] = 1
   owned["ingress"] = 1
   owned["dependencies"] = 1
+  owned["operators"] = 1
   owned["activemq"] = 1
   owned["armonik-common"] = 1
   bad = 0

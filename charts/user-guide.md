@@ -1,6 +1,6 @@
 # ArmoniK Helm Charts — User Guide
 
-A practical guide to deploying ArmoniK with the ArmoniK Helm charts.
+A practical guide to deploying ArmoniK with the ArmoniK Helm charts. Examples below are for illustration only.
 
 ## Table of contents
 

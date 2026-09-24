@@ -343,6 +343,12 @@ helm install my-cp $REPO/armonik-control-plane --version $VERSION -n armonik \
   --set conf.source=armonik
 ```
 
+**Leave `control-plane.enabled: true` on the base release.** `my-cp` is a second, independent
+control plane, reachable only by clients that call it directly - the base's ingress keeps using
+its own. Setting the base's `control-plane.enabled=false` does not redirect the ingress to `my-cp`;
+it only breaks the base's control-plane URL. 
+To route the ingress to `my-cp` instead, set `ingress.control_plane_url` to `my-cp`'s Service URL.
+
 ---
 
 ## 6. TLS: enable, disable, custom issuer
@@ -460,7 +466,7 @@ Full details: [`cert-manager-issuer.md`](cert-manager-issuer.md).
 | I want to… | Values / command |
 | --- | --- |
 | Show a chart's values | `helm show values $REPO/<chart> --version $VERSION` |
-| Mirror images to a private registry | `global.imageRegistry=my-registry.example.com/mirror`
+| Mirror images to a private registry | `global.imageRegistry=my-registry.example.com/mirror` |
 | Install the operators once | `helm install armonik-operators $REPO/armonik-operators --version $VERSION -n operators` |
 | Consume external operators | `global.armonik.operators.<op>.deploy=false` + `namespace=operators` |
 | Disable a component | `<component>.enabled=false` (e.g. `ingress.enabled=false`) |

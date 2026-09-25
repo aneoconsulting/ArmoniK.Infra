@@ -85,6 +85,20 @@ tolerations: []
 annotations: {}
 affinity: {}
 priorityClassName: ""
+# -- Pod securityContext, also the metrics-exporter and init default. Empty: the images already
+# run as a numeric non-root uid, which runAsNonRoot can verify.
+podSecurityContext: {}
+# -- Container securityContext, also the metrics-exporter and init default.
+securityContext:
+  capabilities:
+    drop:
+      - ALL
+  privileged: false
+  runAsNonRoot: true
+  readOnlyRootFilesystem: false
+  allowPrivilegeEscalation: false
+  seccompProfile:
+    type: RuntimeDefault
 
 # -- Extra env for the control-plane container. Shared vars go in conf.env.
 extraEnv: []
@@ -172,6 +186,10 @@ metricsExporter:
   annotations:
   affinity:
   priorityClassName:
+  # -- Falls back to the chart-level podSecurityContext.
+  podSecurityContext:
+  # -- Falls back to the chart-level securityContext.
+  securityContext:
   livenessProbe:
     httpGet:
       path: /liveness
@@ -241,6 +259,10 @@ init:
   annotations:
   affinity:
   priorityClassName:
+  # -- Falls back to the chart-level podSecurityContext.
+  podSecurityContext:
+  # -- Falls back to the chart-level securityContext.
+  securityContext:
   # -- Extra env for the init container. Shared vars go in conf.env.
   extraEnv: []
   # -- Extra envFrom for the init container.

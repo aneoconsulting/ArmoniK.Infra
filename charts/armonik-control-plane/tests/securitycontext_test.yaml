@@ -1,0 +1,78 @@
+suite: securityContext on the control-plane, metrics-exporter and init workloads
+templates:
+  - deployments/control-plane.yaml
+  - deployments/metrics-exporter.yaml
+  - jobs/init.yaml
+set:
+  init.enabled: true
+tests:
+  - it: hardens every container by default
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].securityContext
+          value:
+            capabilities:
+              drop:
+                - ALL
+            privileged: false
+            runAsNonRoot: true
+            readOnlyRootFilesystem: false
+            allowPrivilegeEscalation: false
+            seccompProfile:
+              type: RuntimeDefault
+  - it: renders no pod securityContext by default
+    asserts:
+      - notExists:
+          path: spec.template.spec.securityContext
+  - it: falls back to the chart-level podSecurityContext
+    set:
+      podSecurityContext:
+        fsGroup: 2000
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext.fsGroup
+          value: 2000
+  - it: lets the metrics-exporter and init override the chart-level values
+    template: deployments/metrics-exporter.yaml
+    set:
+      metricsExporter.podSecurityContext:
+        runAsUser: 1000
+      metricsExporter.securityContext:
+        runAsNonRoot: false
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext.runAsUser
+          value: 1000
+      - equal:
+          path: spec.template.spec.containers[0].securityContext
+          value:
+            runAsNonRoot: false
+  - it: overrides the init securityContext independently
+    template: jobs/init.yaml
+    set:
+      init.securityContext:
+        runAsNonRoot: false
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].securityContext
+          value:
+            runAsNonRoot: false
+  - it: drops every container securityContext when the chart-level one is nulled
+    set:
+      securityContext: null
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].securityContext
+  - it: lets containerPatch override a single field
+    template: deployments/control-plane.yaml
+    set:
+      containerPatch:
+        securityContext:
+          readOnlyRootFilesystem: true
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.readOnlyRootFilesystem
+          value: true
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.runAsNonRoot
+          value: true

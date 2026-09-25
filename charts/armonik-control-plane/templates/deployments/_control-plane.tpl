@@ -34,6 +34,10 @@ livenessProbe:
 startupProbe:
   {{- toYaml . | nindent 2 }}
 {{- end }}
+{{- with $v.securityContext }}
+securityContext:
+  {{- toYaml . | nindent 2 }}
+{{- end }}
 volumeMounts:
   {{- include "armonik.conf.generateVolumeMounts" .conf | nindent 2 }}
   {{- with $v.extraVolumeMounts }}
@@ -81,6 +85,10 @@ tolerations:
 {{- end }}
 {{- with $v.priorityClassName }}
 priorityClassName: {{ . | quote }}
+{{- end }}
+{{- with $v.podSecurityContext }}
+securityContext:
+  {{- toYaml . | nindent 2 }}
 {{- end }}
 enableServiceLinks: true
 {{- end -}}

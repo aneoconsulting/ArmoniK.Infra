@@ -1,5 +1,5 @@
 {{/* Pod-template fragments: armonik.utils.patch parses what it patches, so each is a define.
-     Scheduling and sizing coalesce over the chart-level values; patches and extras do not. */}}
+     Scheduling, sizing and securityContexts coalesce over the chart-level values; patches and extras do not. */}}
 
 {{/* Metrics-exporter container; sizing and probes fall back to the chart-level values. */}}
 {{- define "armonik.control.metrics.container" -}}
@@ -34,6 +34,10 @@ livenessProbe:
 {{- end }}
 {{- with coalesce $me.startupProbe $v.startupProbe }}
 startupProbe:
+  {{- toYaml . | nindent 2 }}
+{{- end }}
+{{- with coalesce $me.securityContext $v.securityContext }}
+securityContext:
   {{- toYaml . | nindent 2 }}
 {{- end }}
 volumeMounts:
@@ -84,6 +88,10 @@ tolerations:
 {{- end }}
 {{- with coalesce $me.priorityClassName $v.priorityClassName }}
 priorityClassName: {{ . | quote }}
+{{- end }}
+{{- with coalesce $me.podSecurityContext $v.podSecurityContext }}
+securityContext:
+  {{- toYaml . | nindent 2 }}
 {{- end }}
 enableServiceLinks: true
 dnsPolicy: ClusterFirst

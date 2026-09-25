@@ -1,0 +1,20 @@
+# Shared file storage: a hostPath source declared once in partitionCommon, mounted into the worker
+# of every partition; one partition takes it read-write.
+partitionCommon:
+  sharedStorage:
+    enabled: true
+    volume:
+      hostPath:
+        path: /srv/armonik/data
+        type: Directory
+partitions:
+  default:
+    worker:
+      image:
+        repository: dockerhubaneo/armonik-dynamic-dotnet-worker
+  writer:
+    sharedStorage:
+      readOnly: false
+    worker:
+      image:
+        repository: dockerhubaneo/armonik-dynamic-dotnet-worker

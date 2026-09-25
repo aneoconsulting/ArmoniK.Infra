@@ -49,6 +49,37 @@ env:
 {{- define "armonik.compute.worker.confHelper" -}}
 {{- $partitionName := index . 0 -}}
 {{- $partition := index . 1 -}}
+{{- with list $partitionName $partition | include "armonik.compute.sharedStorage" | fromYaml }}
+env:
+  FileStorageType: FS
+  target_data_path: {{ .mountPath | quote }}
+{{- end }}
+{{- end -}}
+
+{{/*
+A partition's validated sharedStorage, empty when disabled. Fails on a volume that is not exactly one
+source: the merge over partitionCommon unions the keys, so two places naming different sources yield
+an invalid volume rather than an override.
+
+# Usage
+{{- with list $partitionName $partition | include "armonik.compute.sharedStorage" | fromYaml }}
+*/}}
+{{- define "armonik.compute.sharedStorage" -}}
+  {{- $partitionName := index . 0 -}}
+  {{- $shared := (index . 1).sharedStorage | default dict -}}
+  {{- if $shared.enabled -}}
+    {{- $volume := $shared.volume | default dict -}}
+    {{- if hasKey $volume "name" -}}
+      {{- printf "partitions.%s.sharedStorage.volume.name: the chart names the volume shared-volume, drop the key." $partitionName | fail -}}
+    {{- end -}}
+    {{- if ne (len $volume) 1 -}}
+      {{- printf "partitions.%s.sharedStorage.volume must hold exactly one volume source, got [%s]." $partitionName (keys $volume | sortAlpha | join ", ") | fail -}}
+    {{- end -}}
+    {{- if $shared.mountPath | empty -}}
+      {{- printf "partitions.%s.sharedStorage.mountPath is required." $partitionName | fail -}}
+    {{- end -}}
+    {{- $shared | toYaml -}}
+  {{- end -}}
 {{- end -}}
 
 

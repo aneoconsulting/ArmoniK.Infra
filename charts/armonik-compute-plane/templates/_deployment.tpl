@@ -98,6 +98,11 @@ volumeMounts:
   - name: cache-volume
     mountPath: /cache
     mountPropagation: None
+  {{- with list .name .partition | include "armonik.compute.sharedStorage" | fromYaml }}
+  - name: shared-volume
+    mountPath: {{ .mountPath | quote }}
+    readOnly: {{ ne .readOnly false }}
+  {{- end }}
   {{- with $worker.extraVolumeMounts }}
   {{- toYaml . | nindent 2 }}
   {{- end }}
@@ -213,6 +218,10 @@ volumes:
     hostPath:
       path: /var/log
       type: ""
+  {{- end }}
+  {{- with list .name $partition | include "armonik.compute.sharedStorage" | fromYaml }}
+  - name: shared-volume
+    {{- toYaml .volume | nindent 4 }}
   {{- end }}
   {{- with $partition.extraVolumes }}
   {{- toYaml . | nindent 2 }}

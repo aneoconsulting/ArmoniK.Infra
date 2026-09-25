@@ -56,7 +56,7 @@ unknowable there without lookup.
 */}}
 {{- define "armonik.monitoring.prometheusUrl.default" -}}
   {{- $kps := index .Subcharts "kube-prometheus" -}}
-  {{- with index .Subcharts "operators" -}}
+  {{- with .Subcharts.operators -}}
     {{- $kps = index .Subcharts "kube-prometheus" | default $kps -}}
   {{- end -}}
   {{- with $kps -}}

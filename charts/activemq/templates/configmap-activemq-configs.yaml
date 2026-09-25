@@ -1,8 +1,7 @@
-{{- if .Values.extraVolumes -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "armonik.fullname" . }}-configs
+  name: {{ include "activemq.configsName" . | quote }}
   namespace: {{ include "armonik.namespace" . | quote }}
   labels:
     {{- include "armonik.labels" . | nindent 4 }}
@@ -253,4 +252,3 @@ data:
     appender.auditlog.policies.size.size=1MB
     appender.auditlog.strategy.type=DefaultRolloverStrategy
     appender.auditlog.strategy.max=5
-{{- end }}

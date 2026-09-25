@@ -102,46 +102,20 @@ resources:
   #   cpu:
   #   memory:
 
-extraVolumeMounts:
+# -- Mounts added after the chart's own (activemq.xml, log4j2.properties, jolokia-access.xml).
+extraVolumeMounts: []
   # - mountPath: /credentials/
   #   mountPropagation: None
   #   name: activemq-storage-secret-volume
   #   readOnly: true
-  # Single-file overrides: mounting the whole conf/ directory would hide the rest of
-  # the image's own conf/ tree (jetty-spring.xml, conf/jetty/*.xml, login.config,
-  # users.properties, ...), which this ActiveMQ version still needs to start.
-  - mountPath: /opt/apache-activemq/conf/activemq.xml
-    subPath: activemq.xml
-    mountPropagation: None
-    name: activemq-conf-xml
-    readOnly: true
-  - mountPath: /opt/apache-activemq/conf/log4j2.properties
-    subPath: log4j2.properties
-    mountPropagation: None
-    name: activemq-conf-xml
-    readOnly: true
-  - mountPath: /opt/apache-activemq/conf/jolokia-access.xml
-    subPath: jolokia-access.xml
-    mountPropagation: None
-    name: activemq-jolokia-xml
-    readOnly: true
 
-extraVolumes:
+# -- Volumes added after the chart's own ConfigMaps.
+extraVolumes: []
   # - name: activemq-tls-volume
   #   secret:
   #     defaultMode: 420
   #     optional: false
-  #     secretName: activemq   # cert Secret from certificate.yaml (when tls.type=cert-manager)
-  - configMap:
-      defaultMode: 420
-      name: activemq-configs
-      optional: false
-    name: activemq-conf-xml
-  - configMap:
-      defaultMode: 420
-      name: activemq-jolokia-configs
-      optional: false
-    name: activemq-jolokia-xml
+  #     secretName: <fullname>   # cert Secret from certificate.yaml (when tls.type=cert-manager)
 
 nodeSelector: {}
 

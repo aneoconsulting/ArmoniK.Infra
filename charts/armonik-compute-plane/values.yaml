@@ -183,11 +183,13 @@ partitionCommon:
     securityContext:
       capabilities:
         drop:
-          - SYS_PTRACE
+          - ALL
       privileged: false
-      runAsNonRoot: false
+      runAsNonRoot: true
       readOnlyRootFilesystem: false
-      allowPrivilegeEscalation: true
+      allowPrivilegeEscalation: false
+      seccompProfile:
+        type: RuntimeDefault
     enableServiceLinks: true
     messageBatchSize: 1
     graceDelay: "00:00:15"
@@ -265,6 +267,18 @@ partitionCommon:
     requests:
       cpu: "500m"
       memory: "512Mi"
+    # -- Worker container securityContext, same hardening as the agent's. The uid shared with the
+    # agent is podSecurityContext's; runAsNonRoot fails a root image if runAsUser is nulled.
+    securityContext:
+      capabilities:
+        drop:
+          - ALL
+      privileged: false
+      runAsNonRoot: true
+      readOnlyRootFilesystem: false
+      allowPrivilegeEscalation: false
+      seccompProfile:
+        type: RuntimeDefault
     checkRetries: 10
     checkDelay: "00:00:10"
     # On top of partitionCommon: worker layer only. Never core, so user code stays credential-free.

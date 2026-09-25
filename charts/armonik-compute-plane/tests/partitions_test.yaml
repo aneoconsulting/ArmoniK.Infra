@@ -34,7 +34,7 @@ tests:
       - matchRegex:
           path: spec.template.spec.containers[?(@.name == "worker")].image
           pattern: armonik_core_htcmock_test_worker
-  - it: uses tcp channel addresses when socketType is tcp (partitionCommon default)
+  - it: uses unix socket addresses by default (partitionCommon)
     template: deployment.yaml
     documentSelector:
       path: metadata.name
@@ -43,9 +43,44 @@ tests:
       - contains:
           path: spec.template.spec.containers[?(@.name == "agent")].env
           content:
+            name: ComputePlane__AgentChannel__SocketType
+            value: unixdomainsocket
+      - contains:
+          path: spec.template.spec.containers[?(@.name == "agent")].env
+          content:
+            name: ComputePlane__WorkerChannel__SocketType
+            value: unixdomainsocket
+      - contains:
+          path: spec.template.spec.containers[?(@.name == "agent")].env
+          content:
             name: ComputePlane__AgentChannel__Address
-            value: http://localhost:6667
-  - it: uses unix socket addresses when socketType is not tcp
+            value: /cache/armonik_agent.sock
+      - contains:
+          path: spec.template.spec.containers[?(@.name == "agent")].env
+          content:
+            name: ComputePlane__WorkerChannel__Address
+            value: /cache/armonik_worker.sock
+      - contains:
+          path: spec.template.spec.containers[?(@.name == "worker")].env
+          content:
+            name: ComputePlane__AgentChannel__SocketType
+            value: unixdomainsocket
+      - contains:
+          path: spec.template.spec.containers[?(@.name == "worker")].env
+          content:
+            name: ComputePlane__WorkerChannel__SocketType
+            value: unixdomainsocket
+      - contains:
+          path: spec.template.spec.containers[?(@.name == "worker")].env
+          content:
+            name: ComputePlane__AgentChannel__Address
+            value: /cache/armonik_agent.sock
+      - contains:
+          path: spec.template.spec.containers[?(@.name == "worker")].env
+          content:
+            name: ComputePlane__WorkerChannel__Address
+            value: /cache/armonik_worker.sock
+  - it: uses tcp channel addresses when socketType is tcp
     template: deployment.yaml
     documentSelector:
       path: metadata.name
@@ -54,8 +89,96 @@ tests:
       - contains:
           path: spec.template.spec.containers[?(@.name == "agent")].env
           content:
+            name: ComputePlane__AgentChannel__SocketType
+            value: tcp
+      - contains:
+          path: spec.template.spec.containers[?(@.name == "agent")].env
+          content:
+            name: ComputePlane__WorkerChannel__SocketType
+            value: tcp
+      - contains:
+          path: spec.template.spec.containers[?(@.name == "agent")].env
+          content:
             name: ComputePlane__AgentChannel__Address
-            value: /cache/armonik_agent.sock
+            value: http://localhost:6667
+      - contains:
+          path: spec.template.spec.containers[?(@.name == "agent")].env
+          content:
+            name: ComputePlane__WorkerChannel__Address
+            value: http://localhost:6666
+      - contains:
+          path: spec.template.spec.containers[?(@.name == "worker")].env
+          content:
+            name: ComputePlane__AgentChannel__SocketType
+            value: tcp
+      - contains:
+          path: spec.template.spec.containers[?(@.name == "worker")].env
+          content:
+            name: ComputePlane__WorkerChannel__SocketType
+            value: tcp
+      - contains:
+          path: spec.template.spec.containers[?(@.name == "worker")].env
+          content:
+            name: ComputePlane__AgentChannel__Address
+            value: http://localhost:6667
+      - contains:
+          path: spec.template.spec.containers[?(@.name == "worker")].env
+          content:
+            name: ComputePlane__WorkerChannel__Address
+            value: http://localhost:6666
+  - it: runs agent and worker under one uid so each can connect to the other's socket
+    template: deployment.yaml
+    documentSelector:
+      path: metadata.name
+      value: "t-armonik-compute-plane-bench"
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext.runAsUser
+          value: 5000
+  - it: drops the pod securityContext when runAsUser is nulled
+    template: deployment.yaml
+    set:
+      partitionCommon.podSecurityContext.runAsUser: null
+    documentSelector:
+      path: metadata.name
+      value: "t-armonik-compute-plane-bench"
+    asserts:
+      - notExists:
+          path: spec.template.spec.securityContext
+  - it: hardens agent and worker containers by default
+    template: deployment.yaml
+    documentSelector:
+      path: metadata.name
+      value: "t-armonik-compute-plane-bench"
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[?(@.name == "agent")].securityContext
+          value: &hardened
+            capabilities:
+              drop:
+                - ALL
+            privileged: false
+            runAsNonRoot: true
+            readOnlyRootFilesystem: false
+            allowPrivilegeEscalation: false
+            seccompProfile:
+              type: RuntimeDefault
+      - equal:
+          path: spec.template.spec.containers[?(@.name == "worker")].securityContext
+          value: *hardened
+  - it: drops the agent and worker securityContexts when nulled
+    template: deployment.yaml
+    set:
+      partitionCommon.agent.securityContext: null
+      partitionCommon.worker.securityContext: null
+    documentSelector:
+      path: metadata.name
+      value: "t-armonik-compute-plane-bench"
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[?(@.name == "agent")].securityContext
+      - notExists:
+          path: spec.template.spec.containers[?(@.name == "worker")].securityContext
   - it: replaces the default KEDA trigger with the partition override
     template: scaledobject.yaml
     documentSelector:

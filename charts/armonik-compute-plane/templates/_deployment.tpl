@@ -16,8 +16,10 @@ imagePullPolicy: {{ .agentImage.pullPolicy | quote }}
 resources:
   {{- toYaml . | nindent 2 }}
 {{- end }}
+{{- with $agent.securityContext }}
 securityContext:
-  {{- toYaml $agent.securityContext | nindent 2 }}
+  {{- toYaml . | nindent 2 }}
+{{- end }}
 ports:
   - name: {{ $agent.ports.name | quote }}
     containerPort: {{ $agent.ports.containerPort }}
@@ -63,6 +65,10 @@ image: {{ .workerImage.fullname | quote }}
 imagePullPolicy: {{ .workerImage.pullPolicy | quote }}
 {{- with $worker.resources }}
 resources:
+  {{- toYaml . | nindent 2 }}
+{{- end }}
+{{- with $worker.securityContext }}
+securityContext:
   {{- toYaml . | nindent 2 }}
 {{- end }}
 {{- with $worker.livenessProbe }}
@@ -163,6 +169,10 @@ tolerations:
 {{- end }}
 {{- with $partition.priorityClassName }}
 priorityClassName: {{ . | quote }}
+{{- end }}
+{{- with $partition.podSecurityContext }}
+securityContext:
+  {{- toYaml . | nindent 2 }}
 {{- end }}
 terminationGracePeriodSeconds: {{ $partition.terminationGracePeriodSeconds }}
 shareProcessNamespace: {{ $root.Values.shareProcessNamespace }}

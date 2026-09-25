@@ -1,5 +1,5 @@
 {{/* Pod-template fragments: armonik.utils.patch parses what it patches, so each is a define.
-     Scheduling and sizing coalesce over the chart-level values; patches and extras do not.
+     Scheduling, sizing and securityContexts coalesce over the chart-level values; patches and extras do not.
      No extraContainers: a sidecar that never exits keeps the Job from finishing. */}}
 
 {{/* Init container: the one-shot storage and partition setup, which then exits. */}}
@@ -28,6 +28,10 @@ terminationMessagePath: /dev/termination-log
 terminationMessagePolicy: File
 {{- with coalesce $init.resources $v.resources }}
 resources:
+  {{- toYaml . | nindent 2 }}
+{{- end }}
+{{- with coalesce $init.securityContext $v.securityContext }}
+securityContext:
   {{- toYaml . | nindent 2 }}
 {{- end }}
 {{- end -}}
@@ -72,6 +76,10 @@ tolerations:
 {{- end }}
 {{- with coalesce $init.priorityClassName $v.priorityClassName }}
 priorityClassName: {{ . | quote }}
+{{- end }}
+{{- with coalesce $init.podSecurityContext $v.podSecurityContext }}
+securityContext:
+  {{- toYaml . | nindent 2 }}
 {{- end }}
 enableServiceLinks: true
 dnsPolicy: ClusterFirst

@@ -1,0 +1,20 @@
+{{- /* See armonik.seq.ingestionService. In seq's namespace, the release one: seq has no namespace key. */ -}}
+{{- with .Subcharts.dependencies.Subcharts.seq }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "armonik.seq.ingestionService" $.Release.Name | quote }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    app.kubernetes.io/component: seq-ingestion
+    {{- include "armonik.labels" $ | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "seq.selectorLabels" . | nindent 4 }}
+  ports:
+    - name: ingestion
+      port: {{ include "armonik.seq.ingestionPort" $ }}
+      targetPort: ingestion
+      protocol: TCP
+{{- end }}

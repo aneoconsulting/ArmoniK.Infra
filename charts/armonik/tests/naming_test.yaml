@@ -1,0 +1,111 @@
+suite: dependency names and namespaces come from the dependency charts
+release:
+  name: t
+  namespace: rel
+templates:
+  - secrets/armonik-urls.yaml
+  - secrets/redis-users.yaml
+  - secrets/conf-secrets.yaml
+  - services/seq-ingestion.yaml
+  - charts/dependencies/charts/fluent-bit/templates/configmap.yaml
+  - NOTES.txt
+tests:
+  # Every name below is set by the dependency's own naming helpers; overriding it proves the umbrella
+  # reads it back rather than guessing it.
+  - it: URLs Secret targets the grafana and seq Services under their own charts' names
+    template: secrets/armonik-urls.yaml
+    set:
+      dependencies:
+        grafana:
+          fullnameOverride: g
+        seq:
+          fullnameOverride: s
+    asserts:
+      - equal:
+          path: data.grafana
+          value: aHR0cDovL2cucmVsLnN2Yy5jbHVzdGVyLmxvY2Fs # http://g.rel.svc.cluster.local
+      - equal:
+          path: data.seq
+          value: aHR0cDovL3MucmVsLnN2Yy5jbHVzdGVyLmxvY2Fs # http://s.rel.svc.cluster.local
+
+  - it: redis users Secret is the one valkey reads, and the one the core layer reads back
+    set:
+      dependencies:
+        redis:
+          auth:
+            usersExistingSecret: '{{ .Release.Name }}-custom-users'
+    asserts:
+      - equal:
+          path: metadata.name
+          value: t-custom-users
+        template: secrets/redis-users.yaml
+      - contains:
+          path: spec.data
+          content:
+            secretKey: Redis__Password
+            remoteRef:
+              key: t-custom-users
+              property: default
+        template: secrets/conf-secrets.yaml
+        documentSelector:
+          path: metadata.name
+          value: t-conf-core
+
+  # fluent-bit's tpl cannot see seq's values, so it targets a Service the umbrella names itself.
+  - it: fluent-bit ships to the umbrella's seq ingestion Service, whatever seq's own name
+    set:
+      dependencies:
+        seq:
+          nameOverride: logs
+          fullnameOverride: mylogs
+    asserts:
+      - matchRegex:
+          path: data["fluent-bit.conf"]
+          pattern: 'Host +t-seq-ingestion\n +Port +5341\n'
+        template: charts/dependencies/charts/fluent-bit/templates/configmap.yaml
+      - equal:
+          path: metadata.name
+          value: t-seq-ingestion
+        template: services/seq-ingestion.yaml
+      - equal:
+          path: spec.selector
+          value:
+            app: logs
+            release: t
+        template: services/seq-ingestion.yaml
+      - equal:
+          path: spec.ports[0]
+          value:
+            name: ingestion
+            port: 5341
+            targetPort: ingestion
+            protocol: TCP
+        template: services/seq-ingestion.yaml
+
+  - it: renders no seq ingestion Service without seq
+    template: services/seq-ingestion.yaml
+    set:
+      dependencies:
+        seq:
+          enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: warns that a second release in the namespace must rename mongodb-exporter's Secret
+    template: NOTES.txt
+    asserts:
+      - matchRegexRaw:
+          pattern: 'Secret mongodb-exporter-secret, a fixed name'
+      - matchRegexRaw:
+          pattern: 'dependencies\.mongodb-exporter\.volumes\[0\]\.secret\.secretName'
+
+  - it: says nothing of mongodb-exporter's Secret without mongodb-exporter
+    template: NOTES.txt
+    set:
+      dependencies:
+        mongodb-exporter:
+          enabled: false
+    asserts:
+      - notMatchRegexRaw:
+          pattern: 'mongodb-exporter'

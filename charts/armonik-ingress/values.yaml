@@ -24,6 +24,20 @@ tolerations: []
 annotations: {}
 affinity: {}
 priorityClassName: ""
+# -- nginx pod securityContext, also the gui and load-balancer default. Empty: nginx-unprivileged and the
+# load-balancer image run as a numeric non-root uid, which runAsNonRoot can verify.
+podSecurityContext: {}
+# -- nginx container securityContext, also the gui and load-balancer default.
+securityContext:
+  capabilities:
+    drop:
+      - ALL
+  privileged: false
+  runAsNonRoot: true
+  readOnlyRootFilesystem: false
+  allowPrivilegeEscalation: false
+  seccompProfile:
+    type: RuntimeDefault
 # -- Extra env for the nginx container.
 extraEnv: []
 # -- Extra envFrom for the nginx container.
@@ -159,6 +173,10 @@ loadBalancer:
   priorityClassName: ""
   imagePullSecrets: []
   annotations: {}
+  # -- Falls back to the chart-level podSecurityContext.
+  podSecurityContext:
+  # -- Falls back to the chart-level securityContext.
+  securityContext:
   # -- Extra env for the load-balancer container.
   extraEnv: []
   # -- Extra envFrom for the load-balancer container.
@@ -232,6 +250,12 @@ gui:
   affinity: {}
   priorityClassName: ""
   imagePullSecrets: []
+  # -- Pod securityContext, the chart-level one when empty. runAsUser is required by runAsNonRoot:
+  # the image declares the non-numeric USER armonik (uid 5000), which the kubelet cannot verify.
+  podSecurityContext:
+    runAsUser: 5000
+  # -- Falls back to the chart-level securityContext.
+  securityContext:
   # -- Extra env for the gui container.
   extraEnv: []
   # -- Extra envFrom for the gui container.

@@ -1,0 +1,118 @@
+suite: shared file storage on the worker container
+templates:
+  - deployment.yaml
+values:
+  - ../ci/partitions-values.yaml
+release:
+  name: t
+tests:
+  - it: renders nothing by default
+    asserts:
+      - notContains:
+          path: spec.template.spec.volumes
+          content:
+            name: shared-volume
+          any: true
+      - notContains:
+          path: spec.template.spec.containers[1].env
+          content:
+            name: FileStorageType
+          any: true
+
+  - it: mounts the volume and sets the file storage env on the worker only
+    set:
+      partitionCommon.sharedStorage.enabled: true
+      partitionCommon.sharedStorage.volume.persistentVolumeClaim.claimName: shared
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: shared-volume
+            persistentVolumeClaim:
+              claimName: shared
+      - contains:
+          path: spec.template.spec.containers[1].volumeMounts
+          content:
+            name: shared-volume
+            mountPath: /data
+            readOnly: true
+      - contains:
+          path: spec.template.spec.containers[1].env
+          content:
+            name: FileStorageType
+            value: FS
+      - contains:
+          path: spec.template.spec.containers[1].env
+          content:
+            name: target_data_path
+            value: /data
+      - notContains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: shared-volume
+          any: true
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: FileStorageType
+          any: true
+
+  - it: derives target_data_path from mountPath, and honours a partition's readOnly and enabled
+    set:
+      partitionCommon.sharedStorage.enabled: true
+      partitionCommon.sharedStorage.mountPath: /shared
+      partitionCommon.sharedStorage.volume.hostPath.path: /srv
+      partitions.htcmock.sharedStorage.readOnly: false
+      partitions.bench.sharedStorage.enabled: false
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[1].volumeMounts
+          content:
+            name: shared-volume
+            mountPath: /shared
+            readOnly: false
+        documentSelector:
+          path: metadata.name
+          value: t-armonik-compute-plane-htcmock
+      - contains:
+          path: spec.template.spec.containers[1].env
+          content:
+            name: target_data_path
+            value: /shared
+        documentSelector:
+          path: metadata.name
+          value: t-armonik-compute-plane-htcmock
+      - notContains:
+          path: spec.template.spec.volumes
+          content:
+            name: shared-volume
+          any: true
+        documentSelector:
+          path: metadata.name
+          value: t-armonik-compute-plane-bench
+
+  - it: fails on an enabled storage without a volume source
+    set:
+      partitionCommon.sharedStorage.enabled: true
+    asserts:
+      - failedTemplate:
+          errorPattern: "sharedStorage.volume must hold exactly one volume source, got \\[\\]"
+
+  - it: fails when a partition source merges into a different common source
+    set:
+      partitionCommon.sharedStorage.enabled: true
+      partitionCommon.sharedStorage.volume.hostPath.path: /srv
+      partitions.bench.sharedStorage.volume.nfs.server: nfs.local
+      partitions.bench.sharedStorage.volume.nfs.path: /export
+    asserts:
+      - failedTemplate:
+          errorPattern: "partitions.bench.sharedStorage.volume must hold exactly one volume source, got \\[hostPath, nfs\\]"
+
+  - it: fails on a volume name, which the chart sets
+    set:
+      partitionCommon.sharedStorage.enabled: true
+      partitionCommon.sharedStorage.volume.name: mine
+      partitionCommon.sharedStorage.volume.hostPath.path: /srv
+    asserts:
+      - failedTemplate:
+          errorPattern: "sharedStorage.volume.name: the chart names the volume shared-volume"

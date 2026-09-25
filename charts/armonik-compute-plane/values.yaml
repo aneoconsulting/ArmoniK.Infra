@@ -225,6 +225,22 @@ partitionCommon:
   # -- Merged over spec.template.spec, last. Lists the chart builds are refused: use extra*.
   # Pod labels are out of reach: the selector is immutable.
   podSpecPatch: {}
+  # sharedStorage:
+  #   enabled: true
+  #   volume:
+  #     hostPath:
+  #       path: /srv/armonik/data
+  #       type: Directory
+  #
+  # -- Shared file storage (FS type) for the worker container only: `shared-volume` mounted at
+  # mountPath, plus the worker env FileStorageType=FS and target_data_path=<mountPath>. volume is one
+  # Kubernetes volume source without its name (hostPath, persistentVolumeClaim, nfs, csi...). A
+  # partition's volume merges over partitionCommon's, so declare the source in one place.
+  sharedStorage:
+    enabled: false
+    mountPath: /data
+    readOnly: true
+    volume: {}
   # Default worker, will be overridden per partition
   worker:
     name: "worker"
@@ -374,17 +390,7 @@ fluentBit:
     pullPolicy: IfNotPresent
   configMapRef: "fluent-bit-config"
 
-# checkFileStorageType: "FS"
-# fileStorageType: "hostpath"
-
 preStopWaitScript: "<<EOF while test -e /cache/armonik_agent.sock ; do   sleep 1 done EOF"
-# FS:
-#   name: "shared-volume"
-#   mountPath: "/data"
-
-# hostPath:
-#   name: "shared-volume"
-#   path: "/home/mjadoui/ArmoniK/infrastructure/quick-de" # (abs(path) à voir dans .tf)
 
 # env:
 #   pollingAgentAggregation:

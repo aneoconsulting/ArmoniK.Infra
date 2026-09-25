@@ -29,7 +29,7 @@ tests:
       - equal:
           path: spec.issuerRef
           value:
-            name: activemq-issuer
+            name: RELEASE-NAME-activemq-issuer
             kind: GoogleCASIssuer
             group: cas-issuer.jetstack.io
         documentSelector:
@@ -66,7 +66,7 @@ tests:
           any: true
       - equal:
           path: spec.issuerRef.name
-          value: activemq-issuer
+          value: RELEASE-NAME-activemq-issuer
         documentSelector:
           path: kind
           value: Certificate

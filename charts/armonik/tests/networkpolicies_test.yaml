@@ -454,3 +454,29 @@ tests:
                 podSelector:
                   matchLabels:
                     app.kubernetes.io/component: control-plane
+
+  - it: selects Grafana by the name its own chart gives it
+    template: templates/networkpolicies/nginx-egress.yaml
+    set:
+      networkPolicy:
+        enabled: true
+      ingress:
+        networkPolicy:
+          enabled: true
+      dependencies:
+        grafana:
+          nameOverride: gf
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            ports:
+              - protocol: TCP
+                port: 3000
+            to:
+              - namespaceSelector:
+                  matchLabels:
+                    kubernetes.io/metadata.name: default
+                podSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: gf

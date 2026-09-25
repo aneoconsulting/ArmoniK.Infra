@@ -214,7 +214,6 @@ dependencies:
       repository: rabbitmq
       tag: 4.1.3
     enabled: false
-    fullnameOverride: "rabbitmq"
     auth:
       username: "admin"
       password: "admin"
@@ -239,7 +238,8 @@ dependencies:
       registry: public.ecr.aws
     auth:
       enabled: true
-      usersExistingSecret: "redis-users"
+      # tpl-rendered by valkey; templates/secrets/redis-users.yaml creates it under that same name.
+      usersExistingSecret: '{{ .Release.Name }}-redis-users'
       aclUsers:
         default:
           permissions: "~* &* +@all"
@@ -307,7 +307,6 @@ dependencies:
   activemq:
     enabled: true
     replicas: 1
-    fullnameOverride: "activemq"
     image:
       registry: docker.io
     # priorityClassName defaults to system-cluster-critical
@@ -351,8 +350,10 @@ dependencies:
   # from the psmdb-db cluster-monitor credentials.
   mongodb-exporter:
     enabled: true
-    fullnameOverride: "mongodb-exporter"
     existingSecret:
+      # -- Secret the exporter reads its URI from, written by the umbrella's ExternalSecret. Fixed, the
+      # chart tpl-rendering neither this nor `volumes`: two releases sharing a namespace need distinct
+      # names, here and in `volumes[0].secret.secretName`.
       name: mongodb-exporter-secret
       key: mongodb-uri
     # This chart's own serviceMonitor value is static and can't be conditioned on the
@@ -385,7 +386,6 @@ dependencies:
     enabled: true
     serviceMonitor:
       enabled: true
-    fullnameOverride: "grafana"
     grafana.ini:
       server:
         # Keep root_url path-less and serve_from_sub_path false: the ingress publishes Grafana
@@ -428,7 +428,6 @@ dependencies:
   ################## FLUENT-BIT ##################
   fluent-bit:
     enabled: true
-    fullnameOverride: "fluent-bit"
     # priorityClassName:
     daemonSetVolumes:
       - name: runlogjournal
@@ -565,8 +564,9 @@ dependencies:
         [OUTPUT]
             Name                    http
             Match                   kube.*
-            Host                    seq
-            Port                    5341
+            # The umbrella's own Service in front of seq (templates/services/seq-ingestion.yaml).
+            Host                    {{ include "armonik.seq.ingestionService" .Release.Name }}
+            Port                    {{ include "armonik.seq.ingestionPort" . }}
             URI                     /api/events/raw?clef
             Header                  Content-Type application/vnd.serilog.clef
             Format                  json_lines
@@ -764,7 +764,6 @@ dependencies:
   ################## SEQ ##################
   seq:
     enabled: true
-    fullnameOverride: "seq"
     persistence:
       enabled: false
     image:

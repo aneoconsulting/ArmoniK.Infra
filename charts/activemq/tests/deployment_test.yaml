@@ -5,6 +5,8 @@ chart:
 templates:
   - activemq-deployment.yaml
   - service.yaml
+  - configmap-activemq-configs.yaml
+  - configmap-activemq-jolokia-configs.yaml
 tests:
   - it: renders the deployment with the default image
     template: activemq-deployment.yaml
@@ -50,3 +52,79 @@ tests:
             port: 8161
             protocol: TCP
             targetPort: dashboard
+
+  - it: runs as the namespace's default ServiceAccount unless one is named
+    template: activemq-deployment.yaml
+    asserts:
+      - notExists:
+          path: spec.template.spec.serviceAccountName
+
+  - it: runs as the named ServiceAccount, tpl-rendered
+    template: activemq-deployment.yaml
+    release:
+      name: t
+    set:
+      serviceAccountName: '{{ .Release.Name }}-broker'
+    asserts:
+      - equal:
+          path: spec.template.spec.serviceAccountName
+          value: t-broker
+
+  # The pod mounts the chart's own ConfigMaps by the names those templates give them.
+  - it: mounts the chart's ConfigMaps under their release-derived names
+    set:
+      fullnameOverride: mq
+    asserts:
+      - equal:
+          path: metadata.name
+          value: mq-configs
+        template: configmap-activemq-configs.yaml
+      - equal:
+          path: metadata.name
+          value: mq-jolokia-configs
+        template: configmap-activemq-jolokia-configs.yaml
+      - equal:
+          path: spec.template.spec.volumes
+          value:
+            - name: activemq-conf-xml
+              configMap:
+                name: mq-configs
+                defaultMode: 420
+                optional: false
+            - name: activemq-jolokia-xml
+              configMap:
+                name: mq-jolokia-configs
+                defaultMode: 420
+                optional: false
+        template: activemq-deployment.yaml
+
+  - it: appends extraVolumes and extraVolumeMounts after the chart's own
+    template: activemq-deployment.yaml
+    set:
+      extraVolumes:
+        - name: extra
+          emptyDir: {}
+      extraVolumeMounts:
+        - name: extra
+          mountPath: /extra
+    asserts:
+      - lengthEqual:
+          path: spec.template.spec.volumes
+          count: 3
+      - equal:
+          path: spec.template.spec.volumes[2].name
+          value: extra
+      - equal:
+          path: spec.template.spec.containers[0].volumeMounts[3].mountPath
+          value: /extra
+
+  - it: rejects an extraVolumes entry that duplicates one of the chart's own volumes
+    template: activemq-deployment.yaml
+    set:
+      extraVolumes:
+        - name: activemq-conf-xml
+          configMap:
+            name: activemq-configs
+    asserts:
+      - failedTemplate:
+          errorPattern: "extraVolumes.activemq-conf-xml: the chart mounts that volume itself"

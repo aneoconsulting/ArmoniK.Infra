@@ -1,15 +1,4 @@
 {{/*
-Create the name of the service account to use
-*/}}
-{{- define "activemq.serviceAccountName" -}}
-{{- if .Values.serviceAccount.create }}
-{{- default (include "armonik.fullname" .) .Values.serviceAccount.name }}
-{{- else }}
-{{- default "default" .Values.serviceAccount.name }}
-{{- end }}
-{{- end }}
-
-{{/*
 The image to use, resolved exactly as the container resolves it so NOTES.txt cannot drift from the pod.
 */}}
 {{- define "activemq.image" -}}
@@ -17,15 +6,12 @@ The image to use, resolved exactly as the container resolves it so NOTES.txt can
 {{- end }}
 
 {{/*
-ConfigMap name of addon resizer
+Names of the chart's own ConfigMaps, which the broker pod mounts.
 */}}
-{{- define "activemq.addonResizer.configMap" -}}
-{{- printf "%s-%s" (include "armonik.fullname" .) "nanny-config" }}
+{{- define "activemq.configsName" -}}
+{{- include "armonik.fullname" . }}-configs
 {{- end }}
 
-{{/*
-Role name of addon resizer
-*/}}
-{{- define "activemq.addonResizer.role" -}}
-{{ printf "system:%s-nanny" (include "armonik.fullname" .) }}
+{{- define "activemq.jolokiaConfigsName" -}}
+{{- include "armonik.fullname" . }}-jolokia-configs
 {{- end }}

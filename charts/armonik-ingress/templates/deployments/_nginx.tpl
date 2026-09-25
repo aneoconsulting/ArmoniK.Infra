@@ -32,6 +32,10 @@ startupProbe:
 readinessProbe:
   {{- toYaml . | nindent 2 }}
 {{- end }}
+{{- with $v.securityContext }}
+securityContext:
+  {{- toYaml . | nindent 2 }}
+{{- end }}
 {{- with $v.extraEnv }}
 env:
   {{- toYaml . | nindent 2 }}
@@ -100,6 +104,10 @@ tolerations:
 {{- end }}
 {{- with $v.priorityClassName }}
 priorityClassName: {{ . | quote }}
+{{- end }}
+{{- with $v.podSecurityContext }}
+securityContext:
+  {{- toYaml . | nindent 2 }}
 {{- end }}
 enableServiceLinks: true
 volumes:

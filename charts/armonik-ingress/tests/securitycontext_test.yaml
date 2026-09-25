@@ -1,0 +1,94 @@
+suite: securityContext on the nginx, gui and load-balancer deployments
+templates:
+  - deployments/nginx.yaml
+  - deployments/gui.yaml
+  - deployments/load-balancer.yaml
+  # The deployments' checksum/* annotations include these, so they have to be loaded too.
+  - armonik-nginx-conf.yaml
+  - configmaps/load-balancer.yaml
+  - secrets/lb-cluster-certs.yaml
+values:
+  - ../ci/lb-values.yaml
+tests:
+  - it: hardens every container by default
+    templates:
+      - deployments/nginx.yaml
+      - deployments/gui.yaml
+      - deployments/load-balancer.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].securityContext
+          value:
+            capabilities:
+              drop:
+                - ALL
+            privileged: false
+            runAsNonRoot: true
+            readOnlyRootFilesystem: false
+            allowPrivilegeEscalation: false
+            seccompProfile:
+              type: RuntimeDefault
+  - it: renders no nginx or load-balancer pod securityContext by default
+    templates:
+      - deployments/nginx.yaml
+      - deployments/load-balancer.yaml
+    asserts:
+      - notExists:
+          path: spec.template.spec.securityContext
+  - it: runs the gui pod as the image uid by default
+    template: deployments/gui.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext
+          value:
+            runAsUser: 5000
+  - it: falls back to the chart-level podSecurityContext
+    templates:
+      - deployments/gui.yaml
+      - deployments/load-balancer.yaml
+    set:
+      gui.podSecurityContext: null
+      podSecurityContext:
+        fsGroup: 2000
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext
+          value:
+            fsGroup: 2000
+  - it: lets gui and load-balancer override the chart-level securityContext
+    templates:
+      - deployments/gui.yaml
+      - deployments/load-balancer.yaml
+    set:
+      gui.securityContext:
+        runAsNonRoot: false
+      loadBalancer.securityContext:
+        runAsNonRoot: false
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].securityContext
+          value:
+            runAsNonRoot: false
+  - it: drops every container securityContext when the chart-level one is nulled
+    templates:
+      - deployments/nginx.yaml
+      - deployments/gui.yaml
+      - deployments/load-balancer.yaml
+    set:
+      securityContext: null
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].securityContext
+  - it: lets containerPatch override a single field
+    template: deployments/nginx.yaml
+    set:
+      containerPatch:
+        securityContext:
+          readOnlyRootFilesystem: true
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.readOnlyRootFilesystem
+          value: true
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.runAsNonRoot
+          value: true

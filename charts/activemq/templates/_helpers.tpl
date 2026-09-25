@@ -4,3 +4,14 @@ The image to use, resolved exactly as the container resolves it so NOTES.txt can
 {{- define "activemq.image" -}}
 {{- list . "image" .Values.image | include "armonik.utils.imageConf" | fromYaml | dig "fullname" "" }}
 {{- end }}
+
+{{/*
+Names of the chart's own ConfigMaps, which the broker pod mounts.
+*/}}
+{{- define "activemq.configsName" -}}
+{{- include "armonik.fullname" . }}-configs
+{{- end }}
+
+{{- define "activemq.jolokiaConfigsName" -}}
+{{- include "armonik.fullname" . }}-jolokia-configs
+{{- end }}

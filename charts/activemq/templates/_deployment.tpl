@@ -32,7 +32,24 @@ envFrom:
 resources:
   {{- toYaml . | nindent 2 }}
 {{- end }}
+{{- /* Single-file overrides: mounting the whole conf/ directory would hide the rest of the image's
+       own conf/ tree (jetty-spring.xml, conf/jetty/*.xml, login.config, ...), which it still needs. */}}
 volumeMounts:
+  - mountPath: /opt/apache-activemq/conf/activemq.xml
+    subPath: activemq.xml
+    mountPropagation: None
+    name: activemq-conf-xml
+    readOnly: true
+  - mountPath: /opt/apache-activemq/conf/log4j2.properties
+    subPath: log4j2.properties
+    mountPropagation: None
+    name: activemq-conf-xml
+    readOnly: true
+  - mountPath: /opt/apache-activemq/conf/jolokia-access.xml
+    subPath: jolokia-access.xml
+    mountPropagation: None
+    name: activemq-jolokia-xml
+    readOnly: true
   {{- with $v.extraVolumeMounts }}
   {{- toYaml . | nindent 2 }}
   {{- end }}
@@ -45,6 +62,11 @@ volumeMounts:
 {{- $v := $root.Values -}}
 {{- $container := list (include "activemq.container" .) $v.containerPatch "containerPatch" | include "armonik.utils.patch" | fromYaml -}}
 {{- $containers := $v.extraContainers | default list | concat (list $container) -}}
+{{- range $v.extraVolumes }}
+  {{- if has .name (list "activemq-conf-xml" "activemq-jolokia-xml") }}
+    {{- printf "extraVolumes.%s: the chart mounts that volume itself; drop it from extraVolumes (and its extraVolumeMounts)." .name | fail }}
+  {{- end }}
+{{- end }}
 {{- with $v.extraInitContainers }}
 initContainers:
   {{- toYaml . | nindent 2 }}
@@ -54,10 +76,20 @@ containers: {{- $containers | toYaml | nindent 2 }}
 imagePullSecrets:
   {{- toYaml . | nindent 2 }}
 {{- end }}
-{{- with $v.extraVolumes }}
 volumes:
+  - name: activemq-conf-xml
+    configMap:
+      name: {{ include "activemq.configsName" $root | quote }}
+      defaultMode: 420
+      optional: false
+  - name: activemq-jolokia-xml
+    configMap:
+      name: {{ include "activemq.jolokiaConfigsName" $root | quote }}
+      defaultMode: 420
+      optional: false
+  {{- with $v.extraVolumes }}
   {{- toYaml . | nindent 2 }}
-{{- end }}
+  {{- end }}
 {{- with $v.nodeSelector }}
 nodeSelector:
   {{- toYaml . | nindent 2 }}

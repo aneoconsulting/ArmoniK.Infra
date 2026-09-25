@@ -99,6 +99,21 @@ init:
   tolerations:
   affinity:
   priorityClassName:
+  # -- Init Job pod securityContext. runAsUser is required by runAsNonRoot below, the ArmoniK
+  # images declaring a non-numeric USER the kubelet cannot verify.
+  podSecurityContext:
+    runAsUser: 5000
+  # -- Init container securityContext, same hardening as the agent's.
+  securityContext:
+    capabilities:
+      drop:
+        - ALL
+    privileged: false
+    runAsNonRoot: true
+    readOnlyRootFilesystem: false
+    allowPrivilegeEscalation: false
+    seccompProfile:
+      type: RuntimeDefault
   # -- Extra env for the init container. Shared vars go in conf.env.
   extraEnv: []
   # -- Extra envFrom for the init container.

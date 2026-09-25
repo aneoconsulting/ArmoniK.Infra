@@ -55,10 +55,9 @@ Empty where kps is not in .Subcharts (layered install, plane chart), so the reso
 unknowable there without lookup.
 */}}
 {{- define "armonik.monitoring.prometheusUrl.default" -}}
-  {{- $subcharts := .Subcharts | default dict -}}
-  {{- $kps := index $subcharts "kube-prometheus" -}}
-  {{- with index $subcharts "operators" -}}
-    {{- $kps = index (.Subcharts | default dict) "kube-prometheus" | default $kps -}}
+  {{- $kps := index .Subcharts "kube-prometheus" -}}
+  {{- with index .Subcharts "operators" -}}
+    {{- $kps = index .Subcharts "kube-prometheus" | default $kps -}}
   {{- end -}}
   {{- with $kps -}}
     {{- $domain := list $.Values "global" "clusterDomain" | include "armonik.utils.index" -}}

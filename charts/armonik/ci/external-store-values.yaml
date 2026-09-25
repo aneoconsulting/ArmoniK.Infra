@@ -4,6 +4,9 @@
 # ExternalSecrets render at all.
 global:
   armonik:
+    # kube-prometheus-stack is installed by another release: its URL is stated.
+    monitoring:
+      prometheusUrl: http://ops-kube-prometheus-prometheus.monitoring.svc:9090
     operators:
       externalSecrets:
         deploy: false

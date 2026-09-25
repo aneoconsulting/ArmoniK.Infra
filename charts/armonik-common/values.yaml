@@ -59,8 +59,9 @@ global:
         # @default -- `cert-manager.io`
         group:
     monitoring:
-      # -- Prometheus for the Grafana datasource and PromQL KEDA triggers. Defaults to the
-      # `armonik.monitoring.prometheusUrl.default` derivation; a literal URL replaces it.
+      # -- Prometheus for the Grafana datasource and PromQL KEDA triggers. Derived
+      # (`armonik.monitoring.prometheusUrl.default`) only where this release installs kube-prometheus-stack;
+      # set it elsewhere (layered install, plane charts).
       prometheusUrl: '{{ include "armonik.monitoring.prometheusUrl.default" . }}'
       # -- Control-plane metrics-exporter `/metrics` scraped by KEDA (default scaling path). Defaults to
       # the `armonik.monitoring.metricsExporterUrl.default` derivation off `conf.source`; a literal URL replaces it.

@@ -135,6 +135,10 @@ fail_with umbrella-envsecret-without-eso armonik \
   --set global.armonik.operators.externalSecrets.available=false \
   --set global.armonik.operators.externalSecrets.deploy=false \
   --set dependencies.mongodb-exporter.enabled=false
+fail_with umbrella-layered-without-prometheus-url armonik \
+  "global.armonik.monitoring.prometheusUrl resolved empty" \
+  -f charts/armonik/ci/layered-operators-values.yaml \
+  --set global.armonik.monitoring.prometheusUrl=
 fail_with mongodb-exporter-without-mongo armonik \
   "requires dependencies.mongodb (psmdb-db) to be enabled" \
   --set dependencies.mongodb-exporter.enabled=true \

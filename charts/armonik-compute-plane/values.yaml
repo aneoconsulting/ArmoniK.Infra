@@ -326,7 +326,8 @@ partitionCommon:
       # --- PromQL opt-in (advanced) ---------------------------------------------------------------
       # For rate/ratio/aggregation scaling, swap the trigger above for a prometheus one. Reintroduces the
       # dependency on prometheusOperator.available, and needs the namespace filter to stay multi-release
-      # correct:
+      # correct. Its URL never derives here, even under the umbrella: set
+      # global.armonik.monitoring.prometheusUrl or a literal serverAddress.
       #   - type: prometheus
       #     metadata:
       #       serverAddress: '{{ include "armonik.monitoring.prometheusUrl" . }}'

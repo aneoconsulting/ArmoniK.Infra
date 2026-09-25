@@ -17,5 +17,6 @@ helm_test charts/activemq
 helm_test charts/armonik-control-plane
 helm_test charts/armonik-compute-plane
 helm_test charts/armonik-ingress
+helm_test charts/armonik-operators
 helm_test charts/armonik
 helm_test test/harness/common-harness

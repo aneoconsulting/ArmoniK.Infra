@@ -1,0 +1,100 @@
+suite: google-cas-issuer approval RBAC
+release:
+  name: ops
+  namespace: ops
+templates:
+  - google-cas-issuer-approval.yaml
+  - NOTES.txt
+tests:
+  - it: renders nothing unless this release installs google-cas-issuer
+    template: google-cas-issuer-approval.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  # Both the name and the namespace move, which upstream's literal subjects would not follow.
+  - it: binds approval to cert-manager's own ServiceAccount, wherever this release puts it
+    template: google-cas-issuer-approval.yaml
+    set:
+      global:
+        armonik:
+          operators:
+            googleCasIssuer:
+              deploy: true
+              available: true
+            certManager:
+              namespace: cm
+      cert-manager:
+        namespace: cm
+        fullnameOverride: cmgr
+    documentSelector:
+      path: kind
+      value: ClusterRoleBinding
+    asserts:
+      - equal:
+          path: metadata.name
+          value: google-cas-issuer:approval
+      - equal:
+          path: subjects
+          value:
+            - kind: ServiceAccount
+              name: cmgr
+              namespace: cm
+
+  - it: stated subjects replace the derivation
+    template: google-cas-issuer-approval.yaml
+    set:
+      global:
+        armonik:
+          operators:
+            googleCasIssuer:
+              deploy: true
+              available: true
+      googleCasIssuerApproval:
+        subjects:
+          - kind: ServiceAccount
+            name: approver-policy
+            namespace: policy
+    documentSelector:
+      path: kind
+      value: ClusterRoleBinding
+    asserts:
+      - equal:
+          path: subjects[0].name
+          value: approver-policy
+
+  - it: fails rather than guess the ServiceAccount of a cert-manager installed elsewhere
+    template: google-cas-issuer-approval.yaml
+    set:
+      global:
+        armonik:
+          operators:
+            googleCasIssuer:
+              deploy: true
+              available: true
+            certManager:
+              deploy: false
+    asserts:
+      - failedTemplate:
+          errorPattern: "googleCasIssuerApproval.subjects is required"
+
+  - it: renders nothing when approval is managed elsewhere
+    template: google-cas-issuer-approval.yaml
+    set:
+      global:
+        armonik:
+          operators:
+            googleCasIssuer:
+              deploy: true
+              available: true
+      googleCasIssuerApproval:
+        enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: tells the application releases which Prometheus URL to state
+    template: NOTES.txt
+    asserts:
+      - matchRegexRaw:
+          pattern: 'global\.armonik\.monitoring\.prometheusUrl=http://ops-kube-prometheus-prometheus\.ops\.svc:9090'

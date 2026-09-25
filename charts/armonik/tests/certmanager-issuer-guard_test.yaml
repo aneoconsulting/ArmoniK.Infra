@@ -30,6 +30,11 @@ tests:
         mongodb:
           certManager:
             enabled: true
+        redis:
+          tls:
+            enabled: true
+            certManager:
+              enabled: true
     asserts:
       - notFailedTemplate: {}
 
@@ -55,6 +60,34 @@ tests:
     asserts:
       - failedTemplate:
           errorPattern: 'ingress renders its Certificate into namespace "other-ns"'
+
+  - it: fails when the umbrella's namespaceOverride moves the shared issuer away from redis, which cannot follow
+    set:
+      namespaceOverride: other-ns
+      control-plane:
+        namespaceOverride: other-ns
+      compute-plane:
+        namespaceOverride: other-ns
+      global:
+        armonik:
+          certManager:
+            issuer:
+              enabled: true
+              name: shared-issuer
+      certManagerIssuer:
+        create: true
+        provider: venafi
+        venafi:
+          zone: my-zone
+      dependencies:
+        redis:
+          tls:
+            enabled: true
+            certManager:
+              enabled: true
+    asserts:
+      - failedTemplate:
+          errorPattern: 'dependencies.redis renders its Certificate into namespace "NAMESPACE" but the shared issuer lives in "other-ns"'
 
   - it: fails when dependencies.activemq renders its Certificate into a different namespace than the shared issuer
     set:

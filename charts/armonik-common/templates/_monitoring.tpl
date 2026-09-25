@@ -21,7 +21,8 @@ Resolves metricsExporterUrl. Its default reads chart-level conf.source, so this 
 
 {{/*
 Control-plane metrics-exporter /metrics, KEDA's default scaling source:
-http://<conf.source>-control-plane-metrics-exporter.<release-ns>.svc[.<clusterDomain>]:9419/metrics.
+http://<conf.source>-control-plane-metrics-exporter.<ns>.svc[.<clusterDomain>]:9419/metrics, <ns> being
+this chart's armonik.namespace: the umbrella's namespace-guard keeps both planes in the same one.
 Correct as-is for the umbrella (control-plane installed as its "control-plane"-aliased subchart:
 <conf.source> is the umbrella's own release name, and Helm's alias mechanism makes that the exact
 service name armonik-control-plane renders). NOT correct for a standalone control-plane release
@@ -34,7 +35,7 @@ global.armonik.controlPlane for the control-plane URL.
   {{- $src := include "armonik.conf.source" . -}}
   {{- $domain := list .Values "global" "clusterDomain" | include "armonik.utils.index" -}}
   {{- $suffix := $domain | empty | ternary "" (printf ".%s" $domain) -}}
-  {{- printf "http://%s-control-plane-metrics-exporter.%s.svc%s:9419/metrics" $src .Release.Namespace $suffix -}}
+  {{- printf "http://%s-control-plane-metrics-exporter.%s.svc%s:9419/metrics" $src (include "armonik.namespace" .) $suffix -}}
 {{- end -}}
 
 {{/*

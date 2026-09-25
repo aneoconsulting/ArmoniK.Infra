@@ -18,7 +18,7 @@
     {{- with .Subcharts.ingress -}}
       {{- $ns := include "armonik.namespace" . -}}
       {{- if ne $ns $issuerNs -}}
-        {{- fail (printf "ingress renders its Certificate into namespace %q but the shared issuer lives in %q: set ingress.namespaceOverride to %q, point ingress.tls.certManager.existingIssuer (or ingress.mtls.certificationAuthority) at a local issuer instead, or switch global.armonik.certManager.issuer.kind to a cluster-scoped ClusterIssuer/GoogleCASClusterIssuer." $ns $issuerNs $issuerNs) -}}
+        {{- fail (printf "ingress renders its Certificate into namespace %q but the shared issuer lives in %q: set ingress.namespaceOverride to %q, point ingress.tls.certManager.existingIssuer (or ingress.mtls.certificationAuthority) at a local issuer instead, set ingress.tls.certManager.provider to have one created there, or switch global.armonik.certManager.issuer.kind to a cluster-scoped ClusterIssuer/GoogleCASClusterIssuer." $ns $issuerNs $issuerNs) -}}
       {{- end -}}
     {{- end -}}
   {{- end -}}
@@ -35,7 +35,24 @@
     {{- with .Subcharts.dependencies.Subcharts.activemq -}}
       {{- $ns := include "armonik.namespace" . -}}
       {{- if ne $ns $issuerNs -}}
-        {{- fail (printf "dependencies.activemq renders its Certificate into namespace %q but the shared issuer lives in %q: set dependencies.activemq.namespaceOverride to %q, point dependencies.activemq.tls.certManager.existingIssuer at a local issuer instead, or switch global.armonik.certManager.issuer.kind to a cluster-scoped ClusterIssuer/GoogleCASClusterIssuer." $ns $issuerNs $issuerNs) -}}
+        {{- fail (printf "dependencies.activemq renders its Certificate into namespace %q but the shared issuer lives in %q: set dependencies.activemq.namespaceOverride to %q, point dependencies.activemq.tls.certManager.existingIssuer at a local issuer instead, set dependencies.activemq.tls.certManager.provider to have one created there, or switch global.armonik.certManager.issuer.kind to a cluster-scoped ClusterIssuer/GoogleCASClusterIssuer." $ns $issuerNs $issuerNs) -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+
+{{- /* redis: valkey has no namespace key, so its Certificate sits in the release namespace. */ -}}
+{{- $redis := .Values.dependencies.redis | default dict -}}
+{{- if $redis.enabled -}}
+  {{- $rtls := $redis.tls | default dict -}}
+  {{- $rcm := $rtls.certManager | default dict -}}
+  {{- $noLocalIssuer := ($rcm.existingIssuer | default dict).enabled | empty -}}
+  {{- $notLocalRequested := not (hasKey $rcm "provider") -}}
+  {{- if and $noLocalIssuer $notLocalRequested $rtls.enabled $rcm.enabled -}}
+    {{- with .Subcharts.dependencies.Subcharts.redis -}}
+      {{- $ns := include "armonik.redis.namespace" . -}}
+      {{- if ne $ns $issuerNs -}}
+        {{- fail (printf "dependencies.redis renders its Certificate into namespace %q but the shared issuer lives in %q: point dependencies.redis.tls.certManager.existingIssuer at a local issuer instead, set dependencies.redis.tls.certManager.provider to have one created there, or switch global.armonik.certManager.issuer.kind to a cluster-scoped ClusterIssuer/GoogleCASClusterIssuer." $ns $issuerNs) -}}
       {{- end -}}
     {{- end -}}
   {{- end -}}
@@ -51,7 +68,7 @@
     {{- with .Subcharts.dependencies.Subcharts.mongodb -}}
       {{- $ns := include "psmdb-database.namespace" . -}}
       {{- if ne $ns $issuerNs -}}
-        {{- fail (printf "dependencies.mongodb renders its Certificates into namespace %q but the shared issuer lives in %q: set dependencies.mongodb.namespaceOverride to %q, point dependencies.mongodb.certManager.existingIssuer at a local issuer instead, or switch global.armonik.certManager.issuer.kind to a cluster-scoped ClusterIssuer/GoogleCASClusterIssuer." $ns $issuerNs $issuerNs) -}}
+        {{- fail (printf "dependencies.mongodb renders its Certificates into namespace %q but the shared issuer lives in %q: set dependencies.mongodb.namespaceOverride to %q, point dependencies.mongodb.certManager.existingIssuer at a local issuer instead, set dependencies.mongodb.certManager.provider to a real CA (not selfSigned) to have one created there, or switch global.armonik.certManager.issuer.kind to a cluster-scoped ClusterIssuer/GoogleCASClusterIssuer." $ns $issuerNs $issuerNs) -}}
       {{- end -}}
     {{- end -}}
   {{- end -}}

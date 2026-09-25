@@ -13,8 +13,8 @@ tests:
   # TLS handshake with RemoteCertificateNameMismatch (the Certificate itself still reported Ready).
   # fullnameOverride here would not move a hardcoded guess, so it proves the template calls the real
   # helper instead. Covered under three cases: chart defaults, dependencies.redis.fullnameOverride,
-  # and a release namespaceOverride (the valkey Service has no metadata.namespace of its own, so it
-  # always lands in the release namespace that armonik.namespace resolves to).
+  # and the umbrella's namespaceOverride, which valkey (no namespace key) does not follow: its Service
+  # and Certificate stay in the release namespace while ArmoniK's own resources move.
   - it: redis Service is named exactly what redis-certificate.yaml expects (defaults)
     template: charts/dependencies/charts/redis/templates/service.yaml
     asserts:
@@ -84,8 +84,23 @@ tests:
           path: spec.dnsNames
           content: custom-redis.NAMESPACE
 
-  - it: redis Certificate namespace, commonName and dnsNames follow a release namespaceOverride
+  - it: redis Service stays in the release namespace under the umbrella's namespaceOverride
+    template: charts/dependencies/charts/redis/templates/service.yaml
+    set:
+      namespaceOverride: custom-ns
+      control-plane:
+        namespaceOverride: custom-ns
+      compute-plane:
+        namespaceOverride: custom-ns
+    asserts:
+      - notExists:
+          path: metadata.namespace
+
+  - it: redis Certificate namespace and dnsNames follow the Service, not the umbrella's namespaceOverride
     template: certificate/redis-certificate.yaml
+    documentSelector:
+      path: kind
+      value: Certificate
     set:
       namespaceOverride: custom-ns
       control-plane:
@@ -104,10 +119,11 @@ tests:
             existingSecret: redis-tls
             certManager:
               enabled: true
+              provider: selfSigned
     asserts:
       - equal:
           path: metadata.namespace
-          value: custom-ns
+          value: NAMESPACE
       - equal:
           path: spec.commonName
           value: t-redis
@@ -116,7 +132,7 @@ tests:
           content: t-redis
       - contains:
           path: spec.dnsNames
-          content: t-redis.custom-ns
+          content: t-redis.NAMESPACE
 
   # Regression guard: mongodb-certificate.yaml once guessed "<release>-mongodb" for the cluster name
   # and read the namespace from the UMBRELLA's own armonik.namespace instead of the psmdb-db CR's own

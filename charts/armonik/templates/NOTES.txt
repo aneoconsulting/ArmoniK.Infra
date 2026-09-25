@@ -98,9 +98,10 @@ init:
 {{- end }}
 
 {{- $mountPath := include "armonik.conf.mountPath" $ }}
+{{- $confNamespace := include "armonik.namespace" $ }}
 {{- $ownComputePlane := list .Values "compute-plane" "enabled" | include "armonik.utils.index" | empty | not }}
 The configuration Secrets are owned by this release ({{ .Release.Name }}) and live in namespace
-{{ .Release.Namespace }}. To install a plane as a separate release, point it at those Secrets with
+{{ $confNamespace }}. To install a plane as a separate release, point it at those Secrets with
 --set conf.source={{ .Release.Name }} and install it in the SAME namespace. (A plane in another
 namespace needs the Secrets mirrored there, e.g. via an ESO remoteNamespace ExternalSecret.)
 {{- if ne $mountPath "/mounts" }}
@@ -121,7 +122,7 @@ to true. Pass --set global.armonik.operators.<op>.available=false for any operat
 To add a standalone compute-plane with new partitions:
 
      helm install <release-name> ./charts/armonik-compute-plane \
-       -n {{ .Release.Namespace }} \
+       -n {{ $confNamespace }} \
        --set conf.source={{ .Release.Name }} \
       {{- if not $ownComputePlane }}
        --set serviceAccount.create=true \
@@ -134,7 +135,7 @@ To add a standalone compute-plane with new partitions:
 To add a standalone control-plane (with optional external partitions):
 
      helm install <release-name> ./charts/armonik-control-plane \
-       -n {{ .Release.Namespace }} \
+       -n {{ $confNamespace }} \
        --set conf.source={{ .Release.Name }} \
       {{- if ne $mountPath "/mounts" }}
        --set conf.mountPath={{ $mountPath }} \

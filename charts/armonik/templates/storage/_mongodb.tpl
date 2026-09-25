@@ -98,3 +98,24 @@ mountSecret:
 {{- end }}
 {{- end }}
 {{- end }}
+
+{{/*
+mongodb-exporter's namespace, from its subchart scope: the release one, the chart having no namespace key.
+*/}}
+{{- define "armonik.mongodbExporter.namespace" -}}
+  {{- .Release.Namespace -}}
+{{- end -}}
+
+{{/*
+{consumer, remote}: namespaces of the mongodb-exporter ExternalSecret and of the MongoDB Secrets it
+reads, for secret-store.yaml. Empty when either dependency is disabled. Takes the root.
+*/}}
+{{- define "armonik.mongodbExporter.storeReads" -}}
+  {{- with index .Subcharts.dependencies.Subcharts "mongodb-exporter" -}}
+    {{- $consumer := include "armonik.mongodbExporter.namespace" . -}}
+    {{- with $.Subcharts.dependencies.Subcharts.mongodb }}
+consumer: {{ $consumer | quote }}
+remote: {{ include "armonik.mongodb.namespace" . | quote }}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}

@@ -26,6 +26,9 @@
 {{- $rejected := dict
       "selfSigned" "every certificate would sign itself with no CA behind it, where the operator's own CA at least signs them"
       "acme" "ACME only issues for DNS/IP identifiers, so it cannot issue the streaming_replica client certificate" }}
+{{- if and $issuer.needsLocalIssuer (not $localRequested) }}
+{{- fail "dependencies.postgresql.certManager.enabled=true needs an issuer: set dependencies.postgresql.certManager.existingIssuer, dependencies.postgresql.certManager.provider or global.armonik.certManager.issuer, or leave certManager.enabled=false for the CloudNativePG operator's own CA." }}
+{{- end }}
 {{- if and (not $ops.certManager.available) $issuer.needsLocalIssuer }}
 {{- fail "dependencies.postgresql.certManager.enabled requires it: set global.armonik.operators.certManager.available=true, set dependencies.postgresql.certManager.existingIssuer.enabled=true, set global.armonik.certManager.issuer.enabled=true, or disable certManager.enabled and leave the certificates to the CloudNativePG operator." }}
 {{- end }}

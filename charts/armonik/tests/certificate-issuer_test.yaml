@@ -580,7 +580,7 @@ tests:
     asserts:
       - failedTemplate:
           errorPattern: "cannot use a shared issuer with provider=acme"
-  - it: "postgresql: fails when neither existingIssuer nor the shared issuer is configured, the local fallback defaulting to selfSigned"
+  - it: "postgresql: fails when no issuer is configured"
     template: certificate/postgresql-certificate.yaml
     values:
       - ../ci/postgresql-certmanager-values.yaml
@@ -592,7 +592,7 @@ tests:
               enabled: false
     asserts:
       - failedTemplate:
-          errorPattern: "cannot use a local fallback issuer with provider=selfSigned"
+          errorPattern: "dependencies.postgresql.certManager.enabled=true needs an issuer"
   - it: "postgresql: fails on a local acme fallback issuer"
     template: certificate/postgresql-certificate.yaml
     values:

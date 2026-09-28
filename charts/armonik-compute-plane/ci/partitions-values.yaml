@@ -1,13 +1,14 @@
 # Partition fan-out: one Deployment (+ one ScaledObject with keda enabled) per
 # partition, per-partition values merged over partitionCommon: worker image,
-# unix-socket agent/worker channel, custom KEDA trigger threshold.
+# tcp agent/worker channel (bench keeps the unix-socket default), custom KEDA
+# trigger threshold.
 partitions:
   bench:
     worker:
       # Reference-string form, accepted anywhere an image object is.
       image: dockerhubaneo/armonik_core_bench_test_worker:0.0.0-test
   htcmock:
-    socketType: "unix"
+    socketType: "tcp"
     worker:
       image:
         repository: dockerhubaneo/armonik_core_htcmock_test_worker

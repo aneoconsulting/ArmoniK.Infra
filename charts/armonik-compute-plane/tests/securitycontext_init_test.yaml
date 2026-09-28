@@ -1,0 +1,48 @@
+suite: securityContext on the init Job
+templates:
+  - init.yaml
+values:
+  - ../ci/partitions-values.yaml
+release:
+  name: t
+tests:
+  - it: runs the init pod as the ArmoniK uid by default
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext.runAsUser
+          value: 5000
+  - it: hardens the init container by default
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].securityContext
+          value:
+            capabilities:
+              drop:
+                - ALL
+            privileged: false
+            runAsNonRoot: true
+            readOnlyRootFilesystem: false
+            allowPrivilegeEscalation: false
+            seccompProfile:
+              type: RuntimeDefault
+  - it: drops both securityContexts when nulled
+    set:
+      init.podSecurityContext: null
+      init.securityContext: null
+    asserts:
+      - notExists:
+          path: spec.template.spec.securityContext
+      - notExists:
+          path: spec.template.spec.containers[0].securityContext
+  - it: lets containerPatch override a single field
+    set:
+      init.containerPatch:
+        securityContext:
+          readOnlyRootFilesystem: true
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.readOnlyRootFilesystem
+          value: true
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.runAsNonRoot
+          value: true

@@ -99,6 +99,21 @@ init:
   tolerations:
   affinity:
   priorityClassName:
+  # -- Init Job pod securityContext. runAsUser is required by runAsNonRoot below, the ArmoniK
+  # images declaring a non-numeric USER the kubelet cannot verify.
+  podSecurityContext:
+    runAsUser: 5000
+  # -- Init container securityContext, same hardening as the agent's.
+  securityContext:
+    capabilities:
+      drop:
+        - ALL
+    privileged: false
+    runAsNonRoot: true
+    readOnlyRootFilesystem: false
+    allowPrivilegeEscalation: false
+    seccompProfile:
+      type: RuntimeDefault
   # -- Extra env for the init container. Shared vars go in conf.env.
   extraEnv: []
   # -- Extra envFrom for the init container.
@@ -137,7 +152,9 @@ init:
   configmaps:
 
 partitionCommon:
-  socketType: "tcp"  # TODO: things break without this, need to look into it later
+  socketType: "unixdomainsocket"
+  podSecurityContext:
+    runAsUser: 5000
   labels:
     app: "armonik"
     service: "compute-plane"
@@ -181,11 +198,13 @@ partitionCommon:
     securityContext:
       capabilities:
         drop:
-          - SYS_PTRACE
+          - ALL
       privileged: false
-      runAsNonRoot: false
+      runAsNonRoot: true
       readOnlyRootFilesystem: false
-      allowPrivilegeEscalation: true
+      allowPrivilegeEscalation: false
+      seccompProfile:
+        type: RuntimeDefault
     enableServiceLinks: true
     messageBatchSize: 1
     graceDelay: "00:00:15"
@@ -263,6 +282,18 @@ partitionCommon:
     requests:
       cpu: "500m"
       memory: "512Mi"
+    # -- Worker container securityContext, same hardening as the agent's. The uid shared with the
+    # agent is podSecurityContext's; runAsNonRoot fails a root image if runAsUser is nulled.
+    securityContext:
+      capabilities:
+        drop:
+          - ALL
+      privileged: false
+      runAsNonRoot: true
+      readOnlyRootFilesystem: false
+      allowPrivilegeEscalation: false
+      seccompProfile:
+        type: RuntimeDefault
     checkRetries: 10
     checkDelay: "00:00:10"
     # On top of partitionCommon: worker layer only. Never core, so user code stays credential-free.

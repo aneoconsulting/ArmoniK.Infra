@@ -28,6 +28,10 @@ terminationMessagePolicy: File
 resources:
   {{- toYaml . | nindent 2 }}
 {{- end }}
+{{- with $init.securityContext }}
+securityContext:
+  {{- toYaml . | nindent 2 }}
+{{- end }}
 {{- end -}}
 
 
@@ -70,6 +74,10 @@ tolerations:
 {{- end }}
 {{- with $init.priorityClassName }}
 priorityClassName: {{ . | quote }}
+{{- end }}
+{{- with $init.podSecurityContext }}
+securityContext:
+  {{- toYaml . | nindent 2 }}
 {{- end }}
 enableServiceLinks: true
 dnsPolicy: ClusterFirst

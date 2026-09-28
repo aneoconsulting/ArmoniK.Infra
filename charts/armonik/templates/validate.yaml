@@ -25,3 +25,9 @@
 {{- if and $mongodbEnabled $postgresqlEnabled -}}
   {{- fail "dependencies.mongodb and dependencies.postgresql cannot both be enabled: they back the same table storage slot. Disable one." -}}
 {{- end -}}
+
+{{- /* The Cluster CR has no CRD without the CloudNativePG operator: fail at render rather than at apply. */ -}}
+{{- $ops := include "armonik.operators" $ | fromYaml -}}
+{{- if and $postgresqlEnabled (not $ops.postgresqlOperator.available) -}}
+  {{- fail "dependencies.postgresql.enabled=true requires global.armonik.operators.postgresqlOperator.available=true: the Cluster CR needs the CloudNativePG CRDs." -}}
+{{- end -}}

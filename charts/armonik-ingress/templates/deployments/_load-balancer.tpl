@@ -1,5 +1,5 @@
 {{/* Pod-template fragments: armonik.utils.patch parses what it patches, so each is a define.
-     Scheduling and sizing coalesce over the chart-level values; patches and extras do not. */}}
+     Scheduling, sizing and securityContexts coalesce over the chart-level values; patches and extras do not. */}}
 
 {{/* Load-balancer container: reads lb.yml and the cluster certs at startup only. */}}
 {{- define "armonik.ingress.lb.container" -}}
@@ -29,6 +29,10 @@ startupProbe:
 {{- end }}
 {{- with $lb.readinessProbe }}
 readinessProbe:
+  {{- toYaml . | nindent 2 }}
+{{- end }}
+{{- with coalesce $lb.securityContext $v.securityContext }}
+securityContext:
   {{- toYaml . | nindent 2 }}
 {{- end }}
 {{- with $lb.extraEnv }}
@@ -88,6 +92,10 @@ tolerations:
 {{- end }}
 {{- with coalesce $lb.priorityClassName $v.priorityClassName }}
 priorityClassName: {{ . | quote }}
+{{- end }}
+{{- with coalesce $lb.podSecurityContext $v.podSecurityContext }}
+securityContext:
+  {{- toYaml . | nindent 2 }}
 {{- end }}
 enableServiceLinks: true
 volumes:

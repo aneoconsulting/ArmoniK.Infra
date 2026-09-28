@@ -1,5 +1,5 @@
 {{/* Pod-template fragments: armonik.utils.patch parses what it patches, so each is a define.
-     Scheduling and sizing coalesce over the chart-level values; patches and extras do not. */}}
+     Scheduling, sizing and securityContexts coalesce over the chart-level values; patches and extras do not. */}}
 
 {{/* Admin GUI container; sizing and probes fall back to the chart-level values. */}}
 {{- define "armonik.ingress.gui.container" -}}
@@ -30,6 +30,10 @@ startupProbe:
 {{- end }}
 {{- with coalesce $gui.readinessProbe $v.readinessProbe }}
 readinessProbe:
+  {{- toYaml . | nindent 2 }}
+{{- end }}
+{{- with coalesce $gui.securityContext $v.securityContext }}
+securityContext:
   {{- toYaml . | nindent 2 }}
 {{- end }}
 {{- with $gui.extraEnv }}
@@ -81,6 +85,10 @@ tolerations:
 {{- end }}
 {{- with coalesce $gui.priorityClassName $v.priorityClassName }}
 priorityClassName: {{ . | quote }}
+{{- end }}
+{{- with coalesce $gui.podSecurityContext $v.podSecurityContext }}
+securityContext:
+  {{- toYaml . | nindent 2 }}
 {{- end }}
 enableServiceLinks: true
 {{- with $gui.extraVolumes }}

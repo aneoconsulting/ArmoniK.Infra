@@ -1,6 +1,6 @@
 {{/*
 Read-write service of the Cluster. CNPG derives it from the Cluster name, itself taken from the
-subchart's own helper rather than guessed, as armonik.mongodb.host does with psmdb-database.fullname.
+subchart's own helper
 */}}
 {{- define "armonik.postgresql.host" -}}
   {{- include "cluster.fullname" . }}-rw.{{ include "cluster.namespace" . }}.svc.{{ include "armonik.clusterDomain" . }}

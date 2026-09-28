@@ -45,7 +45,7 @@ dependencies:
     version: 0.x.x
     repository: https://cloudnative-pg.github.io/charts
     alias: postgresql-operator
-    condition: global.armonik.operators.postgresOperator.deploy
+    condition: global.armonik.operators.postgresqlOperator.deploy
   - name: kube-prometheus-stack
     version: 91.x.x
     repository: https://prometheus-community.github.io/helm-charts

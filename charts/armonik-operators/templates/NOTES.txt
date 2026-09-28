@@ -6,7 +6,7 @@
  ArmoniK cluster operators  (chart {{ .Chart.Version }})
 **********************************************************
 Installed by this release:
-{{- range $op, $crds := dict "externalSecrets" "external-secrets.io, generators.external-secrets.io" "keda" "keda.sh, eventing.keda.sh" "certManager" "cert-manager.io, acme.cert-manager.io" "mongodbOperator" "psmdb.percona.com" "postgresOperator" "postgresql.cnpg.io" "prometheusOperator" "monitoring.coreos.com" }}
+{{- range $op, $crds := dict "externalSecrets" "external-secrets.io, generators.external-secrets.io" "keda" "keda.sh, eventing.keda.sh" "certManager" "cert-manager.io, acme.cert-manager.io" "mongodbOperator" "psmdb.percona.com" "postgresqlOperator" "postgresql.cnpg.io" "prometheusOperator" "monitoring.coreos.com" }}
 {{- if (index $ops $op).deploy }}
   - {{ $op }} (CRD groups: {{ $crds }})
 {{- end }}
@@ -38,7 +38,7 @@ because the controller that clears it goes down in this same uninstall.
 {{- if $ops.mongodbOperator.deploy }}
      kubectl get perconaservermongodbs.psmdb.percona.com -A
 {{- end }}
-{{- if $ops.postgresOperator.deploy }}
+{{- if $ops.postgresqlOperator.deploy }}
      kubectl get clusters.postgresql.cnpg.io,poolers.postgresql.cnpg.io -A
 {{- end }}
 
@@ -65,7 +65,7 @@ What that leaves behind:
 {{- if $ops.mongodbOperator.deploy }}
   - psmdb-operator: CRDs NEVER removed by Helm (untemplated crds/ directory). Delete by hand.
 {{- end }}
-{{- if $ops.postgresOperator.deploy }}
+{{- if $ops.postgresqlOperator.deploy }}
   - cloudnative-pg: CRDs KEPT (helm.sh/resource-policy: keep, hardcoded by that chart with no knob
     to unset it, unlike cert-manager). Delete by hand.
 {{- end }}

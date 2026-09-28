@@ -5,6 +5,7 @@ metadata:
   name: grafana-datasource-armonik
   labels:
     grafana_datasource: "1"
+    {{- include "armonik.labels" . | nindent 4 }}
 data:
   datasources.yaml: |-
     apiVersion: 1

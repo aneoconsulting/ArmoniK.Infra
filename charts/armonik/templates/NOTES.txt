@@ -98,6 +98,7 @@ init:
 {{- end }}
 
 {{- $mountPath := include "armonik.conf.mountPath" $ }}
+{{- $ownComputePlane := list .Values "compute-plane" "enabled" | include "armonik.utils.index" | empty | not }}
 The configuration Secrets are owned by this release ({{ .Release.Name }}) and live in namespace
 {{ .Release.Namespace }}. To install a plane as a separate release, point it at those Secrets with
 --set conf.source={{ .Release.Name }} and install it in the SAME namespace. (A plane in another
@@ -116,6 +117,9 @@ To add a standalone compute-plane with new partitions:
      helm install <release-name> ./charts/armonik-compute-plane \
        -n {{ .Release.Namespace }} \
        --set conf.source={{ .Release.Name }} \
+      {{- if not $ownComputePlane }}
+       --set serviceAccount.create=true \
+      {{- end }}
       {{- if ne $mountPath "/mounts" }}
        --set conf.mountPath={{ $mountPath }} \
       {{- end }}

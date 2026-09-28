@@ -1,5 +1,10 @@
+# -- Chart name used in resource names and labels.
 nameOverride: ""
+# -- Name prefix of every resource.
 fullnameOverride: ""
+# -- Namespace of every resource, the release namespace when empty. Under the umbrella it must equal the
+# umbrella's own namespaceOverride.
+namespaceOverride: ""
 replicaCount: 1
 shareProcessNamespace: false
 restartPolicy: Always
@@ -14,9 +19,9 @@ global:
 
 serviceAccount:
   create: false
-  # Name of the ServiceAccount.
-  # When create=false, this must instead name an existing ServiceAccount to use.
-  name: compute-plane
+  # -- ServiceAccount name (tpl-rendered), armonik.fullname when empty. With create=false it must exist:
+  # by default, the one the conf.source umbrella creates for its own compute plane.
+  name: '{{ if not .Values.serviceAccount.create }}{{ include "armonik.conf.source" . }}-compute-plane{{ end }}'
   annotations: {}
   secrets: []
 

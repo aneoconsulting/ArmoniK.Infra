@@ -18,6 +18,7 @@
       "kind" $issuer.kind
       "group" $issuer.group
       "spec" (index $certManager $provider | default dict)
+      "labels" (include "armonik.labels" .)
       "specValuesPath" "tls.certManager") }}
 {{- end }}
 ---
@@ -26,12 +27,23 @@ kind: Certificate
 metadata:
   name: {{ include "armonik.fullname" . }}
   namespace: {{ include "armonik.namespace" . | quote }}
-  {{- if $ops.certManager.deploy }}
-  {{- /* Hooked only when this release installs the CRDs; otherwise a plain resource. */}}
+  {{- if or ($ops.certManager.deploy) $certManager.annotations }}
   annotations:
+    {{- if $ops.certManager.deploy }}
+    {{- /* Hooked only when this release installs the CRDs; otherwise a plain resource. */}}
     "helm.sh/hook": post-install,post-upgrade
     "helm.sh/hook-weight": "10"
+    {{- end }}
+    {{- with $certManager.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
   {{- end }}
+  labels:
+    app.kubernetes.io/component: ingress
+    {{- include "armonik.labels" . | nindent 4 }}
+    {{- with $certManager.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
 spec:
   commonName: {{ include "armonik.fullname" . }}-cert
   dnsNames:

@@ -4,7 +4,7 @@ templates:
   - service.yaml
 tests:
   # Regression guard: dnsNames once hardcoded .Release.Namespace while metadata.namespace (and the
-  # actual Service) use activemq.namespace (namespaceOverride-aware), diverging whenever
+  # actual Service) use armonik.namespace (namespaceOverride-aware), diverging whenever
   # namespaceOverride is set.
   - it: Service and Certificate land in the overridden namespace
     set:

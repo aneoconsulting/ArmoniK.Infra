@@ -1,11 +1,12 @@
 {{- $tls := .Values.tls | default dict }}
 {{- $certManager := $tls.certManager | default dict }}
 {{- if and $tls.enabled (eq $tls.type "cert-manager") }}
-{{- $issuerName := printf "%s-issuer" (include "activemq.fullname" .) }}
+{{- $ops := include "armonik.operators" $ | fromYaml }}
+{{- $issuerName := printf "%s-issuer" (include "armonik.fullname" .) }}
 {{- $provider := $certManager.provider | default "selfSigned" }}
 {{- $localRequested := hasKey $certManager "provider" }}
 {{- $issuer := list $ $certManager.existingIssuer $issuerName $provider $localRequested | include "armonik.certManager.getIssuer" | fromYaml }}
-{{- if and (not (dig "armonik" "operators" "certManager" "available" true .Values.global)) $issuer.needsLocalIssuer }}
+{{- if and (not $ops.certManager.available) $issuer.needsLocalIssuer }}
 {{- fail "activemq TLS via cert-manager requires it: set global.armonik.operators.certManager.available=true, set tls.certManager.existingIssuer.enabled=true, set global.armonik.certManager.issuer.enabled=true, or use a tls.type other than cert-manager." }}
 {{- end }}
 {{- if $issuer.needsLocalIssuer }}
@@ -16,33 +17,44 @@
 {{- include "armonik.certManager.issuerManifest" (dict
       "root" $
       "name" $issuer.name
-      "namespace" (include "activemq.namespace" .)
+      "namespace" (include "armonik.namespace" .)
       "provider" $provider
       "kind" $issuer.kind
       "group" $issuer.group
       "spec" (index $certManager $provider | default dict)
       "extraAnnotations" $extraAnnotations
+      "labels" (include "armonik.labels" .)
       "specValuesPath" "tls.certManager") }}
 {{- end }}
 ---
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: {{ include "activemq.fullname" . }}
-  namespace: {{ include "activemq.namespace" . | quote }}
-  {{- if dig "armonik" "operators" "certManager" "deploy" false .Values.global }}
-  {{- /* Hooked only when this release installs the CRDs; otherwise a plain resource. */}}
+  name: {{ include "armonik.fullname" . }}
+  namespace: {{ include "armonik.namespace" . | quote }}
+  {{- if or $ops.certManager.deploy $certManager.annotations }}
   annotations:
+    {{- if $ops.certManager.deploy }}
+    {{- /* Hooked only when this release installs the CRDs; otherwise a plain resource. */}}
     "helm.sh/hook": post-install,post-upgrade
     "helm.sh/hook-weight": "10"
+    {{- end }}
+    {{- with $certManager.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
   {{- end }}
+  labels:
+    {{- include "armonik.labels" . | nindent 4 }}
+    {{- with $certManager.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
 spec:
-  commonName: {{ include "activemq.fullname" . }}
+  commonName: {{ include "armonik.fullname" . }}
   dnsNames:
-  - {{ include "activemq.fullname" . }}.{{ include "activemq.namespace" . }}
-  - {{ include "activemq.fullname" . }}.{{ include "activemq.namespace" . }}.svc
-  - {{ include "activemq.fullname" . }}.{{ include "activemq.namespace" . }}.svc.{{ $tls.clusterDomain }}
-  secretName: {{ include "activemq.fullname" . }}
+  - {{ include "armonik.fullname" . }}.{{ include "armonik.namespace" . }}
+  - {{ include "armonik.fullname" . }}.{{ include "armonik.namespace" . }}.svc
+  - {{ include "armonik.fullname" . }}.{{ include "armonik.namespace" . }}.svc.{{ $tls.clusterDomain }}
+  secretName: {{ include "armonik.fullname" . }}
   {{- include "armonik.certManager.certificateSpec" (dict "certManager" $certManager "issuer" $issuer) | nindent 2 }}
   additionalOutputFormats:
     - type: CombinedPEM

@@ -264,7 +264,7 @@ from:
 
 
 {{/*
-  Operator egress: to the MongoDB server and to cert-manager.
+  Operator egress: to the MongoDB server. cert-manager is reached through the API server only.
 */}}
 {{- define "armonik.netpol.rule.mongodbOperatorTo" -}}
 {{- $root := . -}}
@@ -274,12 +274,6 @@ to:
       {{- include "armonik.netpol.namespaceSelector" . | nindent 6 }}
     podSelector:
       {{- include "armonik.netpol.podSelector.mongodb" $root | nindent 6 }}
-{{- end }}
-{{- with index $root.Subcharts.operators.Subcharts "cert-manager" }}
-  - namespaceSelector:
-      {{- include "armonik.netpol.namespaceSelector" . | nindent 6 }}
-    podSelector:
-      {{- include "armonik.netpol.podSelector" . | nindent 6 }}
 {{- end }}
 ports:
   - protocol: TCP
@@ -488,7 +482,7 @@ egress:
 
 
 {{/*
-  MongoDB operator: ingress from the server, egress to the server + cert-manager + DNS + kube-api.
+  MongoDB operator: ingress from the server, egress to the server + DNS + kube-api.
 */}}
 {{- define "armonik.netpol.mongodbOperator" -}}
 {{- $root := . -}}

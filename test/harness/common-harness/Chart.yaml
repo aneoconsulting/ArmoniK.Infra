@@ -7,7 +7,7 @@ description: >-
 type: application
 version: 0.1.0
 # Distinctive, so an imageConf test can tell the AppVersion fallback from a literal tag.
-appVersion: "9.9.9"
+appVersion: "0.0.0-appversion"
 kubeVersion: ">=v1.25.0-0"
 dependencies:
   - name: armonik-common

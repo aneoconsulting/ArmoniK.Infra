@@ -1,11 +1,11 @@
 {{- if .Values.podDisruptionBudget.enabled -}}
-apiVersion: {{ include "activemq.pdb.apiVersion" . }}
+apiVersion: {{ include "armonik.pdb.apiVersion" . }}
 kind: PodDisruptionBudget
 metadata:
-  name: {{ include "activemq.fullname" . }}
-  namespace: {{ include "activemq.namespace" . | quote }}
+  name: {{ include "armonik.fullname" . }}
+  namespace: {{ include "armonik.namespace" . | quote }}
   labels:
-    {{- include "activemq.labels" . | nindent 4 }}
+    {{- include "armonik.labels" . | nindent 4 }}
 spec:
   {{- if .Values.podDisruptionBudget.minAvailable }}
   minAvailable: {{ .Values.podDisruptionBudget.minAvailable }}
@@ -15,5 +15,5 @@ spec:
   {{- end  }}
   selector:
     matchLabels:
-      {{- include "activemq.selectorLabels" . | nindent 6 }}
+      {{- include "armonik.selectorLabels" . | nindent 6 }}
 {{- end -}}

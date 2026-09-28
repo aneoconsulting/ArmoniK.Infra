@@ -7,6 +7,9 @@ metadata:
   labels:
     app.kubernetes.io/component: load-balancer
     {{- include "armonik.labels" . | nindent 4 }}
+    {{- with .Values.loadBalancer.service.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
   {{- with coalesce .Values.loadBalancer.service.annotations .Values.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}

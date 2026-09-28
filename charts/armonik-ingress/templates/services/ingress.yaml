@@ -6,6 +6,9 @@ metadata:
   labels:
     app.kubernetes.io/component: ingress
     {{- include "armonik.labels" . | nindent 4 }}
+    {{- with .Values.service.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
   {{- with coalesce .Values.service.annotations .Values.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}

@@ -18,7 +18,7 @@ extraVolumeMounts:
     mountPath: /scratch
 extraContainers:
   - name: nginx-debug
-    image: busybox:1.37.0
+    image: busybox:0.0.0-test
     command: ["/bin/sh", "-c", "sleep infinity"]
 containerPatch:
   imagePullPolicy: Always
@@ -68,7 +68,7 @@ loadBalancer:
       mountPath: /scratch
   extraInitContainers:
     - name: lb-warmup
-      image: busybox:1.37.0
+      image: busybox:0.0.0-test
       command: ["/bin/sh", "-c", "true"]
   containerPatch:
     imagePullPolicy: Always

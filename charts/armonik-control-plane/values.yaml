@@ -3,6 +3,13 @@ global:
   # Release name of the umbrella that owns the conf Secrets (defaults to "armonik").
   armonik:
     source: armonik
+# -- Chart name used in resource names and labels.
+nameOverride: ""
+# -- Name prefix of every resource.
+fullnameOverride: ""
+# -- Namespace of every resource, the release namespace when empty. Under the umbrella it must equal the
+# umbrella's own namespaceOverride.
+namespaceOverride: ""
 imagePullSecrets: []
 name: control-plane
 image:
@@ -40,9 +47,8 @@ rbac:
 
 serviceAccount:
   create: true
-  # Name of the ServiceAccount.
-  # When create=false, this must instead name an existing ServiceAccount to use.
-  name: control-plane
+  # -- ServiceAccount name (tpl-rendered), armonik.fullname when empty. With create=false it must exist.
+  name: ""
   annotations: {}
   secrets: []
 

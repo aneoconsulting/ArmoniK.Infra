@@ -53,9 +53,8 @@ global:
         deploy: true
       mongodbOperator:
         deploy: true
-      # MongoDB remains the default table storage, so Postgres stays off.
-      postgresOperator:
-        deploy: false
+      postgresqlOperator:
+        deploy: true
       prometheusOperator:
         deploy: true
       # GCP-specific, only needed by a googleCas issuer (certManagerIssuer.provider=googleCas, for one).

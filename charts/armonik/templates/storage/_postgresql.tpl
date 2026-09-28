@@ -41,7 +41,7 @@ PostgreSQL configuration forwarded to ArmoniK Core, derived from the in-cluster 
 Skipped when that dependency is disabled: to bring your own PostgreSQL, set
 dependencies.postgresql.enabled=false and supply the connection through the conf values directly
 (conf.core.env / conf.core.envFromSecret). The postgres OPERATOR may be managed here or external
-(global.armonik.operators.postgresOperator) - it does not affect this derivation, which reads the
+(global.armonik.operators.postgresqlOperator) - it does not affect this derivation, which reads the
 Cluster's own rendered values.
 
 Do not fix the mismatched spelling below: Components__TableStorage must equal

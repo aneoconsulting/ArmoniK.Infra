@@ -24,3 +24,35 @@ tests:
     asserts:
       - failedTemplate:
           errorPattern: "must stay false"
+  - it: fails when postgresql is enabled without the CloudNativePG operator available
+    set:
+      dependencies:
+        mongodb:
+          enabled: false
+        postgresql:
+          enabled: true
+      global:
+        armonik:
+          operators:
+            postgresqlOperator:
+              deploy: false
+              available: false
+    asserts:
+      - failedTemplate:
+          errorPattern: "requires global.armonik.operators.postgresqlOperator.available=true"
+  - it: renders postgresql against an externally installed CloudNativePG operator
+    set:
+      dependencies:
+        mongodb:
+          enabled: false
+        postgresql:
+          enabled: true
+      global:
+        armonik:
+          operators:
+            postgresqlOperator:
+              deploy: false
+              available: true
+    asserts:
+      - hasDocuments:
+          count: 0

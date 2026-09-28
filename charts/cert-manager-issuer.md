@@ -1,7 +1,8 @@
 # Shared cert-manager issuer
 
-Four consumers can get their TLS material from cert-manager: `armonik-ingress` (server TLS and
-the mTLS client CA), `dependencies.redis`, `dependencies.activemq`, and `dependencies.mongodb`.
+Five consumers can get their TLS material from cert-manager: `armonik-ingress` (server TLS and
+the mTLS client CA), `dependencies.redis`, `dependencies.activemq`, `dependencies.mongodb`, and
+`dependencies.postgresql`.
 Each resolves its `Certificate`'s `issuerRef` the same way, in order:
 
 1. a local `existingIssuer` override
@@ -35,9 +36,10 @@ dependencies:
         enabled: true
 ```
 
-Each consumer creates its **own** local Issuer — ingress, redis, activemq and mongodb end up with
-four independent Issuer objects, not one shared root (mongodb's is one object shared by both its
-Certificates, never one per Certificate, see [MongoDB](#mongodb)). `provider` defaults to
+Each consumer creates its **own** local Issuer: ingress, redis, activemq, mongodb and postgresql
+end up with five independent Issuer objects, not one shared root (mongodb's and postgresql's are
+each one object shared by both their Certificates, never one per Certificate, see
+[MongoDB](#mongodb) and [PostgreSQL](#postgresql)). `provider` defaults to
 `selfSigned`, same as always; set it per consumer for a different backend:
 
 ```yaml
@@ -48,7 +50,7 @@ dependencies:
       existingSecret: redis-tls
       certManager:
         enabled: true
-        provider: vault   # or ca / acme / venafi / googleCas; never selfSigned for mongodb
+        provider: vault   # or ca / acme / venafi / googleCas; never selfSigned for mongodb or postgresql
         vault:
           server: https://vault.example.com:8200
           path: pki_int/sign/redis
@@ -60,9 +62,9 @@ dependencies:
 The value lives under each consumer's own `certManager` block, sibling to `existingIssuer`:
 `dependencies.redis.tls.certManager`, `dependencies.activemq.tls.certManager` (`tls.certManager`
 when activemq is installed standalone), `ingress.tls.certManager` (`tls.certManager` standalone),
-`dependencies.mongodb.certManager`. Unlike `certManagerIssuer`, which is umbrella-only, this is a
-value every one of these charts carries on its own, so it also works when a consumer is installed
-as its own release.
+`dependencies.mongodb.certManager`, `dependencies.postgresql.certManager`. Unlike
+`certManagerIssuer`, which is umbrella-only, this is a value every one of these charts carries on
+its own, so it also works when a consumer is installed as its own release.
 
 ### Global shared issuer
 
@@ -420,3 +422,37 @@ This configuration requires no `dependencies.mongodb.certManager.*`, `secrets.ss
 over (b)/(c)/(d) to keep certificate issuance inside the operator's own reconciliation
 loop. Prefer (b)/(c)/(d) to centralize issuance in this chart's own templates alongside
 redis, activemq, and ingress.
+
+## PostgreSQL
+
+`certManager.enabled` picks who signs the server and replication certificates:
+
+- `false` (default): the CloudNativePG operator, with its own CA `<cluster>-ca`. Nothing is rendered.
+- `true`: cert-manager, the issuer resolving as for the other consumers. The operator creates no CA.
+
+```yaml
+dependencies:
+  postgresql:
+    certManager:
+      enabled: true
+    cluster:
+      certificates:
+        serverTLSSecret: armonik-postgresql-server-tls
+        serverCASecret: armonik-postgresql-server-tls
+        replicationTLSSecret: armonik-postgresql-replication-tls
+        clientCASecret: armonik-postgresql-replication-tls
+```
+
+All four `cluster.certificates` keys are required; the chart reads the Secret names from the Cluster
+CR spec. Do not reuse the operator's own names, `<cluster>-server` and `<cluster>-replication`: after
+switching back to `false`, it would keep the cert-manager leaves until they expire.
+
+`ca.crt` must hold the root: PostgreSQL and libpq do not set OpenSSL's `X509_V_FLAG_PARTIAL_CHAIN`,
+the flag that accepts an intermediate as trust anchor. When the issuer does not return the root,
+point the CA key at a Secret holding it.
+
+`certManager.enabled=true` requires an issuer; `selfSigned` and `acme` are refused.
+
+Replicas authenticate as `streaming_replica` by certificate alone, so any such certificate under the
+issuer's root can stream the WAL until the PostgreSQL NetworkPolicies restrict who reaches the
+instances. Prefer an issuer whose root is dedicated to this Cluster.

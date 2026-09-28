@@ -39,6 +39,10 @@ global:
         deploy: false
         available: true
         namespace: '{{ .Values.global.armonik.operators.mongodbOperator.deploy | empty | ternary "" .Release.Namespace }}'
+      postgresqlOperator:
+        deploy: false
+        available: true
+        namespace: '{{ .Values.global.armonik.operators.postgresqlOperator.deploy | empty | ternary "" .Release.Namespace }}'
       prometheusOperator:
         deploy: false
         available: true

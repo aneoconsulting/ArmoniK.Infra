@@ -200,3 +200,14 @@ tests:
     asserts:
       - failedTemplate:
           errorPattern: 'dependencies.mongodb renders its Certificates into namespace "other-ns-2"'
+
+  - it: fails when dependencies.postgresql renders its Certificates into a different namespace than the shared issuer
+    values:
+      - ../ci/postgresql-certmanager-values.yaml
+    set:
+      dependencies:
+        postgresql:
+          namespaceOverride: other-ns
+    asserts:
+      - failedTemplate:
+          errorPattern: 'dependencies.postgresql renders its Certificates into namespace "other-ns"'

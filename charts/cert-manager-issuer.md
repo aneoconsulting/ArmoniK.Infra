@@ -37,8 +37,9 @@ dependencies:
 ```
 
 Each consumer creates its **own** local Issuer: ingress, redis, activemq, mongodb and postgresql
-end up with five independent Issuer objects, not one shared root (mongodb's is one object shared
-by both its Certificates, never one per Certificate, see [MongoDB](#mongodb)). `provider` defaults to
+end up with five independent Issuer objects, not one shared root (mongodb's and postgresql's are
+each one object shared by both their Certificates, never one per Certificate, see
+[MongoDB](#mongodb) and [PostgreSQL](#postgresql)). `provider` defaults to
 `selfSigned`, same as always; set it per consumer for a different backend:
 
 ```yaml
@@ -424,12 +425,12 @@ redis, activemq, and ingress.
 
 ## PostgreSQL
 
-The CloudNativePG operator always creates its own CA, `<cluster>-ca`. It signs the replication
-certificate (`streaming_replica`), which only the Cluster's instances use, so that half never goes
-through cert-manager. The server certificate depends on `certManager.enabled`:
+`certManager.enabled` picks who signs both halves:
 
-- `false` (default): signed by `<cluster>-ca`; `postgresql-certificate.yaml` renders nothing.
-- `true`: issued by cert-manager, the issuer resolving as for the other consumers.
+- `false` (default): the CloudNativePG operator signs the server and replication certificates with
+  its own CA, `<cluster>-ca`; `postgresql-certificate.yaml` renders nothing.
+- `true`: cert-manager issues both, the issuer resolving as for the other consumers, and the operator
+  creates no CA.
 
 ```yaml
 dependencies:
@@ -440,19 +441,28 @@ dependencies:
       certificates:
         serverTLSSecret: armonik-postgresql-server-tls
         serverCASecret: armonik-postgresql-server-tls
+        replicationTLSSecret: armonik-postgresql-replication-tls
+        clientCASecret: armonik-postgresql-replication-tls
 ```
 
-`cluster.certificates` goes as-is to the Cluster CR, and the chart reads the Secret name from it.
-One Secret serves both keys, cert-manager writing `ca.crt` into it. Do not name it `<cluster>-server`,
-the operator's own: after switching back to `false`, the operator would keep the cert-manager leaf
-until it expires.
+`cluster.certificates` goes as-is to the Cluster CR, and the chart reads the Secret names from it;
+all four are required. A CA key can name the matching TLS Secret, cert-manager writing `ca.crt` into
+it, but `ca.crt` must hold the root: neither PostgreSQL nor libpq accepts an intermediate as trust
+anchor. When the issuer does not return the root, point the CA key at a Secret holding it. Do not
+reuse `<cluster>-server` or `<cluster>-replication`, the operator's own names: after switching back
+to `false`, the operator would keep the cert-manager leaves until they expire.
 
-The Certificate covers the `-rw`, `-ro` and `-r` Services and labels its Secret `cnpg.io/reload`, so
-the instances reload renewals on their own.
+`<cluster>-server` covers the `-rw`, `-ro` and `-r` Services, `<cluster>-replication` has
+`CN=streaming_replica`. Both label their Secret `cnpg.io/reload`, so the instances reload renewals on
+their own.
 
 `selfSigned`, the fallback when no issuer is configured, and `acme` fail at render time: the first
-would self-sign the leaf, the second cannot validate in-cluster names. An `existingIssuer` cannot be
+would self-sign the leaves, the second cannot issue `streaming_replica`. An `existingIssuer` cannot be
 checked at render time: point it at a real CA.
+
+Replicas authenticate as `streaming_replica` by certificate alone, so any such certificate under the
+issuer's root can stream the WAL. The PostgreSQL NetworkPolicies are meant to restrict who can reach
+the instances; until then, prefer an issuer whose root is dedicated to this Cluster.
 
 ArmoniK Core does not verify the chain yet: `PostgreSQL__Ssl=true` maps to Npgsql's
 `SslMode.Require`, which encrypts without validating the server certificate.

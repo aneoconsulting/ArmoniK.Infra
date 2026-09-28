@@ -293,7 +293,7 @@ tests:
       - contains:
           path: spec.dnsNames
           content: custom-pg-r.custom-ns
-  - it: postgresql Cluster CR gets the Secret name the server Certificate writes, and no replication one
+  - it: postgresql Cluster CR gets the same four Secret names the Certificates write
     template: charts/dependencies/charts/postgresql/templates/cluster.yaml
     values:
       - ../ci/postgresql-certmanager-values.yaml
@@ -303,3 +303,5 @@ tests:
           value:
             serverTLSSecret: armonik-postgresql-server-tls
             serverCASecret: armonik-postgresql-server-tls
+            replicationTLSSecret: armonik-postgresql-replication-tls
+            clientCASecret: armonik-postgresql-replication-tls

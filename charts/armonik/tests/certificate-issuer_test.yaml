@@ -424,30 +424,55 @@ tests:
     asserts:
       - hasDocuments:
           count: 0
-  - it: "postgresql: renders only the server Certificate against the shared issuer, replication staying with the operator"
+  - it: "postgresql: renders the server and replication Certificates against the shared issuer"
     template: certificate/postgresql-certificate.yaml
     values:
       - ../ci/postgresql-certmanager-values.yaml
     asserts:
       - hasDocuments:
-          count: 1
+          count: 2
       - equal:
+          path: spec.secretName
+          value: armonik-postgresql-server-tls
+        documentSelector:
           path: metadata.name
           value: t-postgresql-server
       - equal:
           path: spec.secretName
-          value: armonik-postgresql-server-tls
+          value: armonik-postgresql-replication-tls
+        documentSelector:
+          path: metadata.name
+          value: t-postgresql-replication
+      - equal:
+          path: spec.commonName
+          value: streaming_replica
+        documentSelector:
+          path: metadata.name
+          value: t-postgresql-replication
+      - notExists:
+          path: spec.dnsNames
+        documentSelector:
+          path: metadata.name
+          value: t-postgresql-replication
       - equal:
           path: spec.secretTemplate.labels
           value:
             cnpg.io/reload: ""
+        documentSelector:
+          path: kind
+          value: Certificate
+          matchMany: true
       - equal:
           path: spec.issuerRef
           value:
             name: t-shared-issuer
             kind: Issuer
             group: cert-manager.io
-  - it: "postgresql: fails when serverCASecret is missing"
+        documentSelector:
+          path: kind
+          value: Certificate
+          matchMany: true
+  - it: "postgresql: fails when one of the four cluster.certificates names is missing"
     template: certificate/postgresql-certificate.yaml
     values:
       - ../ci/postgresql-certmanager-values.yaml
@@ -456,10 +481,23 @@ tests:
         postgresql:
           cluster:
             certificates:
-              serverCASecret: ""
+              clientCASecret: ""
     asserts:
       - failedTemplate:
-          errorPattern: "dependencies.postgresql.cluster.certificates.serverCASecret is required"
+          errorPattern: "dependencies.postgresql.cluster.certificates.clientCASecret is required"
+  - it: "postgresql: fails when the server and replication Certificates would write the same Secret"
+    template: certificate/postgresql-certificate.yaml
+    values:
+      - ../ci/postgresql-certmanager-values.yaml
+    set:
+      dependencies:
+        postgresql:
+          cluster:
+            certificates:
+              replicationTLSSecret: armonik-postgresql-server-tls
+    asserts:
+      - failedTemplate:
+          errorPattern: "serverTLSSecret and replicationTLSSecret must differ"
   - it: "postgresql: fails naming availability when cert-manager is unavailable and no issuer exists"
     template: certificate/postgresql-certificate.yaml
     values:
@@ -482,7 +520,7 @@ tests:
     asserts:
       - failedTemplate:
           errorPattern: "dependencies.postgresql.certManager.enabled requires it"
-  - it: "postgresql: local existingIssuer wins over the shared issuer"
+  - it: "postgresql: local existingIssuer wins over the shared issuer for both Certificates"
     template: certificate/postgresql-certificate.yaml
     values:
       - ../ci/postgresql-certmanager-values.yaml
@@ -496,13 +534,17 @@ tests:
               name: my-pg-issuer
     asserts:
       - hasDocuments:
-          count: 1
+          count: 2
       - equal:
           path: spec.issuerRef
           value:
             name: my-pg-issuer
             kind: ClusterIssuer
             group: cert-manager.io
+        documentSelector:
+          path: kind
+          value: Certificate
+          matchMany: true
   - it: "postgresql: existingIssuer bypasses the shared-issuer provider guard (its own backend cannot be checked at render time)"
     template: certificate/postgresql-certificate.yaml
     values:
@@ -563,7 +605,7 @@ tests:
     asserts:
       - failedTemplate:
           errorPattern: "cannot use a local fallback issuer with provider=acme"
-  - it: "postgresql: setting certManager.provider keeps a local Issuer even though the shared issuer is enabled"
+  - it: "postgresql: setting certManager.provider keeps one local Issuer, shared by both Certificates, even though the shared issuer is enabled"
     template: certificate/postgresql-certificate.yaml
     values:
       - ../ci/postgresql-certmanager-values.yaml
@@ -576,7 +618,7 @@ tests:
               secretName: my-ca-key-pair
     asserts:
       - hasDocuments:
-          count: 2
+          count: 3
       - equal:
           path: metadata.name
           value: t-postgresql-issuer
@@ -595,3 +637,4 @@ tests:
         documentSelector:
           path: kind
           value: Certificate
+          matchMany: true

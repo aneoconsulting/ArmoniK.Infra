@@ -1,8 +1,7 @@
-{{- if .Values.extraVolumes -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "armonik.fullname" . }}-jolokia-configs
+  name: {{ include "activemq.jolokiaConfigsName" . | quote }}
   namespace: {{ include "armonik.namespace" . | quote }}
   labels:
     {{- include "armonik.labels" . | nindent 4 }}
@@ -205,4 +204,3 @@ data:
       </deny>
 
     </restrict>
-{{- end -}}

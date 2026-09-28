@@ -37,7 +37,7 @@ tests:
     asserts:
       - contains:
           path: spec.dnsNames
-          content: activemq.activemq-ns
+          content: RELEASE-NAME-activemq.activemq-ns
       - contains:
           path: spec.dnsNames
-          content: activemq.activemq-ns.svc
+          content: RELEASE-NAME-activemq.activemq-ns.svc

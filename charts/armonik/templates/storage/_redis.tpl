@@ -43,7 +43,7 @@ env:
 {{- end }}
 envFromSecret:
   Redis__Password:
-    secret: redis-users
+    secret: {{ tpl .Values.auth.usersExistingSecret . | quote }}
     field: default
     namespace: {{ $namespace | quote }}
 mountSecret:

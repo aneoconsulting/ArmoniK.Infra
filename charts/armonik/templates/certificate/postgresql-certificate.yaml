@@ -2,27 +2,30 @@
 {{- $pg := .Values.dependencies.postgresql | default dict }}
 {{- $certManager := $pg.certManager | default dict }}
 {{- if and $pg.enabled $certManager.enabled }}
-{{- /* Server half only: replicationTLSSecret and clientCASecret stay with the operator's own CA,
-       which only this Cluster's instances need to trust. The Secret name is read from the Cluster
-       CR's own spec.certificates, so the Certificate and the CR cannot drift. */}}
+{{- /* The Secret names are read from the Cluster CR's own spec.certificates so the Certificates and the CR cannot drift.
+       Any name left out makes the operator sign that half with its own CA. */}}
 {{- $certs := ($pg.cluster | default dict).certificates | default dict }}
-{{- range $key := list "serverTLSSecret" "serverCASecret" }}
+{{- range $key := list "serverTLSSecret" "serverCASecret" "replicationTLSSecret" "clientCASecret" }}
 {{- if index $certs $key | empty }}
-{{- printf "dependencies.postgresql.cluster.certificates.%s is required when dependencies.postgresql.certManager.enabled=true: set serverTLSSecret and serverCASecret to the Secret the server Certificate writes." $key | fail }}
+{{- printf "dependencies.postgresql.cluster.certificates.%s is required when dependencies.postgresql.certManager.enabled=true, otherwise the operator signs that half with its own CA. Set serverTLSSecret and serverCASecret to one Secret name, replicationTLSSecret and clientCASecret to another." $key | fail }}
 {{- end }}
+{{- end }}
+{{- if eq $certs.serverTLSSecret $certs.replicationTLSSecret }}
+{{- fail "dependencies.postgresql.cluster.certificates.serverTLSSecret and replicationTLSSecret must differ: each is written by its own Certificate." }}
 {{- end }}
 {{- $cluster := include "cluster.fullname" .Subcharts.dependencies.Subcharts.postgresql }}
 {{- $ns := include "cluster.namespace" .Subcharts.dependencies.Subcharts.postgresql }}
 
-{{- /* selfSigned is refused: CNPG validates the server certificate against serverCASecret only,
-       so it would work, but with a self-signed leaf instead of one signed by the operator's CA. */}}
+{{- /* Resolved once so a local fallback Issuer is shared by both Certificates.
+       selfSigned is refused: CNPG validates each half against its own Secret, so it would work,
+       but it would replace leaves signed by the operator's CA with self-signed ones. */}}
 {{- $issuerName := printf "%s-issuer" $cluster }}
 {{- $provider := $certManager.provider | default "selfSigned" }}
 {{- $localRequested := hasKey $certManager "provider" }}
 {{- $issuer := list $ $certManager.existingIssuer $issuerName $provider $localRequested | include "armonik.certManager.getIssuer" | fromYaml }}
 {{- $rejected := dict
-      "selfSigned" "the server certificate would sign itself with no CA behind it, where the operator's own CA at least signs it"
-      "acme" "ACME has to prove control of every name, which the in-cluster Service names cannot" }}
+      "selfSigned" "every certificate would sign itself with no CA behind it, where the operator's own CA at least signs them"
+      "acme" "ACME only issues for DNS/IP identifiers, so it cannot issue the streaming_replica client certificate" }}
 {{- if and (not $ops.certManager.available) $issuer.needsLocalIssuer }}
 {{- fail "dependencies.postgresql.certManager.enabled requires it: set global.armonik.operators.certManager.available=true, set dependencies.postgresql.certManager.existingIssuer.enabled=true, set global.armonik.certManager.issuer.enabled=true, or disable certManager.enabled and leave the certificates to the CloudNativePG operator." }}
 {{- end }}
@@ -33,12 +36,12 @@
 {{- /* An existingIssuer's backend is out of reach at render time. */}}
 {{- $cmiProvider := (.Values.certManagerIssuer | default dict).provider | default "selfSigned" }}
 {{- with index $rejected $cmiProvider }}
-{{- printf "dependencies.postgresql.certManager.enabled cannot use a shared issuer with provider=%s: %s. Use certManagerIssuer.provider=ca, vault, venafi or googleCas, point dependencies.postgresql.certManager.existingIssuer at an issuer backed by a real CA, or leave dependencies.postgresql.certManager.enabled=false so the CloudNativePG operator issues it from its own CA." $cmiProvider . | fail }}
+{{- printf "dependencies.postgresql.certManager.enabled cannot use a shared issuer with provider=%s: %s. Use certManagerIssuer.provider=ca, vault, venafi or googleCas, point dependencies.postgresql.certManager.existingIssuer at an issuer backed by a real CA, or leave dependencies.postgresql.certManager.enabled=false so the CloudNativePG operator issues them from its own CA." $cmiProvider . | fail }}
 {{- end }}
 {{- end }}
 {{- if $issuer.needsLocalIssuer }}
 {{- with index $rejected $provider }}
-{{- printf "dependencies.postgresql.certManager.enabled cannot use a local fallback issuer with provider=%s: %s. Set dependencies.postgresql.certManager.provider to ca, vault, venafi or googleCas, point dependencies.postgresql.certManager.existingIssuer at an issuer backed by a real CA, set global.armonik.certManager.issuer.enabled=true with certManagerIssuer.provider set to a real CA, or leave dependencies.postgresql.certManager.enabled=false so the CloudNativePG operator issues it from its own CA." $provider . | fail }}
+{{- printf "dependencies.postgresql.certManager.enabled cannot use a local fallback issuer with provider=%s: %s. Set dependencies.postgresql.certManager.provider to ca, vault, venafi or googleCas, point dependencies.postgresql.certManager.existingIssuer at an issuer backed by a real CA, set global.armonik.certManager.issuer.enabled=true with certManagerIssuer.provider set to a real CA, or leave dependencies.postgresql.certManager.enabled=false so the CloudNativePG operator issues them from its own CA." $provider . | fail }}
 {{- end }}
 {{- include "armonik.certManager.issuerManifest" (dict
       "root" $
@@ -60,11 +63,17 @@
 {{- $host := printf "%s-%s" $cluster $svc }}
 {{- $dnsNames = concat $dnsNames (list $host (printf "%s.%s" $host $ns) (printf "%s.%s.svc" $host $ns) (printf "%s.%s.svc.%s" $host $ns $domain)) }}
 {{- end }}
+{{- /* Replicas authenticate to the primary as the streaming_replica role, by certificate alone and
+       matched on the CN: any such certificate under the issuer's root qualifies. The PostgreSQL
+       NetworkPolicies are meant to restrict who can reach the instances. */}}
+{{- range $purpose, $spec := dict
+      "server" (dict "secretName" $certs.serverTLSSecret "commonName" (printf "%s-rw" $cluster) "dnsNames" $dnsNames)
+      "replication" (dict "secretName" $certs.replicationTLSSecret "commonName" "streaming_replica") }}
 ---
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: {{ $cluster }}-server
+  name: {{ $cluster }}-{{ $purpose }}
   namespace: {{ $ns }}
   {{- if $ops.certManager.deploy }}
   {{- /* Hooked only when this release installs the CRDs; otherwise a plain resource. */}}
@@ -75,14 +84,17 @@ metadata:
   labels:
     {{- include "armonik.labels" $ | nindent 4 }}
 spec:
-  secretName: {{ $certs.serverTLSSecret }}
+  secretName: {{ $spec.secretName }}
   # Instances reload a Secret carrying this label when it changes; without it a renewal needs
   # `kubectl cnpg reload`.
   secretTemplate:
     labels:
       cnpg.io/reload: ""
-  commonName: {{ $cluster }}-rw
+  commonName: {{ $spec.commonName }}
+  {{- with $spec.dnsNames }}
   dnsNames:
-  {{- toYaml $dnsNames | nindent 2 }}
+  {{- toYaml . | nindent 2 }}
+  {{- end }}
   {{- include "armonik.certManager.certificateSpec" (dict "certManager" $certManager "issuer" $issuer) | nindent 2 }}
+{{- end }}
 {{- end }}

@@ -50,3 +50,20 @@ tests:
             port: 8161
             protocol: TCP
             targetPort: dashboard
+
+  - it: runs as the namespace's default ServiceAccount unless one is named
+    template: activemq-deployment.yaml
+    asserts:
+      - notExists:
+          path: spec.template.spec.serviceAccountName
+
+  - it: runs as the named ServiceAccount, tpl-rendered
+    template: activemq-deployment.yaml
+    release:
+      name: t
+    set:
+      serviceAccountName: '{{ .Release.Name }}-broker'
+    asserts:
+      - equal:
+          path: spec.template.spec.serviceAccountName
+          value: t-broker

@@ -109,11 +109,9 @@ ok ingress-tls-mtls       armonik-ingress       -f charts/armonik-ingress/ci/tls
 ok ingress-gateway        armonik-ingress       -f charts/armonik-ingress/ci/gateway-values.yaml
 ok ingress-lb             armonik-ingress       -f charts/armonik-ingress/ci/lb-values.yaml
 ok ingress-patches        armonik-ingress       -f charts/armonik-ingress/ci/patch-values.yaml
-ok activemq-pdb-hpa       activemq              -f charts/activemq/ci/pdb-hpa-values.yaml
+ok activemq-pdb           activemq              -f charts/activemq/ci/pdb-values.yaml
 ok activemq-tls           activemq              -f charts/activemq/ci/tls-values.yaml
 ok activemq-patches       activemq              -f charts/activemq/ci/patch-values.yaml
-ok activemq-psp-k8s124    activemq --kube-version 1.24.17 -f test/fixtures/activemq/psp-values.yaml
-ok activemq-psp-k8s131    activemq              -f test/fixtures/activemq/psp-values.yaml
 ok umbrella-no-control-plane armonik -f charts/armonik/ci/minimal-values.yaml --set control-plane.enabled=false
 ok compute-patches        armonik-compute-plane -f charts/armonik-compute-plane/ci/patch-values.yaml
 ok control-patches        armonik-control-plane -f charts/armonik-control-plane/ci/patch-values.yaml

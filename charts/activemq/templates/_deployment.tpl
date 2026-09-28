@@ -73,6 +73,9 @@ tolerations:
 {{- with $v.priorityClassName }}
 priorityClassName: {{ . | quote }}
 {{- end }}
+{{- with tpl ($v.serviceAccountName | default "") $root }}
+serviceAccountName: {{ . | quote }}
+{{- end }}
 {{- with $v.topologySpreadConstraints }}
 topologySpreadConstraints:
   {{- toYaml . | nindent 2 }}

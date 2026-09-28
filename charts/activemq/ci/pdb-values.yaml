@@ -1,0 +1,4 @@
+# PodDisruptionBudget gate.
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1

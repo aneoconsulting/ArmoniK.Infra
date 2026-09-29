@@ -182,6 +182,13 @@ tests:
           path: kind
           value: Issuer
       - equal:
+          path: metadata.labels["app.kubernetes.io/instance"]
+          value: RELEASE-NAME
+        template: secrets/mtls-ca.yaml
+        documentSelector:
+          path: kind
+          value: Issuer
+      - equal:
           path: spec.issuerRef
           value:
             name: custom-ingress-issuer

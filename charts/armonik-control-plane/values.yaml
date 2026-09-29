@@ -1,7 +1,8 @@
-# global.armonik.* comes from armonik-common via import-values; its defaults suit a standalone plane.
+# global.armonik.* defaults come from armonik-common/values.yaml (import-values) and suit a standalone
+# plane.
 global:
-  # Release name of the umbrella that owns the conf Secrets (defaults to "armonik").
   armonik:
+    # Release name of the umbrella that owns the conf Secrets.
     source: armonik
 # -- Chart name used in resource names and labels.
 nameOverride: ""
@@ -131,15 +132,15 @@ containerPatch: {}
 # Pod labels are out of reach: the selector is immutable.
 podSpecPatch: {}
 
-# Base conf merged into every control-plane workload: core + log layers + core TLS mounts.
+# Base conf of every workload of this chart: core and log layers, env and mounts.
 conf:
   # Overrides the umbrella's global.armonik.mountPath for this release (default "/mounts").
   # mountPath: /mounts
-  # A workload mounts the mount-aggregate of each layer it uses (same layers as envSecret), all at
-  # mountPath (merged into one projected volume). path defaults to mountPath, mode to "0444".
   envSecret:
     - '{{ list "core" . | include "armonik.conf.secretName" }}'
     - '{{ list "log" . | include "armonik.conf.secretName" }}'
+  # The mount-aggregate of each layer in envSecret, all at mountPath in one projected volume. path
+  # defaults to mountPath, mode to "0444".
   mountSecret:
     - secret: '{{ list "core" . | include "armonik.conf.mountSecretName" }}'
     - secret: '{{ list "log" . | include "armonik.conf.mountSecretName" }}'
@@ -279,7 +280,7 @@ init:
   # -- Merged over spec.template.spec, last. Lists the chart builds are refused: use extra*.
   # Pod labels are out of reach: the selector is immutable.
   podSpecPatch: {}
-  # On top of the base conf: jobs layer.
+  # On top of the base conf: init layer.
   conf:
     envSecret:
       - '{{ list "init" . | include "armonik.conf.secretName" }}'
@@ -290,11 +291,11 @@ networkPolicy:
   enabled: false
   submitter:
     enabled: true
-    # Pod selector matching Prometheus, for the built-in ingress rule below. Defaults to
+    # Pod selector matching Prometheus, for the built-in ingress rule. Defaults to
     # app.kubernetes.io/name: prometheus (kube-prometheus-stack's own label).
     prometheusPodSelector:
     extraIngressRules: []
-    # DNS-only by default. Add your own rules below.
+    # Egress is DNS-only by default. Examples for the storage backends:
     # extraEgressRules:
     #   - to:
     #       - namespaceSelector:
@@ -330,9 +331,9 @@ networkPolicy:
 
   metricsExporter:
     enabled: true
-    # Pod selector matching Prometheus, for the built-in ingress rule below. Defaults to
-    # app.kubernetes.io/name: prometheus (kube-prometheus-stack's own label).
+    # Same default as submitter.prometheusPodSelector.
     prometheusPodSelector:
     extraIngressRules: []
-    # DNS-only by default, same as submitter.extraEgressRules above (MongoDB only).
+    # Egress is DNS-only by default. The metrics-exporter only reaches MongoDB: see the first
+    # submitter.extraEgressRules example.
     extraEgressRules: []

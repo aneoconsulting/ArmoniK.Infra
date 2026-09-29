@@ -76,7 +76,8 @@ service:
   type: LoadBalancer
   annotations: {}
 
-# DNS domain of the cluster
+# Cluster DNS domain. tls.clusterDomain overrides it; empty falls back to global.clusterDomain, then
+# cluster.local.
 clusterDomain: ""
 
 tls:
@@ -85,17 +86,15 @@ tls:
     enabled: true
     addInjectorAnnotations: true
     existingIssuer:
-      # Use an existing cert-manager issuer
+      # Use an existing cert-manager issuer.
       enabled: false
-      # Kind of the existing cert-manager issuer (Issuer or ClusterIssuer)
+      # Issuer or ClusterIssuer.
       kind: "Issuer"
-      # Name of the existing cert-manager issuer
       name: "my-issuer"
       group: ""
-    # Setting provider (any value, including selfSigned) makes this consumer keep its own local
-    # fallback Issuer even if the global issuer is enabled release-wide; leaving it unset falls
-    # through to the global issuer when one is enabled, else defaults to selfSigned anyway. See
-    # cert-manager-issuer.md.
+    # Any provider, selfSigned included, keeps a local Issuer even when the global issuer is enabled.
+    # Unset: the global issuer when enabled, else a local selfSigned one. See
+    # charts/cert-manager-issuer.md.
     # provider: selfSigned
     # selfSigned: {}
     # ca: {}
@@ -103,22 +102,16 @@ tls:
     # acme: {}
     # venafi: {}
     # googleCas: {}
-    # Set the requested duration (i.e. lifetime) of the Certificate.
-    # See https://cert-manager.io/docs/reference/api-docs/#cert-manager.io/v1.CertificateSpec
+    # Certificate duration and renewBefore, see
+    # https://cert-manager.io/docs/reference/api-docs/#cert-manager.io/v1.CertificateSpec
     duration: ""
-    # How long before the currently issued certificate’s expiry cert-manager should renew the certificate.
-    # See https://cert-manager.io/docs/reference/api-docs/#cert-manager.io/v1.CertificateSpec
     renewBefore: ""
-    # Extra DNS names for the Certificate, appended to the built-in in-cluster Service names (short,
-    # namespaced, svc, and FQDN). The ingress is the external entry point, so a client reaching it from
-    # outside the cluster by hostname needs that hostname listed here.
+    # DNS SANs appended to the in-cluster Service names. List every hostname external clients use.
     extraDnsNames: []
-    # IP SANs for the Certificate. A client connecting directly to the ingress
-    # Service's external IP needs that IP listed here.
+    # IP SANs. List the Service's external IP if clients connect to it directly.
     ipAddresses: []
-    # Add extra annotations to the Certificate resource
+    # Extra annotations and labels on the Certificate.
     annotations: {}
-    # Add extra labels to the Certificate resource
     labels: {}
   customCert:
     certPem: ""
@@ -133,12 +126,13 @@ tls:
 mtls:
   enabled: false
   certificationAuthority:
-    # pem or existingSecret. If neither is set, a CA is cert-manager-issued from the same issuer
-    # tls.certManager would use (tls.certManager.existingIssuer, else global.armonik.certManager.issuer).
+    # pem or existingSecret. With neither, cert-manager issues a CA from the issuer tls.certManager
+    # resolves (existingIssuer, else global.armonik.certManager.issuer, else a local Issuer).
     pem: ""
     existingSecret: ""
   trustedCommonNames: []
 
+# Not read by any template.
 volumes:
   # ingressSecret: ingress-crt
   mongodbSecret: mongodb
@@ -146,7 +140,7 @@ volumes:
   nginxConfigMap: armonik-ingress-conf
   nginxStaticConfigMap: armonik-ingress-static
 
-# Load Balancer (multi-cluster gRPC load balancer)
+# ==== Multi-cluster gRPC load balancer ====
 loadBalancer:
   enabled: false
   clusters: {}
@@ -193,23 +187,21 @@ loadBalancer:
   # Pod labels are out of reach: the selector is immutable.
   podSpecPatch: {}
 
-# Set to the key of a Secret in an ESO SecretStore to source ingress conf URLs via ExternalSecret.
-# Leave empty to fall back to a plain Kubernetes Secret instead.
+# Secret holding the upstream URLs (keys control-plane, grafana, seq), read through ESO: its name in
+# urlsSecretNamespace (default: the release namespace), or its key in urlsSecretStoreName.
+# Empty, or ESO unavailable: the nginx conf is a plain Secret built from control_plane_url,
+# grafana_url and seq_url.
 #
-# WARNING: only matters if you flip this value on an EXISTING release, in place (helm upgrade,
-# same release name and namespace). Both modes render a Secret under the same name, and Helm
-# refuses to adopt one it doesn't already own. A fresh install, or changing this on a different
-# release or namespace, is unaffected - there's no prior resource to conflict with.
-#
-# To switch in place: delete the old ExternalSecret first (it also owns and deletes the Secret
-# it produced), then upgrade:
-#   kubectl delete externalsecrets.external-secrets.io -n <namespace> <release>-ingress-conf
+# Flipping this on an existing release fails: both modes produce a Secret of the same name, and Helm
+# refuses to adopt one it does not own. Delete the ExternalSecret first (its Secret goes with it),
+# then upgrade:
+#   kubectl delete externalsecrets.external-secrets.io -n <namespace> <fullname>-nginx-conf
 #   helm upgrade <release-name> ...
 urlsSecretName: ""
 urlsSecretNamespace: ""
-# Read the URLs from a pre-existing ESO store instead of the Kubernetes-provider one this chart
-# renders; urlsSecretName is then the key in that store. Kind defaults to SecretStore, in the
-# release namespace. Excludes urlsSecretNamespace; urlsSecretVersion needs a store name.
+# Read the URLs from a pre-existing ESO store instead of this chart's Kubernetes-provider one;
+# urlsSecretName is then the key in that store. Kind defaults to SecretStore, in the release
+# namespace. Excludes urlsSecretNamespace; urlsSecretVersion needs a store name.
 urlsSecretStoreName: ""
 urlsSecretStoreKind: ""
 urlsSecretVersion: ""
@@ -220,9 +212,7 @@ conf:
   refreshInterval: 1m0s
   # refreshPolicy: Periodic
 
-###########################################################
-# Admin GUI
-###########################################################
+# ==== Admin GUI ====
 gui:
   image:
     registry:
@@ -281,7 +271,7 @@ static:
   guiConfiguration: {}
 
 
-# GATEWAY
+# ==== Gateway API ====
 gateway:
   enabled: false
   tls:
@@ -290,30 +280,28 @@ gateway:
     namespaces:
       from: Same
 
-# HTTPROUTE
+# ==== HTTPRoute ====
 httpRoute:
   enabled: false
 
-# HEALTHCHECKPOLICY
+# ==== GKE HealthCheckPolicy ====
 healthCheckPolicy:
   enabled: false
 
 networkPolicy:
   enabled: false
 
-  # Only rendered when gateway.enabled or httpRoute.enabled is true
+  # Health-check NetworkPolicy, rendered with gateway.enabled or httpRoute.enabled: its podSelector
+  # and its ingress rules (each a full rule with "from" and "ports").
   healthCheckPodSelector: {}
-  # Ingress rules for the health-check policy: at minimum a "from" and a "ports" key
   healthCheckRules: []
 
   # NetworkPolicy for the nginx front pod.
   nginx:
-    # Extra ingress rules appended to the chart's own rules. Each entry is
-    # a full NetworkPolicy rule: at minimum a "from" and a "ports" key.
+    # Extra ingress rules, each a full NetworkPolicy rule with "from" and "ports".
     extraIngressRules: []
-    # The chart's own egress rule only covers DNS + the GUI backend. In the
-    # umbrella, a separate precise NetworkPolicy covers this instead. Installed standalone, add
-    # your own egress rules here, e.g.:
+    # The chart's own egress covers DNS and the GUI. The umbrella adds control-plane, Grafana and Seq
+    # (armonik/templates/networkpolicies/nginx-egress.yaml); standalone, add them here, e.g.:
     # extraEgressRules:
     #   - to:
     #       - namespaceSelector:
@@ -349,7 +337,7 @@ networkPolicy:
 
   # NetworkPolicy for the GUI backend pod.
   gui:
-    # Extra ingress rules appended to the chart's own rules (nginx only, by default).
+    # Extra ingress rules; the chart's own admit nginx only.
     extraIngressRules: []
-    # Extra egress rules appended to the chart's own rules (DNS).
+    # Extra egress rules; the chart's own allow DNS only.
     extraEgressRules: []

@@ -1,17 +1,19 @@
-# Layered install, the target layout: the operators release goes in first, this
-# release only consumes it. deploy=false drops the operator subcharts,
-# available=true still emits the CRs (ExternalSecret, SecretStore, ScaledObject,
-# Service/PodMonitor), unhooked since this release owns no CRD.
+# Layered install, the target layout: the operators release goes in first and this release only
+# consumes it. deploy=false drops the operator subcharts; available=true still emits the CRs
+# (ExternalSecret, SecretStore, ScaledObject, Service/PodMonitor), unhooked since this release owns
+# no CRD.
 #
-# The third-party dependencies stay at their defaults, unlike minimal-values.yaml:
-# the point of this profile is that the real CRs get rendered.
+# Unlike minimal-values.yaml, the third-party dependencies stay at their defaults, so the real CRs
+# get rendered.
 global:
   armonik:
-    # kube-prometheus-stack is in the operators release: its URL is stated, as armonik-operators NOTES print it.
+    # kube-prometheus-stack is in the operators release: its URL is stated, as the armonik-operators
+    # NOTES print it.
     monitoring:
       prometheusUrl: http://ops-kube-prometheus-prometheus.monitoring.svc:9090
-    # Only prometheusOperator.namespace is read (the Grafana dashboard sidecar derives its watched
-    # namespaces from it, and fails on an empty one); the four others are stated for symmetry.
+    # Only prometheusOperator.namespace is read here: the Grafana dashboard sidecar derives its
+    # watched namespaces from it and fails on an empty one. keda's feeds the NetworkPolicies, off in
+    # this profile; the others are stated for symmetry.
     operators:
       externalSecrets:
         deploy: false

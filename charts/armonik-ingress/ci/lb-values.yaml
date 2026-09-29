@@ -1,5 +1,5 @@
-# Multi-cluster gRPC load balancer: Deployment + Service + ConfigMap, and the
-# cluster-certs Secret for the cluster that brings its own cert material.
+# Multi-cluster gRPC load balancer: Deployment, Service, ConfigMap, and the cluster-certs Secret
+# carrying cluster-b's cert material.
 global:
   environment:
     name: ci

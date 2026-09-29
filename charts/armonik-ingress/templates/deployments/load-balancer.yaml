@@ -1,5 +1,5 @@
 {{- if .Values.loadBalancer.enabled }}
-{{/* Own release train, not the chart AppVersion. */}}
+{{/* Tag from global.armonik.versions.infraPlugins, not the chart appVersion. */}}
 {{- $image := list $ "loadBalancer.image" .Values.loadBalancer.image | include "armonik.utils.imageConf" | fromYaml }}
 {{- $ctx := dict "root" $ "image" $image -}}
 {{- $podSpec := list (include "armonik.ingress.lb.podSpec" $ctx) .Values.loadBalancer.podSpecPatch "loadBalancer.podSpecPatch" | include "armonik.utils.patch" -}}
@@ -27,7 +27,7 @@ spec:
   template:
     metadata:
       annotations:
-        # The LB reads lb.yml (and the cluster certs) only at startup, so roll the pod whenever either changes
+        # The LB reads lb.yml and the cluster certs only at startup: roll the pod when either changes
         checksum/config: {{ include (print $.Template.BasePath "/configmaps/load-balancer.yaml") . | sha256sum }}
         checksum/certs: {{ include (print $.Template.BasePath "/secrets/lb-cluster-certs.yaml") . | sha256sum }}
         {{- with .Values.loadBalancer.podAnnotations }}

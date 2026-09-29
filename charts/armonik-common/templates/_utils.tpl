@@ -1,8 +1,8 @@
 {{/*
-Parses `[registry/]repository[:tag][@digest]` into the image fields, where repository is the whole path
-under the registry, as the OCI spec defines it. The first segment is the registry when it carries a "."
-or ":", or is "localhost". The digest is split off first, so the rest still decomposes and a registry
-override reaches a digest-pinned reference.
+Parses `[registry/]repository[:tag][@digest]` into registry/repository/tag/digest, repository being the
+whole path under the registry (OCI). The first segment is the registry when it contains "." or ":", or
+is "localhost". The digest is split off first, so a digest-pinned reference still decomposes and takes
+a registry override.
 
   {{- $ref := include "armonik.utils.imageRef.parse" "fluent/fluent-bit:5.1.2" | fromYaml }}
 */}}
@@ -33,21 +33,20 @@ override reaches a digest-pinned reference.
 
 
 {{/*
-Merges partial image configs left to right into the schema below, plus `fullname`. Each may instead be
-a reference string; one that supplies the repository settles the registry too, so a bare
+Merges partial image configs, first one winning, into the schema below plus `fullname`. A config may
+be a reference string instead; one that supplies the repository also settles the registry, so a bare
 `busybox:1.37.0` cannot pick up a registry from a lower-precedence config. pullPolicy, which no string
 carries, still merges.
 
-`repository` is the whole path under the registry (dockerhubaneo/armonik_control), as everywhere else
-in the ecosystem, which is also what lets renovate resolve it.
+`repository` is the whole path under the registry (dockerhubaneo/armonik_control), as renovate expects.
 
-The tag defaults from the repository, not the call site, which is what a worker needs: a repository
-listed in global.armonik.imageComponents takes its component's version from global.armonik.versions,
-empty or absent meaning the chart AppVersion. Any other image must carry a tag. `latest` is never a
-fallback: it installs cleanly, then drifts per node under IfNotPresent and defeats an airgap mirror.
+The tag defaults per repository, not per call site, which is what a worker needs: a repository listed
+in global.armonik.imageComponents takes its component's version from global.armonik.versions, empty or
+absent meaning the chart AppVersion. Any other image must carry a tag. `latest` is never a fallback:
+it installs cleanly, then drifts per node under IfNotPresent and defeats an airgap mirror.
 
 global.imageRegistry overrides whatever registry was chosen, and may carry a path prefix. The values
-path argument makes a failure name the key to set.
+path argument names the key to set in failure messages.
 
   {{- $image := list $ "metricsExporter.image" .Values.metricsExporter.image .Values.image | include "armonik.utils.imageConf" | fromYaml }}
 
@@ -111,15 +110,17 @@ schema: registry, repository, tag, digest (rendered repository[:tag]@digest), pu
 
 
 {{/*
-Like index, but does not error if any intermediary key is absent.
-If result is empty, it is not printed out, and thus is directly compatible with conditions.
+Like index, but short-circuits to "" on any nil/false/empty step instead of erroring. An empty result
+prints nothing, so it works directly as a condition.
 
-A string value is rendered raw and must be `quote`d before being inserted into a template.
-Any other value is toYaml-encoded and needs a conversion function to get the proper type:
+A string comes back raw: `quote` it before inserting it into YAML. Anything else is toYaml-encoded;
+decode it by type:
 - bool: `empty | not`
 - int: `int`
 - array: `fromYamlArray`
 - object: `fromYaml`
+
+  {{ list .Values "a" "b" | include "armonik.utils.index" }}
 */}}
 {{- define "armonik.utils.index" -}}
   {{- $value := first . | dict "value" -}}
@@ -139,31 +140,36 @@ Any other value is toYaml-encoded and needs a conversion function to get the pro
 
 
 {{/* 
+Recursive merge of src, then each of srcs, into dst. Maps merge per key; elsewhere dst wins unless
+overwrite is set, and two lists concatenate with concatList. Mixed kinds: a map dst with a list src
+yields one copy of dst per src element, merged with it; a list dst with a non-list src merges src
+into each element; a map dst with a scalar src fails.
+
 Usage:
 {{- $call := dict "src" $src "dst" $dst "render" true -}}
 {{- include "armonik.utils.merge" $call -}}
 {{- $dst := $call.dst -}}
 
 schema:
-  # destination of the merge. If dst is a dict or a list, it will be modified in-place
+  # merge destination; a map is updated in place, but always read the result back from $call.dst
   dst: any
   # value to merge into dst
   src: any
-  # values to merge into dst, if both src and srcs are set, src is first merged before each elements of srcs are merged
+  # values merged into dst after src, in order
   srcs: list
-  # if overwrite is enabled, src values will have precedence over dst
+  # src wins over dst
   overwrite: bool = false
-  # if nullIsAbsent, null values will be considered as if the key does not exist at all
+  # a null value counts as an absent key
   nullIsAbsent: bool = true
-  # if emptyStringIsAbsent, empty values will be considered as if the key does not exist at all
+  # an empty string counts as an absent key
   emptyStringIsAbsent: bool = true
-  # if render, string values will be rendered before being merged
+  # tpl-render src strings against context before merging (dst is never rendered)
   render: bool = false
-  # if concatList, when both src and dst are non-empty list, they will be concatenated together instead of one replacing the other
+  # concatenate two lists instead of keeping dst (or replacing it, with overwrite)
   concatList: bool = false
-  # Context passed to rendering
+  # tpl context for render
   context: any
-  # Prints the result as yaml
+  # print the result as YAML
   print: bool = true
  */}}
 {{- define "armonik.utils.merge" -}}
@@ -278,9 +284,9 @@ schema:
 {{/*
 Merges a user patch over a rendered YAML fragment, the patch winning.
 
-A list replaces rather than merges by key, so a key the fragment already builds is refused: dropping
-what the chart put in `containers` or `env` would surface as a broken workload, not a render error.
-`command` and `args` are exempt. Null is absent to the merge, so a patch cannot delete.
+A list replaces rather than merges by key, so patching a list the fragment already builds is refused:
+dropping what the chart put in `containers` or `env` would surface as a broken workload, not a render
+error. `command` and `args` are exempt. Null counts as absent, so a patch cannot delete.
 
 {{- $spec := list (include "armonik.compute.podSpec" $ctx) $partition.podSpecPatch "podSpecPatch" | include "armonik.utils.patch" -}}
 */}}

@@ -1,1 +1,1 @@
-# All the configuration is done in the parent chart
+# Configured from the umbrella, under dependencies.* in armonik/values.yaml.

@@ -3,12 +3,12 @@
 ***********************************************************************
   Chart version: {{ .Chart.Version }}
   App version:   {{ .Chart.AppVersion }}
-  Image tag:     {{ include "activemq.image" . }}
+  Image:         {{ include "activemq.image" . }}
 {{- if .Values.networkPolicy.enabled }}
 
-  NetworkPolicy support is enabled for this release.
-  Configure ingress rules explicitly under `networkPolicy.ingress` and
-  egress rules under `networkPolicy.egress` in your values file to meet your needs
+  NetworkPolicy is enabled: only DNS egress is allowed by default.
+  Add ingress rules under `networkPolicy.extraIngressRules` and egress
+  rules under `networkPolicy.extraEgressRules`.
 
 {{- end }}
 ***********************************************************************

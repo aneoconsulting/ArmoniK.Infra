@@ -1,5 +1,6 @@
 {{/*
-Takes a list of configurations and returns a merged configuration.
+Merges a list of confs, later entries winning: maps merge per key, lists concatenate, envConfigmap and
+envSecret are deduplicated (envSecret items normalized by armonik.conf.secretItem). Empty entries are skipped.
 
 # Schema
 
@@ -45,13 +46,14 @@ items:
         required: [ "secret" ]
         properties:
           secret: { "type": "string" }
-          # Required unless storeName is set: without a property the Kubernetes provider imports
-          # the whole Secret as one blob, while a store entry may hold a single value.
+          # Required unless storeName is set: without it the Kubernetes provider imports the whole
+          # Secret as one blob, while a store entry may hold a single value.
           field:  { "type": "string" }
-          # Aggregation source only: an ESO store that ALREADY exists, these charts creating none
-          # but their own Kubernetes-provider ones. storeKind defaults to SecretStore, which must
-          # then sit in the release namespace. namespace routes that Kubernetes store instead, so
-          # it excludes storeName. version needs storeName, the Kubernetes provider ignoring it.
+          # Aggregation source only. storeName: an ESO store that already exists (these charts
+          # create only their own Kubernetes-provider stores). storeKind defaults to SecretStore,
+          # which must then sit in the release namespace. namespace reads the Secret from that
+          # namespace through our Kubernetes store, so it excludes storeName. version needs
+          # storeName, the Kubernetes provider ignoring it.
           storeName: { "type": "string" }
           storeKind: { "type": "string", "enum": [ "SecretStore", "ClusterSecretStore" ] }
           namespace: { "type": "string" }
@@ -64,29 +66,30 @@ items:
         required: [ "secret" ]        # or "configmap" for mountConfigmap
         properties:
           secret: { "type": "string" }
-          # Aggregation source only (umbrella conf.<layer>.mountSecret): key prefix on imported keys;
-          # "" / unset = none. A source drives the aggregate via secret/prefix/items; the consuming-mount
-          # fields below may still be set to mirror the plane config (only path is then validated).
+          # Aggregation source only (umbrella conf.<layer>.mountSecret): prefix of the imported keys,
+          # none when unset or "". A source is driven by secret/prefix/items; it may mirror the
+          # consuming-mount fields below, of which only path is then validated.
           prefix:    { "type": "string" }
           # Store fields as on envFromSecret above; aggregation source only.
           storeName: { "type": "string" }
           storeKind: { "type": "string", "enum": [ "SecretStore", "ClusterSecretStore" ] }
           namespace: { "type": "string" }
           version:   { "type": "string" }
-          # Consuming-mount mountPath; defaults to armonik.conf.mountPath. Entries (secret and/or
-          # configmap) that resolve to the SAME path are merged into one projected volume. On an
-          # aggregation source it is validated against the umbrella mountPath (equal, or under it if subpath).
+          # Consuming-mount mountPath, default armonik.conf.mountPath. Entries (secret or configmap)
+          # at the same path merge into one projected volume. On an aggregation source, validated
+          # against the umbrella mountPath (equal, or under it with a subpath).
           path:      { "type": "string" }
-          # Consuming-mount subPath (selects one file; not refreshed on rotation). Rejected when the path
-          # is shared by 2+ entries (a projected group has a single mountPath).
+          # Consuming-mount subPath (one file, not refreshed on rotation). Rejected at a path shared
+          # by 2+ entries, a projected volume having a single mountPath.
           subpath:   { "type": "string" }
-          # File mode; defaults to "0444". When a path is shared it is the projected volume defaultMode
-          # and must be identical across the group (use items[].mode for per-file perms).
+          # File mode, default "0444". At a shared path it is the projected volume's defaultMode and
+          # must match across the group (items[].mode sets per-file modes).
           mode:      { "type": "string" }
           optional:  { "type": "boolean" }
-          # map <dest> -> { field: <source key> }.
-          #  consuming mount: secret/configmap volume items (whitelist).
-          #  aggregation source: per-key select+rename into the aggregate via ESO data[] ("<prefix><dest>", flat).
+          # <dest> -> { field: <source key> }.
+          #  consuming mount: volume items, only these keys mounted.
+          #  aggregation source: per-key select and rename into the aggregate as "<prefix><dest>"
+          #  (ESO data[], flat keys).
           # field is required unless storeName is set, as on envFromSecret.
           items:
             type: object
@@ -126,7 +129,7 @@ items:
 
 {{/*
 Normalizes one envSecret item: "<secret>" is shorthand for { secret: <secret> }. Applied by both
-armonik.conf.merge and armonik.conf.resolve, callers reaching the emitters through only one.
+armonik.conf.merge and armonik.conf.resolve, since a caller may reach the emitters through either one.
 
 # Usage
 
@@ -141,7 +144,8 @@ armonik.conf.merge and armonik.conf.resolve, callers reaching the emitters throu
 {{- end -}}
 
 {{/*
-Prefix of every conf Secret name: .Values.conf.source (tpl-rendered), default .Release.Name.
+Prefix of every conf Secret name: .Values.conf.source, else global.armonik.source, else .Release.Name,
+tpl-rendered.
 
 # Usage
 
@@ -181,10 +185,9 @@ Name of a conf layer's mount Secret (TLS material): <source>-conf-<layer>-mount.
 {{- end -}}
 
 {{/*
-Volume/volumeMount name for a group of conf mounts at one path. Content-addressed: a pure function of
-the path AND the group's mount specs, so the same (path + sources) always yields the same name in both
-generators, while different source sets at the same path (e.g. compute agent vs credential-free worker)
-get distinct volumes. Args: (list <path> <group>), group = list of { mount: <entry> }.
+Volume and volumeMount name of a group of conf mounts at one path, hashed from the path and the
+group's specs: both generators agree on it, and different source sets at one path (compute agent vs
+credential-free worker) get distinct volumes. Args: (list <path> <group>), group = list of { mount: <entry> }.
 
 # Usage
 
@@ -200,9 +203,9 @@ get distinct volumes. Args: (list <path> <group>), group = list of { mount: <ent
 {{- end -}}
 
 {{/*
-Root dir for conf mount Secrets in pods; both the storage env strings and the volumeMounts derive
-from it. Precedence: .Values.conf.mountPath > .Values.global.armonik.mountPath > "/mounts" (trailing
-"/" trimmed). Root scope only, never inside a backend-subchart `with`.
+Root dir of the conf mount Secrets in pods, from which the storage env strings and the volumeMounts
+both derive: .Values.conf.mountPath, else global.armonik.mountPath, else "/mounts", trailing "/" trimmed.
+Root scope only, never inside a backend-subchart `with`.
 
 # Usage
 
@@ -215,9 +218,9 @@ from it. Precedence: .Values.conf.mountPath > .Values.global.armonik.mountPath >
 {{- end -}}
 
 {{/*
-ESO sync cadence of the conf ExternalSecrets: .Values.conf.refreshInterval, else 1h0m0s. A 0 syncs
-once and never refreshes. Worth raising on a metered provider (Secret Manager bills per access); it
-cannot be per store, one layer being one ExternalSecret that may mix stores.
+refreshInterval of the conf ExternalSecrets: .Values.conf.refreshInterval, else 1h0m0s. 0 syncs once
+and never refreshes. Worth raising on a metered provider (Secret Manager bills per access). It cannot
+be per store: one layer is one ExternalSecret, which may mix stores.
 
 # Usage
 
@@ -234,8 +237,8 @@ cannot be per store, one layer being one ExternalSecret that may mix stores.
 {{- end -}}
 
 {{/*
-Optional refreshPolicy of the conf ExternalSecrets: .Values.conf.refreshPolicy, else empty, ESO
-then applying Periodic.
+Optional refreshPolicy of the conf ExternalSecrets: .Values.conf.refreshPolicy, else empty (ESO then
+applies Periodic).
 
 # Usage
 
@@ -254,7 +257,7 @@ refreshPolicy: {{ . | quote }}
 {{- end -}}
 
 {{/*
-In-pod path of one mounted conf file: <mountPath>/<prefix><filename>. Keeps the storage env string
+In-pod path of one mounted conf file, <mountPath>/<prefix><filename>, keeping the storage env string
 and the mounted file in sync.
 
 # Usage
@@ -269,8 +272,9 @@ and the mounted file in sync.
 {{- end -}}
 
 {{/*
-Per-release SecretStore reading the given namespace, as seen from the namespace holding the
-ExternalSecret: this chart's, or the optional third argument (see secret-store.yaml).
+Name of the per-release SecretStore reading the given namespace, for ExternalSecrets in the consumer
+namespace (armonik.namespace, or the optional third argument): <release>-conf-store, suffixed with the
+namespace when the two differ. See charts/armonik/templates/secrets/secret-store.yaml.
 
 # Usage
 
@@ -294,7 +298,7 @@ ExternalSecret: this chart's, or the optional third argument (see secret-store.y
 
 {{/*
 Store to route one data[]/dataFrom[] entry through, empty when the base store reads it. Arguments as
-armonik.conf.storeName.
+for armonik.conf.storeName.
 */}}
 {{- define "armonik.conf.storeNameOverride" -}}
   {{- $namespace := index . 0 -}}
@@ -309,9 +313,9 @@ armonik.conf.storeName.
 {{- end -}}
 
 {{/*
-storeRef of one conf aggregation source: empty when it reads this release's own Kubernetes-provider
-store, else the store to route it through. Single validation point for the store fields. A named
-store is never created here and its existence is uncheckable (lookup is banned), so a namespaced
+storeRef of one conf aggregation source: empty when it reads through this release's base
+Kubernetes-provider store, else the store to route it through. Single validation point of the store
+fields. A named store is never created here and cannot be checked without lookup, so a namespaced
 SecretStore outside the release namespace only surfaces as an ESO sync error.
 
 Args: (list <source> <label> $), label naming the source in failure messages.
@@ -355,8 +359,9 @@ name: {{ . | quote }}
 {{- end -}}
 
 {{/*
-tpl-renders a conf's name-bearing fields (envSecret/envConfigmap/mountSecret.secret/...) against
-the root. Idempotent on plain strings.
+Resolves a conf against the root: tpl-renders its name-bearing fields (Secret and ConfigMap names, store
+names, namespaces, mount path and subpath), normalizes envSecret items, and defaults a mount's path to
+armonik.conf.mountPath and its mode to "0444". Idempotent on plain strings.
 
 # Usage
 
@@ -433,6 +438,7 @@ the root. Idempotent on plain strings.
   {{- $conf | toYaml -}}
 {{- end -}}
 
+{{/* Container env entries: env literals, then envFromConfigmap and envFromSecret key references. */}}
 {{- define "armonik.conf.generateEnv" }}
 {{- range $name, $value := .env }}
 - name: {{ $name | quote }}
@@ -454,6 +460,7 @@ the root. Idempotent on plain strings.
 {{- end }}{{/* range $name, $value := .envFromSecret */}}
 {{- end -}}{{/* define "armonik.conf.generateEnv" */}}
 
+{{/* Container envFrom entries: envConfigmap, then envSecret, all non-optional. */}}
 {{- define "armonik.conf.generateEnvFrom" }}
 {{- range $name := .envConfigmap }}
 - configMapRef:
@@ -468,8 +475,7 @@ the root. Idempotent on plain strings.
 {{- end }}{{/* range $s := .envSecret */}}
 {{- end -}}{{/* define "armonik.conf.generateEnvFrom" */}}
 
-{{/* Groups a conf's mountConfigmap + mountSecret entries by resolved path (entries sharing a path are
-     merged into one projected volume). Returns, as YAML:
+{{/* Groups a resolved conf's mountConfigmap then mountSecret entries by path. Returns, as YAML:
        order:  [ paths, in first-seen order ]
        byPath: { <path>: [ { kind: configmap|secret, mount: <entry> } ] } */}}
 {{- define "armonik.conf.groupMounts" -}}
@@ -496,8 +502,8 @@ the root. Idempotent on plain strings.
   {{- dict "order" $order "byPath" $byPath | toYaml -}}
 {{- end -}}{{/* define "armonik.conf.groupMounts" */}}
 
-{{/* Emits one volumeMount per distinct path (entries sharing a path are merged into one projected
-     volume, so they share a single mountPath). */}}
+{{/* One read-only volumeMount per distinct path of a resolved conf, entries at one path sharing
+     one projected volume. */}}
 {{- define "armonik.conf.generateVolumeMounts" -}}
   {{- $g := include "armonik.conf.groupMounts" . | fromYaml -}}
   {{- range $p := $g.order }}
@@ -518,11 +524,10 @@ the root. Idempotent on plain strings.
   {{- end }}
 {{- end -}}{{/* define "armonik.conf.generateVolumeMounts" */}}
 
-{{/* Takes a LIST of confs (one per container that shares this pod's volumes). Within a conf, entries
-     (mountConfigmap + mountSecret) sharing a path become sources of one projected volume; across confs,
-     identical (path + sources) volumes are deduplicated by their content-addressed name, while different
-     source sets at the same path (e.g. compute agent vs credential-free worker) yield distinct volumes.
-     configMap sources first, then secret sources (deterministic "last source wins" on a duplicate path). */}}
+{{/* Pod volumes for a LIST of resolved confs, one per container. Within a conf, entries at one path
+     become sources of one projected volume. Across confs, identical volumes are deduplicated by their
+     content-addressed name, while different source sets at one path stay distinct volumes. configMap
+     sources come first, then secret ones, so the last source deterministically wins a duplicate file. */}}
 {{- define "armonik.conf.generateVolumes" -}}
   {{- $byName := dict -}}
   {{- $order := list -}}
@@ -589,6 +594,10 @@ the root. Idempotent on plain strings.
 {{- end }}
 {{- end -}}{{/* define "armonik.conf.generateVolumes" */}}
 
+{{/*
+Release name of the control plane, for its URL: .Values.controlPlane.source, else
+global.armonik.controlPlane, else .Release.Name, tpl-rendered.
+*/}}
 {{- define "armonik.controlPlane.source" -}}
   {{- $global := list .Values "global" "armonik" "controlPlane" | include "armonik.utils.index" -}}
   {{- $conf := list .Values "controlPlane" | include "armonik.utils.index" | fromYaml -}}

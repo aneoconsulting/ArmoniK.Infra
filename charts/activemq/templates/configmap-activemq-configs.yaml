@@ -7,13 +7,9 @@ metadata:
     {{- include "armonik.labels" . | nindent 4 }}
 data:
   {{/*
-  Single-file override (mounted by subPath, never the whole conf/ directory): the
-  image's conf/ layout is version-specific (6.x moved the web console to a modular
-  jetty-spring.xml + conf/jetty/*.xml + JAAS login.config, none of which we ship),
-  so masking the directory would hide files this ActiveMQ version still needs.
-  This is the image's own conf/activemq.xml with only the AMQP transport connector
-  turned on; the queue policy and heap/store limits below are ArmoniK's own tuning,
-  not upstream defaults.
+  Mounted by subPath, see activemq.container. The image's own conf/activemq.xml with only
+  the AMQP transport connector on; the queue policy and heap/store limits are ArmoniK's
+  tuning, not upstream defaults.
   */}}
   activemq.xml: |
     <beans
@@ -133,9 +129,7 @@ data:
 
     </beans>
   {{/*
-  Log4j2 (the image dropped Log4j 1.x in 6.x): same loggers, levels, patterns and
-  rollover policy as ArmoniK's previous log4j.properties, translated to the Log4j2
-  properties format.
+  Log4j2 properties. The console appender writes CLEF JSON (@t, @l, @m).
   */}}
   log4j2.properties: |
     #

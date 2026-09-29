@@ -2,26 +2,26 @@
 {{- $fluentBit := $.Values.fluentBit | default dict -}}
 {{- $partitionCommon := $.Values.partitionCommon | default dict -}}
 {{- $partition := dict -}}
-{{/* Partition render context: chart context minus .Values.partitions, plus .Values.partitionName. */}}
+{{/* Partition render context, as in scaledobject.yaml: .Values minus partitions, plus partitionName. */}}
 {{- $context := omit $ "Values" -}}
 {{- $_ := omit $.Values "partitions" | set $context "Values" -}}
 {{- $_ := set $context.Values "partitionName" $partitionName -}}
 {{- dict "dst" $partition "srcs" (list $config $.Values.partitionCommon) "print" false "render" true "context" $context | include "armonik.utils.merge" -}}
 {{- $agent := $partition.agent -}}
 {{- $worker := $partition.worker -}}
-{{/* Layer secrets shared by both agent and worker (log + compute); no credentials. */}}
+{{/* Shared by agent and worker: channel env plus the log and compute layers, no credentials. */}}
 {{- $commonConf := list
     (list $partitionName $partition | include "armonik.compute.confHelper" | fromYaml)
     $partition.conf
   | include "armonik.conf.merge" | fromYaml -}}
-{{/* Agent additionally gets core (credentials) + polling + cert mounts. */}}
+{{/* Agent adds the core (credentials) and polling layers. */}}
 {{- $agentConf := list
   (list $partitionName $partition | include "armonik.compute.agent.confHelper" | fromYaml)
   $agent.conf
   $commonConf
 | include "armonik.conf.merge" | fromYaml -}}
 {{- $agentConf = list $agentConf $ | include "armonik.conf.resolve" | fromYaml -}}
-{{/* Worker (user code) never references the core secret: stays credential-free. */}}
+{{/* Worker (user code) adds only the worker layer, never core: it stays credential-free. */}}
 {{- $workerConf := list
   (list $partitionName $partition | include "armonik.compute.worker.confHelper" | fromYaml)
   $worker.conf
@@ -30,7 +30,7 @@
 {{- $workerConf = list $workerConf $ | include "armonik.conf.resolve" | fromYaml -}}
 {{/* Dot access, not armonik.utils.index: a reference string would not survive its fromYaml. */}}
 {{- $agentImage := list $ "partitionCommon.agent.image" $agent.image ($partitionCommon.agent | default dict).image | include "armonik.utils.imageConf" | fromYaml -}}
-{{/* User-supplied: an unknown worker must carry a tag, a mapped one resolves. */}}
+{{/* User-supplied: a repository missing from global.armonik.imageComponents must carry its own tag. */}}
 {{- $workerImage := list $ (printf "partitions.%s.worker.image" $partitionName) $worker.image ($partitionCommon.worker | default dict).image | include "armonik.utils.imageConf" | fromYaml -}}
 {{/* Third party: the chart AppVersion must not become its tag. */}}
 {{- $fluentBitImage := list $ "fluentBit.image" $fluentBit.image | include "armonik.utils.imageConf" | fromYaml -}}

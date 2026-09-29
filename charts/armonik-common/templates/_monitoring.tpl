@@ -1,14 +1,14 @@
 {{/*
-Paired per value: `<value>.default` derives the default, `<value>` resolves whatever the value holds,
-tpl-rendering it since that default is a template string. Only values.yaml calls a `.default`, which must
-therefore never read its own value, or tpl recurses.
+Each value comes as a pair: `<value>.default` derives the default, `<value>` resolves whatever the value
+holds, tpl-rendering it since that default is a template string. Only values.yaml calls a `.default`,
+which must never read its own value, or tpl recurses.
 
   values.yaml   prometheusUrl: '{{ include "armonik.monitoring.prometheusUrl.default" . }}'
   template      {{- $url := include "armonik.monitoring.prometheusUrl" $ -}}
 */}}
 
 {{/*
-Resolves metricsExporterUrl. Its default reads chart-level conf.source, so this needs one of OUR charts.
+Resolves metricsExporterUrl. Its default reads the chart-level conf.source, so only our charts can call it.
 */}}
 {{- define "armonik.monitoring.metricsExporterUrl" -}}
   {{- $raw := list .Values "global" "armonik" "monitoring" "metricsExporterUrl" | include "armonik.utils.index" -}}
@@ -22,14 +22,11 @@ Resolves metricsExporterUrl. Its default reads chart-level conf.source, so this 
 {{/*
 Control-plane metrics-exporter /metrics, KEDA's default scaling source:
 http://<conf.source>-control-plane-metrics-exporter.<ns>.svc[.<clusterDomain>]:9419/metrics, <ns> being
-this chart's armonik.namespace: the umbrella's namespace-guard keeps both planes in the same one.
-Correct as-is for the umbrella (control-plane installed as its "control-plane"-aliased subchart:
-<conf.source> is the umbrella's own release name, and Helm's alias mechanism makes that the exact
-service name armonik-control-plane renders). NOT correct for a standalone control-plane release
-whose own release name differs from conf.source (armonik.fullname has no alias to collapse
-against, so the real service name is <that release>-armonik-control-plane-metrics-exporter): set
-global.armonik.monitoring.metricsExporterUrl yourself in that case, same as
-global.armonik.controlPlane for the control-plane URL.
+this chart's armonik.namespace (the umbrella's namespace-guard keeps both planes in one namespace).
+Right under the umbrella: conf.source is its release name, and the "control-plane" alias makes
+armonik.fullname <release>-control-plane. Wrong for a standalone control-plane release, whose service is
+<that release>-armonik-control-plane-metrics-exporter: set global.armonik.monitoring.metricsExporterUrl
+there, as global.armonik.controlPlane for the control-plane URL.
 */}}
 {{- define "armonik.monitoring.metricsExporterUrl.default" -}}
   {{- $src := include "armonik.conf.source" . -}}
@@ -52,8 +49,8 @@ Resolves prometheusUrl: the Grafana datasource, and a PromQL KEDA trigger's endp
 
 {{/*
 Prometheus of the kube-prometheus-stack this release installs, named by that chart's own helpers.
-Empty where kps is not in .Subcharts (layered install, plane chart), so the resolver fails: its name is
-unknowable there without lookup.
+Empty where kps is not in .Subcharts (layered install, plane chart), where its name is unknowable
+without lookup, so the resolver fails.
 */}}
 {{- define "armonik.monitoring.prometheusUrl.default" -}}
   {{- $kps := index .Subcharts "kube-prometheus" -}}
@@ -72,9 +69,9 @@ unknowable there without lookup.
 {{- end -}}
 
 {{/*
-searchNamespace for the Grafana dashboard sidecar: this release's namespace plus the monitoring one, where
-kps renders its dashboard ConfigMaps, deduplicated. No resolver, the value being the grafana chart's own.
-Reached through that chart's tpl of it, hence in the GRAFANA context: read only .Release and .Values.global.
+searchNamespace of the Grafana dashboard sidecar: this release's namespace plus the one where kps renders
+its dashboard ConfigMaps, deduplicated. No resolver: the value is the grafana chart's own, and it tpl-renders
+it in the GRAFANA context, so read only .Release and .Values.global here.
 */}}
 {{- define "armonik.monitoring.dashboardNamespaces.default" -}}
   {{- $ops := include "armonik.operators" . | fromYaml -}}

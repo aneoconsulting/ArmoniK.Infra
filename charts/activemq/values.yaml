@@ -12,20 +12,23 @@ namespaceOverride: ""
 
 image:
   repository: apache/activemq
-  # -- Tag. Defaults to this chart's AppVersion, which tracks the ActiveMQ release it ships.
+  # -- Tag. Empty takes `global.armonik.versions.activemq`, else this chart's AppVersion (the
+  # ActiveMQ release it ships).
   # @default -- `.Chart.AppVersion`
   tag:
   pullPolicy: IfNotPresent
   imagePullSecrets: []
   registry: ""
 
-# -- Existing ServiceAccount the broker pod runs as (tpl-rendered), the namespace's `default` when
-# empty. The broker never calls the Kubernetes API, so the chart creates none.
+# -- Existing ServiceAccount of the broker pod (tpl-rendered), the namespace's `default` when empty.
+# The broker never calls the Kubernetes API, so the chart creates none.
 serviceAccountName: ""
 
 activemqOptsMemory: "-Xms1g -Xmx1g"
 
 extraEnv: []
+  # - name: ACTIVEMQ_ENABLE_SCHEDULER
+  #   value: "true"
 # -- Extra envFrom for the activemq container.
 extraEnvFrom: []
 # -- Extra containers, after the activemq container, and extra init containers.
@@ -35,18 +38,16 @@ extraInitContainers: []
 #   securityContext:
 #     readOnlyRootFilesystem: true
 #
-# -- Merged over the activemq container, last. Lists the chart builds are refused: use extra*.
+# -- Merged over the activemq container, last. Patching a list the chart builds fails: use extra*.
 containerPatch: {}
 # podSpecPatch:
 #   hostAliases:
 #     - ip: "10.0.0.1"
 #       hostnames: ["legacy.internal"]
 #
-# -- Merged over spec.template.spec, last. Lists the chart builds are refused: use extra*.
+# -- Merged over spec.template.spec, last. Patching a list the chart builds fails: use extra*.
 # Pod labels are out of reach: the selector is immutable.
 podSpecPatch: {}
-  # - name: ACTIVEMQ_ENABLE_SCHEDULER
-  #   value: "true"
 
 commonLabels:
   app: storage
@@ -79,7 +80,6 @@ updateStrategy: {}
 #     maxUnavailable: 1
 
 podDisruptionBudget:
-  # https://kubernetes.io/docs/tasks/run-application/configure-pdb/
   enabled: false
   minAvailable:
   maxUnavailable:
@@ -115,7 +115,7 @@ extraVolumes: []
   #   secret:
   #     defaultMode: 420
   #     optional: false
-  #     secretName: <fullname>   # cert Secret from certificate.yaml (when tls.type=cert-manager)
+  #     secretName: <fullname>   # Certificate Secret, see certificate.yaml
 
 nodeSelector: {}
 
@@ -127,7 +127,7 @@ topologySpreadConstraints: []
 
 dnsConfig: {}
 
-# Annotations to add to the deployment
+# Deployment annotations.
 deploymentAnnotations: {}
 
 schedulerName: ""
@@ -136,24 +136,21 @@ tmpVolume:
   emptyDir: {}
 
 tls:
-  # Enable TLS certificate management for activemq (only takes effect when tls.type is "cert-manager").
+  # Issue a cert-manager Certificate for the broker. Only tls.type "cert-manager" renders anything.
   enabled: false
   type: "cert-manager"
   clusterDomain: cluster.local
   certManager:
     addInjectorAnnotations: true
+    # Issuer the Certificate references instead of a local one.
     existingIssuer:
-      # Use an existing cert-manager issuer
       enabled: false
-      # Kind of the existing cert-manager issuer
       kind: "Issuer"
-      # Name of the existing cert-manager issuer
       name: "my-issuer"
       group: ""
-    # Setting provider (any value, including selfSigned) makes this consumer keep its own local
-    # fallback Issuer even if the global issuer is enabled release-wide; leaving it unset falls
-    # through to the global issuer when one is enabled, else defaults to selfSigned anyway. See
-    # cert-manager-issuer.md.
+    # Setting provider, even to selfSigned, keeps a local Issuer despite an enabled global issuer.
+    # Unset, the global issuer is used when enabled, else a local selfSigned one. See
+    # charts/cert-manager-issuer.md.
     # provider: selfSigned
     # selfSigned: {}
     # ca: {}
@@ -161,15 +158,12 @@ tls:
     # acme: {}
     # venafi: {}
     # googleCas: {}
-    # Set the requested duration (i.e. lifetime) of the Certificate.
-    # See https://cert-manager.io/docs/reference/api-docs/#cert-manager.io/v1.CertificateSpec
+    # Certificate spec.duration and spec.renewBefore, cert-manager's defaults when empty. See
+    # https://cert-manager.io/docs/reference/api-docs/#cert-manager.io/v1.CertificateSpec
     duration: ""
-    # How long before the currently issued certificate’s expiry cert-manager should renew the certificate.
-    # See https://cert-manager.io/docs/reference/api-docs/#cert-manager.io/v1.CertificateSpec
     renewBefore: ""
-    # Add extra annotations to the Certificate resource
+    # Extra annotations and labels of the Certificate.
     annotations: {}
-    # Add extra labels to the Certificate resource
     labels: {}
 
 networkPolicy:

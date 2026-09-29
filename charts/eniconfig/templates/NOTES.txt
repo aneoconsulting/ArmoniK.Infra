@@ -1,1 +1,1 @@
-Create ENIConfig for every subnet
+Created one ENIConfig per entry of subnets.

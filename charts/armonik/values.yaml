@@ -1,39 +1,42 @@
-############################################
-################## GLOBAL ##################
-############################################
+# ==== Global ====
 global:
+  # Read by no ArmoniK template: image tags resolve from global.armonik.versions
+  # (armonik-common/values.yaml).
   version:
-    armonikCore: "0.41.0"  ### TODO FIX VERSIONS GLOBAL IF NULL USE DEFAULT IN SUB CHARTS COMPUTE-PLANE
+    # TODO: when null, fall back to the subchart defaults (compute-plane).
+    armonikCore: "0.41.0"
     # armonikPollingagent: "0.35.0"
     # armonikGui: "0.15.3"
     # nginx: "1.27.4-alpine-slim"
+  # For the third-party subcharts that read global.image (KEDA among them).
   image:
-    pullPolicy: IfNotPresent  # FOR KEDA IMAGES
-    registry: ""  # FOR KEDA IMAGES
-  # -- Registry every image is pulled from. Overrides whatever registry was chosen, so one value
-  # relocates the release to a mirror; may carry a path prefix. Dependencies honour it only if they
-  # implement the convention themselves.
+    pullPolicy: IfNotPresent
+    registry: ""
+  # -- Registry every image is pulled from, overriding each image's own; may carry a path prefix, so
+  # one value relocates the release to a mirror. Dependencies honour it only if they implement the
+  # convention themselves.
   imageRegistry: ""
+  # Lets the Bitnami rabbitmq chart accept its bitnamilegacy and public.ecr.aws images.
   security:
     allowInsecureImages: true
-  # imagePullSecrets: [{"name": "secret"}] # FOR BITNAMI IMAGES AND ARMONIK IMAGES
+  # ArmoniK pods (see armonik-common/values.yaml) and the Bitnami charts read it.
+  # imagePullSecrets: [{"name": "secret"}]
+  # Shown by the admin GUI (armonik-common/values.yaml).
   environment:
     description: "ArmoniK environment"
-  # Cluster DNS domain. Empty stops hostnames at ".svc"; callers needing an FQDN use cluster.local.
+  # Cluster DNS domain; see armonik-common/values.yaml.
   clusterDomain: ""
-  # Root dir for conf mount Secrets in pods; propagated to subcharts. env strings and volumeMounts derive from it.
+  # Keys documented in armonik-common/values.yaml; only the umbrella's overrides are here.
   armonik:
+    # Root dir of the conf mount Secrets in pods. Env strings and volumeMounts derive from it.
     mountPath: /mounts
-    # Point the child at the conf Secrets this umbrella renders (overrides its "armonik" default).
+    # Stated so the plane subcharts, which default it to "armonik", read this release's conf Secrets.
     source: '{{ .Release.Name }}'
-    # Release name of the control-plane, used to build the control-plane URL.
-    # Only needed when the control plane is installed as its own release, separate from this umbrella:
-    # Set it to that release's name, e.g. --set global.armonik.controlPlane=my-cp.
-    # A top-level controlPlane.source on this chart (e.g. --set controlPlane.source=my-cp) takes precedence
-    # over this global if both are set.
+    # Release of the control plane, for its URL. Set it only when the control plane is its own
+    # release (e.g. --set global.armonik.controlPlane=my-cp); a top-level controlPlane.source on this
+    # chart wins over it.
     controlPlane: '{{ .Release.Name }}'
-    # Operator control (semantics in armonik-common/values.yaml). All-in-one default: this release
-    # installs every operator, through the armonik-operators subchart.
+    # All-in-one default: this release installs every operator through the armonik-operators subchart.
     operators:
       externalSecrets:
         deploy: true
@@ -45,13 +48,12 @@ global:
         deploy: true
       prometheusOperator:
         deploy: true
-      # googleCasIssuer is GCP-specific, only needed for
-      # certManager.issuer.provider=googleCas.
+      # GCP-specific, only needed by a googleCas issuer (certManagerIssuer.provider=googleCas, for one).
       googleCasIssuer:
         deploy: false
 
-    # monitoring.{prometheusUrl,metricsExporterUrl} come from armonik-common (see its README); both derive
-    # from the operators namespaces above, which a layered install has to state.
+    # monitoring.* keeps its armonik-common defaults. A layered install must set
+    # monitoring.prometheusUrl, which derives only where this release installs kube-prometheus-stack.
 
 
 # -- Chart name used in this chart's resource names and labels (armonik.name).
@@ -63,9 +65,7 @@ fullnameOverride: ""
 # only through its own namespace key, and those without one stay in the release namespace.
 namespaceOverride: ""
 
-############################################
-### ARMONIK APPLICATION CONFIGURATION #####
-############################################
+# ==== ArmoniK application ====
 control-plane:
   enabled: true
   defaultPartition: default
@@ -82,9 +82,9 @@ control-plane:
   # priorityClassName:
 
 compute-plane:
-  # Default partitions below make a plain `helm install` usable. enabled=false gives a base release
-  # (control-plane + storage + operators + conf) whose partitions come from separate
-  # armonik-compute-plane releases instead; see NOTES.txt. enabled=true requires at least one partition.
+  # The default partitions make a plain `helm install` usable; enabled=true requires at least one.
+  # enabled=false gives a base release (control plane, storage, operators, conf) whose partitions come
+  # from separate armonik-compute-plane releases (see NOTES.txt).
   enabled: true
   serviceAccount:
     create: true
@@ -107,18 +107,19 @@ compute-plane:
         image:
           repository: "dockerhubaneo/armonik_core_htcmock_test_worker"
 
+# Conf layers, rendered as the <source>-conf-<layer>[-mount] Secrets. Schema at the top of
+# armonik-common/templates/_conf.tpl.
 conf:
-  # Names every <source>-conf-<layer> Secret the umbrella renders (this release).
   log:
     minimumLevel: Information
-  # ESO sync of every conf layer, both Secrets. Defaults to 1h0m0s; 0 syncs once and never
-  # refreshes. Raise it behind a metered store (Secret Manager bills per access).
+  # ESO sync interval of every conf ExternalSecret, env and mount alike. Defaults to 1h0m0s; 0 syncs
+  # once and never refreshes. Raise it behind a metered store (Secret Manager bills per access).
   # refreshInterval: 1h0m0s
   # CreatedOnce, Periodic (the ESO default) or OnChange.
   # refreshPolicy: Periodic
   # A source reads this release's Kubernetes-provider SecretStore unless it names a store that
-  # ALREADY exists (these charts create none but their own), which is how a value comes from Secret
-  # Manager, Vault or any other ESO provider. Per-field rules: the conf schema in armonik-common.
+  # already exists (these charts create none but their own): that is how a value comes from Secret
+  # Manager, Vault or any other ESO provider.
   # core:
   #   env:
   #     MongoDB__Host: cluster0.example.mongodb.net
@@ -143,22 +144,21 @@ conf:
   #       items:
   #         credentials.json: {}
 
-################## INGRESS ##################
+# ==== Ingress ====
 ingress:
   enabled: true
   # priorityClassName:
+  # Secret templates/secrets/armonik-urls.yaml renders and the ingress reads.
   urlsSecretName: '{{ .Release.Name }}-urls'
 
-############################################
-###### CERT-MANAGER SHARED ISSUER ######
-############################################
-# Settings to create the Issuer named by global.armonik.certManager.issuer: whether
-# this release creates it (create) and with which cert-manager backend (provider).
-# create=false: nothing below is used, the Issuer must already exist.
+# ==== Shared cert-manager issuer ====
+# The Issuer named by global.armonik.certManager.issuer, rendered when both that issuer.enabled and
+# create are true; otherwise the Issuer must already exist and nothing below is used. See
+# charts/cert-manager-issuer.md.
 #
-# Every provider block is forwarded as-is. selfSigned/ca/vault/acme/venafi map to
-# Issuer.spec.<provider> (https://cert-manager.io/docs/configuration/); googleCas is a
-# separate CRD (cas-issuer.jetstack.io) whose block IS the CR's spec directly.
+# The block of the selected provider is forwarded as-is: selfSigned/ca/vault/acme/venafi become
+# Issuer.spec.<provider> (https://cert-manager.io/docs/configuration/); googleCas is a separate CRD
+# (cas-issuer.jetstack.io) whose block is the whole CR spec.
 certManagerIssuer:
   create: false
   provider: selfSigned
@@ -178,12 +178,12 @@ certManagerIssuer:
     #   name: ""
     # solvers: []
   venafi: {}
-    # caBundle must already be base64.
     # zone: ""
     # tpp:
     #   url: ""
     #   credentialsRef:
     #     name: ""
+    #   # Already base64-encoded.
     #   caBundle: ""
     # cloud:
     #   apiTokenSecretRef:
@@ -198,15 +198,12 @@ certManagerIssuer:
     #   name: ""
     #   key: credentials.json
 
-# To bring your own MongoDB, set dependencies.mongodb.enabled=false and supply the connection via the
-# conf values (conf.core.env / conf.core.envFromSecret). The in-cluster psmdb-db (below) is the default.
-
-############################################
-############### DEPENDENCIES ###############
-############################################
-
+# ==== Dependencies (armonik-dependencies, alias dependencies) ====
+# Only the values ArmoniK sets; the rest is each chart's own. To bring your own backend (MongoDB,
+# Redis, ActiveMQ, RabbitMQ), set dependencies.<backend>.enabled=false and supply its connection
+# through conf.core.env / conf.core.envFromSecret.
 dependencies:
-  ################# RABBITMQ #################
+  # == RabbitMQ ==
   rabbitmq:
     image:
       registry: bitnamilegacy
@@ -219,7 +216,7 @@ dependencies:
       # tls:
       #   enabled: false
       #   autoGenerated: false
-    # esourcesPreset: nano
+    # resourcesPreset: nano
     persistence:
       enabled: false
     metrics:
@@ -230,7 +227,7 @@ dependencies:
         enabled: true
     # priorityClassName:
 
-  ################## REDIS ##################
+  # == Redis (valkey) ==
   redis:
     enabled: true
     image:
@@ -264,7 +261,7 @@ dependencies:
       appendonly no
     # priorityClassName:
 
-  # Bitnami chart compatible values
+  # Equivalent values for the Bitnami redis chart, kept for reference.
   # redis:
   #   enabled: true
   #   image:
@@ -279,7 +276,7 @@ dependencies:
   #       targetCPU: "80"
   #       targetMemory: "80"
   #   fullnameOverride: "redis"
-  #   tls: #BUG CHART https://github.com/bitnami/charts/issues/29616
+  #   tls: # Bitnami chart bug: https://github.com/bitnami/charts/issues/29616
   #     enabled: false
   #     autoGenerated: false
   #     authClients: false
@@ -302,26 +299,25 @@ dependencies:
   #     serviceMonitor:
   #       enabled: true
 
-  ################## ACTIVEMQ ##################
+  # == ActiveMQ (charts/activemq) ==
   activemq:
     enabled: true
     replicas: 1
     image:
       registry: docker.io
-    # priorityClassName defaults to system-cluster-critical
+    # Defaults to system-cluster-critical.
     # priorityClassName:
 
-  ################## MONGODB ##################
-  # This default configuration is intended for a development/test cluster
-  # Sharding is not supported yet
-  # Please check Percona's MongoDB Helm chart documentation @ https://github.com/percona/percona-helm-charts/tree/main/charts/psmdb-db
+  # == MongoDB (Percona psmdb-db) ==
+  # Defaults suit a development or test cluster. Sharding is not supported yet.
+  # Upstream values: https://github.com/percona/percona-helm-charts/tree/main/charts/psmdb-db
   mongodb:
     enabled: true
     sharding:
       enabled: false
     backup:
       enabled: false
-    # mongod logs logv2 JSON to stdout, we don't need the sidecar from the Percona's collector.
+    # mongod already logs logv2 JSON to stdout, which fluent-bit collects: no Percona log sidecar.
     logcollector:
       enabled: false
     replsets:
@@ -336,34 +332,32 @@ dependencies:
       #   name: armonik-selfsigned-issuer
       #   kind: ClusterIssuer
       #   group: cert-manager.io
+    # replsetSize allows the single-member rs0 above. ArmoniK reads tls=true as "TLS not required":
+    # set it to false to have Core and mongodb-exporter connect over TLS with the CA mounted.
     unsafeFlags:
       replsetSize: true
       tls: true
     finalizers: []
 
-  ################## MONGODB-EXPORTER ##################
-  # Prometheus exporter for MongoDB metrics (https://github.com/percona/mongodb_exporter).
-  # existingSecret.name/key is the single source of truth for the Secret it reads its connection
-  # URI from: armonik/templates/secrets/mongodb-exporter-secret.yaml renders an ExternalSecret
-  # that reads these same values back, rather than deriving its own name, and composes that URI
-  # from the psmdb-db cluster-monitor credentials.
+  # == mongodb-exporter (prometheus-mongodb-exporter) ==
+  # existingSecret.{name,key} is the single source of truth for the Secret holding the exporter's
+  # connection URI: templates/secrets/mongodb-exporter-secret.yaml renders an ExternalSecret under
+  # that name, composing the URI from the psmdb-db cluster-monitor credentials.
   mongodb-exporter:
     enabled: true
     existingSecret:
-      # -- Secret the exporter reads its URI from, written by the umbrella's ExternalSecret. Fixed, the
-      # chart tpl-rendering neither this nor `volumes`: two releases sharing a namespace need distinct
-      # names, here and in `volumes[0].secret.secretName`.
+      # -- Secret the exporter reads its URI from, written by the umbrella's ExternalSecret. A fixed
+      # name, since the exporter chart tpl-renders neither this nor `volumes`: two releases sharing a
+      # namespace need distinct names, here and in `volumes[0].secret.secretName`.
       name: mongodb-exporter-secret
       key: mongodb-uri
-    # This chart's own serviceMonitor value is static and can't be conditioned on the
-    # prometheusOperator CRD being available, so it stays off; the umbrella renders its own
-    # instead (armonik/templates/servicemonitors/mongodb-exporter.yaml).
+    # Off: this static value cannot be gated on the prometheusOperator CRDs being available, so
+    # templates/servicemonitors/mongodb-exporter.yaml renders a gated ServiceMonitor instead.
     serviceMonitor:
       enabled: false
-    # Mounts the whole mongodb-exporter-secret at /mongodb/certificate for the MongoDB__CAFile
-    # case (no `items`: the ca.crt key only exists in that secret when MongoDB TLS is required,
-    # and an items entry for an absent key leaves the pod stuck in ContainerCreating).
-    # secretName must match existingSecret.name above.
+    # The CA for the URI's tlsCAFile, when MongoDB requires TLS. The whole Secret is mounted, without
+    # `items`: its ca.crt key exists only in that case, and an items entry naming an absent key blocks
+    # the pod in ContainerCreating. secretName must equal existingSecret.name.
     volumes:
       - name: mongodb-ca
         secret:
@@ -374,11 +368,10 @@ dependencies:
         readOnly: true
     # priorityClassName:
 
-  # KEDA moved to charts/armonik-operators, configured at operators.keda.*.
+  # KEDA, cert-manager, kube-prometheus-stack and external-secrets are operators, configured under
+  # operators.* (see the Operators section below).
 
-  # cert-manager moved to charts/armonik-operators, configured at operators.cert-manager.*.
-
-  ################## GRAFANA ##################
+  # == Grafana ==
   grafana:
     image:
       registry: docker.io
@@ -387,9 +380,9 @@ dependencies:
       enabled: true
     grafana.ini:
       server:
-        # Keep root_url path-less and serve_from_sub_path false: the ingress publishes Grafana
-        # under a prefix it injects itself (armonik-ingress templates/armonik-nginx-conf.yaml),
-        # which needs an empty appSubUrl. Enforced by armonik/templates/validate.yaml.
+        # Keep root_url path-less and serve_from_sub_path false: the ingress injects Grafana's public
+        # prefix itself (armonik-ingress/templates/_armonik-conf.tpl), which needs an empty appSubUrl.
+        # Enforced by templates/validate.yaml.
         domain: grafana.local
         root_url: http://grafana
         serve_from_sub_path: false
@@ -400,19 +393,19 @@ dependencies:
         enabled: true
         folderAnnotation: "grafana_dashboard_folder"
         label: "grafana_dashboard"
-        # -- Namespaces the sidecar watches: this release's plus the prometheusOperator namespace,
-        # where kps renders the standard k8s/node dashboards (the sidecar sees only its own by default;
-        # `rbac.namespaced=false` already grants the cluster-wide read).
-        # Beware `helm upgrade --reuse-values`: it replays the old coalesced values, where the grafana
-        # chart's own `searchNamespace: null` beats this default. Pass values explicitly.
+        # -- Namespaces the sidecar watches: this release's plus the prometheusOperator one, where
+        # kube-prometheus-stack renders its Kubernetes and node dashboards (`rbac.namespaced=false`
+        # already grants the cluster-wide read). Avoid `helm upgrade --reuse-values`: it replays the
+        # old coalesced values, where the grafana chart's `searchNamespace: null` beats this default.
         searchNamespace:
           - '{{ include "armonik.monitoring.dashboardNamespaces.default" . }}'
       datasources:
         enabled: true
     # priorityClassName:
 
+    # Applied once networkPolicy.enabled=true: egress to Prometheus (9090), HTTPS and the
+    # Kubernetes API (443, 6443).
     networkPolicy:
-      # Set networkPolicy.enabled: true to apply the default NetworkPolicy for this component.
       egress:
         enabled: true
         blockDNSResolution: false
@@ -424,7 +417,7 @@ dependencies:
           - protocol: TCP
             port: 6443
 
-  ################## FLUENT-BIT ##################
+  # == fluent-bit (DaemonSet) ==
   fluent-bit:
     enabled: true
     # priorityClassName:
@@ -600,7 +593,7 @@ dependencies:
   #     enabled: true
   #     serviceMonitor:
   #       enabled: true
-  #   #existingConfigMap: "fluent-bit-config-armonik" # Bug chart Bitnami
+  #   #existingConfigMap: "fluent-bit-config-armonik" # Broken in the Bitnami chart
   #   extraVolumes: |
   #     - name: runlogjournal
   #       hostPath:
@@ -760,26 +753,26 @@ dependencies:
   #           Time_Key    time
   #           Time_Format %b %d %H:%M:%S
 
-  ################## SEQ ##################
+  # == Seq ==
   seq:
     enabled: true
     persistence:
       enabled: false
     image:
       pullPolicy: IfNotPresent
+    #   repository: $REPO-NAME/datalust/seq
     env:
       SEQ_API_LISTENURI: "http://+:5341"
-    #   repository: $REPO-NAME/datalust/seq
     # imagePullSecrets: []
     # priorityClassName:
-    # Seq requires a default admin password in order to initialize a fresh container. Either
-    # specify this here, or opt out using `firstRunNoAuthentication: true` (not suitable for production
-    # deployment). See the `firstRunAdminPasswordHash` variant for better confidentiality. (https://github.com/datalust/helm.datalust.co/blob/main/charts/seq/values.yaml)
+    # A fresh Seq needs an admin password (firstRunAdminPassword, or firstRunAdminPasswordHash for
+    # better confidentiality) unless firstRunNoAuthentication is set, which is unfit for production.
+    # See https://github.com/datalust/helm.datalust.co/blob/main/charts/seq/values.yaml
     firstRunNoAuthentication: true
+    # Applied once networkPolicy.enabled=true: ingress from fluent-bit (5341) and the ingress (80).
     networkPolicy:
-      # Set networkPolicy.enabled: true to apply the default NetworkPolicy for this component.
       ingress:
-        # Open to any namespace by default. Restrict to fluent-bit's actual namespace once known.
+        # namespaceSelector {} admits any namespace; narrow it to the peers' namespaces once known.
         - from:
             - namespaceSelector: {}
               podSelector:
@@ -798,13 +791,10 @@ dependencies:
               port: 80
 
 
-  ################## PROMETHEUS ##################
-  # kube-prometheus-stack moved to charts/armonik-operators, configured at operators.kube-prometheus.*.
-  # Its broken static additionalScrapeConfigs Secret is now first-party ServiceMonitor/PodMonitor.
-  # external-secrets moved to charts/armonik-operators.
-############################################
+  # Not subcharts: umbrella-only settings of ArmoniK's GCS object storage and Pub/Sub queue adapters
+  # (templates/storage/_gcs.tpl, _pubsub.tpl).
 
-  ################## GCS ##################
+  # == GCS ==
   gcs:
     enabled: false
     projectId: ""  # required when gcs.enabled
@@ -812,7 +802,7 @@ dependencies:
     emulatorEndpoint: ""
     credentialsFilePath: ""
 
-  ################## PUBSUB ##################
+  # == Pub/Sub ==
   pubsub:
     enabled: false
     projectId: ""  # required when pubsub.enabled
@@ -820,22 +810,15 @@ dependencies:
     kmsKeyName: ""
 
 
-################## NETWORK POLICIES ##################
-# These settings are specific to the ArmoniK umbrella chart.
-# The policies declared for control-plane, compute-plane, and fluent-bit are egress
-# rules managed by ArmoniK itself. Ingress rules are generally defined by the
-# upstream dependency charts, with MongoDB and Redis as the exceptions where the
-# ingress and egress policies are explicitly configured in this chart.
-#
-# By default, NetworkPolicy resources are disabled per component. To restrict
-# traffic for a given component, set its `networkPolicy.enabled: true` (naming
-# varies per chart, see each dependency's own values).
+# ==== Network policies ====
+# The umbrella's own NetworkPolicies (templates/networkpolicies/): the control and compute planes,
+# the egress of nginx, fluent-bit and KEDA, then MongoDB, Redis, ActiveMQ and mongodb-exporter.
+# Every other dependency and operator has its own networkPolicy.enabled, independent of this one.
+# Inventory in charts/network-policies.md.
 networkPolicy:
-  # Renders this chart's own NetworkPolicy resources (control-plane, compute-plane, MongoDB,
-  # Redis, fluent-bit, KEDA egress) when true. Each dependency chart's own networkPolicy.enabled
-  # is independent.
+  # Renders every policy above, extraPolicies included.
   enabled: false
-  # Add your own NetworkPolicy resources, independent of the rules above, e.g.:
+  # Your own NetworkPolicies, each with its own podSelector and rules, e.g.:
   # extraPolicies:
   #   - name: allow-custom-scraper
   #     podSelector:
@@ -851,18 +834,22 @@ networkPolicy:
   #             port: 9090
   extraPolicies: []
 
-  # Overrides the podSelector used to reach MongoDB (psmdb-operator hardcodes its own label).
+  # podSelector of the MongoDB pods, labelled by psmdb-operator rather than their own chart.
   # mongodbPodSelector:
   #   matchLabels:
   #     app.kubernetes.io/name: percona-server-mongodb
 
-
-  # Same idea for the KEDA
+  # Same for the KEDA operator pods.
   # kedaPodSelector:
   #   matchLabels:
   #     app.kubernetes.io/name: keda-operator
 
+# ==== Operators (armonik-operators, alias operators) ====
+# Only the ArmoniK-specific overrides; the operators' base configuration is in
+# armonik-operators/values.yaml.
 operators:
+  # Kubernetes-flavor policies, applied once networkPolicy.enabled=true, plus egress to the
+  # Kubernetes API (443, 6443) for each KEDA component.
   keda:
     networkPolicy:
       flavor: "kubernetes"
@@ -889,9 +876,10 @@ operators:
                 - protocol: TCP
                   port: 6443
 
+  # Egress to DNS and the Kubernetes API (443, 6443), for the controller, webhook and cert
+  # controller alike, applied once their networkPolicy.enabled=true.
   external-secrets:
     networkPolicy:
-    # Set networkPolicy.enabled: true to apply the default NetworkPolicy for this component.
       enabled: false
       egress:
         - to:
@@ -913,7 +901,6 @@ operators:
           - protocol: TCP
             port: 6443
     webhook:
-    # Set networkPolicy.enabled: true to apply the default NetworkPolicy for this component.
       networkPolicy:
         enabled: false
         egress:
@@ -937,7 +924,6 @@ operators:
               port: 6443
 
     certController:
-    # Set networkPolicy.enabled: true to apply the default NetworkPolicy for this component.
       networkPolicy:
         enabled: false
         egress:
@@ -961,10 +947,8 @@ operators:
               port: 6443
 
   kube-prometheus:
-    ### Network policy
-    # Minimum required for this deployment: enable the networkPolicy
-    # on prometheusOperator, kube-state-metrics and prometheus.
-
+    # Restricting this stack takes at least the networkPolicy of prometheusOperator,
+    # kube-state-metrics and prometheus.
     # prometheusOperator:
     #   networkPolicy:
     #     enabled: true
@@ -972,12 +956,11 @@ operators:
     #   networkPolicy:
     #     enabled: true
 
-    # The prometheus component is already configured with ArmoniK-specific ingress/egress
-    # Set networkPolicy.enabled: true to apply the default NetworkPolicy for this component.
+    # prometheus carries ArmoniK-specific rules, applied once networkPolicy.enabled=true.
     prometheus:
       networkPolicy:
         enabled: false
-        # Open to any namespace by default on every peer below. Restrict to the peer's actual
+        # namespaceSelector {} admits any namespace on every peer below; narrow it to each peer's
         # namespace once known.
         ingress:
           - from:
@@ -1110,7 +1093,7 @@ operators:
               - protocol: TCP
                 port: 6443
 
-            # CoreDNS metrics
+          # CoreDNS metrics
           - ports:
               - protocol: TCP
                 port: 9153
@@ -1123,11 +1106,10 @@ operators:
                     k8s-app: kube-dns
 
   cert-manager:
-    # Reuses cert-manager's own startupapicheck Job as the webhook-readiness gate ahead of our
-    # shared Issuer (weight 0) and Certificates (weight 10). Two overrides on upstream's default
-    # (post-install only, weight 1): add post-upgrade, since upgrades touch those CRs too; and
-    # move the weight to -1, still after upstream's own ServiceAccount/RBAC hooks (weight -5) so
-    # the Job's pod can find them, but ahead of the Issuer/Certificates it is meant to gate.
+    # cert-manager's own startupapicheck Job gates our hooked shared Issuer (weight 0) and
+    # Certificates (weight 10) on the webhook being ready. Upstream runs it post-install at weight 1;
+    # post-upgrade is added since upgrades touch those CRs too, and weight -1 keeps it after its
+    # ServiceAccount/RBAC hooks (-5) but ahead of what it gates.
     startupapicheck:
       timeout: 300s
       jobAnnotations:
@@ -1135,15 +1117,13 @@ operators:
         helm.sh/hook-weight: "-1"
         helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
 
-    ### Network policy
-    # Minimum required for this deployment: enable the default networkPolicy on
-    # all three cert-manager sub-components below (controller, cainjector, webhook).
-
+    # Restricting cert-manager takes the networkPolicy of all three components (controller,
+    # cainjector, webhook).
+    # networkPolicy:
+    #   enabled: true
+    # cainjector:
     #   networkPolicy:
     #     enabled: true
-    #   cainjector:
-    #     networkPolicy:
-    #       enabled: true
-    #   webhook:
-    #     networkPolicy:
-    #       enabled: true
+    # webhook:
+    #   networkPolicy:
+    #     enabled: true

@@ -1,10 +1,11 @@
+{{- /* A namespaced shared issuer created here (Issuer, GoogleCASIssuer) is only usable from its own
+       namespace: fail when a consumer falling back on it renders its Certificate elsewhere. */ -}}
 {{- $issuer := include "armonik.certManager.issuer" $ | fromYaml -}}
 {{- $cmi := .Values.certManagerIssuer | default dict -}}
 {{- if and $issuer.enabled ($cmi.create | empty | not) (has $issuer.kind (list "Issuer" "GoogleCASIssuer")) -}}
 {{- $issuerNs := include "armonik.namespace" $ -}}
 
-{{- /* ingress: covers both the TLS server Certificate and the mTLS CA Certificate,
-       they share the same existingIssuer/namespaceOverride. */ -}}
+{{- /* ingress: the TLS server and mTLS CA Certificates share existingIssuer and namespaceOverride. */ -}}
 {{- $ingress := .Values.ingress | default dict -}}
 {{- if $ingress.enabled -}}
   {{- $itls := $ingress.tls | default dict -}}

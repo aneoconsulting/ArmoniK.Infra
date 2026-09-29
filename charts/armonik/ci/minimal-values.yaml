@@ -1,11 +1,9 @@
-# Deterministic minimal profile: every third-party dependency disabled.
-# Keeps the render small, offline-friendly and reproducible (no operator CRs,
-# no randAlphaNum redis-users Secret). Used by the render matrix
-# (test/matrix.sh), the umbrella unittest suites, and linted by ct.
+# Deterministic minimal profile: every third-party dependency disabled. Keeps the render small,
+# offline-friendly and reproducible (no operator CRs, no randAlphaNum redis-users Secret). Used by
+# test/matrix.sh and the umbrella unittest suites, and linted by ct.
 #
-# The operators block keeps both the operator subcharts and the operator-gated
-# resources (SecretStore, ExternalSecrets, monitors, ScaledObjects) out of the
-# render: deploy=false drops the subchart, available=false the consumers.
+# deploy=false drops the operator subcharts, available=false the operator-gated resources
+# (SecretStore, ExternalSecrets, monitors, ScaledObjects).
 global:
   armonik:
     operators:

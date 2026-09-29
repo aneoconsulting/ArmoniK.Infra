@@ -2,9 +2,9 @@
 {{- with index .Subcharts.dependencies.Subcharts "mongodb-exporter" -}}
 {{- $namespace := include "armonik.mongodbExporter.namespace" . -}}
 {{- if $ops.prometheusOperator.available }}
-{{/* mongodb-exporter's own metrics, exposed on the chart's default "metrics" service port. Its
-     serviceMonitor.enabled value is static and cannot be conditioned on the prometheusOperator
-     CRD being available, so the umbrella renders this one instead (see values.yaml). */}}
+{{/* mongodb-exporter's metrics, on its chart's default "metrics" Service port. The chart's own
+     serviceMonitor.enabled is static and cannot follow prometheusOperator.available, hence this one
+     (see dependencies.mongodb-exporter in values.yaml). */}}
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
@@ -19,8 +19,7 @@ spec:
       - {{ $namespace | quote }}
   selector:
     matchLabels:
-      {{/* Helm's dependency alias becomes this subchart instance's own .Chart.Name, so its
-           labels read "mongodb-exporter" (our alias), not the chart's real name. */}}
+      {{/* Alias-derived name label: see armonik.netpol.rule.mongodbExporterFrom. */}}
       app.kubernetes.io/name: mongodb-exporter
       app.kubernetes.io/instance: {{ $.Release.Name | quote }}
   targetLabels:

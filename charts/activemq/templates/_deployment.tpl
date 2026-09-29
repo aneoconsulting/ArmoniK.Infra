@@ -32,8 +32,8 @@ envFrom:
 resources:
   {{- toYaml . | nindent 2 }}
 {{- end }}
-{{- /* Single-file overrides: mounting the whole conf/ directory would hide the rest of the image's
-       own conf/ tree (jetty-spring.xml, conf/jetty/*.xml, login.config, ...), which it still needs. */}}
+{{- /* Mounted file by file: a whole conf/ mount would hide the image's other conf/ files
+       (jetty-spring.xml, conf/jetty/*.xml, login.config), which the broker still needs. */}}
 volumeMounts:
   - mountPath: /opt/apache-activemq/conf/activemq.xml
     subPath: activemq.xml

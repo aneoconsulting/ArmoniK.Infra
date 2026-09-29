@@ -1,5 +1,4 @@
-# Escape hatches on all three ingress workloads. The global.environment block is required for any
-# standalone render of this chart (see ci/default-values.yaml).
+# Escape hatches (extra*, containerPatch, podSpecPatch) on all three ingress workloads.
 urlsSecretName: example-urls
 
 global:

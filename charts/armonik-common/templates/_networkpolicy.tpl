@@ -1,5 +1,5 @@
 {{/*
-  Renders a NetworkPolicy for a component.
+  NetworkPolicy <fullname>-<component>, followed by a document separator.
 
   Usage:
     {{ include "armonik.netpol.render" (dict
@@ -10,12 +10,9 @@
 
   Args:
     context: Helm context.
-    component: Component name used in the policy name and labels.
-    config: NetworkPolicy configuration, including podSelector, ingress,
-            egress, namespace, and optional policyTypes.
-
-  If policyTypes is not set, it is inferred from the configured ingress
-  and egress rules.
+    component: component name, in the policy name and labels.
+    config: podSelector, ingress, egress, optional namespace and policyTypes. policyTypes
+            defaults to the non-empty ones of ingress and egress.
 */}}
 {{- define "armonik.netpol.render" -}}
 {{- $ctx := .context | default dict -}}
@@ -54,7 +51,7 @@ spec:
 
 
 {{/*
-  Generic namespace selector: matches the current namespace of the subchart passed in context.
+  namespaceSelector matching the namespace of the chart passed as context.
 */}}
 {{- define "armonik.netpol.namespaceSelector" -}}
 matchLabels:
@@ -63,9 +60,9 @@ matchLabels:
 
 
 {{/*
-  Namespace segment of an in-cluster service URL/host, shaped <name>.<namespace>.svc[.<domain>][:port]
-  (the .<domain> suffix is absent when clusterDomain is unset, so "svc" isn't always followed by a dot).
-  Empty when the URL is unset or not in that shape (e.g. an external URL) - callers skip their rule.
+  Namespace segment of an in-cluster service URL or host, <name>.<namespace>.svc[.<domain>][:port].
+  Empty when the URL is unset or has another shape (an external URL, for one); callers then skip
+  their rule.
 */}}
 {{- define "armonik.netpol.namespaceFromServiceUrl" -}}
   {{- $host := . | default "" | trimPrefix "http://" | trimPrefix "https://" -}}
@@ -76,7 +73,7 @@ matchLabels:
 
 
 {{/*
-  Generic pod selector: matches by app.kubernetes.io/name of the subchart passed in context.
+  podSelector matching app.kubernetes.io/name of the chart passed as context.
 */}}
 {{- define "armonik.netpol.podSelector" -}}
 matchLabels:
@@ -85,9 +82,8 @@ matchLabels:
 
 
 {{/*
-  A user-supplied podSelector override, or a literal app.kubernetes.io/name default. For pods
-  created by an external operator (Prometheus, KEDA, the MongoDB operator) whose real label
-  cannot be derived from any of our own charts, so every such override value shares this fallback.
+  The user's podSelector override, else a literal app.kubernetes.io/name selector. For pods of an
+  external operator (Prometheus, KEDA, the MongoDB operator), whose labels our charts cannot derive.
   Args (list): [override, name]
 */}}
 {{- define "armonik.netpol.podSelector.default" -}}
@@ -98,7 +94,7 @@ matchLabels:
 
 
 {{/*
-  Creates an ingress or egress rule for a pod in a namespace on a specific port.
+  Ingress or egress rule for a peer (namespace + pod selector) on one TCP port.
 
   Usage:
     {{ include "armonik.netpol.rule.peerOnPort" (list
@@ -109,10 +105,10 @@ matchLabels:
     ) }}
 
   Args:
-    namespaceSelector: Namespace selector for the peer.
-    podSelector: Pod selector for the peer.
-    port: Port allowed by the rule.
-    direction: "from" for ingress or "to" for egress.
+    namespaceSelector: peer namespace selector, pre-rendered YAML.
+    podSelector: peer pod selector, pre-rendered YAML.
+    port: allowed port.
+    direction: "from" for ingress, "to" for egress.
 */}}
 {{- define "armonik.netpol.rule.peerOnPort" -}}
 {{- $namespaceSelector := index . 0 -}}
@@ -131,10 +127,11 @@ ports:
 
 
 {{/*
-  Ingress from the shared Prometheus on the given port, from the namespace of
-  global.armonik.monitoring.prometheusUrl, else of the operator where that URL does not derive (plane
-  charts): being scraped must not require it. No rule when the operator is unavailable or its
+  Ingress from the shared Prometheus on the given port. Peer namespace: that of
+  global.armonik.monitoring.prometheusUrl, else the operator's (plane charts, where the URL does not
+  derive: being scraped must not require it). No rule when the operator is unavailable or its
   namespace unstated, nor for an out-of-cluster URL.
+  Args (list): [context, port, podSelector override]
 */}}
 {{- define "armonik.netpol.rule.prometheusIngress" -}}
 {{- $ctx := index . 0 -}}
@@ -161,7 +158,7 @@ ports:
 
 
 {{/*
-  Egress rule: DNS resolution via kube-dns in kube-system.
+  Egress rule to kube-dns in kube-system.
 */}}
 {{- define "armonik.netpol.dnsRule" -}}
 to:
@@ -180,7 +177,7 @@ ports:
 
 
 {{/*
-  Egress ports rule: the Kubernetes API server (443 in-cluster, 6443 common external port).
+  Egress rule to the Kubernetes API server by port only: 443 in-cluster, 6443 the usual external port.
 */}}
 {{- define "armonik.netpol.kubeApiRule" -}}
 ports:
@@ -191,8 +188,7 @@ ports:
 {{- end -}}
 
 {{/*
-  Merges a dict of named rules into one rule list: each entry maps a define name to its render
-  context, included and parsed back from YAML, nil results dropped.
+  Rule list from a dict mapping a define name to its render context. Empty results are dropped.
 */}}
 {{- define "armonik.netpol.mergeRules" -}}
   {{- $rules := list -}}
@@ -203,7 +199,7 @@ ports:
 {{- end -}}
 
 {{/*
-  Concatenates the chart's own rules with the user's extra rules, dropping nils.
+  The chart's own rules (YAML list) followed by the user's extra rules, empty entries dropped.
   Args (dict): {rules, extra}
 */}}
 {{- define "armonik.netpol.mergeExtra" -}}
@@ -212,6 +208,10 @@ ports:
   {{- concat $rules $extra | compact | toYaml -}}
 {{- end -}}
 
+{{/*
+  containerPort named <port name> in the ports list at <values path>, else 1080.
+  Args (list): [root, values path segments (list), port name]
+*/}}
 {{- define "armonik.netpol.controlPlane.port" -}}
   {{- $root := index . 0 -}}
   {{- $pathSegments := index . 1 -}}

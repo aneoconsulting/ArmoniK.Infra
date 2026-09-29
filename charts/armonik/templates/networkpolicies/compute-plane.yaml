@@ -4,8 +4,8 @@
 -}}
 
 {{/*
-  Compute-plane connectivity NetworkPolicy: egress to dependencies + DNS. Ingress from Prometheus
-  is armonik-compute-plane's own chart-local policy (see its NetworkPolicy config comment).
+  Compute-plane egress to dependencies + DNS. Ingress from Prometheus is armonik-compute-plane's
+  own policy (networkPolicy in its values.yaml).
 */}}
 
 {{- if $networkPolicyEnabled }}

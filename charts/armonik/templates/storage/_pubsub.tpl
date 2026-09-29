@@ -1,6 +1,5 @@
 {{/*
-Configuration for Pub/Sub forwarded to ArmoniK Core.
-This configuration is used to configure the Pub/Sub queue adapter.
+Core env for the Pub/Sub queue adapter, when dependencies.pubsub.enabled.
 */}}
 {{- define "armonik.pubsub.conf" -}}
 {{- $pubsub := list .Values "dependencies" "pubsub" | include "armonik.utils.index" | fromYaml -}}

@@ -2,8 +2,7 @@
 {{- $me := .Values.metricsExporter | default dict }}
 {{- $svc := $me.service | default dict }}
 {{- if and $me.enabled $ops.prometheusOperator.available }}
-{{/* Metrics-exporter app metrics, incl. armonik_<partition>_tasks_queued. The shared cluster
-     Prometheus selects it across namespaces. */}}
+{{/* Metrics-exporter metrics, armonik_<partition>_tasks_queued included, for the shared cluster Prometheus. */}}
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
@@ -20,16 +19,14 @@ spec:
     matchLabels:
       app.kubernetes.io/component: metrics-exporter
       {{- include "armonik.selectorLabels" . | nindent 6 }}
-  {{/* Carry the release onto the series so a shared Prometheus keeps per-release metrics distinct
-       (job stays the stable role name; app_kubernetes_io_instance identifies the release). */}}
+  {{/* Release labels on every series, so a shared Prometheus keeps releases apart under one job name. */}}
   targetLabels:
     - app.kubernetes.io/instance
     - armonik.fr/deployment
   endpoints:
     - port: {{ $svc.name | quote }}
       path: /metrics
-      {{/* Force the legacy job name so the bundled Grafana dashboards match; releases are still
-           distinguishable by the namespace/pod labels the operator adds. */}}
+      {{/* Fixed job name the bundled Grafana dashboards query, instead of the Service name. */}}
       relabelings:
         - targetLabel: job
           replacement: metrics-exporter

@@ -1,14 +1,13 @@
 {{/*
-Expand the name of the chart.
+Chart name, or nameOverride.
 */}}
 {{- define "eniconfig.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
-Create a default fully qualified app name.
-We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
-If release name contains chart name it will be used as a full name.
+Fully qualified name, truncated to 63 chars (DNS label limit). The release name alone when it
+already contains the chart name.
 */}}
 {{- define "eniconfig.fullname" -}}
 {{- if .Values.fullnameOverride }}
@@ -24,14 +23,14 @@ If release name contains chart name it will be used as a full name.
 {{- end }}
 
 {{/*
-Create chart name and version as used by the chart label.
+Chart name and version, for the helm.sh/chart label.
 */}}
 {{- define "eniconfig.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
-Common labels
+Common labels.
 */}}
 {{- define "eniconfig.labels" -}}
 helm.sh/chart: {{ include "eniconfig.chart" . }}
@@ -43,7 +42,7 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end }}
 
 {{/*
-Selector labels
+Selector labels.
 */}}
 {{- define "eniconfig.selectorLabels" -}}
 app.kubernetes.io/name: {{ include "eniconfig.name" . }}
@@ -51,7 +50,7 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*
-Create the name of the service account to use
+ServiceAccount name. Unused: values.yaml has no serviceAccount block.
 */}}
 {{- define "eniconfig.serviceAccountName" -}}
 {{- if .Values.serviceAccount.create }}

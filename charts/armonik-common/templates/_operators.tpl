@@ -1,7 +1,7 @@
 {{/*
-Control map for the five install-once operators, from global.armonik.operators.<op>.{available,deploy,
-namespace} (semantics in armonik-common/values.yaml, which also ships the defaults). Absent flags read as
-false; namespace comes back tpl-rendered, empty when nobody stated where an external operator runs.
+Control map of the install-once operators, from global.armonik.operators.<op>.{available,deploy,namespace}
+(semantics and defaults in armonik-common/values.yaml). Absent flags read as false. namespace comes back
+tpl-rendered, empty when nobody stated where an external operator runs.
 
   {{- $ops := include "armonik.operators" $ | fromYaml }}
   {{- if $ops.keda.available }} ...emit ScaledObject... {{- end }}

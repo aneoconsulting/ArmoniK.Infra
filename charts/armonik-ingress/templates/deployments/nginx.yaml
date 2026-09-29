@@ -25,7 +25,7 @@ spec:
   template:
     metadata:
       annotations:
-        # Roll the pod when the nginx conf changes so config updates
+        # nginx reads its conf only at startup: roll the pod when it changes
         checksum/config: {{ include (print $.Template.BasePath "/armonik-nginx-conf.yaml") . | sha256sum }}
         {{- with .Values.podAnnotations }}
         {{- toYaml . | nindent 8 }}

@@ -1,12 +1,12 @@
 {{/*
-Name of the conf secret related resources
+Name shared by the nginx conf Secret, its ExternalSecret, and the SecretStore with its RBAC.
 */}}
 {{- define "armonik.ingress.confName" -}}
   {{- include "armonik.fullname" . | printf "%s-nginx-conf" | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
 {{/*
-SEQ locations
+nginx locations proxying /seq/ to $seq_upstream.
 */}}
 {{- define "armonik.seq.locations" }}
 location = /seq {
@@ -27,10 +27,11 @@ location /seq/ {
 
 
 {{/*
-Grafana locations
+nginx locations proxying /grafana/ to $grafana_upstream.
 */}}
-{{- /* Grafana runs with a path-less root_url and never learns its public path: we inject it
-        below, so one Grafana serves under any prefix. Per-cluster: derive from the cluster key. */}}
+{{- /* Grafana runs with a path-less root_url and never learns its public path, so it is injected
+        below and one Grafana serves under any prefix. For a per-cluster Grafana, derive the path
+        from the cluster key. */}}
 {{- define "armonik.grafana.locations" }}
 {{- $grafanaPath := "/grafana" }}
 location = {{ $grafanaPath }}{
@@ -73,12 +74,11 @@ location {{ $grafanaPath }}/api/live {
 {{- end }}
 
 {{/*
-Renders the Nginx ingress configuration
+nginx server configuration. With useEso, an upstream absent from values becomes an ESO template
+reference to the URLs Secret key (control-plane, seq, grafana).
 
 Usage:
-{{- dict "root" . "useEso" true |include "armonik.conf.render"}}
-{{- dict "root" . "useEso" false | include "armonik.conf.render"}}
-
+{{- dict "root" . "useEso" true | include "armonik.conf.render" }}
 */}}
 {{- define "armonik.conf.render" -}}
 {{- $root := .root -}}
@@ -126,10 +126,10 @@ map "$http_x_certificate_client_fingerprint|$ssl_client_s_dn_cn" $client_fingerp
 upstream armonik {
     zone armonik_zone 32k;
     {{- if $root.Values.loadBalancer.enabled }}
-    # Load balancer enabled: route gRPC through it
+    # gRPC through the multi-cluster load balancer
     server {{ $lbHost }}.{{ $svcSuffix }}:{{ $root.Values.loadBalancer.conf.listenPort }} resolve;
     {{- else if $root.Values.control_plane_url }}
-    # External URL
+    # External control-plane URL
     server {{ $root.Values.control_plane_url | quote }} resolve;
     {{- else if $useEso }}
     server {{`{{ index . "control-plane" | quote }}`}} resolve;
@@ -141,7 +141,7 @@ upstream armonik {
 
 server {
     {{- if $tls }}
-    # ===== TLS ENABLED =====
+    # TLS enabled
     listen 8443 ssl http2;
     listen [::]:8443 ssl http2;
     listen 9443 ssl http2;
@@ -150,7 +150,7 @@ server {
     ssl_certificate     {{ default "/ingress/tls.crt" $root.Values.tls.ssl.certificatePath | quote}};
     ssl_certificate_key {{ default "/ingress/tls.key" $root.Values.tls.ssl.keyPath | quote}};
     {{- else }}
-    # TLS enabled but no certificate paths configured — mount certificate at /ingress or set .Values.tls.ssl.certificatePath and .Values.tls.ssl.keyPath
+    # TLS enabled but no certificate paths: mount the certificate at /ingress, or set tls.ssl.certificatePath and tls.ssl.keyPath
     {{- end }}
     {{- if $mtls }}
     ssl_verify_client on;
@@ -164,7 +164,7 @@ server {
     ssl_ciphers {{ default "EECDH+AESGCM:EECDH+AES256" $root.Values.tls.ssl.ciphers }};
     ssl_conf_command Ciphersuites {{ default "TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256" $root.Values.tls.ssl.cipherSuites }};
     {{- else }}
-    # ===== TLS DISABLED =====
+    # TLS disabled
     listen 8080;
     listen [::]:8080;
     listen 9080;
@@ -197,11 +197,10 @@ server {
         grpc_set_header X-Certificate-Client-Fingerprint $client_fingerprint;
         {{- end }}
         grpc_pass grpc://armonik;
-        # Apparently, multiple chunks in a grpc stream is counted has a single body
-        # So disable the limit
+        # A whole gRPC stream seems to count as one body, so disable the size limit.
         client_max_body_size 0;
-        # add a timeout of 1 month to avoid grpc exception for long task
-        # TODO: find better configuration
+        # 30-day read timeout so long tasks do not raise a gRPC exception.
+        # TODO: find a better configuration
         proxy_read_timeout 30d;
         proxy_send_timeout 1d;
         grpc_read_timeout 30d;

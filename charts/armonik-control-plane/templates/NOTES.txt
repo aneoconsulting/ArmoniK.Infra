@@ -1,4 +1,4 @@
-Thank you for support {{ .Chart.Name }}.
+Thank you for installing {{ .Chart.Name }}.
 Your release is named {{ .Release.Name }}.
 To learn more about the release, try:
   $ helm status {{ .Release.Name }}
@@ -8,10 +8,10 @@ To learn more about the release, try:
 {{- if .Values.networkPolicy.enabled }}
 
 NetworkPolicy status:
-  This chart's own rule allows DNS only. Sharing a namespace with an armonik umbrella release
-  that also has networkPolicy.enabled true and already covers this egress - nothing to do.
-  Otherwise, add your own rule (networkPolicy.submitter.extraEgressRules;
-  networkPolicy.metricsExporter.extraEgressRules for MongoDB only), e.g. for MongoDB:
+  This chart's own rules allow DNS egress only. Nothing to do if an armonik umbrella release in the
+  same namespace, with networkPolicy.enabled=true, already allows this egress. Otherwise add your own
+  rules under networkPolicy.submitter.extraEgressRules, and under
+  networkPolicy.metricsExporter.extraEgressRules for MongoDB only. For instance for MongoDB:
 
     networkPolicy.submitter.extraEgressRules:
       - to:

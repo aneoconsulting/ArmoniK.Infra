@@ -19,22 +19,21 @@ Operators:
 {{- end }}
 **********************************************************
 {{- if list .Values "networkPolicy" "enabled" | include "armonik.utils.index" }}
-NetworkPolicy is enabled for this release. Turn on the same flag on every subchart/dependency
-you also want covered:
+NetworkPolicy is enabled for this chart's own policies. Each subchart has its own flag:
   - control-plane.networkPolicy.enabled=true
   - compute-plane.networkPolicy.enabled=true
   - ingress.networkPolicy.enabled=true
-  - dependencies.<activemq|grafana|seq|fluent-bit>.networkPolicy.enabled=true (Redis is covered above)
+  - dependencies.<activemq|grafana|seq|fluent-bit>.networkPolicy.enabled=true (Redis has no flag: this chart covers it)
 {{- end }}
 **********************************************************
 {{- $sharedIssuer := include "armonik.certManager.issuer" $ | fromYaml }}
 {{- $cmi := .Values.certManagerIssuer | default dict }}
 {{- if and $sharedIssuer.enabled (eq ($cmi.provider | default "selfSigned") "googleCas") }}
 
-ACTION NEEDED for provider=googleCas: cert-manager only auto-approves signers listed in
-approveSignerNames, which does not cover Google CAS by default. Without this, CertificateRequests hang
-unapproved forever with no error. Set on the release installing cert-manager (armonik-operators, alias
-"operators" here) - this REPLACES the default, so keep the first two entries:
+ACTION NEEDED (provider=googleCas): cert-manager auto-approves only the signers in approveSignerNames,
+which omits Google CAS by default, so CertificateRequests stay unapproved with no error. Set it on the
+release installing cert-manager (armonik-operators, alias "operators" here). The list REPLACES the
+default, so keep the first two entries:
 
      operators:
        cert-manager:
@@ -52,13 +51,12 @@ unapproved forever with no error. Set on the release installing cert-manager (ar
 This release deployed {{ len $workerPartitions }} compute-plane partition(s): {{ join ", " $workerPartitions }}.
 {{- else }}
 
-NOTE: this release deploys NO compute-plane, so there are no worker pods (and no KEDA ScaledObjects)
-to execute tasks. To run work, either enable the bundled compute-plane (set compute-plane.enabled=true
-AND define compute-plane.partitions - an empty compute-plane is rejected at render time), or install
-one or more separate armonik-compute-plane releases pointed at this release (see the recipe below).
-Reminder: a submission may still be ACCEPTED for any partition already registered in the database
-(seeded by a prior release, or persisted in a reused MongoDB volume). Such tasks will queue with
-nothing to run them, so an accepted submission is NOT proof that a worker exists.
+NOTE: this release deploys NO compute-plane: no worker pods, no KEDA ScaledObjects. To run tasks,
+either set compute-plane.enabled=true AND define compute-plane.partitions (an empty compute-plane
+fails at render time), or install armonik-compute-plane releases against this one (recipe below).
+A submission may still be ACCEPTED for a partition already registered in the database (by a prior
+release, or in a reused MongoDB volume). Its tasks then queue with nothing to run them: acceptance
+does NOT prove a worker exists.
 {{- end }}
 **********************************************************
 
@@ -67,57 +65,58 @@ nothing to run them, so an accepted submission is NOT proof that a worker exists
 {{- $cpAuth := $cpRbac.authentication | default dict }}
 {{- if and (not $cpRbac.userCertificates) $cpAuth.required }}
 Authentication in ArmoniK is enabled{{ if $cpRbac.createBuiltinRoles }}, default roles "Submitter" and "Monitoring" were created{{ end }}.
-Since authentication inside ArmoniK in enabled, you must apply the following steps to be able to query your ArmoniK cluster :
+To query the cluster:
 
-  1. Make sure your users hold a x509 certificate
-  2. For each user, check their certificate common name and fingerprint (keep them for the next step)
-  3. Create a YAML file with the following structure (replace brackets-wrapped values with your own): 
-  
+  1. Give each user an x509 certificate.
+  2. Note each certificate's common name and fingerprint.
+  3. Write a values file of this shape (replace the <...> placeholders):
+
 ### YAML start ###
 init:
   enabled: true
-  rbac:
+rbac:
+  authentication:
+    required: true
 {{- if not $cpRbac.createBuiltinRoles }}
-    roles:
-      <Role1>: [<Permission1>, <PermissionN>]
-      <Role2>: [<Permission1>, <PermissionN>]
+  roles:
+    <Role1>: [<Permission1>, <PermissionN>]
+    <Role2>: [<Permission1>, <PermissionN>]
 {{- end }}
-    users:
-      <username1>: [<RoleName1>, <RolesNameN>]
-      <usernameN>: [<RoleName1>, <RolesNameN>]
-    userCertificates:
-      <username1>:
-        commonName: <user1commonName>
-        fingerprint: <user1fingerprint>
-      <usernameN>:
-        commonName: <userNcommonName>
-        fingerprint <userNfingerprint>
+  users:
+    <username1>: [<RoleName1>, <RoleNameN>]
+    <usernameN>: [<RoleName1>, <RoleNameN>]
+  userCertificates:
+    <username1>:
+      commonName: <user1commonName>
+      fingerprint: <user1fingerprint>
+    <usernameN>:
+      commonName: <userNcommonName>
+      fingerprint: <userNfingerprint>
 ### YAML end ###
-  4. Make sure userCertificates and users maps share the same keys.
-  5. Use this YAML file as a values file for a standalone control-plane (further details below)
+  4. Use the same keys in users and userCertificates.
+  5. Pass it as a values file to a standalone control-plane (recipe below).
 {{- end }}
 
 {{- $mountPath := include "armonik.conf.mountPath" $ }}
 {{- $confNamespace := include "armonik.namespace" $ }}
 {{- $ownComputePlane := list .Values "compute-plane" "enabled" | include "armonik.utils.index" | empty | not }}
-The configuration Secrets are owned by this release ({{ .Release.Name }}) and live in namespace
-{{ $confNamespace }}. To install a plane as a separate release, point it at those Secrets with
---set conf.source={{ .Release.Name }} and install it in the SAME namespace. (A plane in another
-namespace needs the Secrets mirrored there, e.g. via an ESO remoteNamespace ExternalSecret.)
+The conf Secrets belong to this release ({{ .Release.Name }}), in namespace {{ $confNamespace }}.
+A plane installed as its own release reads them with --set conf.source={{ .Release.Name }}, in the
+SAME namespace (another namespace needs them mirrored, e.g. by an ESO remoteNamespace ExternalSecret).
 {{- if ne $mountPath "/mounts" }}
-This release overrides the conf mount path; a standalone plane must also set
---set conf.mountPath={{ $mountPath }} so it mounts the config where the Secrets expect it.
+This release overrides the conf mount path, so a standalone plane also needs
+--set conf.mountPath={{ $mountPath }}.
 {{- end }}
 {{- with index .Subcharts.dependencies.Subcharts "mongodb-exporter" }}
 
-mongodb-exporter reads its URI from Secret {{ .Values.existingSecret.name }}, a fixed name. Another ArmoniK
-release in namespace {{ .Release.Namespace }} must rename it, identically in
+mongodb-exporter reads its URI from Secret {{ .Values.existingSecret.name }}, a fixed name. Another
+ArmoniK release in namespace {{ .Release.Namespace }} must rename it, identically in
 dependencies.mongodb-exporter.existingSecret.name and dependencies.mongodb-exporter.volumes[0].secret.secretName.
 {{- end }}
 
-Standalone planes assume the cluster already provides the operators (KEDA, External Secrets,
-cert-manager, psmdb-operator, prometheus-operator): global.armonik.operators.<op>.available defaults
-to true. Pass --set global.armonik.operators.<op>.available=false for any operator NOT installed.
+Standalone planes assume the operators listed above are already in the cluster
+(global.armonik.operators.<op>.available defaults to true). Pass
+--set global.armonik.operators.<op>.available=false for each one NOT installed.
 
 To add a standalone compute-plane with new partitions:
 
@@ -147,18 +146,16 @@ To add a standalone control-plane (with optional external partitions):
 **********************************************************
 UNINSTALLING (full procedure and recovery steps: charts/uninstall.md)
 
-{{- /* Operators installed BY this release render their CRs as post-install hooks (the CRD does not
-       exist yet when the main manifest is applied). Helm does not track hook resources, so those CRs
-       outlive `helm uninstall` and wedge the CRD deletion. Types listed only when hooked. */}}
+{{- /* CR types that are Helm hooks, i.e. whose operator this release installs (charts/uninstall.md). */}}
 {{- $ops := include "armonik.operators" $ | fromYaml }}
 {{- $drain := list }}
 {{- if $ops.keda.deploy }}{{ $drain = append $drain "scaledobjects.keda.sh" }}{{ end }}
 {{- if $ops.externalSecrets.deploy }}{{ $drain = concat $drain (list "externalsecrets.external-secrets.io" "secretstores.external-secrets.io") }}{{ end }}
 {{- if $ops.certManager.deploy }}{{ $drain = concat $drain (list "certificates.cert-manager.io" "issuers.cert-manager.io") }}{{ end }}
 {{- if $drain }}
-This release installs its own operators, so the custom resources below are applied as Helm hooks, and
-Helm does NOT delete hook resources on uninstall. Delete them FIRST, while the operators are still
-running, otherwise their CRDs hang in Terminating with orphaned resources no controller can finalize:
+This release installs its own operators, so the custom resources below are Helm hooks, which
+helm uninstall does NOT delete. Delete them FIRST, while the operators still run, or their CRDs hang
+in Terminating on orphaned resources no controller can finalize:
 
      for t in {{ join " " $drain }}; do
        kubectl delete "$t" -n {{ .Release.Namespace }} \
@@ -167,11 +164,11 @@ running, otherwise their CRDs hang in Terminating with orphaned resources no con
 
      helm uninstall {{ .Release.Name }} -n {{ .Release.Namespace }}
 
-Deleting the ExternalSecrets also removes the conf Secrets they own; deleting the Certificates removes
-the TLS Secrets they own.
+Deleting the ExternalSecrets also removes the conf Secrets they own, and deleting the Certificates the
+TLS Secrets they own.
 {{- else }}
-Every operator used here comes from another release, so no custom resource is applied as a Helm hook
-and a plain uninstall is complete:
+Every operator comes from another release, so no custom resource is a Helm hook and a plain uninstall
+is complete:
 
      helm uninstall {{ .Release.Name }} -n {{ .Release.Namespace }}
 
@@ -181,19 +178,19 @@ cascade-deletes the custom resources of every ArmoniK release in the cluster.
 
 {{- $managedAny := false }}
 {{- range $op, $cfg := $ops }}{{ if $cfg.deploy }}{{ $managedAny = true }}{{ end }}{{ end }}
-Left behind on purpose: the MongoDB PVCs (mongodb.finalizers carries no percona.com/delete-psmdb-pvc)
-and the Secrets the operators generate themselves, which no release owns.
+Left behind on purpose: the MongoDB PVCs (dependencies.mongodb.finalizers lacks
+percona.com/delete-psmdb-pvc) and the Secrets the operators generate, which no release owns.
 {{- if $managedAny }}
 {{- if or $ops.mongodbOperator.deploy $ops.prometheusOperator.deploy }}
 Also the CRDs Helm never manages: psmdb-operator and kube-prometheus-stack ship them in an untemplated
-crds/ directory, so they are neither upgraded nor deleted by any release.
+crds/ directory, which no release upgrades or deletes.
 {{- end }}
 {{- if $ops.certManager.deploy }}
-The cert-manager CRDs, in contrast, DO go away with this release (operators.cert-manager.crds.keep is
-false), and that deletes every Certificate and Issuer in the cluster, ArmoniK's or not.
+The cert-manager CRDs, however, DO go away with this release (operators.cert-manager.crds.keep is
+false), deleting every Certificate and Issuer in the cluster, ArmoniK's or not.
 {{- end }}
 {{- else }}
-The operator CRDs belong to the operators release and are untouched by this one.
+The operator CRDs belong to the operators release; this one leaves them alone.
 {{- end }}
-A reinstall reuses the old MongoDB volume, so partitions from a previous release stay registered in the
+A reinstall reuses the old MongoDB volume, so partitions of a previous release stay registered in the
 database.

@@ -3,18 +3,13 @@
 {{- $tls := $redis.tls | default dict }}
 {{- $certManager := $tls.certManager | default dict }}
 {{- if and $redis.enabled $tls.enabled $certManager.enabled }}
-{{- /* Real valkey Service name: charts/armonik-dependencies/charts/redis is the valkey chart, aliased
-       "redis" (so its own .Chart.Name resolves to "redis" there, not "valkey"). Call its own fullname
-       helper through the live subchart scope, the same pattern armonik.redis.host in
-       storage/_redis.tpl already uses for the connection string, rather than hardcoding
-       "<release>-redis": a hardcoded guess silently diverges from nameOverride/fullnameOverride. */}}
+{{- /* valkey (alias "redis") Service name from its own fullname helper through the live subchart
+       scope, as armonik.redis.host does, so nameOverride/fullnameOverride are honored. */}}
 {{- $svcName := include "valkey.fullname" .Subcharts.dependencies.Subcharts.redis }}
 {{- $ns := include "armonik.redis.namespace" .Subcharts.dependencies.Subcharts.redis }}
-{{- /* Same three-tier fallback as activemq/armonik-ingress: local existingIssuer, else the shared
-       issuer, else a local Issuer this chart creates itself, backed by
-       dependencies.redis.tls.certManager.provider (default selfSigned, same as today) - redis is a
-       single server with one client-facing cert, so unlike mongodb it has no common-CA constraint
-       against that. */}}
+{{- /* Issuer resolution: see armonik.certManager.getIssuer. A local fallback Issuer defaults to
+       selfSigned, which suits a single server with one client-facing certificate (no common-CA
+       constraint, unlike mongodb). */}}
 {{- $issuerName := printf "%s-issuer" $svcName }}
 {{- $provider := $certManager.provider | default "selfSigned" }}
 {{- $localRequested := hasKey $certManager "provider" }}

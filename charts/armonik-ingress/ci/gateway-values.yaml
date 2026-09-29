@@ -1,5 +1,5 @@
-# Gateway API path: Gateway + HTTPRoute + (GKE) HealthCheckPolicy, and the
-# service type forced to ClusterIP by armonik.ingress.serviceType.
+# Gateway API path: Gateway, HTTPRoute and (GKE) HealthCheckPolicy, the HTTPRoute forcing the
+# Service type to ClusterIP (armonik.ingress.serviceType).
 global:
   environment:
     name: ci
@@ -7,7 +7,7 @@ global:
 urlsSecretName: example-urls
 gateway:
   enabled: true
-  # No chart default; the Gateway is invalid without it.
+  # No chart default; templates/validate.yaml requires it.
   gatewayClassName: example-gateway-class
 httpRoute:
   enabled: true

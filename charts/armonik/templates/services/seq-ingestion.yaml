@@ -1,4 +1,4 @@
-{{- /* See armonik.seq.ingestionService. In seq's namespace, the release one: seq has no namespace key. */ -}}
+{{- /* Named by armonik.seq.ingestionService. seq has no namespace key, so it runs in the release namespace. */ -}}
 {{- with .Subcharts.dependencies.Subcharts.seq }}
 apiVersion: v1
 kind: Service

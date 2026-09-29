@@ -1,27 +1,26 @@
-# Library chart: renders nothing, takes no configuration of its own. What it owns is the single
-# definition of the cross-chart `global.armonik` defaults below, which each root chart lifts with
-# `import-values: [{child: global.armonik, parent: global.armonik}]` on its armonik-common dependency,
-# globals not propagating upward on their own. Precedence holds per key: these < the root chart's
-# values.yaml < user -f/--set. import-values copies chart-file values only, which is what makes it right
-# here (nobody configures this chart) and unusable for propagating a dependency's user-set values, which
-# it would silently drop.
-# Only what must be identical across charts belongs here.
+# Library chart: renders nothing and takes no configuration. It owns the single definition of the
+# cross-chart `global.armonik` defaults below; only what must be identical across charts belongs here.
+# Each root chart lifts them with `import-values: [{child: global.armonik, parent: global.armonik}]` on
+# its armonik-common dependency. Precedence per key: these < the root chart's values.yaml < -f/--set.
+# import-values copies chart-file values only: right here, since nobody configures this chart, but
+# unusable for a dependency's user-set values, which it silently drops.
 #
-# values.schema.json type-checks these globals for every chart depending on this one: helm validates a
-# library chart's schema against its subchart values, which carry the coalesced `global`. It ships inside
-# the vendored archive, so re-run charts/update-charts.sh after editing it.
+# values.schema.json type-checks these globals for every chart depending on this one (helm validates a
+# library chart's schema against its coalesced `global`). It ships in the vendored archive: re-run
+# charts/update-charts.sh after editing it.
 global:
   armonik:
-    # Cross-chart operator control (see charts/armonik-operators), per operator:
-    #   deploy    - THIS release installs the operator + CRDs; gates the armonik-operators subchart
-    #               conditions and the CRD-ordering hooks on the CRs we emit.
-    #   available - the CRDs exist, from here or another release -> emit CRs.
+    # Install-once operator control (see charts/armonik-operators), per operator:
+    #   deploy    - THIS release installs the operator and its CRDs. Gates the armonik-operators
+    #               subchart conditions and the CRD-ordering hooks on the CRs we emit.
+    #   available - the CRDs exist, from this release or another: emit CRs.
     #   namespace - where the operator runs, for consumers deriving hostnames from it. Defaults to this
-    #               release's namespace when this release deploys it, else empty, meaning "not stated":
-    #               that is a render error for anything that needs it. Set it for an externally installed
-    #               operator, or when a subchart's own namespaceOverride moves it (the umbrella guards
-    #               against the two disagreeing).
-    # Default = consume operators installed elsewhere; the umbrella overrides deploy=true.
+    #               release's namespace when this release deploys it, else empty ("not stated"), a render
+    #               error for anything that needs it. Set it for an externally installed operator, or
+    #               when the operator subchart's own namespaceOverride moves it (the umbrella fails on
+    #               the two disagreeing).
+    # Defaults consume operators installed elsewhere. The umbrella and armonik-operators set deploy=true
+    # for all but googleCasIssuer.
     operators:
       externalSecrets:
         deploy: false
@@ -47,7 +46,8 @@ global:
         deploy: false
         available: true
         namespace: '{{ .Values.global.armonik.operators.googleCasIssuer.deploy | empty | ternary "" .Release.Namespace }}'
-    # Shared cert-manager issuer Certificates reference by default.
+    # Shared cert-manager issuer that Certificates reference unless a component sets its own
+    # (resolved by armonik.certManager.issuer / getIssuer, _certmanager.tpl).
     certManager:
       issuer:
         enabled: false
@@ -59,19 +59,19 @@ global:
         # @default -- `cert-manager.io`
         group:
     monitoring:
-      # -- Prometheus for the Grafana datasource and PromQL KEDA triggers. Derived
-      # (`armonik.monitoring.prometheusUrl.default`) only where this release installs kube-prometheus-stack;
-      # set it elsewhere (layered install, plane charts).
+      # -- Prometheus for the Grafana datasource and PromQL KEDA triggers. Derives
+      # (`armonik.monitoring.prometheusUrl.default`) only where this release installs
+      # kube-prometheus-stack; set it elsewhere (layered install, plane charts).
       prometheusUrl: '{{ include "armonik.monitoring.prometheusUrl.default" . }}'
-      # -- Control-plane metrics-exporter `/metrics` scraped by KEDA (default scaling path). Defaults to
-      # the `armonik.monitoring.metricsExporterUrl.default` derivation off `conf.source`; a literal URL replaces it.
+      # -- Control-plane metrics-exporter `/metrics` scraped by KEDA (default scaling path). Derives from
+      # `conf.source` (`armonik.monitoring.metricsExporterUrl.default`); a literal URL replaces it.
       metricsExporterUrl: '{{ include "armonik.monitoring.metricsExporterUrl.default" . }}'
-    # Default tag of an image that sets none, keyed on the repository rather than the values slot:
-    # a worker's identity is only known at render time. Components mirror ArmoniK's release trains
-    # (armonik_versions in versions.tfvars.json), plus one per chart whose AppVersion is its image's.
+    # Image tags default per repository, not per values slot, a worker's image being known only at
+    # render time (armonik.utils.imageConf). Components mirror ArmoniK's release trains (armonik_versions
+    # in versions.tfvars.json), plus one per chart whose AppVersion is its image's.
     # -- Version per component. Empty or absent means the AppVersion of the chart deploying the image,
-    # keeping core and gui in lockstep with the charts. The rest release separately and need reviewing
-    # per ArmoniK release.
+    # which keeps core and gui in lockstep with the charts. The others release separately: review them
+    # on each ArmoniK release.
     versions:
       core: ""
       gui: ""
@@ -84,8 +84,8 @@ global:
       # renovate: datasource=github-releases depName=aneoconsulting/ArmoniK.Extensions.Java
       extJava: "0.1.4"
       activemq: ""
-    # -- Component each image repository belongs to. Registering one gives it a default tag; leaving it
-    # out makes the tag required, the safer default for a user-supplied image.
+    # -- Component of each image repository. A listed repository gets a default tag; any other needs
+    # an explicit tag, the safer default for a user-supplied image.
     imageComponents:
       dockerhubaneo/armonik_control: core
       dockerhubaneo/armonik_control_metrics: core
@@ -101,18 +101,19 @@ global:
       apache/activemq: activemq
     # Declared, not defaulted: null documents the key without joining the precedence chain. Each
     # resolves in charts/armonik/values.yaml, else in the helper named below.
-    # -- Root dir for conf mount Secrets in pods.
+    # -- Root dir of the conf mount Secrets in pods.
     # @default -- `/mounts`, from `armonik.conf.mountPath`
     mountPath:
-    # -- Release owning the conf Secrets a child reads, as `<source>-conf-<layer>`.
+    # -- Release owning the conf Secrets a child reads, named `<source>-conf-<layer>`.
     # @default -- `.Release.Name`, from `armonik.conf.source`
     source:
     # -- Release name of the control plane, for its URL. Only needed when it is its own release.
     # @default -- `.Release.Name`, from `armonik.controlPlane.source`
     controlPlane:
-  # Ours, outside `global.armonik`, which is all `import-values` lifts: a default here would reach no
-  # root chart, so each consumer resolves its own.
-  # -- Cluster DNS domain. Empty stops hostnames at `.svc`.
+  # Outside `global.armonik`, which is all `import-values` lifts: a default here would reach no root
+  # chart, so each consumer resolves its own.
+  # -- Cluster DNS domain. Empty stops service hostnames at `.svc`, except where a full name is needed
+  # (Certificate dnsNames, nginx upstreams), which falls back to `cluster.local`.
   # @default -- `cluster.local`, from `armonik.clusterDomain`
   clusterDomain:
   # -- Surfaced by the admin GUI. armonik-ingress reads both fields and defaults neither.

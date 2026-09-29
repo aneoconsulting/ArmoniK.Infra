@@ -7,7 +7,7 @@
 
 
 {{/*
-  Control-plane's metrics-exporter deployment's metrics-port container port.
+  Control-plane metrics-exporter's metrics-port container port.
 */}}
 {{- define "armonik.netpol.controlPlane.metricsExporterPort" -}}
   {{- list . (list "control-plane" "metricsExporter" "ports") "metrics-port" | include "armonik.netpol.controlPlane.port" -}}
@@ -62,7 +62,7 @@ ports:
 
 
 {{/*
-  Allows the control-plane submitter and init job as a source, on the given port.
+  Allows the control-plane submitter and init Job as a source, on the given port.
   Args (list): [root, port]
 */}}
 {{- define "armonik.netpol.rule.controlPlaneFrom" -}}
@@ -100,9 +100,8 @@ ports:
 
 
 {{/*
-  Allows the mongodb-exporter as a source, on the given port. Helm's dependency alias becomes
-  that subchart instance's own .Chart.Name, so its labels read "mongodb-exporter" (our alias),
-  not the chart's real name (prometheus-mongodb-exporter).
+  Allows the mongodb-exporter as a source, on the given port. Its name label is our alias
+  "mongodb-exporter" (the alias becomes the subchart's .Chart.Name), not prometheus-mongodb-exporter.
   Args (list): [root, port]
 */}}
 {{- define "armonik.netpol.rule.mongodbExporterFrom" -}}
@@ -116,9 +115,9 @@ ports:
 {{- end -}}
 
 {{/*
-  Generic egress rule to a dependency subchart: its namespace + podSelector (override or chart default) 
-  + port from portHelper.
-  Args (list): [root, dependency name, podSelector override, port helper name]
+  Egress to a dependency subchart: its namespace, the podSelector (override, else the chart's
+  default) and the port the helper returns in the subchart scope. Empty when the dependency is disabled.
+  Args (list): [root, dependency name, podSelector override or "", port helper name]
 */}}
 {{- define "armonik.netpol.rule.dependencyTo" -}}
 {{- $root := index . 0 -}}
@@ -171,7 +170,8 @@ ports:
 
 
 {{/*
-  Egress to Seq on the given port.
+  Egress to Seq on the given named port.
+  Args (list): [root, port]
 */}}
 {{- define "armonik.netpol.rule.seqTo" -}}
   {{- $root := index . 0 -}}
@@ -264,7 +264,8 @@ from:
 
 
 {{/*
-  Operator egress: to the MongoDB server. cert-manager is reached through the API server only.
+  Operator egress: to the MongoDB server. cert-manager needs no rule, the operator reaching it
+  through the API server only.
 */}}
 {{- define "armonik.netpol.rule.mongodbOperatorTo" -}}
 {{- $root := . -}}
@@ -282,7 +283,8 @@ ports:
 
 
 {{/*
-  Shared MongoDB operator<->server rule; direction ("from"/"to") passed as arg.
+  MongoDB server <-> operator peer rule.
+  Args (list): [root, direction ("from" or "to")]
 */}}
 {{- define "armonik.netpol.rule.mongodbServerOperator" -}}
 {{- $root := index . 0 -}}
@@ -316,7 +318,8 @@ ports:
 
 
 {{/*
-  Shared MongoDB server<->server rule.
+  MongoDB server <-> server peer rule, on the MongoDB port.
+  Args (list): [root, direction ("from" or "to")]
 */}}
 {{- define "armonik.netpol.rule.mongodbServerPeers" -}}
 {{- $root := index . 0 -}}
@@ -374,8 +377,8 @@ ports:
 
 
 {{/*
-  Submitter ingress: from compute-plane and nginx (grpc/http).
-  Prometheus scraping (/metrics) is handled separately, in control-plane's own chart-local policy.
+  Submitter ingress: from compute-plane and nginx (grpc/http). Prometheus scraping is
+  armonik-control-plane's own policy.
 */}}
 {{- define "armonik.netpol.rule.submitterIngress" -}}
   {{- $controlPort := include "armonik.netpol.controlPlane.controlPort" . | int -}}
@@ -388,8 +391,8 @@ ports:
 
 
 {{/*
-  Control-plane submitter + init job: same egress needs, init has no ingress of
-  its own, so they share one policy.
+  Control-plane submitter + init Job: one policy, since they share egress needs and init has no
+  ingress of its own.
 */}}
 {{- define "armonik.netpol.controlPlaneSubmitter" -}}
 podSelector:
@@ -407,9 +410,8 @@ egress:
 
 
 {{/*
-  Allows KEDA to scrape the control plane's metrics endpoint (needed for HPA scaling decisions).
-  KEDA's namespace is resolved via armonik.operators since KEDA can be deployed either in this
-  release or in a separate operators release.
+  Ingress from the KEDA operator to the metrics-exporter (default metrics-api scaling trigger).
+  Empty unless KEDA is available with a stated namespace (armonik.operators).
 */}}
 {{- define "armonik.netpol.rule.controlPlaneMetricsExporterIngress" -}}
 {{- $root := . -}}
@@ -572,8 +574,7 @@ egress:
 {{- with index $root.Subcharts.dependencies.Subcharts "mongodb-exporter" -}}
 podSelector:
   matchLabels:
-    {{/* Helm's dependency alias becomes this subchart instance's own .Chart.Name, so its labels
-         read "mongodb-exporter" (our alias), not the chart's real name. */}}
+    {{/* Alias-derived name label: see armonik.netpol.rule.mongodbExporterFrom. */}}
     app.kubernetes.io/name: mongodb-exporter
     app.kubernetes.io/instance: {{ $root.Release.Name | quote }}
 ingress:
@@ -611,8 +612,8 @@ ingress:
 
 
 {{/*
-  ActiveMQ server: ingress from control-plane/init + compute-plane (the activemq chart's own
-  NetworkPolicy no longer carries this ArmoniK-specific rule - see armonik.netpol.redisServer).
+  ActiveMQ server: ingress from control-plane/init + compute-plane. The activemq chart's own
+  NetworkPolicy only takes extra rules, so this ArmoniK-specific one lives here.
 */}}
 {{- define "armonik.netpol.activemqServer" -}}
 {{- $root := . -}}
@@ -633,10 +634,9 @@ ingress:
 
 
 {{/*
-  KEDA operator egress: to this release's control-plane metrics-exporter (target of the
-  default metrics-api ScaledObject). KEDA's chart already grants DNS + Kubernetes API by
-  default; this adds the ArmoniK-specific target without touching that third-party chart.
-  Namespace resolved via armonik.operators.
+  KEDA operator egress: to this release's metrics-exporter (default metrics-api trigger target).
+  KEDA's own chart grants DNS and the Kubernetes API; this adds the ArmoniK target, in KEDA's
+  namespace from armonik.operators.
 */}}
 {{- define "armonik.netpol.kedaMetricsEgress" -}}
 {{- $root := . -}}

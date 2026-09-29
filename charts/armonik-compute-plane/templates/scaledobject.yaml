@@ -3,7 +3,7 @@
 {{- range $partitionName, $config := include "armonik.compute.partitions" $ | fromYaml }}
 {{- $partition := dict -}}
 {{/* Partition render context: .Values minus partitions, plus partitionName. Full .Values so
-     partitionCommon can call helpers, like the monitoring resolver in its triggers. */}}
+     partition values can call helpers, like the monitoring resolver in the triggers. */}}
 {{- $context := omit $ "Values" -}}
 {{- $_ := omit $.Values "partitions" | set $context "Values" -}}
 {{- $_ := set $context.Values "partitionName" $partitionName -}}
@@ -30,21 +30,20 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name: {{ printf "%s-%s" (include "armonik.fullname" $) $partitionName | trunc 63 | trimSuffix "-" | quote }}
-    #envSourceContainerName: ".spec.template.spec.containers[0].name" # Optional. Default: .spec.template.spec.containers[0]
-  pollingInterval: {{ $partition.hpa.pollingInterval }}                               # Optional. Default: 30 seconds
-  cooldownPeriod: {{ $partition.hpa.cooldownPeriod }}                              # Optional. Default: 300 seconds
-  idleReplicaCount: {{ $partition.hpa.idleReplicaCount }}                               # Optional. Default: ignored, must be less than minReplicaCount
-  minReplicaCount: {{ $partition.hpa.minReplicaCount }}                                # Optional. Default: 0
-  maxReplicaCount: {{ $partition.hpa.maxReplicaCount }}                              # Optional. Default: 100
+  pollingInterval: {{ $partition.hpa.pollingInterval }}
+  cooldownPeriod: {{ $partition.hpa.cooldownPeriod }}
+  idleReplicaCount: {{ $partition.hpa.idleReplicaCount }}
+  minReplicaCount: {{ $partition.hpa.minReplicaCount }}
+  maxReplicaCount: {{ $partition.hpa.maxReplicaCount }}
   {{- with $partition.hpa.fallback }}
-  fallback:                                          # Optional. Section to specify fallback options
-    failureThreshold: {{ $partition.hpa.fallback.failureThreshold }}                              # Mandatory if fallback section is included
-    replicas: {{ $partition.hpa.fallback.replicas }}                                     # Mandatory if fallback section is included
+  fallback:
+    failureThreshold: {{ $partition.hpa.fallback.failureThreshold }}
+    replicas: {{ $partition.hpa.fallback.replicas }}
   {{- end }}
-  advanced: # Optional. Section to specify advanced options
-    restoreToOriginalReplicaCount: {{ $partition.hpa.behavior.restoreToOriginalReplicaCount }}        # Optional. Default: false
-    horizontalPodAutoscalerConfig: # Optional. Section to specify HPA related options
-      behavior: # Optional. Use to modify HPA's scaling behavior
+  advanced:
+    restoreToOriginalReplicaCount: {{ $partition.hpa.behavior.restoreToOriginalReplicaCount }}
+    horizontalPodAutoscalerConfig:
+      behavior:
         scaleDown:
           stabilizationWindowSeconds: {{ $partition.hpa.behavior.stabilizationWindowSeconds }}
           policies:

@@ -67,7 +67,9 @@ metadata:
     {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
+  {{- if not (kindIs "invalid" $partition.replicas) }}
   replicas: {{ $partition.replicas }}
+  {{- end }}
   selector:
     matchLabels:
       app.kubernetes.io/component: {{ printf "compute-plane-%s" $partitionName | quote }}

@@ -366,7 +366,9 @@ partitionCommon:
       #       serverAddress: '{{ include "armonik.monitoring.prometheusUrl" . }}'
       #       query: 'sum(armonik_{{ .Values.partitionName }}_tasks_queued{namespace="{{ .Release.Namespace }}"})'
       #       threshold: "2"
-  replicas: 1
+  # -- Fixed replica count, rendered only when set. Null leaves it to KEDA, so an upgrade never resets
+  # what it scaled; set it when KEDA is not available by overriding the value.
+  replicas: null
   # Shared by agent + worker (no credentials): log + compute layers.
   conf:
     envSecret:

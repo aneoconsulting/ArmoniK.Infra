@@ -1,0 +1,17 @@
+suite: agent and worker container resources
+templates:
+  - deployment.yaml
+values:
+  - ../ci/partitions-values.yaml
+release:
+  name: t
+tests:
+  - it: renders the partitionCommon resources on the agent and the worker
+    documentSelector:
+      path: metadata.name
+      value: "t-armonik-compute-plane-bench"
+    asserts:
+      - exists:
+          path: spec.template.spec.containers[?(@.name == "agent")].resources.limits
+      - exists:
+          path: spec.template.spec.containers[?(@.name == "worker")].resources.requests

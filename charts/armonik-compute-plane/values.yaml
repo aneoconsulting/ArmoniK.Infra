@@ -189,12 +189,13 @@ partitionCommon:
       timeoutSeconds: 1
       successThreshold: 1
       failureThreshold: 20
-    limits:
-      cpu: "1000m"
-      memory: "1024Mi"
-    requests:
-      cpu: "500m"
-      memory: "256Mi"
+    resources:
+      limits:
+        cpu: "1000m"
+        memory: "1024Mi"
+      requests:
+        cpu: "500m"
+        memory: "256Mi"
     securityContext:
       capabilities:
         drop:
@@ -276,12 +277,13 @@ partitionCommon:
     terminationMessagePath: "/dev/termination-log"
     terminationMessagePolicy: "File"
     imagePullPolicy: "IfNotPresent"
-    limits:
-      cpu: "1000m"
-      memory: "1024Mi"
-    requests:
-      cpu: "500m"
-      memory: "512Mi"
+    resources:
+      limits:
+        cpu: "1000m"
+        memory: "1024Mi"
+      requests:
+        cpu: "500m"
+        memory: "512Mi"
     # -- Worker container securityContext, same hardening as the agent's. The uid shared with the
     # agent is podSecurityContext's; runAsNonRoot fails a root image if runAsUser is nulled.
     securityContext:

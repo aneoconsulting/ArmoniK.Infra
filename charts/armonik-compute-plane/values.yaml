@@ -366,7 +366,7 @@ partitionCommon:
       #       serverAddress: '{{ include "armonik.monitoring.prometheusUrl" . }}'
       #       query: 'sum(armonik_{{ .Values.partitionName }}_tasks_queued{namespace="{{ .Release.Namespace }}"})'
       #       threshold: "2"
-  replicas: 1
+  replicas: null
   # Shared by agent + worker (no credentials): log + compute layers.
   conf:
     envSecret:

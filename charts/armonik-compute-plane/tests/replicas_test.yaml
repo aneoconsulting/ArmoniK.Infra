@@ -1,0 +1,26 @@
+suite: compute Deployment replicas
+templates:
+  - deployment.yaml
+values:
+  - ../ci/partitions-values.yaml
+release:
+  name: t
+tests:
+  - it: leaves the replica count to the autoscaler by default
+    documentSelector:
+      path: metadata.name
+      value: "t-armonik-compute-plane-bench"
+    asserts:
+      - notExists:
+          path: spec.replicas
+
+  - it: renders an explicit count, zero included
+    set:
+      partitions.bench.replicas: 0
+    documentSelector:
+      path: metadata.name
+      value: "t-armonik-compute-plane-bench"
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 0

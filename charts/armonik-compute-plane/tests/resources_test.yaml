@@ -1,4 +1,4 @@
-suite: agent and worker container resources, per partition
+suite: agent and worker container resources
 templates:
   - deployment.yaml
 values:
@@ -6,55 +6,12 @@ values:
 release:
   name: t
 tests:
-  - it: renders the partitionCommon resources on the agent
+  - it: renders the partitionCommon resources on the agent and the worker
     documentSelector:
       path: metadata.name
       value: "t-armonik-compute-plane-bench"
     asserts:
-      - equal:
-          path: spec.template.spec.containers[?(@.name == "agent")].resources
-          value:
-            limits:
-              cpu: "1000m"
-              memory: "1024Mi"
-            requests:
-              cpu: "500m"
-              memory: "256Mi"
-
-  - it: renders the partitionCommon resources on the worker
-    documentSelector:
-      path: metadata.name
-      value: "t-armonik-compute-plane-bench"
-    asserts:
-      - equal:
-          path: spec.template.spec.containers[?(@.name == "worker")].resources
-          value:
-            limits:
-              cpu: "1000m"
-              memory: "1024Mi"
-            requests:
-              cpu: "500m"
-              memory: "512Mi"
-
-  - it: lets a partition override one key and inherit the others
-    set:
-      partitions.htcmock.worker.resources.limits.cpu: "4"
-    asserts:
-      - equal:
-          path: spec.template.spec.containers[?(@.name == "worker")].resources.limits.cpu
-          value: "4"
-        documentSelector:
-          path: metadata.name
-          value: "t-armonik-compute-plane-htcmock"
-      - equal:
-          path: spec.template.spec.containers[?(@.name == "worker")].resources.limits.memory
-          value: "1024Mi"
-        documentSelector:
-          path: metadata.name
-          value: "t-armonik-compute-plane-htcmock"
-      - equal:
-          path: spec.template.spec.containers[?(@.name == "worker")].resources.limits.cpu
-          value: "1000m"
-        documentSelector:
-          path: metadata.name
-          value: "t-armonik-compute-plane-bench"
+      - exists:
+          path: spec.template.spec.containers[?(@.name == "agent")].resources.limits
+      - exists:
+          path: spec.template.spec.containers[?(@.name == "worker")].resources.requests

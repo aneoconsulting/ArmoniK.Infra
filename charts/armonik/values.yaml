@@ -339,7 +339,7 @@ dependencies:
       tls: true
     finalizers: []
 
-  ################## POSTGRESQL ##################
+  # == PostgreSQL ==
   # Exclusive with mongodb. Requires Core with the PostgreSQL spelling (ArmoniK.Core#1302).
   postgresql:
     enabled: false
@@ -826,7 +826,7 @@ dependencies:
     prefix: ""
     kmsKeyName: ""
 
-  ################## S3 ##################
+  # == S3 ==
   s3:
     enabled: false
     region: ""  # required when s3.enabled, unless endpointUrl
@@ -841,7 +841,7 @@ dependencies:
       storeName: ""
       storeKind: ""
 
-  ################## SQS ##################
+  # == SQS ==
   sqs:
     enabled: false
     region: ""  # required when sqs.enabled, unless serviceUrl

@@ -13,12 +13,7 @@ Components__AuthenticationStorage must be stated: Core defaults it to the MongoD
 {{- if list .Values "dependencies" "postgresql" "enabled" | include "armonik.utils.index" }}
 {{- $conn := include "armonik.postgresql.connection" . | fromYaml -}}
 {{- $credentials := $conn.credentials | default dict -}}
-{{- $ref := required "dependencies.postgresql.connection.credentials.secret is required when dependencies.postgresql.enabled" $credentials.secret | dict "secret" -}}
-{{- range $key := list "namespace" "storeName" "storeKind" -}}
-  {{- with index $credentials $key -}}
-    {{- $_ := set $ref $key . -}}
-  {{- end -}}
-{{- end -}}
+{{- $_ := required "dependencies.postgresql.connection.credentials.secret is required when dependencies.postgresql.enabled" $credentials.secret -}}
 {{- $ssl := true -}}
 {{- if kindIs "bool" $conn.ssl -}}
   {{- $ssl = $conn.ssl -}}
@@ -32,8 +27,8 @@ env:
   PostgreSQL__Ssl:                   {{ $ssl | quote }}
 envFromSecret:
   PostgreSQL__User:
-    {{- $credentials.usernameField | default "username" | set (deepCopy $ref) "field" | toYaml | nindent 4 }}
+    {{- $credentials.usernameField | default "username" | set (pick $credentials "secret" "namespace" "storeName" "storeKind") "field" | toYaml | nindent 4 }}
   PostgreSQL__Password:
-    {{- $credentials.passwordField | default "password" | set (deepCopy $ref) "field" | toYaml | nindent 4 }}
+    {{- $credentials.passwordField | default "password" | set (pick $credentials "secret" "namespace" "storeName" "storeKind") "field" | toYaml | nindent 4 }}
 {{- end }}
 {{- end -}}

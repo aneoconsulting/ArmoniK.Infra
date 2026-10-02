@@ -832,6 +832,14 @@ dependencies:
     region: ""  # required when s3.enabled, unless endpointUrl
     bucketName: ""  # required when s3.enabled
     endpointUrl: ""  # defaults to https://s3.<region>.amazonaws.com
+    forcePathStyle: false  # S3-compatible servers (MinIO, SeaweedFS) behind an in-cluster endpointUrl
+    credentials:
+      secret: ""  # static access key; empty uses the pod's AWS identity
+      usernameField: username
+      passwordField: password
+      namespace: ""
+      storeName: ""
+      storeKind: ""
 
   ################## SQS ##################
   sqs:

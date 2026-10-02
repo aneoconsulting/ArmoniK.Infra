@@ -125,6 +125,49 @@ tests:
       - equal:
           path: stringData.S3__BucketName
           value: my-bucket
+  - it: renders S3 static credentials and path-style for an S3-compatible server
+    values:
+      - ../ci/minimal-values.yaml
+    set:
+      global:
+        armonik:
+          operators:
+            externalSecrets:
+              available: true
+      dependencies:
+        s3:
+          enabled: true
+          endpointUrl: http://seaweedfs.storage.svc:8333
+          bucketName: my-bucket
+          forcePathStyle: true
+          credentials:
+            secret: seaweedfs-s3
+            usernameField: accessKey
+            passwordField: secretKey
+    documentSelector:
+      path: metadata.name
+      value: t-conf-core
+    asserts:
+      - equal:
+          path: spec.target.template.data.S3__EndpointUrl
+          value: http://seaweedfs.storage.svc:8333
+      - equal:
+          path: spec.target.template.data.S3__MustForcePathStyle
+          value: "true"
+      - contains:
+          path: spec.data
+          content:
+            secretKey: S3__Login
+            remoteRef:
+              key: seaweedfs-s3
+              property: accessKey
+      - contains:
+          path: spec.data
+          content:
+            secretKey: S3__Password
+            remoteRef:
+              key: seaweedfs-s3
+              property: secretKey
   - it: renders the SQS queue adapter env, endpoint derived from the region
     values:
       - ../ci/minimal-values.yaml

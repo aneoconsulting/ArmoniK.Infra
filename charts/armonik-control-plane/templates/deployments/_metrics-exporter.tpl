@@ -1,7 +1,7 @@
 {{/* Pod-template fragments: armonik.utils.patch parses what it patches, so each is a define.
-     Scheduling, sizing and securityContexts coalesce over the chart-level values; patches and extras do not. */}}
+     Scheduling, sizing, probes and securityContexts fall back to the chart-level values; patches and extras do not. */}}
 
-{{/* Metrics-exporter container; sizing and probes fall back to the chart-level values. */}}
+{{/* Metrics-exporter container, before metricsExporter.containerPatch. */}}
 {{- define "armonik.control.metrics.container" -}}
 {{- $v := .root.Values -}}
 {{- $me := $v.metricsExporter -}}
@@ -48,7 +48,7 @@ volumeMounts:
 {{- end -}}
 
 
-{{/* Metrics-exporter pod spec; scheduling falls back to the chart-level values. */}}
+{{/* Metrics-exporter pod spec, before metricsExporter.podSpecPatch. */}}
 {{- define "armonik.control.metrics.podSpec" -}}
 {{- $root := .root -}}
 {{- $v := $root.Values -}}

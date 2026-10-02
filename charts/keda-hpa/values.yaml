@@ -1,51 +1,49 @@
-# Default values for keda-hpa-activemq.
-# This is a YAML-formatted file.
-# Declare variables to be passed into your templates.
+# Nothing renders until triggers is set.
 
-# -- Suffix to add to the resource
+# -- Name of the ScaledObject.
 suffix: ""
 
-# -- Scale target reference
+# -- Workload to scale. It must be in the ScaledObject's namespace.
 scaleTargetRef:
-  # -- Kubernetes API version to be used
-  apiVersion: "apps/v1"                                       # Optional. Default: apps/v1
-  # -- Kid of the Kubernetes resource to be scaled
-  kind: "Deployment"                                          # Optional. Default: Deployment
-  # -- Name of the Kubernetes resource to be scaled
-  name: ""                                                    # Mandatory. Must be in the same namespace as the ScaledObject
-  # -- Name of the container to be scaled
-  envSourceContainerName: ".spec.template.spec.containers[0]"   # Optional. Default: .spec.template.spec.containers[0]
+  # -- API version of the workload.
+  apiVersion: "apps/v1"
+  # -- Kind of the workload.
+  kind: "Deployment"
+  # -- Name of the workload. Required.
+  name: ""
+  # -- Container whose environment KEDA reads for trigger parameters (KEDA default: the first one).
+  envSourceContainerName: ".spec.template.spec.containers[0]"
 
-# -- Polling interval in seconds
-pollingInterval: 30                                          # Optional. Default: 30 seconds
-# -- Cooldown period in seconds
-cooldownPeriod: 300                                         # Optional. Default: 300 seconds
-# -- Count of idle replicas
-idleReplicaCount: 0                                           # Optional. Default: ignored, must be less than minReplicaCount
-# -- Minimum count of replicas
-minReplicaCount: 1                                           # Optional. Default: 0
-# -- Maximum count of replicas
-maxReplicaCount: 100                                         # Optional. Default: 100
+# -- Polling interval in seconds.
+pollingInterval: 30
+# -- Cooldown period in seconds.
+cooldownPeriod: 300
+# -- Idle replica count, below minReplicaCount. Not rendered: commented out in the template.
+idleReplicaCount: 0
+# -- Minimum replica count.
+minReplicaCount: 1
+# -- Maximum replica count.
+maxReplicaCount: 100
 
-# -- Fallback options
-fallback:   # Optional. Section to specify fallback options
-  # -- Threshold of failures
-  failureThreshold: 3                                         # Mandatory if fallback section is included
-  # -- Number of replicas
-  replicas: 6                                                 # Mandatory if fallback section is included
+# -- Fallback options. Not rendered: commented out in the template.
+fallback:
+  # -- Failures before falling back.
+  failureThreshold: 3
+  # -- Replica count on fallback.
+  replicas: 6
 
-# -- Advanced options to manage the behavior of the HPA
-behavior:   # Optional. Section to specify advanced options
-  # -- Restore to the original replicas count
-  restoreToOriginalReplicaCount: false                        # Optional. Default: false
-  # -- Stabilization window in seconds
+# -- `advanced` options and the HPA scale-down behavior.
+behavior:
+  # -- Restore the workload's original replica count when the ScaledObject is deleted.
+  restoreToOriginalReplicaCount: false
+  # -- Scale-down stabilization window in seconds.
   stabilizationWindowSeconds: 300
-  # -- Type of the target
+  # -- Scale-down policy type: Percent or Pods.
   type: Percent
-  # -- Value of the target
+  # -- Scale-down policy value.
   value: 100
-  # -- Period in seconds
+  # -- Scale-down policy period in seconds.
   periodSeconds: 15
 
-# -- Triggers for HPA
+# -- KEDA triggers, rendered as-is.
 triggers: []

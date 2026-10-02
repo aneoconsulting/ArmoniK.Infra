@@ -1,21 +1,20 @@
 {{/*
-Expand the name of the chart.
+Chart name: nameOverride, else .Chart.Name (the alias under an umbrella).
 */}}
 {{- define "armonik.name" -}}
   {{-  .Values.nameOverride | default .Chart.Name | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
-Expand the namespace of the chart.
+Target namespace: namespaceOverride, else .Release.Namespace.
 */}}
 {{- define "armonik.namespace" -}}
   {{-  .Values.namespaceOverride | default .Release.Namespace }}
 {{- end }}
 
 {{/*
-Create a default fully qualified app name.
-We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
-If release name contains chart name it will be used as a full name.
+Fully qualified app name, truncated to 63 chars (DNS label): fullnameOverride, else
+<release>-<name>, collapsed to <release> when the release name already contains the name.
 */}}
 {{- define "armonik.fullname" -}}
   {{- if .Values.fullnameOverride }}
@@ -31,7 +30,7 @@ If release name contains chart name it will be used as a full name.
 {{- end }}
 
 {{/*
-Create chart name and version as used by the chart label.
+<chart>-<version> for the helm.sh/chart label.
 */}}
 {{- define "armonik.chart" -}}
   {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
@@ -50,7 +49,7 @@ name, else armonik.fullname. Required when create=false.
   {{- end }}
 {{- end }}
 
-{{/* Get PodDisruptionBudget API Version */}}
+{{/* PodDisruptionBudget apiVersion: policy/v1 when served, else policy/v1beta1. */}}
 {{- define "armonik.pdb.apiVersion" -}}
   {{- if and (.Capabilities.APIVersions.Has "policy/v1") (semverCompare ">= 1.21-0" .Capabilities.KubeVersion.Version) -}}
       {{- print "policy/v1" -}}
@@ -61,7 +60,7 @@ name, else armonik.fullname. Required when create=false.
 
 
 {{/*
-Common labels
+Common labels, plus .Values.commonLabels.
 */}}
 {{- define "armonik.labels" -}}
 helm.sh/chart: {{ include "armonik.chart" . }}
@@ -76,7 +75,7 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end }}
 
 {{/*
-Selector labels
+Selector labels: name and instance only, since selectors are immutable and changing them breaks upgrades.
 */}}
 {{- define "armonik.selectorLabels" -}}
 app.kubernetes.io/name: {{ include "armonik.name" . | quote }}
@@ -84,9 +83,9 @@ app.kubernetes.io/instance: {{ .Release.Name | quote }}
 {{- end }}
 
 {{/*
-Cluster DNS domain for callers needing a complete name (ingress Certificate dnsNames, nginx upstreams):
-tls.clusterDomain, clusterDomain, global.clusterDomain, then the Kubernetes default. Callers that can
-stop at ".svc" read global.clusterDomain and drop the suffix when it is empty.
+Cluster DNS domain for callers needing a complete name (Certificate dnsNames, nginx upstreams):
+tls.clusterDomain, clusterDomain, global.clusterDomain, then "cluster.local". Callers that can stop at
+".svc" read global.clusterDomain instead and drop the suffix when it is empty.
 */}}
 {{- define "armonik.clusterDomain" -}}
   {{- $tls := .Values.tls | default dict -}}
@@ -94,6 +93,9 @@ stop at ".svc" read global.clusterDomain and drop the suffix when it is empty.
   {{- coalesce $tls.clusterDomain .Values.clusterDomain $global "cluster.local" -}}
 {{- end -}}
 
+{{/*
+Port of the "control-port" entry in the umbrella's control-plane.service.ports, 0 when absent.
+*/}}
 {{- define "armonik.controlPlane.servicePort" -}}
 	{{- $ports := list .Values "control-plane" "service" "ports" | include "armonik.utils.index" | fromYamlArray -}}
 	{{- $port := 0 -}}
@@ -106,7 +108,9 @@ stop at ".svc" read global.clusterDomain and drop the suffix when it is empty.
 {{- end }}
 
 {{/*
-  Generic port lookup.
+containerPort of the entry named .name in .ports, empty when none matches.
+
+  {{ include "armonik.netpol.port" (dict "ports" $ports "name" "grpc") }}
 */}}
 {{- define "armonik.netpol.port" -}}
   {{- $ports := .ports | default list -}}

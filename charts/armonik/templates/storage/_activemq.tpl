@@ -1,15 +1,16 @@
 {{/*
-ActiveMQ's AMQP port.
+ActiveMQ's AMQP port. Takes the activemq subchart scope.
 */}}
 {{- define "armonik.activemq.port" -}}
   {{- .Values.containerPort.amqp -}}
 {{- end }}
 
 {{/*
-Gets the configuration from activemq forwarded to ArmoniK Core.
+Core env for the in-cluster ActiveMQ.
+TODO: the credentials are a hardcoded admin/admin; they need a real Secret.
 */}}
 {{- define "armonik.activemq.conf" -}}
-{{/* Live subchart scope via .Subcharts (armonik-dependencies is aliased "dependencies"); skipped when the dep is disabled. */}}
+{{/* Skipped when the dependency is disabled (.Subcharts holds enabled ones only). */}}
 {{- with .Subcharts.dependencies.Subcharts.activemq -}}
 {{- $namespace := include "armonik.namespace" . -}}
 env:

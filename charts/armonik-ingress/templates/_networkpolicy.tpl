@@ -1,5 +1,5 @@
 {{/*
-  Nginx -> GUI
+  Egress rule: nginx to the GUI pod, on its gui port.
 */}}
 {{- define "armonik.netpol.rule.guiTo" -}}
 {{- $guiPort := include "armonik.netpol.port" (dict
@@ -34,7 +34,8 @@ from:
 
 
 {{/*
-  External entrypoint into nginx
+  Ingress rule: any source to nginx on 8080/9080.
+  TODO: the TLS ports 8443/9443 (armonik.ingress.containerPort) are not admitted.
 */}}
 {{- define "armonik.netpol.rule.nginxExternal" -}}
 from: []
@@ -47,7 +48,7 @@ ports:
 
 
 {{/*
-  Egress rules for the NGINX front pod: DNS, GUI .
+  nginx egress rules: DNS and the GUI.
 */}}
 {{- define "armonik.netpol.nginxEgress" -}}
   {{- dict
@@ -59,9 +60,7 @@ ports:
 
 
 {{/*
-  Ingress rules for the NGINX front pod: external client -> nginx (8080/9080). Wrapped in a
-  single list directly (not mergeRules) since nginxExternal always renders - mergeRules' merge
-  and null-filtering machinery is only needed for multiple or conditionally-empty rules.
+  nginx ingress rules: the external rule alone, listed directly since it always renders.
 */}}
 {{- define "armonik.netpol.nginxIngress" -}}
   {{- list (include "armonik.netpol.rule.nginxExternal" . | fromYaml) | toYaml -}}
@@ -69,7 +68,7 @@ ports:
 
 
 {{/*
-  NGINX front NetworkPolicy configuration.
+  nginx NetworkPolicy config: the chart's rules plus networkPolicy.nginx.extra*Rules.
 */}}
 {{- define "armonik.netpol.ingressNginx" -}}
 podSelector:
@@ -91,6 +90,9 @@ egress:
 {{- end -}}
 
 
+{{/*
+  Health-check NetworkPolicy config, entirely from networkPolicy.healthCheck{PodSelector,Rules}.
+*/}}
 {{- define "armonik.netpol.ingressHealthCheck" -}}
 podSelector:
   {{- .Values.networkPolicy.healthCheckPodSelector | default dict | toYaml | nindent 2 }}
@@ -100,7 +102,7 @@ ingress:
 
 
 {{/*
-  GUI NetworkPolicy configuration.
+  GUI NetworkPolicy config: ingress from nginx, egress to DNS, plus networkPolicy.gui.extra*Rules.
 */}}
 {{- define "armonik.netpol.ingressGui" -}}
 podSelector:

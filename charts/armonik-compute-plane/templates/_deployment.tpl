@@ -1,8 +1,6 @@
 {{/*
-Pod-template fragments, split one per patchable object: armonik.utils.patch parses what it patches,
-and printed text cannot be patched.
-
-Each takes the partition context built in deployment.yaml:
+Pod-template fragments, one define per patchable object, since armonik.utils.patch parses what it
+patches. Each takes the partition context built in deployment.yaml:
   root, name, partition, agentConf, workerConf, agentImage, workerImage, fluentBit, fluentBitImage
 */}}
 
@@ -57,7 +55,7 @@ volumeMounts:
 {{- end -}}
 
 
-{{/* Worker (user code) container, before worker.containerPatch. Never gets the core conf layer. */}}
+{{/* Worker (user code) container, before worker.containerPatch. Never gets the core layer. */}}
 {{- define "armonik.compute.container.worker" -}}
 {{- $worker := .partition.worker -}}
 name: worker

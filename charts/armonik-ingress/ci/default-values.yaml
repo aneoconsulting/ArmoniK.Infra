@@ -1,8 +1,5 @@
-# Near-default render. The chart's own values ship no global.environment,
-# yet static."environment.json" tpl-renders global.environment.{name,description},
-# so plain defaults do not render (nil pointer; covered by the disabled
-# defaults test in tests/defaults_test.yaml). Drop this block once the chart
-# defaults those values.
+# Near-default render. urlsSecretName is the one value templates/validate.yaml requires.
+# global.environment.name has no chart default and would show empty in the GUI's environment.json.
 global:
   environment:
     name: ci

@@ -1,3 +1,8 @@
+{{/*
+Control-plane conf: auth flags, and Submitter__DefaultPartition set to defaultPartition when it is
+one of extraPartitions, else to an arbitrary one of them (keys is unordered), else empty.
+Authorization without authentication fails.
+*/}}
 {{- define "armonik.control.confHelper" }}
 {{- $defaultPartition := .Values.defaultPartition }}
 {{- $partitionNames := .Values.extraPartitions | default dict | keys | default list }}
@@ -17,6 +22,11 @@ env:
   InitServices__StopAfterInit: "false"
 {{- end }}
 
+{{/*
+Init conf: one-shot database, object storage and queue setup, then one indexed InitServices entry
+per partition of extraPartitions, role, user and user certificate. With createBuiltInRoles, the
+built-in roles join rbac.roles, which wins on a name collision.
+*/}}
 {{- define "armonik.control.init.confHelper" }}
 env:
   Submitter__DefaultPartition: ""
@@ -38,12 +48,12 @@ env:
   InitServices__Authentication__Roles__{{ $i }}: {{ include "armonik.control.rbac.role.format" (list $role $permissions) | quote }}
     {{- $i = add $i 1 }}
   {{- end }}
-  {{- $i = 0 }} {{/* Necessary ? */}}
+  {{- $i = 0 }} {{/* Each list is indexed from 0. */}}
   {{- range $user, $roles := .Values.rbac.users }}
   InitServices__Authentication__Users__{{ $i }}: {{ include "armonik.control.rbac.user.format" (list $user $roles) | quote }}
       {{- $i = add $i 1 }}
     {{- end }}
-  {{- $i = 0 }} {{/* Necessary ? */}}
+  {{- $i = 0 }} {{/* Each list is indexed from 0. */}}
   {{- range $user, $certData := .Values.rbac.userCertificates }}
     {{- $commonName := $certData.commonName }}
     {{- $fingerprint := $certData.fingerprint }}
@@ -52,6 +62,7 @@ env:
   {{- end }}
 {{- end }}
 
+{{/* Metrics-exporter conf: no default partition, no storage or queue setup. */}}
 {{- define "armonik.control.metrics.confHelper" }}
 env:
   Submitter__DefaultPartition: ""

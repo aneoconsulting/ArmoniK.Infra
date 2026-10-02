@@ -20,7 +20,7 @@ spec:
     {{- toYaml . | nindent 4 }}
   {{- end }}
   egress:
-    # Allow DNS resolution
+    # DNS resolution.
     - to:
         - namespaceSelector: 
             matchLabels:

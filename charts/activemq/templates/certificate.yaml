@@ -12,8 +12,8 @@
 {{- if $issuer.needsLocalIssuer }}
 {{- $extraAnnotations := "" }}
 {{- with .Values.additionalAnnotations }}{{- $extraAnnotations = toYaml . }}{{- end }}
-{{- /* CRD-ordering hook only when THIS release installs cert-manager; external/absent -> no hook.
-       Weight 0 keeps the Issuer ahead of the Certificate below, hooked at weight 10. */}}
+{{- /* Hooked only when this release installs cert-manager (CRD ordering). Its weight 0 keeps
+       the Issuer ahead of the Certificate below (weight 10). */}}
 {{- include "armonik.certManager.issuerManifest" (dict
       "root" $
       "name" $issuer.name
@@ -35,7 +35,7 @@ metadata:
   {{- if or $ops.certManager.deploy $certManager.annotations }}
   annotations:
     {{- if $ops.certManager.deploy }}
-    {{- /* Hooked only when this release installs the CRDs; otherwise a plain resource. */}}
+    {{- /* CRD-ordering hook, see the Issuer above. */}}
     "helm.sh/hook": post-install,post-upgrade
     "helm.sh/hook-weight": "10"
     {{- end }}

@@ -1,5 +1,6 @@
 {{- $init := .Values.init | default dict -}}
 {{- $deployment := .Values.deployment | default dict -}}
+{{- /* Without the init Job, the control plane runs the init itself and keeps running (StopAfterInit false). */}}
 {{- $conf := list
     (not $init.enabled | ternary (include "armonik.control.init.confHelper" .) "" | fromYaml)
     (include "armonik.control.confHelper" . | fromYaml)

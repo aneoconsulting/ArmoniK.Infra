@@ -3,9 +3,8 @@
 -}}
 
 {{/*
-  Freeform extra NetworkPolicy resources: each entry owns its own podSelector and rules,
-  independent from every dependency-wiring policy this chart renders elsewhere. See
-  networkPolicy.extraPolicies in values.yaml.
+  Freeform policies from networkPolicy.extraPolicies (values.yaml), each with its own podSelector
+  and rules, independent of this chart's other policies.
 */}}
 {{- if $networkPolicyEnabled }}
 {{- range $i, $policy := .Values.networkPolicy.extraPolicies }}

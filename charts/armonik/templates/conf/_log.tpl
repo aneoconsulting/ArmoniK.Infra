@@ -1,4 +1,4 @@
-{{/* "log" layer: Serilog levels from conf.log.minimumLevel (validated, fail-fast) + conf.log. */}}
+{{/* "log" layer: Serilog levels from conf.log.minimumLevel (validated) + conf.log. */}}
 {{- define "armonik.conf.logHelper" -}}
   {{- $level := (list .Values "conf" "log" | include "armonik.utils.index" | fromYaml).minimumLevel | default "Information" -}}
   {{- $validLevels := list "Verbose" "Debug" "Information" "Warning" "Error" "Fatal" -}}

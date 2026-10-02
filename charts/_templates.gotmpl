@@ -1,23 +1,21 @@
 {{- /*
-  Overrides of the helm-docs built-in templates. The file holds definitions only,
-  so helm-docs still appends its default README body, and a definition here wins
-  over the built-in one of the same name. Every construct trims its surrounding
-  whitespace: text left outside a definition would be prepended to that body.
+  Overrides of helm-docs built-in templates, same names. Definitions only, so
+  helm-docs still renders its default README body. Every construct trims its
+  whitespace: text outside a definition would be prepended to that body.
 */ -}}
 
 {{- /*
-  A pipe splits a markdown table row into further cells even inside a code span,
-  and helm-docs emits the Default and Description cells raw. Any value holding a
-  template pipeline, which most of the conf defaults do, would therefore render
-  half in the Default column and half in the Description one.
+  Escapes pipes for a table cell. A pipe splits a markdown row even inside a code
+  span, and helm-docs emits Default and Description raw, so a default holding a
+  template pipeline (most conf defaults) would spill into the next column.
 */ -}}
 {{- define "armonik.escapePipes" -}}
 {{ . | replace "|" "\\|" }}
 {{- end -}}
 
 {{- /*
-  Same as the built-in chart.valuesTable, the cells going through the escaping
-  above. Whitespace here mirrors the built-in one exactly, keep it that way.
+  The built-in chart.valuesTable with its cells escaped. Its whitespace mirrors
+  the built-in one exactly; keep it that way.
 */ -}}
 {{- define "chart.valuesTable" -}}
 {{ if .Sections.Sections }}{{ range .Sections.Sections }}

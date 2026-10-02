@@ -1,5 +1,5 @@
-{{- /* google-cas-issuer's approval RBAC, whose chart only takes literal subjects: bound here to
-       cert-manager's ServiceAccount as its own helpers name it. */ -}}
+{{- /* google-cas-issuer's approval RBAC. Its chart takes literal subjects only, so this binds
+       cert-manager's ServiceAccount as cert-manager's own helpers name it. */ -}}
 {{- $approval := .Values.googleCasIssuerApproval | default dict -}}
 {{- with index .Subcharts "google-cas-issuer" -}}
 {{- if $approval.enabled -}}

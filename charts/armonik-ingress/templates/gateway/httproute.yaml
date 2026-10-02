@@ -47,7 +47,7 @@ spec:
   {{- end }}
 
   {{- else }}
-  # Default HTTPRoute
+  # Default rules: gRPC by content-type to the grpc port, the rest to the http port
   - matches:
     - path:
         type: PathPrefix

@@ -1,53 +1,52 @@
 # Uninstalling
 
-`helm uninstall` does not fully undo `helm install` for these charts, and what it leaves behind
-depends on **who installed the operators** and on **whether the release is still there**. This
-document gives the procedure for each case.
+`helm uninstall` does not fully undo `helm install` for these charts. What it leaves behind depends
+on **who installed the operators** and **whether the release is still there**.
 
-Two upstream Helm behaviours cause all of it, and both are by design:
+Two upstream Helm behaviours, both by design, cause all of it:
 
-- **Helm never removes CRDs that ship in a chart's `crds/` directory.** "There is no support at this
-  time for upgrading or deleting CRDs using Helm"
+- **Helm never removes CRDs from a chart's `crds/` directory**
   ([Helm docs](https://helm.sh/docs/chart_best_practices/custom_resource_definitions/)).
-- **Resources created by a Helm hook are not part of the release.** "if you create resources in a
-  hook, you cannot rely upon `helm uninstall` to remove the resources"
+- **Hook resources are not part of the release**, so `helm uninstall` does not remove them
   ([Helm docs](https://helm.sh/docs/topics/charts_hooks/#hook-resources-are-not-managed-with-corresponding-releases)).
 
 ## Why the operator layout changes the procedure
 
-The ArmoniK charts annotate a custom resource as a `post-install,post-upgrade` hook **only when the
-same release installs that resource's operator** (`global.armonik.operators.<op>.deploy=true`). The
-hook exists because the CRD does not yet exist when the main manifest is applied, so the CR has to be
-applied in a later pass. The consequence at teardown time is that those CRs are invisible to
-`helm uninstall`.
+A custom resource is a `post-install,post-upgrade` hook **only when the same release installs its
+operator** (`global.armonik.operators.<op>.deploy=true`): its CRD does not exist yet when the main
+manifest is applied. Those CRs are then invisible to `helm uninstall`.
 
-| Emitter | Resource | Hook applied when |
-|---------|----------|-------------------|
-| `armonik-compute-plane/templates/scaledobject.yaml:15` | `ScaledObject` (one per partition) | `keda.deploy` |
-| `armonik/templates/secrets/conf-secrets.yaml:31` | `ExternalSecret` (one per conf layer) | `externalSecrets.deploy` |
-| `armonik/templates/secrets/conf-mounts.yaml:44` | `ExternalSecret` (mount aggregation) | `externalSecrets.deploy` |
-| `armonik/templates/secrets/secret-store.yaml:49` | `SecretStore` | `externalSecrets.deploy` |
-| `armonik-ingress/templates/certificate.yaml:13,30` | `Issuer` + `Certificate` | `certManager.deploy` |
-| `activemq/templates/certificate.yaml:22` | `Certificate` (the `Issuer` above it is **not** hooked) | `certManager.deploy` |
+| Emitter | Resource | Hooked when |
+|---------|----------|-------------|
+| `armonik-compute-plane/templates/scaledobject.yaml` | `ScaledObject` (one per partition) | `keda.deploy` |
+| `armonik/templates/secrets/conf-secrets.yaml` | `ExternalSecret` (one per conf layer) | `externalSecrets.deploy` |
+| `armonik/templates/secrets/conf-mounts.yaml` | `ExternalSecret` (mount aggregates) | `externalSecrets.deploy` |
+| `armonik/templates/secrets/mongodb-exporter-secret.yaml` | `ExternalSecret` (mongodb-exporter URI) | `externalSecrets.deploy` |
+| `armonik/templates/secrets/secret-store.yaml` | `SecretStore` | `externalSecrets.deploy` |
+| `armonik-ingress/templates/armonik-nginx-conf.yaml` | `ExternalSecret` (nginx conf, when rendered through ESO) | `externalSecrets.deploy` |
+| `armonik-ingress/templates/secrets/secret-store.yaml` | `SecretStore` | `externalSecrets.deploy` |
+| `armonik-ingress/templates/certificate.yaml`, `secrets/mtls-ca.yaml` | `Certificate` (server TLS, mTLS CA) | `certManager.deploy` |
+| `armonik/templates/certificate/{redis,mongodb}-certificate.yaml` | `Certificate` | `certManager.deploy` |
+| `activemq/templates/certificate.yaml` | `Certificate` | `certManager.deploy` |
+| `armonik.certManager.issuerManifest` (`armonik-common/templates/_certmanager.tpl`) | every `Issuer` the charts create, shared or local | `certManager.deploy` |
+| same helper, `provider: googleCas` | `GoogleCASIssuer` / `GoogleCASClusterIssuer` | `googleCasIssuer.deploy` |
 
-`PodMonitor`, `ServiceMonitor` and `PerconaServerMongoDB` are never hooked: kube-prometheus-stack and
-psmdb-operator ship their CRDs in an untemplated `crds/` directory, which Helm applies ahead of the
-templates, so no extra ordering pass is needed. They are ordinary release resources and
-`helm uninstall` deletes them normally.
+`PodMonitor`, `ServiceMonitor` and `PerconaServerMongoDB` are never hooked: kube-prometheus-stack
+and psmdb-operator ship their CRDs in an untemplated `crds/` directory, which Helm applies before
+the templates. `helm uninstall` deletes them normally.
 
-Second-order effect of the same mechanism: because hook resources are not in the release manifest,
-`helm upgrade` never prunes them either. A partition removed from `compute-plane.partitions` leaves
-its `ScaledObject` behind while the operators are release-managed. That is why the sweeps below select
-by label instead of trusting Helm to know what it owns.
+For the same reason `helm upgrade` never prunes hook resources: with release-managed operators, a
+partition removed from `compute-plane.partitions` leaves its `ScaledObject` behind. That is why the
+sweeps below select by label.
 
 ## Which case are you in
 
 | | Release still installed | Release already uninstalled |
 |---|---|---|
-| **Operators installed beforehand** (`deploy=false`, `available=true`) | [Case A](#case-a) : plain `helm uninstall`, nothing else | [Case C](#case-c) : nothing wedged, only check leftovers |
-| **Operators installed by this release** (`deploy=true`) | [Case B](#case-b) : drain the CRs first, then uninstall | [Case D](#case-d) : recover the wedged CRDs by hand |
+| **Operators installed beforehand** (`deploy=false`, `available=true`) | [Case A](#case-a): plain `helm uninstall` | [Case C](#case-c): nothing wedged, check leftovers |
+| **Operators installed by this release** (`deploy=true`) | [Case B](#case-b): drain the CRs, then uninstall | [Case D](#case-d): recover the wedged CRDs by hand |
 
-Set the variables used throughout:
+Variables used throughout:
 
 ```sh
 RELEASE=armonik
@@ -57,30 +56,29 @@ NS=default
 <a id="case-a"></a>
 ## Case A: operators pre-deployed, release still installed
 
-Nothing special. With `deploy=false` no CR carries a hook annotation, so every `ScaledObject`,
-`ExternalSecret`, `SecretStore`, `Certificate` and `Issuer` is a normal release resource. Helm deletes
-them, and the operators (alive in their own release) clear their finalizers as they go:
+No CR is hooked, so Helm deletes them all, and the operators (alive in their own release) clear the
+finalizers:
 
 ```sh
 helm uninstall "$RELEASE" -n "$NS"
 ```
 
-The operator CRDs belong to the `armonik-operators` release and are untouched, which is exactly what
-you want when other ArmoniK releases still run in the cluster. Then check the
-[non-CRD leftovers](#non-crd-leftovers), which no case avoids.
+The operator CRDs belong to the `armonik-operators` release and stay, as other ArmoniK releases may
+still use them. Then check the [non-CRD leftovers](#non-crd-leftovers).
 
-If you also want the operators gone, uninstall that release **last**, after every application release
-(see [Case B on ordering](#ordering-across-releases)).
+To remove the operators too, uninstall that release **last**, see
+[Ordering across releases](#ordering-across-releases).
 
 <a id="case-b"></a>
 ## Case B: operators managed by the same release, release still installed
 
-`helm uninstall` alone leaves every hooked CR from the table above orphaned in the namespace, then
-deletes the KEDA and External Secrets CRDs (those two charts render CRDs as templates). The apiserver
-cascade-deletes the orphans, and they wedge: `ScaledObject` holds `finalizer.keda.sh` and
-`ExternalSecret` holds `externalsecrets.external-secrets.io/externalsecret-cleanup`, and the
-controllers that would clear them died in the same uninstall. The CRDs then sit in `Terminating`
-forever. Avoid this by deleting the CRs **while the operators are still running**:
+A bare `helm uninstall` orphans every hooked CR, then deletes the templated CRDs, KEDA's and
+External Secrets' among them. The apiserver cascade-deletes the orphans, which wedge: `ScaledObject` holds
+`finalizer.keda.sh`, `ExternalSecret` holds
+`externalsecrets.external-secrets.io/externalsecret-cleanup`, and their controllers died in the same
+uninstall. The CRDs stay `Terminating` forever.
+
+Delete the CRs first, **while the operators still run**:
 
 ```sh
 for t in scaledobjects.keda.sh \
@@ -91,35 +89,33 @@ for t in scaledobjects.keda.sh \
 done
 ```
 
-`kubectl delete` waits for finalizers by default, so it returns only once the operators have actually
-finished. Deleting the `ExternalSecret`s also removes the conf Secrets they own
-(`target.creationPolicy: Owner`, `armonik/templates/secrets/conf-secrets.yaml:45`), and deleting the
-`Certificate`s removes the TLS Secrets they own.
+`kubectl delete` waits for finalizers, so it returns once the operators are done. Deleting the
+`ExternalSecret`s also deletes the Secrets they own (`target.creationPolicy: Owner`); deleting the
+`Certificate`s deletes their TLS Secrets.
 
-Then uninstall:
+Then:
 
 ```sh
 helm uninstall "$RELEASE" -n "$NS"
 ```
 
-Note that `helm upgrade --set global.armonik.operators.<op>.available=false` is **not** a valid drain
-step: the umbrella guard rejects `deploy=true` with `available=false`
-(`armonik/templates/operators-guard.yaml:9`). Setting both flags to false in one upgrade puts the CR
-deletions and the operator deletion in the same operation with no ordering guarantee between them, so
-it can wedge exactly like a bare uninstall. Delete the CRs with `kubectl` first.
+`helm upgrade --set global.armonik.operators.<op>.available=false` is **not** a drain step: the
+umbrella guard (`armonik/templates/operators-guard.yaml`) rejects `deploy=true` with
+`available=false`. Setting both to false in one upgrade deletes the CRs and the operator in the same
+operation, unordered, and can wedge like a bare uninstall. Use `kubectl` first.
 
 <a id="ordering-across-releases"></a>
 ### Ordering across releases
 
-CRDs are cluster-scoped and shared. Uninstalling a release that owns the KEDA or External Secrets
-CRDs cascade-deletes **every** `ScaledObject` and `ExternalSecret` in the cluster, including those of
-other ArmoniK releases. So: application releases first, `armonik-operators` last.
+CRDs are cluster-scoped. Uninstalling the release that owns the KEDA or External Secrets CRDs
+cascade-deletes **every** `ScaledObject` and `ExternalSecret` in the cluster, other ArmoniK
+releases' included. Uninstall the application releases first, `armonik-operators` last.
 
 <a id="case-c"></a>
 ## Case C: operators pre-deployed, release already uninstalled
 
-Nothing is wedged. The CRs were release-managed and were deleted while their operators were alive.
-Confirm, then handle the [non-CRD leftovers](#non-crd-leftovers):
+Nothing is wedged: the CRs were release resources, deleted while their operators ran. Confirm, then
+handle the [non-CRD leftovers](#non-crd-leftovers):
 
 ```sh
 kubectl get scaledobjects.keda.sh,externalsecrets.external-secrets.io,certificates.cert-manager.io \
@@ -129,7 +125,7 @@ kubectl get scaledobjects.keda.sh,externalsecrets.external-secrets.io,certificat
 <a id="case-d"></a>
 ## Case D: operators managed by the release, release already uninstalled
 
-Recovery from the wedge described in Case B.
+Recovery from the Case B wedge.
 
 1. Find the CRDs stuck in `Terminating`:
 
@@ -138,8 +134,8 @@ kubectl get crd -o json \
   | jq -r '.items[] | select(.metadata.deletionTimestamp != null) | .metadata.name'
 ```
 
-2. For each one, the blocker is the CRs that still exist under it. They are still readable and
-   patchable while the CRD terminates. Strip their finalizers:
+2. For each one, strip the finalizers of the CRs still under it (they stay readable and patchable
+   while the CRD terminates):
 
 ```sh
 CRD=scaledobjects.keda.sh   # repeat per stuck CRD
@@ -150,14 +146,13 @@ kubectl get "$CRD" -A -o json \
     done
 ```
 
-The apiserver's CRD cleanup controller then finishes the deletion and the CRD disappears on its own,
-usually within a second or two. Nothing else is needed.
+The apiserver then finishes deleting the CRD, usually within seconds.
 
-**Do not** remove the `customresourcecleanup.apiextensions.k8s.io` finalizer from the CRD itself. It
-is the apiserver's own bookkeeping; forcing it off drops the CRD while leaving orphaned custom
-resource data in etcd.
+**Do not** remove the `customresourcecleanup.apiextensions.k8s.io` finalizer from the CRD itself:
+it is the apiserver's own bookkeeping, and forcing it off leaves orphaned custom resource data in
+etcd.
 
-3. Delete the CRDs that survived the uninstall on purpose, if you want them gone
+3. Optionally delete the CRDs that survive an uninstall by design
    (see [what always survives](#what-always-survives)):
 
 ```sh
@@ -166,69 +161,67 @@ kubectl get crd -o name | grep -E '\.(keda\.sh|eventing\.keda\.sh|external-secre
 # kubectl delete crd <names>
 ```
 
-Deleting a CRD deletes every custom resource of that type cluster-wide. Check the list before
-running the delete, especially for `monitoring.coreos.com` (shared cluster monitoring) and
-`cert-manager.io` (certificates of unrelated workloads).
+Deleting a CRD deletes every resource of that type cluster-wide. Review the list first, especially
+`monitoring.coreos.com` (shared cluster monitoring) and `cert-manager.io` (other workloads'
+certificates).
 
 4. Finish with the [non-CRD leftovers](#non-crd-leftovers).
 
 <a id="what-always-survives"></a>
 ## What always survives an uninstall
 
-Per-operator CRD delivery, at the versions pinned in `armonik-operators/Chart.lock`:
+CRD delivery per operator chart, at the versions pinned in `armonik-operators/Chart.lock`:
 
 | Operator chart | CRD delivery | Removed by `helm uninstall`? |
 |----------------|--------------|------------------------------|
-| keda 2.20.1 | `templates/crds/`, gated by `crds.install` | yes |
-| external-secrets 2.8.0 | `templates/crds/`, gated by that chart's own `installCRDs` (unrelated to cert-manager's deprecated key of the same name) | yes |
-| cert-manager v1.21.x | `templates/crd-*.yaml`, gated by `crds.enabled` | yes, because `armonik-operators` sets `cert-manager.crds.keep: false`. With the upstream default (`crds.keep: true`) they are annotated `helm.sh/resource-policy: keep` and survive |
-| psmdb-operator 1.23.0 | `crds/crd.yaml`, untemplated | never |
-| kube-prometheus-stack 82.18.0 | `charts/crds/crds/*`, untemplated, gated by the `crds.enabled` subchart condition | never |
+| keda 2.21.0 | `templates/crds/`, gated by `crds.install` | yes |
+| external-secrets 2.11.0 | `templates/crds/`, gated by its own `installCRDs` (unrelated to cert-manager's deprecated key of the same name) | yes |
+| cert-manager v1.21.2 | `templates/crd-*.yaml`, gated by `crds.enabled` | yes, because `armonik-operators` sets `cert-manager.crds.keep: false`. With the upstream default (`true`) they carry `helm.sh/resource-policy: keep` and survive |
+| cert-manager-google-cas-issuer v0.13.0 (off by default) | `templates/crd-*.yaml`, gated by `crds.enabled` | yes, `armonik-operators` sets `google-cas-issuer.crds.keep: false` (upstream default `true`) |
+| psmdb-operator 1.23.1 | `crds/crd.yaml`, untemplated | never |
+| kube-prometheus-stack 91.5.1 | `charts/crds/crds/*`, untemplated, gated by the `crds.enabled` subchart condition | never |
 
-`templates/crds/` is an ordinary templates subdirectory, not the special untemplated `crds/`
-directory, which is why the first three rows behave like normal resources.
+`templates/crds/` is an ordinary templates subdirectory, not the special `crds/` directory, which is
+why the templated rows behave like normal resources.
 
-The cert-manager row is a deliberate deviation from that chart's default: an install-once operators
-release should undo itself. The cost is that uninstalling it deletes every `Certificate` and `Issuer`
-in the cluster, ArmoniK's or not, so on a shared cluster set `cert-manager.crds.keep=true` or leave
-cert-manager to another release (`global.armonik.operators.certManager.deploy=false`). Do not use the
-deprecated `installCRDs: true`, which is defined as `crds.enabled=true` plus `crds.keep=true`.
+The cert-manager row deliberately departs from upstream so the install-once operators release
+undoes itself. The cost: uninstalling it deletes every `Certificate` and `Issuer` in the cluster,
+ArmoniK's or not. On a shared cluster, set `cert-manager.crds.keep=true` or leave cert-manager to
+another release (`global.armonik.operators.certManager.deploy=false`). Do not use the deprecated
+`installCRDs: true`, defined as `crds.enabled=true` plus `crds.keep=true`.
 
 <a id="non-crd-leftovers"></a>
 ### Non-CRD leftovers
 
-These outlive every uninstall path, and reusing them silently changes behaviour on the next install.
+These outlive every uninstall path, and a reinstall silently reuses them.
 
 **PersistentVolumeClaims.** Helm does not manage StatefulSet `volumeClaimTemplates` PVCs, and the
-umbrella sets `mongodb.finalizers: []` (`armonik/values.yaml:252`), so psmdb keeps its volumes (no
-`percona.com/delete-psmdb-pvc`). A reinstall binds the old MongoDB data, which is why a submission can
-be accepted for a partition that no longer exists in the new release (the partition rows are still in
-the database):
+umbrella sets `dependencies.mongodb.finalizers: []` (no `percona.com/delete-psmdb-pvc`), so psmdb
+keeps its volumes. A reinstall binds the old MongoDB data, which is why a submission can be accepted
+for a partition the new release no longer has:
 
 ```sh
 kubectl get pvc -n "$NS"
 # kubectl delete pvc -n "$NS" -l app.kubernetes.io/instance=<mongodb-instance>
 ```
 
-**Operator-generated Secrets.** Created by the operators rather than by Helm, so no release owns them:
-`<cluster>-secrets`, `internal-<cluster>-users`, `<cluster>-mongodb-encryption-key` (psmdb),
-`cert-manager-webhook-ca`, `kedaorg-certs`, `prometheus-admission`. Keeping the psmdb ones together
-with the PVC is consistent; keeping one without the other gives a database whose credentials no longer
-match:
+**Operator-generated Secrets**, which no release owns: `<cluster>-secrets`,
+`internal-<cluster>-users`, `<cluster>-mongodb-encryption-key` (psmdb), `cert-manager-webhook-ca`,
+`kedaorg-certs`, `prometheus-admission`. Keep or delete the psmdb ones together with the PVCs; one
+without the other gives a database whose credentials no longer match:
 
 ```sh
 kubectl get secret -n "$NS" -o json \
   | jq -r '.items[] | select((.metadata.labels["app.kubernetes.io/managed-by"] // "") != "Helm") | .metadata.name'
 ```
 
-**Orphaned hook resources**, in Case B and D only: the conf Secrets owned by an orphaned
-`ExternalSecret`, and the TLS Secrets owned by an orphaned `Certificate`. Deleting the owning CR
-garbage-collects them.
+**Orphaned hook resources** (Cases B and D only): the Secrets owned by an orphaned `ExternalSecret`
+or `Certificate`. Deleting the owning CR garbage-collects them.
 
 ## Clean slate for a test loop
 
-Full teardown of one application release plus the operators, in the order that avoids every wedge.
-This destroys all ArmoniK data in the namespace.
+Full teardown of one application release plus the operators, in wedge-free order. This destroys all
+ArmoniK data in the namespace.
 
 ```sh
 RELEASE=armonik OPERATORS=armonik-operators NS=default
@@ -258,21 +251,21 @@ kubectl delete secret -n "$NS" \
   cert-manager-webhook-ca kedaorg-certs prometheus-admission --ignore-not-found
 ```
 
-Step 3 is cluster-wide. On a shared cluster, restrict it to the CRDs you actually own.
+Step 3 is cluster-wide. On a shared cluster, restrict it to the CRDs you own.
 
 ## Making uninstall symmetric
 
-If you install and uninstall repeatedly, these knobs reduce the manual cleanup. Paths are given as
-seen from the umbrella, where `armonik-operators` is aliased `operators`; drop the `operators.` prefix
-when installing `armonik-operators` directly.
+Knobs that reduce manual cleanup for repeated install/uninstall. Paths are from the umbrella, where
+`armonik-operators` is aliased `operators`; drop the `operators.` prefix when installing
+`armonik-operators` directly.
 
 | Knob | Effect |
 |------|--------|
-| `operators.cert-manager.crds.keep` | Already `false` in `armonik-operators/values.yaml`, so the six `cert-manager.io` CRDs go with the release and need no manual cleanup. Set it back to `true` on a shared cluster, where deleting them would take unrelated workloads' `Certificate`s with them. |
-| `operators.kube-prometheus.crds.enabled=false` | kube-prometheus-stack stops shipping the `monitoring.coreos.com` CRDs. Only useful when something else in the cluster already provides them, and it does not help teardown: CRDs already installed are still never removed by Helm. |
-| psmdb-operator | No knob. Its single `crds/crd.yaml` is always installed and never removed. |
-| `mongodb.finalizers: ["percona.com/delete-psmdb-pvc"]` (`armonik/values.yaml:252`) | psmdb deletes the database PVCs when the `PerconaServerMongoDB` CR goes away. Only for throwaway environments, and it needs the operator alive at deletion time, so it does not survive a bare uninstall in Case B. |
+| `operators.cert-manager.crds.keep` | Already `false` in `armonik-operators/values.yaml`: the six `cert-manager.io` CRDs go with the release. Set `true` on a shared cluster, where deleting them takes other workloads' `Certificate`s along. |
+| `operators.kube-prometheus.crds.enabled=false` | Stops shipping the `monitoring.coreos.com` CRDs. Only useful when something else provides them; it does not help teardown, since Helm never removes installed CRDs. |
+| psmdb-operator | No knob: its `crds/crd.yaml` is always installed and never removed. |
+| `dependencies.mongodb.finalizers: ["percona.com/delete-psmdb-pvc"]` | psmdb deletes the database PVCs with the `PerconaServerMongoDB` CR. Throwaway environments only. It needs the operator alive at deletion time, so a bare uninstall in Case B defeats it. |
 
-Nothing makes hooked CRs disappear with the release: a `helm.sh/hook-delete-policy` would delete them
-right after they are applied, which is not what a long-lived resource wants. Pre-installing the
-operators (Case A) is the configuration with a clean teardown.
+Nothing makes hooked CRs go away with the release: a `helm.sh/hook-delete-policy` would delete them
+right after they are applied. Pre-installing the operators (Case A) is the configuration with a
+clean teardown.

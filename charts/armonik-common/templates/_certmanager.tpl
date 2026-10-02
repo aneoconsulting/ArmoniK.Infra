@@ -1,6 +1,5 @@
 {{/*
-Resolves global.armonik.certManager.issuer into the issuerRef fields (name/kind/group) a Certificate uses.
-Usage: {{ include "armonik.certManager.issuer" . | fromYaml }}
+global.armonik.certManager.issuer resolved: enabled, plus the issuerRef name/kind/group.
 */}}
 {{- define "armonik.certManager.issuer" -}}
 {{- $issuer := list .Values "global" "armonik" "certManager" "issuer" | include "armonik.utils.index" | fromYaml -}}
@@ -11,22 +10,17 @@ group: {{ $issuer.group | default "cert-manager.io" | quote }}
 {{- end -}}
 
 {{/*
-Gets the Issuer a Certificate's issuerRef should point at, in order: a local existingIssuer
-override, else a local Issuer the caller creates itself when the caller says the consumer has its
-own provider configured (localRequested), else the shared global.armonik.certManager.issuer, else
-(nothing configured anywhere) a local Issuer the caller creates itself anyway, defaulting to
-provider selfSigned - kind/group for that local Issuer are derived from localProvider (default
-"selfSigned"), matching what armonik.certManager.issuerManifest actually creates for that
-provider: every native provider (selfSigned/ca/vault/acme/venafi) is a namespaced Issuer, googleCas
-a GoogleCASIssuer.
-localRequested lets one consumer opt out of an enabled global issuer and keep its own local Issuer
-instead, without needing a real pre-existing existingIssuer to point at - a release can then mix
-"most consumers share the global issuer" with "this one consumer keeps its own". Callers derive it
-from whether the consumer's own certManager.provider key is present at all (hasKey $certManager
-"provider"), not its resolved value - so provider explicitly set to "selfSigned" still counts as
-requested, only an absent key falls through to the global issuer. It has no effect unless the
-global issuer is actually enabled; existingIssuer still wins over both.
-Input: list $ <tls.certManager.existingIssuer, may be nil> <issuerName string> <localProvider string, may be empty> <localRequested, may be empty>
+issuerRef (name/kind/group) a Certificate points at, plus needsLocalIssuer when the caller must
+create that Issuer itself. In order:
+  1. existingIssuer, when enabled;
+  2. the shared global.armonik.certManager.issuer, when enabled and localRequested is not set;
+  3. a local Issuer named issuerName, whose kind/group follow localProvider (default "selfSigned")
+     as armonik.certManager.issuerManifest creates it: Issuer for a native provider, GoogleCASIssuer
+     for googleCas.
+localRequested lets one consumer keep its own local Issuer under an enabled global one, without a
+pre-existing existingIssuer. Callers set it from the presence of their certManager.provider key
+(hasKey), not its value, so an explicit "selfSigned" still opts out.
+Input: list $ <tls.certManager.existingIssuer, may be nil> <issuerName> <localProvider, may be empty> <localRequested, may be empty>
 Usage: {{ list $ $x $n $provider $localRequested | include "armonik.certManager.getIssuer" | fromYaml }}
 */}}
 {{- define "armonik.certManager.getIssuer" -}}
@@ -62,12 +56,10 @@ needsLocalIssuer: true
 {{- end -}}
 
 {{/*
-Renders and validates ONE Issuer-shaped manifest (a namespaced Issuer for every native provider, or
-a GoogleCASIssuer/GoogleCASClusterIssuer for provider=googleCas), from an already-resolved name/
-namespace/kind/group/provider/spec. Shared by certmanager-issuer.yaml (the umbrella's single shared
-issuer) and every consumer's own local fallback Issuer (redis/activemq/armonik-ingress/mongodb), so
-the googleCas kind/group hard validation and the per-provider spec-not-empty guard live in exactly
-one place instead of being reimplemented at each call site.
+Renders and validates one issuer manifest: a cert-manager one for a native provider, a
+GoogleCASIssuer/GoogleCASClusterIssuer for googleCas. Single home of the googleCas kind/group checks
+and the per-provider spec guard, shared by the umbrella's certmanager-issuer.yaml and every
+consumer's local fallback Issuer. Hooked (weight 0) when this release installs the matching operator.
 Input: dict
   root             $ of the caller, needed for armonik.operators
   name             metadata.name (already resolved)
@@ -77,7 +69,7 @@ Input: dict
   group            default "cert-manager.io"
   spec             dict, forwarded as-is into spec.<provider> (native) or spec (googleCas)
   labels           optional, pre-rendered labels block (e.g. include "armonik.labels" .)
-  extraAnnotations optional, pre-rendered annotations block merged alongside the hook annotation
+  extraAnnotations optional, pre-rendered annotations block, added next to the hook annotations
   specValuesPath   values path named in "<specValuesPath>.<provider> is required..." errors
   refValuesPath    values path named in "<refValuesPath>.kind/.group is invalid..." errors, default specValuesPath
 Usage: {{ include "armonik.certManager.issuerManifest" (dict "root" $ "name" $n "namespace" $ns
@@ -159,11 +151,9 @@ spec:
 {{- end -}}
 
 {{/*
-Renders the tail of a Certificate's spec that is identical everywhere one is emitted: usages (server
-auth + client auth - a leaf certificate used for both, never a CA), the privateKey block, duration/
-renewBefore passthrough, and issuerRef built from an already-fetched issuer (armonik.certManager.
-getIssuer's output, fromYaml'd). Callers keep metadata, labels, commonName, dnsNames and secretName
-local - those vary per component and are not this helper's concern.
+Common tail of a Certificate spec: usages (server and client auth, a leaf certificate, never a CA),
+privateKey, duration/renewBefore passthrough, and issuerRef. Callers keep the per-component fields
+(commonName, dnsNames, secretName).
 Input: dict "certManager" <the component's own certManager block, read for .duration/.renewBefore>
        "issuer" <armonik.certManager.getIssuer's output, fromYaml'd>
 Usage: under spec:, after the component-specific fields:

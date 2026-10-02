@@ -8,7 +8,7 @@
 
 
 {{/*
-  Control-plane submitter + init job connectivity NetworkPolicy
+  Control-plane submitter + init Job connectivity.
 */}}
 {{- $dependencyRules := include "armonik.netpol.dependencyRules" . | fromYaml -}}
 
@@ -22,8 +22,8 @@
 
 
 {{/*
-  Control-plane metrics-exporter NetworkPolicy: ingress from KEDA, egress to MongoDB. Ingress
-  from Prometheus is armonik-control-plane's own chart-local policy (see its config comment).
+  Control-plane metrics-exporter: ingress from KEDA, egress to MongoDB. Ingress from Prometheus is
+  armonik-control-plane's own policy (networkPolicy in its values.yaml).
 */}}
 {{- $mongodbRule := include "armonik.netpol.rule.mongodb" . | fromYaml -}}
 

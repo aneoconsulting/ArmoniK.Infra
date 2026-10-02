@@ -6,7 +6,7 @@
 {{- if and $storeName .Values.urlsSecretNamespace -}}
   {{- fail "urlsSecretStoreName excludes urlsSecretNamespace, which routes the Kubernetes provider only" -}}
 {{- end -}}
-{{- /* No namespace key: the fallback is this chart's own store, not a conf-store clone. */ -}}
+{{- /* No namespace key: without a storeName, sourceRef returns nothing and this chart's own SecretStore is used. */ -}}
 {{- $store := dict "storeName" $storeName "storeKind" (.Values.urlsSecretStoreKind | default "") "version" (.Values.urlsSecretVersion | default "") -}}
 {{- if $useEso }}
 apiVersion: external-secrets.io/v1

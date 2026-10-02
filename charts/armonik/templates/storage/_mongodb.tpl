@@ -1,45 +1,44 @@
 {{/*
-Replica-set hostname. The suffix mirrors the psmdb-db chart's clusterServiceDNSSuffix (it already
-carries the "svc." segment) to match what the operator provisions, so this one is deliberately driven
-by the mongodb chart rather than global.clusterDomain.
+Replica-set hostname. Takes the psmdb-db subchart scope, as do the armonik.mongodb.* helpers below
+except armonik.mongodb.conf, which takes the root. The suffix is psmdb-db's clusterServiceDNSSuffix
+(which includes "svc."), matching what the operator provisions, deliberately not global.clusterDomain.
 */}}
 {{- define "armonik.mongodb.host" -}}
   {{- include "psmdb-database.fullname" . }}-{{ list .Values "replsets" "rs0" "name" | include "armonik.utils.index" | default "rs0" }}.{{ include "psmdb-database.namespace" . }}.{{ .Values.clusterServiceDNSSuffix | default "svc.cluster.local" }}
 {{- end -}}
 
 {{/*
-Gets the database name from mongodb context.
+Database name.
 */}}
 {{- define "armonik.mongodb.database" -}}
   database
 {{- end -}}
 
 {{/*
-Gets the authentication source from mongodb context.
+Authentication database.
 */}}
 {{- define "armonik.mongodb.authSource" -}}
   admin
 {{- end -}}
 
 {{/*
-Returns whether MongoDB requires tls from mongodb context
+"enabled: <bool>": TLS is required unless unsafeFlags.tls is set.
 */}}
 {{- define "armonik.mongodb.requireTls" -}}
   enabled: {{ list .Values "unsafeFlags" "tls" | include "armonik.utils.index" | empty }}
 {{- end -}}
 
 {{/*
-Returns the Secret's name created by Percona's MongoDB Helm chart according
-to https://github.com/percona/percona-helm-charts/blob/main/charts/psmdb-db/templates/cluster-secret.yaml#L5
-since no such partial is defined in the chart helpers
+Name of the users Secret psmdb-db creates, which the chart exposes through no helper:
+https://github.com/percona/percona-helm-charts/blob/main/charts/psmdb-db/templates/cluster-secret.yaml#L5
 */}}
 {{- define "armonik.mongodb.secretName" }}
   {{- include "psmdb-database.fullname" . }}-secrets
 {{- end }}
 
 {{/*
-Returns the port of rs0 replica set, as indicated by the documentation, https://docs.percona.com/percona-operator-for-mongodb/custom-install.html?h=port#configure-ports-for-mongodb-cluster-components
-By default set to 27017.
+Port of the rs0 replica set, 27017 unless its configuration sets net.port:
+https://docs.percona.com/percona-operator-for-mongodb/custom-install.html?h=port#configure-ports-for-mongodb-cluster-components
 */}}
 {{- define "armonik.mongodb.port" }}
   {{- $config := list .Values "replsets" "rs0" "configuration" | include "armonik.utils.index" | fromYaml }}
@@ -47,23 +46,20 @@ By default set to 27017.
 {{- end }}
 
 {{/*
-Expand the namespace of the psmdb-db instance.
+Namespace of the psmdb-db instance.
 */}}
 {{- define "armonik.mongodb.namespace" -}}
   {{- include "psmdb-database.namespace" . -}}
 {{- end }}
 {{/*
-MongoDB configuration forwarded to ArmoniK Core, derived from the in-cluster Percona MongoDB (the
-psmdb-db dependency). Skipped when that dependency is disabled: to bring your own MongoDB, set
-dependencies.mongodb.enabled=false and supply the connection through the conf values directly
-(conf.core.env / conf.core.envFromSecret). The mongodb OPERATOR may be managed here or external
-(global.armonik.operators.mongodbOperator) - it does not affect this derivation, which reads the
-psmdb-db instance's own rendered values.
+Core conf for the in-cluster psmdb-db: env, credential references and, with TLS, the TLS Secret mount.
+To bring your own MongoDB, set dependencies.mongodb.enabled=false and supply the connection through
+conf.core.env / conf.core.envFromSecret. Where the operator runs does not matter here.
 */}}
 {{- define "armonik.mongodb.conf" -}}
 {{- $root := . -}}
 {{- $prefix := "mongodb-" -}}
-{{/* Live subchart scope via .Subcharts (armonik-dependencies is aliased "dependencies"); skipped when the dep is disabled. */}}
+{{/* Skipped when the dependency is disabled (.Subcharts holds enabled ones only). */}}
 {{- with .Subcharts.dependencies.Subcharts.mongodb -}}
 {{- $requireTls := (include "armonik.mongodb.requireTls" . | fromYaml).enabled -}}
 {{- $namespace := include "armonik.mongodb.namespace" . -}}
@@ -100,7 +96,7 @@ mountSecret:
 {{- end }}
 
 {{/*
-mongodb-exporter's namespace, from its subchart scope: the release one, the chart having no namespace key.
+mongodb-exporter's namespace: the release one, its chart having no namespace key. Takes its subchart scope.
 */}}
 {{- define "armonik.mongodbExporter.namespace" -}}
   {{- .Release.Namespace -}}

@@ -7,10 +7,9 @@ metadata:
     {{- include "armonik.labels" . | nindent 4 }}
 data:
   {{/*
-  Single-file override (mounted by subPath): pins the Jolokia (JMX-over-HTTP) access
-  policy served under the dashboard port's /api/jolokia/*, matching ActiveMQ 6.3.1's
-  own conf/jolokia-access.xml. Kept explicit here so it renders the same regardless
-  of what a future patch version of the image ships by default.
+  Mounted by subPath, see activemq.container. Jolokia access policy for the dashboard
+  port's /api/jolokia/*, copied from ActiveMQ 6.3.1's conf/jolokia-access.xml and pinned
+  so it does not follow the image.
   */}}
   jolokia-access.xml: |
     <restrict>

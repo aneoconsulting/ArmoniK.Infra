@@ -1,5 +1,6 @@
 {{/*
-Calculate port based on protocol and TLS status
+nginx container port for .protocol (http or grpc): 8443/9443 when nginx terminates TLS (tls.enabled
+without a gateway), else 8080/9080.
 */}}
 {{- define "armonik.ingress.containerPort" -}}
 {{- if eq .protocol "http" }}
@@ -17,10 +18,7 @@ Calculate port based on protocol and TLS status
 {{- end -}}
 {{- end -}}
 
-{{/*
-  Resolve the service port for the requested protocol.
-  For headless services, use the container port instead.
-*/}}
+{{/* ingress Service port for .protocol; the container port when the Service is headless. */}}
 {{- define "armonik.httpRoute.port" -}}
 {{- $protocol := .protocol -}}
 {{- $root := .root -}}
@@ -39,6 +37,7 @@ Calculate port based on protocol and TLS status
 {{- end }}
 {{- end }}
 
+{{/* Regex alternation of mtls.trustedCommonNames, dots escaped; empty unless mTLS is on. Takes .Values. */}}
 {{- define "armonik.ingress.mtlsCnPattern" -}}
   {{- $mtls := .mtls | default dict -}}
   {{- if $mtls.enabled -}}
@@ -52,6 +51,7 @@ Calculate port based on protocol and TLS status
   {{- end -}}
 {{- end -}}
 
+{{/* ingress Service type: ClusterIP behind an HTTPRoute, else service.type. */}}
 {{- define "armonik.ingress.serviceType" -}}
   {{- if .Values.httpRoute.enabled -}}
     ClusterIP

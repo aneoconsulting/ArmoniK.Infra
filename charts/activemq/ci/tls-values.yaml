@@ -1,5 +1,6 @@
-# cert-manager TLS: Certificate issued by an existing issuer, plus the
-# certificates.enable gate.
+# cert-manager TLS with an existing issuer.
+# FIXME: sets certificates.enable, which no template reads, instead of tls.enabled, so this fixture
+# renders no Certificate.
 certificates:
   enable: true
 tls:

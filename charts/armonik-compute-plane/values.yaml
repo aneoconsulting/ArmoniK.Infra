@@ -10,11 +10,11 @@ shareProcessNamespace: false
 restartPolicy: Always
 imagePullSecrets: []
 
-# global.armonik.* comes from armonik-common via import-values; its defaults suit a standalone plane
-# (external operators, KEDA trigger URL derived from conf.source).
+# global.armonik.* defaults come from armonik-common/values.yaml (import-values) and suit a standalone
+# plane: external operators, KEDA trigger URL derived from conf.source.
 global:
-  # Release name of the umbrella that owns the conf Secrets (defaults to "armonik").
   armonik:
+    # Release name of the umbrella that owns the conf Secrets.
     source: armonik
 
 serviceAccount:
@@ -28,23 +28,22 @@ serviceAccount:
 service: {}
 
 rbac:
-  # Specifies whether RBAC resources should be created
+  # Not read: this chart renders no RBAC resources.
   create: true
 
 podDisruptionBudget:
-  # https://kubernetes.io/docs/tasks/run-application/configure-pdb/
   enabled: false
   minAvailable:
   maxUnavailable:
 
 networkPolicy:
   enabled: false
-  # Pod selector matching Prometheus, for the built-in ingress rule below. Defaults to
+  # Pod selector matching Prometheus, for the built-in ingress rule. Defaults to
   # app.kubernetes.io/name: prometheus (kube-prometheus-stack's own label).
   prometheusPodSelector:
-  # Extra ingress rules on top of the built-in Prometheus rule. Rarely needed.
+  # Extra ingress rules on top of the built-in Prometheus rule.
   extraIngressRules: []
-  # DNS-only by default. Add your own rules below.
+  # Egress is DNS-only by default. Examples for the storage backends:
   # extraEgressRules:
   #   - to:
   #       - namespaceSelector:
@@ -78,8 +77,7 @@ networkPolicy:
   #         port: 6379
   extraEgressRules: []
 
-# KEDA is controlled cross-chart by global.armonik.operators.keda: one ScaledObject per partition when
-# it is available.
+# KEDA is gated by global.armonik.operators.keda: one ScaledObject per partition when available.
 
 # Base conf, merged into the init Job only (agent/worker build theirs from partitionCommon).
 conf:
@@ -139,7 +137,7 @@ init:
   # -- Merged over spec.template.spec, last. Lists the chart builds are refused: use extra*.
   # Pod labels are out of reach: the selector is immutable.
   podSpecPatch: {}
-  # Init Job: core + log + jobs layers + core TLS mounts.
+  # Init Job: core, log and init layers, env and mounts.
   conf:
     envSecret:
       - '{{ list "core" . | include "armonik.conf.secretName" }}'
@@ -209,7 +207,7 @@ partitionCommon:
     enableServiceLinks: true
     messageBatchSize: 1
     graceDelay: "00:00:15"
-    # On top of partitionCommon: core (credentials) + polling + core TLS mounts.
+    # On top of partitionCommon.conf: core (credentials) and polling layers, env and mounts.
     conf:
       envSecret:
         - '{{ list "core" . | include "armonik.conf.secretName" }}'
@@ -241,7 +239,7 @@ partitionCommon:
   # -- Merged over spec.template.spec, last. Lists the chart builds are refused: use extra*.
   # Pod labels are out of reach: the selector is immutable.
   podSpecPatch: {}
-  # Default worker, will be overridden per partition
+  # Worker defaults, overridden per partition.
   worker:
     name: "worker"
     # -- Worker image, as this object or a reference string. The repository has no default: each
@@ -298,7 +296,7 @@ partitionCommon:
         type: RuntimeDefault
     checkRetries: 10
     checkDelay: "00:00:10"
-    # On top of partitionCommon: worker layer only. Never core, so user code stays credential-free.
+    # On top of partitionCommon.conf: worker layer only. Never core, so user code stays credential-free.
     conf:
       envSecret:
         - '{{ list "worker" . | include "armonik.conf.secretName" }}'
@@ -312,43 +310,44 @@ partitionCommon:
     extraVolumeMounts: []
     # -- Merged over the worker container, last. Lists the chart builds are refused: use extra*.
     containerPatch: {}
+  # KEDA ScaledObject of each partition.
   hpa:
+    # Not read.
     type: "prometheus"
-    # -- Polling interval in seconds
-    pollingInterval: 15  # Optional. Default: 30 seconds
-    # -- Cooldown period in seconds
-    cooldownPeriod: 300  # Optional. Default: 300 seconds
-    # -- Count of idle replicas
-    idleReplicaCount: 0  # Optional. Default: ignored, must be less than minReplicaCount
-    # -- Minimum count of replicas
-    minReplicaCount: 1  # Optional. Default: 0
-    # -- Maximum count of replicas
-    maxReplicaCount: 5  # Optional. Default: 100
+    # -- ScaledObject pollingInterval, in seconds.
+    pollingInterval: 15
+    # -- ScaledObject cooldownPeriod, in seconds.
+    cooldownPeriod: 300
+    # -- Replicas while no trigger is active; must be less than minReplicaCount.
+    idleReplicaCount: 0
+    # -- Minimum replicas while a trigger is active.
+    minReplicaCount: 1
+    # -- Maximum replicas.
+    maxReplicaCount: 5
 
-    # -- Fallback options
-    # fallback: # Optional. Section to specify fallback options
-    #  # -- Threshold of failures
-    #  failureThreshold: 3 # Mandatory if fallback section is included
-    #  # -- Number of replicas
-    #  replicas: 6 # Mandatory if fallback section is included
+    # Optional fallback: replicas to hold after failureThreshold failed trigger reads. Both keys are
+    # required when the block is set.
+    # fallback:
+    #   failureThreshold: 3
+    #   replicas: 6
 
-    # -- Advanced options to manage the behavior of the HPA
+    # -- restoreToOriginalReplicaCount, and the HPA scale-down behavior (one policy).
     behavior:
-      # -- Restore to the original replicas count
-      restoreToOriginalReplicaCount: false  # Optional. Default: false
-      # -- Stabilization window in seconds
+      # -- Restore the Deployment's own replica count when the ScaledObject is deleted.
+      restoreToOriginalReplicaCount: false
+      # -- Scale-down stabilization window, in seconds.
       stabilizationWindowSeconds: 300
-      # -- Type of the target
+      # -- Scale-down policy type (Percent or Pods).
       type: Percent
-      # -- Value of the target
+      # -- Scale-down policy value.
       value: 100
-      # -- Period in seconds
+      # -- Scale-down policy period, in seconds.
       periodSeconds: 15
     triggers:
       # Default: KEDA scrapes the metrics-exporter directly, keeping Prometheus out of the scaling path.
       # url comes from global.armonik.monitoring.metricsExporterUrl; targetValue is queued tasks per
-      # replica. ASSUMES one always-present sample per armonik_<partition>_tasks_queued - metrics-api
-      # cannot aggregate and has no absent-as-zero, so labeled metrics would need the PromQL opt-in.
+      # replica. Assumes one always-present sample per armonik_<partition>_tasks_queued: metrics-api
+      # cannot aggregate and has no absent-as-zero, so labeled metrics need the PromQL opt-in.
       - type: metrics-api
         metadata:
           url: '{{ include "armonik.monitoring.metricsExporterUrl" . }}'
@@ -356,10 +355,9 @@ partitionCommon:
           valueLocation: 'armonik_{{ .Values.partitionName }}_tasks_queued'
           targetValue: "2"
           activationTargetValue: "0"
-      # --- PromQL opt-in (advanced) ---------------------------------------------------------------
-      # For rate/ratio/aggregation scaling, swap the trigger above for a prometheus one. Reintroduces the
-      # dependency on prometheusOperator.available, and needs the namespace filter to stay multi-release
-      # correct. Its URL never derives here, even under the umbrella: set
+      # PromQL opt-in, for rate, ratio or aggregation scaling: swap the trigger above for a prometheus
+      # one. Unlike the default, it depends on prometheusOperator.available, and needs the namespace filter to stay
+      # correct with several releases. Its URL never derives here, even under the umbrella: set
       # global.armonik.monitoring.prometheusUrl or a literal serverAddress.
       #   - type: prometheus
       #     metadata:
@@ -369,7 +367,7 @@ partitionCommon:
   # -- Fixed replica count, rendered only when set. Null leaves it to KEDA, so an upgrade never resets
   # what it scaled; set it when KEDA is not available by overriding the value.
   replicas: null
-  # Shared by agent + worker (no credentials): log + compute layers.
+  # Shared by agent and worker (no credentials): log and compute layers, env and mounts.
   conf:
     envSecret:
       - '{{ list "log" . | include "armonik.conf.secretName" }}'
@@ -377,11 +375,10 @@ partitionCommon:
     mountSecret:
       - secret: '{{ list "log" . | include "armonik.conf.mountSecretName" }}'
       - secret: '{{ list "compute" . | include "armonik.conf.mountSecretName" }}'
-# Partitions to deploy: each key is a partition name, its value overrides merged over `partitionCommon`.
-# At least one is REQUIRED (templates/partitions-guard.yaml), since a plane with none runs no workers.
-# Maps being unioned across values files, partitions accumulate rather than replace; `unwanted: null`
-# (or --set partitions.unwanted=null) drops an inherited one, while `{}` is a real partition inheriting
-# partitionCommon. Only relevant when layering values files: this chart ships no active default.
+# Partitions to deploy: each key is a partition name, its value merged over `partitionCommon`. At least
+# one is required (templates/partitions-guard.yaml). Maps union across values files, so partitions
+# accumulate: `unwanted: null` (or --set partitions.unwanted=null) drops an inherited one, while `{}`
+# is a real partition inheriting partitionCommon. This chart ships none.
 partitions:
 
 fluentBit:
@@ -389,14 +386,18 @@ fluentBit:
   image:
     registry:
     repository: fluent/fluent-bit
-    # Third party, so the tag is required. In step with the fluent-bit subchart used by the DaemonSet.
+    # Third party, so the tag is required. Keep it in step with the fluent-bit subchart (DaemonSet).
     tag: "5.1.2"
     pullPolicy: IfNotPresent
+  # FIXME: the sidecar reads fluentBit.configMapName instead, so this key is ignored.
   configMapRef: "fluent-bit-config"
 
+# The commented keys below are not read: placeholders for the shared file storage and volume options.
 # checkFileStorageType: "FS"
 # fileStorageType: "hostpath"
 
+# preStop command of the worker and fluent-bit containers, meant to wait for the agent socket to go.
+# FIXME: not valid sh (syntax error at "do"), so the hook fails at once and never waits.
 preStopWaitScript: "<<EOF while test -e /cache/armonik_agent.sock ; do   sleep 1 done EOF"
 # FS:
 #   name: "shared-volume"
@@ -404,7 +405,7 @@ preStopWaitScript: "<<EOF while test -e /cache/armonik_agent.sock ; do   sleep 1
 
 # hostPath:
 #   name: "shared-volume"
-#   path: "/home/mjadoui/ArmoniK/infrastructure/quick-de" # (abs(path) à voir dans .tf)
+#   path: "/data"
 
 # env:
 #   pollingAgentAggregation:

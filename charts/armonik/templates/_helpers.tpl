@@ -1,3 +1,4 @@
+{{/* Component -> enabled map, for NOTES.txt and the Grafana ConfigMaps. */}}
 {{- define "armonik.dependencies" }}
 controlPlane: {{ include "armonik.utils.index" (list .Values "control-plane" "enabled") | empty | not }}
 computePlane: {{ include "armonik.utils.index" (list .Values "compute-plane" "enabled") | empty | not }}

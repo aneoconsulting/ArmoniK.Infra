@@ -1,4 +1,4 @@
-{{- /* Guards that control-plane and compute-plane render into the same namespace as the release */ -}}
+{{- /* control-plane and compute-plane must render into the umbrella's namespace, where their conf Secrets live. */ -}}
 {{- $currentNamespace := include "armonik.namespace" $ -}}
 {{- range $alias := list "control-plane" "compute-plane" -}}
   {{- with index $.Subcharts $alias -}}

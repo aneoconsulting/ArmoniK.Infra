@@ -1,6 +1,4 @@
-# -------------------------------------------------------------------
-#  ENVIRONMENTS DEFINITION
-# -------------------------------------------------------------------
+# ==== Environments ====
 environments: 
   local:
     values:
@@ -14,9 +12,7 @@ environments:
     values:
       - values-gcp-bench.yaml
 ---
-# --------------------------------------------------------------------
-# DEFAULT HELM CONFIGURATION (OPTIONAL)
-# --------------------------------------------------------------------
+# ==== Helm defaults (optional) ====
 helmDefaults:
   cleanupOnFail: false
   verify: false
@@ -27,9 +23,7 @@ helmDefaults:
   createNamespace: true
 
 ---
-# --------------------------------------------------------------------
-# RELEASES CONFIGURATION
-# --------------------------------------------------------------------
+# ==== Releases ====
 releases:
   - name: armonik
     chart: "."

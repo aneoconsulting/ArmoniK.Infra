@@ -1,5 +1,5 @@
-# TLS via cert-manager (default issuer generation + wait job) with mTLS on
-# top: Certificate + Issuer + wait-job hook set, nginx conf CN allow-list.
+# TLS through cert-manager with the default local selfSigned Issuer, plus mTLS from an inline CA:
+# Issuer, Certificate, the mTLS CA Secret, and the nginx conf CN allow-list.
 global:
   environment:
     name: ci

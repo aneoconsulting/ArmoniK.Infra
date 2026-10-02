@@ -1,10 +1,9 @@
 {{- $ops := include "armonik.operators" $ | fromYaml }}
 {{- $mongo := .Values.dependencies.mongodb | default dict }}
-{{- /* dependencies.mongodb.tls passes straight into the PerconaServerMongoDB CR's spec.tls
-       (armonik-dependencies/charts/psmdb-db templates/cluster.yaml), whose CRD is a structural
-       schema: any key here beyond mode/allowInvalidCertificates/certManagementPolicy/
-       certValidityDuration/issuerConf makes server-side apply fail with "field not declared in
-       schema". ArmoniK's own trigger keys therefore live under the sibling dependencies.mongodb.certManager. */}}
+{{- /* dependencies.mongodb.tls passes verbatim into the PerconaServerMongoDB spec.tls (psmdb-db
+       templates/cluster.yaml), a structural schema: any key beyond mode/allowInvalidCertificates/
+       certManagementPolicy/certValidityDuration/issuerConf fails server-side apply with "field not
+       declared in schema". ArmoniK's own keys therefore live in dependencies.mongodb.certManager. */}}
 {{- $tls := $mongo.tls | default dict }}
 {{- $certManager := $mongo.certManager | default dict }}
 {{- if and $mongo.enabled $certManager.enabled }}
@@ -12,24 +11,18 @@
 {{- fail "dependencies.mongodb.certManager.enabled cannot be combined with dependencies.mongodb.tls.mode=disabled: cert-manager would issue Certificates the replica set never uses. Set tls.mode to allowTLS, preferTLS or requireTLS, or turn certManager.enabled off." }}
 {{- end }}
 {{- $domain := include "armonik.clusterDomain" . }}
-{{- /* Real CR name and namespace (charts/armonik-dependencies/charts/mongodb is psmdb-db, aliased
-       "mongodb"): the operator derives the replset Service/StatefulSet names from this CR's
-       metadata.name and creates them in the CR's own namespace, so reuse the chart's own helpers
-       through the live subchart scope rather than guessing "<release>-mongodb" or assuming the
-       umbrella's namespace. dependencies.mongodb.namespaceOverride and dependencies.mongodb.
-       {nameOverride,fullnameOverride} are real psmdb-db values independent of the umbrella's own
-       namespaceOverride/fullname, and diverge from them silently if read from the wrong scope (same
-       bug class as redis's hardcoded Service name). replsetName stays an ArmoniK-only convenience
-       defaulting to the chart's own default replset key "rs0"; it is not re-derived from
+{{- /* The operator names the replset Service/StatefulSet after the CR and creates them in the CR's
+       namespace, so take both from psmdb-db's (alias "mongodb") own helpers through the live subchart
+       scope: its nameOverride/fullnameOverride/namespaceOverride are independent of the umbrella's.
+       replsetName is an ArmoniK-only value defaulting to "rs0"; it is not derived from
        dependencies.mongodb.replsets.*.name, so a renamed replset needs it set explicitly. */}}
 {{- $cluster := include "psmdb-database.fullname" .Subcharts.dependencies.Subcharts.mongodb }}
 {{- $ns := include "psmdb-database.namespace" .Subcharts.dependencies.Subcharts.mongodb }}
 {{- $replset := $mongo.replsetName | default "rs0" }}
 {{- $svc := printf "%s-%s" $cluster $replset }}
 
-{{- /* Same three-tier fallback as activemq/armonik-ingress/redis, but resolved ONCE, here, before
-       the range below: both Certificates (ssl, ssl-internal) reference this single $issuer, so a
-       local-fallback Issuer created from it is one shared object, never one per Certificate. */}}
+{{- /* Resolved once, outside the range below: ssl and ssl-internal share this $issuer, so a local
+       fallback Issuer is one object, not one per Certificate. */}}
 {{- $issuerName := printf "%s-issuer" $cluster }}
 {{- $provider := $certManager.provider | default "selfSigned" }}
 {{- $localRequested := hasKey $certManager "provider" }}
@@ -41,19 +34,16 @@
 {{- fail "the cert-manager issuer has no name: set dependencies.mongodb.certManager.existingIssuer.name when existingIssuer.enabled=true, else global.armonik.certManager.issuer.name must not be empty." }}
 {{- end }}
 {{- if and (list $certManager "existingIssuer" "enabled" | include "armonik.utils.index" | empty) (not $issuer.needsLocalIssuer) }}
-{{- /* certManagerIssuer.provider is a chart value and checkable here; a local existingIssuer's
-       actual backend is an out-of-cluster fact `lookup` cannot see at render time (GitOps-first
-       rendering forbids it), so this guard cannot cover that path - pointing existingIssuer at a
-       selfSigned Issuer silently reintroduces the same no-common-CA problem this guard exists for. */}}
+{{- /* Only the shared issuer's provider is checkable at render time. The backend of a local
+       existingIssuer would need `lookup`, so pointing existingIssuer at a selfSigned Issuer
+       reintroduces the no-common-CA problem unnoticed. */}}
 {{- $cmi := .Values.certManagerIssuer | default dict }}
 {{- if eq ($cmi.provider | default "selfSigned") "selfSigned" }}
 {{- fail "dependencies.mongodb.certManager.enabled cannot use a selfSigned shared issuer: replica set members must chain to a common CA. Use certManagerIssuer.provider=ca, vault, acme, venafi or googleCas, or point dependencies.mongodb.certManager.existingIssuer at an issuer backed by a real CA." }}
 {{- end }}
 {{- end }}
-{{- /* Same reasoning, for the local fallback: cert-manager's selfSigned issuer type has no
-       persistent signing key, so ssl and ssl-internal would each get an independently self-signed
-       root even though both reference the SAME local Issuer - worse than the shared-issuer case
-       above, since even those two would not trust each other. */}}
+{{- /* Same for the local fallback: a selfSigned Issuer has no persistent signing key, so ssl and
+       ssl-internal would each get their own root, not trusting each other. */}}
 {{- if and $issuer.needsLocalIssuer (eq $provider "selfSigned") }}
 {{- fail "dependencies.mongodb.certManager.enabled cannot use a local selfSigned fallback issuer: replica set members must chain to a common CA, and cert-manager's selfSigned issuer type has no persistent signing key, so ssl and ssl-internal would each get an independently self-signed root that does not trust the other. Set dependencies.mongodb.certManager.provider to ca, vault, acme, venafi or googleCas, point dependencies.mongodb.certManager.existingIssuer at an issuer backed by a real CA, or set global.armonik.certManager.issuer.enabled=true with certManagerIssuer.provider set to a real CA." }}
 {{- end }}
@@ -88,8 +78,8 @@ metadata:
 spec:
   secretName: {{ $secret }}
   commonName: {{ $svc }}
-  # Headless service and every pod behind it. The wildcard covers rs0-0, rs0-1, ...
-  # Replica set members act as both server and client towards each other (usages below).
+  # The replset Service and, through the wildcard, each member (rs0-0, rs0-1, ...). Members are
+  # both server and client to each other (usages in armonik.certManager.certificateSpec).
   dnsNames:
   - {{ $svc }}
   - {{ $svc }}.{{ $ns }}

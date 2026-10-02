@@ -1,4 +1,4 @@
-{{/* "core" layer: storage env + credentials (mongodb/activemq/rabbitmq/redis), coreHelper, conf.core. */}}
+{{/* "core" layer: storage fragments (mongodb, activemq, rabbitmq, redis, gcs, pubsub) + coreHelper + conf.core. */}}
 {{- define "armonik.conf.coreHelper" -}}
 {{- end -}}
 {{- define "armonik.conf.core" -}}

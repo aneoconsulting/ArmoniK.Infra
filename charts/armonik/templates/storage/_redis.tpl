@@ -1,31 +1,32 @@
 {{/*
-Gets the hostname from redis context.
+valkey Service hostname. Takes the redis (valkey) subchart scope, as do the other helpers here except
+armonik.redis.conf, which takes the root.
 */}}
 {{- define "armonik.redis.host" -}}
   {{- include "valkey.fullname" . }}.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain -}}
 {{- end -}}
 
 {{/*
-Gets the port from redis context.
+valkey Service port.
 */}}
 {{- define "armonik.redis.port" -}}
   {{- .Values.service.port }}
 {{- end -}}
 
 {{/*
-Expand the namespace of the valkey instance.
+Namespace of the valkey instance: the release one, valkey having no namespace key.
 */}}
 {{- define "armonik.redis.namespace" -}}
   {{- .Release.Namespace -}}
 {{- end }}
 
 {{/*
-Gets the configuration from redis forwarded to ArmoniK Core.
+Core conf for the in-cluster valkey: env, password reference and, with TLS, the TLS Secret mount.
 */}}
 {{- define "armonik.redis.conf" -}}
 {{- $root := . -}}
 {{- $prefix := "redis-" -}}
-{{/* Live subchart scope via .Subcharts (armonik-dependencies is aliased "dependencies"); skipped when the dep is disabled. */}}
+{{/* Skipped when the dependency is disabled (.Subcharts holds enabled ones only). */}}
 {{- with .Subcharts.dependencies.Subcharts.redis -}}
 {{- $namespace := include "armonik.redis.namespace" . -}}
 env:

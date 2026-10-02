@@ -1,31 +1,32 @@
 {{/*
-Gets the hostname from rabbitmq context.
+RabbitMQ Service hostname. Takes the rabbitmq subchart scope, as do the other helpers here except
+armonik.rabbitmq.conf, which takes the root.
 */}}
 {{- define "armonik.rabbitmq.host" -}}
   {{- include "common.names.fullname" . }}.{{ include "common.names.namespace" . }}.svc.{{ .Values.clusterDomain }}
 {{- end -}}
 
 {{/*
-Gets the port from rabbitmq context.
+AMQP port, or the AMQPS one when TLS is enabled without the plain port.
 */}}
 {{- define "armonik.rabbitmq.port" -}}
   {{- or (.Values.service.portEnabled) (not .Values.auth.tls.enabled) | ternary .Values.service.ports.amqp .Values.service.ports.amqpTls -}}
 {{- end -}}
 
 {{/*
-Expand the namespace of the rabbitmq instance
+Namespace of the rabbitmq instance.
 */}}
 {{- define "armonik.rabbitmq.namespace" -}}
   {{- include "common.names.namespace" . -}}
 {{- end }}
 
 {{/*
-Gets the configuration from rabbitmq forwarded to ArmoniK Core.
+Core conf for the in-cluster RabbitMQ: env, password reference and, with TLS, the TLS Secret mount.
 */}}
 {{- define "armonik.rabbitmq.conf" -}}
 {{- $root := . -}}
 {{- $prefix := "rabbitmq-" -}}
-{{/* Live subchart scope via .Subcharts (armonik-dependencies is aliased "dependencies"); skipped when the dep is disabled. */}}
+{{/* Skipped when the dependency is disabled (.Subcharts holds enabled ones only). */}}
 {{- with .Subcharts.dependencies.Subcharts.rabbitmq -}}
 {{- $namespace := include "armonik.rabbitmq.namespace" . -}}
 env:

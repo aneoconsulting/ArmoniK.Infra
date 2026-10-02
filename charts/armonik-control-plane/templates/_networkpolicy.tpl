@@ -1,8 +1,7 @@
 {{/*
-  Ingress from Prometheus (the submitter's own /metrics), derived from
-  global.armonik.monitoring.prometheusUrl (see armonik.netpol.rule.prometheusIngress in
-  armonik-common). Ingress from nginx (grpc/http) needs .Subcharts visibility this chart doesn't
-  have, so it stays umbrella-only (armonik.netpol.controlPlaneSubmitter).
+  Prometheus ingress on the submitter metrics port. The source namespace resolves in
+  armonik.netpol.rule.prometheusIngress (armonik-common). Ingress from nginx needs .Subcharts, so it
+  is umbrella-only (armonik.netpol.controlPlaneSubmitter).
 */}}
 {{- define "armonik.netpol.submitter.prometheusIngress" -}}
   {{- $port := include "armonik.netpol.port" (dict "ports" .Values.ports "name" "metrics-port") | int -}}
@@ -11,7 +10,8 @@
 
 
 {{/*
-  Submitter (control-plane + init) NetworkPolicy configuration.
+  Submitter NetworkPolicy spec: Prometheus ingress, DNS egress, plus the extra*Rules. Its selector
+  matches every pod of the release, the metrics-exporter and init Job included.
 */}}
 {{- define "armonik.netpol.submitter" -}}
 podSelector:
@@ -31,10 +31,8 @@ egress:
 
 
 {{/*
-  Ingress from Prometheus, derived from global.armonik.monitoring.prometheusUrl (see
-  armonik.netpol.rule.prometheusIngress in armonik-common) - resolves the same whether installed
-  standalone or through the umbrella. KEDA's own ingress needs .Subcharts visibility this chart
-  doesn't have, so it stays umbrella-only (armonik.netpol.controlPlaneMetricsExporter).
+  Prometheus ingress on the metrics-exporter port, resolved as above. Ingress from KEDA needs
+  .Subcharts, so it is umbrella-only (armonik.netpol.controlPlaneMetricsExporter).
 */}}
 {{- define "armonik.netpol.metricsExporter.prometheusIngress" -}}
   {{- $port := include "armonik.netpol.port" (dict "ports" .Values.metricsExporter.ports "name" "metrics-port") | int -}}
@@ -42,9 +40,7 @@ egress:
 {{- end -}}
 
 
-{{/*
-  Metrics-exporter NetworkPolicy configuration.
-*/}}
+{{/* Metrics-exporter NetworkPolicy spec: Prometheus ingress, DNS egress, plus the extra*Rules. */}}
 {{- define "armonik.netpol.metricsExporter" -}}
 podSelector:
   matchLabels:

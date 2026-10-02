@@ -1,10 +1,7 @@
 {{/*
-Live partitions: .Values.partitions minus null entries, which are removals from a lower-precedence
-values file ({} stays, being a real partition inheriting partitionCommon). Single source for "which
-partitions deploy": the guard and the Deployment / ScaledObject / init ranges all range over this.
-
-# Usage
-{{- $partitions := include "armonik.compute.partitions" . | fromYaml }}
+Partitions that deploy, as YAML: .Values.partitions minus null entries, a null being a removal from a
+lower-precedence values file ({} is a real partition inheriting partitionCommon). The guard and every
+per-partition range read this, never .Values.partitions.
 */}}
 {{- define "armonik.compute.partitions" -}}
   {{- $live := dict -}}
@@ -16,7 +13,10 @@ partitions deploy": the guard and the Deployment / ScaledObject / init ranges al
   {{- $live | toYaml -}}
 {{- end -}}
 
-{{/* Get common conf for agent and worker */}}
+{{/*
+Channel conf shared by agent and worker: unix sockets under the /cache volume, or localhost ports
+with socketType tcp. Takes (list <name> <partition>), as do the two helpers below.
+*/}}
 {{- define "armonik.compute.confHelper" -}}
 {{- $partitionName := index . 0 -}}
 {{- $partition := index . 1 -}}
@@ -32,7 +32,7 @@ env:
 {{- end }}
 {{- end -}}
 
-{{/* Get conf for agent */}}
+{{/* Agent-only conf: partition id, message batch, grace delay and worker readiness checks. */}}
 {{- define "armonik.compute.agent.confHelper" -}}
 {{- $partitionName := index . 0 -}}
 {{- $partition := index . 1 -}}
@@ -45,14 +45,17 @@ env:
   Pollster__GraceDelay: {{ $partition.agent.graceDelay | quote }}
 {{- end -}}
 
-{{/* Get conf for worker */}}
+{{/* Worker-only conf: none, the hook keeping the worker builder parallel to the agent's. */}}
 {{- define "armonik.compute.worker.confHelper" -}}
 {{- $partitionName := index . 0 -}}
 {{- $partition := index . 1 -}}
 {{- end -}}
 
 
-{{/* ---- partition env var generation ---- */}}
+{{/*
+Init Job conf: one-shot database, object storage and queue setup, plus one
+InitServices__Partitioning entry per partition.
+*/}}
 {{- define "armonik.compute.init.confHelper" -}}
 env:
   Submitter__DefaultPartition: ""
@@ -68,18 +71,15 @@ env:
 {{- end -}}
 
 {{/*
-  Ingress from Prometheus (poll-agent metrics), derived from global.armonik.monitoring.prometheusUrl
-  (see armonik.netpol.rule.prometheusIngress in armonik-common) - resolves the same whether
-  installed standalone or through the umbrella.
+Prometheus ingress on the polling-agent metrics port. The source namespace resolves in
+armonik.netpol.rule.prometheusIngress (armonik-common).
 */}}
 {{- define "armonik.netpol.computePlane.prometheusIngress" -}}
   {{- list . (.Values.partitionCommon.agent.ports.containerPort | int) .Values.networkPolicy.prometheusPodSelector | include "armonik.netpol.rule.prometheusIngress" -}}
 {{- end -}}
 
 
-{{/*
-  Compute-plane NetworkPolicy configuration.
-*/}}
+{{/* Compute-plane NetworkPolicy spec: Prometheus ingress, DNS egress, plus the extra*Rules. */}}
 {{- define "armonik.netpol.computePlane" -}}
 podSelector:
   matchLabels:

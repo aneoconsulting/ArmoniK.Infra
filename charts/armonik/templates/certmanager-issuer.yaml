@@ -7,8 +7,8 @@
 {{- $name := required "global.armonik.certManager.issuer.name is required when certManagerIssuer.create=true" $issuer.name -}}
 {{- if and (eq $provider "googleCas") $ops.certManager.deploy -}}
 {{- /*
-  When certManagerIssuer.provider is "googleCas", the release deploying cert-manager must include
-  both Google CAS signer names in operators.cert-manager.approveSignerNames.
+  Checkable only when this release installs cert-manager: its approveSignerNames must list both
+  Google CAS signers (NOTES.txt shows the full list).
 */ -}}
 {{- $signerNames := list .Values "operators" "cert-manager" "approveSignerNames" | include "armonik.utils.index" | fromYamlArray -}}
 {{- if not (and (has "googlecasissuers.cas-issuer.jetstack.io/*" $signerNames) (has "googlecasclusterissuers.cas-issuer.jetstack.io/*" $signerNames)) -}}

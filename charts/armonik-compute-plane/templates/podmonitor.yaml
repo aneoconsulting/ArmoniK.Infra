@@ -1,6 +1,6 @@
 {{- $ops := include "armonik.operators" $ | fromYaml }}
 {{- if $ops.prometheusOperator.available }}
-{{/* Polling-agent metrics (1080) for every partition, when the prometheus-operator CRDs are present. */}}
+{{/* Polling-agent metrics (1080) of every partition. */}}
 apiVersion: monitoring.coreos.com/v1
 kind: PodMonitor
 metadata:
@@ -17,8 +17,8 @@ spec:
     matchLabels:
       app.kubernetes.io/part-of: compute-plane
       {{- include "armonik.selectorLabels" $ | nindent 6 }}
-  {{/* Carry the partition and release onto the scraped series so a shared cluster Prometheus keeps
-       per-partition / per-release metrics distinguishable (as armonik_fr_partition, app_kubernetes_io_instance). */}}
+  {{/* Partition and release labels on every series, so a shared cluster Prometheus keeps them apart
+       (armonik_fr_partition, app_kubernetes_io_instance, armonik_fr_deployment). */}}
   podTargetLabels:
     - armonik.fr/partition
     - app.kubernetes.io/instance
@@ -26,8 +26,7 @@ spec:
   podMetricsEndpoints:
     - port: poll-agent-port
       path: /metrics
-      {{/* Legacy job name for the bundled Grafana dashboards; per-partition/release stay distinct
-           via the armonik.fr/partition and instance podTargetLabels above. */}}
+      {{/* Fixed job name the bundled Grafana dashboards query; the podTargetLabels keep series apart. */}}
       relabelings:
         - targetLabel: job
           replacement: metrics-polling-agent

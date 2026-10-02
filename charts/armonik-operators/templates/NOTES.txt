@@ -1,6 +1,5 @@
-{{- /* Only the top-level chart's NOTES.txt is displayed (the umbrella needs --render-subchart-notes
-       to show this one), so this text can assume armonik-operators is its own release: the
-       install-once layer, deployed ahead of the ArmoniK application release(s). */}}
+{{- /* Shown only as a release root (the umbrella needs --render-subchart-notes), so the text
+       assumes the install-once layer, deployed ahead of the application release(s). */}}
 {{- $ops := include "armonik.operators" $ | fromYaml }}
 **********************************************************
  ArmoniK cluster operators  (chart {{ .Chart.Version }})

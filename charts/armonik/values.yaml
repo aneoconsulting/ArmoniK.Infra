@@ -339,6 +339,22 @@ dependencies:
       tls: true
     finalizers: []
 
+  ################## POSTGRESQL ##################
+  # Exclusive with mongodb. Requires Core with the PostgreSQL spelling (ArmoniK.Core#1302).
+  postgresql:
+    connection:
+      host: ""  # non-empty enables PostgreSQL
+      port: 5432
+      database: ""  # required with host
+      ssl: true
+      credentials:
+        secret: ""  # required with host
+        usernameField: username
+        passwordField: password
+        namespace: ""
+        storeName: ""
+        storeKind: ""
+
   # == mongodb-exporter (prometheus-mongodb-exporter) ==
   # existingSecret.{name,key} is the single source of truth for the Secret holding the exporter's
   # connection URI: templates/secrets/mongodb-exporter-secret.yaml renders an ExternalSecret under
@@ -808,6 +824,21 @@ dependencies:
     projectId: ""  # required when pubsub.enabled
     prefix: ""
     kmsKeyName: ""
+
+  ################## S3 ##################
+  s3:
+    enabled: false
+    region: ""  # required when s3.enabled, unless endpointUrl
+    bucketName: ""  # required when s3.enabled
+    endpointUrl: ""  # defaults to https://s3.<region>.amazonaws.com
+
+  ################## SQS ##################
+  sqs:
+    enabled: false
+    region: ""  # required when sqs.enabled, unless serviceUrl
+    serviceUrl: ""  # defaults to https://sqs.<region>.amazonaws.com
+    prefix: ""
+    kmsKeyId: ""
 
 
 # ==== Network policies ====

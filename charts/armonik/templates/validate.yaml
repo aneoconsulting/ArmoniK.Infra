@@ -16,3 +16,23 @@
     {{- fail `dependencies.grafana."grafana.ini".server.serve_from_sub_path must stay false: armonik-ingress strips the prefix before proxying, so Grafana keeps serving at "/".` -}}
   {{- end -}}
 {{- end -}}
+
+{{- /* One backend per Core storage slot: the fragment listed last in _core.tpl would silently win the
+       slot's Components__ keys while the other backend still deploys. */ -}}
+{{- $postgresqlHost := list .Values "dependencies" "postgresql" "connection" "host" | include "armonik.utils.index" -}}
+{{- $slots := dict
+      "table storage" (list "mongodb" "postgresql")
+      "object storage" (list "redis" "gcs" "s3")
+      "queue" (list "activemq" "rabbitmq" "pubsub" "sqs") -}}
+{{- range $slot, $deps := $slots -}}
+  {{- $on := list -}}
+  {{- range $dep := $deps -}}
+    {{- $enabled := list $.Values "dependencies" $dep "enabled" | include "armonik.utils.index" -}}
+    {{- if or $enabled (and (eq $dep "postgresql") $postgresqlHost) -}}
+      {{- $on = append $on $dep -}}
+    {{- end -}}
+  {{- end -}}
+  {{- if gt (len $on) 1 -}}
+    {{- printf "dependencies %s back the same %s slot: enable only one." (join ", " $on) $slot | fail -}}
+  {{- end -}}
+{{- end -}}

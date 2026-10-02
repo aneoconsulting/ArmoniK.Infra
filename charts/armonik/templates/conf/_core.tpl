@@ -1,14 +1,17 @@
-{{/* "core" layer: storage fragments (mongodb, activemq, rabbitmq, redis, gcs, pubsub) + coreHelper + conf.core. */}}
+{{/* "core" layer: storage env + credentials (mongodb/postgresql/activemq/rabbitmq/redis/gcs/s3/pubsub/sqs), coreHelper, conf.core. */}}
 {{- define "armonik.conf.coreHelper" -}}
 {{- end -}}
 {{- define "armonik.conf.core" -}}
   {{- list
         (include "armonik.mongodb.conf" . | fromYaml)
+        (include "armonik.postgresql.conf" . | fromYaml)
         (include "armonik.activemq.conf" . | fromYaml)
         (include "armonik.rabbitmq.conf" . | fromYaml)
         (include "armonik.redis.conf" . | fromYaml)
         (include "armonik.gcs.conf" . | fromYaml)
+        (include "armonik.s3.conf" . | fromYaml)
         (include "armonik.pubsub.conf" . | fromYaml)
+        (include "armonik.sqs.conf" . | fromYaml)
         (include "armonik.conf.coreHelper" . | fromYaml)
         (list .Values "conf" "core" | include "armonik.utils.index" | fromYaml)
       | include "armonik.conf.merge" -}}

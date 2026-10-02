@@ -1,4 +1,4 @@
-suite: grafana-behind-ingress guards
+suite: render-time guards
 templates:
   - validate.yaml
 release:
@@ -24,3 +24,23 @@ tests:
     asserts:
       - failedTemplate:
           errorPattern: "must stay false"
+  - it: fails when MongoDB and an external PostgreSQL are both set
+    set:
+      dependencies:
+        mongodb:
+          enabled: true
+        externalPostgresql:
+          enabled: true
+    asserts:
+      - failedTemplate:
+          errorPattern: "mongodb, externalPostgresql back the same table storage slot"
+  - it: fails when two queues are enabled
+    set:
+      dependencies:
+        activemq:
+          enabled: true
+        sqs:
+          enabled: true
+    asserts:
+      - failedTemplate:
+          errorPattern: "activemq, sqs back the same queue slot"

@@ -339,6 +339,23 @@ dependencies:
       tls: true
     finalizers: []
 
+  # == External PostgreSQL ==
+  # A server outside this release (RDS, Cloud SQL, on-prem). Exclusive with mongodb.
+  # Requires Core with the PostgreSQL spelling (ArmoniK.Core#1302).
+  externalPostgresql:
+    enabled: false
+    host: ""  # required when externalPostgresql.enabled
+    port: 5432
+    database: ""  # required when externalPostgresql.enabled
+    ssl: true
+    credentials:
+      secret: ""  # required when externalPostgresql.enabled
+      usernameField: username
+      passwordField: password
+      namespace: ""
+      storeName: ""
+      storeKind: ""
+
   # == mongodb-exporter (prometheus-mongodb-exporter) ==
   # existingSecret.{name,key} is the single source of truth for the Secret holding the exporter's
   # connection URI: templates/secrets/mongodb-exporter-secret.yaml renders an ExternalSecret under
@@ -808,6 +825,29 @@ dependencies:
     projectId: ""  # required when pubsub.enabled
     prefix: ""
     kmsKeyName: ""
+
+  # == S3 ==
+  s3:
+    enabled: false
+    region: ""  # required when s3.enabled, unless endpointUrl
+    bucketName: ""  # required when s3.enabled
+    endpointUrl: ""  # defaults to https://s3.<region>.amazonaws.com
+    forcePathStyle: false  # S3-compatible servers (MinIO, SeaweedFS) behind an in-cluster endpointUrl
+    credentials:
+      secret: ""  # static access key; empty uses the pod's AWS identity
+      usernameField: username
+      passwordField: password
+      namespace: ""
+      storeName: ""
+      storeKind: ""
+
+  # == SQS ==
+  sqs:
+    enabled: false
+    region: ""  # required when sqs.enabled, unless serviceUrl
+    serviceUrl: ""  # defaults to https://sqs.<region>.amazonaws.com
+    prefix: ""
+    kmsKeyId: ""
 
 
 # ==== Network policies ====

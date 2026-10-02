@@ -158,6 +158,7 @@ tests:
               available: true
       dependencies:
         postgresql:
+          enabled: true
           connection:
             host: pg.example
             database: armonik

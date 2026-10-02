@@ -6,14 +6,14 @@ Connection to the PostgreSQL server, from dependencies.postgresql.connection.
 {{- end -}}
 
 {{/*
-PostgreSQL configuration forwarded to ArmoniK Core, skipped without a host.
+PostgreSQL configuration forwarded to ArmoniK Core.
 Components__AuthenticationStorage must be stated: Core defaults it to the MongoDB table.
 */}}
 {{- define "armonik.postgresql.conf" -}}
+{{- if list .Values "dependencies" "postgresql" "enabled" | include "armonik.utils.index" }}
 {{- $conn := include "armonik.postgresql.connection" . | fromYaml -}}
-{{- if $conn.host }}
 {{- $credentials := $conn.credentials | default dict -}}
-{{- $ref := required "dependencies.postgresql.connection.credentials.secret is required with a host" $credentials.secret | dict "secret" -}}
+{{- $ref := required "dependencies.postgresql.connection.credentials.secret is required when dependencies.postgresql.enabled" $credentials.secret | dict "secret" -}}
 {{- range $key := list "namespace" "storeName" "storeKind" -}}
   {{- with index $credentials $key -}}
     {{- $_ := set $ref $key . -}}
@@ -26,9 +26,9 @@ Components__AuthenticationStorage must be stated: Core defaults it to the MongoD
 env:
   Components__TableStorage:          "ArmoniK.Adapters.PostgreSQL.TableStorage"
   Components__AuthenticationStorage: "ArmoniK.Adapters.PostgreSQL.AuthenticationTable"
-  PostgreSQL__Host:                  {{ $conn.host | quote }}
+  PostgreSQL__Host:                  {{ required "dependencies.postgresql.connection.host is required when dependencies.postgresql.enabled" $conn.host | quote }}
   PostgreSQL__Port:                  {{ $conn.port | default 5432 | toString | quote }}
-  PostgreSQL__DatabaseName:          {{ required "dependencies.postgresql.connection.database is required with a host" $conn.database | quote }}
+  PostgreSQL__DatabaseName:          {{ required "dependencies.postgresql.connection.database is required when dependencies.postgresql.enabled" $conn.database | quote }}
   PostgreSQL__Ssl:                   {{ $ssl | quote }}
 envFromSecret:
   PostgreSQL__User:

@@ -30,8 +30,7 @@ tests:
         mongodb:
           enabled: true
         postgresql:
-          connection:
-            host: pg.example
+          enabled: true
     asserts:
       - failedTemplate:
           errorPattern: "mongodb, postgresql back the same table storage slot"

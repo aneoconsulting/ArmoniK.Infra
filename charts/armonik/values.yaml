@@ -342,13 +342,14 @@ dependencies:
   ################## POSTGRESQL ##################
   # Exclusive with mongodb. Requires Core with the PostgreSQL spelling (ArmoniK.Core#1302).
   postgresql:
+    enabled: false
     connection:
-      host: ""  # non-empty enables PostgreSQL
+      host: ""  # required when postgresql.enabled
       port: 5432
-      database: ""  # required with host
+      database: ""  # required when postgresql.enabled
       ssl: true
       credentials:
-        secret: ""  # required with host
+        secret: ""  # required when postgresql.enabled
         usernameField: username
         passwordField: password
         namespace: ""

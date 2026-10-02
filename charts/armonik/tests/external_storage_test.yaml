@@ -190,7 +190,7 @@ tests:
       - equal:
           path: stringData.SQS__Prefix
           value: "armonik-"
-  - it: renders the PostgreSQL env with credentials from an existing store
+  - it: renders the external PostgreSQL env with credentials from an existing store
     values:
       - ../ci/minimal-values.yaml
     set:
@@ -200,15 +200,14 @@ tests:
             externalSecrets:
               available: true
       dependencies:
-        postgresql:
+        externalPostgresql:
           enabled: true
-          connection:
-            host: pg.example
-            database: armonik
-            credentials:
-              secret: rds-master
-              storeName: aws-secrets-manager
-              storeKind: ClusterSecretStore
+          host: pg.example
+          database: armonik
+          credentials:
+            secret: rds-master
+            storeName: aws-secrets-manager
+            storeKind: ClusterSecretStore
     documentSelector:
       path: metadata.name
       value: t-conf-core

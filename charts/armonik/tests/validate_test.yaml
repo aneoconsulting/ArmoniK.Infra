@@ -24,16 +24,16 @@ tests:
     asserts:
       - failedTemplate:
           errorPattern: "must stay false"
-  - it: fails when MongoDB and PostgreSQL are both set
+  - it: fails when MongoDB and an external PostgreSQL are both set
     set:
       dependencies:
         mongodb:
           enabled: true
-        postgresql:
+        externalPostgresql:
           enabled: true
     asserts:
       - failedTemplate:
-          errorPattern: "mongodb, postgresql back the same table storage slot"
+          errorPattern: "mongodb, externalPostgresql back the same table storage slot"
   - it: fails when two queues are enabled
     set:
       dependencies:

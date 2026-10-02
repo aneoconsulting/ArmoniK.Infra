@@ -1,10 +1,10 @@
-{{/* "core" layer: storage env + credentials (mongodb/postgresql/activemq/rabbitmq/redis/gcs/s3/pubsub/sqs), coreHelper, conf.core. */}}
+{{/* "core" layer: storage env + credentials (mongodb/externalPostgresql/activemq/rabbitmq/redis/gcs/s3/pubsub/sqs), coreHelper, conf.core. */}}
 {{- define "armonik.conf.coreHelper" -}}
 {{- end -}}
 {{- define "armonik.conf.core" -}}
   {{- list
         (include "armonik.mongodb.conf" . | fromYaml)
-        (include "armonik.postgresql.conf" . | fromYaml)
+        (include "armonik.externalPostgresql.conf" . | fromYaml)
         (include "armonik.activemq.conf" . | fromYaml)
         (include "armonik.rabbitmq.conf" . | fromYaml)
         (include "armonik.redis.conf" . | fromYaml)

@@ -20,7 +20,7 @@
 {{- /* One backend per Core storage slot: the fragment listed last in _core.tpl would silently win the
        slot's Components__ keys while the other backend still deploys. */ -}}
 {{- $slots := dict
-      "table storage" (list "mongodb" "postgresql")
+      "table storage" (list "mongodb" "externalPostgresql")
       "object storage" (list "redis" "gcs" "s3")
       "queue" (list "activemq" "rabbitmq" "pubsub" "sqs") -}}
 {{- range $slot, $deps := $slots -}}

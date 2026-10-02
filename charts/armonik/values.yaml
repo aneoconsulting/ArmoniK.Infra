@@ -339,22 +339,22 @@ dependencies:
       tls: true
     finalizers: []
 
-  # == PostgreSQL ==
-  # Exclusive with mongodb. Requires Core with the PostgreSQL spelling (ArmoniK.Core#1302).
-  postgresql:
+  # == External PostgreSQL ==
+  # A server outside this release (RDS, Cloud SQL, on-prem). Exclusive with mongodb.
+  # Requires Core with the PostgreSQL spelling (ArmoniK.Core#1302).
+  externalPostgresql:
     enabled: false
-    connection:
-      host: ""  # required when postgresql.enabled
-      port: 5432
-      database: ""  # required when postgresql.enabled
-      ssl: true
-      credentials:
-        secret: ""  # required when postgresql.enabled
-        usernameField: username
-        passwordField: password
-        namespace: ""
-        storeName: ""
-        storeKind: ""
+    host: ""  # required when externalPostgresql.enabled
+    port: 5432
+    database: ""  # required when externalPostgresql.enabled
+    ssl: true
+    credentials:
+      secret: ""  # required when externalPostgresql.enabled
+      usernameField: username
+      passwordField: password
+      namespace: ""
+      storeName: ""
+      storeKind: ""
 
   # == mongodb-exporter (prometheus-mongodb-exporter) ==
   # existingSecret.{name,key} is the single source of truth for the Secret holding the exporter's

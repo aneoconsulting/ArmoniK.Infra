@@ -112,13 +112,13 @@ map $ssl_client_s_dn $ssl_client_s_dn_cn {
 map "$http_x_certificate_client_cn|$ssl_client_s_dn_cn" $client_cn {
     default $ssl_client_s_dn_cn;
 {{- if $cnPattern }}
-    ~^(.+)|({{ $cnPattern }})$ $http_x_certificate_client_cn;
+    ~^(.+)\|({{ $cnPattern }})$ $http_x_certificate_client_cn;
 {{- end }}
 }
 map "$http_x_certificate_client_fingerprint|$ssl_client_s_dn_cn" $client_fingerprint {
     default $ssl_client_fingerprint;
 {{- if $cnPattern }}
-    ~^(.+)|({{ $cnPattern }})$ $http_x_certificate_client_fingerprint;
+    ~^(.+)\|({{ $cnPattern }})$ $http_x_certificate_client_fingerprint;
 {{- end }}
 }
 {{- end }}

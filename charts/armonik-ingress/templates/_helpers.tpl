@@ -37,14 +37,14 @@ without a gateway), else 8080/9080.
 {{- end }}
 {{- end }}
 
-{{/* Regex alternation of mtls.trustedCommonNames, dots escaped; empty unless mTLS is on. Takes .Values. */}}
+{{/* Regex alternation of mtls.trustedCommonNames, each quoted as a literal; empty unless mTLS is on. Takes .Values. */}}
 {{- define "armonik.ingress.mtlsCnPattern" -}}
   {{- $mtls := .mtls | default dict -}}
   {{- if $mtls.enabled -}}
     {{- if $mtls.trustedCommonNames -}}
       {{- $patterns := list -}}
       {{- range $mtls.trustedCommonNames -}}
-        {{- $patterns = append $patterns (. | replace "." "\\.") -}}
+        {{- $patterns = append $patterns (regexQuoteMeta .) -}}
       {{- end -}}
       {{- join "|" $patterns -}}
     {{- end -}}

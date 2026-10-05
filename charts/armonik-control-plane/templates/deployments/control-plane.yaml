@@ -30,7 +30,9 @@ metadata:
   {{- end }}
 spec:
   progressDeadlineSeconds: 600
+  {{- if list .Values "hpa" "enabled" | include "armonik.utils.index" | empty }}
   replicas: {{ .Values.replicas }}
+  {{- end }}
   revisionHistoryLimit: 10
   selector:
     matchLabels:

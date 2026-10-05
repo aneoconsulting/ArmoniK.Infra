@@ -300,39 +300,29 @@ partitionCommon:
     extraVolumeMounts: []
     # -- Merged over the worker container, last. Lists the chart builds are refused: use extra*.
     containerPatch: {}
-  # KEDA ScaledObject of each partition.
+  # -- KEDA ScaledObject of each partition, when operators.keda.available. `annotations` go on its
+  # metadata; the other keys are ScaledObject spec fields, passed through as written.
   hpa:
-    # Not read.
-    type: "prometheus"
-    # -- ScaledObject pollingInterval, in seconds.
+    enabled: true
+    annotations: {}
     pollingInterval: 15
-    # -- ScaledObject cooldownPeriod, in seconds.
     cooldownPeriod: 300
-    # -- Replicas while no trigger is active; must be less than minReplicaCount.
     idleReplicaCount: 0
-    # -- Minimum replicas while a trigger is active.
     minReplicaCount: 1
-    # -- Maximum replicas.
     maxReplicaCount: 5
-
-    # Optional fallback: replicas to hold after failureThreshold failed trigger reads. Both keys are
-    # required when the block is set.
     # fallback:
     #   failureThreshold: 3
     #   replicas: 6
-
-    # -- restoreToOriginalReplicaCount, and the HPA scale-down behavior (one policy).
-    behavior:
-      # -- Restore the Deployment's own replica count when the ScaledObject is deleted.
+    advanced:
       restoreToOriginalReplicaCount: false
-      # -- Scale-down stabilization window, in seconds.
-      stabilizationWindowSeconds: 300
-      # -- Scale-down policy type (Percent or Pods).
-      type: Percent
-      # -- Scale-down policy value.
-      value: 100
-      # -- Scale-down policy period, in seconds.
-      periodSeconds: 15
+      horizontalPodAutoscalerConfig:
+        behavior:
+          scaleDown:
+            stabilizationWindowSeconds: 300
+            policies:
+              - type: Percent
+                value: 100
+                periodSeconds: 15
     triggers:
       # Default: KEDA scrapes the metrics-exporter directly, keeping Prometheus out of the scaling path.
       # url comes from global.armonik.monitoring.metricsExporterUrl; targetValue is queued tasks per
@@ -354,8 +344,7 @@ partitionCommon:
       #       serverAddress: '{{ include "armonik.monitoring.prometheusUrl" . }}'
       #       query: 'sum(armonik_{{ .Values.partitionName }}_tasks_queued{namespace="{{ .Release.Namespace }}"})'
       #       threshold: "2"
-  # -- Fixed replica count, rendered only when set. Null leaves it to KEDA, so an upgrade never resets
-  # what it scaled; set it when KEDA is not available by overriding the value.
+  # -- Fixed replica count, rendered only when set. Ignored when the ScaledObject renders.
   replicas: null
   # Shared by agent and worker (no credentials): log and compute layers, env and mounts.
   conf:

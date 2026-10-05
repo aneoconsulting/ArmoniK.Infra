@@ -1,0 +1,9 @@
+{{- $hpa := .Values.hpa | default dict -}}
+{{- if $hpa.enabled -}}
+  {{- $ops := include "armonik.operators" . | fromYaml -}}
+  {{- if not $ops.keda.available -}}
+    {{- fail "hpa.enabled renders a KEDA ScaledObject: set global.armonik.operators.keda.available=true" -}}
+  {{- end -}}
+  {{- $labels := dict "app.kubernetes.io/component" "ingress" -}}
+{{ dict "root" $ "name" (include "armonik.fullname" .) "labels" $labels "hpa" $hpa | include "armonik.scaledObject" }}
+{{- end }}

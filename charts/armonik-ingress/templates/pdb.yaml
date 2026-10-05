@@ -1,0 +1,1 @@
+{{- dict "root" $ "component" "ingress" "values" .Values.podDisruptionBudget | include "armonik.pdb" }}

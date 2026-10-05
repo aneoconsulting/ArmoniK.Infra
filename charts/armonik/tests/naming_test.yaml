@@ -33,6 +33,24 @@ tests:
           path: data.seq
           value: aHR0cDovL3MucmVsLnN2Yy5jbHVzdGVyLmxvY2Fs # http://s.rel.svc.cluster.local
 
+  - it: URLs Secret dials the control-port container port behind the default headless control-plane Service
+    template: secrets/armonik-urls.yaml
+    asserts:
+      - equal:
+          path: data.control-plane
+          value: dC1jb250cm9sLXBsYW5lLnJlbC5zdmMuY2x1c3Rlci5sb2NhbDoxMDgw # t-control-plane.rel.svc.cluster.local:1080
+
+  - it: URLs Secret dials the Service port of a ClusterIP control-plane Service
+    template: secrets/armonik-urls.yaml
+    set:
+      control-plane:
+        service:
+          serviceType: ClusterIP
+    asserts:
+      - equal:
+          path: data.control-plane
+          value: dC1jb250cm9sLXBsYW5lLnJlbC5zdmMuY2x1c3Rlci5sb2NhbDo1MDAx # t-control-plane.rel.svc.cluster.local:5001
+
   - it: redis users Secret is the one valkey reads, and the one the core layer reads back
     set:
       dependencies:

@@ -94,14 +94,16 @@ tls.clusterDomain, clusterDomain, global.clusterDomain, then "cluster.local". Ca
 {{- end -}}
 
 {{/*
-Port of the "control-port" entry in the umbrella's control-plane.service.ports, 0 when absent.
+Port of the "control-port" entry in the umbrella's control-plane.service.ports, 0 when absent. A headless
+Service resolves to the pods and maps no port, so the entry's containerPort in control-plane.ports then.
 */}}
 {{- define "armonik.controlPlane.servicePort" -}}
-	{{- $ports := list .Values "control-plane" "service" "ports" | include "armonik.utils.index" | fromYamlArray -}}
+	{{- $headless := list .Values "control-plane" "service" "serviceType" | include "armonik.utils.index" | eq "HeadLess" -}}
+	{{- $ports := $headless | ternary (list .Values "control-plane" "ports") (list .Values "control-plane" "service" "ports") | include "armonik.utils.index" | fromYamlArray -}}
 	{{- $port := 0 -}}
 	{{- range $servicePort := $ports -}}
 		{{- if eq (get $servicePort "name") "control-port" -}}
-			{{- $port = int (get $servicePort "port") -}}
+			{{- $port = get $servicePort ($headless | ternary "containerPort" "port") | int -}}
 		{{- end -}}
 	{{- end -}}
 	{{- $port -}}

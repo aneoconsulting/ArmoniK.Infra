@@ -17,7 +17,9 @@ metadata:
     {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
+  {{- if list .Values "hpa" "enabled" | include "armonik.utils.index" | empty }}
   replicas: {{ .Values.replicas }}
+  {{- end }}
   selector:
     matchLabels:
       app.kubernetes.io/component: ingress

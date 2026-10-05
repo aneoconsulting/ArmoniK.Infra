@@ -38,7 +38,7 @@ Day-to-day, from `charts/`:
 helm lint <chart-dir>                     # e.g. helm lint armonik-compute-plane
 helm template <chart-dir> >/dev/null      # render with defaults; do this for EVERY chart you touch
 helm template armonik                     # render the full umbrella
-helm template armonik-compute-plane --set podDisruptionBudget.enabled=true   # exercise non-default paths too
+helm template armonik-compute-plane -f armonik-compute-plane/ci/partitions-values.yaml --set networkPolicy.enabled=true   # exercise non-default paths too
 ```
 
 From the repo root:
@@ -70,7 +70,7 @@ charts/armonik (umbrella)
  |- armonik-common          (library: helpers, merge engine, conf schema and emitters, operator/monitoring resolvers)
  |- armonik-operators       (alias operators: install-once cluster operators, see below)
  |- armonik-control-plane   (alias control-plane: deployment + service, metrics-exporter, init Job, auth builtin roles)
- |- armonik-compute-plane   (alias compute-plane: one deployment + KEDA ScaledObject per partition, init Job, PDB)
+ |- armonik-compute-plane   (alias compute-plane: one deployment + KEDA ScaledObject per partition, init Job)
  |- armonik-ingress         (alias ingress: nginx gRPC/HTTP entry, admin GUI, grafana/seq routes, certificates)
  |- armonik-dependencies    (alias dependencies: activemq [custom local chart], valkey, psmdb-db,
                              rabbitmq, grafana, fluent-bit, seq)
@@ -155,7 +155,6 @@ There is no materialized twin and no configuration subchart: both files range th
 
 Current state, not a wish list: check before assuming a path works, and prune an entry when you fix it.
 
-- **Broken render paths** (each keeps a disabled test naming it): compute-plane `podDisruptionBudget.enabled=true` calls the undefined `armonik.compute.pdb.apiVersion` (the library defines `armonik.pdb.apiVersion`).
 - **Unix socket mode** is forced to tcp by an undiagnosed `#TODO: things break without this` in `partitionCommon.socketType`, and the worker preStop drain waits on a socket path that tcp never creates. Terraform's default is `unixdomainsocket`, and restoring it is required parity. Likely a socket-path-versus-mount-path mismatch: Terraform mounts the comm volume at `/cache/shared`, the chart at `/cache`.
 - **Fluent-bit sidecar** exists only in the compute plane, where it reads `fluentBit.configMapName` while the values ship `configMapRef`. Control-plane and init pods have no sidecar path at all. Prefer native sidecars (initContainer with `restartPolicy: Always`) so init Jobs still complete, which means raising `kubeVersion` from `>=1.25` to `>=1.29`.
 - **Missing versus Terraform and in target**: pod-deletion-cost controller, control-plane cpu/memory autoscaling (and the metrics-server it needs), data retention (MongoDB DataRetention, Redis TTL, Seq retention), mongodb-exporter, auth client certificate generation and fingerprint-to-user wiring, the every-minute self-healing init CronJob, and the comm/cache/FS volume options (today a single plain emptyDir at `/cache`).

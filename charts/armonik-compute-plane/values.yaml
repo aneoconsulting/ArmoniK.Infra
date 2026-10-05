@@ -31,11 +31,6 @@ rbac:
   # Not read: this chart renders no RBAC resources.
   create: true
 
-podDisruptionBudget:
-  enabled: false
-  minAvailable:
-  maxUnavailable:
-
 networkPolicy:
   enabled: false
   # Pod selector matching Prometheus, for the built-in ingress rule. Defaults to

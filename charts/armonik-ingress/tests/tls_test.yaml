@@ -59,6 +59,30 @@ tests:
       - matchRegex:
           path: spec.target.template.data["armonik.conf"]
           pattern: ssl_verify_client on
+  # An unescaped '|' makes the map key an alternation whose first branch '^(.+)' matches any
+  # request carrying the header, so every client could choose its own CN and fingerprint.
+  - it: trusts forwarded client headers only from trustedCommonNames
+    template: armonik-nginx-conf.yaml
+    asserts:
+      - matchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: '~\^\(\.\+\)\\\|\(client\\\.armonik\\\.local\|admin\\\.armonik\\\.local\)\$ \$http_x_certificate_client_cn;'
+      - matchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: '~\^\(\.\+\)\\\|\(client\\\.armonik\\\.local\|admin\\\.armonik\\\.local\)\$ \$http_x_certificate_client_fingerprint;'
+      - notMatchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: '\(\.\+\)\|\('
+  - it: matches trustedCommonNames literally
+    template: armonik-nginx-conf.yaml
+    set:
+      mtls:
+        trustedCommonNames:
+          - lb+1.armonik(test)
+    asserts:
+      - matchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: '\\\|\(lb\\\+1\\\.armonik\\\(test\\\)\)\$ \$http_x_certificate_client_cn;'
   - it: local fallback Issuer honors tls.certManager.provider=googleCas, forwarded as-is
     template: certificate.yaml
     set:

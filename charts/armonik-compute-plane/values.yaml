@@ -226,9 +226,10 @@ partitionCommon:
   priorityClassName: ""
   imagePullSecrets: []
   terminationGracePeriodSeconds: 30
-  # -- Extra containers, after the agent. The worker and fluent-bit stop only once they all exit.
+  # -- Extra containers, after the agent. Like the agent, they stop before the worker and fluent-bit.
   extraContainers: []
-  # -- Extra init containers, between the fluent-bit sidecar and the worker.
+  # -- Extra init containers, between the fluent-bit sidecar and the worker. A restartable one
+  # stops after the worker, before fluent-bit.
   extraInitContainers: []
   # -- Extra volumes, after the conf mounts and the cache volume.
   extraVolumes: []

@@ -6,7 +6,7 @@ A practical guide to deploying ArmoniK with the ArmoniK Helm charts. Examples be
 
 1. [Overview](#1-overview)
 2. [Getting the charts](#2-getting-the-charts)
-3. [Two-step deployment (recommended)](#3-two-step-deployment-recommended)
+3. [Deploy ArmoniK](#3-deploy-armonik)
 4. [Modularity: enable / disable](#4-modularity-enable--disable)
 5. [Compute planes as independent releases](#5-compute-planes-as-independent-releases)
 6. [TLS: enable, disable, custom issuer](#6-tls-enable-disable-custom-issuer)
@@ -64,29 +64,34 @@ VERSION=X.Y.Z   # always pin a released version
 
 # Inspect the default values of a chart
 helm show values $REPO/armonik --version $VERSION > armonik-values.yaml
-
-# Install directly from the registry
-helm install armonik $REPO/armonik --version $VERSION \
-  -n armonik --create-namespace
 ```
 
 ### From the git repository
 
 ```bash
-# Vendor the chart dependencies first, then install by path
+# Clone the repository, then vendor the chart dependencies
+git clone https://github.com/aneoconsulting/ArmoniK.Infra.git
+cd ArmoniK.Infra
 ./charts/update-charts.sh
-helm install armonik ./charts/armonik -n armonik --create-namespace
 ```
 
-Every example below uses `$REPO/<chart> --version $VERSION`; replace it with `./charts/<chart>` to use a local checkout. For air-gapped clusters, see [`airgap.md`](airgap.md).
+For installing from a packaged archive instead of a live registry - air-gapped clusters, or any offline/reproducible install - see [`airgap.md`](airgap.md).
 
 ---
 
-## 3. Two-step deployment (recommended)
+## 3. Deploy ArmoniK
 
-Install the operators **once per cluster**, then one or more ArmoniK releases that **consume** them. The all-in-one umbrella also works, but the two-step layout makes upgrades and uninstalls much simpler.
+### Quick start: two ways to deploy
 
-### Operator flags
+- **Two-step (recommended)**: install the operators once per cluster, then one or more ArmoniK releases that consume them. Makes upgrades and uninstalls simpler; see [Two-step, in detail](#two-step-in-detail) below.
+- **All-in-one**: the umbrella installs its own operators too, in the same release. The fastest way to try ArmoniK, with a few additional steps required for uninstalling (see [Check and uninstall](#check-and-uninstall) below).
+
+
+### Two-step, in detail
+
+Install the operators **once per cluster**, then one or more ArmoniK releases that **consume** them.
+
+#### Operator flags
 
 | Flag | Meaning |
 | --- | --- |
@@ -94,7 +99,7 @@ Install the operators **once per cluster**, then one or more ArmoniK releases th
 | `available` | The CRDs exist (installed here or elsewhere): custom resources can be rendered |
 | `namespace` | Where the operator runs (required when it is external) |
 
-### Step 1 — Operators
+#### Step 1 — Operators
 
 ```bash
 # Install cluster-wide operators once (KEDA, cert-manager, ESO, Percona, Prometheus)
@@ -102,7 +107,7 @@ helm install armonik-operators $REPO/armonik-operators --version $VERSION \
   -n operators --create-namespace
 ```
 
-### Step 2 — ArmoniK, consuming the operators
+#### Step 2 — ArmoniK, consuming the operators
 
 `values-layered.yaml`:
 
@@ -140,9 +145,33 @@ helm install armonik $REPO/armonik --version $VERSION \
   -f values-layered.yaml
 ```
 
-### Check
+#### Uninstall (reverse order)
 
-The release `NOTES.txt` prints the status of each operator:
+```bash
+# 1. Application first: operators are external here, so a plain uninstall is enough
+helm uninstall armonik -n armonik
+# 2. Operators last: their CRDs are cluster-scoped
+helm uninstall armonik-operators -n operators
+```
+
+### All-in-one, in detail
+
+One release, operators included:
+
+```bash
+# All-in-one, from Docker Hub
+helm install armonik $REPO/armonik --version $VERSION \
+  -n armonik --create-namespace
+
+# All-in-one, from a local checkout
+helm install armonik ./charts/armonik -n armonik --create-namespace
+```
+
+This is the same procedure the release's own `NOTES.txt` prints for this mode (see [Check and uninstall](#check-and-uninstall) below).
+
+### Check and uninstall
+
+The release `NOTES.txt` reports the status of each operator:
 
 ```text
 Operators:
@@ -150,15 +179,11 @@ Operators:
   - certManager: external (already present in the cluster)
 ```
 
-### Uninstall (reverse order)
+It also prints the exact uninstall procedure for **your** configuration, and `helm get notes <release> -n <namespace>` re-prints it later if needed. All-in-one installs (operators bundled in the same release) get a `kubectl delete` step that must run *before* `helm uninstall`, since those custom resources are Helm hooks that `helm uninstall` does not remove on its own. Layered installs (operators pre-deployed, see above) just get a plain `helm uninstall`. Full procedure and recovery from a stuck uninstall: [`uninstall.md`](uninstall.md).
 
-```bash
-# 1. Application first: a plain uninstall is enough in layered mode
-helm uninstall armonik -n armonik
-# 2. Operators last: their CRDs are cluster-scoped
-helm uninstall armonik-operators -n operators
-```
 ---
+
+Every example below uses `$REPO/<chart> --version $VERSION`; replace it with `./charts/<chart>` to use a local checkout.
 
 ## 4. Modularity: enable / disable
 
@@ -474,6 +499,7 @@ Full details: [`cert-manager-issuer.md`](cert-manager-issuer.md).
 | Release without workers | `compute-plane.enabled=false` |
 | Add partitions separately | `helm install <rel> $REPO/armonik-compute-plane --version $VERSION --set conf.source=armonik` |
 | Remove a partition | `--set compute-plane.partitions.<name>=null` |
+| Uninstall | check the release's `NOTES.txt` (`helm get notes <release> -n <namespace>`), or [`uninstall.md`](uninstall.md) |
 
 ## See also
 

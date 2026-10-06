@@ -172,9 +172,7 @@ partitionCommon:
       timeoutSeconds: 10
       successThreshold: 1
       failureThreshold: 3
-    # -- Also the time the worker gets to start: the agent passes /startup once it reaches the
-    # worker. Raise failureThreshold for a slow worker, within worker.checkRetries/checkDelay,
-    # the agent's own retry budget.
+    # -- Also bounds the worker's startup: raise failureThreshold for a slow worker.
     startupProbe:
       httpGet:
         path: "/startup"
@@ -230,8 +228,7 @@ partitionCommon:
   terminationGracePeriodSeconds: 30
   # -- Extra containers, after the agent. The worker and fluent-bit stop only once they all exit.
   extraContainers: []
-  # -- Extra init containers, after the fluent-bit sidecar (which ships their logs) and before
-  # the worker.
+  # -- Extra init containers, between the fluent-bit sidecar and the worker.
   extraInitContainers: []
   # -- Extra volumes, after the conf mounts and the cache volume.
   extraVolumes: []
@@ -251,8 +248,7 @@ partitionCommon:
     ports:
       name: worker-port
       containerPort: 1081
-    # -- Probes the agent, which forwards the worker's health as its own. initialDelaySeconds is
-    # left unset: it then defaults to the agent's startup budget, see the deployment template.
+    # -- Probes the agent. Unset initialDelaySeconds defaults to the agent's startup budget.
     livenessProbe:
       httpGet:
         path: "/liveness"
@@ -262,10 +258,8 @@ partitionCommon:
       timeoutSeconds: 10
       successThreshold: 1
       failureThreshold: 3
-    # -- Empty on purpose; agent.startupProbe is the slow-worker budget instead. The worker is a
-    # native sidecar, so the agent starts only once this probe passes: probing the agent here
-    # deadlocks the pod, and the chart refuses it. The worker is not our code, so nothing it
-    # listens on can be probed either.
+    # -- Must stay empty: the agent waits for the worker, so probing it deadlocks. Use
+    # agent.startupProbe.
     startupProbe: {}
     terminationMessagePath: "/dev/termination-log"
     terminationMessagePolicy: "File"

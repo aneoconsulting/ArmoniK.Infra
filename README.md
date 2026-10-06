@@ -1,12 +1,17 @@
 # Table of contents
 
 - [Introduction](#introduction)
+- [Documentation](#documentation)
 - [Contributing](#contributing)
 - [Bugs/Support](#bugssupport)
 
 # Introduction
 
 In this project contains Terraform modules for the different cloud resources and components of ArmoniK.
+
+# Documentation
+
+Full documentation is available at [armonikinfra.readthedocs.io](https://armonikinfra.readthedocs.io/en/latest/).
 
 # Contributing
 

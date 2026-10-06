@@ -131,6 +131,17 @@ To add a standalone compute-plane with new partitions:
       {{- end }}
        -f <your-partitions>.yaml
 
+<your-partitions>.yaml needs at least a worker image
+
+### YAML start ###
+partitions:
+  my-partition:
+    worker:
+      image:
+        repository: my-registry/my-worker   # full path
+        tag: "1.0.0"
+### YAML end ###
+
 To add a standalone control-plane (with optional external partitions):
 
      helm install <release-name> ./charts/armonik-control-plane \

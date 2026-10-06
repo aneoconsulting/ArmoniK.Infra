@@ -1,0 +1,131 @@
+suite: worker and fluent-bit native sidecars, and the probes their ordering constrains
+templates:
+  - deployment.yaml
+values:
+  - ../ci/partitions-values.yaml
+release:
+  name: t
+tests:
+  - it: runs the worker as a native sidecar and the agent as the only main container
+    documentSelector:
+      path: metadata.name
+      value: "t-armonik-compute-plane-bench"
+    asserts:
+      - lengthEqual:
+          path: spec.template.spec.containers
+          count: 1
+      - equal:
+          path: spec.template.spec.containers[0].name
+          value: agent
+      - equal:
+          path: spec.template.spec.initContainers[?(@.name == "worker")].restartPolicy
+          value: Always
+      - notExists:
+          path: spec.template.spec.initContainers[?(@.name == "worker")].lifecycle
+
+  - it: starts fluent-bit first and the worker last, so fluent-bit stops last
+    set:
+      fluentBit.isDaemonSet: false
+      fluentBit.configMapName: fb
+      partitionCommon.extraInitContainers:
+        - name: warmup
+          image: busybox:0.0.0-test
+    documentSelector:
+      path: metadata.name
+      value: "t-armonik-compute-plane-bench"
+    asserts:
+      - lengthEqual:
+          path: spec.template.spec.initContainers
+          count: 3
+      - equal:
+          path: spec.template.spec.initContainers[0].name
+          value: fluent-bit
+      - equal:
+          path: spec.template.spec.initContainers[1].name
+          value: warmup
+      - equal:
+          path: spec.template.spec.initContainers[2].name
+          value: worker
+      - equal:
+          path: spec.template.spec.initContainers[0].restartPolicy
+          value: Always
+      - notExists:
+          path: spec.template.spec.initContainers[0].lifecycle
+      - notExists:
+          path: spec.template.spec.initContainers[1].restartPolicy
+
+  - it: renders no worker startupProbe by default
+    documentSelector:
+      path: metadata.name
+      value: "t-armonik-compute-plane-bench"
+    asserts:
+      - notExists:
+          path: spec.template.spec.initContainers[?(@.name == "worker")].startupProbe
+
+  - it: delays the worker liveness probe by the agent startup budget
+    set:
+      partitionCommon.agent.startupProbe:
+        initialDelaySeconds: 5
+        periodSeconds: 4
+        failureThreshold: 30
+    documentSelector:
+      path: metadata.name
+      value: "t-armonik-compute-plane-bench"
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[?(@.name == "worker")].livenessProbe.initialDelaySeconds
+          value: 125
+
+  - it: falls back to the Kubernetes probe defaults without an agent startupProbe
+    set:
+      partitionCommon.agent.startupProbe: null
+    documentSelector:
+      path: metadata.name
+      value: "t-armonik-compute-plane-bench"
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[?(@.name == "worker")].livenessProbe.initialDelaySeconds
+          value: 30
+
+  - it: keeps a worker liveness delay set explicitly
+    set:
+      partitionCommon.worker.livenessProbe.initialDelaySeconds: 7
+    documentSelector:
+      path: metadata.name
+      value: "t-armonik-compute-plane-bench"
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[?(@.name == "worker")].livenessProbe.initialDelaySeconds
+          value: 7
+
+  - it: refuses a worker startupProbe on the agent port
+    set:
+      partitionCommon.worker.startupProbe:
+        httpGet:
+          path: /startup
+          port: 1080
+    asserts:
+      - failedTemplate:
+          errorPattern: "worker.startupProbe.httpGet probes the agent port 1080"
+
+  - it: refuses a worker startupProbe on the agent port name
+    set:
+      partitionCommon.worker.startupProbe:
+        tcpSocket:
+          port: poll-agent-port
+    asserts:
+      - failedTemplate:
+          errorPattern: "worker.startupProbe.tcpSocket probes the agent port poll-agent-port"
+
+  - it: accepts a worker startupProbe that does not wait on the agent
+    set:
+      partitionCommon.worker.startupProbe:
+        exec:
+          command: ["true"]
+    documentSelector:
+      path: metadata.name
+      value: "t-armonik-compute-plane-bench"
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[?(@.name == "worker")].startupProbe.exec.command[0]
+          value: "true"

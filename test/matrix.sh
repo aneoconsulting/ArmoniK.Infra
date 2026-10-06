@@ -101,6 +101,11 @@ ok umbrella-mongodb-exporter     armonik        -f charts/armonik/ci/mongodb-exp
 ok umbrella-mongodb-exporter-tls armonik        -f charts/armonik/ci/mongodb-exporter-tls-values.yaml
 ok compute-partitions     armonik-compute-plane -f charts/armonik-compute-plane/ci/partitions-values.yaml
 ok compute-keda-off       armonik-compute-plane -f charts/armonik-compute-plane/ci/keda-off-values.yaml
+ok compute-fluent-bit-sidecar armonik-compute-plane -f charts/armonik-compute-plane/ci/partitions-values.yaml \
+  --set fluentBit.isDaemonSet=false --set fluentBit.configMapName=fluent-bit-config
+# The worker and fluent-bit run as native sidecars (restartable init containers).
+fail_with compute-kube-1.28 armonik-compute-plane "incompatible with Kubernetes v1.28.0" \
+  -f charts/armonik-compute-plane/ci/partitions-values.yaml --kube-version 1.28.0
 ok control-rbac-full      armonik-control-plane -f charts/armonik-control-plane/ci/rbac-values.yaml
 ok control-headless-init  armonik-control-plane -f charts/armonik-control-plane/ci/headless-init-values.yaml
 ok ingress-near-default   armonik-ingress       -f charts/armonik-ingress/ci/default-values.yaml

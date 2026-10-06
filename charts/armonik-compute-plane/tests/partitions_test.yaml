@@ -32,7 +32,7 @@ tests:
       value: "t-armonik-compute-plane-htcmock"
     asserts:
       - matchRegex:
-          path: spec.template.spec.containers[?(@.name == "worker")].image
+          path: spec.template.spec.initContainers[?(@.name == "worker")].image
           pattern: armonik_core_htcmock_test_worker
   - it: uses unix socket addresses by default (partitionCommon)
     template: deployment.yaml
@@ -61,22 +61,22 @@ tests:
             name: ComputePlane__WorkerChannel__Address
             value: /cache/armonik_worker.sock
       - contains:
-          path: spec.template.spec.containers[?(@.name == "worker")].env
+          path: spec.template.spec.initContainers[?(@.name == "worker")].env
           content:
             name: ComputePlane__AgentChannel__SocketType
             value: unixdomainsocket
       - contains:
-          path: spec.template.spec.containers[?(@.name == "worker")].env
+          path: spec.template.spec.initContainers[?(@.name == "worker")].env
           content:
             name: ComputePlane__WorkerChannel__SocketType
             value: unixdomainsocket
       - contains:
-          path: spec.template.spec.containers[?(@.name == "worker")].env
+          path: spec.template.spec.initContainers[?(@.name == "worker")].env
           content:
             name: ComputePlane__AgentChannel__Address
             value: /cache/armonik_agent.sock
       - contains:
-          path: spec.template.spec.containers[?(@.name == "worker")].env
+          path: spec.template.spec.initContainers[?(@.name == "worker")].env
           content:
             name: ComputePlane__WorkerChannel__Address
             value: /cache/armonik_worker.sock
@@ -107,22 +107,22 @@ tests:
             name: ComputePlane__WorkerChannel__Address
             value: http://localhost:6666
       - contains:
-          path: spec.template.spec.containers[?(@.name == "worker")].env
+          path: spec.template.spec.initContainers[?(@.name == "worker")].env
           content:
             name: ComputePlane__AgentChannel__SocketType
             value: tcp
       - contains:
-          path: spec.template.spec.containers[?(@.name == "worker")].env
+          path: spec.template.spec.initContainers[?(@.name == "worker")].env
           content:
             name: ComputePlane__WorkerChannel__SocketType
             value: tcp
       - contains:
-          path: spec.template.spec.containers[?(@.name == "worker")].env
+          path: spec.template.spec.initContainers[?(@.name == "worker")].env
           content:
             name: ComputePlane__AgentChannel__Address
             value: http://localhost:6667
       - contains:
-          path: spec.template.spec.containers[?(@.name == "worker")].env
+          path: spec.template.spec.initContainers[?(@.name == "worker")].env
           content:
             name: ComputePlane__WorkerChannel__Address
             value: http://localhost:6666
@@ -164,7 +164,7 @@ tests:
             seccompProfile:
               type: RuntimeDefault
       - equal:
-          path: spec.template.spec.containers[?(@.name == "worker")].securityContext
+          path: spec.template.spec.initContainers[?(@.name == "worker")].securityContext
           value: *hardened
   - it: drops the agent and worker securityContexts when nulled
     template: deployment.yaml
@@ -178,7 +178,7 @@ tests:
       - notExists:
           path: spec.template.spec.containers[?(@.name == "agent")].securityContext
       - notExists:
-          path: spec.template.spec.containers[?(@.name == "worker")].securityContext
+          path: spec.template.spec.initContainers[?(@.name == "worker")].securityContext
   - it: replaces the default KEDA trigger with the partition override
     template: scaledobject.yaml
     documentSelector:

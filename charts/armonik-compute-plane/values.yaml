@@ -172,6 +172,7 @@ partitionCommon:
       timeoutSeconds: 10
       successThreshold: 1
       failureThreshold: 3
+    # -- Also bounds the worker's startup: raise failureThreshold for a slow worker.
     startupProbe:
       httpGet:
         path: "/startup"
@@ -225,9 +226,10 @@ partitionCommon:
   priorityClassName: ""
   imagePullSecrets: []
   terminationGracePeriodSeconds: 30
-  # -- Extra containers, after agent, worker and the fluent-bit sidecar.
+  # -- Extra containers, after the agent. Like the agent, they stop before the worker and fluent-bit.
   extraContainers: []
-  # -- Extra init containers.
+  # -- Extra init containers, between the fluent-bit sidecar and the worker. A restartable one
+  # stops after the worker, before fluent-bit.
   extraInitContainers: []
   # -- Extra volumes, after the conf mounts and the cache volume.
   extraVolumes: []
@@ -247,26 +249,19 @@ partitionCommon:
     ports:
       name: worker-port
       containerPort: 1081
+    # -- Probes the agent. Unset initialDelaySeconds defaults to the agent's startup budget.
     livenessProbe:
       httpGet:
         path: "/liveness"
         port: 1080
         scheme: HTTP
-      initialDelaySeconds: 15
       periodSeconds: 10
       timeoutSeconds: 10
       successThreshold: 1
       failureThreshold: 3
-    startupProbe:
-      httpGet:
-        path: "/startup"
-        port: 1080
-        scheme: HTTP
-      initialDelaySeconds: 1
-      periodSeconds: 3
-      timeoutSeconds: 1
-      successThreshold: 1
-      failureThreshold: 20
+    # -- Must stay empty: the agent waits for the worker, so probing it deadlocks. Use
+    # agent.startupProbe.
+    startupProbe: {}
     terminationMessagePath: "/dev/termination-log"
     terminationMessagePolicy: "File"
     imagePullPolicy: "IfNotPresent"
@@ -391,9 +386,6 @@ fluentBit:
 # checkFileStorageType: "FS"
 # fileStorageType: "hostpath"
 
-# preStop command of the worker and fluent-bit containers, meant to wait for the agent socket to go.
-# FIXME: not valid sh (syntax error at "do"), so the hook fails at once and never waits.
-preStopWaitScript: "<<EOF while test -e /cache/armonik_agent.sock ; do   sleep 1 done EOF"
 # FS:
 #   name: "shared-volume"
 #   mountPath: "/data"

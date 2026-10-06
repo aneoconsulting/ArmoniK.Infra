@@ -55,7 +55,7 @@ volumeMounts:
 {{- end -}}
 
 
-{{/* Worker (user code) container, before worker.containerPatch. Never gets the core layer. */}}
+{{/* Worker (user code) native sidecar, before worker.containerPatch. Never gets the core layer. */}}
 {{- define "armonik.compute.container.worker" -}}
 {{- $worker := .partition.worker -}}
 name: worker
@@ -77,10 +77,7 @@ livenessProbe:
 startupProbe:
   {{- toYaml . | nindent 2 }}
 {{- end }}
-lifecycle:
-  preStop:
-    exec:
-      command: ["/bin/sh", "-c", {{ .root.Values.preStopWaitScript }}]
+restartPolicy: Always
 env:
   {{- include "armonik.conf.generateEnv" .workerConf | nindent 2 }}
   {{- with $worker.extraEnv }}
@@ -102,7 +99,7 @@ volumeMounts:
 {{- end -}}
 
 
-{{/* Fluent-bit sidecar, rendered only when fluentBit.isDaemonSet is false. */}}
+{{/* Fluent-bit native sidecar, rendered only when fluentBit.isDaemonSet is false. */}}
 {{- define "armonik.compute.container.fluentBit" -}}
 name: fluent-bit
 image: {{ .fluentBitImage.fullname | quote }}
@@ -110,10 +107,7 @@ imagePullPolicy: {{ .fluentBitImage.pullPolicy | quote }}
 envFrom:
   - configMapRef:
       name: {{ .fluentBit.configMapName | quote }}
-lifecycle:
-  preStop:
-    exec:
-      command: ["/bin/sh", "-c", {{ .root.Values.preStopWaitScript }}]
+restartPolicy: Always
 volumeMounts:
   - name: cache-volume
     mountPath: /cache
@@ -144,12 +138,41 @@ volumeMounts:
 {{- $global := $root.Values.global | default dict -}}
 {{- $agent := list (include "armonik.compute.container.agent" .) $partition.agent.containerPatch "agent.containerPatch" | include "armonik.utils.patch" | fromYaml -}}
 {{- $worker := list (include "armonik.compute.container.worker" .) $partition.worker.containerPatch "worker.containerPatch" | include "armonik.utils.patch" | fromYaml -}}
-{{- $containers := list $agent $worker -}}
-{{- if not $fluentBit.isDaemonSet -}}
-  {{- $containers = append $containers (include "armonik.compute.container.fluentBit" . | fromYaml) -}}
+{{/* The agent starts once the worker sidecar's startup probe passes, so that probe cannot wait on it. */}}
+{{- with $worker.startupProbe -}}
+  {{- $probe := . -}}
+  {{- $agentPorts := list (toString $partition.agent.ports.containerPort) $partition.agent.ports.name -}}
+  {{- range $handler := list "httpGet" "tcpSocket" "grpc" -}}
+    {{- $port := dig $handler "port" "" $probe | toString -}}
+    {{- if $agentPorts | has $port -}}
+      {{- printf "worker.startupProbe.%s probes the agent port %s: the worker is a native sidecar, so the agent only starts once that probe passes and the pod deadlocks. Leave it empty and raise agent.startupProbe.failureThreshold for a slow worker." $handler $port | fail -}}
+    {{- end -}}
+  {{- end -}}
 {{- end -}}
+{{/*
+The worker probes the agent's /liveness, and the agent latches its first failed liveness check
+for good, which a worker still starting triggers. So unless set, the worker's first liveness
+check waits out the agent's whole startup budget (Kubernetes defaults for unset fields).
+*/}}
+{{- with $worker.livenessProbe -}}
+  {{- if not (hasKey . "initialDelaySeconds") -}}
+    {{- $startup := $agent.startupProbe | default dict -}}
+    {{- $budget := mul (coalesce $startup.periodSeconds 10) (coalesce $startup.failureThreshold 3) | add ($startup.initialDelaySeconds | default 0) -}}
+    {{- $_ := set . "initialDelaySeconds" $budget -}}
+  {{- end -}}
+{{- end -}}
+{{/*
+Native sidecars stop after the agent, in reverse order: the worker outlives the agent draining
+its current task, and fluent-bit, first in, ships every other container's logs, the extra init
+containers' included.
+*/}}
+{{- $initContainers := list -}}
+{{- if not $fluentBit.isDaemonSet -}}
+  {{- $initContainers = append $initContainers (include "armonik.compute.container.fluentBit" . | fromYaml) -}}
+{{- end -}}
+{{- $initContainers = append ($partition.extraInitContainers | default list | concat $initContainers) $worker -}}
 {{/* Extras go last: container 0 is what `kubectl logs` picks by default. */}}
-{{- $containers = $partition.extraContainers | default list | concat $containers -}}
+{{- $containers := $partition.extraContainers | default list | concat (list $agent) -}}
 {{- with $partition.nodeSelector }}
 nodeSelector:
   {{- toYaml . | nindent 2 }}
@@ -180,10 +203,7 @@ imagePullSecrets:
   {{- toYaml . | nindent 2 }}
 {{- end }}
 restartPolicy: {{ $root.Values.restartPolicy | quote }}
-{{- with $partition.extraInitContainers }}
-initContainers:
-  {{- toYaml . | nindent 2 }}
-{{- end }}
+initContainers: {{- $initContainers | toYaml | nindent 2 }}
 containers: {{- $containers | toYaml | nindent 2 }}
 volumes:
   {{- include "armonik.conf.generateVolumes" (list .agentConf .workerConf) | nindent 2 }}

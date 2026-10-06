@@ -1,3 +1,4 @@
+{{- $ops := include "armonik.operators" $ | fromYaml -}}
 {{- range $partitionName, $config := include "armonik.compute.partitions" $ | fromYaml }}
 {{- $fluentBit := $.Values.fluentBit | default dict -}}
 {{- $partitionCommon := $.Values.partitionCommon | default dict -}}
@@ -67,7 +68,8 @@ metadata:
     {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
-  {{- if not (kindIs "invalid" $partition.replicas) }}
+  {{- $scaled := and $ops.keda.available (list $partition "hpa" "enabled" | include "armonik.utils.index" | empty | not) }}
+  {{- if and (not $scaled) (not (kindIs "invalid" $partition.replicas)) }}
   replicas: {{ $partition.replicas }}
   {{- end }}
   selector:

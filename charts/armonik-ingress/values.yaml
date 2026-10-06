@@ -17,7 +17,39 @@ image:
   tag: 1.31.6-alpine-slim
   pullPolicy: IfNotPresent
 
+# -- Ignored when `hpa.enabled`.
 replicas: 1
+# -- KEDA ScaledObject on CPU, needs operators.keda.available and metrics-server. `annotations` go on
+# its metadata; the other keys are ScaledObject spec fields, passed through as written.
+hpa:
+  enabled: false
+  annotations: {}
+  pollingInterval: 30
+  cooldownPeriod: 300
+  minReplicaCount: 1
+  maxReplicaCount: 5
+  advanced:
+    restoreToOriginalReplicaCount: false
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleDown:
+          stabilizationWindowSeconds: 300
+          policies:
+            - type: Percent
+              value: 100
+              periodSeconds: 15
+  triggers:
+    - type: cpu
+      metricType: Utilization
+      metadata:
+        value: "80"
+# -- PodDisruptionBudget. At most one of minAvailable and maxUnavailable; neither means maxUnavailable 1.
+podDisruptionBudget:
+  enabled: false
+  minAvailable:
+  maxUnavailable:
+  labels: {}
+  annotations: {}
 
 nodeSelector: {}
 tolerations: []

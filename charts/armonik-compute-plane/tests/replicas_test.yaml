@@ -14,9 +14,20 @@ tests:
       - notExists:
           path: spec.replicas
 
-  - it: renders an explicit count, zero included
+  - it: ignores the count while the partition is autoscaled
+    set:
+      partitions.bench.replicas: 3
+    documentSelector:
+      path: metadata.name
+      value: "t-armonik-compute-plane-bench"
+    asserts:
+      - notExists:
+          path: spec.replicas
+
+  - it: renders an explicit count, zero included, once autoscaling is off
     set:
       partitions.bench.replicas: 0
+      partitions.bench.hpa.enabled: false
     documentSelector:
       path: metadata.name
       value: "t-armonik-compute-plane-bench"

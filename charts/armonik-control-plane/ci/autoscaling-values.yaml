@@ -1,0 +1,16 @@
+# ScaledObject on CPU and memory, with a disruption budget.
+hpa:
+  enabled: true
+  minReplicaCount: 2
+  maxReplicaCount: 6
+  triggers:
+    - type: cpu
+      metricType: Utilization
+      metadata:
+        value: "80"
+    - type: memory
+      metricType: Utilization
+      metadata:
+        value: "85"
+podDisruptionBudget:
+  enabled: true

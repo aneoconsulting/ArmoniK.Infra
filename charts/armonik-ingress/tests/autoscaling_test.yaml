@@ -1,0 +1,172 @@
+suite: autoscaling and disruption budget
+values:
+  - ../ci/default-values.yaml
+templates:
+  - scaledobject.yaml
+  - pdb.yaml
+  - deployments/nginx.yaml
+  - armonik-nginx-conf.yaml
+tests:
+  - it: renders no ScaledObject and no PDB by default, and a fixed replica count
+    asserts:
+      - hasDocuments:
+          count: 0
+        template: scaledobject.yaml
+      - hasDocuments:
+          count: 0
+        template: pdb.yaml
+      - equal:
+          path: spec.replicas
+          value: 1
+        template: deployments/nginx.yaml
+
+  - it: hands the replica count to a KEDA ScaledObject on CPU when enabled
+    set:
+      hpa.enabled: true
+    asserts:
+      - notExists:
+          path: spec.replicas
+        template: deployments/nginx.yaml
+      - isKind:
+          of: ScaledObject
+        template: scaledobject.yaml
+      - equal:
+          path: spec.scaleTargetRef
+          value:
+            apiVersion: apps/v1
+            kind: Deployment
+            name: RELEASE-NAME-armonik-ingress
+        template: scaledobject.yaml
+      - equal:
+          path: metadata.labels["app.kubernetes.io/component"]
+          value: ingress
+        template: scaledobject.yaml
+      - equal:
+          path: spec.triggers
+          value:
+            - type: cpu
+              metricType: Utilization
+              metadata:
+                value: "80"
+        template: scaledobject.yaml
+      - notExists:
+          path: spec.idleReplicaCount
+        template: scaledobject.yaml
+      - notExists:
+          path: spec.fallback
+        template: scaledobject.yaml
+      - notExists:
+          path: metadata.annotations
+        template: scaledobject.yaml
+
+  - it: hooks the ScaledObject after install when this release installs the KEDA CRDs
+    template: scaledobject.yaml
+    set:
+      hpa.enabled: true
+      global.armonik.operators.keda.deploy: true
+    asserts:
+      - equal:
+          path: metadata.annotations["helm.sh/hook"]
+          value: post-install,post-upgrade
+
+  - it: fails when KEDA is not available
+    template: scaledobject.yaml
+    set:
+      hpa.enabled: true
+      global.armonik.operators.keda.available: false
+    asserts:
+      - failedTemplate:
+          errorMessage: "hpa.enabled renders a KEDA ScaledObject: set global.armonik.operators.keda.available=true"
+
+  - it: selects the nginx pods with the default maxUnavailable
+    template: pdb.yaml
+    set:
+      podDisruptionBudget.enabled: true
+    asserts:
+      - isKind:
+          of: PodDisruptionBudget
+      - equal:
+          path: spec.maxUnavailable
+          value: 1
+      - notExists:
+          path: spec.minAvailable
+      - equal:
+          path: spec.selector.matchLabels["app.kubernetes.io/component"]
+          value: ingress
+
+  - it: keeps a zero bound
+    template: pdb.yaml
+    set:
+      podDisruptionBudget:
+        enabled: true
+        maxUnavailable: 0
+    asserts:
+      - equal:
+          path: spec.maxUnavailable
+          value: 0
+
+  - it: fails with both PDB bounds set
+    template: pdb.yaml
+    set:
+      podDisruptionBudget:
+        enabled: true
+        minAvailable: 1
+        maxUnavailable: 1
+    asserts:
+      - failedTemplate:
+          errorMessage: "ingress podDisruptionBudget: set at most one of minAvailable and maxUnavailable"
+
+  - it: passes the ScaledObject spec fields through and adds custom annotations to the hook
+    template: scaledobject.yaml
+    set:
+      hpa:
+        enabled: true
+        annotations:
+          team: hpc
+        idleReplicaCount: null
+        fallback:
+          failureThreshold: 3
+          replicas: 2
+        advanced:
+          horizontalPodAutoscalerConfig:
+            behavior:
+              scaleUp:
+                stabilizationWindowSeconds: 0
+      global.armonik.operators.keda.deploy: true
+    asserts:
+      - equal:
+          path: metadata.annotations
+          value:
+            team: hpc
+            helm.sh/hook: post-install,post-upgrade
+            helm.sh/hook-weight: "10"
+      - equal:
+          path: spec.fallback
+          value:
+            failureThreshold: 3
+            replicas: 2
+      - equal:
+          path: spec.advanced.horizontalPodAutoscalerConfig.behavior.scaleUp.stabilizationWindowSeconds
+          value: 0
+      - notExists:
+          path: spec.idleReplicaCount
+      - notExists:
+          path: spec.enabled
+
+  - it: adds custom labels and annotations to the PDB
+    template: pdb.yaml
+    set:
+      podDisruptionBudget:
+        enabled: true
+        labels:
+          tier: edge
+        annotations:
+          team: hpc
+    asserts:
+      - equal:
+          path: metadata.labels.tier
+          value: edge
+      - equal:
+          path: metadata.annotations
+          value:
+            team: hpc

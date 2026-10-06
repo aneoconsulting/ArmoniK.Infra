@@ -17,3 +17,11 @@ tests:
     asserts:
       - hasDocuments:
           count: 0
+  - it: renders no scaled object for a partition with hpa disabled
+    template: scaledobject.yaml
+    set:
+      global.armonik.operators.keda.available: true
+      partitions.default.hpa.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0

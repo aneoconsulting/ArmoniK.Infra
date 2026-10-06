@@ -14,4 +14,4 @@ tests:
       - exists:
           path: spec.template.spec.containers[?(@.name == "agent")].resources.limits
       - exists:
-          path: spec.template.spec.containers[?(@.name == "worker")].resources.requests
+          path: spec.template.spec.initContainers[?(@.name == "worker")].resources.requests

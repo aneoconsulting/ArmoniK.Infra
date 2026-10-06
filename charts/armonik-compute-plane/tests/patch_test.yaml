@@ -48,11 +48,23 @@ tests:
           path: spec.template.spec.containers[0].name
           value: agent
       - equal:
-          path: spec.template.spec.containers[2].name
+          path: spec.template.spec.containers[1].name
           value: debug
       - equal:
           path: spec.template.spec.initContainers[0].name
           value: warmup
+      - equal:
+          path: spec.template.spec.initContainers[1].name
+          value: worker
+
+  - it: refuses a patch that would replace the init containers, which hold the worker
+    set:
+      partitionCommon.podSpecPatch.initContainers:
+        - name: hijack
+          image: busybox:0.0.0-test
+    asserts:
+      - failedTemplate:
+          errorPattern: "podSpecPatch.initContainers: the chart builds initContainers"
 
   - it: appends extraEnv after the conf layers and extra mounts after the conf mounts
     documentSelector:
@@ -129,7 +141,7 @@ tests:
       partitionCommon.worker.containerPatch.command: ["/bin/sh", "-c", "sleep 1"]
     asserts:
       - equal:
-          path: spec.template.spec.containers[?(@.name == "worker")].command[2]
+          path: spec.template.spec.initContainers[?(@.name == "worker")].command[2]
           value: "sleep 1"
         documentSelector:
           path: metadata.name

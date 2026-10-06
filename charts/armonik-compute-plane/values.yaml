@@ -172,6 +172,9 @@ partitionCommon:
       timeoutSeconds: 10
       successThreshold: 1
       failureThreshold: 3
+    # -- Also the time the worker gets to start: the agent passes /startup once it reaches the
+    # worker. Raise failureThreshold for a slow worker, within worker.checkRetries/checkDelay,
+    # the agent's own retry budget.
     startupProbe:
       httpGet:
         path: "/startup"
@@ -225,9 +228,10 @@ partitionCommon:
   priorityClassName: ""
   imagePullSecrets: []
   terminationGracePeriodSeconds: 30
-  # -- Extra containers, after agent, worker and the fluent-bit sidecar.
+  # -- Extra containers, after the agent. The worker and fluent-bit stop only once they all exit.
   extraContainers: []
-  # -- Extra init containers.
+  # -- Extra init containers, after the fluent-bit sidecar (which ships their logs) and before
+  # the worker.
   extraInitContainers: []
   # -- Extra volumes, after the conf mounts and the cache volume.
   extraVolumes: []
@@ -247,26 +251,22 @@ partitionCommon:
     ports:
       name: worker-port
       containerPort: 1081
+    # -- Probes the agent, which forwards the worker's health as its own. initialDelaySeconds is
+    # left unset: it then defaults to the agent's startup budget, see the deployment template.
     livenessProbe:
       httpGet:
         path: "/liveness"
         port: 1080
         scheme: HTTP
-      initialDelaySeconds: 15
       periodSeconds: 10
       timeoutSeconds: 10
       successThreshold: 1
       failureThreshold: 3
-    startupProbe:
-      httpGet:
-        path: "/startup"
-        port: 1080
-        scheme: HTTP
-      initialDelaySeconds: 1
-      periodSeconds: 3
-      timeoutSeconds: 1
-      successThreshold: 1
-      failureThreshold: 20
+    # -- Empty on purpose; agent.startupProbe is the slow-worker budget instead. The worker is a
+    # native sidecar, so the agent starts only once this probe passes: probing the agent here
+    # deadlocks the pod, and the chart refuses it. The worker is not our code, so nothing it
+    # listens on can be probed either.
+    startupProbe: {}
     terminationMessagePath: "/dev/termination-log"
     terminationMessagePolicy: "File"
     imagePullPolicy: "IfNotPresent"
@@ -391,9 +391,6 @@ fluentBit:
 # checkFileStorageType: "FS"
 # fileStorageType: "hostpath"
 
-# preStop command of the worker and fluent-bit containers, meant to wait for the agent socket to go.
-# FIXME: not valid sh (syntax error at "do"), so the hook fails at once and never waits.
-preStopWaitScript: "<<EOF while test -e /cache/armonik_agent.sock ; do   sleep 1 done EOF"
 # FS:
 #   name: "shared-volume"
 #   mountPath: "/data"

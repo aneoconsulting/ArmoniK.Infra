@@ -59,10 +59,7 @@ Known-broken render paths keep their tests written but disabled, each with a
 `skip.reason` (suites) or `skip` line (matrix) naming the bug. Enable them as
 the bugs get fixed:
 
-1. `armonik-compute-plane` PDB: `pdb.yaml` calls the undefined helper
-   `armonik.compute.pdb.apiVersion` (armonik-common defines
-   `armonik.pdb.apiVersion`).
-2. `armonik-ingress` standalone defaults: the chart ships no
+1. `armonik-ingress` standalone defaults: the chart ships no
    `global.environment` defaults but tpl-renders
    `global.environment.{name,description}` in `static."environment.json"`.
    Until fixed, `ci/default-values.yaml` provides the block.

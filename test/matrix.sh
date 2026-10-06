@@ -101,7 +101,6 @@ ok umbrella-mongodb-exporter     armonik        -f charts/armonik/ci/mongodb-exp
 ok umbrella-mongodb-exporter-tls armonik        -f charts/armonik/ci/mongodb-exporter-tls-values.yaml
 ok compute-partitions     armonik-compute-plane -f charts/armonik-compute-plane/ci/partitions-values.yaml
 ok compute-keda-off       armonik-compute-plane -f charts/armonik-compute-plane/ci/keda-off-values.yaml
-skip compute-pdb "broken: pdb.yaml calls the undefined helper armonik.compute.pdb.apiVersion; enable when fixed"
 ok control-rbac-full      armonik-control-plane -f charts/armonik-control-plane/ci/rbac-values.yaml
 ok control-headless-init  armonik-control-plane -f charts/armonik-control-plane/ci/headless-init-values.yaml
 ok ingress-near-default   armonik-ingress       -f charts/armonik-ingress/ci/default-values.yaml

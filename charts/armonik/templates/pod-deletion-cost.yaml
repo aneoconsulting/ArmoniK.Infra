@@ -1,0 +1,92 @@
+{{- if .Values.podDeletionCost.enabled }}
+{{- $pdc := .Values.podDeletionCost -}}
+{{- $sa := include "armonik.fullname" $ | printf "%s-pdc-update" | trunc 63 | trimSuffix "-" -}}
+{{- $image := list $ "podDeletionCost.image" $pdc.image | include "armonik.utils.imageConf" | fromYaml -}}
+{{- $prometheusUrl := $pdc.prometheusUrl -}}
+{{- if not $prometheusUrl -}}
+  {{- $prometheusUrl = include "armonik.monitoring.prometheusUrl" $ -}}
+{{- end -}}
+{{- $env := dict "PrometheusUrl" $prometheusUrl -}}
+{{- with $pdc.metricsName }}{{- $_ := set $env "MetricsName" . -}}{{- end -}}
+{{- with $pdc.period }}{{- $_ := set $env "Period" . -}}{{- end -}}
+{{- with $pdc.ignoreYoungerThan }}{{- $_ := set $env "IgnoreYoungerThan" . -}}{{- end -}}
+{{- with $pdc.concurrency }}{{- $_ := set $env "Concurrency" . -}}{{- end -}}
+{{- with $pdc.granularity }}{{- $_ := set $env "Granularity" . -}}{{- end -}}
+{{- $ctx := dict "root" $ "image" $image "env" $env "serviceAccount" $sa -}}
+{{- $podSpec := list (include "armonik.podDeletionCost.podSpec" $ctx) $pdc.podSpecPatch "podDeletionCost.podSpecPatch" | include "armonik.utils.patch" -}}
+{{/* Dedicated ServiceAccount. */}}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ $sa | quote }}
+  namespace: {{ include "armonik.namespace" $ }}
+  labels:
+    {{- include "armonik.labels" $ | nindent 4 }}
+---
+{{/* get/patch pods only. */}}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ $sa | quote }}
+  namespace: {{ include "armonik.namespace" $ }}
+  labels:
+    {{- include "armonik.labels" $ | nindent 4 }}
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ $sa | quote }}
+  namespace: {{ include "armonik.namespace" $ }}
+  labels:
+    {{- include "armonik.labels" $ | nindent 4 }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ $sa | quote }}
+    namespace: {{ include "armonik.namespace" $ }}
+roleRef:
+  kind: Role
+  name: {{ $sa | quote }}
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $sa | quote }}
+  namespace: {{ include "armonik.namespace" $ }}
+  labels:
+    app.kubernetes.io/component: pod-deletion-cost
+    {{- include "armonik.labels" $ | nindent 4 }}
+    {{- with $pdc.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with $pdc.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: pod-deletion-cost
+      {{- include "armonik.selectorLabels" $ | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: pod-deletion-cost
+        {{- include "armonik.labels" $ | nindent 8 }}
+        {{- with $pdc.labels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with $pdc.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with $pdc.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec: {{- $podSpec | nindent 6 }}
+{{- end }}

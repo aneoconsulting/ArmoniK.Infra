@@ -76,7 +76,7 @@ global:
       core: ""
       gui: ""
       # renovate: datasource=github-releases depName=aneoconsulting/ArmoniK.Infra.Plugins
-      infraPlugins: "0.3.2"
+      infraPlugins: "0.3.3"
       # renovate: datasource=github-releases depName=aneoconsulting/ArmoniK.Extensions.CSharp.New
       extCsharp: "0.22.0"
       # renovate: datasource=github-releases depName=aneoconsulting/ArmoniK.Extensions.Cpp
@@ -95,6 +95,7 @@ global:
       dockerhubaneo/armonik_core_bench_test_worker: core
       dockerhubaneo/armonik_admin_app: gui
       dockerhubaneo/armonik_load_balancer: infraPlugins
+      dockerhubaneo/armonik_pdc_update: infraPlugins
       dockerhubaneo/armonik-dynamic-dotnet-worker: extCsharp
       dockerhubaneo/armonik-sdk-cpp-dynamicworker: extCpp
       dockerhubaneo/armonik-dynamic-java-worker: extJava

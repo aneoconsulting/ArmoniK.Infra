@@ -278,6 +278,53 @@ metricsExporter:
     mountSecret:
       - secret: '{{ list "metrics" . | include "armonik.conf.mountSecretName" }}'
 
+# Reads a per-pod Prometheus metric and patches the pod's own
+# pod-deletion-cost annotation, so the ReplicaSet shrink
+# prefers removing idle compute-plane pods over busy ones.
+podDeletionCost:
+  enabled: false
+  image:
+    registry:
+    repository: dockerhubaneo/armonik_pdc_update
+    tag:
+    pullPolicy: IfNotPresent
+  imagePullSecrets:
+  # URL of the Prometheus endpoint.
+  prometheusUrl:
+  # Name of the metrics that will be read from Prometheus.
+  # default: TaskStartTime_Seconds
+  metricsName:
+  # Period in seconds at which the pod-deletion-cost is updated .
+  # default: 10
+  period:
+  # Ignore precise value of the metric if the tasks are younger than the specified value.
+  # default: 10
+  ignoreYoungerThan:
+  # Number of concurrent requests to Kubernetes.
+  # default: 10
+  concurrency:
+  # Granularity of the computed cost in seconds.
+  # default: 2
+  granularity:
+  resources:
+  nodeSelector:
+  tolerations:
+  annotations:
+  affinity:
+  priorityClassName:
+  podSecurityContext:
+  # Since 0.3.3, image runs as root
+  securityContext:
+    runAsNonRoot: false
+  extraEnv: []
+  extraEnvFrom: []
+  extraVolumeMounts: []
+  extraVolumes: []
+  extraInitContainers: []
+  extraContainers: []
+  containerPatch: {}
+  podSpecPatch: {}
+
 init:
   enabled: false
   name: init

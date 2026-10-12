@@ -1,6 +1,6 @@
-{{- if .Values.podDeletionCost.enabled }}
-{{- $pdc := .Values.podDeletionCost -}}
-{{- $sa := include "armonik.fullname" $ | printf "%s-pdc-update" | trunc 63 | trimSuffix "-" -}}
+{{- $pdc := .Values.podDeletionCost | default dict -}}
+{{- if $pdc.enabled }}
+{{- $sa := include "armonik.fullname" $ | printf "%s-pdc" | trunc 63 | trimSuffix "-" -}}
 {{- $image := list $ "podDeletionCost.image" $pdc.image | include "armonik.utils.imageConf" | fromYaml -}}
 {{- $prometheusUrl := $pdc.prometheusUrl -}}
 {{- if not $prometheusUrl -}}
@@ -13,13 +13,13 @@
 {{- with $pdc.concurrency }}{{- $_ := set $env "Concurrency" . -}}{{- end -}}
 {{- with $pdc.granularity }}{{- $_ := set $env "Granularity" . -}}{{- end -}}
 {{- $ctx := dict "root" $ "image" $image "env" $env "serviceAccount" $sa -}}
-{{- $podSpec := list (include "armonik.podDeletionCost.podSpec" $ctx) $pdc.podSpecPatch "podDeletionCost.podSpecPatch" | include "armonik.utils.patch" -}}
+{{- $podSpec := list (include "armonik.control.podDeletionCost.podSpec" $ctx) $pdc.podSpecPatch "podDeletionCost.podSpecPatch" | include "armonik.utils.patch" -}}
 {{/* Dedicated ServiceAccount. */}}
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: {{ $sa | quote }}
-  namespace: {{ include "armonik.namespace" $ }}
+  namespace: {{ include "armonik.namespace" $ | quote }}
   labels:
     {{- include "armonik.labels" $ | nindent 4 }}
 ---
@@ -28,7 +28,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: {{ $sa | quote }}
-  namespace: {{ include "armonik.namespace" $ }}
+  namespace: {{ include "armonik.namespace" $ | quote }}
   labels:
     {{- include "armonik.labels" $ | nindent 4 }}
 rules:
@@ -40,13 +40,13 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: {{ $sa | quote }}
-  namespace: {{ include "armonik.namespace" $ }}
+  namespace: {{ include "armonik.namespace" $ | quote }}
   labels:
     {{- include "armonik.labels" $ | nindent 4 }}
 subjects:
   - kind: ServiceAccount
     name: {{ $sa | quote }}
-    namespace: {{ include "armonik.namespace" $ }}
+    namespace: {{ include "armonik.namespace" $ | quote }}
 roleRef:
   kind: Role
   name: {{ $sa | quote }}
@@ -56,7 +56,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ $sa | quote }}
-  namespace: {{ include "armonik.namespace" $ }}
+  namespace: {{ include "armonik.namespace" $ | quote }}
   labels:
     app.kubernetes.io/component: pod-deletion-cost
     {{- include "armonik.labels" $ | nindent 4 }}

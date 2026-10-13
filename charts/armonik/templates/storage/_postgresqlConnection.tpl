@@ -1,9 +1,8 @@
 {{/*
 Core conf for a PostgreSQL connection, shared by armonik.postgresql.conf (in-cluster) and
-armonik.externalPostgresql.conf (cloud), which build and validate it. Takes (list <connection> <root>),
-the connection shaped like dependencies.externalPostgresql with ssl as a bool.
+armonik.externalPostgresql.conf (cloud), which build and validate it.
 Components__AuthenticationStorage must be stated: Core defaults it to the MongoDB table.
-With ssl, Core validates the server certificate against CAFile (ArmoniK.Core#1307).
+With ssl, Core validates the server certificate against CAFile.
 */}}
 {{- define "armonik.postgresqlConnection.conf" -}}
 {{- $pg := index . 0 -}}

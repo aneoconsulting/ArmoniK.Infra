@@ -48,8 +48,7 @@ Expand the namespace of the postgresql instance.
 {{/*
 PostgreSQL configuration forwarded to ArmoniK Core, derived from the in-cluster CloudNativePG Cluster,
 through armonik.postgresqlConnection.conf. The postgres OPERATOR may be managed here or external
-(global.armonik.operators.postgresqlOperator) - it does not affect this derivation, which reads the
-Cluster's own rendered values.
+(global.armonik.operators.postgresqlOperator).
 */}}
 {{- define "armonik.postgresql.conf" -}}
 {{/* Live subchart scope via .Subcharts (armonik-dependencies is aliased "dependencies"); skipped when the dep is disabled. */}}

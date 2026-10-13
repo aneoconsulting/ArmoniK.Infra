@@ -202,8 +202,7 @@ certManagerIssuer:
 
 # ==== Dependencies (armonik-dependencies, alias dependencies) ====
 # Only the values ArmoniK sets; the rest is each chart's own. Table storage is MongoDB or PostgreSQL,
-# whichever of dependencies.{mongodb,postgresql,externalPostgresql} is enabled; the in-cluster
-# psmdb-db is the default.
+# whichever of dependencies.{mongodb,postgresql,externalPostgresql} is enabled.
 # To bring your own backend (MongoDB, Redis, ActiveMQ, RabbitMQ), set
 # dependencies.<backend>.enabled=false and supply its connection through conf.core.env /
 # conf.core.envFromSecret.
@@ -393,21 +392,20 @@ dependencies:
         postInitSQL:
           # The task and result watchers read the WAL through pgoutput, the operator creates the owner with
           # `CREATE ROLE <owner> LOGIN` and nothing else, so it lacks REPLICATION; postInitSQL runs as superuser right
-          # after, which is the only hook early enough to grant it.
+          # after.
           - ALTER ROLE armonik WITH REPLICATION;
       postgresql:
         parameters:
           # Already the CloudNativePG default. Stated because the watchers do not work without it.
           wal_level: logical
           # One replication slot and one WAL sender per watcher per subscribed process, so these scale
-          # with the number of control-plane and polling-agent replicas, not with the data.
+          # with the number of control-plane and polling-agent replicas.
           max_replication_slots: "32"
           max_wal_senders: "16"
-      # Nothing needs an external superuser: the operator reaches the server over its local socket,
-      # and ArmoniK connects as the database owner.
+      # Nothing needs an external superuser.
       enableSuperuserAccess: false
       monitoring:
-        # PodMonitor over the instances, as for the other dependencies here.
+        # PodMonitor over the instances.
         enabled: true
 
   # == External PostgreSQL ==

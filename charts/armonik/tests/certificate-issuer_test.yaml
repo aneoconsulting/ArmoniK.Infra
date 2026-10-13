@@ -416,7 +416,7 @@ tests:
       - failedTemplate:
           errorPattern: "cannot use a local selfSigned fallback issuer"
 
-  # postgresql: same resolution as mongodb. Every case loads the fixture, which disables mongodb and
+  # Postgresql : Every case loads the fixture, which disables mongodb and
   # issues from a shared ca issuer.
   - it: "postgresql: renders nothing when certManager is disabled"
     template: certificate/postgresql-certificate.yaml

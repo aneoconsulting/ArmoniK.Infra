@@ -72,9 +72,8 @@ initContainers:
   {{- toYaml . | nindent 2 }}
 {{- end }}
 containers: {{- $containers | toYaml | nindent 2 }}
-{{- with concat ($v.image.imagePullSecrets | default list) ($v.global.imagePullSecrets | default list) }}
-imagePullSecrets:
-  {{- toYaml . | nindent 2 }}
+{{- with list $v.image.imagePullSecrets $v.global.imagePullSecrets | include "armonik.imagePullSecrets" }}
+imagePullSecrets: {{- . | nindent 2 }}
 {{- end }}
 volumes:
   - name: activemq-conf-xml

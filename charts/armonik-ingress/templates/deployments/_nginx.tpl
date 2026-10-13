@@ -86,9 +86,8 @@ initContainers:
 containers: {{- $containers | toYaml | nindent 2 }}
 dnsPolicy: ClusterFirst
 shareProcessNamespace: false
-{{- with concat ($v.imagePullSecrets | default list) ($global.imagePullSecrets | default list) }}
-imagePullSecrets:
-  {{- toYaml . | nindent 2 }}
+{{- with list $v.imagePullSecrets $global.imagePullSecrets | include "armonik.imagePullSecrets" }}
+imagePullSecrets: {{- . | nindent 2 }}
 {{- end }}
 {{- with $v.nodeSelector }}
 nodeSelector:

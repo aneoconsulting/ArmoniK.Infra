@@ -198,9 +198,8 @@ securityContext:
 terminationGracePeriodSeconds: {{ $partition.terminationGracePeriodSeconds }}
 shareProcessNamespace: {{ $root.Values.shareProcessNamespace }}
 enableServiceLinks: true
-{{- with concat ($partition.imagePullSecrets | default list) ($root.Values.imagePullSecrets | default list) ($global.imagePullSecrets | default list) }}
-imagePullSecrets:
-  {{- toYaml . | nindent 2 }}
+{{- with list $partition.imagePullSecrets $root.Values.imagePullSecrets $global.imagePullSecrets | include "armonik.imagePullSecrets" }}
+imagePullSecrets: {{- . | nindent 2 }}
 {{- end }}
 restartPolicy: {{ $root.Values.restartPolicy | quote }}
 initContainers: {{- $initContainers | toYaml | nindent 2 }}

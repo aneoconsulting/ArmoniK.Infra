@@ -66,10 +66,10 @@ tests:
           path: spec.template.spec.imagePullSecrets[1].name
           value: from-global
 
-  - it: takes the global imagePullSecrets alone, which the string-typed read used to mangle
+  - it: takes the global imagePullSecrets alone, as Secret names
     set:
       global.imagePullSecrets:
-        - name: from-global
+        - from-global
     asserts:
       - lengthEqual:
           path: spec.template.spec.imagePullSecrets

@@ -19,8 +19,15 @@ global:
   # Lets the Bitnami rabbitmq chart accept its bitnamilegacy and public.ecr.aws images.
   security:
     allowInsecureImages: true
-  # ArmoniK pods (see armonik-common/values.yaml) and the Bitnami charts read it.
-  # imagePullSecrets: [{"name": "secret"}]
+  # Pull secrets, as Secret names or {name} references. ArmoniK pods take either (see
+  # armonik-common/values.yaml), as do grafana, kube-prometheus-stack and rabbitmq; cert-manager and
+  # external-secrets require references, and valkey (dependencies.redis) names only, rendering a
+  # reference as `name: map[name:...]`. No form serves the all-in-one default, which installs
+  # cert-manager and valkey together: install the operators as their own release, references there
+  # and names here, or leave this unset and set each chart's own key. fluent-bit, seq, mongodb,
+  # mongodb-exporter, keda, mongodb-operator and google-cas-issuer never read it: each takes its own
+  # `imagePullSecrets`, as references.
+  # imagePullSecrets: ["secret"]
   # Shown by the admin GUI (armonik-common/values.yaml).
   environment:
     description: "ArmoniK environment"

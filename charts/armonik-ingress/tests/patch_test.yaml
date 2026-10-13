@@ -60,7 +60,7 @@ tests:
           value: role
         template: deployments/load-balancer.yaml
 
-  - it: renders imagePullSecrets on nginx and gui, which had none
+  - it: renders the chart imagePullSecrets on nginx and gui
     asserts:
       - equal:
           path: spec.template.spec.imagePullSecrets[0].name

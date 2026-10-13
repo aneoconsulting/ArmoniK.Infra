@@ -9,3 +9,5 @@ index:
 conf:
 # patch: input for armonik.utils.patch (base object, patch object, name used in errors)
 patch:
+# pullSecrets: the source lists of armonik.imagePullSecrets, in precedence order
+pullSecrets:

@@ -123,3 +123,39 @@ containerPort of the entry named .name in .ports, empty when none matches.
     {{- end -}}
   {{- end -}}
 {{- end -}}
+
+{{/*
+imagePullSecrets of a pod spec, from a list of sources in precedence order (component, chart,
+global.imagePullSecrets), any of them nil. An entry is a Secret name or a {name} reference, the two
+forms the dependency charts split between, so one global value can serve ours under either. Renders
+the list deduplicated by name, the field being a map keyed on it, or nothing when empty.
+
+  {{- with list $component.imagePullSecrets $v.imagePullSecrets $global.imagePullSecrets | include "armonik.imagePullSecrets" }}
+  imagePullSecrets: {{- . | nindent 2 }}
+  {{- end }}
+*/}}
+{{- define "armonik.imagePullSecrets" -}}
+  {{- $names := list -}}
+  {{- range $source := . -}}
+    {{- if not (kindIs "slice" ($source | default list)) -}}
+      {{- printf "imagePullSecrets must be a list, got %s" (toJson $source) | fail -}}
+    {{- end -}}
+    {{- range $entry := $source -}}
+      {{- $name := $entry -}}
+      {{- if kindIs "map" $entry -}}
+        {{- $name = $entry.name -}}
+      {{- end -}}
+      {{- if or (not $name) (kindIs "map" $name) (kindIs "slice" $name) -}}
+        {{- printf "imagePullSecrets entry %s names no Secret: use \"<name>\" or {name: <name>}" (toJson $entry) | fail -}}
+      {{- end -}}
+      {{- $names = toString $name | append $names -}}
+    {{- end -}}
+  {{- end -}}
+  {{- $secrets := list -}}
+  {{- range $name := $names | uniq -}}
+    {{- $secrets = dict "name" $name | append $secrets -}}
+  {{- end -}}
+  {{- with $secrets -}}
+    {{- toYaml . -}}
+  {{- end -}}
+{{- end -}}

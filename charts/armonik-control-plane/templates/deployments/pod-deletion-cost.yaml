@@ -2,17 +2,20 @@
 {{- if $pdc.enabled }}
 {{- $sa := include "armonik.fullname" $ | printf "%s-pdc" | trunc 63 | trimSuffix "-" -}}
 {{- $image := list $ "podDeletionCost.image" $pdc.image | include "armonik.utils.imageConf" | fromYaml -}}
-{{- $prometheusUrl := $pdc.prometheusUrl -}}
-{{- if not $prometheusUrl -}}
-  {{- $prometheusUrl = include "armonik.monitoring.prometheusUrl" $ -}}
+{{- $env := dict -}}
+{{- $envFromSecret := dict -}}
+{{/* Defaults to the umbrella's resolved PrometheusUrl. */}}
+{{- if $pdc.prometheusUrl -}}
+  {{- $_ := set $env "PrometheusUrl" $pdc.prometheusUrl -}}
+{{- else -}}
+  {{- $_ := set $envFromSecret "PrometheusUrl" (dict "secret" (list "pdc" $ | include "armonik.conf.secretName") "field" "PrometheusUrl") -}}
 {{- end -}}
-{{- $env := dict "PrometheusUrl" $prometheusUrl -}}
 {{- with $pdc.metricsName }}{{- $_ := set $env "MetricsName" . -}}{{- end -}}
 {{- with $pdc.period }}{{- $_ := set $env "Period" . -}}{{- end -}}
 {{- with $pdc.ignoreYoungerThan }}{{- $_ := set $env "IgnoreYoungerThan" . -}}{{- end -}}
 {{- with $pdc.concurrency }}{{- $_ := set $env "Concurrency" . -}}{{- end -}}
 {{- with $pdc.granularity }}{{- $_ := set $env "Granularity" . -}}{{- end -}}
-{{- $ctx := dict "root" $ "image" $image "env" $env "serviceAccount" $sa -}}
+{{- $ctx := dict "root" $ "image" $image "env" $env "envFromSecret" $envFromSecret "serviceAccount" $sa -}}
 {{- $podSpec := list (include "armonik.control.podDeletionCost.podSpec" $ctx) $pdc.podSpecPatch "podDeletionCost.podSpecPatch" | include "armonik.utils.patch" -}}
 {{/* Dedicated ServiceAccount. */}}
 apiVersion: v1

@@ -91,13 +91,7 @@ For installing from a packaged archive instead of a live registry - air-gapped c
 
 Install the operators **once per cluster**, then one or more ArmoniK releases that **consume** them.
 
-#### Operator flags
 
-| Flag | Meaning |
-| --- | --- |
-| `deploy` | This release installs the operator and its CRDs |
-| `available` | The CRDs exist (installed here or elsewhere): custom resources can be rendered |
-| `namespace` | Where the operator runs (required when it is external) |
 
 #### Step 1 — Operators
 
@@ -108,6 +102,8 @@ helm install armonik-operators $REPO/armonik-operators --version $VERSION \
 ```
 
 #### Step 2 — ArmoniK, consuming the operators
+
+`deploy`, `available` and `namespace` are documented in [`armonik-common/values.yaml`](armonik-common/values.yaml).
 
 `values-layered.yaml`:
 
@@ -215,18 +211,27 @@ dependencies:
     enabled: false
   mongodb-exporter:
     enabled: false
+
 # Then pass the connection via conf.core.env / conf.core.envFromSecret
+conf:
+  core:
+    env:
+      Components__TableStorage: ArmoniK.Adapters.MongoDB.TableStorage
+      MongoDB__Host: mongodb.example.com
+      MongoDB__Port: "27017"
+      MongoDB__Tls: "true"
+      MongoDB__DatabaseName: armonik
+      MongoDB__AuthSource: admin
+    envFromSecret:
+      MongoDB__User:
+        secret: my-external-mongodb-creds
+        field: username
+      MongoDB__Password:
+        secret: my-external-mongodb-creds
+        field: password
 ```
 
-### Example 3 — A "base" release without workers
-
-```yaml
-# Control plane + storage + conf only; partitions come from other releases (section 5)
-compute-plane:
-  enabled: false
-```
-
-### Example 4 — No ingress
+### Example 3 — No ingress
 
 ```yaml
 # No nginx / admin GUI: the control plane is reachable in-cluster only
@@ -234,16 +239,25 @@ ingress:
   enabled: false
 ```
 
-### Example 5 — Remove a default partition
+### Example 4 — Remove a default partition
 
-Partitions accumulate across values files; remove one with `null`:
+Partitions accumulate across values files; remove one with `null`, in a values file:
+
+```yaml
+# Remove the htcmock demo partition shipped in the default values
+compute-plane:
+  partitions:
+    htcmock: null
+```
+
+or on the command line:
 
 ```bash
-# Remove the htcmock demo partition shipped in the default values
 helm upgrade armonik $REPO/armonik --version $VERSION -n armonik \
   --reuse-values --set compute-plane.partitions.htcmock=null
 ```
-### Example 6 — Customize without forking the chart
+
+### Example 5 — Customize without forking the chart
 
 | Need | Mechanism |
 | --- | --- |
@@ -293,7 +307,6 @@ helm install armonik $REPO/armonik --version $VERSION -n armonik \
 # compute-plane.enabled=false in Step 1 means no ServiceAccount either, so create one here
 serviceAccount:
   create: true
-  name: compute-plane
 
 # One Deployment (+ one KEDA ScaledObject) per partition
 partitions:

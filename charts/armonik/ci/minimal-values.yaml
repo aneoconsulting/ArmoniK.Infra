@@ -37,3 +37,6 @@ dependencies:
     enabled: false
   seq:
     enabled: false
+control-plane:
+  podDeletionCost:
+    enabled: false

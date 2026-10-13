@@ -174,12 +174,12 @@ schema:
  */}}
 {{- define "armonik.utils.merge" -}}
   {{/* Default options */}}
-  {{- $overwrite := eq $.overwrite nil | ternary false $.overwrite -}}
-  {{- $nullIsAbsent := eq $.nullIsAbsent nil | ternary true $.nullIsAbsent -}}
-  {{- $emptyStringIsAbsent := eq $.emptyStringIsAbsent nil | ternary true $.emptyStringIsAbsent -}}
-  {{- $render := eq $.render nil | ternary false $.render -}}
-  {{- $concatList := eq $.concatList nil | ternary false $.concatList -}}
-  {{- $print := eq $.print nil | ternary true $.print -}}
+  {{- $overwrite := kindIs "invalid" $.overwrite | ternary false $.overwrite -}}
+  {{- $nullIsAbsent := kindIs "invalid" $.nullIsAbsent | ternary true $.nullIsAbsent -}}
+  {{- $emptyStringIsAbsent := kindIs "invalid" $.emptyStringIsAbsent | ternary true $.emptyStringIsAbsent -}}
+  {{- $render := kindIs "invalid" $.render | ternary false $.render -}}
+  {{- $concatList := kindIs "invalid" $.concatList | ternary false $.concatList -}}
+  {{- $print := kindIs "invalid" $.print | ternary true $.print -}}
   {{- $options := pick $ "overwrite" "nullIsAbsent" "emptyStringIsAbsent" "render" "concatList" "context" -}}
   {{- $_ := set $options "print" false -}}
 
@@ -189,7 +189,7 @@ schema:
   {{- end -}}
 
   {{/* If dst is absent */}}
-  {{- if or (hasKey $ "dst" | not) (eq $.dst nil | and $nullIsAbsent) (and $emptyStringIsAbsent (kindIs "string" $.dst) (not $.dst)) -}}
+  {{- if or (hasKey $ "dst" | not) (kindIs "invalid" $.dst | and $nullIsAbsent) (and $emptyStringIsAbsent (kindIs "string" $.dst) (not $.dst)) -}}
     {{- if hasKey $ "src" -}}
       {{- if kindIs "slice" $.src | and $render -}}
         {{- $_ := set $ "dst" list -}}
@@ -213,7 +213,7 @@ schema:
     {{- end -}}
 
   {{/* Else if src is present */}}
-  {{- else if or (hasKey $ "src" | not) (eq $.src nil | and $nullIsAbsent) (and $emptyStringIsAbsent (kindIs "string" $.src) (not $.src)) | not -}}
+  {{- else if or (hasKey $ "src" | not) (kindIs "invalid" $.src | and $nullIsAbsent) (and $emptyStringIsAbsent (kindIs "string" $.src) (not $.src)) | not -}}
     {{- if kindIs "map" $.dst -}}
       {{- if kindIs "map" $.src -}}
         {{/* Merge map with map */}}

@@ -33,6 +33,7 @@ keda:
       serviceMonitor:
         enabled: true
   certificates:
+    operator: {}
     certManager:
       enabled: false
       issuer:

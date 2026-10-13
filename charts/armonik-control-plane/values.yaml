@@ -284,7 +284,7 @@ metricsExporter:
 # pod-deletion-cost annotation, so the ReplicaSet shrink
 # prefers removing idle compute-plane pods over busy ones.
 podDeletionCost:
-  enabled: true
+  enabled: false
   image:
     registry:
     repository: dockerhubaneo/armonik_pdc_update

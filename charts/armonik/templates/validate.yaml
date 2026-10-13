@@ -35,7 +35,7 @@
   {{- end -}}
 {{- end -}}
 
-{{- /* The Cluster CR has no CRD without the CloudNativePG operator: fail at render rather than at apply. */ -}}
+{{- /* The Cluster CR has no CRD without the CloudNativePG operator: fail at render. */ -}}
 {{- $ops := include "armonik.operators" $ | fromYaml -}}
 {{- $postgresqlEnabled := list .Values "dependencies" "postgresql" "enabled" | include "armonik.utils.index" | empty | not -}}
 {{- if and $postgresqlEnabled (not $ops.postgresqlOperator.available) -}}

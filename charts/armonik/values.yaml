@@ -86,7 +86,7 @@ control-plane:
     enabled: true
   rbac:
     createBuiltInRoles: true
-  podDeletionCost: 
+  podDeletionCost:
     enabled: true
   # priorityClassName:
 

@@ -209,7 +209,8 @@ certManagerIssuer:
 
 # ==== Dependencies (armonik-dependencies, alias dependencies) ====
 # Only the values ArmoniK sets; the rest is each chart's own. Table storage is MongoDB or PostgreSQL,
-# whichever of dependencies.{mongodb,postgresql} is enabled; the in-cluster psmdb-db is the default.
+# whichever of dependencies.{mongodb,postgresql,externalPostgresql} is enabled; the in-cluster
+# psmdb-db is the default.
 # To bring your own backend (MongoDB, Redis, ActiveMQ, RabbitMQ), set
 # dependencies.<backend>.enabled=false and supply its connection through conf.core.env /
 # conf.core.envFromSecret.
@@ -350,23 +351,6 @@ dependencies:
       tls: true
     finalizers: []
 
-  # == External PostgreSQL ==
-  # A server outside this release (RDS, Cloud SQL, on-prem). Exclusive with mongodb.
-  # Requires Core with the PostgreSQL spelling (ArmoniK.Core#1302).
-  externalPostgresql:
-    enabled: false
-    host: ""  # required when externalPostgresql.enabled
-    port: 5432
-    database: ""  # required when externalPostgresql.enabled
-    ssl: true
-    credentials:
-      secret: ""  # required when externalPostgresql.enabled
-      usernameField: username
-      passwordField: password
-      namespace: ""
-      storeName: ""
-      storeKind: ""
-
   # == mongodb-exporter (prometheus-mongodb-exporter) ==
   # existingSecret.{name,key} is the single source of truth for the Secret holding the exporter's
   # connection URI: templates/secrets/mongodb-exporter-secret.yaml renders an ExternalSecret under
@@ -397,7 +381,7 @@ dependencies:
     # priorityClassName:
 
   # == PostgreSQL (CloudNativePG Cluster) ==
-  # This table storage is mutually exclusive with mongodb above.
+  # This table storage is mutually exclusive with mongodb and externalPostgresql.
   # armonik/templates/validate.yaml rejects both at once.
   # Everything under cluster.* is the Cluster CR's spec
   postgresql:
@@ -432,6 +416,30 @@ dependencies:
       monitoring:
         # PodMonitor over the instances, as for the other dependencies here.
         enabled: true
+
+  # == External PostgreSQL ==
+  # A server outside this release (RDS, Cloud SQL, on-prem). Exclusive with mongodb and postgresql.
+  # Requires Core with the PostgreSQL spelling (ArmoniK.Core#1302).
+  externalPostgresql:
+    enabled: false
+    host: ""  # required when externalPostgresql.enabled
+    port: 5432
+    database: ""  # required when externalPostgresql.enabled
+    ssl: true
+    credentials:
+      secret: ""  # required when externalPostgresql.enabled
+      usernameField: username
+      passwordField: password
+      namespace: ""
+      storeName: ""
+      storeKind: ""
+    # CA that Core validates the server certificate against (for RDS, the region's bundle).
+    ca:
+      secret: ""  # required when ssl
+      field: ca.crt
+      namespace: ""
+      storeName: ""
+      storeKind: ""
 
   # KEDA, cert-manager, kube-prometheus-stack and external-secrets are operators, configured under
   # operators.* (see the Operators section below).

@@ -30,6 +30,15 @@ Secret the operator generates for the database owner, holding keys username and 
 {{- end -}}
 
 {{/*
+Secret holding the server certificate's CA under ca.crt: cluster.certificates.serverCASecret, else
+<cluster>-ca, the operator's own.
+*/}}
+{{- define "armonik.postgresql.caSecretName" -}}
+  {{- $override := list .Values "cluster" "certificates" "serverCASecret" | include "armonik.utils.index" -}}
+  {{- $override | default (printf "%s-ca" (include "cluster.fullname" .)) -}}
+{{- end -}}
+
+{{/*
 Expand the namespace of the postgresql instance.
 */}}
 {{- define "armonik.postgresql.namespace" -}}
@@ -37,43 +46,22 @@ Expand the namespace of the postgresql instance.
 {{- end -}}
 
 {{/*
-PostgreSQL configuration forwarded to ArmoniK Core, derived from the in-cluster CloudNativePG Cluster. 
-Skipped when that dependency is disabled: to bring your own PostgreSQL, set
-dependencies.postgresql.enabled=false and supply the connection through the conf values directly
-(conf.core.env / conf.core.envFromSecret). The postgres OPERATOR may be managed here or external
+PostgreSQL configuration forwarded to ArmoniK Core, derived from the in-cluster CloudNativePG Cluster,
+through armonik.postgresqlConnection.conf. The postgres OPERATOR may be managed here or external
 (global.armonik.operators.postgresqlOperator) - it does not affect this derivation, which reads the
 Cluster's own rendered values.
-
-Do not fix the mismatched spelling below: Components__TableStorage must equal
-"ArmoniK.Adapters.PostgresSQL.TableStorage", an upstream typo matched literally by AddPostgresComponents.
-Normalising either one silently unregisters the adaptor.
-TODO: Core's PostgreSQL adaptor is still under development; re-check once it stabilizes there.
-
-Ssl=true maps to Npgsql's SslMode.Require, which encrypts without validating the chain, so the server
-CA needs no mountSecret here. A verify-full setup would mount it like MongoDB__CAFile does: from
-cluster.certificates.serverCASecret with certManager enabled, else from the operator's <cluster>-ca.
-
-Components__AuthenticationStorage must be stated: Core defaults it to the MongoDB table.
 */}}
 {{- define "armonik.postgresql.conf" -}}
 {{/* Live subchart scope via .Subcharts (armonik-dependencies is aliased "dependencies"); skipped when the dep is disabled. */}}
 {{- with .Subcharts.dependencies.Subcharts.postgresql -}}
-{{- $namespace := include "armonik.postgresql.namespace" . -}}
-env:
-  Components__TableStorage:          "ArmoniK.Adapters.PostgresSQL.TableStorage"
-  Components__AuthenticationStorage: "ArmoniK.Adapters.PostgresSQL.AuthenticationTable"
-  PostgreSQL__Host:                  {{ include "armonik.postgresql.host" . | quote }}
-  PostgreSQL__Port:                  {{ include "armonik.postgresql.port" . | trim | quote }}
-  PostgreSQL__DatabaseName:          {{ include "armonik.postgresql.database" . | quote }}
-  PostgreSQL__Ssl:                   "true"
-envFromSecret:
-  PostgreSQL__User:
-    secret: {{ include "armonik.postgresql.secretName" . }}
-    field: username
-    namespace: {{ $namespace | quote }}
-  PostgreSQL__Password:
-    secret: {{ include "armonik.postgresql.secretName" . }}
-    field: password
-    namespace: {{ $namespace | quote }}
+  {{- $namespace := include "armonik.postgresql.namespace" . -}}
+  {{- $connection := dict
+        "host" (include "armonik.postgresql.host" .)
+        "port" (include "armonik.postgresql.port" . | trim)
+        "database" (include "armonik.postgresql.database" .)
+        "ssl" true
+        "credentials" (dict "secret" (include "armonik.postgresql.secretName" .) "namespace" $namespace)
+        "ca" (dict "secret" (include "armonik.postgresql.caSecretName" .) "namespace" $namespace) }}
+{{ list $connection $ | include "armonik.postgresqlConnection.conf" }}
 {{- end }}
 {{- end }}

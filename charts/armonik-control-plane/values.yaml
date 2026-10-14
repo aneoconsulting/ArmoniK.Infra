@@ -177,13 +177,15 @@ conf:
     - secret: '{{ list "core" . | include "armonik.conf.mountSecretName" }}'
     - secret: '{{ list "log" . | include "armonik.conf.mountSecretName" }}'
 
-# On top of the base conf: control layer.
+# The control-plane pod alone, on top of the chart-wide values: the control conf layer, and pull
+# secrets listed before the chart-level and global ones.
 deployment:
   conf:
     envSecret:
       - '{{ list "control" . | include "armonik.conf.secretName" }}'
     mountSecret:
       - secret: '{{ list "control" . | include "armonik.conf.mountSecretName" }}'
+  imagePullSecrets: []
 
 ports:
   - name: control-port

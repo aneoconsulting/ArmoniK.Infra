@@ -51,6 +51,7 @@ volumeMounts:
 {{- $root := .root -}}
 {{- $v := $root.Values -}}
 {{- $global := $v.global | default dict -}}
+{{- $deployment := $v.deployment | default dict -}}
 {{- $container := list (include "armonik.control.container" .) $v.containerPatch "containerPatch" | include "armonik.utils.patch" | fromYaml -}}
 {{- $containers := $v.extraContainers | default list | concat (list $container) -}}
 {{- with $v.extraInitContainers }}
@@ -63,7 +64,7 @@ volumes:
   {{- with $v.extraVolumes }}
   {{- toYaml . | nindent 2 }}
   {{- end }}
-{{- with list $v.imagePullSecrets $global.imagePullSecrets | include "armonik.imagePullSecrets" }}
+{{- with list $deployment.imagePullSecrets $v.imagePullSecrets $global.imagePullSecrets | include "armonik.imagePullSecrets" }}
 imagePullSecrets: {{- . | nindent 2 }}
 {{- end }}
 serviceAccountName: {{ include "armonik.serviceAccountName" $root | quote }}

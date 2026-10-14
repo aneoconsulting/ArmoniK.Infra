@@ -1,7 +1,9 @@
 # Escape hatches on the activemq deployment.
-image:
+imagePullSecrets:
+  - name: from-chart
+deployment:
   imagePullSecrets:
-    - name: from-chart
+    - name: from-deployment
 global:
   imagePullSecrets:
     - name: from-global

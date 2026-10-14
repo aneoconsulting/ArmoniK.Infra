@@ -71,6 +71,27 @@ tests:
           value: from-chart
         template: deployments/gui.yaml
 
+  - it: layers the deployment imagePullSecrets on the chart and global ones, on nginx only
+    set:
+      deployment.imagePullSecrets:
+        - name: from-deployment
+      global.imagePullSecrets:
+        - name: from-global
+    asserts:
+      - equal:
+          path: spec.template.spec.imagePullSecrets
+          value:
+            - name: from-deployment
+            - name: from-chart
+            - name: from-global
+        template: deployments/nginx.yaml
+      - equal:
+          path: spec.template.spec.imagePullSecrets
+          value:
+            - name: from-chart
+            - name: from-global
+        template: deployments/gui.yaml
+
   - it: patches each pod and container independently
     asserts:
       - equal:

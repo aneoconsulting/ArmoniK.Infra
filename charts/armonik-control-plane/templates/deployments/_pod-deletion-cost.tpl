@@ -6,14 +6,15 @@ name: pdc-update
 image: {{ .image.fullname | quote }}
 imagePullPolicy: {{ .image.pullPolicy | quote }}
 env:
-  {{- include "armonik.conf.generateEnv" (dict "env" .env "envFromSecret" .envFromSecret) | nindent 2 }}
+  {{- include "armonik.conf.generateEnv" .conf | nindent 2 }}
   {{- with $pdc.extraEnv }}
   {{- toYaml . | nindent 2 }}
   {{- end }}
-{{- with $pdc.extraEnvFrom }}
 envFrom:
+  {{- include "armonik.conf.generateEnvFrom" .conf | nindent 2 }}
+  {{- with $pdc.extraEnvFrom }}
   {{- toYaml . | nindent 2 }}
-{{- end }}
+  {{- end }}
 {{- with coalesce $pdc.resources $v.resources }}
 resources:
   {{- toYaml . | nindent 2 }}

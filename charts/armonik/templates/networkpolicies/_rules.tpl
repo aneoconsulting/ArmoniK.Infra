@@ -377,13 +377,11 @@ ports:
 
 
 {{/*
-  Submitter ingress: from compute-plane and nginx (grpc/http). Prometheus scraping is
-  armonik-control-plane's own policy.
+  Submitter ingress: nginx only, the submitter trusting the identity headers nginx sets under mTLS.
+  Prometheus scraping is armonik-control-plane's own policy.
 */}}
 {{- define "armonik.netpol.rule.submitterIngress" -}}
-  {{- $controlPort := include "armonik.netpol.controlPlane.controlPort" . | int -}}
   {{- dict
-      "armonik.netpol.rule.computePlaneFrom" (list . $controlPort)
       "armonik.netpol.rule.ingressFrom" .
     | include "armonik.netpol.mergeRules"
   -}}
@@ -392,7 +390,7 @@ ports:
 
 {{/*
   Control-plane submitter + init Job: one policy, since they share egress needs and init has no
-  ingress of its own.
+  ingress of its own. Ingress is explicit so that, without the ingress subchart, nothing is admitted.
 */}}
 {{- define "armonik.netpol.controlPlaneSubmitter" -}}
 podSelector:
@@ -402,6 +400,9 @@ podSelector:
       values:
         - control-plane
         - init
+policyTypes:
+  - Ingress
+  - Egress
 ingress:
   {{- include "armonik.netpol.rule.submitterIngress" . | nindent 2 }}
 egress:

@@ -361,7 +361,7 @@ tests:
             app.kubernetes.io/name: activemq
 
   - it: scopes the control-plane-submitter-connectivity policy to control-plane/init pods and
-      grants ingress from both compute-plane and nginx (standalone-release-friendly, label-based)
+      grants ingress from nginx only
     template: templates/networkpolicies/control-plane.yaml
     set:
       networkPolicy:
@@ -378,32 +378,39 @@ tests:
               values:
                 - control-plane
                 - init
-      - contains:
+      - equal:
           path: spec.ingress
-          content:
-            from:
-              - namespaceSelector:
-                  matchLabels:
-                    kubernetes.io/metadata.name: default
-                podSelector:
-                  matchLabels:
-                    app.kubernetes.io/part-of: compute-plane
-            ports:
-              - protocol: TCP
-                port: 1080
-      - contains:
+          value:
+            - from:
+                - namespaceSelector:
+                    matchLabels:
+                      kubernetes.io/metadata.name: default
+                  podSelector:
+                    matchLabels:
+                      app.kubernetes.io/component: ingress
+              ports:
+                - protocol: TCP
+                  port: 1080
+
+  - it: keeps Ingress in the control-plane-submitter-connectivity policy types when the ingress
+      subchart is disabled
+    template: templates/networkpolicies/control-plane.yaml
+    set:
+      networkPolicy:
+        enabled: true
+      ingress:
+        enabled: false
+    documentSelector:
+      path: metadata.name
+      value: t-armonik-control-plane-submitter-connectivity
+    asserts:
+      - equal:
+          path: spec.policyTypes
+          value:
+            - Ingress
+            - Egress
+      - notExists:
           path: spec.ingress
-          content:
-            from:
-              - namespaceSelector:
-                  matchLabels:
-                    kubernetes.io/metadata.name: default
-                podSelector:
-                  matchLabels:
-                    app.kubernetes.io/component: ingress
-            ports:
-              - protocol: TCP
-                port: 1080
 
   - it: still resolves the control-plane submitter/metrics-exporter ports when control-plane
       itself is disabled (a standalone control-plane release sharing this namespace) - regression

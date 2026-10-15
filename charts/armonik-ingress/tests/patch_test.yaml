@@ -60,7 +60,7 @@ tests:
           value: role
         template: deployments/load-balancer.yaml
 
-  - it: renders imagePullSecrets on nginx and gui, which had none
+  - it: renders the chart imagePullSecrets on nginx and gui
     asserts:
       - equal:
           path: spec.template.spec.imagePullSecrets[0].name
@@ -69,6 +69,27 @@ tests:
       - equal:
           path: spec.template.spec.imagePullSecrets[0].name
           value: from-chart
+        template: deployments/gui.yaml
+
+  - it: layers the deployment imagePullSecrets on the chart and global ones, on nginx only
+    set:
+      deployment.imagePullSecrets:
+        - name: from-deployment
+      global.imagePullSecrets:
+        - name: from-global
+    asserts:
+      - equal:
+          path: spec.template.spec.imagePullSecrets
+          value:
+            - name: from-deployment
+            - name: from-chart
+            - name: from-global
+        template: deployments/nginx.yaml
+      - equal:
+          path: spec.template.spec.imagePullSecrets
+          value:
+            - name: from-chart
+            - name: from-global
         template: deployments/gui.yaml
 
   - it: patches each pod and container independently

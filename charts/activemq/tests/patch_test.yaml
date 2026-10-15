@@ -41,11 +41,12 @@ tests:
             name: ACTIVEMQ_OPTS_MEMORY
             value: "-Xms1g -Xmx1g"
 
-  - it: applies both the chart and the global imagePullSecrets, not one or the other
+  - it: layers the deployment imagePullSecrets on the chart and global ones
     asserts:
       - equal:
           path: spec.template.spec.imagePullSecrets
           value:
+            - name: from-deployment
             - name: from-chart
             - name: from-global
 

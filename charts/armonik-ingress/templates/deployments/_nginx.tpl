@@ -76,6 +76,7 @@ volumeMounts:
 {{- $root := .root -}}
 {{- $v := $root.Values -}}
 {{- $global := $v.global | default dict -}}
+{{- $deployment := $v.deployment | default dict -}}
 {{- $container := list (include "armonik.ingress.nginx.container" .) $v.containerPatch "containerPatch" | include "armonik.utils.patch" | fromYaml -}}
 {{- $containers := $v.extraContainers | default list | concat (list $container) -}}
 automountServiceAccountToken: true
@@ -86,9 +87,8 @@ initContainers:
 containers: {{- $containers | toYaml | nindent 2 }}
 dnsPolicy: ClusterFirst
 shareProcessNamespace: false
-{{- with concat ($v.imagePullSecrets | default list) ($global.imagePullSecrets | default list) }}
-imagePullSecrets:
-  {{- toYaml . | nindent 2 }}
+{{- with list $deployment.imagePullSecrets $v.imagePullSecrets $global.imagePullSecrets | include "armonik.imagePullSecrets" }}
+imagePullSecrets: {{- . | nindent 2 }}
 {{- end }}
 {{- with $v.nodeSelector }}
 nodeSelector:

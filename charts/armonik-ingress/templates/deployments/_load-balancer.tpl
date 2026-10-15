@@ -67,9 +67,8 @@ volumeMounts:
 {{- $container := list (include "armonik.ingress.lb.container" .) $lb.containerPatch "loadBalancer.containerPatch" | include "armonik.utils.patch" | fromYaml -}}
 {{- $containers := $lb.extraContainers | default list | concat (list $container) -}}
 automountServiceAccountToken: true
-{{- with concat ($lb.imagePullSecrets | default list) ($v.imagePullSecrets | default list) ($global.imagePullSecrets | default list) }}
-imagePullSecrets:
-  {{- toYaml . | nindent 2 }}
+{{- with list $lb.imagePullSecrets $v.imagePullSecrets $global.imagePullSecrets | include "armonik.imagePullSecrets" }}
+imagePullSecrets: {{- . | nindent 2 }}
 {{- end }}
 {{- with $lb.extraInitContainers }}
 initContainers:

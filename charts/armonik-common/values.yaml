@@ -120,7 +120,9 @@ global:
   environment:
     name:
     description:
-  # -- Appended to every ArmoniK pod spec, after the chart- and component-level ones.
+  # -- Appended to every ArmoniK pod spec, after the chart- and component-level ones, deduplicated by
+  # name. Entries are Secret names or {name} references, at every level. Dependencies disagree on the
+  # form they take, or ignore it; charts/armonik/values.yaml lists which.
   imagePullSecrets:
   # -- Overrides every image's own registry, ours and the dependencies'.
   imageRegistry:

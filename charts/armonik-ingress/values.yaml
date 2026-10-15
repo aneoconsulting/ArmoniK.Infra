@@ -11,6 +11,10 @@ fullnameOverride: ""
 # -- Namespace of every resource, the release namespace when empty.
 namespaceOverride: ""
 imagePullSecrets: []
+# The nginx pod alone, on top of the chart-wide values.
+deployment:
+  # Listed before the chart-level and global ones.
+  imagePullSecrets: []
 image:
   registry:
   repository: nginxinc/nginx-unprivileged

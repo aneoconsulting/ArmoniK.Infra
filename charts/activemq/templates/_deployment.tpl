@@ -60,6 +60,7 @@ volumeMounts:
 {{- define "activemq.podSpec" -}}
 {{- $root := .root -}}
 {{- $v := $root.Values -}}
+{{- $deployment := $v.deployment | default dict -}}
 {{- $container := list (include "activemq.container" .) $v.containerPatch "containerPatch" | include "armonik.utils.patch" | fromYaml -}}
 {{- $containers := $v.extraContainers | default list | concat (list $container) -}}
 {{- range $v.extraVolumes }}
@@ -72,9 +73,8 @@ initContainers:
   {{- toYaml . | nindent 2 }}
 {{- end }}
 containers: {{- $containers | toYaml | nindent 2 }}
-{{- with concat ($v.image.imagePullSecrets | default list) ($v.global.imagePullSecrets | default list) }}
-imagePullSecrets:
-  {{- toYaml . | nindent 2 }}
+{{- with list $deployment.imagePullSecrets $v.imagePullSecrets $v.global.imagePullSecrets | include "armonik.imagePullSecrets" }}
+imagePullSecrets: {{- . | nindent 2 }}
 {{- end }}
 volumes:
   - name: activemq-conf-xml

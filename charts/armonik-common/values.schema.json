@@ -181,7 +181,7 @@
             "array",
             "null"
           ],
-          "description": "Array, not a bare string, which used to be read as a list and mangled.",
+          "description": "List of Secret names or {name} references; a bare string is not a list.",
           "items": {
             "anyOf": [
               {

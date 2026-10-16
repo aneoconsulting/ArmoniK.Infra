@@ -5,6 +5,8 @@ templates:
   - operators-guard.yaml
   - secrets/conf-secrets.yaml
   - charts/operators/charts/cert-manager/templates/startupapicheck-job.yaml
+  - charts/operators/charts/cert-manager/templates/startupapicheck-rbac.yaml
+  - charts/operators/charts/cert-manager/templates/startupapicheck-serviceaccount.yaml
 tests:
   - it: rejects an operator deployed but not available
     template: operators-guard.yaml
@@ -49,3 +51,21 @@ tests:
       - matchRegex:
           path: metadata.annotations["helm.sh/hook-delete-policy"]
           pattern: before-hook-creation
+  - it: runs the cert-manager startupapicheck ServiceAccount and RBAC on upgrades too, ahead of the Job
+    templates:
+      - charts/operators/charts/cert-manager/templates/startupapicheck-rbac.yaml
+      - charts/operators/charts/cert-manager/templates/startupapicheck-serviceaccount.yaml
+    set:
+      global:
+        armonik:
+          operators:
+            certManager:
+              deploy: true
+              available: true
+    asserts:
+      - equal:
+          path: metadata.annotations["helm.sh/hook"]
+          value: post-install,post-upgrade
+      - equal:
+          path: metadata.annotations["helm.sh/hook-weight"]
+          value: "-5"

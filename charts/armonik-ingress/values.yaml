@@ -304,7 +304,10 @@ static:
     description: "{{ .Values.global.environment.description }}"
     name: "{{ .Values.global.environment.name }}"
     version: "{{ .Chart.AppVersion }}"
-  guiConfiguration: {}
+  # -- Default Admin GUI settings, the JSON exported from its Settings page. The GUI fetches
+  # /static/gui_configuration, so the key name is fixed. It fills only the settings a browser has
+  # not stored yet, and is ignored unless its `version` matches the GUI's major.minor.
+  gui_configuration: {}
 
 
 # ==== Gateway API ====

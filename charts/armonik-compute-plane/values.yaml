@@ -332,7 +332,7 @@ partitionCommon:
         metadata:
           url: '{{ include "armonik.monitoring.metricsExporterUrl" . }}'
           format: prometheus
-          valueLocation: 'armonik_{{ .Values.partitionName }}_tasks_queued'
+          valueLocation: 'armonik_{{ .Values.partitionName | replace "-" "_" }}_tasks_queued'
           targetValue: "2"
           activationTargetValue: "0"
       # PromQL opt-in, for rate, ratio or aggregation scaling: swap the trigger above for a prometheus

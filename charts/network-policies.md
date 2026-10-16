@@ -9,7 +9,7 @@ The one exception is the Bitnami RabbitMQ chart, whose own `networkPolicy.enable
 
 | Component | Rendered by | Default egress | Default ingress |
 |---|---|---|---|
-| control-plane submitter + init | umbrella `armonik/templates/networkpolicies/control-plane.yaml` | MongoDB, RabbitMQ/ActiveMQ, Redis, DNS | compute-plane, nginx (control-port) |
+| control-plane submitter + init | umbrella `armonik/templates/networkpolicies/control-plane.yaml` | MongoDB, RabbitMQ/ActiveMQ, Redis, DNS | nginx (control-port) only, see below |
 | control-plane submitter (chart-local) | `armonik-control-plane` | DNS | Prometheus |
 | control-plane metrics-exporter | umbrella + `armonik-control-plane` | MongoDB, DNS | KEDA (umbrella), Prometheus (chart-local) |
 | compute-plane | umbrella `.../compute-plane.yaml` + `armonik-compute-plane` | MongoDB, RabbitMQ/ActiveMQ, Redis, DNS | Prometheus |
@@ -23,6 +23,9 @@ The one exception is the Bitnami RabbitMQ chart, whose own `networkPolicy.enable
 | ActiveMQ | umbrella `.../activemq.yaml` + `activemq/templates/network-policy.yaml` | DNS (chart-local) | control-plane/init, compute-plane (umbrella) |
 | fluent-bit | umbrella `.../fluent-bit-egress.yaml` | DNS, kube-api, Seq | - |
 | KEDA operator | umbrella `.../keda-metrics-egress.yaml` | control-plane metrics-exporter | - |
+
+The submitter admits nginx alone: under mTLS it trusts the identity headers nginx sets. Do not open
+it to another pod, least of all the compute-plane, whose workers run user code.
 
 The umbrella owns the policies of MongoDB, Redis/valkey and mongodb-exporter outright, their charts
 shipping none. The other dependencies (ActiveMQ, RabbitMQ, Grafana, Seq, fluent-bit) also have

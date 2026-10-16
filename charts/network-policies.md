@@ -13,7 +13,7 @@ The one exception is the Bitnami RabbitMQ chart, whose own `networkPolicy.enable
 | control-plane submitter (chart-local) | `armonik-control-plane` | DNS | Prometheus |
 | control-plane metrics-exporter | umbrella + `armonik-control-plane` | MongoDB, DNS | KEDA (umbrella), Prometheus (chart-local) |
 | compute-plane | umbrella `.../compute-plane.yaml` + `armonik-compute-plane` | MongoDB, RabbitMQ/ActiveMQ, Redis, DNS | Prometheus |
-| nginx (ingress) | `armonik-ingress` + umbrella `.../nginx-egress.yaml` | DNS, GUI; control-plane, Grafana, Seq (umbrella only) | any source, 8080/9080 |
+| nginx (ingress) | `armonik-ingress` + umbrella `.../nginx-egress.yaml` | DNS, GUI (both); control-plane, Grafana, Seq (umbrella only) | any source, 8080/9080 |
 | GUI | `armonik-ingress` | DNS | nginx |
 | gateway/httpRoute health check | `armonik-ingress`, with `gateway` or `httpRoute` enabled | - | `networkPolicy.healthCheckRules` |
 | MongoDB operator | umbrella `.../mongodb.yaml` | MongoDB server, DNS, kube-api | MongoDB server |
@@ -22,7 +22,7 @@ The one exception is the Bitnami RabbitMQ chart, whose own `networkPolicy.enable
 | Redis/valkey | umbrella `.../redis.yaml` | - | control-plane/init, compute-plane |
 | ActiveMQ | umbrella `.../activemq.yaml` + `activemq/templates/network-policy.yaml` | DNS (chart-local) | control-plane/init, compute-plane (umbrella) |
 | fluent-bit | umbrella `.../fluent-bit-egress.yaml` | DNS, kube-api, Seq | - |
-| KEDA operator | umbrella `.../keda-metrics-egress.yaml` | control-plane metrics-exporter | - |
+| KEDA operator | umbrella `.../keda-metrics-egress.yaml` | control-plane metrics-exporter, DNS, kube-api | - |
 
 The umbrella owns the policies of MongoDB, Redis/valkey and mongodb-exporter outright, their charts
 shipping none. The other dependencies (ActiveMQ, RabbitMQ, Grafana, Seq, fluent-bit) also have
@@ -39,7 +39,9 @@ their own, toggled by `dependencies.<name>.networkPolicy.enabled`.
 
 Redis/valkey and mongodb-exporter follow the umbrella's `networkPolicy.enabled`. That switch does
 not cascade to dependency or operator charts, on purpose, so a default-deny baseline can be matched
-incrementally.
+incrementally. The umbrella policies selecting another chart's pods (nginx, KEDA, fluent-bit) still
+grant the DNS and API egress those pods need, since selecting them isolates their egress whatever
+that chart's own switch.
 
 ## Standalone installs
 

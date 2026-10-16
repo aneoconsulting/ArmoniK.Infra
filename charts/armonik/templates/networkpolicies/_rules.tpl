@@ -227,7 +227,8 @@ ports:
 
 
 {{/*
-  Ingress (nginx) NetworkPolicy: egress-only, to control-plane + Grafana + Seq.
+  Ingress (nginx) NetworkPolicy: egress-only, to control-plane + Grafana + Seq, plus the DNS and GUI
+  rules of armonik-ingress's own policy, since this one isolates nginx's egress without it.
 */}}
 {{- define "armonik.netpol.ingressEgress" -}}
 {{- with .Subcharts.ingress -}}
@@ -238,6 +239,8 @@ podSelector:
     {{- include "armonik.selectorLabels" . | nindent 4 }}
 egress:
   {{- dict
+        "armonik.netpol.dnsRule" dict
+        "armonik.netpol.rule.guiTo" .
         "armonik.netpol.rule.ingressToControlPlane" $
         "armonik.netpol.rule.ingressToGrafana" $
         "armonik.netpol.rule.ingressToSeq" $
@@ -634,9 +637,9 @@ ingress:
 
 
 {{/*
-  KEDA operator egress: to this release's metrics-exporter (default metrics-api trigger target).
-  KEDA's own chart grants DNS and the Kubernetes API; this adds the ArmoniK target, in KEDA's
-  namespace from armonik.operators.
+  KEDA operator egress: to this release's metrics-exporter (default metrics-api trigger target), in
+  KEDA's namespace from armonik.operators. DNS and the Kubernetes API repeat KEDA's own chart policy,
+  since this one isolates the operator's egress without it.
 */}}
 {{- define "armonik.netpol.kedaMetricsEgress" -}}
 {{- $root := . -}}
@@ -655,4 +658,10 @@ egress:
     ports:
       - protocol: TCP
         port: {{ $metricsPort }}
+  {{- dict
+        "armonik.netpol.dnsRule" dict
+        "armonik.netpol.kubeApiRule" dict
+    | include "armonik.netpol.mergeRules"
+    | nindent 2
+  }}
 {{- end -}}

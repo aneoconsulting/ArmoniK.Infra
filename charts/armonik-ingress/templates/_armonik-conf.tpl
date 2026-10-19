@@ -87,6 +87,7 @@ Usage:
 {{- $mtls := $root.Values.mtls.enabled | default false }}
 {{- $cnPattern := include "armonik.ingress.mtlsCnPattern" $root.Values }}
 {{- $headers := include "armonik.ingress.identityHeaders" $root.Values | fromYaml }}
+{{- $sso := include "armonik.ingress.sso" $root | fromYaml }}
 {{- $lbHost := include "armonik.fullname" $root | printf "%s-load-balancer" | trunc 63 | trimSuffix "-" }}
 {{- $svcSuffix := printf "%s.svc.%s" (include "armonik.namespace" $root) (include "armonik.clusterDomain" $root) }}
 resolver kube-dns.kube-system ipv6=off;
@@ -122,6 +123,9 @@ map "{{ $headers.fingerprint.var }}|$ssl_client_s_dn_cn" $client_fingerprint {
 {{- end }}
 }
 {{- end }}
+{{- if $sso.enabled }}
+{{ include "armonik.ingress.conf.ssoMaps" $root }}
+{{- end }}
 
 upstream armonik {
     zone armonik_zone 32k;
@@ -147,7 +151,8 @@ upstream armonik {
 {{/*
 One nginx server: role web listens on 8080 (8443 with TLS), role grpc on 9080 (9443 with TLS). The
 ports follow tls.enabled alone, as nginx terminates TLS whenever it is set; the Service targets
-come from armonik.ingress.containerPort.
+come from armonik.ingress.containerPort. With SSO the web server authenticates through
+oauth2-proxy instead of client certificates.
 
 Usage:
 {{ dict "root" $root "useEso" $useEso "role" "web" | include "armonik.ingress.conf.server" }}
@@ -161,6 +166,8 @@ Usage:
 {{- if not $ports }}
   {{- printf "armonik.ingress.conf.server: unknown role %q, expected web or grpc" .role | fail }}
 {{- end }}
+{{- $sso := include "armonik.ingress.sso" $root | fromYaml }}
+{{- $ssoWeb := and $sso.enabled (eq .role "web") }}
 {{- $port := $tls | empty | ternary (index $ports 0) (index $ports 1) -}}
 server {
     # {{ .role }} port
@@ -174,7 +181,7 @@ server {
     {{- else }}
     # TLS enabled but no certificate paths: mount the certificate at /ingress, or set tls.ssl.certificatePath and tls.ssl.keyPath
     {{- end }}
-    {{- if $mtls }}
+    {{- if and $mtls (not $ssoWeb) }}
     ssl_verify_client on;
     ssl_client_certificate /ingressclient/ca.crt;
     {{- else }}
@@ -194,21 +201,39 @@ server {
 
     sendfile on;
     tcp_nopush on;
+    {{- if $ssoWeb }}
+
+    # SSO: every location requires an oauth2-proxy session unless it turns auth_request off
+    auth_request /oauth2/auth;
+    error_page 401 = @sso_login;
+    # Pass on the session cookie oauth2-proxy renews (cookieRefresh)
+    auth_request_set $auth_cookie $upstream_http_set_cookie;
+    add_header Set-Cookie $auth_cookie;
+    {{- end }}
 {{ include "armonik.ingress.conf.locations" . }}
 }
 {{- end -}}
 
 {{/*
 The locations of one server, with the server-level directives between them (upstream variables,
-buffering). Takes the server's dict; role is not read yet, both servers serve the same routes.
+buffering). Takes the server's dict. Both roles serve every route, except with SSO: the web server
+adds the oauth2-proxy routes, the grpc server keeps the gRPC API alone.
 */}}
 {{- define "armonik.ingress.conf.locations" -}}
 {{- $root := .root -}}
 {{- $useEso := .useEso -}}
-{{- $mtls := $root.Values.mtls.enabled | default false }}
-{{- $headers := include "armonik.ingress.identityHeaders" $root.Values | fromYaml }}
 {{- $guiHost := include "armonik.fullname" $root | printf "%s-gui" | trunc 63 | trimSuffix "-" }}
 {{- $svcSuffix := printf "%s.svc.%s" (include "armonik.namespace" $root) (include "armonik.clusterDomain" $root) }}
+{{- $sso := include "armonik.ingress.sso" $root | fromYaml }}
+{{- if and $sso.enabled (eq .role "grpc") }}
+{{- include "armonik.ingress.conf.apiLocation" . }}
+    location / {
+        return 404;
+    }
+{{- else }}
+{{- if $sso.enabled }}
+{{- include "armonik.ingress.conf.ssoLocations" . }}
+{{- end }}
     location = / {
         rewrite ^ $scheme://$http_host/admin/$accept_language/;
     }
@@ -225,27 +250,7 @@ buffering). Takes the server's dict; role is not read yet, both servers serve th
     location /admin/ {
         proxy_pass $admin_app_upstream$uri$is_args$args;
     }
-    location ~* ^/armonik\. {
-        {{- if $mtls }}
-        grpc_set_header {{ $headers.commonName.name }} $client_cn;
-        grpc_set_header {{ $headers.fingerprint.name }} $client_fingerprint;
-        {{- else }}
-        # No client certificate: never forward identity headers sent by the client
-        grpc_set_header {{ $headers.commonName.name }} "";
-        grpc_set_header {{ $headers.fingerprint.name }} "";
-        grpc_set_header {{ $headers.impersonationUsername.name }} "";
-        grpc_set_header {{ $headers.impersonationId.name }} "";
-        {{- end }}
-        grpc_pass grpc://armonik;
-        # A whole gRPC stream seems to count as one body, so disable the size limit.
-        client_max_body_size 0;
-        # 30-day read timeout so long tasks do not raise a gRPC exception.
-        # TODO: find a better configuration
-        proxy_read_timeout 30d;
-        proxy_send_timeout 1d;
-        grpc_read_timeout 30d;
-        grpc_send_timeout 1d;
-    }
+{{- include "armonik.ingress.conf.apiLocation" . }}
 
     location /static/ {
         alias /static/;
@@ -272,4 +277,49 @@ buffering). Takes the server's dict; role is not read yet, both servers serve th
     {{ include "armonik.grafana.locations" $root }}
     {{`{{- end }}`}}
     {{- end }}
+{{- end }}
+{{- end -}}
+
+{{/*
+The gRPC API location (also gRPC-web): identity headers from the SSO session on the web server
+under SSO, else from the client certificate with mTLS, else cleared. Takes the server's dict.
+*/}}
+{{- define "armonik.ingress.conf.apiLocation" -}}
+{{- $root := .root -}}
+{{- $mtls := $root.Values.mtls.enabled | default false }}
+{{- $headers := include "armonik.ingress.identityHeaders" $root.Values | fromYaml }}
+{{- $sso := include "armonik.ingress.sso" $root | fromYaml }}
+{{- $ssoWeb := and $sso.enabled (eq .role "web") }}
+    location ~* ^/armonik\. {
+        {{- if $ssoWeb }}
+        auth_request /oauth2/auth;
+        error_page 401 = @grpc_unauthenticated;
+        auth_request_set $auth_cookie $upstream_http_set_cookie;
+        auth_request_set $sso_identity {{ $sso.identityVar }};
+        auth_request_set $sso_groups $upstream_http_x_auth_request_groups;
+        # Identity from the SSO session only, never from the client
+        grpc_set_header {{ $headers.commonName.name }} $sso_cn;
+        grpc_set_header {{ $headers.fingerprint.name }} "{{ $sso.fingerprint }}";
+        grpc_set_header {{ $headers.impersonationUsername.name }} "";
+        grpc_set_header {{ $headers.impersonationId.name }} "";
+        {{- else if $mtls }}
+        grpc_set_header {{ $headers.commonName.name }} $client_cn;
+        grpc_set_header {{ $headers.fingerprint.name }} $client_fingerprint;
+        {{- else }}
+        # No client certificate: never forward identity headers sent by the client
+        grpc_set_header {{ $headers.commonName.name }} "";
+        grpc_set_header {{ $headers.fingerprint.name }} "";
+        grpc_set_header {{ $headers.impersonationUsername.name }} "";
+        grpc_set_header {{ $headers.impersonationId.name }} "";
+        {{- end }}
+        grpc_pass grpc://armonik;
+        # A whole gRPC stream seems to count as one body, so disable the size limit.
+        client_max_body_size 0;
+        # 30-day read timeout so long tasks do not raise a gRPC exception.
+        # TODO: find a better configuration
+        proxy_read_timeout 30d;
+        proxy_send_timeout 1d;
+        grpc_read_timeout 30d;
+        grpc_send_timeout 1d;
+    }
 {{- end -}}

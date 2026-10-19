@@ -47,14 +47,36 @@ ports:
 
 
 {{/*
-  nginx egress rules: DNS and the GUI.
+  Egress rule: the oauth2-proxy sidecar to the IdP, TCP 443 to sso.networkPolicy.idpEgressCidrs.
+  Empty without sso or CIDRs, an empty "to" admitting every destination. Takes the ingress chart's
+  root, so the umbrella passes .Subcharts.ingress.
+*/}}
+{{- define "armonik.netpol.rule.ssoIdpTo" -}}
+{{- $sso := include "armonik.ingress.sso" . | fromYaml -}}
+{{- if and $sso.enabled $sso.idpEgressCidrs -}}
+to:
+  {{- range $sso.idpEgressCidrs }}
+  - ipBlock:
+      cidr: {{ . | quote }}
+  {{- end }}
+ports:
+  - protocol: TCP
+    port: 443
+{{- end -}}
+{{- end -}}
+
+
+{{/*
+  nginx egress rules: DNS and the GUI, plus the IdP with sso.
 */}}
 {{- define "armonik.netpol.nginxEgress" -}}
-  {{- dict
+  {{- $rules := dict
         "armonik.netpol.dnsRule" dict
-        "armonik.netpol.rule.guiTo" .
-      | include "armonik.netpol.mergeRules"
-  -}}
+        "armonik.netpol.rule.guiTo" . -}}
+  {{- if list .Values "sso" "enabled" | include "armonik.utils.index" -}}
+    {{- $_ := set $rules "armonik.netpol.rule.ssoIdpTo" . -}}
+  {{- end -}}
+  {{- $rules | include "armonik.netpol.mergeRules" -}}
 {{- end -}}
 
 

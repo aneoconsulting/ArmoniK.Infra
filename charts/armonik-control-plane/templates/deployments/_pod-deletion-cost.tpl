@@ -47,9 +47,8 @@ containers: {{- $containers | toYaml | nindent 2 }}
 volumes:
   {{- toYaml . | nindent 2 }}
 {{- end }}
-{{- with concat ($pdc.imagePullSecrets | default list) ($v.imagePullSecrets | default list) ($global.imagePullSecrets | default list) }}
-imagePullSecrets:
-  {{- toYaml . | nindent 2 }}
+{{- with list $pdc.imagePullSecrets $v.imagePullSecrets $global.imagePullSecrets | include "armonik.imagePullSecrets" }}
+imagePullSecrets: {{- . | nindent 2 }}
 {{- end }}
 serviceAccountName: {{ .serviceAccount | quote }}
 serviceAccount: {{ .serviceAccount | quote }}

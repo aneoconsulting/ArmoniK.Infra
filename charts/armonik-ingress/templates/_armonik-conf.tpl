@@ -74,8 +74,9 @@ location {{ $grafanaPath }}/api/live {
 {{- end }}
 
 {{/*
-nginx server configuration. With useEso, an upstream absent from values becomes an ESO template
-reference to the URLs Secret key (control-plane, seq, grafana).
+nginx configuration: the http-level resolver, maps and upstream once, then one server per port
+role. With useEso, an upstream absent from values becomes an ESO template reference to the URLs
+Secret key (control-plane, seq, grafana).
 
 Usage:
 {{- dict "root" . "useEso" true | include "armonik.conf.render" }}
@@ -83,11 +84,10 @@ Usage:
 {{- define "armonik.conf.render" -}}
 {{- $root := .root -}}
 {{- $useEso := .useEso -}}
-{{- $tls := $root.Values.tls.enabled | default false }}
 {{- $mtls := $root.Values.mtls.enabled | default false }}
 {{- $cnPattern := include "armonik.ingress.mtlsCnPattern" $root.Values }}
+{{- $headers := include "armonik.ingress.identityHeaders" $root.Values | fromYaml }}
 {{- $lbHost := include "armonik.fullname" $root | printf "%s-load-balancer" | trunc 63 | trimSuffix "-" }}
-{{- $guiHost := include "armonik.fullname" $root | printf "%s-gui" | trunc 63 | trimSuffix "-" }}
 {{- $svcSuffix := printf "%s.svc.%s" (include "armonik.namespace" $root) (include "armonik.clusterDomain" $root) }}
 resolver kube-dns.kube-system ipv6=off;
 
@@ -109,16 +109,16 @@ map $ssl_client_s_dn $ssl_client_s_dn_cn {
     default "";
     ~CN=(?<CN>[^,/]+) $CN;
 }
-map "$http_x_certificate_client_cn|$ssl_client_s_dn_cn" $client_cn {
+map "{{ $headers.commonName.var }}|$ssl_client_s_dn_cn" $client_cn {
     default $ssl_client_s_dn_cn;
 {{- if $cnPattern }}
-    ~^(.+)\|({{ $cnPattern }})$ $http_x_certificate_client_cn;
+    ~^(.+)\|({{ $cnPattern }})$ {{ $headers.commonName.var }};
 {{- end }}
 }
-map "$http_x_certificate_client_fingerprint|$ssl_client_s_dn_cn" $client_fingerprint {
+map "{{ $headers.fingerprint.var }}|$ssl_client_s_dn_cn" $client_fingerprint {
     default $ssl_client_fingerprint;
 {{- if $cnPattern }}
-    ~^(.+)\|({{ $cnPattern }})$ $http_x_certificate_client_fingerprint;
+    ~^(.+)\|({{ $cnPattern }})$ {{ $headers.fingerprint.var }};
 {{- end }}
 }
 {{- end }}
@@ -138,14 +138,36 @@ upstream armonik {
     keepalive_time 8h;
     keepalive_timeout 1h;
 }
+{{- range list "web" "grpc" }}
 
+{{ dict "root" $root "useEso" $useEso "role" . | include "armonik.ingress.conf.server" }}
+{{- end }}
+{{- end -}}
+
+{{/*
+One nginx server: role web listens on 8080 (8443 with TLS), role grpc on 9080 (9443 with TLS). The
+ports follow tls.enabled alone, as nginx terminates TLS whenever it is set; the Service targets
+come from armonik.ingress.containerPort.
+
+Usage:
+{{ dict "root" $root "useEso" $useEso "role" "web" | include "armonik.ingress.conf.server" }}
+*/}}
+{{- define "armonik.ingress.conf.server" -}}
+{{- $root := .root -}}
+{{- $tls := $root.Values.tls.enabled | default false }}
+{{- $mtls := $root.Values.mtls.enabled | default false }}
+{{- $headers := include "armonik.ingress.identityHeaders" $root.Values | fromYaml }}
+{{- $ports := index (dict "web" (list 8080 8443) "grpc" (list 9080 9443)) .role }}
+{{- if not $ports }}
+  {{- printf "armonik.ingress.conf.server: unknown role %q, expected web or grpc" .role | fail }}
+{{- end }}
+{{- $port := $tls | empty | ternary (index $ports 0) (index $ports 1) -}}
 server {
+    # {{ .role }} port
     {{- if $tls }}
     # TLS enabled
-    listen 8443 ssl http2;
-    listen [::]:8443 ssl http2;
-    listen 9443 ssl http2;
-    listen [::]:9443 ssl http2;
+    listen {{ $port }} ssl http2;
+    listen [::]:{{ $port }} ssl http2;
     {{- if or $root.Values.tls.ssl.certificatePath $root.Values.tls.ssl.keyPath }}
     ssl_certificate     {{ default "/ingress/tls.crt" $root.Values.tls.ssl.certificatePath | quote}};
     ssl_certificate_key {{ default "/ingress/tls.key" $root.Values.tls.ssl.keyPath | quote}};
@@ -157,24 +179,36 @@ server {
     ssl_client_certificate /ingressclient/ca.crt;
     {{- else }}
     ssl_verify_client off;
-    proxy_hide_header X-Certificate-Client-CN;
-    proxy_hide_header X-Certificate-Client-Fingerprint;
+    proxy_hide_header {{ $headers.commonName.name }};
+    proxy_hide_header {{ $headers.fingerprint.name }};
     {{- end }}
     ssl_protocols {{ default "TLSv1.2 TLSv1.3" $root.Values.tls.ssl.protocols }};
     ssl_ciphers {{ default "EECDH+AESGCM:EECDH+AES256" $root.Values.tls.ssl.ciphers }};
     ssl_conf_command Ciphersuites {{ default "TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256" $root.Values.tls.ssl.cipherSuites }};
     {{- else }}
     # TLS disabled
-    listen 8080;
-    listen [::]:8080;
-    listen 9080;
-    listen [::]:9080;
+    listen {{ $port }};
+    listen [::]:{{ $port }};
     http2 on;
     {{- end }}
 
     sendfile on;
     tcp_nopush on;
+{{ include "armonik.ingress.conf.locations" . }}
+}
+{{- end -}}
 
+{{/*
+The locations of one server, with the server-level directives between them (upstream variables,
+buffering). Takes the server's dict; role is not read yet, both servers serve the same routes.
+*/}}
+{{- define "armonik.ingress.conf.locations" -}}
+{{- $root := .root -}}
+{{- $useEso := .useEso -}}
+{{- $mtls := $root.Values.mtls.enabled | default false }}
+{{- $headers := include "armonik.ingress.identityHeaders" $root.Values | fromYaml }}
+{{- $guiHost := include "armonik.fullname" $root | printf "%s-gui" | trunc 63 | trimSuffix "-" }}
+{{- $svcSuffix := printf "%s.svc.%s" (include "armonik.namespace" $root) (include "armonik.clusterDomain" $root) }}
     location = / {
         rewrite ^ $scheme://$http_host/admin/$accept_language/;
     }
@@ -193,8 +227,14 @@ server {
     }
     location ~* ^/armonik\. {
         {{- if $mtls }}
-        grpc_set_header X-Certificate-Client-CN $client_cn;
-        grpc_set_header X-Certificate-Client-Fingerprint $client_fingerprint;
+        grpc_set_header {{ $headers.commonName.name }} $client_cn;
+        grpc_set_header {{ $headers.fingerprint.name }} $client_fingerprint;
+        {{- else }}
+        # No client certificate: never forward identity headers sent by the client
+        grpc_set_header {{ $headers.commonName.name }} "";
+        grpc_set_header {{ $headers.fingerprint.name }} "";
+        grpc_set_header {{ $headers.impersonationUsername.name }} "";
+        grpc_set_header {{ $headers.impersonationId.name }} "";
         {{- end }}
         grpc_pass grpc://armonik;
         # A whole gRPC stream seems to count as one body, so disable the size limit.
@@ -232,5 +272,4 @@ server {
     {{ include "armonik.grafana.locations" $root }}
     {{`{{- end }}`}}
     {{- end }}
-}
 {{- end -}}

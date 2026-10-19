@@ -14,7 +14,7 @@ The one exception is the Bitnami RabbitMQ chart, whose own `networkPolicy.enable
 | control-plane metrics-exporter | umbrella + `armonik-control-plane` | MongoDB, DNS | KEDA (umbrella), Prometheus (chart-local) |
 | control-plane pod-deletion-cost controller | `armonik-control-plane` | Prometheus, kube-api, DNS | - |
 | compute-plane | umbrella `.../compute-plane.yaml` + `armonik-compute-plane` | MongoDB, RabbitMQ/ActiveMQ, Redis, DNS | Prometheus |
-| nginx (ingress) | `armonik-ingress` + umbrella `.../nginx-egress.yaml` | DNS, GUI (both); control-plane, Grafana, Seq (umbrella only) | any source, 8080/9080 |
+| nginx (ingress) | `armonik-ingress` + umbrella `.../nginx-egress.yaml` | DNS, GUI; control-plane, Grafana, Seq (umbrella only) | any source, 8080/9080 (8443/9443 with TLS) |
 | GUI | `armonik-ingress` | DNS | nginx |
 | gateway/httpRoute health check | `armonik-ingress`, with `gateway` or `httpRoute` enabled | - | `networkPolicy.healthCheckRules` |
 | MongoDB operator | umbrella `.../mongodb.yaml` | MongoDB server, DNS, kube-api | MongoDB server |

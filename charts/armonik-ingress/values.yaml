@@ -166,6 +166,17 @@ mtls:
     existingSecret: ""
   trustedCommonNames: []
 
+# -- Identity headers nginx sets on gRPC requests to the control plane. They must match the
+# control plane's Authenticator header settings, which the charts leave at their ArmoniK Core
+# defaults. With mTLS, the CN and fingerprint come from the client certificate (or from a
+# trustedCommonNames proxy) and the impersonation headers pass through; without mTLS, all four are
+# cleared so a client cannot assert an identity. Letters, digits and dashes only.
+identityHeaders:
+  commonName: X-Certificate-Client-CN
+  fingerprint: X-Certificate-Client-Fingerprint
+  impersonationUsername: X-Impersonate-Username
+  impersonationId: X-Impersonate-Id
+
 # Not read by any template.
 volumes:
   # ingressSecret: ingress-crt

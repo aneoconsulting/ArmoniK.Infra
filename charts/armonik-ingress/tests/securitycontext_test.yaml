@@ -28,32 +28,45 @@ tests:
             allowPrivilegeEscalation: false
             seccompProfile:
               type: RuntimeDefault
-  - it: renders no nginx or load-balancer pod securityContext by default
-    templates:
-      - deployments/nginx.yaml
-      - deployments/load-balancer.yaml
+  - it: runs the nginx pod as nobody by default
+    template: deployments/nginx.yaml
     asserts:
-      - notExists:
+      - equal:
           path: spec.template.spec.securityContext
-  - it: runs the gui pod as the image uid by default
+          value:
+            runAsUser: 65534
+            runAsGroup: 65534
+  - it: runs the gui pod as the image uid by default, which owns nginx's temp dir
     template: deployments/gui.yaml
     asserts:
       - equal:
           path: spec.template.spec.securityContext
           value:
             runAsUser: 5000
+            runAsGroup: 5000
+  - it: runs the load-balancer pod as its dedicated uid, its image declaring USER 0
+    template: deployments/load-balancer.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext
+          value:
+            runAsUser: 5001
+            runAsGroup: 5001
   - it: falls back to the chart-level podSecurityContext
     templates:
       - deployments/gui.yaml
       - deployments/load-balancer.yaml
     set:
       gui.podSecurityContext: null
+      loadBalancer.podSecurityContext: null
       podSecurityContext:
         fsGroup: 2000
     asserts:
       - equal:
           path: spec.template.spec.securityContext
           value:
+            runAsUser: 65534
+            runAsGroup: 65534
             fsGroup: 2000
   - it: lets gui and load-balancer override the chart-level securityContext
     templates:

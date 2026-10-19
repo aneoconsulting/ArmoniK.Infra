@@ -1,0 +1,36 @@
+suite: global.armonik.runAsUser and runAsGroup across the planes
+release:
+  name: t
+templates:
+  - charts/control-plane/templates/deployments/control-plane.yaml
+  - charts/compute-plane/templates/deployment.yaml
+set:
+  global.armonik.runAsUser: 1234
+  global.armonik.runAsGroup: 4321
+tests:
+  - it: runs the submitter as the umbrella's uid and gid
+    template: charts/control-plane/templates/deployments/control-plane.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[?(@.name == "control-plane")].securityContext.runAsUser
+          value: 1234
+      - equal:
+          path: spec.template.spec.containers[?(@.name == "control-plane")].securityContext.runAsGroup
+          value: 4321
+  - it: runs every partition's agent and worker as the same uid and gid
+    template: charts/compute-plane/templates/deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[?(@.name == "agent")].securityContext.runAsUser
+          value: 1234
+      - equal:
+          path: spec.template.spec.initContainers[?(@.name == "worker")].securityContext.runAsUser
+          value: 1234
+      - equal:
+          path: spec.template.spec.containers[?(@.name == "agent")].securityContext.runAsGroup
+          value: 4321
+      - equal:
+          path: spec.template.spec.initContainers[?(@.name == "worker")].securityContext.runAsGroup
+          value: 4321
+      - notExists:
+          path: spec.template.spec.securityContext

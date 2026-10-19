@@ -1,0 +1,50 @@
+suite: securityContext on the activemq broker
+templates:
+  - activemq-deployment.yaml
+tests:
+  - it: runs the broker as the image uid, which owns its store
+    template: activemq-deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext
+          value:
+            runAsUser: 999
+            runAsGroup: 999
+  - it: hardens the broker container by default
+    template: activemq-deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].securityContext
+          value:
+            capabilities:
+              drop:
+                - ALL
+            privileged: false
+            runAsNonRoot: true
+            readOnlyRootFilesystem: false
+            allowPrivilegeEscalation: false
+            seccompProfile:
+              type: RuntimeDefault
+  - it: renders an overridden podSecurityContext, merged over the default
+    template: activemq-deployment.yaml
+    set:
+      podSecurityContext:
+        runAsUser: 1000
+        fsGroup: 1000
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext
+          value:
+            runAsUser: 1000
+            runAsGroup: 999
+            fsGroup: 1000
+  - it: drops both securityContexts when nulled
+    template: activemq-deployment.yaml
+    set:
+      podSecurityContext: null
+      securityContext: null
+    asserts:
+      - notExists:
+          path: spec.template.spec.securityContext
+      - notExists:
+          path: spec.template.spec.containers[0].securityContext

@@ -1,0 +1,92 @@
+suite: armonik.securityContext uid and gid defaulting
+templates:
+  - security-context.yaml
+tests:
+  - it: defaults runAsUser and runAsGroup to their globals
+    set:
+      securityContext:
+        input: {runAsNonRoot: true}
+    asserts:
+      - equal:
+          path: data.result
+          value: '{"runAsGroup":5000,"runAsNonRoot":true,"runAsUser":5000}'
+  - it: follows overridden globals
+    set:
+      global.armonik.runAsUser: 1234
+      global.armonik.runAsGroup: 4321
+      securityContext:
+        input: {runAsNonRoot: true}
+    asserts:
+      - equal:
+          path: data.result
+          value: '{"runAsGroup":4321,"runAsNonRoot":true,"runAsUser":1234}'
+  - it: keeps ids set on the container
+    set:
+      global.armonik.runAsUser: 1234
+      securityContext:
+        input: {runAsUser: 42, runAsGroup: 43}
+    asserts:
+      - equal:
+          path: data.result
+          value: '{"runAsGroup":43,"runAsUser":42}'
+  - it: defaults each id independently
+    set:
+      securityContext:
+        input: {runAsUser: 42}
+    asserts:
+      - equal:
+          path: data.result
+          value: '{"runAsGroup":5000,"runAsUser":42}'
+  - it: keeps container ids of 0, which are not empty
+    set:
+      securityContext:
+        input: {runAsUser: 0, runAsGroup: 0, runAsNonRoot: false}
+    asserts:
+      - equal:
+          path: data.result
+          value: '{"runAsGroup":0,"runAsNonRoot":false,"runAsUser":0}'
+  - it: honours global ids of 0
+    set:
+      global.armonik.runAsUser: 0
+      global.armonik.runAsGroup: 0
+      securityContext:
+        input: {runAsNonRoot: false}
+    asserts:
+      - equal:
+          path: data.result
+          value: '{"runAsGroup":0,"runAsNonRoot":false,"runAsUser":0}'
+  - it: adds the ids alone to a nulled securityContext
+    set:
+      securityContext:
+        input: null
+    asserts:
+      - equal:
+          path: data.result
+          value: '{"runAsGroup":5000,"runAsUser":5000}'
+  - it: leaves the image's own id when one global is nulled
+    set:
+      global.armonik.runAsGroup: null
+      securityContext:
+        input: {runAsNonRoot: true}
+    asserts:
+      - equal:
+          path: data.result
+          value: '{"runAsNonRoot":true,"runAsUser":5000}'
+  - it: renders nothing when both globals are nulled and the input is empty
+    set:
+      global.armonik.runAsUser: null
+      global.armonik.runAsGroup: null
+      securityContext:
+        input: {}
+    asserts:
+      - equal:
+          path: data.result
+          value: '{}'
+  - it: does not write the ids back into the values
+    set:
+      securityContext:
+        input: {runAsNonRoot: true}
+    asserts:
+      - equal:
+          path: data.input
+          value: '{"runAsNonRoot":true}'

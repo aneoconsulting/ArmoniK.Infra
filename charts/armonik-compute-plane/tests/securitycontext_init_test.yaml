@@ -6,11 +6,27 @@ values:
 release:
   name: t
 tests:
-  - it: runs the init pod as the ArmoniK uid by default
+  - it: runs the init pod as nobody by default
     asserts:
       - equal:
-          path: spec.template.spec.securityContext.runAsUser
-          value: 5000
+          path: spec.template.spec.securityContext
+          value:
+            runAsUser: 65534
+            runAsGroup: 65534
+  - it: ignores global.armonik.runAsUser and runAsGroup, which only the agent and worker take
+    set:
+      global.armonik.runAsUser: 1234
+      global.armonik.runAsGroup: 4321
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext
+          value:
+            runAsUser: 65534
+            runAsGroup: 65534
+      - notExists:
+          path: spec.template.spec.containers[0].securityContext.runAsUser
+      - notExists:
+          path: spec.template.spec.containers[0].securityContext.runAsGroup
   - it: hardens the init container by default
     asserts:
       - equal:

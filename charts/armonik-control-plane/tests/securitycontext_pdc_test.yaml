@@ -1,0 +1,59 @@
+suite: securityContext on the pod-deletion-cost controller
+templates:
+  - deployments/pod-deletion-cost.yaml
+tests:
+  - it: runs as nobody, its image declaring USER 0 and it only calling the Kubernetes API
+    documentSelector:
+      path: kind
+      value: Deployment
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext
+          value:
+            runAsUser: 65534
+            runAsGroup: 65534
+  - it: hardens its container like the others
+    documentSelector:
+      path: kind
+      value: Deployment
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].securityContext
+          value:
+            capabilities:
+              drop:
+                - ALL
+            privileged: false
+            runAsNonRoot: true
+            readOnlyRootFilesystem: false
+            allowPrivilegeEscalation: false
+            seccompProfile:
+              type: RuntimeDefault
+  - it: does not take global.armonik.runAsUser and runAsGroup
+    set:
+      global.armonik.runAsUser: 1234
+      global.armonik.runAsGroup: 4321
+    documentSelector:
+      path: kind
+      value: Deployment
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext.runAsUser
+          value: 65534
+      - notExists:
+          path: spec.template.spec.containers[0].securityContext.runAsUser
+      - notExists:
+          path: spec.template.spec.containers[0].securityContext.runAsGroup
+  - it: falls back to the chart-level podSecurityContext when nulled
+    set:
+      podDeletionCost.podSecurityContext: null
+      podSecurityContext:
+        fsGroup: 2000
+    documentSelector:
+      path: kind
+      value: Deployment
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext
+          value:
+            fsGroup: 2000

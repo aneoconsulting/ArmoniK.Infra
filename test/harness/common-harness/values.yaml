@@ -11,3 +11,5 @@ conf:
 patch:
 # pullSecrets: the source lists of armonik.imagePullSecrets, in precedence order
 pullSecrets:
+# securityContext: {input: <container securityContext>} for armonik.securityContext
+securityContext:

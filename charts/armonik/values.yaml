@@ -20,9 +20,6 @@ global:
   # mongodb-exporter, keda, mongodb-operator and google-cas-issuer never read it: each takes its own
   # `imagePullSecrets`, as references.
   # imagePullSecrets: ["secret"]
-  # Shown by the admin GUI (armonik-common/values.yaml).
-  environment:
-    description: "ArmoniK environment"
   # Cluster DNS domain; see armonik-common/values.yaml.
   clusterDomain: ""
   # Keys documented in armonik-common/values.yaml; only the umbrella's overrides are here.
@@ -151,6 +148,15 @@ ingress:
   # priorityClassName:
   # Secret templates/secrets/armonik-urls.yaml renders and the ingress reads.
   urlsSecretName: '{{ .Release.Name }}-urls'
+  static:
+    environment.json:
+      color: "#80ff80"
+      description: "ArmoniK environment {{ .Release.Name }}"
+      name: "{{ .Release.Name }}"
+    # -- Default Admin GUI settings, the JSON exported from its Settings page. The GUI fetches
+    # /static/gui_configuration, so the key name is fixed. It fills only the settings a browser has
+    # not stored yet, and is ignored unless its `version` matches the GUI's major.minor.
+    guiConfiguration: {}
 
 # ==== Shared cert-manager issuer ====
 # The Issuer named by global.armonik.certManager.issuer, rendered when both that issuer.enabled and

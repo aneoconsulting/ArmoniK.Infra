@@ -34,16 +34,15 @@ from:
 
 
 {{/*
-  Ingress rule: any source to nginx on 8080/9080.
-  TODO: the TLS ports 8443/9443 (armonik.ingress.containerPort) are not admitted.
+  Ingress rule: any source to nginx on its http and grpc container ports, which follow TLS.
 */}}
 {{- define "armonik.netpol.rule.nginxExternal" -}}
 from: []
 ports:
+  {{- range list "http" "grpc" }}
   - protocol: TCP
-    port: 8080
-  - protocol: TCP
-    port: 9080
+    port: {{ dict "protocol" . "root" $ | include "armonik.ingress.containerPort" }}
+  {{- end }}
 {{- end -}}
 
 

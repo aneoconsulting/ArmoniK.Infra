@@ -330,6 +330,36 @@ tests:
                   matchLabels:
                     app.kubernetes.io/component: metrics-exporter
 
+  - it: grants KEDA egress to DNS and the Kubernetes API without KEDA's own policy
+    template: templates/networkpolicies/keda-metrics-egress.yaml
+    set:
+      networkPolicy:
+        enabled: true
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            ports:
+              - protocol: UDP
+                port: 53
+              - protocol: TCP
+                port: 53
+            to:
+              - namespaceSelector:
+                  matchLabels:
+                    kubernetes.io/metadata.name: kube-system
+                podSelector:
+                  matchLabels:
+                    k8s-app: kube-dns
+      - contains:
+          path: spec.egress
+          content:
+            ports:
+              - protocol: TCP
+                port: 443
+              - protocol: TCP
+                port: 6443
+
   - it: does not render the KEDA egress policy when KEDA is unavailable
     template: templates/networkpolicies/keda-metrics-egress.yaml
     set:
@@ -438,6 +468,43 @@ tests:
             ports:
               - protocol: TCP
                 port: 1080
+
+  - it: grants nginx egress to DNS and the GUI without armonik-ingress's own policy
+    template: templates/networkpolicies/nginx-egress.yaml
+    set:
+      networkPolicy:
+        enabled: true
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            ports:
+              - protocol: UDP
+                port: 53
+              - protocol: TCP
+                port: 53
+            to:
+              - namespaceSelector:
+                  matchLabels:
+                    kubernetes.io/metadata.name: kube-system
+                podSelector:
+                  matchLabels:
+                    k8s-app: kube-dns
+      - contains:
+          path: spec.egress
+          content:
+            ports:
+              - protocol: TCP
+                port: 1080
+            to:
+              - namespaceSelector:
+                  matchLabels:
+                    kubernetes.io/metadata.name: default
+                podSelector:
+                  matchLabels:
+                    app.kubernetes.io/component: gui
+                    app.kubernetes.io/instance: t
+                    app.kubernetes.io/name: ingress
 
   - it: scopes the nginx-egress-to-control-plane peer by component
     template: templates/networkpolicies/nginx-egress.yaml

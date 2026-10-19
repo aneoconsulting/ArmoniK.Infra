@@ -1,0 +1,8 @@
+# Expected failure: SSO with the Gateway API mode must be rejected by the armonik.ingress.sso
+# resolver (the default HTTPRoute would send application/grpc+proto to the web port). Layered on
+# charts/armonik-ingress/ci/sso-values.yaml.
+gateway:
+  enabled: true
+  gatewayClassName: example-gateway-class
+httpRoute:
+  enabled: true

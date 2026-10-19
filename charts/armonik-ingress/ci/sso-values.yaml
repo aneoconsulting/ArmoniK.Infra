@@ -1,0 +1,16 @@
+# SSO in user mode without TLS: oauth2-proxy sidecar, auth_request on the web port, the grpc port
+# serving the gRPC API alone.
+global:
+  environment:
+    name: ci
+    description: ArmoniK CI environment
+urlsSecretName: example-urls
+grafana_url: http://grafana.example
+seq_url: http://seq.example
+sso:
+  enabled: true
+  publicUrl: http://armonik.example.com:5000
+  oauth2Proxy:
+    issuerUrl: https://idp.example.com/realms/armonik
+    clientId: armonik
+    existingSecret: armonik-oauth2-proxy

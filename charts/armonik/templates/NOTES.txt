@@ -209,3 +209,5 @@ The operator CRDs belong to the operators release; this one leaves them alone.
 {{- end }}
 A reinstall reuses the old MongoDB volume, so partitions of a previous release stay registered in the
 database.
+
+{{- with .Subcharts.ingress }}{{ include "armonik.ingress.sso.notes" . }}{{ end }}

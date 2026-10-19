@@ -1,0 +1,173 @@
+suite: sso nginx configuration
+templates:
+  - armonik-nginx-conf.yaml
+values:
+  - ../ci/sso-values.yaml
+tests:
+  - it: renders no SSO directive with sso disabled
+    set:
+      sso:
+        enabled: false
+    asserts:
+      - notMatchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: 'auth_request|oauth2|sso_|grpc_unauthenticated'
+
+  - it: protects the whole web server, before any location
+    asserts:
+      - matchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: '# web port\n(.*\n)*?    tcp_nopush on;\n\n    # SSO[^\n]*\n    auth_request /oauth2/auth;\n    error_page 401 = @sso_login;\n    # [^\n]*\n    auth_request_set \$auth_cookie \$upstream_http_set_cookie;\n    add_header Set-Cookie \$auth_cookie;\n\n    location = /healthz'
+
+  # The only exemptions; every other location inherits the server-level auth_request.
+  - it: exempts the health path and the oauth2-proxy routes alone
+    asserts:
+      - matchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: 'location = /healthz \{\n        auth_request off;\n        access_log off;\n        default_type text/plain;\n        return 200 "ok\\n";'
+      - matchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: 'location /oauth2/ \{\n        auth_request off;\n        proxy_pass http://127.0.0.1:4180;'
+      - matchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: 'location = /oauth2/auth \{\n        internal;\n        auth_request off;'
+      - matchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: 'location @sso_login \{\n        auth_request off;'
+      - matchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: 'location @grpc_unauthenticated \{\n        auth_request off;'
+      - matchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: '(?s)(auth_request off;.*){5}'
+      - notMatchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: '(?s)(auth_request off;.*){6}'
+
+  # A 4 KB X-Auth-Request-Groups or a large Set-Cookie otherwise fails with "upstream sent too big
+  # header": a 500 on every authenticated call, a 502 on the callback.
+  - it: reads large oauth2-proxy response headers
+    asserts:
+      - matchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: '(?s)location /oauth2/ \{\n        auth_request off;\n        proxy_pass http://127.0.0.1:4180;\n        # [^\n]*\n        proxy_buffer_size 64k;\n        proxy_buffers 8 64k;\n        proxy_busy_buffers_size 128k;\n.*location = /oauth2/auth \{\n        internal;\n        auth_request off;\n        proxy_pass http://127.0.0.1:4180;\n        # [^\n]*\n        proxy_buffer_size 64k;\n.*location @sso_login \{\n        auth_request off;\n        rewrite \^ /oauth2/start\? break;\n        proxy_pass http://127.0.0.1:4180;\n        # [^\n]*\n        proxy_buffer_size 64k;'
+
+  - it: hands the auth subrequest a trusted, bodiless request
+    asserts:
+      - matchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: '(?s)location = /oauth2/auth \{.*proxy_pass_request_body off;\n        proxy_set_header Content-Length "";.*proxy_set_header X-Original-URI \$request_uri;.*proxy_set_header X-Forwarded-Uri \$request_uri;.*proxy_set_header User-Agent "nginx-auth-request";\n    \}'
+
+  - it: forwards the scheme and the original URI to the oauth2-proxy routes
+    asserts:
+      - matchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: 'location /oauth2/ \{\n(        [^\n]*\n)*?        proxy_set_header X-Forwarded-Proto \$real_scheme;\n        proxy_set_header X-Forwarded-Host \$host;\n        proxy_set_header X-Auth-Request-Redirect \$request_uri;\n    \}'
+
+  # rd would need URL encoding nginx lacks: the original URI travels in X-Auth-Request-Redirect.
+  - it: sends a browser without session to /oauth2/start with its original URI
+    asserts:
+      - matchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: 'location @sso_login \{\n        auth_request off;\n        rewrite \^ /oauth2/start\? break;\n        proxy_pass http://127.0.0.1:4180;(\n        [^\n]*)*\n        proxy_set_header X-Auth-Request-Redirect \$request_uri;\n    \}'
+
+  - it: never turns a 403 into a login redirect
+    asserts:
+      - notMatchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: 'error_page[^;]*403'
+
+  - it: answers an unauthenticated gRPC-web call with a trailers-only UNAUTHENTICATED
+    asserts:
+      - matchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: 'location @grpc_unauthenticated \{\n        auth_request off;\n        # [^\n]*\n        default_type "";\n        add_header Content-Type \$grpc_error_content_type always;\n        add_header grpc-status 16 always;\n        add_header grpc-message "Unauthenticated" always;\n        return 200;\n    \}'
+      - matchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: 'map \$http_content_type \$grpc_error_content_type \{\n    default application/grpc;\n    ~\*\^application/grpc-web-text application/grpc-web-text\+proto;\n    ~\*\^application/grpc-web application/grpc-web\+proto;\n\}'
+
+  - it: sets the gRPC-web identity from the session and clears impersonation
+    asserts:
+      - matchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: '# web port(.*\n)*?    location ~\* \^/armonik\\\. \{\n        auth_request /oauth2/auth;\n        error_page 401 = @grpc_unauthenticated;\n        auth_request_set \$auth_cookie \$upstream_http_set_cookie;\n        auth_request_set \$sso_identity \$upstream_http_x_auth_request_email;\n        auth_request_set \$sso_groups \$upstream_http_x_auth_request_groups;\n        # [^\n]*\n        grpc_set_header X-Certificate-Client-CN \$sso_cn;\n        grpc_set_header X-Certificate-Client-Fingerprint "sso";\n        grpc_set_header X-Impersonate-Username "";\n        grpc_set_header X-Impersonate-Id "";\n        grpc_pass grpc://armonik;'
+
+  - it: builds the user-mode CN in an http-level map, empty without a claim
+    set:
+      sso:
+        cnPrefix: "user:"
+    asserts:
+      - matchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: '\nmap \$sso_identity \$sso_cn \{\n    default "user:\$sso_identity";\n    "" "";\n\}\n'
+
+  - it: reads the configured identity claim
+    set:
+      sso:
+        identityClaim: preferred_username
+    asserts:
+      - matchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: 'auth_request_set \$sso_identity \$upstream_http_x_auth_request_preferred_username;'
+
+  - it: names the identity headers through identityHeaders
+    set:
+      identityHeaders:
+        commonName: X-User-Cn
+        impersonationId: X-As-Id
+    asserts:
+      - matchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: 'grpc_set_header X-User-Cn \$sso_cn;'
+      - matchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: '(?s)# web port.*grpc_set_header X-As-Id "";.*# grpc port'
+
+  - it: serves a custom health path
+    set:
+      sso:
+        healthPath: /livez
+    asserts:
+      - matchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: 'location = /livez \{\n        auth_request off;'
+
+  - it: keeps the gRPC API alone on the grpc server
+    asserts:
+      - matchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: '# grpc port\n(.*\n)*?    tcp_nopush on;\n\n    location ~\* \^/armonik\\\. \{\n        # No client certificate[^\n]*\n        grpc_set_header X-Certificate-Client-CN "";(.*\n)*?    \}\n    location / \{\n        return 404;\n    \}\n\}'
+      - notMatchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: '(?s)# grpc port.*(location /admin/|location /static/|/grafana|/seq|oauth2|auth_request|sso_|healthz)'
+
+  - it: verifies client certificates on the grpc server only, with TLS and mTLS
+    values:
+      - ../ci/sso-tls-mtls-values.yaml
+    asserts:
+      - matchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: '(?s)# web port.*ssl_verify_client off;.*# grpc port.*ssl_verify_client on;\n    ssl_client_certificate /ingressclient/ca.crt;'
+      - notMatchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: '(?s)ssl_verify_client on;.*ssl_verify_client on;'
+      - matchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: '(?s)# grpc port.*grpc_set_header X-Certificate-Client-CN \$client_cn;\n        grpc_set_header X-Certificate-Client-Fingerprint \$client_fingerprint;\n        grpc_pass'
+      - matchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: '~\^\(\.\+\)\\\|\(proxy\\\.armonik\\\.local\)\$ \$http_x_certificate_client_cn;'
+      - matchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: '(?s)# web port.*grpc_set_header X-Certificate-Client-CN \$sso_cn;.*# grpc port'
+
+  - it: maps IdP groups in order, escaped, matched whole, empty by default
+    values:
+      - ../ci/sso-group-values.yaml
+    asserts:
+      - matchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: '\nmap \$sso_groups \$sso_cn \{\n    default "";\n    "~\(\^\|,\)armonik\\\.admins\(,\|\$\)" "sso-group:admins";\n    "~\(\^\|,\)/armonik/c\\\+\\\+ users\(,\|\$\)" "sso-group:users";\n\}\n'
+      - notMatchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: 'map \$sso_identity'

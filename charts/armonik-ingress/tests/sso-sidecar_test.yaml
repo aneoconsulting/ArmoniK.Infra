@@ -1,0 +1,257 @@
+suite: sso oauth2-proxy sidecar, Secret and NetworkPolicy
+templates:
+  - deployments/nginx.yaml
+  # The deployment's checksum/config annotation includes it.
+  - armonik-nginx-conf.yaml
+  - secrets/oauth2-proxy.yaml
+  - networkpolicy.yaml
+values:
+  - ../ci/sso-values.yaml
+release:
+  name: t
+tests:
+  - it: renders the nginx container alone with sso disabled
+    template: deployments/nginx.yaml
+    set:
+      sso:
+        enabled: false
+    asserts:
+      - lengthEqual:
+          path: spec.template.spec.containers
+          count: 1
+
+  - it: adds the pinned oauth2-proxy sidecar after nginx, extraContainers last
+    template: deployments/nginx.yaml
+    set:
+      extraContainers:
+        - name: extra
+          image: busybox:1.36.1
+    asserts:
+      - lengthEqual:
+          path: spec.template.spec.containers
+          count: 3
+      - equal:
+          path: spec.template.spec.containers[0].name
+          value: ingress
+      - equal:
+          path: spec.template.spec.containers[1].name
+          value: oauth2-proxy
+      - equal:
+          path: spec.template.spec.containers[2].name
+          value: extra
+      - equal:
+          path: spec.template.spec.containers[1].image
+          value: quay.io/oauth2-proxy/oauth2-proxy:v7.15.5
+
+  - it: configures oauth2-proxy for nginx auth_request on loopback
+    template: deployments/nginx.yaml
+    set:
+      sso:
+        oauth2Proxy:
+          allowedGroups: [armonik-users, armonik-admins]
+          emailDomains: [example.com, example.org]
+          extraArgs: [--cookie-name=_armonik]
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[1].args
+          value:
+            - --provider=oidc
+            - --oidc-issuer-url=https://idp.example.com/realms/armonik
+            - --client-id=armonik
+            - --http-address=127.0.0.1:4180
+            - --reverse-proxy=true
+            - --trusted-proxy-ip=127.0.0.1/32
+            - --set-xauthrequest=true
+            - --upstream=static://202
+            - --skip-provider-button=true
+            - --redirect-url=http://armonik.example.com:5000/oauth2/callback
+            - --whitelist-domain=armonik.example.com:5000
+            - --code-challenge-method=S256
+            - --scope=openid email profile
+            - --oidc-groups-claim=groups
+            - --allowed-group=armonik-users
+            - --allowed-group=armonik-admins
+            - --email-domain=example.com
+            - --email-domain=example.org
+            - --cookie-secure=false
+            - --cookie-samesite=lax
+            - --cookie-expire=8h
+            - --cookie-refresh=0
+            - --session-cookie-minimal=true
+            - --ping-path=/oauth2/ping
+            - --ready-path=/oauth2/ready
+            - --silence-ping-logging=true
+            - --cookie-name=_armonik
+
+  - it: keeps the OAuth tokens and refreshes once sessionCookieMinimal is off
+    template: deployments/nginx.yaml
+    set:
+      sso:
+        oauth2Proxy:
+          sessionCookieMinimal: false
+          cookieRefresh: 1h
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[1].args
+          content: --session-cookie-minimal=false
+      - contains:
+          path: spec.template.spec.containers[1].args
+          content: --cookie-refresh=1h
+
+  - it: marks the cookie Secure behind an https publicUrl
+    template: deployments/nginx.yaml
+    set:
+      sso:
+        publicUrl: https://armonik.example.com/
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[1].args
+          content: --cookie-secure=true
+      - contains:
+          path: spec.template.spec.containers[1].args
+          content: --redirect-url=https://armonik.example.com/oauth2/callback
+      - contains:
+          path: spec.template.spec.containers[1].args
+          content: --whitelist-domain=armonik.example.com
+
+  - it: reads the client and cookie secrets from existingSecret
+    template: deployments/nginx.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[1].env
+          value:
+            - name: OAUTH2_PROXY_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: armonik-oauth2-proxy
+                  key: client-secret
+            - name: OAUTH2_PROXY_COOKIE_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: armonik-oauth2-proxy
+                  key: cookie-secret
+
+  - it: hardens the sidecar like nginx, with a read-only root filesystem
+    template: deployments/nginx.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[1].securityContext
+          value:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            privileged: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.readOnlyRootFilesystem
+          value: false
+
+  - it: takes its own securityContext and resources when set
+    template: deployments/nginx.yaml
+    set:
+      sso:
+        oauth2Proxy:
+          securityContext:
+            runAsUser: 65532
+          resources:
+            limits:
+              memory: 64Mi
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[1].securityContext
+          value:
+            runAsUser: 65532
+      - equal:
+          path: spec.template.spec.containers[1].resources.limits.memory
+          value: 64Mi
+
+  # The sidecar listens on loopback, out of the kubelet's reach: its probes go through nginx.
+  - it: probes the sidecar through nginx's web port
+    template: deployments/nginx.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[1].livenessProbe.httpGet
+          value:
+            path: /oauth2/ping
+            port: 8080
+            scheme: HTTP
+      - equal:
+          path: spec.template.spec.containers[1].readinessProbe.httpGet
+          value:
+            path: /oauth2/ready
+            port: 8080
+            scheme: HTTP
+
+  - it: probes over HTTPS on the TLS web port
+    template: deployments/nginx.yaml
+    values:
+      - ../ci/sso-tls-mtls-values.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[1].livenessProbe.httpGet
+          value:
+            path: /oauth2/ping
+            port: 8443
+            scheme: HTTPS
+
+  - it: rolls the pod when the nginx conf changes with SSO
+    template: deployments/nginx.yaml
+    asserts:
+      - exists:
+          path: spec.template.metadata.annotations["checksum/config"]
+
+  - it: renders no Secret without an ESO store
+    template: secrets/oauth2-proxy.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: builds existingSecret through ESO from a named store
+    template: secrets/oauth2-proxy.yaml
+    values:
+      - ../ci/sso-group-values.yaml
+    asserts:
+      - isKind:
+          of: ExternalSecret
+      - equal:
+          path: spec.target.name
+          value: armonik-oauth2-proxy
+      - equal:
+          path: spec.secretStoreRef
+          value:
+            kind: ClusterSecretStore
+            name: vault
+      - equal:
+          path: spec.data
+          value:
+            - secretKey: client-secret
+              remoteRef:
+                key: armonik/oauth2-proxy
+                property: client-secret
+            - secretKey: cookie-secret
+              remoteRef:
+                key: armonik/oauth2-proxy
+                property: cookie-secret
+
+  - it: lets the nginx pod reach the IdP on 443, after DNS and the GUI
+    template: networkpolicy.yaml
+    values:
+      - ../ci/sso-group-values.yaml
+    documentIndex: 0
+    asserts:
+      - lengthEqual:
+          path: spec.egress
+          count: 3
+      - equal:
+          path: spec.egress[2]
+          value:
+            to:
+              - ipBlock:
+                  cidr: 203.0.113.0/24
+            ports:
+              - protocol: TCP
+                port: 443

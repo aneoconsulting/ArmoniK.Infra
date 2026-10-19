@@ -110,7 +110,7 @@ compute-plane:
 conf:
   log:
     minimumLevel: Information
-  # ESO sync interval of every conf ExternalSecret, env and mount alike. Defaults to 1h0m0s; 0 syncs
+  # ESO sync interval of every conf ExternalSecret, env and mount alike. Unset, 1h0m0s; 0 syncs
   # once and never refreshes. Raise it behind a metered store (Secret Manager bills per access).
   refreshInterval: 1m0s
   # CreatedOnce, Periodic (the ESO default) or OnChange.

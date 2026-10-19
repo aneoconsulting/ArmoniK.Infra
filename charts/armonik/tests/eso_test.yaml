@@ -39,7 +39,7 @@ tests:
       - equal:
           path: stringData.MyTestKey
           value: my-value
-  - it: syncs every hour unless told otherwise, refreshPolicy left to ESO
+  - it: syncs every minute with the Periodic policy by default
     values:
       - ../ci/layered-operators-values.yaml
     template: secrets/conf-secrets.yaml
@@ -49,9 +49,10 @@ tests:
     asserts:
       - equal:
           path: spec.refreshInterval
-          value: 1h0m0s
-      - notExists:
+          value: 1m0s
+      - equal:
           path: spec.refreshPolicy
+          value: Periodic
   - it: takes the sync cadence and policy from the conf values
     values:
       - ../ci/layered-operators-values.yaml

@@ -13,14 +13,14 @@ tests:
     template: secrets/conf-secrets.yaml
     asserts:
       - hasDocuments:
-          count: 8
+          count: 9
       - isKind:
           of: Secret
   - it: renders one mount Secret per conf layer
     template: secrets/conf-mounts.yaml
     asserts:
       - hasDocuments:
-          count: 8
+          count: 9
       - isKind:
           of: Secret
   - it: materializes the log level into the log layer

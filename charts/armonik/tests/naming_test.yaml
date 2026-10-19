@@ -147,6 +147,10 @@ tests:
             prometheusOperator:
               deploy: false
               namespace: mon
+      # The pdc conf layer's own prometheusUrl guard would fire otherwise.
+      control-plane:
+        podDeletionCost:
+          enabled: false
     asserts:
       - failedTemplate:
           errorPattern: "global.armonik.monitoring.prometheusUrl resolved empty"

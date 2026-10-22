@@ -409,6 +409,15 @@ dependencies:
           # with the number of control-plane and polling-agent replicas.
           max_replication_slots: "32"
           max_wal_senders: "16"
+          # One pool per Core pod (PostgreSQL__MaxPoolSize). Restarts the instance. 100 by default
+          max_connections: "500"
+          # An orphaned transaction blocks replication slot creation, hence the watchers.
+          idle_in_transaction_session_timeout: "60s"
+          # Detect dead clients in ~1 min rather than the kernel defaults (15 min to 2 h).
+          tcp_user_timeout: "30s"
+          tcp_keepalives_idle: "30"
+          tcp_keepalives_interval: "10"
+          tcp_keepalives_count: "3"
       # Nothing needs an external superuser.
       enableSuperuserAccess: false
       monitoring:

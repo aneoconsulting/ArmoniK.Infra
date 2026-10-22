@@ -409,7 +409,7 @@ dependencies:
           # with the number of control-plane and polling-agent replicas.
           max_replication_slots: "32"
           max_wal_senders: "16"
-          # One pool per Core pod (PostgreSQL__MaxPoolSize). Restarts the instance. 100 by default
+          # PostgreSQL default 100. Sum of the Core pools (PostgreSQL__MaxPoolSize per pod). Restarts the instance.
           max_connections: "500"
           # An orphaned transaction blocks replication slot creation, hence the watchers.
           idle_in_transaction_session_timeout: "60s"

@@ -20,6 +20,15 @@ resource "helm_release" "cluster_autoscaler" {
     value = "aws"
   }
   set {
+    name  = "rbac.serviceAccount.name"
+    value = "cluster-autoscaler"
+  }
+  set {
+    name  = "rbac.serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn"
+    value = module.cluster_autoscaler_irsa.arn
+    type  = "string"
+  }
+  set {
     name  = "image.repository"
     value = var.cluster_autoscaler_image
   }
@@ -133,49 +142,18 @@ resource "helm_release" "cluster_autoscaler" {
   ]
 }
 
-# Workers Auto Scaling policy
-data "aws_iam_policy_document" "worker_autoscaling" {
-  statement {
-    sid    = "eksWorkerAutoscalingAll"
-    effect = "Allow"
-    actions = [
-      "autoscaling:DescribeAutoScalingGroups",
-      "autoscaling:DescribeAutoScalingInstances",
-      "autoscaling:DescribeLaunchConfigurations",
-      "autoscaling:DescribeScalingActivities",
-      "autoscaling:DescribeTags",
-      "ec2:DescribeInstanceTypes",
-      "ec2:DescribeLaunchTemplateVersions",
-    ]
-    resources = ["*"]
+# Cluster Autoscaler's own IRSA role, scoped to the ASGs tagged as owned by this cluster.
+module "cluster_autoscaler_irsa" {
+  source                           = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts"
+  version                          = "6.8.2"
+  name                             = "${var.name}-cluster-autoscaler"
+  attach_cluster_autoscaler_policy = true
+  cluster_autoscaler_cluster_names = [module.eks.cluster_name]
+  oidc_providers = {
+    main = {
+      provider_arn               = module.eks.oidc_provider_arn
+      namespace_service_accounts = ["${var.cluster_autoscaler_namespace}:cluster-autoscaler"]
+    }
   }
-  statement {
-    sid    = "eksWorkerAutoscalingOwn"
-    effect = "Allow"
-    actions = [
-      "autoscaling:SetDesiredCapacity",
-      "autoscaling:TerminateInstanceInAutoScalingGroup",
-      "ec2:DescribeImages",
-      "ec2:GetInstanceTypesFromInstanceRequirements",
-      "autoscaling:UpdateAutoScalingGroup",
-      "eks:DescribeNodegroup"
-    ]
-    resources = ["*"]
-  }
-}
-
-resource "aws_iam_policy" "worker_autoscaling" {
-  name_prefix = local.iam_worker_autoscaling_policy_name
-  description = "EKS worker node autoscaling policy for cluster ${module.eks.cluster_name}"
-  policy      = data.aws_iam_policy_document.worker_autoscaling.json
-  tags        = local.tags
-}
-
-resource "aws_iam_policy_attachment" "workers_autoscaling" {
-  name = "eks-worker-node-autoscaling-${module.eks.cluster_name}"
-  roles = concat(
-    values(module.eks.eks_managed_node_groups)[*].iam_role_name,
-    values(module.eks.self_managed_node_groups)[*].iam_role_name,
-  values(module.eks.fargate_profiles)[*].iam_role_name)
-  policy_arn = aws_iam_policy.worker_autoscaling.arn
+  tags = local.tags
 }

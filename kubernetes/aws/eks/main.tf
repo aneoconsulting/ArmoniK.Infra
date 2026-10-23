@@ -9,22 +9,10 @@ data "aws_availability_zones" "available" {
   region = var.region
 }
 
-# Random string
-resource "random_string" "random_resources" {
-  length  = 5
-  special = false
-  upper   = false
-  numeric = true
-}
-
 locals {
-  region                                 = data.aws_region.current.region
-  tags                                   = merge({ module = "eks-${var.name}" }, var.tags)
-  iam_worker_autoscaling_policy_name     = "eks-worker-autoscaling-${var.name}"
-  ima_aws_node_termination_handler_name  = "${var.name}-aws-node-termination-handler-${random_string.random_resources.result}"
-  aws_node_termination_handler_asg_name  = "${var.name}-asg-termination"
-  aws_node_termination_handler_spot_name = "${var.name}-spot-termination"
-  kubeconfig_output_path                 = coalesce(var.kubeconfig_file, "${path.root}/generated/kubeconfig")
+  region                 = data.aws_region.current.region
+  tags                   = merge({ module = "eks-${var.name}" }, var.tags)
+  kubeconfig_output_path = coalesce(var.kubeconfig_file, "${path.root}/generated/kubeconfig")
 
   # Node selector
   node_selector_keys   = keys(var.node_selector)
@@ -44,43 +32,53 @@ locals {
   }
 
   # Node group defaults; the upstream module has no *_defaults inputs, so they are merged here, the node group winning.
+  # A hop limit of 1 keeps pods off the node role; workloads get AWS credentials through IRSA.
   node_metadata_options = {
     http_endpoint               = "enabled"
     http_tokens                 = "required"
-    http_put_response_hop_limit = 2
+    http_put_response_hop_limit = 1
     instance_metadata_tags      = "disabled"
   }
   # The sysctls fs.inotify.max_user_instances defines user limits on the number of inotify resources.
   # In the context of a Kubernetes cluster, if these limits are reached, you may experience processes
   # failing with error messages related to the limits, and it would exhibit as failing Pods with inotify
   # related errors in the Pod logs.
-  node_post_bootstrap_user_data = <<-EOT
+  # Runs before bootstrap: AL2 nodes take it as pre_bootstrap_user_data, AL2023 nodes as a nodeadm cloud-init
+  # part; the EKS module drops post-bootstrap user data on managed node groups and on AL2023.
+  node_sysctl_user_data = <<-EOT
+      #!/bin/bash
       echo fs.inotify.max_user_instances=8192 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
     EOT
+  node_sysctl_nodeadm_part = {
+    content_type = "text/x-shellscript"
+    content      = local.node_sysctl_user_data
+  }
 
   # List of EKS managed node groups
   eks_managed_node_groups = {
     for key, value in var.eks_managed_node_groups : key => merge({
-      enable_monitoring        = true
-      metadata_options         = local.node_metadata_options
-      post_bootstrap_user_data = local.node_post_bootstrap_user_data
+      enable_monitoring       = true
+      metadata_options        = local.node_metadata_options
+      pre_bootstrap_user_data = local.node_sysctl_user_data
       }, value, {
       name                       = can(coalesce(value.name)) ? "${try(value.name, "")}-${var.name}" : "${key}-${var.name}",
       enable_bootstrap_user_data = can(coalesce(value.ami_id))
       vpc_security_group_ids     = [module.eks.node_security_group_id]
+      cloudinit_pre_nodeadm      = concat([local.node_sysctl_nodeadm_part], try(value.cloudinit_pre_nodeadm, null) == null ? [] : value.cloudinit_pre_nodeadm)
     })
   }
 
   # List of self managed node groups
   self_managed_node_groups = {
     for key, value in var.self_managed_node_groups : key => merge({
-      enable_monitoring        = true
-      tags                     = local.tags
-      autoscaling_group_tags   = local.autoscaling_group_tags
-      metadata_options         = local.node_metadata_options
-      post_bootstrap_user_data = local.node_post_bootstrap_user_data
+      enable_monitoring       = true
+      tags                    = local.tags
+      autoscaling_group_tags  = local.autoscaling_group_tags
+      metadata_options        = local.node_metadata_options
+      pre_bootstrap_user_data = local.node_sysctl_user_data
       }, value, {
-      name = can(coalesce(value.name)) ? "${try(value.name, "")}-${var.name}" : "${key}-${var.name}",
+      name                  = can(coalesce(value.name)) ? "${try(value.name, "")}-${var.name}" : "${key}-${var.name}",
+      cloudinit_pre_nodeadm = concat([local.node_sysctl_nodeadm_part], try(value.cloudinit_pre_nodeadm, null) == null ? [] : value.cloudinit_pre_nodeadm)
     })
   }
 
@@ -169,8 +167,10 @@ module "eks" {
 
   additional_security_group_ids = [module.eks.node_security_group_id]
 
+  # The module creates the secret encryption key unless one is given.
+  create_kms_key = !can(coalesce(var.cluster_encryption_config))
   encryption_config = {
-    provider_key_arn = var.cluster_encryption_config
+    provider_key_arn = can(coalesce(var.cluster_encryption_config)) ? var.cluster_encryption_config : null
     resources        = ["secrets"]
   }
 

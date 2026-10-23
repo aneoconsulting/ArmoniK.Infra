@@ -47,15 +47,15 @@ module "eks" {
   cluster_autoscaler_scale_down_utilization_threshold      = 0.5
   cluster_autoscaler_scan_interval                         = "10s"
   cluster_autoscaler_skip_nodes_with_system_pods           = true
-  cluster_autoscaler_tag                                   = "v1.32.0"
-  cluster_autoscaler_version                               = "9.46.6"
+  cluster_autoscaler_tag                                   = "v1.35.2"
+  cluster_autoscaler_version                               = "9.59.0"
   cluster_encryption_config                                = ""
   cluster_endpoint_private_access                          = false
   cluster_endpoint_public_access                           = true
   cluster_endpoint_public_access_cidrs                     = ["0.0.0.0/0"]
   cluster_log_kms_key_id                                   = ""
   cluster_log_retention_in_days                            = 30
-  cluster_version                                          = "1.32"
+  cluster_version                                          = "1.35"
   ebs_kms_key_id                                           = ""
   instance_refresh_image                                   = "public.ecr.aws/aws-ec2/aws-node-termination-handler"
   instance_refresh_namespace                               = "kube-system"
@@ -71,7 +71,7 @@ module "eks" {
     test = {
       name                        = "workers"
       launch_template_description = "Node group for test"
-      ami_type                    = "AL2_x86_64"
+      ami_type                    = "AL2023_x86_64_STANDARD"
       instance_types              = ["c5.large"]
       capacity_type               = "SPOT"
       min_size                    = 0

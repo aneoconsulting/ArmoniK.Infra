@@ -139,8 +139,14 @@ variable "vpc_private_subnet_ids" {
 }
 
 variable "vpc_pods_subnet_ids" {
-  description = "List of VPC pods subnet ids"
+  description = "List of VPC pods subnet ids, one per availability zone, in the order of the region's zones. Pods only use them when vpc_cni_custom_networking is true"
   type        = list(string)
+}
+
+variable "vpc_cni_custom_networking" {
+  description = "Whether pods take their IPs from vpc_pods_subnet_ids (VPC CNI custom networking) instead of the node subnets. Switching it on an existing cluster only applies to nodes created afterwards"
+  type        = bool
+  default     = false
 }
 
 # Cluster autoscaler
@@ -311,12 +317,12 @@ variable "cluster_log_kms_key_id" {
 }
 
 variable "cluster_encryption_config" {
-  description = "Configuration block with encryption configuration for the cluster. To disable secret encryption, set this value to {}"
+  description = "ARN of the KMS key encrypting the cluster's secrets; empty to let the EKS module create one. EKS cannot change the key of an existing cluster, so it can only be set at cluster creation"
   type        = string
 }
 
 variable "ebs_kms_key_id" {
-  description = "KMS key id to encrypt/decrypt EBS"
+  description = "KMS key (id, alias or ARN) the EBS CSI driver is allowed to encrypt volumes with; empty for none. A StorageClass must still name it in its kmsKeyId parameter"
   type        = string
 }
 

@@ -99,7 +99,7 @@ jobs:
       - name: Generate release version
         id: release
         if: github.ref_type == 'tag'
-        uses: codacy/git-version@376c75fc90be05da2e5c3b7e54de18524b5226bd # 2.8.8
+        uses: codacy/git-version@5cabe6920ad6a182ba6d653ee8cb5ec65b8b4cfd # 2.9.0
         with:
           minor-identifier: "feat:"
           # `git describe` as the release branch is what makes a detached HEAD
@@ -112,7 +112,7 @@ jobs:
       - name: Generate snapshot version
         id: snapshot
         if: github.event_name != 'workflow_dispatch' && github.ref_type != 'tag'
-        uses: codacy/git-version@376c75fc90be05da2e5c3b7e54de18524b5226bd # 2.8.8
+        uses: codacy/git-version@5cabe6920ad6a182ba6d653ee8cb5ec65b8b4cfd # 2.9.0
         with:
           minor-identifier: "feat:"
           # Never the current branch as release-branch: a push to main would
@@ -275,7 +275,7 @@ jobs:
         run: helm template airgap "dist/armonik-$VERSION.tgz" >/dev/null
 
       - name: Upload packaged charts
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: packaged-charts
           if-no-files-found: error
@@ -302,7 +302,7 @@ jobs:
 
       # dist/ is the artifact's common ancestor, so it holds bare file names.
       - name: Download packaged charts
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: packaged-charts
           path: dist
@@ -399,7 +399,7 @@ jobs:
       contents: write # `gh release upload`
     steps:
       - name: Download packaged charts
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: packaged-charts
           path: dist

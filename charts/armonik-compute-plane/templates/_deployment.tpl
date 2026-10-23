@@ -14,9 +14,8 @@ imagePullPolicy: {{ .agentImage.pullPolicy | quote }}
 resources:
   {{- toYaml . | nindent 2 }}
 {{- end }}
-{{- with $agent.securityContext }}
-securityContext:
-  {{- toYaml . | nindent 2 }}
+{{- with list $agent.securityContext .root | include "armonik.securityContext" }}
+securityContext: {{- . | nindent 2 }}
 {{- end }}
 ports:
   - name: {{ $agent.ports.name | quote }}
@@ -65,9 +64,8 @@ imagePullPolicy: {{ .workerImage.pullPolicy | quote }}
 resources:
   {{- toYaml . | nindent 2 }}
 {{- end }}
-{{- with $worker.securityContext }}
-securityContext:
-  {{- toYaml . | nindent 2 }}
+{{- with list $worker.securityContext .root | include "armonik.securityContext" }}
+securityContext: {{- . | nindent 2 }}
 {{- end }}
 {{- with $worker.livenessProbe }}
 livenessProbe:

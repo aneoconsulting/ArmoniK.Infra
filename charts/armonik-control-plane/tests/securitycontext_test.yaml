@@ -9,6 +9,21 @@ tests:
   - it: hardens every container by default
     asserts:
       - equal:
+          path: spec.template.spec.containers[0].securityContext.capabilities
+          value:
+            drop:
+              - ALL
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.runAsNonRoot
+          value: true
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.seccompProfile
+          value:
+            type: RuntimeDefault
+  - it: runs the submitter as global.armonik.runAsUser and runAsGroup, shared with the agent and worker
+    template: deployments/control-plane.yaml
+    asserts:
+      - equal:
           path: spec.template.spec.containers[0].securityContext
           value:
             capabilities:
@@ -16,22 +31,104 @@ tests:
                 - ALL
             privileged: false
             runAsNonRoot: true
+            runAsUser: 5000
+            runAsGroup: 5000
             readOnlyRootFilesystem: false
             allowPrivilegeEscalation: false
             seccompProfile:
               type: RuntimeDefault
-  - it: renders no pod securityContext by default
+  - it: follows overridden global ids on the submitter
+    template: deployments/control-plane.yaml
+    set:
+      global.armonik.runAsUser: 1234
+      global.armonik.runAsGroup: 4321
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.runAsUser
+          value: 1234
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.runAsGroup
+          value: 4321
+  - it: keeps a uid set in securityContext over the global one
+    template: deployments/control-plane.yaml
+    set:
+      global.armonik.runAsUser: 1234
+      securityContext.runAsUser: 42
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.runAsUser
+          value: 42
+  - it: leaves the image user and group on the submitter when the globals are nulled
+    template: deployments/control-plane.yaml
+    set:
+      global.armonik.runAsUser: null
+      global.armonik.runAsGroup: null
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].securityContext.runAsUser
+      - notExists:
+          path: spec.template.spec.containers[0].securityContext.runAsGroup
+  - it: does not give the global ids to the metrics-exporter and init
+    templates:
+      - deployments/metrics-exporter.yaml
+      - jobs/init.yaml
+    set:
+      global.armonik.runAsUser: 1234
+      global.armonik.runAsGroup: 4321
+    asserts:
+      - hasDocuments:
+          count: 1
+      - notExists:
+          path: spec.template.spec.containers[0].securityContext.runAsUser
+      - notExists:
+          path: spec.template.spec.containers[0].securityContext.runAsGroup
+      - equal:
+          path: spec.template.spec.securityContext.runAsUser
+          value: 65534
+  - it: runs the metrics-exporter and init as nobody, sharing no file
+    templates:
+      - deployments/metrics-exporter.yaml
+      - jobs/init.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: spec.template.spec.securityContext
+          value:
+            runAsUser: 65534
+            runAsGroup: 65534
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.runAsNonRoot
+          value: true
+  - it: renders no control-plane pod securityContext by default, its uid being on the container
+    template: deployments/control-plane.yaml
     asserts:
       - notExists:
           path: spec.template.spec.securityContext
-  - it: falls back to the chart-level podSecurityContext
+  - it: falls back to the chart-level podSecurityContext when a component one is nulled
+    templates:
+      - deployments/metrics-exporter.yaml
+      - jobs/init.yaml
+    set:
+      metricsExporter.podSecurityContext: null
+      init.podSecurityContext: null
+      podSecurityContext:
+        fsGroup: 2000
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext
+          value:
+            fsGroup: 2000
+  - it: applies the chart-level podSecurityContext to the control-plane pod
+    template: deployments/control-plane.yaml
     set:
       podSecurityContext:
         fsGroup: 2000
     asserts:
       - equal:
-          path: spec.template.spec.securityContext.fsGroup
-          value: 2000
+          path: spec.template.spec.securityContext
+          value:
+            fsGroup: 2000
   - it: lets the metrics-exporter and init override the chart-level values
     template: deployments/metrics-exporter.yaml
     set:
@@ -57,12 +154,24 @@ tests:
           path: spec.template.spec.containers[0].securityContext
           value:
             runAsNonRoot: false
-  - it: drops every container securityContext when the chart-level one is nulled
+  - it: drops every container securityContext when the chart-level one and the global ids are nulled
     set:
       securityContext: null
+      global.armonik.runAsUser: null
+      global.armonik.runAsGroup: null
     asserts:
       - notExists:
           path: spec.template.spec.containers[0].securityContext
+  - it: keeps only the ids on the submitter when the chart-level securityContext is nulled
+    template: deployments/control-plane.yaml
+    set:
+      securityContext: null
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].securityContext
+          value:
+            runAsUser: 5000
+            runAsGroup: 5000
   - it: lets containerPatch override a single field
     template: deployments/control-plane.yaml
     set:

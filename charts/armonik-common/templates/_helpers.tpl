@@ -159,3 +159,31 @@ the list deduplicated by name, the field being a map keyed on it, or nothing whe
     {{- toYaml . -}}
   {{- end -}}
 {{- end -}}
+
+
+{{/*
+Container securityContext of the ArmoniK processes sharing files (submitter, polling agent, worker):
+runAsUser and runAsGroup each default to their global.armonik counterpart, a value set on the
+container winning. Nulling a global leaves the image's own. Takes (list <securityContext> <root context>).
+
+  {{- with list $v.securityContext $ | include "armonik.securityContext" }}
+  securityContext: {{- . | nindent 2 }}
+  {{- end }}
+*/}}
+{{- define "armonik.securityContext" -}}
+  {{- $securityContext := index . 0 | default dict | deepCopy -}}
+  {{- $global := (index . 1).Values.global | default dict -}}
+  {{- $armonik := $global.armonik | default dict -}}
+  {{- range $key := list "runAsUser" "runAsGroup" -}}
+    {{- if index $securityContext $key | kindIs "invalid" -}}
+      {{- $_ := unset $securityContext $key -}}
+      {{- $id := index $armonik $key -}}
+      {{- if not (kindIs "invalid" $id) -}}
+        {{- $_ := set $securityContext $key $id -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+  {{- with $securityContext -}}
+    {{- toYaml . -}}
+  {{- end -}}
+{{- end -}}

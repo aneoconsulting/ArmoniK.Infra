@@ -118,10 +118,12 @@ tolerations: []
 annotations: {}
 affinity: {}
 priorityClassName: ""
-# -- Pod securityContext, also the metrics-exporter and init default. Empty: the images already
-# run as a numeric non-root uid, which runAsNonRoot can verify.
+# -- Control-plane pod securityContext, also the default of a nulled metrics-exporter, pdc or init
+# one. Empty: the submitter's ids are set on its container (global.armonik.runAsUser, runAsGroup).
 podSecurityContext: {}
-# -- Container securityContext, also the metrics-exporter and init default.
+# -- Container securityContext, also the metrics-exporter and init default. On the control-plane
+# container only, runAsUser and runAsGroup default to global.armonik's, the ids it shares with the
+# compute-plane agent and worker.
 securityContext:
   capabilities:
     drop:
@@ -222,8 +224,11 @@ metricsExporter:
   annotations:
   affinity:
   priorityClassName:
-  # -- Falls back to the chart-level podSecurityContext.
+  # -- Pod securityContext, the chart-level one when nulled. nobody: it shares no file with the
+  # other ArmoniK processes.
   podSecurityContext:
+    runAsUser: 65534
+    runAsGroup: 65534
   # -- Falls back to the chart-level securityContext.
   securityContext:
   livenessProbe:
@@ -317,10 +322,13 @@ podDeletionCost:
   annotations:
   affinity:
   priorityClassName:
+  # -- Pod securityContext, the chart-level one when nulled. The image declares USER 0, so runAsUser
+  # is required by runAsNonRoot; nobody, as it only calls the Kubernetes API.
   podSecurityContext:
-  # Since 0.3.3, image runs as root
+    runAsUser: 65534
+    runAsGroup: 65534
+  # -- Falls back to the chart-level securityContext.
   securityContext:
-    runAsNonRoot: false
   extraEnv: []
   extraEnvFrom: []
   extraVolumeMounts: []
@@ -345,8 +353,11 @@ init:
   annotations:
   affinity:
   priorityClassName:
-  # -- Falls back to the chart-level podSecurityContext.
+  # -- Pod securityContext, the chart-level one when nulled. nobody: it shares no file with the
+  # other ArmoniK processes.
   podSecurityContext:
+    runAsUser: 65534
+    runAsGroup: 65534
   # -- Falls back to the chart-level securityContext.
   securityContext:
   # -- Extra env for the init container. Shared vars go in conf.env.

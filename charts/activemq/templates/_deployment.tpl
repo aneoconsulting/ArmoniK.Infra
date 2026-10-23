@@ -73,6 +73,10 @@ initContainers:
   {{- toYaml . | nindent 2 }}
 {{- end }}
 containers: {{- $containers | toYaml | nindent 2 }}
+{{- with $v.podSecurityContext }}
+securityContext:
+  {{- toYaml . | nindent 2 }}
+{{- end }}
 {{- with list $deployment.imagePullSecrets $v.imagePullSecrets $v.global.imagePullSecrets | include "armonik.imagePullSecrets" }}
 imagePullSecrets: {{- . | nindent 2 }}
 {{- end }}

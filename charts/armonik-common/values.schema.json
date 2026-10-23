@@ -104,6 +104,22 @@
                 }
               }
             },
+            "runAsUser": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0,
+              "description": "Container runAsUser of the control-plane submitter and the compute-plane agent and worker, unless set on the container."
+            },
+            "runAsGroup": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0,
+              "description": "Container runAsGroup of the control-plane submitter and the compute-plane agent and worker, unless set on the container."
+            },
             "versions": {
               "type": [
                 "object",

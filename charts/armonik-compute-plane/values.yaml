@@ -93,9 +93,11 @@ init:
   affinity:
   priorityClassName:
   # -- Init Job pod securityContext. runAsUser is required by runAsNonRoot below, the ArmoniK
-  # images declaring a non-numeric USER the kubelet cannot verify.
+  # images declaring a non-numeric USER the kubelet cannot verify. Sharing no file with the other
+  # processes, the Job runs as nobody rather than as global.armonik.runAsUser.
   podSecurityContext:
-    runAsUser: 5000
+    runAsUser: 65534
+    runAsGroup: 65534
   # -- Init container securityContext, same hardening as the agent's.
   securityContext:
     capabilities:
@@ -146,8 +148,10 @@ init:
 
 partitionCommon:
   socketType: "unixdomainsocket"
-  podSecurityContext:
-    runAsUser: 5000
+  # -- Partition pod securityContext. The agent and worker uid and gid are global.armonik.runAsUser and
+  # runAsGroup, set on their containers, so the fluent-bit sidecar and the extra containers keep their
+  # images' own user.
+  podSecurityContext: {}
   labels:
     app: "armonik"
     service: "compute-plane"
@@ -190,6 +194,9 @@ partitionCommon:
       requests:
         cpu: "500m"
         memory: "256Mi"
+    # -- Agent container securityContext. runAsUser and runAsGroup default to global.armonik's, which
+    # the worker shares: each connects to the other's socket in /cache. runAsNonRoot below needs a
+    # numeric uid, the ArmoniK images declaring a non-numeric USER the kubelet cannot verify.
     securityContext:
       capabilities:
         drop:
@@ -272,8 +279,8 @@ partitionCommon:
       requests:
         cpu: "500m"
         memory: "512Mi"
-    # -- Worker container securityContext, same hardening as the agent's. The uid shared with the
-    # agent is podSecurityContext's; runAsNonRoot fails a root image if runAsUser is nulled.
+    # -- Worker container securityContext, same hardening and uid as the agent's. runAsNonRoot fails
+    # a root image if global.armonik.runAsUser is nulled.
     securityContext:
       capabilities:
         drop:

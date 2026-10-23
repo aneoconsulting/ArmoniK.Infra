@@ -34,9 +34,8 @@ livenessProbe:
 startupProbe:
   {{- toYaml . | nindent 2 }}
 {{- end }}
-{{- with $v.securityContext }}
-securityContext:
-  {{- toYaml . | nindent 2 }}
+{{- with list $v.securityContext .root | include "armonik.securityContext" }}
+securityContext: {{- . | nindent 2 }}
 {{- end }}
 volumeMounts:
   {{- include "armonik.conf.generateVolumeMounts" .conf | nindent 2 }}

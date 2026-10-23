@@ -60,9 +60,24 @@ commonLabels:
 podLabels: {}
 podAnnotations: {}
 
-podSecurityContext: {}
+# -- Pod securityContext. The image's own user activemq (uid 999), not nobody: the broker writes its
+# store under /opt/apache-activemq/data, which it owns. runAsUser is required by runAsNonRoot, the
+# image declaring that user by name, which the kubelet cannot verify.
+podSecurityContext:
+  runAsUser: 999
+  runAsGroup: 999
 
-securityContext: {}
+# -- Container securityContext.
+securityContext:
+  capabilities:
+    drop:
+      - ALL
+  privileged: false
+  runAsNonRoot: true
+  readOnlyRootFilesystem: false
+  allowPrivilegeEscalation: false
+  seccompProfile:
+    type: RuntimeDefault
 
 priorityClassName: system-cluster-critical
 

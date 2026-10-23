@@ -111,6 +111,12 @@ global:
     # -- Release name of the control plane, for its URL. Only needed when it is its own release.
     # @default -- `.Release.Name`, from `armonik.controlPlane.source`
     controlPlane:
+    # -- Container runAsUser of the control-plane submitter and the compute-plane agent and worker,
+    # unless set on the container. One uid, as they share files. Null keeps each image's own user.
+    runAsUser: 5000
+    # -- Container runAsGroup of the same processes, unless set on the container. Set alongside
+    # runAsUser: an image without a passwd entry for that uid would otherwise run it in group 0.
+    runAsGroup: 5000
   # Outside `global.armonik`, which is all `import-values` lifts: a default here would reach no root
   # chart, so each consumer resolves its own.
   # -- Cluster DNS domain. Empty stops service hostnames at `.svc`, except where a full name is needed

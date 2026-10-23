@@ -126,25 +126,115 @@ tests:
           content:
             name: ComputePlane__WorkerChannel__Address
             value: http://localhost:6666
-  - it: runs agent and worker under one uid so each can connect to the other's socket
+  - it: runs agent and worker under one uid and gid so each can connect to the other's socket
     template: deployment.yaml
     documentSelector:
       path: metadata.name
       value: "t-armonik-compute-plane-bench"
     asserts:
       - equal:
-          path: spec.template.spec.securityContext.runAsUser
+          path: spec.template.spec.containers[?(@.name == "agent")].securityContext.runAsUser
           value: 5000
-  - it: drops the pod securityContext when runAsUser is nulled
+      - equal:
+          path: spec.template.spec.initContainers[?(@.name == "worker")].securityContext.runAsUser
+          value: 5000
+      - equal:
+          path: spec.template.spec.containers[?(@.name == "agent")].securityContext.runAsGroup
+          value: 5000
+      - equal:
+          path: spec.template.spec.initContainers[?(@.name == "worker")].securityContext.runAsGroup
+          value: 5000
+  - it: sets the uid on the agent and worker only, not on the pod or the other containers
     template: deployment.yaml
     set:
-      partitionCommon.podSecurityContext.runAsUser: null
+      fluentBit.isDaemonSet: false
+      partitionCommon.extraContainers:
+        - name: extra
+          image: busybox
     documentSelector:
       path: metadata.name
       value: "t-armonik-compute-plane-bench"
     asserts:
       - notExists:
           path: spec.template.spec.securityContext
+      - exists:
+          path: spec.template.spec.initContainers[?(@.name == "fluent-bit")].image
+      - notExists:
+          path: spec.template.spec.initContainers[?(@.name == "fluent-bit")].securityContext
+      - exists:
+          path: spec.template.spec.containers[?(@.name == "extra")].image
+      - notExists:
+          path: spec.template.spec.containers[?(@.name == "extra")].securityContext
+  - it: takes the ids from global.armonik.runAsUser and runAsGroup, in every partition
+    template: deployment.yaml
+    set:
+      global.armonik.runAsUser: 1234
+      global.armonik.runAsGroup: 4321
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[?(@.name == "agent")].securityContext.runAsUser
+          value: 1234
+      - equal:
+          path: spec.template.spec.initContainers[?(@.name == "worker")].securityContext.runAsUser
+          value: 1234
+      - equal:
+          path: spec.template.spec.containers[?(@.name == "agent")].securityContext.runAsGroup
+          value: 4321
+      - equal:
+          path: spec.template.spec.initContainers[?(@.name == "worker")].securityContext.runAsGroup
+          value: 4321
+  - it: keeps a uid set on a container over the global one
+    template: deployment.yaml
+    set:
+      global.armonik.runAsUser: 1234
+      partitions.bench.worker.securityContext.runAsUser: 42
+      partitions.bench.worker.securityContext.runAsGroup: 43
+    documentSelector:
+      path: metadata.name
+      value: "t-armonik-compute-plane-bench"
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[?(@.name == "worker")].securityContext.runAsUser
+          value: 42
+      - equal:
+          path: spec.template.spec.initContainers[?(@.name == "worker")].securityContext.runAsGroup
+          value: 43
+      - equal:
+          path: spec.template.spec.containers[?(@.name == "agent")].securityContext.runAsUser
+          value: 1234
+  - it: leaves the image user and group when the globals are nulled
+    template: deployment.yaml
+    set:
+      global.armonik.runAsUser: null
+      global.armonik.runAsGroup: null
+    documentSelector:
+      path: metadata.name
+      value: "t-armonik-compute-plane-bench"
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[?(@.name == "agent")].securityContext.runAsUser
+      - notExists:
+          path: spec.template.spec.initContainers[?(@.name == "worker")].securityContext.runAsUser
+      - notExists:
+          path: spec.template.spec.containers[?(@.name == "agent")].securityContext.runAsGroup
+      - notExists:
+          path: spec.template.spec.initContainers[?(@.name == "worker")].securityContext.runAsGroup
+      - equal:
+          path: spec.template.spec.containers[?(@.name == "agent")].securityContext.runAsNonRoot
+          value: true
+  - it: lets podSecurityContext still reach the pod
+    template: deployment.yaml
+    set:
+      partitionCommon.podSecurityContext:
+        fsGroup: 2000
+    documentSelector:
+      path: metadata.name
+      value: "t-armonik-compute-plane-bench"
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext
+          value:
+            fsGroup: 2000
   - it: hardens agent and worker containers by default
     template: deployment.yaml
     documentSelector:
@@ -159,6 +249,8 @@ tests:
                 - ALL
             privileged: false
             runAsNonRoot: true
+            runAsUser: 5000
+            runAsGroup: 5000
             readOnlyRootFilesystem: false
             allowPrivilegeEscalation: false
             seccompProfile:
@@ -166,9 +258,30 @@ tests:
       - equal:
           path: spec.template.spec.initContainers[?(@.name == "worker")].securityContext
           value: *hardened
-  - it: drops the agent and worker securityContexts when nulled
+  - it: keeps only the ids when the agent and worker securityContexts are nulled
     template: deployment.yaml
     set:
+      partitionCommon.agent.securityContext: null
+      partitionCommon.worker.securityContext: null
+    documentSelector:
+      path: metadata.name
+      value: "t-armonik-compute-plane-bench"
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[?(@.name == "agent")].securityContext
+          value:
+            runAsUser: 5000
+            runAsGroup: 5000
+      - equal:
+          path: spec.template.spec.initContainers[?(@.name == "worker")].securityContext
+          value:
+            runAsUser: 5000
+            runAsGroup: 5000
+  - it: drops the agent and worker securityContexts when the global ids are nulled too
+    template: deployment.yaml
+    set:
+      global.armonik.runAsUser: null
+      global.armonik.runAsGroup: null
       partitionCommon.agent.securityContext: null
       partitionCommon.worker.securityContext: null
     documentSelector:

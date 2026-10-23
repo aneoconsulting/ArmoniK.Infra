@@ -1,0 +1,10 @@
+{{- with .Values.securityContext }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: security-context-result
+data:
+  result: {{ list .input $ | include "armonik.securityContext" | fromYaml | toJson | quote }}
+  # The input after the call, which must not have gained the uid.
+  input: {{ .input | toJson | quote }}
+{{- end }}

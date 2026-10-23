@@ -4,7 +4,7 @@
 num_control=1
 storage_dir="$HOME/armonik/storage"
 logs_dir="$HOME/armonik/logs"
-control_image="docker://dockerhubaneo/armonik_control:0.35.0"
+control_image="docker://dockerhubaneo/armonik_control:0.41.2"
 dataplane_ip="127.0.0.1"
 
 usage() {

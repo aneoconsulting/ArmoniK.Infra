@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Default values
-client_image="docker://dockerhubaneo/armonik_core_htcmock_test_client:0.35.0"
+client_image="docker://dockerhubaneo/armonik_core_htcmock_test_client:0.41.2"
 logs_dir="$HOME/armonik/logs"
 
 usage() {

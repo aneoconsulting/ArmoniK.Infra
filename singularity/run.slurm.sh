@@ -36,14 +36,14 @@ sleep 15
 singularity/control.sh -n 1 -s $STORAGE_DIR \
     -i $SLURMD_NODENAME \
     -l $LOGS_DIR \
-    -c $SINGULARITY_ALLOWED_DIR/armonik_control_0.35.0.sif
+    -c $SINGULARITY_ALLOWED_DIR/armonik_control_0.41.2.sif
 
 singularity/compute.sh -n 20 -s $STORAGE_DIR \
     -c /tmp/armonik/comm \
     -i $SLURMD_NODENAME \
     -l $LOGS_DIR \
-    -a $SINGULARITY_ALLOWED_DIR/armonik_pollingagent_0.35.0.sif \
-    -w $SINGULARITY_ALLOWED_DIR/armonik_core_htcmock_test_worker_0.35.0.sif
+    -a $SINGULARITY_ALLOWED_DIR/armonik_pollingagent_0.41.2.sif \
+    -w $SINGULARITY_ALLOWED_DIR/armonik_core_htcmock_test_worker_0.41.2.sif
 
 # run on the other nodes only (SLURM_NODEID > 0)
 # todo: check things are working properly with multiple nodes
@@ -59,8 +59,8 @@ if [ "$SLURM_NNODES" -gt "1" ]; then
         -s $STORAGE_DIR \
         -c /tmp/armonik/comm \
         -l $LOGS_DIR \
-        -a $SINGULARITY_ALLOWED_DIR/armonik_pollingagent_0.35.0.sif \
-        -w $SINGULARITY_ALLOWED_DIR/armonik_core_htcmock_test_worker_0.35.0.sif \
+        -a $SINGULARITY_ALLOWED_DIR/armonik_pollingagent_0.41.2.sif \
+        -w $SINGULARITY_ALLOWED_DIR/armonik_core_htcmock_test_worker_0.41.2.sif \
         -W &
 fi
 
@@ -72,5 +72,5 @@ for node in $trimmed; do
 done
 
 singularity/client-htcmock.sh \
-    -i $SINGULARITY_ALLOWED_DIR/armonik_core_htcmock_test_client_0.35.0.sif \
+    -i $SINGULARITY_ALLOWED_DIR/armonik_core_htcmock_test_client_0.41.2.sif \
     -l $LOGS_DIR

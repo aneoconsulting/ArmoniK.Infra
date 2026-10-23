@@ -1,6 +1,6 @@
 # ArmoniK on Jean Zay (Singularity + Slurm)
 
-Scripts to run ArmoniK (core 0.35.0) with the HtcMock sample on the Jean Zay supercomputer, without Kubernetes:
+Scripts to run ArmoniK (core 0.41.2) with the HtcMock sample on the Jean Zay supercomputer, without Kubernetes:
 MongoDB and ActiveMQ run as plain processes, the ArmoniK components run as Singularity containers.
 
 ## Prerequisites
@@ -11,9 +11,9 @@ Images must be built locally as `.sif` files, then added to the container manage
 `$SINGULARITY_ALLOWED_DIR` (copies are per user):
 
 ```bash
-singularity build armonik_pollingagent_0.35.0.sif docker://dockerhubaneo/armonik_pollingagent:0.35.0
+singularity build armonik_pollingagent_0.41.2.sif docker://dockerhubaneo/armonik_pollingagent:0.41.2
 module load singularity
-idrcontmgr cp armonik_pollingagent_0.35.0.sif
+idrcontmgr cp armonik_pollingagent_0.41.2.sif
 idrcontmgr ls
 ```
 

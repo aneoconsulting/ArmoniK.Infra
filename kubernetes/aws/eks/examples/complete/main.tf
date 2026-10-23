@@ -72,17 +72,21 @@ module "eks" {
   vpc_private_subnet_ids                                   = data.aws_subnets.subnets.ids
 
   efs_csi = {
-    image      = "public.ecr.aws/efs-csi-driver/amazon/aws-efs-csi-driver"
-    tag        = "v2.1.8"
-    repository = "https://kubernetes-sigs.github.io/aws-efs-csi-driver/"
-    version    = "3.1.9"
+    addon_version = "v3.5.2-eksbuild.1"
+    name          = "eks-complete-test-efs-csi-driver"
+    controller_resources = {
+      limits   = { memory = "256Mi" }
+      requests = { cpu = "10m", memory = "40Mi" }
+    }
   }
 
   ebs_csi = {
-    image      = "public.ecr.aws/ebs-csi-driver/aws-ebs-csi-driver"
-    tag        = "v1.44.0"
-    repository = "https://kubernetes-sigs.github.io/aws-ebs-csi-driver/"
-    version    = "2.44.0"
+    addon_version = "v1.67.1-eksbuild.1"
+    name          = "eks-complete-test-ebs-csi-driver"
+    controller_resources = {
+      limits   = { memory = "256Mi" }
+      requests = { cpu = "10m", memory = "40Mi" }
+    }
   }
 
   # The control plane settings below restate the EKS and Kubernetes defaults.
@@ -111,21 +115,6 @@ module "eks" {
         ]
       }
     }
-  }
-
-  csi_liveness_probe = {
-    image = "public.ecr.aws/eks-distro/kubernetes-csi/livenessprobe"
-    tag   = "v2.15.0-eks-1-32-14"
-  }
-
-  csi_node_driver_registrar = {
-    image = "public.ecr.aws/eks-distro/kubernetes-csi/node-driver-registrar"
-    tag   = "v2.13.0-eks-1-32-14"
-  }
-
-  csi_external_provisioner = {
-    image = "public.ecr.aws/eks-distro/kubernetes-csi/external-provisioner"
-    tag   = "v5.2.0-eks-1-32-14"
   }
 
   eks_managed_node_groups = {

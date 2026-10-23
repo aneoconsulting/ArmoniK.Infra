@@ -67,28 +67,6 @@ module "eks" {
   vpc_pods_subnet_ids                                      = data.aws_subnets.subnets.ids
   vpc_private_subnet_ids                                   = data.aws_subnets.subnets.ids
 
-  efs_csi = {
-    tag     = "v2.1.8"
-    version = "3.1.9"
-  }
-
-  ebs_csi = {
-    tag     = "v1.44.0"
-    version = "2.44.0"
-  }
-
-  csi_liveness_probe = {
-    tag = "v2.15.0-eks-1-32-14"
-  }
-
-  csi_node_driver_registrar = {
-    tag = "v2.13.0-eks-1-32-14"
-  }
-
-  csi_external_provisioner = {
-    tag = "v5.2.0-eks-1-32-14"
-  }
-
   eks_managed_node_groups = {
     test = {
       name                        = "workers"

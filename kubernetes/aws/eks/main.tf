@@ -2,6 +2,8 @@ data "aws_region" "current" {
   region = var.region
 }
 
+data "aws_partition" "current" {}
+
 # Available zones
 data "aws_availability_zones" "available" {
   region = var.region
@@ -24,17 +26,6 @@ locals {
   aws_node_termination_handler_spot_name = "${var.name}-spot-termination"
   kubeconfig_output_path                 = coalesce(var.kubeconfig_file, "${path.root}/generated/kubeconfig")
 
-  # Custom ENI
-  subnets = {
-    subnets = [
-      for index, id in var.vpc_pods_subnet_ids : {
-        subnet_id          = id
-        az_name            = element(data.aws_availability_zones.available.names, index)
-        security_group_ids = [module.eks.node_security_group_id]
-      }
-    ]
-  }
-
   # Node selector
   node_selector_keys   = keys(var.node_selector)
   node_selector_values = values(var.node_selector)
@@ -50,25 +41,6 @@ locals {
         effect   = "NoSchedule"
       }
     ]
-  }
-
-  # Patch coredns
-  patch_coredns_spec = {
-    spec = {
-      template = {
-        spec = {
-          nodeSelector = var.node_selector
-          tolerations = [
-            for index in range(0, length(local.node_selector_keys)) : {
-              key      = local.node_selector_keys[index]
-              operator = "Equal"
-              value    = local.node_selector_values[index]
-              effect   = "NoSchedule"
-            }
-          ]
-        }
-      }
-    }
   }
 
   # Node group defaults; the upstream module has no *_defaults inputs, so they are merged here, the node group winning.
@@ -205,6 +177,8 @@ module "eks" {
   # Tags
   tags         = local.tags
   cluster_tags = local.tags
+
+  addons = local.addons
 
   # Worker groups
   # module input from doc : https://registry.terraform.io/modules/terraform-aws-modules/eks/aws/latest?tab=inputs#optional-inputs

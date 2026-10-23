@@ -4,34 +4,6 @@ variable "profile" {
   type        = string
 }
 
-# Namespace helm chart
-variable "chart_namespace" {
-  type        = string
-  description = "Version for chart"
-  default     = "default" # Enter your desired namespace of helm chart here
-}
-
-# Version helm chart
-variable "chart_version" {
-  type        = string
-  description = "Version for chart"
-  default     = "0.1.0" # Enter your desired version of helm chart here
-}
-
-# Name helm chart
-variable "chart_name" {
-  type        = string
-  description = "Name for chart"
-  default     = "eniconfig" # Enter your desired name of Helm chart here
-}
-
-# Path helm chart
-variable "chart_repository" {
-  type        = string
-  description = "Path to the charts repository"
-  default     = "../../../charts" # Enter your desired relative path here
-}
-
 # Kubeconfig file path
 variable "kubeconfig_file" {
   description = "Kubeconfig file path"
@@ -306,67 +278,29 @@ variable "eks_managed_node_groups" {
 }
 
 variable "efs_csi" {
-  description = "Container Storage Interface for EFS volume provisioning on EKS"
+  description = "EFS CSI driver, deployed as the aws-efs-csi-driver EKS add-on. A null addon_version tracks the latest version compatible with the cluster; name is the IAM role name"
   type = object({
-    repository         = optional(string, "https://kubernetes-sigs.github.io/aws-efs-csi-driver/")
-    version            = string
-    image              = optional(string, "public.ecr.aws/efs-csi-driver/amazon/aws-efs-csi-driver")
-    tag                = string
-    name               = optional(string)
-    namespace          = optional(string)
-    image_pull_secrets = optional(string)
+    addon_version = optional(string)
+    name          = optional(string)
     controller_resources = optional(object({
-      limits = optional(object({
-        storage = string
-      }))
-      requests = optional(object({
-        storage = string
-      }))
+      limits   = optional(map(string))
+      requests = optional(map(string))
     }))
   })
+  default = {}
 }
 
 variable "ebs_csi" {
-  description = "Container Storage Interface for EBS volume provisioning on EKS"
+  description = "EBS CSI driver, deployed as the aws-ebs-csi-driver EKS add-on. A null addon_version tracks the latest version compatible with the cluster; name is the IAM role name"
   type = object({
-    repository         = optional(string, "https://kubernetes-sigs.github.io/aws-ebs-csi-driver/")
-    version            = string
-    image              = optional(string, "public.ecr.aws/ebs-csi-driver/aws-ebs-csi-driver")
-    tag                = string
-    name               = optional(string)
-    namespace          = optional(string)
-    image_pull_secrets = optional(string)
+    addon_version = optional(string)
+    name          = optional(string)
     controller_resources = optional(object({
-      limits = optional(object({
-        storage = string
-      }))
-      requests = optional(object({
-        storage = string
-      }))
+      limits   = optional(map(string))
+      requests = optional(map(string))
     }))
   })
-}
-
-variable "csi_liveness_probe" {
-  description = "CSI liveness probe for both EFS and EBS"
-  type = object({
-    image = optional(string, "public.ecr.aws/csi-components/livenessprobe")
-    tag   = string
-  })
-}
-variable "csi_node_driver_registrar" {
-  description = "CSI node driver registrar for both EFS and EBS"
-  type = object({
-    image = optional(string, "public.ecr.aws/csi-components/csi-node-driver-registrar")
-    tag   = string
-  })
-}
-variable "csi_external_provisioner" {
-  description = "CSI external provisioner for both EFS and EBS"
-  type = object({
-    image = optional(string, "public.ecr.aws/csi-components/csi-provisioner")
-    tag   = string
-  })
+  default = {}
 }
 
 # Encryption keys

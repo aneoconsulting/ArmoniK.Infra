@@ -26,7 +26,6 @@ charts/armonik-common/index
 charts/armonik-dependencies/index
 charts/armonik-operators/index
 charts/activemq/index
-charts/eniconfig/index
 charts/keda-hpa/index
 ```
 

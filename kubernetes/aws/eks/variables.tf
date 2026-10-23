@@ -24,6 +24,12 @@ variable "name" {
   default     = "armonik-eks"
 }
 
+variable "pod_identity" {
+  description = "Deploy EKS Pod Identity (the eks-pod-identity-agent add-on) and use it for the EBS/EFS CSI drivers and the cluster autoscaler instead of IRSA. Private clusters then need the eks-auth VPC endpoint. Their roles trust both, so switching only takes a pod restart"
+  type        = bool
+  default     = false
+}
+
 variable "region" {
   description = "AWS region where the EKS resources will be managed. Defaults to the region set in the provider configuration"
   type        = string

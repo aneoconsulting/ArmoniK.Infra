@@ -1,4 +1,22 @@
 locals {
+  pod_identity = var.pod_identity
+
+  # Service accounts of each workload role, trusted through both IRSA and EKS Pod Identity.
+  workload_roles = {
+    ebs_csi_driver = {
+      namespace        = "kube-system"
+      service_accounts = ["ebs-csi-controller-sa", "ebs-csi-node-sa"]
+    }
+    efs_csi_driver = {
+      namespace        = "kube-system"
+      service_accounts = ["efs-csi-controller-sa", "efs-csi-node-sa"]
+    }
+    cluster_autoscaler = {
+      namespace        = var.cluster_autoscaler_namespace
+      service_accounts = ["cluster-autoscaler"]
+    }
+  }
+
   # Drops null settings so the add-on keeps its own defaults for them.
   ebs_csi_controller = { for k, v in {
     logLevel     = 2
@@ -24,7 +42,12 @@ locals {
   }
 
   # resolve_conflicts_on_create = OVERWRITE adopts the objects of a cluster that ran these components self-managed.
-  addons = {
+  addons = merge(local.pod_identity ? {
+    eks-pod-identity-agent = {
+      before_compute              = true
+      resolve_conflicts_on_create = "OVERWRITE"
+    }
+    } : {}, {
     vpc-cni = {
       before_compute              = true
       resolve_conflicts_on_create = "OVERWRITE"
@@ -56,16 +79,24 @@ locals {
     aws-ebs-csi-driver = {
       addon_version               = var.ebs_csi.addon_version
       resolve_conflicts_on_create = "OVERWRITE"
-      service_account_role_arn    = aws_iam_role.ebs_csi_driver.arn
-      configuration_values        = jsonencode({ controller = local.ebs_csi_controller })
+      service_account_role_arn    = local.pod_identity ? null : aws_iam_role.ebs_csi_driver.arn
+      pod_identity_association = local.pod_identity ? [{
+        role_arn        = aws_iam_role.ebs_csi_driver.arn
+        service_account = "ebs-csi-controller-sa"
+      }] : null
+      configuration_values = jsonencode({ controller = local.ebs_csi_controller })
     }
     aws-efs-csi-driver = {
       addon_version               = var.efs_csi.addon_version
       resolve_conflicts_on_create = "OVERWRITE"
-      service_account_role_arn    = aws_iam_role.efs_csi_driver.arn
-      configuration_values        = jsonencode({ controller = local.efs_csi_controller })
+      service_account_role_arn    = local.pod_identity ? null : aws_iam_role.efs_csi_driver.arn
+      pod_identity_association = local.pod_identity ? [{
+        role_arn        = aws_iam_role.efs_csi_driver.arn
+        service_account = "efs-csi-controller-sa"
+      }] : null
+      configuration_values = jsonencode({ controller = local.efs_csi_controller })
     }
-  }
+  })
 }
 
 # Custom networking without ENIConfigs leaves pods without IPs. Cross-variable validation needs Terraform 1.9.
@@ -78,31 +109,58 @@ resource "null_resource" "vpc_cni_custom_networking_guard" {
   }
 }
 
-# IRSA role of the aws-ebs-csi-driver add-on
+# Both mechanisms are always trusted, so switching pod_identity never breaks a running pod; the Pod Identity
+# statement follows https://docs.aws.amazon.com/eks/latest/userguide/pod-id-role.html, also pinned to this cluster.
+data "aws_iam_policy_document" "workload_trust" {
+  for_each = local.workload_roles
+  statement {
+    sid     = "Irsa"
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+    principals {
+      type        = "Federated"
+      identifiers = [module.eks.oidc_provider_arn]
+    }
+    condition {
+      test     = "StringEquals"
+      variable = "${module.eks.oidc_provider}:aud"
+      values   = ["sts.amazonaws.com"]
+    }
+    condition {
+      test     = "StringEquals"
+      variable = "${module.eks.oidc_provider}:sub"
+      values   = [for sa in each.value.service_accounts : "system:serviceaccount:${each.value.namespace}:${sa}"]
+    }
+  }
+  statement {
+    sid     = "PodIdentity"
+    actions = ["sts:AssumeRole", "sts:TagSession"]
+    principals {
+      type        = "Service"
+      identifiers = ["pods.eks.amazonaws.com"]
+    }
+    condition {
+      test     = "StringEquals"
+      variable = "aws:RequestTag/eks-cluster-name"
+      values   = [module.eks.cluster_name]
+    }
+    condition {
+      test     = "StringEquals"
+      variable = "aws:RequestTag/kubernetes-namespace"
+      values   = [each.value.namespace]
+    }
+    condition {
+      test     = "StringEquals"
+      variable = "aws:RequestTag/kubernetes-service-account"
+      values   = each.value.service_accounts
+    }
+  }
+}
+
+# Role of the aws-ebs-csi-driver add-on
 resource "aws_iam_role" "ebs_csi_driver" {
-  name = coalesce(var.ebs_csi.name, "${var.name}-ebs-csi-driver")
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Principal = {
-          Federated = module.eks.oidc_provider_arn
-        }
-        Action = "sts:AssumeRoleWithWebIdentity"
-        Condition = {
-          StringEquals = {
-            "${module.eks.oidc_provider}:aud" = "sts.amazonaws.com"
-            "${module.eks.oidc_provider}:sub" = [
-              "system:serviceaccount:kube-system:ebs-csi-controller-sa",
-              "system:serviceaccount:kube-system:ebs-csi-node-sa"
-            ]
-          }
-        }
-      }
-    ]
-  })
-  tags = local.tags
+  name               = coalesce(var.ebs_csi.name, "${var.name}-ebs-csi-driver")
+  assume_role_policy = data.aws_iam_policy_document.workload_trust["ebs_csi_driver"].json
+  tags               = local.tags
 }
 
 resource "aws_iam_role_policy_attachment" "ebs_csi_driver_managed" {
@@ -151,31 +209,11 @@ resource "aws_iam_role_policy" "ebs_csi_driver_kms" {
   policy = data.aws_iam_policy_document.ebs_csi_driver_kms[0].json
 }
 
-# IRSA role of the aws-efs-csi-driver add-on
+# Role of the aws-efs-csi-driver add-on
 resource "aws_iam_role" "efs_csi_driver" {
-  name = coalesce(var.efs_csi.name, "${var.name}-efs-csi-driver")
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Principal = {
-          Federated = module.eks.oidc_provider_arn
-        }
-        Action = "sts:AssumeRoleWithWebIdentity"
-        Condition = {
-          StringEquals = {
-            "${module.eks.oidc_provider}:aud" = "sts.amazonaws.com"
-            "${module.eks.oidc_provider}:sub" = [
-              "system:serviceaccount:kube-system:efs-csi-controller-sa",
-              "system:serviceaccount:kube-system:efs-csi-node-sa"
-            ]
-          }
-        }
-      }
-    ]
-  })
-  tags = local.tags
+  name               = coalesce(var.efs_csi.name, "${var.name}-efs-csi-driver")
+  assume_role_policy = data.aws_iam_policy_document.workload_trust["efs_csi_driver"].json
+  tags               = local.tags
 }
 
 resource "aws_iam_role_policy_attachment" "efs_csi_driver_managed" {

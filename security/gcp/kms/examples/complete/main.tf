@@ -1,54 +1,35 @@
 data "google_client_openid_userinfo" "current" {}
 
-resource "local_file" "date_sh" {
-  filename = "${path.module}/generated/date.sh"
-  content  = local.date
-}
-
-data "external" "static_timestamp" {
-  program     = ["bash", "date.sh"]
-  working_dir = "${path.module}/generated"
-  depends_on  = [local_file.date_sh]
-}
-
-resource "null_resource" "timestamp" {
-  triggers = {
-    date = data.external.static_timestamp.result.date
-  }
-  lifecycle {
-    ignore_changes = [triggers]
-  }
+# Key rings are never deleted: a random suffix lets the example be applied again after a destroy
+resource "random_string" "suffix" {
+  length  = 5
+  special = false
+  upper   = false
+  numeric = true
 }
 
 locals {
-  date = <<-EOT
-#!/bin/bash
-set -e
-DATE=$(date +%F-%H-%M-%S)
-jq -n --arg date "$DATE" '{"date":$date}'
-  EOT
+  current_user = "user:${data.google_client_openid_userinfo.current.email}"
   labels = {
-    env             = "test"
-    app             = "complete"
-    module          = "kms"
-    "create_by"     = split("@", data.google_client_openid_userinfo.current.email)[0]
-    "creation_date" = null_resource.timestamp.triggers["date"]
+    env    = "test"
+    app    = "complete"
+    module = "kms"
+    # Label values only allow lowercase letters, digits, "_" and "-"
+    created_by = replace(lower(split("@", data.google_client_openid_userinfo.current.email)[0]), "/[^a-z0-9_-]/", "_")
   }
   key_ring_roles = {
-    "roles/cloudkms.admin" = ["user:hbitoun@aneo.fr", "user:lzianekhodja@aneo.fr"],
-    "roles/editor"         = ["user:hbitoun@aneo.fr"]
+    "roles/cloudkms.admin"  = [local.current_user]
+    "roles/cloudkms.viewer" = [local.current_user]
   }
   crypto_keys = {
     "key-1" = {
-      purpose                       = "ENCRYPT_DECRYPT"
       rotation_period               = "86400s"
-      import_only                   = false
       skip_initial_version_creation = true
       version_template = {
-        algorithm = "CRYPTO_KEY_VERSION_ALGORITHM_UNSPECIFIED"
+        algorithm = "GOOGLE_SYMMETRIC_ENCRYPTION"
       }
     }
-    "key-4" = {
+    "key-2" = {
       purpose = "ASYMMETRIC_SIGN"
       version_template = {
         algorithm        = "EC_SIGN_P384_SHA384"
@@ -56,11 +37,9 @@ jq -n --arg date "$DATE" '{"date":$date}'
       }
     }
     "key-3" = {
-      purpose                    = "ENCRYPT_DECRYPT"
       destroy_scheduled_duration = "86400s"
-      crypto_key_roles = {
-        "roles/cloudkms.cryptoKeyEncrypter" = ["user:hbitoun@aneo.fr"],
-        "roles/cloudkms.admin"              = ["user:hbitoun@aneo.fr", "user:lzianekhodja@aneo.fr"]
+      roles = {
+        "roles/cloudkms.cryptoKeyEncrypterDecrypter" = [local.current_user]
       }
     }
   }
@@ -68,7 +47,7 @@ jq -n --arg date "$DATE" '{"date":$date}'
 
 module "complete_kms" {
   source         = "../../../kms"
-  key_ring_name  = "complete-kms"
+  key_ring_name  = "complete-kms-${random_string.suffix.result}"
   key_ring_roles = local.key_ring_roles
   crypto_keys    = local.crypto_keys
   location       = "europe"

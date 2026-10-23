@@ -1,20 +1,9 @@
 ## Complete PSA
 
-Terraform scripts to create a complete GCP PSA using the [module psa](../..).
-
-To create a complete PSA:
+Every input, with `deletion_policy = "REMOVE_PEERING"`. Uses the [psa module](../..).
 
 ```bash
 terraform init
-terraform plan
-terraform apply
+terraform apply -var project=<project>
+terraform destroy -var project=<project>
 ```
-
-To delete all resource:
-
-```bash
-terraform destroy
-```
-
-
-

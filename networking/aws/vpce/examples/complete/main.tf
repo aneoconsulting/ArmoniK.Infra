@@ -30,6 +30,32 @@ resource "null_resource" "timestamp" {
 locals {
   azs      = data.aws_availability_zones.available.names
   vpc_cidr = "10.0.0.0/16"
+
+  # VPC Lattice endpoints are addressed by ARN rather than a service name; only created when the matching ARN is
+  # supplied, since there is no VPC Lattice resource in this example to connect them to otherwise.
+  lattice_endpoints = merge(
+    var.lattice_resource_configuration_arn == null ? {} : {
+      lattice_resource = {
+        vpc_endpoint_type          = "Resource"
+        resource_configuration_arn = var.lattice_resource_configuration_arn
+        private_dns_enabled        = true
+        dns_options = {
+          private_dns_preference = "VERIFIED_DOMAINS_ONLY"
+        }
+      }
+    },
+    var.lattice_service_network_arn == null ? {} : {
+      lattice_service_network = {
+        vpc_endpoint_type   = "ServiceNetwork"
+        service_network_arn = var.lattice_service_network_arn
+        private_dns_enabled = true
+        dns_options = {
+          private_dns_preference        = "SPECIFIED_DOMAINS_ONLY"
+          private_dns_specified_domains = ["example.internal"]
+        }
+      }
+    }
+  )
 }
 
 # Create VPC
@@ -52,7 +78,7 @@ module "vpc" {
 module "vpce" {
   source = "../../../vpce"
   vpc_id = module.vpc.id
-  endpoints = {
+  endpoints = merge(local.lattice_endpoints, {
     s3 = {
       service      = "s3"
       service_type = "Gateway"
@@ -104,6 +130,7 @@ module "vpce" {
     sts = {
       service             = "sts"
       service_type        = "Interface"
+      service_region      = var.sts_service_region
       private_dns_enabled = !module.vpc.enable_external_access
       subnet_ids          = !module.vpc.enable_external_access ? module.vpc.private_subnets : []
       security_group_ids  = !module.vpc.enable_external_access ? [module.vpc.this.default_security_group_id] : []
@@ -136,7 +163,7 @@ module "vpce" {
       subnet_ids          = !module.vpc.enable_external_access ? module.vpc.private_subnets : []
       security_group_ids  = !module.vpc.enable_external_access ? [module.vpc.this.default_security_group_id] : []
     }
-  }
+  })
   security_group_ids = []
   subnet_ids         = []
   tags = {

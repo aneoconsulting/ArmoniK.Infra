@@ -26,9 +26,7 @@ env:
   PostgreSQL__Port:                  {{ $pg.port | default 5432 | toString | quote }}
   PostgreSQL__DatabaseName:          {{ $pg.database | quote }}
   PostgreSQL__Ssl:                   {{ $pg.ssl | quote }}
-{{- /* Pending Core release: keeps idle replication slots for reuse.
   PostgreSQL__ReplicationIdleTimeout: "00:05:00"
-*/}}
 {{- if $pg.ssl }}
   PostgreSQL__CAFile:                {{ list $prefix "ca.crt" $root | include "armonik.conf.mountFilePath" | quote }}
 {{- end }}

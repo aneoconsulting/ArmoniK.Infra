@@ -9,6 +9,7 @@ resource "aws_autoscaling_group_tag" "autoscaling_group_tag" {
       }
     }
   ]...)
+  region = var.region
   # Lookup the ASG name for the MNG, error if there is more than one
   autoscaling_group_name = one(module.eks.eks_managed_node_groups[each.value.mng].node_group_autoscaling_group_names)
   tag {

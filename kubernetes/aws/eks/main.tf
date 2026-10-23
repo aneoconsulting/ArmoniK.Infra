@@ -1,7 +1,11 @@
-data "aws_region" "current" {}
+data "aws_region" "current" {
+  region = var.region
+}
 
 # Available zones
-data "aws_availability_zones" "available" {}
+data "aws_availability_zones" "available" {
+  region = var.region
+}
 
 # Random string
 resource "random_string" "random_resources" {
@@ -12,7 +16,7 @@ resource "random_string" "random_resources" {
 }
 
 locals {
-  region                                 = data.aws_region.current.name
+  region                                 = data.aws_region.current.region
   tags                                   = merge({ module = "eks-${var.name}" }, var.tags)
   iam_worker_autoscaling_policy_name     = "eks-worker-autoscaling-${var.name}"
   ima_aws_node_termination_handler_name  = "${var.name}-aws-node-termination-handler-${random_string.random_resources.result}"
@@ -67,9 +71,28 @@ locals {
     }
   }
 
+  # Node group defaults; the upstream module has no *_defaults inputs, so they are merged here, the node group winning.
+  node_metadata_options = {
+    http_endpoint               = "enabled"
+    http_tokens                 = "required"
+    http_put_response_hop_limit = 2
+    instance_metadata_tags      = "disabled"
+  }
+  # The sysctls fs.inotify.max_user_instances defines user limits on the number of inotify resources.
+  # In the context of a Kubernetes cluster, if these limits are reached, you may experience processes
+  # failing with error messages related to the limits, and it would exhibit as failing Pods with inotify
+  # related errors in the Pod logs.
+  node_post_bootstrap_user_data = <<-EOT
+      echo fs.inotify.max_user_instances=8192 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
+    EOT
+
   # List of EKS managed node groups
   eks_managed_node_groups = {
-    for key, value in var.eks_managed_node_groups : key => merge(value, {
+    for key, value in var.eks_managed_node_groups : key => merge({
+      enable_monitoring        = true
+      metadata_options         = local.node_metadata_options
+      post_bootstrap_user_data = local.node_post_bootstrap_user_data
+      }, value, {
       name                       = can(coalesce(value.name)) ? "${try(value.name, "")}-${var.name}" : "${key}-${var.name}",
       enable_bootstrap_user_data = can(coalesce(value.ami_id))
       vpc_security_group_ids     = [module.eks.node_security_group_id]
@@ -78,13 +101,21 @@ locals {
 
   # List of self managed node groups
   self_managed_node_groups = {
-    for key, value in var.self_managed_node_groups : key => merge(value, {
+    for key, value in var.self_managed_node_groups : key => merge({
+      enable_monitoring        = true
+      tags                     = local.tags
+      autoscaling_group_tags   = local.autoscaling_group_tags
+      metadata_options         = local.node_metadata_options
+      post_bootstrap_user_data = local.node_post_bootstrap_user_data
+      }, value, {
       name = can(coalesce(value.name)) ? "${try(value.name, "")}-${var.name}" : "${key}-${var.name}",
     })
   }
 
   # List of fargate profiles
-  fargate_profiles = var.fargate_profiles
+  fargate_profiles = {
+    for key, value in var.fargate_profiles : key => merge({ tags = local.tags }, value)
+  }
 
   # enable discovery of autoscaling groups by cluster-autoscaler
   autoscaling_group_tags = {
@@ -112,14 +143,17 @@ locals {
 
 
 module "eks" {
-  source          = "terraform-aws-modules/eks/aws"
-  version         = "20.36.0"
-  create          = true
-  cluster_name    = var.name
-  cluster_version = var.cluster_version
+  source              = "terraform-aws-modules/eks/aws"
+  version             = "21.29.0"
+  create              = true
+  region              = var.region
+  name                = var.name
+  kubernetes_version  = var.cluster_version
+  deletion_protection = var.cluster_deletion_protection
 
   # If you want to maintain the current default behavior of v19.x
-  kms_key_enable_default_policy = false
+  kms_key_enable_default_policy   = false
+  kms_key_rotation_period_in_days = var.cluster_kms_key_rotation_period_in_days
 
   # Cluster access entry
   # To add the current caller identity as an administrator
@@ -130,17 +164,24 @@ module "eks" {
   vpc_id     = var.vpc_id
 
   # Private cluster
-  cluster_endpoint_private_access = var.cluster_endpoint_private_access
+  endpoint_private_access = var.cluster_endpoint_private_access
 
   # Public cluster
-  cluster_endpoint_public_access       = var.cluster_endpoint_public_access
-  cluster_endpoint_public_access_cidrs = var.cluster_endpoint_public_access_cidrs
+  endpoint_public_access       = var.cluster_endpoint_public_access
+  endpoint_public_access_cidrs = var.cluster_endpoint_public_access_cidrs
+
+  # Control plane
+  control_plane_scaling_config   = var.cluster_control_plane_scaling_config
+  control_plane_egress_mode      = var.cluster_control_plane_egress_mode
+  kube_api_server_config         = var.cluster_kube_api_server_config
+  kube_controller_manager_config = var.cluster_kube_controller_manager_config
+  kube_scheduler_config          = var.cluster_kube_scheduler_config
 
   # Cluster parameters
-  cluster_enabled_log_types              = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
+  enabled_log_types                      = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
   cloudwatch_log_group_kms_key_id        = var.cluster_log_kms_key_id
   cloudwatch_log_group_retention_in_days = var.cluster_log_retention_in_days
-  create_cluster_security_group          = true
+  create_security_group                  = true
 
   # Extend node-to-node security group rules
   node_security_group_additional_rules = {
@@ -154,9 +195,9 @@ module "eks" {
     }
   }
 
-  cluster_additional_security_group_ids = [module.eks.node_security_group_id]
+  additional_security_group_ids = [module.eks.node_security_group_id]
 
-  cluster_encryption_config = {
+  encryption_config = {
     provider_key_arn = var.cluster_encryption_config
     resources        = ["secrets"]
   }
@@ -165,54 +206,8 @@ module "eks" {
   tags         = local.tags
   cluster_tags = local.tags
 
-  # List of EKS managed node groups
-  eks_managed_node_group_defaults = {
-    enable_monitoring = true
-    metadata_options = {
-      http_endpoint               = "enabled"
-      http_tokens                 = "required"
-      http_put_response_hop_limit = 2
-      instance_metadata_tags      = "disabled"
-    }
-    # The sysctls fs.inotify.max_user_instances defines user limits on the number of inotify resources.
-    # In the context of a Kubernetes cluster, if these limits are reached, you may experience processes
-    # failing with error messages related to the limits, and it would exhibit as failing Pods with inotify
-    # related errors in the Pod logs.
-    post_bootstrap_user_data = <<-EOT
-        echo fs.inotify.max_user_instances=8192 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
-      EOT
-  }
-
-  # List of self managed node groups
-  self_managed_node_group_defaults = {
-    enable_monitoring      = true
-    tags                   = local.tags
-    autoscaling_group_tags = local.autoscaling_group_tags
-    metadata_options = {
-      http_endpoint               = "enabled"
-      http_tokens                 = "required"
-      http_put_response_hop_limit = 2
-      instance_metadata_tags      = "disabled"
-    }
-    # The sysctls fs.inotify.max_user_instances defines user limits on the number of inotify resources.
-    # In the context of a Kubernetes cluster, if these limits are reached, you may experience processes
-    # failing with error messages related to the limits, and it would exhibit as failing Pods with inotify
-    # related errors in the Pod logs.
-    post_bootstrap_user_data = <<-EOT
-        echo fs.inotify.max_user_instances=8192 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
-      EOT
-  }
-
-  # List of fargate profiles
-  fargate_profile_defaults = {
-    tags = local.tags
-  }
-
   # Worker groups
   # module input from doc : https://registry.terraform.io/modules/terraform-aws-modules/eks/aws/latest?tab=inputs#optional-inputs
-  # variables from module code : https://github.dev/terraform-aws-modules/terraform-aws-eks/tree/v19.10.0
-  # sample usages : https://github.com/Jitsusama/example-terraform-eks-mixed-os-cluster/blob/main/cluster.tf#L91
-  #                 https://github.dev/terraform-aws-modules/terraform-aws-eks/tree/v19.10.0
   eks_managed_node_groups  = local.eks_managed_node_groups
   self_managed_node_groups = local.self_managed_node_groups
   fargate_profiles         = local.fargate_profiles

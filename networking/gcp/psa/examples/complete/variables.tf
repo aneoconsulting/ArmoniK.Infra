@@ -1,5 +1,5 @@
 variable "region" {
-  description = "The GCP region to deploy the Artifact registry"
+  description = "The GCP region used by the provider"
   type        = string
   default     = "europe-west1"
 }

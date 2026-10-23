@@ -8,28 +8,9 @@ output "id" {
   value       = module.complete_vpc.id
 }
 
-output "private_subnets" {
-  description = "Map of private subnets"
-  value = {
-    for key in keys(module.complete_vpc.private_subnet_ids) : key => {
-      id         = module.complete_vpc.private_subnet_ids[key],
-      cidr_block = module.complete_vpc.private_subnet_cidr_blocks[key],
-      self_link  = module.complete_vpc.private_subnet_self_links[key]
-      region     = module.complete_vpc.private_subnet_regions[key]
-    }
-  }
-}
-
-output "public_subnets" {
-  description = "Map of public subnets"
-  value = {
-    for key in keys(module.complete_vpc.public_subnet_ids) : key => {
-      id         = module.complete_vpc.public_subnet_ids[key],
-      cidr_block = module.complete_vpc.public_subnet_cidr_blocks[key],
-      self_link  = module.complete_vpc.public_subnet_self_links[key]
-      region     = module.complete_vpc.public_subnet_regions[key]
-    }
-  }
+output "subnets" {
+  description = "Map of subnets"
+  value       = module.complete_vpc.subnets
 }
 
 output "gke_subnet" {

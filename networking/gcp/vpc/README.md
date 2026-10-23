@@ -8,13 +8,14 @@ This module creates a GCP VPC with these constraints:
 
 * By default, the VPC is global
 * All subnets are in the same region chosen by user
-* List of public and private subnets can be created
-* List of private subnets for VPC-native Kubernetes clusters can be created
+* List of subnets can be created, each with or without outbound internet access through Cloud NAT
+* A subnet for VPC-native Kubernetes clusters can be created, with Cloud NAT by default so that private nodes can pull
+  public images
 * All created subnets are of purpose `PRIVATE_RFC_1918`
 * Create subnet flow logs in Stackdriver
 * All traffic are captured in flow logs
 * Subnetwork without external IP addresses can access Google APIs and services by using Private Google Access
-* If external access enabled, use a NAT router for public subnets
+* Cloud NAT is outbound only: no subnet gets public IP addresses or inbound access
 
 <!-- BEGIN_TF_DOCS -->
 <!-- END_TF_DOCS -->

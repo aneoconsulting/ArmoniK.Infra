@@ -61,7 +61,7 @@ locals {
 # Create VPC
 module "vpc" {
   source          = "../../../vpc"
-  name            = "vpce-simple-${random_string.suffix.result}"
+  name            = "vpce-complete-${random_string.suffix.result}"
   eks_name        = "complete-vpce"
   private_subnets = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 4, k)]
   public_subnets  = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 8, k + 48)]

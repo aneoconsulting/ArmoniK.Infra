@@ -1,20 +1,9 @@
-## Complete Cloud KMS
+## Complete KMS
 
-Terraform scripts to create a complete GCP Cloud KMS using the [module kms](../..).
-
-To create a complete GCP Cloud KMS:
+Symmetric and signing keys, rotation, and IAM roles for the current user. Uses the [kms module](../..).
 
 ```bash
 terraform init
-terraform plan
-terraform apply
+terraform apply -var project=<project>
+terraform destroy -var project=<project>
 ```
-
-To delete all resource:
-
-```bash
-terraform destroy
-```
-
-
-

@@ -1,20 +1,15 @@
-# Cloud KMS
+# GCP Cloud KMS
 
-Cloud Key Management Service allows you to create, import, and manage cryptographic keys and perform cryptographic
-operations in a single centralized cloud service. You can use these keys and perform these operations by using Cloud KMS
-directly, by using Cloud HSM or Cloud External Key Manager, or by using Customer-Managed Encryption Keys (CMEK) integrations
-within other Google Cloud services.
+Customer-managed encryption keys (CMEK) for the other modules: GKE secrets, GCS, Artifact Registry, Memorystore.
 
-This module create a key ring with a list of crypto keys with these possibilities :
+This module creates:
 
-* Create a KeyRing.
-* Configure the IAM policy for the newly created key ring.
-* Create a map of crypto keys.
-* Configure the IAM policy for the newly created crypto keys.
+* A key ring.
+* Crypto keys (purpose, rotation, algorithm).
+* IAM roles on the key ring and on each key.
 
-> Note: KeyRings cannot be deleted from Google Cloud Platform. Destroying a Terraform-managed KeyRing will remove it from state but will not delete the resource from the project. See [Documentation](https://cloud.google.com/kms/docs/destroy-restore#:~:text=Note%3A%20Key%20rings%2C%20keys%2C,unless%20it%20has%20been%20destroyed.).
-
-> Note: CryptoKeys cannot be deleted from Google Cloud Platform. Destroying a Terraform-managed CryptoKey will remove it from state and delete all CryptoKeyVersions, rendering the key unusable, but will not delete the resource from the project. When Terraform destroys these keys, any data previously encrypted with these keys will be irrecoverable. For this reason, it is strongly recommended that you add lifecycle hooks to the resource to prevent accidental destruction.
+> Note: GCP never deletes key rings and keys. A destroy removes them from the state and destroys the key versions,
+> and their names stay reserved.
 
 <!-- BEGIN_TF_DOCS -->
 <!-- END_TF_DOCS -->
@@ -27,4 +22,3 @@ This module create a key ring with a list of crypto keys with these possibilitie
 
 examples/**
 ```
-

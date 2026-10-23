@@ -6,13 +6,26 @@ env
 export ARMONIK_VERSION=0.41.2
 export PROJECT=${WORK_SHARED}/Projets
 export LOGS_DIR=$WORK_SHARED/armonik/$SLURM_JOB_ID/logs
-export DB_DIR=$WORK_SHARED/armonik/$SLURM_JOB_ID/db
+# MongoDB and ActiveMQ store their data in the RAM of the first node (/dev/shm): compute nodes have no local disk,
+# /tmp is a 150 MB tmpfs and Lustre makes every fsync a network round trip. The data is lost at the end of the job.
+export DB_DIR=${DB_DIR:-/dev/shm/armonik/db}
+export ACTIVEMQ_DATA=${ACTIVEMQ_DATA:-/dev/shm/activemq}
 export STORAGE_DIR=$JOBSCRATCH/armonik/storage
 
 export INSTALL_DIR=$WORK_SHARED/install
 export PATH=$PATH:$INSTALL_DIR/mongodb-linux-x86_64-rhel93-8.2.2/bin:$INSTALL_DIR/mongosh-2.5.10-linux-x64/bin:$INSTALL_DIR/apache-activemq-6.2.0/bin:$INSTALL_DIR/jdk-21.0.8/bin
 
 cd $PROJECT
+
+# keep the ActiveMQ log and free the RAM used by the data when the job ends
+cleanup() {
+    cp $ACTIVEMQ_DATA/activemq.log $LOGS_DIR/ 2>/dev/null
+    for dir in $DB_DIR $ACTIVEMQ_DATA; do
+        case $dir in /dev/shm/*) rm -rf $dir ;; esac
+    done
+}
+trap cleanup EXIT
+trap "exit 143" TERM
 
 module purge
 module load singularity

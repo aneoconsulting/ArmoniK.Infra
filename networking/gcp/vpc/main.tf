@@ -2,9 +2,12 @@
 data "google_client_config" "current" {}
 
 locals {
-  public_subnets  = { for key, value in var.subnets : key => value if value.public_access }
-  private_subnets = { for key, value in var.subnets : key => value if !value.public_access }
-  public_regions  = toset([for key, value in local.public_subnets : value.region])
+  nat_subnets    = { for key, value in var.subnets : key => value if value.enable_nat }
+  gke_subnet_nat = try(var.gke_subnet.enable_nat, false)
+  nat_regions = toset(concat(
+    [for key, value in local.nat_subnets : value.region],
+    local.gke_subnet_nat ? [var.gke_subnet.region] : []
+  ))
 }
 
 # VPC
@@ -15,7 +18,7 @@ resource "google_compute_network" "vpc" {
   routing_mode                              = var.routing_mode
   mtu                                       = var.mtu
   enable_ula_internal_ipv6                  = var.enable_ula_internal_ipv6
-  internal_ipv6_range                       = can(coalesce(var.enable_ula_internal_ipv6)) ? var.internal_ipv6_range : null
+  internal_ipv6_range                       = var.internal_ipv6_range
   network_firewall_policy_enforcement_order = var.network_firewall_policy_enforcement_order
   project                                   = data.google_client_config.current.project
   delete_default_routes_on_create           = var.delete_default_routes_on_create
@@ -27,7 +30,7 @@ resource "google_compute_subnetwork" "subnets" {
   ip_cidr_range            = each.value.cidr_block
   name                     = each.key
   network                  = google_compute_network.vpc.name
-  description              = "${each.value.public_access ? "Public" : "Private"} subnet of IP address range ${each.value.cidr_block} in VPC ${google_compute_network.vpc.name}"
+  description              = "Subnet of IP address range ${each.value.cidr_block} in VPC ${google_compute_network.vpc.name}"
   private_ip_google_access = var.enable_google_access
   region                   = each.value.region
   project                  = data.google_client_config.current.project
@@ -38,13 +41,13 @@ resource "google_compute_subnetwork" "subnets" {
   }
 }
 
-# GKE private subnets
+# GKE subnet
 resource "google_compute_subnetwork" "gke_subnet" {
   count                    = var.gke_subnet != null ? 1 : 0
   ip_cidr_range            = var.gke_subnet.nodes_cidr_block
   name                     = var.gke_subnet.name
   network                  = google_compute_network.vpc.name
-  description              = "GKE private subnet of IP address range ${var.gke_subnet.nodes_cidr_block} in VPC ${google_compute_network.vpc.name}"
+  description              = "GKE subnet of IP address range ${var.gke_subnet.nodes_cidr_block} in VPC ${google_compute_network.vpc.name}"
   private_ip_google_access = var.enable_google_access
   region                   = var.gke_subnet.region
   project                  = data.google_client_config.current.project
@@ -62,10 +65,10 @@ resource "google_compute_subnetwork" "gke_subnet" {
   }
 }
 
-# External access for public subnets
+# Outbound internet access through Cloud NAT
 # Router
 resource "google_compute_router" "routers" {
-  for_each    = local.public_regions
+  for_each    = local.nat_regions
   name        = "${google_compute_network.vpc.name}-router-${each.value}"
   network     = google_compute_network.vpc.self_link
   description = "Router for the VPC ${google_compute_network.vpc.name} in region ${each.key}"
@@ -83,10 +86,18 @@ resource "google_compute_router_nat" "nat_gateway" {
   region                             = each.value.region
   project                            = data.google_client_config.current.project
   dynamic "subnetwork" {
-    for_each = [for key, value in local.public_subnets : key if value.region == each.value.region]
+    for_each = [for key, value in local.nat_subnets : key if value.region == each.value.region]
     content {
       name                    = google_compute_subnetwork.subnets[subnetwork.value].id
       source_ip_ranges_to_nat = ["PRIMARY_IP_RANGE"]
+    }
+  }
+  # Secondary ranges included: Pod traffic keeps its Pod IP when default SNAT is disabled on the cluster
+  dynamic "subnetwork" {
+    for_each = [for subnet in google_compute_subnetwork.gke_subnet : subnet.id if local.gke_subnet_nat && subnet.region == each.value.region]
+    content {
+      name                    = subnetwork.value
+      source_ip_ranges_to_nat = ["ALL_IP_RANGES"]
     }
   }
   log_config {

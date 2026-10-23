@@ -34,6 +34,7 @@ locals {
 
 module "complete_vpc" {
   source                                          = "../../../vpc"
+  region                                          = var.aws_region
   name                                            = "complete-${random_string.suffix.result}"
   eks_name                                        = "complete-vpc"
   cidr                                            = local.vpc_cidr
@@ -45,6 +46,7 @@ module "complete_vpc" {
   flow_log_cloudwatch_log_group_retention_in_days = 30
   flow_log_file_format                            = "plain-text"
   flow_log_max_aggregation_interval               = 60
+  vpc_flow_log_iam_role_path                      = "/armonik/"
   use_karpenter                                   = true
   tags = {
     env             = "test"

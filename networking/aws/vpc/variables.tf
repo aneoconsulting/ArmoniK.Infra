@@ -3,6 +3,12 @@ variable "name" {
   type        = string
 }
 
+variable "region" {
+  description = "AWS region where the VPC resources will be managed. Defaults to the region set in the provider configuration"
+  type        = string
+  default     = null
+}
+
 variable "cidr" {
   description = "Main CIDR bloc for the VPC"
   type        = string
@@ -36,6 +42,12 @@ variable "flow_log_cloudwatch_log_group_kms_key_id" {
 variable "flow_log_cloudwatch_log_group_retention_in_days" {
   description = "Number of days for retention of VPC flow logs in the CloudWatch"
   type        = number
+  default     = null
+}
+
+variable "vpc_flow_log_iam_role_path" {
+  description = "Path for the IAM role created to push VPC flow logs to CloudWatch"
+  type        = string
   default     = null
 }
 

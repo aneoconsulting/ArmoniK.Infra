@@ -1,5 +1,7 @@
 # Availability zones
-data "aws_availability_zones" "available" {}
+data "aws_availability_zones" "available" {
+  region = var.region
+}
 
 locals {
   tags                          = merge(var.tags, { module = "vpc" })
@@ -15,7 +17,8 @@ locals {
 # VPC
 module "vpc" {
   source                = "terraform-aws-modules/vpc/aws"
-  version               = "5.19.0"
+  version               = "6.7.3"
+  region                = var.region
   name                  = var.name
   azs                   = data.aws_availability_zones.available.names
   cidr                  = var.cidr
@@ -34,6 +37,7 @@ module "vpc" {
   flow_log_file_format                            = var.flow_log_file_format
   create_flow_log_cloudwatch_log_group            = true
   create_flow_log_cloudwatch_iam_role             = true
+  vpc_flow_log_iam_role_path                      = var.vpc_flow_log_iam_role_path
   flow_log_max_aggregation_interval               = var.flow_log_max_aggregation_interval
   flow_log_cloudwatch_log_group_name_prefix       = "/aws/${var.name}-vpc-flow-logs/"
   flow_log_cloudwatch_log_group_kms_key_id        = var.flow_log_cloudwatch_log_group_kms_key_id
@@ -52,6 +56,7 @@ module "vpc" {
 # Pod subnets
 data "aws_subnet" "pod_subnets" {
   for_each   = can(coalesce(var.eks_name)) ? toset(var.pod_subnets) : []
+  region     = var.region
   vpc_id     = module.vpc.vpc_id
   cidr_block = each.key
   depends_on = [module.vpc]

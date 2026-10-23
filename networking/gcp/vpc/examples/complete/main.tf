@@ -24,17 +24,17 @@ module "complete_vpc" {
     {
       for k in range(3) :
       "private-subnet-${k}" => {
-        cidr_block    = cidrsubnet(local.cidr, 4, k)
-        region        = "europe-west${k + 1}"
-        public_access = false
+        cidr_block = cidrsubnet(local.cidr, 4, k)
+        region     = "europe-west${k + 1}"
+        enable_nat = false
       }
     },
     {
       for k in range(3) :
-      "public-subnet-${k}" => {
-        cidr_block    = cidrsubnet(local.cidr, 8, k + 48)
-        region        = "europe-west${k % 2 + 1}"
-        public_access = true
+      "nat-subnet-${k}" => {
+        cidr_block = cidrsubnet(local.cidr, 8, k + 48)
+        region     = "europe-west${k % 2 + 1}"
+        enable_nat = true
       }
     }
   )
@@ -44,6 +44,7 @@ module "complete_vpc" {
     pods_cidr_block     = "192.168.64.0/22"
     services_cidr_block = "192.168.1.0/24"
     region              = "europe-west9"
+    enable_nat          = true
   }
   enable_google_access              = true
   flow_log_max_aggregation_interval = "INTERVAL_30_SEC"

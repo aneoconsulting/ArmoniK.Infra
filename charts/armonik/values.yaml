@@ -385,6 +385,9 @@ dependencies:
   # Everything under cluster.* is the Cluster CR's spec
   postgresql:
     enabled: false
+    # Core requires TLS and verifies the server certificate against the Cluster's server CA. false
+    # falls back to SslMode.Prefer: CloudNativePG always serves TLS, so still encrypted, but unverified.
+    ssl: true
     version:
       # What ArmoniK.Core tests the adaptor against, rather than this chart's own default of 16.
       postgresql: "18"

@@ -54,11 +54,12 @@ through armonik.postgresqlConnection.conf. The postgres OPERATOR may be managed 
 {{/* Live subchart scope via .Subcharts (armonik-dependencies is aliased "dependencies"); skipped when the dep is disabled. */}}
 {{- with .Subcharts.dependencies.Subcharts.postgresql -}}
   {{- $namespace := include "armonik.postgresql.namespace" . -}}
+  {{- $ssl := kindIs "bool" .Values.ssl | ternary .Values.ssl true -}}
   {{- $connection := dict
         "host" (include "armonik.postgresql.host" .)
         "port" (include "armonik.postgresql.port" . | trim)
         "database" (include "armonik.postgresql.database" .)
-        "ssl" true
+        "ssl" $ssl
         "credentials" (dict "secret" (include "armonik.postgresql.secretName" .) "namespace" $namespace)
         "ca" (dict "secret" (include "armonik.postgresql.caSecretName" .) "namespace" $namespace) }}
 {{ list $connection $ | include "armonik.postgresqlConnection.conf" }}

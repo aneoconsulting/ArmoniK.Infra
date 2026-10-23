@@ -3,6 +3,16 @@ Core conf for a PostgreSQL connection, shared by armonik.postgresql.conf (in-clu
 armonik.externalPostgresql.conf (cloud), which build and validate it.
 Components__AuthenticationStorage must be stated: Core defaults it to the MongoDB table.
 With ssl, Core validates the server certificate against CAFile.
+Input: list <connection> $ (the umbrella root, for armonik.conf.mountFilePath)
+  connection.host         server host name
+  connection.port         default 5432
+  connection.database     database name
+  connection.ssl          bool; true sets CAFile and mounts ca.crt from connection.ca
+  connection.credentials  {secret, namespace, storeName, storeKind, usernameField, passwordField},
+                          fields default to username/password
+  connection.ca           {secret, field, namespace, storeName, storeKind}, field defaults to ca.crt;
+                          read only with ssl
+Usage: {{ list $connection $ | include "armonik.postgresqlConnection.conf" }}
 */}}
 {{- define "armonik.postgresqlConnection.conf" -}}
 {{- $pg := index . 0 -}}

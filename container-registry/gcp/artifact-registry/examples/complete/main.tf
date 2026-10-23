@@ -1,82 +1,33 @@
 data "google_client_openid_userinfo" "current" {}
 
 locals {
-  docker_images = {
-    prometheus = [{
-      image = "prom/prometheus"
-      tag   = "latest"
-    }],
-    node-exporter = [{
-      image = "prom/node-exporter"
-      tag   = "latest"
-    }],
-    redis = [{
-      image = "redis"
-      tag   = "latest"
-    }],
-    grafana = [{
-      image = "grafana/grafana"
-      tag   = "latest"
-    }],
-    nginx = [{
-      image = "nginx"
-      tag   = "latest"
-    }],
-    rabbitmq = [{
-      image = "rabbitmq"
-      tag   = "latest"
-    }],
-    busybox = [{
-      image = "busybox"
-      tag   = "latest"
-    }]
-  }
-  registry_iam = {
-    "roles/artifactregistry.repoAdmin" = [],
-    "roles/artifactregistry.reader"    = [],
-    "roles/artifactregistry.writer"    = []
-  }
-  date = <<-EOT
-#!/bin/bash
-set -e
-DATE=$(date +%F-%H-%M-%S)
-jq -n --arg date "$DATE" '{"date":$date}'
-  EOT
-}
-
-resource "local_file" "date_sh" {
-  filename = "${path.module}/generated/date.sh"
-  content  = local.date
-}
-
-data "external" "static_timestamp" {
-  program     = ["bash", "date.sh"]
-  working_dir = "${path.module}/generated"
-  depends_on  = [local_file.date_sh]
-}
-
-resource "null_resource" "timestamp" {
-  triggers = {
-    date = data.external.static_timestamp.result.date
-  }
-  lifecycle {
-    ignore_changes = [triggers]
-  }
+  current_user = "user:${data.google_client_openid_userinfo.current.email}"
 }
 
 module "complete_artifact_registry" {
-  source         = "../../../artifact-registry"
-  docker_images  = local.docker_images
-  name           = "complete-test"
-  description    = "A complete artifact registry"
-  immutable_tags = true
-  kms_key_id     = null
-  iam_roles      = local.registry_iam
+  source      = "../../../artifact-registry"
+  name        = "complete-test"
+  description = "A complete artifact registry"
+  kms_key_id  = null
+  remote_repositories = {
+    dockerhub = { public_repository = "DOCKER_HUB", priority = 20, description = "Docker Hub" }
+    quay      = { uri = "https://quay.io", priority = 10 }
+  }
+  standard_repository = {
+    immutable_tags = true
+    priority       = 100
+    iam_roles = {
+      "roles/artifactregistry.writer" = [local.current_user]
+    }
+  }
+  iam_roles = {
+    "roles/artifactregistry.reader" = [local.current_user]
+  }
   labels = {
-    env             = "test"
-    app             = "complete"
-    module          = "GCP Artifact Registry"
-    "create_by"     = split("@", data.google_client_openid_userinfo.current.email)[0]
-    "creation_date" = null_resource.timestamp.triggers["date"]
+    env    = "test"
+    app    = "complete"
+    module = "artifact-registry"
+    # Label values only allow lowercase letters, digits, "_" and "-"
+    created_by = replace(lower(split("@", data.google_client_openid_userinfo.current.email)[0]), "/[^a-z0-9_-]/", "_")
   }
 }

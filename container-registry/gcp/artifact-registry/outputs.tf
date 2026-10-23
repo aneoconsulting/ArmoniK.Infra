@@ -1,14 +1,14 @@
-output "docker_repositories" {
-  description = "Docker repositories in Artifactory Registry created on GCP"
-  value       = { for key, value in local.docker_images : "${value.image}:${value.tag}" => "${data.google_client_config.current.region}-docker.pkg.dev/${data.google_client_config.current.project}/${google_artifact_registry_repository.docker.name}/${value.name}" }
+output "url" {
+  description = "URL of the virtual repository, to use as the registry of every image (global.imageRegistry in the ArmoniK charts)"
+  value       = google_artifact_registry_repository.virtual.registry_uri
 }
 
-output "kms_key_name" {
-  description = "KMS key name used to encrypt the registry"
-  value       = var.kms_key_id
+output "standard_url" {
+  description = "URL of the standard repository, where private images are pushed"
+  value       = one(google_artifact_registry_repository.standard[*].registry_uri)
 }
 
-output "service_account" {
-  description = "The associated service account created for artifact-registry."
-  value       = "service-${data.google_project.project.number}@gcp-sa-artifactregistry.iam.gserviceaccount.com"
+output "remote_urls" {
+  description = "URLs of the remote repositories, keyed by name"
+  value       = { for key, repository in google_artifact_registry_repository.remote : key => repository.registry_uri }
 }

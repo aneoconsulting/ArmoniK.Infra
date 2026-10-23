@@ -1,5 +1,5 @@
 variable "region" {
-  description = "The GCP region to deploy the Artifact registry"
+  description = "The GCP region of the Artifact Registry repositories"
   type        = string
   default     = "europe-west9"
 }

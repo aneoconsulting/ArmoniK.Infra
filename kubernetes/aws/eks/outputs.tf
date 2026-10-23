@@ -94,3 +94,8 @@ output "node_security_group_id" {
   description = "ID of the node shared security group"
   value       = module.eks.node_security_group_id
 }
+
+output "pod_identity" {
+  description = "Whether EKS Pod Identity is deployed on the cluster, to pass to service-account/aws"
+  value       = var.pod_identity
+}

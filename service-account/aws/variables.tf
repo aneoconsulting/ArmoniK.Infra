@@ -36,3 +36,15 @@ variable "oidc_issuer_url" {
   description = "URL of the OIDC issuer"
   type        = string
 }
+
+variable "pod_identity" {
+  description = "Whether EKS Pod Identity is deployed on the cluster (the pod_identity output of kubernetes/aws/eks). When true, the service account gets its role through a Pod Identity association instead of the IRSA annotation, which requires an AWS SDK supporting it. The role trusts both, so switching only takes a pod restart"
+  type        = bool
+  default     = false
+}
+
+variable "cluster_name" {
+  description = "Name of the EKS cluster, required when pod_identity is true; when set, the role's Pod Identity trust is also pinned to this cluster"
+  type        = string
+  default     = null
+}

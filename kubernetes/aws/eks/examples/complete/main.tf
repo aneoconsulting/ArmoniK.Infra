@@ -31,6 +31,7 @@ data "aws_subnets" "subnets" {
 module "eks" {
   source                                                   = "../.."
   region                                                   = var.aws_region
+  pod_identity                                             = true
   name                                                     = "eks-complete-test"
   profile                                                  = "default"
   cluster_autoscaler_expander                              = "least-waste"

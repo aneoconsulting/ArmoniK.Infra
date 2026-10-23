@@ -1,20 +1,9 @@
-## Simple Cloud KMS
+## Simple KMS
 
-Terraform scripts to create a simple GCP Cloud KMS using the [module kms](../..).
-
-To create a simple GCP Cloud KMS:
+A key ring with one default key. Uses the [kms module](../..).
 
 ```bash
 terraform init
-terraform plan
-terraform apply
+terraform apply -var project=<project>
+terraform destroy -var project=<project>
 ```
-
-To delete all resource:
-
-```bash
-terraform destroy
-```
-
-
-

@@ -1,10 +1,14 @@
 # GCP Private Service Access
 
-Google and third parties (together known as service producers) can offer services that are hosted in a VPC network. Private
-services access (PSA) lets you reach the internal IP addresses of these Google and third-party services by using private
-connections. This is useful if you want your VM instances in your VPC network to use internal IP addresses instead of
-external IP addresses. The official documentation
-for [Private service access](https://cloud.google.com/vpc/docs/private-services-access).
+Private IP addresses in the VPC for Google managed services, such as Memorystore for Redis or Cloud SQL.
+
+This module creates:
+
+* An internal IP range reserved for the service producers.
+* The VPC peering with `servicenetworking.googleapis.com`.
+
+> Note: with `deletion_policy = "REMOVE_PEERING"`, an ephemeral environment can delete its VPC even while a
+> producer still holds the connection.
 
 <!-- BEGIN_TF_DOCS -->
 <!-- END_TF_DOCS -->
@@ -17,4 +21,3 @@ for [Private service access](https://cloud.google.com/vpc/docs/private-services-
 
 examples/**
 ```
-

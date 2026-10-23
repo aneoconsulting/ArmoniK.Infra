@@ -32,7 +32,8 @@ locals {
         enableWindowsIpam             = "true"
         enableWindowsPrefixDelegation = "true"
         env = {
-          ENI_CONFIG_LABEL_DEF = "topology.kubernetes.io/zone"
+          AWS_VPC_K8S_CNI_CUSTOM_NETWORK_CFG = tostring(var.vpc_cni_custom_networking)
+          ENI_CONFIG_LABEL_DEF               = "topology.kubernetes.io/zone"
         }
         }, length(local.eni_configs) == 0 ? {} : {
         eniConfig = {
@@ -67,6 +68,16 @@ locals {
   }
 }
 
+# Custom networking without ENIConfigs leaves pods without IPs. Cross-variable validation needs Terraform 1.9.
+resource "null_resource" "vpc_cni_custom_networking_guard" {
+  lifecycle {
+    precondition {
+      condition     = !var.vpc_cni_custom_networking || length(var.vpc_pods_subnet_ids) > 0
+      error_message = "vpc_cni_custom_networking requires vpc_pods_subnet_ids."
+    }
+  }
+}
+
 # IRSA role of the aws-ebs-csi-driver add-on
 resource "aws_iam_role" "ebs_csi_driver" {
   name = coalesce(var.ebs_csi.name, "${var.name}-ebs-csi-driver")
@@ -97,6 +108,47 @@ resource "aws_iam_role" "ebs_csi_driver" {
 resource "aws_iam_role_policy_attachment" "ebs_csi_driver_managed" {
   policy_arn = "arn:${data.aws_partition.current.partition}:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
   role       = aws_iam_role.ebs_csi_driver.name
+}
+
+# Lets the driver create and attach volumes encrypted with ebs_kms_key_id (key id, alias or ARN).
+data "aws_kms_key" "ebs" {
+  count  = can(coalesce(var.ebs_kms_key_id)) ? 1 : 0
+  region = var.region
+  key_id = var.ebs_kms_key_id
+}
+
+data "aws_iam_policy_document" "ebs_csi_driver_kms" {
+  count = length(data.aws_kms_key.ebs)
+  statement {
+    actions = [
+      "kms:CreateGrant",
+      "kms:ListGrants",
+      "kms:RevokeGrant",
+    ]
+    resources = [data.aws_kms_key.ebs[0].arn]
+    condition {
+      test     = "Bool"
+      variable = "kms:GrantIsForAWSResource"
+      values   = [true]
+    }
+  }
+  statement {
+    actions = [
+      "kms:Encrypt",
+      "kms:Decrypt",
+      "kms:ReEncrypt*",
+      "kms:GenerateDataKey*",
+      "kms:DescribeKey",
+    ]
+    resources = [data.aws_kms_key.ebs[0].arn]
+  }
+}
+
+resource "aws_iam_role_policy" "ebs_csi_driver_kms" {
+  count  = length(data.aws_iam_policy_document.ebs_csi_driver_kms)
+  name   = "kms"
+  role   = aws_iam_role.ebs_csi_driver.id
+  policy = data.aws_iam_policy_document.ebs_csi_driver_kms[0].json
 }
 
 # IRSA role of the aws-efs-csi-driver add-on

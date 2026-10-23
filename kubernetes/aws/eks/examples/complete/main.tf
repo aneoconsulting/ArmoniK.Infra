@@ -48,15 +48,15 @@ module "eks" {
   cluster_autoscaler_scale_down_utilization_threshold      = 0.5
   cluster_autoscaler_scan_interval                         = "10s"
   cluster_autoscaler_skip_nodes_with_system_pods           = true
-  cluster_autoscaler_tag                                   = "v1.32.0"
-  cluster_autoscaler_version                               = "9.46.6"
+  cluster_autoscaler_tag                                   = "v1.35.2"
+  cluster_autoscaler_version                               = "9.59.0"
   cluster_encryption_config                                = ""
   cluster_endpoint_private_access                          = false
   cluster_endpoint_public_access                           = true
   cluster_endpoint_public_access_cidrs                     = ["0.0.0.0/0"]
   cluster_log_kms_key_id                                   = ""
   cluster_log_retention_in_days                            = 30
-  cluster_version                                          = "1.32"
+  cluster_version                                          = "1.35"
   cluster_deletion_protection                              = false
   cluster_kms_key_rotation_period_in_days                  = 365
   cluster_control_plane_egress_mode                        = "AWS_MANAGED"
@@ -69,6 +69,7 @@ module "eks" {
   kubeconfig_file                                          = "generated/kubeconfig"
   vpc_id                                                   = data.aws_vpc.default.id
   vpc_pods_subnet_ids                                      = data.aws_subnets.subnets.ids
+  vpc_cni_custom_networking                                = false
   vpc_private_subnet_ids                                   = data.aws_subnets.subnets.ids
 
   efs_csi = {
@@ -121,7 +122,7 @@ module "eks" {
     test = {
       name                        = "workers"
       launch_template_description = "Node group for test"
-      ami_type                    = "AL2_x86_64"
+      ami_type                    = "AL2023_x86_64_STANDARD"
       instance_types              = ["c5.large"]
       capacity_type               = "SPOT"
       min_size                    = 0
@@ -157,7 +158,17 @@ module "eks" {
       instance_market_options = {
         market_type = "spot"
       }
-      bootstrap_extra_args     = "--kubelet-extra-args '--node-labels=node.kubernetes.io/lifecycle=spot'"
+      cloudinit_pre_nodeadm = [{
+        content_type = "application/node.eks.aws"
+        content      = <<-EOT
+          apiVersion: node.eks.aws/v1alpha1
+          kind: NodeConfig
+          spec:
+            kubelet:
+              flags:
+                - --node-labels=node.kubernetes.io/lifecycle=spot
+        EOT
+      }]
       iam_role_use_name_prefix = false
       iam_role_additional_policies = {
         AmazonSSMManagedInstanceCore = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"

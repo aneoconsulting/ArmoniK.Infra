@@ -1,9 +1,10 @@
 terraform {
-  required_version = ">= 1.0"
+  required_version = ">= 1.9"
   required_providers {
+    # 8.1 adds REMOVE_PEERING to deletion_policy
     google = {
       source  = "hashicorp/google"
-      version = ">= 4.75.0"
+      version = ">= 8.1, < 9.0"
     }
   }
 }

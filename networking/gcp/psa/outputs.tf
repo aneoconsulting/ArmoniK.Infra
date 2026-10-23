@@ -6,18 +6,13 @@ output "reserved_service_range_id" {
 }
 
 output "reserved_service_range_self_link" {
-  description = "The URI of of the reserved service range."
+  description = "The URI of the reserved service range."
   value       = google_compute_global_address.reserved_service_range.self_link
 
   depends_on = [google_service_networking_connection.private_service_connection]
 }
 
-output "private_service_access" {
-  description = " The PSA."
-  value       = google_service_networking_connection.private_service_connection
-}
-
 output "private_service_access_peering" {
-  description = " The name of the VPC Network Peering connection that was created by the service producer."
+  description = "The name of the VPC Network Peering connection that was created by the service producer."
   value       = google_service_networking_connection.private_service_connection.peering
 }

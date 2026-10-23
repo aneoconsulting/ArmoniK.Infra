@@ -21,3 +21,4 @@ chart-repos:
   - datalust=https://helm.datalust.co
   - jetstack=https://charts.jetstack.io
   - external-secrets=https://charts.external-secrets.io
+  - cnpg=https://cloudnative-pg.github.io/charts

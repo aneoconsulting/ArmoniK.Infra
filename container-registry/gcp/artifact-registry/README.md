@@ -1,18 +1,16 @@
-# Google Artifact Registry
+# GCP Artifact Registry
 
-The Google Artifact Registry provides a single location for storing and managing your packages and Docker container images.
+Container images of a deployment, behind a single URL.
 
-This module creates Docker repositories in Google Artifact Registry, all reachable through a single URL:
+This module creates:
 
-* One remote repository per public registry (Docker Hub, public.ecr.aws, quay.io, ghcr.io and registry.k8s.io by
-  default): a pull-through cache that fetches an image from upstream on its first pull, then serves it from the cache.
-* An optional standard repository for images pushed by their owner, such as private workers.
-* A virtual repository in front of them, which tries each one in priority order. Its URL (output `url`) replaces the
-  registry of every image, `global.imageRegistry` in the ArmoniK charts.
-* Optional encryption of the remote and standard repositories with a Cloud KMS key, and IAM roles on the virtual and
-  standard repositories.
+* One remote repository (pull-through cache) per public registry: Docker Hub, public.ecr.aws, quay.io, ghcr.io and
+  registry.k8s.io by default.
+* An optional standard repository for pushed images, such as private workers.
+* A virtual repository in front of them, tried by priority. Its URL (output `url`) is the image registry,
+  `global.imageRegistry` in the ArmoniK charts.
 
-Two images of different upstream registries sharing the same path resolve to the one with the highest priority.
+> Note: an image path found in two upstream registries resolves to the one with the highest priority.
 
 <!-- BEGIN_TF_DOCS -->
 <!-- END_TF_DOCS -->
@@ -25,4 +23,3 @@ Two images of different upstream registries sharing the same path resolve to the
 
 examples/**
 ```
-

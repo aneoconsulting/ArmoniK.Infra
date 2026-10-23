@@ -1,20 +1,9 @@
 ## Simple VPC
 
-Terraform scripts to create a simple GCP VPC using the [module vpc](../..).
-
-To create a simple GCP VPC:
+Two subnets, one behind Cloud NAT. Uses the [vpc module](../..).
 
 ```bash
 terraform init
-terraform plan
-terraform apply
+terraform apply -var project=<project>
+terraform destroy -var project=<project>
 ```
-
-To delete all resource:
-
-```bash
-terraform destroy
-```
-
-
-

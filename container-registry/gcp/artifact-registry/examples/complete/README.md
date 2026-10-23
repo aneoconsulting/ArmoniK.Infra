@@ -1,20 +1,9 @@
-## Complete Google Artifact Registry
+## Complete Artifact Registry
 
-Terraform scripts to create a complete Google Artifact Registry using the [module artifact-registry](../..).
-
-To create a complete Google Artifact Registry:
+Two remote repositories, a standard repository and IAM roles for the current user. Uses the [artifact-registry module](../..).
 
 ```bash
 terraform init
-terraform plan
-terraform apply
+terraform apply -var project=<project>
+terraform destroy -var project=<project>
 ```
-
-To delete all resource:
-
-```bash
-terraform destroy
-```
-
-
-

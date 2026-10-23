@@ -1,20 +1,9 @@
-## Simple Google Artifact Registry
+## Simple Artifact Registry
 
-Terraform scripts to create a simple Google Artifact Registry using the [module artifact-registry](../..).
-
-To create a simple Google Artifact Registry:
+The default remote repositories behind a virtual repository. Uses the [artifact-registry module](../..).
 
 ```bash
 terraform init
-terraform plan
-terraform apply
+terraform apply -var project=<project>
+terraform destroy -var project=<project>
 ```
-
-To delete all resource:
-
-```bash
-terraform destroy
-```
-
-
-

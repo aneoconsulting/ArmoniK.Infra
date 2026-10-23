@@ -30,6 +30,7 @@ data "aws_subnets" "subnets" {
 # AWS EKS
 module "eks" {
   source                                                   = "../.."
+  region                                                   = var.aws_region
   name                                                     = "eks-complete-test"
   profile                                                  = "default"
   cluster_autoscaler_expander                              = "least-waste"
@@ -56,6 +57,9 @@ module "eks" {
   cluster_log_kms_key_id                                   = ""
   cluster_log_retention_in_days                            = 30
   cluster_version                                          = "1.32"
+  cluster_deletion_protection                              = false
+  cluster_kms_key_rotation_period_in_days                  = 365
+  cluster_control_plane_egress_mode                        = "AWS_MANAGED"
   ebs_kms_key_id                                           = ""
   instance_refresh_image                                   = "public.ecr.aws/aws-ec2/aws-node-termination-handler"
   instance_refresh_namespace                               = "kube-system"
@@ -79,6 +83,34 @@ module "eks" {
     tag        = "v1.44.0"
     repository = "https://kubernetes-sigs.github.io/aws-ebs-csi-driver/"
     version    = "2.44.0"
+  }
+
+  # The control plane settings below restate the EKS and Kubernetes defaults.
+  cluster_control_plane_scaling_config = {
+    tier = "standard"
+  }
+
+  cluster_kube_api_server_config = {
+    event_ttl = "1h"
+    service_node_port_range = {
+      min_port = 30000
+      max_port = 32767
+    }
+  }
+
+  # horizontal_pod_autoscaler_sync_period is rejected on the standard tier; it needs tier-xl or higher.
+  cluster_kube_controller_manager_config = null
+
+  cluster_kube_scheduler_config = {
+    node_resources_fit = {
+      scoring_strategy = {
+        type = "LeastAllocated"
+        resources = [
+          { name = "cpu", weight = 1 },
+          { name = "memory", weight = 1 },
+        ]
+      }
+    }
   }
 
   csi_liveness_probe = {
@@ -133,7 +165,6 @@ module "eks" {
       desired_size                = 1
       max_size                    = 5
       force_delete                = true
-      force_delete_warm_pool      = true
       instance_market_options = {
         market_type = "spot"
       }
@@ -151,23 +182,27 @@ module "eks" {
       max_size                    = 5
       use_mixed_instances_policy  = true
       mixed_instances_policy = {
-        on_demand_allocation_strategy            = "lowest-price"
-        on_demand_base_capacity                  = 0
-        on_demand_percentage_above_base_capacity = 20 # 20% On-Demand Instances, 80% Spot Instances
-        spot_allocation_strategy                 = "price-capacity-optimized"
-        spot_instance_pools                      = null
-        spot_max_price                           = null
+        instances_distribution = {
+          on_demand_allocation_strategy            = "lowest-price"
+          on_demand_base_capacity                  = 0
+          on_demand_percentage_above_base_capacity = 20 # 20% On-Demand Instances, 80% Spot Instances
+          spot_allocation_strategy                 = "price-capacity-optimized"
+          spot_instance_pools                      = null
+          spot_max_price                           = null
+        }
+        launch_template = {
+          override = [
+            {
+              instance_type     = "c5.4xlarge"
+              weighted_capacity = "1"
+            },
+            {
+              instance_type     = "c5.2xlarge"
+              weighted_capacity = "2"
+            },
+          ]
+        }
       }
-      override = [
-        {
-          instance_type     = "c5.4xlarge"
-          weighted_capacity = "1"
-        },
-        {
-          instance_type     = "c5.2xlarge"
-          weighted_capacity = "2"
-        },
-      ]
       iam_role_use_name_prefix = false
       iam_role_additional_policies = {
         AmazonSSMManagedInstanceCore = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"

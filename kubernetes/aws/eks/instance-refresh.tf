@@ -32,7 +32,7 @@ resource "helm_release" "aws_node_termination_handler" {
   }
   set {
     name  = "serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn"
-    value = module.aws_node_termination_handler_role.iam_role_arn
+    value = module.aws_node_termination_handler_role.arn
     type  = "string"
   }
   set {
@@ -59,7 +59,8 @@ resource "helm_release" "aws_node_termination_handler" {
 }
 
 data "aws_autoscaling_groups" "groups" {
-  names = local.asg_names
+  region = var.region
+  names  = local.asg_names
 }
 
 data "aws_iam_policy_document" "aws_node_termination_handler" {
@@ -100,18 +101,23 @@ resource "aws_iam_policy" "aws_node_termination_handler" {
 }
 
 module "aws_node_termination_handler_role" {
-  source                        = "terraform-aws-modules/iam/aws//modules/iam-assumable-role-with-oidc"
-  version                       = "5.54.0"
-  create_role                   = true
-  role_description              = "IRSA role for ANTH, cluster ${var.name}"
-  role_name_prefix              = var.name
-  provider_url                  = replace(module.eks.cluster_oidc_issuer_url, "https://", "")
-  role_policy_arns              = [aws_iam_policy.aws_node_termination_handler.arn]
-  oidc_fully_qualified_subjects = ["system:serviceaccount:kube-system:aws-node-termination-handler"]
-  depends_on                    = [aws_iam_policy.aws_node_termination_handler]
+  source             = "terraform-aws-modules/iam/aws//modules/iam-role"
+  version            = "6.8.2"
+  create             = true
+  description        = "IRSA role for ANTH, cluster ${var.name}"
+  name               = var.name
+  use_name_prefix    = true
+  enable_oidc        = true
+  oidc_provider_urls = [replace(module.eks.cluster_oidc_issuer_url, "https://", "")]
+  oidc_subjects      = ["system:serviceaccount:kube-system:aws-node-termination-handler"]
+  policies = {
+    aws_node_termination_handler = aws_iam_policy.aws_node_termination_handler.arn
+  }
+  depends_on = [aws_iam_policy.aws_node_termination_handler]
 }
 
 resource "aws_cloudwatch_event_rule" "aws_node_termination_handler_asg" {
+  region      = var.region
   name        = local.aws_node_termination_handler_asg_name
   description = "Node termination event rule"
   event_pattern = jsonencode(
@@ -129,6 +135,7 @@ resource "aws_cloudwatch_event_rule" "aws_node_termination_handler_asg" {
 }
 
 resource "aws_cloudwatch_event_rule" "aws_node_termination_handler_spot" {
+  region      = var.region
   name        = local.aws_node_termination_handler_spot_name
   description = "Node termination event rule"
   event_pattern = jsonencode(
@@ -150,6 +157,7 @@ resource "aws_cloudwatch_event_rule" "aws_node_termination_handler_spot" {
 # and thus allows the ASG to be destroyed cleanly.
 resource "aws_autoscaling_lifecycle_hook" "aws_node_termination_handler" {
   for_each               = module.eks.self_managed_node_groups
+  region                 = var.region
   name                   = "aws-node-termination-handler"
   autoscaling_group_name = each.value.autoscaling_group_name
   lifecycle_transition   = "autoscaling:EC2_INSTANCE_TERMINATING"

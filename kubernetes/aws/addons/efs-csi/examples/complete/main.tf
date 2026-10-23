@@ -29,21 +29,30 @@ data "aws_subnets" "subnets" {
 
 #EKS cluster
 module "eks" {
-  source                         = "terraform-aws-modules/eks/aws"
-  version                        = "~> 19.0"
-  cluster_name                   = "test-cluster"
-  cluster_version                = "1.27"
-  vpc_id                         = data.aws_vpc.default.id
-  subnet_ids                     = data.aws_subnets.subnets.ids
-  control_plane_subnet_ids       = data.aws_subnets.subnets.ids
-  cluster_endpoint_public_access = true
-  eks_managed_node_group_defaults = {
-    ami_type                   = "AL2_x86_64"
-    instance_types             = ["c5.xlarge"]
-    iam_role_attach_cni_policy = true
+  source                                   = "terraform-aws-modules/eks/aws"
+  version                                  = "21.29.0"
+  name                                     = "test-cluster"
+  kubernetes_version                       = "1.32"
+  vpc_id                                   = data.aws_vpc.default.id
+  subnet_ids                               = data.aws_subnets.subnets.ids
+  control_plane_subnet_ids                 = data.aws_subnets.subnets.ids
+  endpoint_public_access                   = true
+  enable_cluster_creator_admin_permissions = true
+  addons = {
+    coredns = {}
+    eks-pod-identity-agent = {
+      before_compute = true
+    }
+    kube-proxy = {}
+    vpc-cni = {
+      before_compute = true
+    }
   }
   eks_managed_node_groups = {
     default_node_group = {
+      ami_type                   = "AL2_x86_64"
+      instance_types             = ["c5.xlarge"]
+      iam_role_attach_cni_policy = true
       use_custom_launch_template = false
       disk_size                  = 50
     }

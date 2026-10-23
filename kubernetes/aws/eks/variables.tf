@@ -52,6 +52,12 @@ variable "name" {
   default     = "armonik-eks"
 }
 
+variable "region" {
+  description = "AWS region where the EKS resources will be managed. Defaults to the region set in the provider configuration"
+  type        = string
+  default     = null
+}
+
 # Node selector
 variable "node_selector" {
   description = "Node selector for pods of EKS system"
@@ -83,6 +89,70 @@ variable "cluster_endpoint_public_access_cidrs" {
 variable "cluster_log_retention_in_days" {
   description = "Logs retention in days"
   type        = number
+}
+
+variable "cluster_deletion_protection" {
+  description = "Whether to enable deletion protection for the cluster; it must be disabled before the cluster can be deleted"
+  type        = bool
+  default     = null
+}
+
+variable "cluster_kms_key_rotation_period_in_days" {
+  description = "Period in days between two rotations of the KMS key created for secret encryption, between 90 and 2560. Defaults to 365"
+  type        = number
+  default     = null
+}
+
+variable "cluster_control_plane_scaling_config" {
+  description = "EKS Provisioned Control Plane scaling tier. Valid values for tier are `standard`, `tier-xl`, `tier-2xl`, `tier-4xl` and `tier-8xl`"
+  type = object({
+    tier = string
+  })
+  default = null
+}
+
+variable "cluster_control_plane_egress_mode" {
+  description = "Egress mode for the EKS control plane. Valid values are `AWS_MANAGED` and `CUSTOMER_ROUTED`"
+  type        = string
+  default     = null
+}
+
+variable "cluster_kube_api_server_config" {
+  description = "Configuration of the Kubernetes API server"
+  type = object({
+    event_ttl = optional(string)
+    service_node_port_range = optional(object({
+      min_port = optional(number)
+      max_port = optional(number)
+    }))
+  })
+  default = null
+}
+
+variable "cluster_kube_controller_manager_config" {
+  description = "Configuration of the Kubernetes controller manager"
+  type = object({
+    horizontal_pod_autoscaler_controller_config = optional(object({
+      horizontal_pod_autoscaler_sync_period = optional(string)
+    }))
+  })
+  default = null
+}
+
+variable "cluster_kube_scheduler_config" {
+  description = "Configuration of the Kubernetes scheduler. Valid values for `scoring_strategy.type` are `LeastAllocated` and `MostAllocated`; a resource `weight` must be between 1 and 100"
+  type = object({
+    node_resources_fit = optional(object({
+      scoring_strategy = optional(object({
+        type = optional(string)
+        resources = optional(list(object({
+          name   = string
+          weight = optional(number)
+        })))
+      }))
+    }))
+  })
+  default = null
 }
 
 # VPC infos

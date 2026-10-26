@@ -1,10 +1,10 @@
+variable "region" {
+  description = "The GCP region used by the provider."
+  type        = string
+  default     = "europe-west9"
+}
+
 variable "project" {
   description = "Project name"
   type        = string
-}
-
-variable "region" {
-  description = "The region to host the cluster in"
-  type        = string
-  default     = "europe-west9"
 }

@@ -1,20 +1,10 @@
 ## Simple GKE
 
-Terraform scripts to create a simple GCP GKE using the [module gke](../..).
-
-To create a simple GCP GKE:
+A zonal cluster with the default settings: private nodes, public control plane endpoint, Dataplane V2.
+Uses the [gke module](../..).
 
 ```bash
 terraform init
-terraform plan
-terraform apply
+terraform apply -var project=<project>
+terraform destroy -var project=<project>
 ```
-
-To delete all resource:
-
-```bash
-terraform destroy
-```
-
-
-

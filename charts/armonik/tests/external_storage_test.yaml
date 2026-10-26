@@ -208,6 +208,8 @@ tests:
             secret: rds-master
             storeName: aws-secrets-manager
             storeKind: ClusterSecretStore
+          ca:
+            secret: rds-ca
     documentSelector:
       path: metadata.name
       value: t-conf-core

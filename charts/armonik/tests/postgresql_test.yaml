@@ -1,0 +1,46 @@
+suite: In-cluster PostgreSQL conf
+release:
+  name: t
+templates:
+  - secrets/conf-secrets.yaml
+  - secrets/conf-mounts.yaml
+values:
+  - ../ci/minimal-values.yaml
+set:
+  global:
+    armonik:
+      operators:
+        externalSecrets:
+          available: true
+  dependencies:
+    postgresql:
+      enabled: true
+tests:
+  - it: mounts only ca.crt from the operator's CA Secret by default
+    template: secrets/conf-mounts.yaml
+    documentSelector:
+      path: metadata.name
+      value: t-conf-core-mount
+    asserts:
+      - contains:
+          path: spec.data
+          content:
+            secretKey: postgresql-ca.crt
+            remoteRef:
+              key: t-postgresql-ca
+              property: ca.crt
+  - it: drops CAFile with ssl=false
+    template: secrets/conf-secrets.yaml
+    set:
+      dependencies:
+        postgresql:
+          ssl: false
+    documentSelector:
+      path: metadata.name
+      value: t-conf-core
+    asserts:
+      - equal:
+          path: spec.target.template.data.PostgreSQL__Ssl
+          value: "false"
+      - notExists:
+          path: spec.target.template.data.PostgreSQL__CAFile

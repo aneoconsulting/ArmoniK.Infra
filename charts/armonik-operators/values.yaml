@@ -16,6 +16,8 @@ global:
         deploy: true
       mongodbOperator:
         deploy: true
+      postgresqlOperator:
+        deploy: true
       prometheusOperator:
         deploy: true
       googleCasIssuer:
@@ -97,6 +99,22 @@ mongodb-operator:
   # anywhere else. true watches every namespace, with ClusterRole/ClusterRoleBinding RBAC.
   watchAllNamespaces: true
 # The psmdb-operator chart has no priorityClassName value.
+
+# CloudNativePG (https://cloudnative-pg.github.io/charts). Chart defaults install the CRDs;
+# the Cluster CR itself stays in armonik-dependencies.
+postgresql-operator:
+  # The operator's PKI setup looks its own Deployment up by a hardcoded
+  # app.kubernetes.io/name=cloudnative-pg selector; without this the alias puts postgresql-operator
+  # in that label and the operator exits before serving the webhooks.
+  nameOverride: cloudnative-pg
+  monitoring:
+    # Off in this chart's defaults. Requires Prometheus Operator CRDs.
+    podMonitorEnabled: true
+    grafanaDashboard:
+      # Must stay stated: dropping this line yields true rather than the chart default false.
+      # This is a Helm bug due to alias, fix in progress : https://github.com/helm/helm/pull/31847
+      create: true
+  # priorityClassName:
 
 # kube-prometheus-stack (https://prometheus-community.github.io/helm-charts): the shared monitoring
 # stack, one per cluster. Grafana stays per-release, in armonik-dependencies.

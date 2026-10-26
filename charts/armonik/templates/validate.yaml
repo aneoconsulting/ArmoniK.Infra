@@ -20,7 +20,7 @@
 {{- /* One backend per Core storage slot: the fragment listed last in _core.tpl would silently win the
        slot's Components__ keys while the other backend still deploys. */ -}}
 {{- $slots := dict
-      "table storage" (list "mongodb" "externalPostgresql")
+      "table storage" (list "mongodb" "postgresql" "externalPostgresql")
       "object storage" (list "redis" "gcs" "s3")
       "queue" (list "activemq" "rabbitmq" "pubsub" "sqs") -}}
 {{- range $slot, $deps := $slots -}}
@@ -33,4 +33,11 @@
   {{- if gt (len $on) 1 -}}
     {{- printf "dependencies %s back the same %s slot: enable only one." (join ", " $on) $slot | fail -}}
   {{- end -}}
+{{- end -}}
+
+{{- /* The Cluster CR has no CRD without the CloudNativePG operator: fail at render. */ -}}
+{{- $ops := include "armonik.operators" $ | fromYaml -}}
+{{- $postgresqlEnabled := list .Values "dependencies" "postgresql" "enabled" | include "armonik.utils.index" | empty | not -}}
+{{- if and $postgresqlEnabled (not $ops.postgresqlOperator.available) -}}
+  {{- fail "dependencies.postgresql.enabled=true requires global.armonik.operators.postgresqlOperator.available=true: the Cluster CR needs the CloudNativePG CRDs." -}}
 {{- end -}}

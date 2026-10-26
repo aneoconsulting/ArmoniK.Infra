@@ -1,6 +1,6 @@
 # GCP Private Service Access
 
-Private IP addresses in the VPC for Google managed services, such as Memorystore for Redis or Cloud SQL.
+Private IP addresses in the VPC for Google managed services, such as Cloud SQL.
 
 This module creates:
 

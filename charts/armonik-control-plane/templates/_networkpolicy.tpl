@@ -40,6 +40,63 @@ egress:
 {{- end -}}
 
 
+{{/*
+  Egress to the Prometheus the pod-deletion-cost controller queries: podDeletionCost.prometheusUrl,
+  else global.armonik.monitoring.prometheusUrl (the pdc layer's default), else the Prometheus
+  operator's namespace on 9090. The port is the URL's (80 or 443 when it names none),
+  kube-prometheus-stack serving Prometheus on its Service port. No rule for an out-of-cluster URL,
+  which extraEgressRules covers.
+*/}}
+{{- define "armonik.netpol.podDeletionCost.prometheusEgress" -}}
+  {{- $ops := include "armonik.operators" . | fromYaml -}}
+  {{- $raw := coalesce .Values.podDeletionCost.prometheusUrl (list .Values "global" "armonik" "monitoring" "prometheusUrl" | include "armonik.utils.index") -}}
+  {{- $url := tpl ($raw | default "") . -}}
+  {{- $ns := "" -}}
+  {{- $port := 9090 -}}
+  {{- if $url -}}
+    {{- $ns = include "armonik.netpol.namespaceFromServiceUrl" $url -}}
+    {{- $schemePort := hasPrefix "https://" $url | ternary "443" "80" -}}
+    {{- $port = regexReplaceAll "^([a-z]+://)?[^/:]+(:([0-9]+))?.*$" $url "${3}" | default $schemePort | int -}}
+  {{- else if $ops.prometheusOperator.available -}}
+    {{- $ns = $ops.prometheusOperator.namespace -}}
+  {{- end -}}
+  {{- $podSelector := list .Values "networkPolicy" "podDeletionCost" "prometheusPodSelector" | include "armonik.utils.index" | fromYaml -}}
+  {{- if $ns }}
+to:
+  - namespaceSelector:
+      matchLabels:
+        kubernetes.io/metadata.name: {{ $ns | quote }}
+    podSelector:
+      {{- list $podSelector "prometheus" | include "armonik.netpol.podSelector.default" | nindent 6 }}
+ports:
+  - protocol: TCP
+    port: {{ $port }}
+  {{- end -}}
+{{- end -}}
+
+
+{{/*
+  Pod-deletion-cost controller NetworkPolicy spec: egress to Prometheus, which ranks the busy
+  compute-plane pods, to the Kubernetes API, through which it annotates them, and to DNS, plus the
+  extraEgressRules. The submitter policy selects this pod too and only grants DNS.
+*/}}
+{{- define "armonik.netpol.podDeletionCost" -}}
+podSelector:
+  matchLabels:
+    app.kubernetes.io/component: pod-deletion-cost
+    {{- include "armonik.selectorLabels" $ | nindent 4 }}
+egress:
+  {{- include "armonik.netpol.mergeExtra" (dict
+        "rules" (dict
+            "armonik.netpol.podDeletionCost.prometheusEgress" .
+            "armonik.netpol.kubeApiRule" dict
+            "armonik.netpol.dnsRule" dict
+          | include "armonik.netpol.mergeRules")
+        "extra" .Values.networkPolicy.podDeletionCost.extraEgressRules
+    ) | nindent 2 }}
+{{- end -}}
+
+
 {{/* Metrics-exporter NetworkPolicy spec: Prometheus ingress, DNS egress, plus the extra*Rules. */}}
 {{- define "armonik.netpol.metricsExporter" -}}
 podSelector:

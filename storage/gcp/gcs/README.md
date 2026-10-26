@@ -1,13 +1,16 @@
-# Google Cloud Storage
+# GCP Cloud Storage
 
-Google Cloud Storage allows world-wide storage and retrieval of any amount of data at any time. You can use Cloud Storage
-for a range of scenarios including serving website content, storing data for archival and disaster recovery, or distributing
-large data objects to users via direct download.
+Bucket for ArmoniK object storage (native GCS adapter) or for shared files such as the worker DLLs.
 
-This module creates a Google Cloud Storage with these possibilities :
+This module creates:
 
-* Add ACLs on the newly created cloud storage.
-* Bind IAM Roles to the newly created cloud storage.
+* A bucket with uniform bucket-level access and public access prevention enforced by default.
+* Optional lifecycle rules, versioning or retention policy, Autoclass, soft delete retention, access logs and
+  dual-region placement.
+* Optional encryption with a Cloud KMS key, and IAM roles on the bucket.
+
+> Note: set `soft_delete_retention_days = 0` on the object storage bucket, whose deleted objects are not worth
+> paying 7 more days for.
 
 <!-- BEGIN_TF_DOCS -->
 <!-- END_TF_DOCS -->
@@ -17,8 +20,6 @@ This module creates a Google Cloud Storage with these possibilities :
 ```{toctree}
 :maxdepth: 2
 :glob:
-:glob:
 
 examples/**
 ```
-

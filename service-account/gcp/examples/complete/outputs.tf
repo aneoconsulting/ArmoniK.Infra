@@ -1,24 +1,14 @@
-output "vpc_name" {
-  description = "Name of VPC"
-  value       = module.vpc.name
+output "member" {
+  description = "IAM member of the Kubernetes service account"
+  value       = module.complete_service_account.member
 }
 
-output "gke_name" {
-  description = "Name of VPC"
+output "cluster_name" {
+  description = "Name of the GKE cluster"
   value       = module.gke.name
 }
 
-output "kubernetes_service_account_name" {
-  description = "Kubernetes service account name"
-  value       = module.service_account.kubernetes_service_account_name
-}
-
-output "gcp_service_account_name" {
-  description = "Kubernetes service account name"
-  value       = module.service_account.service_account_name
-}
-
-output "kubernetes_namespace" {
-  description = "Kubernetes service account name"
-  value       = module.service_account.namespace
+output "bucket_url" {
+  description = "URL of the bucket the test pod can list"
+  value       = module.bucket.url
 }

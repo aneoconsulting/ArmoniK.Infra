@@ -1,20 +1,10 @@
 ## Complete GCS
 
-Terraform scripts to create a complete GCS using the [module gcs](../..).
-
-To create a complete GCS:
+A dual-region versioned bucket with lifecycle rules, no soft delete, access logs and IAM roles for the current user.
+Uses the [gcs module](../..).
 
 ```bash
 terraform init
-terraform plan
-terraform apply
+terraform apply -var project=<project>
+terraform destroy -var project=<project>
 ```
-
-To delete all resource:
-
-```bash
-terraform destroy
-```
-
-
-

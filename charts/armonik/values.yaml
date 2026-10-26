@@ -952,6 +952,13 @@ networkPolicy:
   #   matchLabels:
   #     app.kubernetes.io/name: keda-operator
 
+  # Same for the CloudNativePG operator pods, admitted into the PostgreSQL instances. The operator
+  # gets no policy of its own (charts/network-policies.md); a layered install must state
+  # global.armonik.operators.postgresqlOperator.namespace.
+  # postgresqlOperatorPodSelector:
+  #   matchLabels:
+  #     app.kubernetes.io/name: cloudnative-pg
+
 # ==== Operators (armonik-operators, alias operators) ====
 # Only the ArmoniK-specific overrides; the operators' base configuration is in
 # armonik-operators/values.yaml.

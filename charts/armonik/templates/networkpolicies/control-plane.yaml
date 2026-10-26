@@ -22,12 +22,16 @@
 
 
 {{/*
-  Control-plane metrics-exporter: ingress from KEDA, egress to MongoDB. Ingress from Prometheus is
-  armonik-control-plane's own policy (networkPolicy in its values.yaml).
+  Control-plane metrics-exporter: ingress from KEDA, egress to the table storage (MongoDB or
+  PostgreSQL). Ingress from Prometheus is armonik-control-plane's own policy (networkPolicy in its
+  values.yaml).
 */}}
-{{- $mongodbRule := include "armonik.netpol.rule.mongodb" . | fromYaml -}}
+{{- $tableStorageRule := or
+      (include "armonik.netpol.rule.mongodb" . | fromYaml)
+      (include "armonik.netpol.rule.postgresql" . | fromYaml)
+-}}
 
-{{- if and $meOn $mongodbRule }}
+{{- if and $meOn $tableStorageRule }}
 {{- include "armonik.netpol.render" (dict
       "context" .
       "component" "control-plane-metrics-exporter-connectivity"

@@ -8,14 +8,14 @@ tests:
       - hasDocuments:
           count: 0
 
-  - it: renders both policies with instance-scoped podSelectors when enabled
+  - it: renders the three policies with instance-scoped podSelectors when enabled
     template: networkpolicy.yaml
     set:
       networkPolicy:
         enabled: true
     asserts:
       - hasDocuments:
-          count: 2
+          count: 3
       - equal:
           path: spec.podSelector.matchLabels
           value:
@@ -44,7 +44,7 @@ tests:
                   port: 27017
     asserts:
       - hasDocuments:
-          count: 2
+          count: 3
 
   - it: skips the metrics-exporter policy when the metrics-exporter itself is disabled
     template: networkpolicy.yaml
@@ -55,4 +55,187 @@ tests:
         enabled: false
     asserts:
       - hasDocuments:
-          count: 1
+          count: 2
+
+  - it: scopes the pod-deletion-cost policy to its pod, egress only, to the Kubernetes API and DNS
+    template: networkpolicy.yaml
+    set:
+      networkPolicy:
+        enabled: true
+    documentSelector:
+      path: metadata.name
+      value: RELEASE-NAME-armonik-control-plane-pod-deletion-cost
+    asserts:
+      - equal:
+          path: spec.podSelector.matchLabels
+          value:
+            app.kubernetes.io/component: pod-deletion-cost
+            app.kubernetes.io/name: armonik-control-plane
+            app.kubernetes.io/instance: RELEASE-NAME
+      - equal:
+          path: spec.policyTypes
+          value:
+            - Egress
+      - contains:
+          path: spec.egress
+          content:
+            ports:
+              - protocol: TCP
+                port: 443
+              - protocol: TCP
+                port: 6443
+      - contains:
+          path: spec.egress
+          content:
+            to:
+              - namespaceSelector:
+                  matchLabels:
+                    kubernetes.io/metadata.name: kube-system
+                podSelector:
+                  matchLabels:
+                    k8s-app: kube-dns
+            ports:
+              - protocol: UDP
+                port: 53
+              - protocol: TCP
+                port: 53
+
+  - it: grants the pod-deletion-cost controller egress to the Prometheus of
+      global.armonik.monitoring.prometheusUrl, on the URL's port
+    template: networkpolicy.yaml
+    set:
+      networkPolicy:
+        enabled: true
+      global:
+        armonik:
+          monitoring:
+            prometheusUrl: http://kps-prometheus.monitoring.svc:9091
+    documentSelector:
+      path: metadata.name
+      value: RELEASE-NAME-armonik-control-plane-pod-deletion-cost
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            to:
+              - namespaceSelector:
+                  matchLabels:
+                    kubernetes.io/metadata.name: monitoring
+                podSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: prometheus
+            ports:
+              - protocol: TCP
+                port: 9091
+
+  - it: prefers podDeletionCost.prometheusUrl, on the scheme's port when the URL names none
+    template: networkpolicy.yaml
+    set:
+      networkPolicy:
+        enabled: true
+      global:
+        armonik:
+          monitoring:
+            prometheusUrl: http://kps-prometheus.monitoring.svc:9090
+      podDeletionCost:
+        prometheusUrl: http://prometheus.observability.svc.cluster.local/
+    documentSelector:
+      path: metadata.name
+      value: RELEASE-NAME-armonik-control-plane-pod-deletion-cost
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            to:
+              - namespaceSelector:
+                  matchLabels:
+                    kubernetes.io/metadata.name: observability
+                podSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: prometheus
+            ports:
+              - protocol: TCP
+                port: 80
+
+  - it: falls back to the Prometheus operator's namespace on 9090 without a URL, with the
+      prometheusPodSelector override
+    template: networkpolicy.yaml
+    set:
+      networkPolicy:
+        enabled: true
+        podDeletionCost:
+          prometheusPodSelector:
+            matchLabels:
+              app: my-prometheus
+      global:
+        armonik:
+          operators:
+            prometheusOperator:
+              namespace: monitoring
+    documentSelector:
+      path: metadata.name
+      value: RELEASE-NAME-armonik-control-plane-pod-deletion-cost
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            to:
+              - namespaceSelector:
+                  matchLabels:
+                    kubernetes.io/metadata.name: monitoring
+                podSelector:
+                  matchLabels:
+                    app: my-prometheus
+            ports:
+              - protocol: TCP
+                port: 9090
+
+  - it: grants no Prometheus egress for an out-of-cluster URL (extraEgressRules covers it)
+    template: networkpolicy.yaml
+    set:
+      networkPolicy:
+        enabled: true
+        podDeletionCost:
+          extraEgressRules:
+            - ports:
+                - protocol: TCP
+                  port: 8443
+      global:
+        armonik:
+          monitoring:
+            prometheusUrl: https://prometheus.example.com
+    documentSelector:
+      path: metadata.name
+      value: RELEASE-NAME-armonik-control-plane-pod-deletion-cost
+    asserts:
+      - lengthEqual:
+          path: spec.egress
+          count: 3
+      - contains:
+          path: spec.egress
+          content:
+            ports:
+              - protocol: TCP
+                port: 8443
+
+  - it: skips the pod-deletion-cost policy when the controller or its policy is disabled
+    template: networkpolicy.yaml
+    set:
+      networkPolicy:
+        enabled: true
+      podDeletionCost:
+        enabled: false
+    asserts:
+      - hasDocuments:
+          count: 2
+
+  - it: skips the pod-deletion-cost policy when networkPolicy.podDeletionCost.enabled is false
+    template: networkpolicy.yaml
+    set:
+      networkPolicy:
+        enabled: true
+        podDeletionCost:
+          enabled: false
+    asserts:
+      - hasDocuments:
+          count: 2

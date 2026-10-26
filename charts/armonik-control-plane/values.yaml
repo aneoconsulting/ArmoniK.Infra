@@ -433,3 +433,13 @@ networkPolicy:
     # Egress is DNS-only by default. The metrics-exporter only reaches MongoDB: see the first
     # submitter.extraEgressRules example.
     extraEgressRules: []
+
+  # Rendered when podDeletionCost.enabled too.
+  podDeletionCost:
+    enabled: true
+    # Same default as submitter.prometheusPodSelector, for the egress to Prometheus.
+    prometheusPodSelector:
+    # Egress is Prometheus, the Kubernetes API and DNS by default. Prometheus is found through
+    # podDeletionCost.prometheusUrl, else global.armonik.monitoring.prometheusUrl, else the
+    # Prometheus operator's namespace on 9090; an out-of-cluster Prometheus needs a rule here.
+    extraEgressRules: []

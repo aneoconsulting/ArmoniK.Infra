@@ -12,6 +12,7 @@ The one exception is the Bitnami RabbitMQ chart, whose own `networkPolicy.enable
 | control-plane submitter + init | umbrella `armonik/templates/networkpolicies/control-plane.yaml` | MongoDB or PostgreSQL, RabbitMQ/ActiveMQ, Redis, DNS | nginx (control-port) only, see below |
 | control-plane submitter (chart-local) | `armonik-control-plane` | DNS | Prometheus |
 | control-plane metrics-exporter | umbrella + `armonik-control-plane` | MongoDB or PostgreSQL, DNS | KEDA (umbrella), Prometheus (chart-local) |
+| control-plane pod-deletion-cost controller | `armonik-control-plane` | Prometheus, kube-api, DNS | - |
 | compute-plane | umbrella `.../compute-plane.yaml` + `armonik-compute-plane` | MongoDB or PostgreSQL, RabbitMQ/ActiveMQ, Redis, DNS | Prometheus |
 | nginx (ingress) | `armonik-ingress` + umbrella `.../nginx-egress.yaml` | DNS, GUI (both); control-plane, Grafana, Seq (umbrella only) | any source, 8080/9080 |
 | GUI | `armonik-ingress` | DNS | nginx |
@@ -25,6 +26,13 @@ The one exception is the Bitnami RabbitMQ chart, whose own `networkPolicy.enable
 | ActiveMQ | umbrella `.../activemq.yaml` + `activemq/templates/network-policy.yaml` | DNS (chart-local) | control-plane/init, compute-plane (umbrella) |
 | fluent-bit | umbrella `.../fluent-bit-egress.yaml` | DNS, kube-api, Seq | - |
 | KEDA operator | umbrella `.../keda-metrics-egress.yaml` | control-plane metrics-exporter, DNS, kube-api | - |
+
+The chart-local submitter policy selects every pod of the `armonik-control-plane` release, so its
+DNS-only egress also isolates the metrics-exporter and the pod-deletion-cost controller: each has a
+policy of its own adding what it needs. The controller finds Prometheus through
+`podDeletionCost.prometheusUrl`, else `global.armonik.monitoring.prometheusUrl`, else the Prometheus
+operator's namespace on 9090; an out-of-cluster Prometheus needs
+`networkPolicy.podDeletionCost.extraEgressRules`.
 
 The submitter admits nginx alone: under mTLS it trusts the identity headers nginx sets. Do not open
 it to another pod, least of all the compute-plane, whose workers run user code.

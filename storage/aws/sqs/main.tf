@@ -28,10 +28,11 @@ data "aws_iam_policy_document" "sqs" {
 }
 
 resource "aws_iam_policy" "sqs" {
-  name_prefix = "${local.prefix}-sqs-admin"
-  description = "Policy for allowing SQS admin access"
-  policy      = data.aws_iam_policy_document.sqs.json
-  tags        = local.tags
+  name_prefix                       = "${local.prefix}-sqs-admin"
+  description                       = "Policy for allowing SQS admin access"
+  policy                            = data.aws_iam_policy_document.sqs.json
+  delay_after_policy_creation_in_ms = var.policy_creation_delay_in_ms
+  tags                              = local.tags
 }
 
 resource "aws_iam_policy_attachment" "sqs" {

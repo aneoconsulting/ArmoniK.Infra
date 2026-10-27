@@ -31,8 +31,10 @@ on:
 
 permissions: {}
 
+# A pending run replaces the previous pending one of its group, so the group
+# must not merge two pull requests: fork branch names collide.
 concurrency:
-  group: approval-freshness-${{ github.event.workflow_run.head_branch || github.run_id }}
+  group: approval-freshness-${{ github.event.workflow_run && format('{0}:{1}', github.event.workflow_run.head_repository.full_name, github.event.workflow_run.head_branch) || github.run_id }}
   cancel-in-progress: false
 
 jobs:

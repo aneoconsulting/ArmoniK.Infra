@@ -8,7 +8,7 @@ name: Approval freshness
 # See .github/scripts/approval-freshness.js.
 #
 # Every pull request event, and every forced push, reaches this workflow through
-# a relay, so it always runs from the default branch: a pull request can stop it
+# the relay, so it always runs from the default branch: a pull request can stop it
 # from running, which leaves its head without the required check, but cannot
 # change what it does.
 # A pull request job named `approval-freshness` can still forge the check: this
@@ -19,7 +19,6 @@ on:
   workflow_run:
     workflows:
       - Approval freshness relay
-      - Approval freshness push relay
     types:
       - completed
   workflow_dispatch:
@@ -39,7 +38,7 @@ concurrency:
 jobs:
   evaluate:
     name: Evaluate approvals
-    # A push relay run whose job was skipped was not a forced push.
+    # A relay run on push whose job was skipped was not a forced push.
     if: >-
       github.event_name != 'workflow_run'
       || github.event.workflow_run.event == 'pull_request'

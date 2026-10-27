@@ -19,7 +19,8 @@
 // re-reads the whole state, so runs need no ordering.
 //
 // Moving a base branch sends no event to the pull requests based on it, so the
-// pull requests stacked on an evaluated one are evaluated with it.
+// pull requests stacked on an evaluated one are evaluated with it, and a forced
+// push to any branch evaluates the pull requests based on that branch.
 
 const { execFileSync } = require('child_process');
 
@@ -192,7 +193,15 @@ module.exports = async ({ github, context, core }) => {
 
   // The pull requests to evaluate, depending on the trigger.
   let prs = [];
-  if (context.eventName === 'workflow_run') {
+  let stack = true;
+  if (context.eventName === 'workflow_run' && context.payload.workflow_run.event === 'push') {
+    // A forced push: the pull requests based on the rewritten branch. Those
+    // stacked on them keep their own base, so their diff did not change.
+    stack = false;
+    prs = await github.paginate(github.rest.pulls.list, {
+      owner, repo, state: 'open', base: context.payload.workflow_run.head_branch, per_page: 100,
+    });
+  } else if (context.eventName === 'workflow_run') {
     // pull_requests is empty when the head is in a fork: look it up by head.
     const run = context.payload.workflow_run;
     for (const { number } of run.pull_requests) {
@@ -204,7 +213,6 @@ module.exports = async ({ github, context, core }) => {
       });
     }
   } else {
-    // workflow_dispatch, or schedule, which has no input.
     const input = context.payload.inputs && context.payload.inputs['pull-request'];
     if (input) {
       prs = [(await github.rest.pulls.get({ owner, repo, pull_number: Number(input) })).data];
@@ -216,7 +224,7 @@ module.exports = async ({ github, context, core }) => {
 
   // Plus the pull requests stacked on them, whose base branch they are.
   const queue = new Map(prs.map((pr) => [pr.number, pr]));
-  for (const pr of prs) {
+  for (const pr of stack ? prs : []) {
     if (!pr.head.repo || pr.head.repo.full_name !== `${owner}/${repo}`) continue;
     const stacked = await github.paginate(github.rest.pulls.list, {
       owner, repo, state: 'open', base: pr.head.ref, per_page: 100,

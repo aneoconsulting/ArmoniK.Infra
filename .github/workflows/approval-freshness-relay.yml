@@ -3,9 +3,6 @@ name: Approval freshness relay
 # Only a trigger: its completion starts approval-freshness.yml as workflow_run,
 # which runs the default branch's workflow with a write token, whatever the
 # pull request's base and origin.
-# A push to a branch can change the diff of the pull requests based on it
-# without sending them any event, so pushes are relayed too: a rewrite, but also
-# a fast-forward to commits such a pull request already contains.
 
 on:
   pull_request:
@@ -18,9 +15,6 @@ on:
     types:
       - submitted
       - dismissed
-  push:
-    branches:
-      - "**"
 
 permissions: {}
 
@@ -33,5 +27,5 @@ jobs:
       - name: Relay
         env:
           EVENT: ${{ github.event_name }}
-          REF: ${{ github.event.pull_request.number && format('pull request {0}', github.event.pull_request.number) || github.ref }}
-        run: echo "${EVENT} on ${REF}"
+          NUMBER: ${{ github.event.pull_request.number }}
+        run: echo "${EVENT} on pull request ${NUMBER}"

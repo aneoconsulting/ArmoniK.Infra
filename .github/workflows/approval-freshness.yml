@@ -7,10 +7,9 @@ name: Approval freshness
 # `approval-freshness` and `approval-freshness-relay` (GitHub Actions source).
 # See .github/scripts/approval-freshness.js.
 #
-# Every pull request event, and every push, reaches this workflow through
-# the relay, so it always runs from the default branch: a pull request can stop it
-# from running, which leaves its head without the required check, but cannot
-# change what it does.
+# Every pull request event reaches this workflow through the relay, so it always
+# runs from the default branch: a pull request can stop it from running, which
+# leaves its head without the required check, but cannot change what it does.
 # A pull request job named `approval-freshness` can still forge the check: this
 # guards against mistakes, not against an author with write access.
 # Nothing here runs code from the pull request: its commits are only diffed.

@@ -38,8 +38,8 @@ module "rabbitmq" {
   }
   name               = "test-mq"
   engine_type        = "RabbitMQ"
-  engine_version     = "3.10.20"
-  host_instance_type = "mq.m5.xlarge"
+  engine_version     = "4.3"
+  host_instance_type = "mq.m7g.xlarge"
   vpc_cidr_blocks    = [data.aws_vpc.default.cidr_block]
   vpc_id             = data.aws_vpc.default.id
   vpc_subnet_ids     = data.aws_subnets.subnets.ids

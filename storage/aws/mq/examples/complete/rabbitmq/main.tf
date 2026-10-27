@@ -40,8 +40,9 @@ module "rabbitmq" {
   password                = ""
   username                = ""
   engine_type             = "RabbitMQ"
-  engine_version          = "3.10.20"
-  host_instance_type      = "mq.m5.xlarge"
+  region                  = var.aws_region
+  engine_version          = "4.3"
+  host_instance_type      = "mq.m7g.xlarge"
   apply_immediately       = true
   deployment_mode         = "SINGLE_INSTANCE"
   storage_type            = "ebs"

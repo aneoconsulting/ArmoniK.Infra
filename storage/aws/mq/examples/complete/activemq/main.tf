@@ -36,19 +36,21 @@ module "activemq" {
     "create by"     = data.aws_caller_identity.current.arn
     "creation date" = null_resource.timestamp.triggers["creation_date"]
   }
-  name                    = "test-mq"
-  password                = ""
-  username                = ""
-  engine_type             = "ActiveMQ"
-  engine_version          = "5.17.3"
-  host_instance_type      = "mq.m5.xlarge"
-  apply_immediately       = true
-  deployment_mode         = "SINGLE_INSTANCE"
-  storage_type            = "ebs"
-  authentication_strategy = "simple"
-  publicly_accessible     = false
-  kms_key_id              = null
-  vpc_cidr_blocks         = [data.aws_vpc.default.cidr_block]
-  vpc_id                  = data.aws_vpc.default.id
-  vpc_subnet_ids          = data.aws_subnets.subnets.ids
+  name                       = "test-mq"
+  password                   = ""
+  username                   = ""
+  engine_type                = "ActiveMQ"
+  region                     = var.aws_region
+  configuration_skip_destroy = false
+  engine_version             = "5.19"
+  host_instance_type         = "mq.m5.xlarge"
+  apply_immediately          = true
+  deployment_mode            = "SINGLE_INSTANCE"
+  storage_type               = "ebs"
+  authentication_strategy    = "simple"
+  publicly_accessible        = false
+  kms_key_id                 = null
+  vpc_cidr_blocks            = [data.aws_vpc.default.cidr_block]
+  vpc_id                     = data.aws_vpc.default.id
+  vpc_subnet_ids             = data.aws_subnets.subnets.ids
 }

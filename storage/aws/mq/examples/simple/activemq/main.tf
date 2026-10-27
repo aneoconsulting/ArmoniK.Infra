@@ -38,7 +38,7 @@ module "activemq" {
   }
   name               = "test-mq"
   engine_type        = "ActiveMQ"
-  engine_version     = "5.17.3"
+  engine_version     = "5.19"
   host_instance_type = "mq.m5.xlarge"
   vpc_cidr_blocks    = [data.aws_vpc.default.cidr_block]
   vpc_id             = data.aws_vpc.default.id

@@ -1,11 +1,6 @@
 # Escape hatches (extra*, containerPatch, podSpecPatch) on all three ingress workloads.
 urlsSecretName: example-urls
 
-global:
-  environment:
-    name: "patch-fixture"
-    description: "escape hatch render"
-
 extraEnv:
   - name: NGINX_LOCAL
     value: "1"

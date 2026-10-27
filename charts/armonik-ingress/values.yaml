@@ -1,9 +1,5 @@
 # global.armonik.* comes from armonik-common via import-values; its defaults suit a standalone release.
 
-global:
-  environment:
-    description: "ArmoniK ingress environment"
-
 # -- Chart name used in resource names and labels.
 nameOverride: ""
 # -- Name prefix of every resource.
@@ -307,9 +303,9 @@ gui:
 
 static:
   environment.json:
-    color: "#80ff80"
-    description: "{{ .Values.global.environment.description }}"
-    name: "{{ .Values.global.environment.name }}"
+    color: "#808080"
+    description: "ArmoniK ingress environment"
+    name: ""
     version: "{{ .Chart.AppVersion }}"
   # -- Default Admin GUI settings, the JSON exported from its Settings page. The GUI fetches
   # /static/gui_configuration, so the key name is fixed. It fills only the settings a browser has

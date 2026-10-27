@@ -1,9 +1,5 @@
 # TLS through cert-manager with the default local selfSigned Issuer, plus mTLS from an inline CA:
 # Issuer, Certificate, the mTLS CA Secret, and the nginx conf CN allow-list.
-global:
-  environment:
-    name: ci
-    description: ArmoniK CI environment
 urlsSecretName: example-urls
 tls:
   enabled: true

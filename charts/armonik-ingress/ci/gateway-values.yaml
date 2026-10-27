@@ -1,9 +1,5 @@
 # Gateway API path: Gateway, HTTPRoute and (GKE) HealthCheckPolicy, the HTTPRoute forcing the
 # Service type to ClusterIP (armonik.ingress.serviceType).
-global:
-  environment:
-    name: ci
-    description: ArmoniK CI environment
 urlsSecretName: example-urls
 gateway:
   enabled: true

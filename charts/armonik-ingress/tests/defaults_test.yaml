@@ -1,13 +1,13 @@
 suite: chart defaults
 templates:
   - deployments/nginx.yaml
+  # The deployment's checksum/* annotation includes it, so it has to be loaded too.
+  - armonik-nginx-conf.yaml
 tests:
-  - it: renders with plain chart defaults, no extra values
-    skip:
-      reason: >-
-        Broken render path: the chart ships no global.environment defaults, and
-        static."environment.json" tpl-renders global.environment.{name,description}
-        (nil pointer). Enable once the chart defines defaults for them.
+  - it: renders with chart defaults plus urlsSecretName, which has none
+    template: deployments/nginx.yaml
+    set:
+      urlsSecretName: example-urls
     asserts:
       - hasDocuments:
           count: 1

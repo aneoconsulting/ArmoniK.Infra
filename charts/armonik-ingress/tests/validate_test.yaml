@@ -2,12 +2,12 @@ suite: validation guards
 templates:
   - validate.yaml
   - gateway/httproute.yaml
-set:
-  global:
-    environment:
-      name: ci
-      description: ArmoniK CI environment
 tests:
+  - it: fails on plain chart defaults, urlsSecretName having none
+    template: validate.yaml
+    asserts:
+      - failedTemplate:
+          errorPattern: "specify urlsSecretName or at least one of"
   - it: fails when mTLS is enabled without TLS
     template: validate.yaml
     set:

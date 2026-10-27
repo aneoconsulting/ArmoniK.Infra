@@ -1,9 +1,5 @@
 # Multi-cluster gRPC load balancer: Deployment, Service, ConfigMap, and the cluster-certs Secret
 # carrying cluster-b's cert material.
-global:
-  environment:
-    name: ci
-    description: ArmoniK CI environment
 urlsSecretName: example-urls
 loadBalancer:
   enabled: true

@@ -1,9 +1,16 @@
 name: Approval freshness relay
 
 # Only a trigger: its completion starts approval-freshness.yml as workflow_run,
-# which has the write token this run lacks on a fork pull request.
+# which runs the default branch's workflow with a write token, whatever the
+# pull request's base and origin.
 
 on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - edited
   pull_request_review:
     types:
       - submitted
@@ -13,11 +20,12 @@ permissions: {}
 
 jobs:
   relay:
-    name: Relay review event
+    # Required status check: keep the name in sync with the ruleset.
+    name: approval-freshness-relay
     runs-on: ubuntu-latest
     steps:
       - name: Relay
         env:
+          EVENT: ${{ github.event_name }}
           NUMBER: ${{ github.event.pull_request.number }}
-          STATE: ${{ github.event.review.state }}
-        run: echo "Review ${STATE} on pull request ${NUMBER}"
+        run: echo "${EVENT} on pull request ${NUMBER}"

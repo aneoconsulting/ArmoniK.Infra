@@ -12,7 +12,10 @@
 //
 // The check run on the head is the required check: it closes the window
 // between a push and the dismissals, and fails when a stale approval could not
-// be dismissed. Every run re-reads the whole state, so runs need no ordering.
+// be dismissed. Posted with GITHUB_TOKEN, it joins the head's existing GitHub
+// Actions check suite, which the relay's pull_request run provides; that suite
+// is what lets it satisfy a required check from this non-PR context. Every run
+// re-reads the whole state, so runs need no ordering.
 
 const { execFileSync } = require('child_process');
 
@@ -145,9 +148,7 @@ module.exports = async ({ github, context, core }) => {
 
   // The pull requests to evaluate, depending on the trigger.
   let numbers = [];
-  if (context.eventName === 'pull_request_target') {
-    numbers = [context.payload.pull_request.number];
-  } else if (context.eventName === 'workflow_run') {
+  if (context.eventName === 'workflow_run') {
     // pull_requests is empty when the head is in a fork: look it up by head.
     const run = context.payload.workflow_run;
     numbers = run.pull_requests.map((pr) => pr.number);
@@ -157,7 +158,8 @@ module.exports = async ({ github, context, core }) => {
       });
       numbers = prs.map((pr) => pr.number);
     }
-  } else if (context.eventName === 'workflow_dispatch') {
+  } else {
+    // workflow_dispatch, or schedule, which has no input.
     const input = context.payload.inputs && context.payload.inputs['pull-request'];
     if (input) {
       numbers = [Number(input)];

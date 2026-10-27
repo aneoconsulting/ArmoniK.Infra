@@ -3,25 +3,26 @@ name: Approval freshness
 # Dismisses an approval only when the pull request diff changed since it was
 # given, so rebasing a stack keeps the approvals of unchanged pull requests.
 # Replaces the ruleset's "Dismiss stale pull request approvals when new commits
-# are pushed", which must be off, and is paired with a required status check on
-# `approval-freshness`. See .github/scripts/approval-freshness.js.
+# are pushed", which must be off, and is paired with the required status checks
+# `approval-freshness` and `approval-freshness-relay` (GitHub Actions source).
+# See .github/scripts/approval-freshness.js.
 #
-# Reviews reach this workflow through the relay: a pull_request_review run gets
-# a read-only token on a fork pull request, a workflow_run always gets this one.
+# Every pull request event reaches this workflow through the relay, so it always
+# runs from the default branch: a pull request can stop it from running, which
+# leaves its head without the required check, but cannot change what it does.
+# A pull request job named `approval-freshness` can still forge the check: this
+# guards against mistakes, not against an author with write access.
 # Nothing here runs code from the pull request: its commits are only diffed.
 
 on:
-  pull_request_target:
-    types:
-      - opened
-      - reopened
-      - synchronize
-      - edited
   workflow_run:
     workflows:
       - Approval freshness relay
     types:
       - completed
+  # Catches pull requests whose relay did not run.
+  schedule:
+    - cron: "17,47 * * * *"
   workflow_dispatch:
     inputs:
       pull-request:
@@ -31,28 +32,25 @@ on:
 permissions: {}
 
 concurrency:
-  group: approval-freshness-${{ github.event.pull_request.number || github.event.workflow_run.head_branch || github.run_id }}
+  group: approval-freshness-${{ github.event.workflow_run.head_branch || github.run_id }}
   cancel-in-progress: false
 
 jobs:
   evaluate:
     name: Evaluate approvals
-    # `edited` also fires on title and body changes; only a retarget matters.
     if: >-
-      (github.event_name == 'pull_request_target' && (github.event.action != 'edited' || github.event.changes.base))
-      || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request_review')
-      || github.event_name == 'workflow_dispatch'
+      github.event_name != 'workflow_run'
+      || github.event.workflow_run.event == 'pull_request'
+      || github.event.workflow_run.event == 'pull_request_review'
     permissions:
       checks: write # to record fingerprints and report the required check
       contents: read # to fetch and diff the pull request commits
       pull-requests: write # to dismiss stale approvals
     runs-on: ubuntu-latest
     steps:
-      # Always the default branch: the script must be the reviewed one.
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          ref: ${{ github.event.repository.default_branch }}
           fetch-depth: 0
           filter: blob:none
           sparse-checkout: .github/scripts

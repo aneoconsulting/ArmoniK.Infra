@@ -43,8 +43,9 @@ locals {
   # In the context of a Kubernetes cluster, if these limits are reached, you may experience processes
   # failing with error messages related to the limits, and it would exhibit as failing Pods with inotify
   # related errors in the Pod logs.
-  # Runs before bootstrap: AL2 nodes take it as pre_bootstrap_user_data, AL2023 nodes as a nodeadm cloud-init
-  # part; the EKS module drops post-bootstrap user data on managed node groups and on AL2023.
+  # Runs before bootstrap: AL2 nodes take it as pre_bootstrap_user_data, AL2023 nodes (the default ami_type) as a
+  # nodeadm cloud-init part; the EKS module drops post-bootstrap user data on managed node groups and on AL2023.
+  # Windows and Bottlerocket nodes cannot run a bash script, so they get none.
   node_sysctl_user_data = <<-EOT
       #!/bin/bash
       echo fs.inotify.max_user_instances=8192 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
@@ -59,12 +60,15 @@ locals {
     for key, value in var.eks_managed_node_groups : key => merge({
       enable_monitoring       = true
       metadata_options        = local.node_metadata_options
-      pre_bootstrap_user_data = local.node_sysctl_user_data
+      pre_bootstrap_user_data = startswith(coalesce(try(value.ami_type, null), "AL2023_"), "AL2_") ? local.node_sysctl_user_data : null
       }, value, {
       name                       = can(coalesce(value.name)) ? "${try(value.name, "")}-${var.name}" : "${key}-${var.name}",
       enable_bootstrap_user_data = can(coalesce(value.ami_id))
       vpc_security_group_ids     = [module.eks.node_security_group_id]
-      cloudinit_pre_nodeadm      = concat([local.node_sysctl_nodeadm_part], try(value.cloudinit_pre_nodeadm, null) == null ? [] : value.cloudinit_pre_nodeadm)
+      cloudinit_pre_nodeadm = concat(
+        startswith(coalesce(try(value.ami_type, null), "AL2023_"), "AL2023_") ? [local.node_sysctl_nodeadm_part] : [],
+        try(value.cloudinit_pre_nodeadm, null) == null ? [] : value.cloudinit_pre_nodeadm,
+      )
     })
   }
 
@@ -75,10 +79,13 @@ locals {
       tags                    = local.tags
       autoscaling_group_tags  = local.autoscaling_group_tags
       metadata_options        = local.node_metadata_options
-      pre_bootstrap_user_data = local.node_sysctl_user_data
+      pre_bootstrap_user_data = startswith(coalesce(try(value.ami_type, null), "AL2023_"), "AL2_") ? local.node_sysctl_user_data : null
       }, value, {
-      name                  = can(coalesce(value.name)) ? "${try(value.name, "")}-${var.name}" : "${key}-${var.name}",
-      cloudinit_pre_nodeadm = concat([local.node_sysctl_nodeadm_part], try(value.cloudinit_pre_nodeadm, null) == null ? [] : value.cloudinit_pre_nodeadm)
+      name = can(coalesce(value.name)) ? "${try(value.name, "")}-${var.name}" : "${key}-${var.name}",
+      cloudinit_pre_nodeadm = concat(
+        startswith(coalesce(try(value.ami_type, null), "AL2023_"), "AL2023_") ? [local.node_sysctl_nodeadm_part] : [],
+        try(value.cloudinit_pre_nodeadm, null) == null ? [] : value.cloudinit_pre_nodeadm,
+      )
     })
   }
 

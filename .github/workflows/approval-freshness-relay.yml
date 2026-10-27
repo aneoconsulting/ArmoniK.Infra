@@ -1,0 +1,23 @@
+name: Approval freshness relay
+
+# Only a trigger: its completion starts approval-freshness.yml as workflow_run,
+# which has the write token this run lacks on a fork pull request.
+
+on:
+  pull_request_review:
+    types:
+      - submitted
+      - dismissed
+
+permissions: {}
+
+jobs:
+  relay:
+    name: Relay review event
+    runs-on: ubuntu-latest
+    steps:
+      - name: Relay
+        env:
+          NUMBER: ${{ github.event.pull_request.number }}
+          STATE: ${{ github.event.review.state }}
+        run: echo "Review ${STATE} on pull request ${NUMBER}"

@@ -1,9 +1,4 @@
 # ScaledObject and disruption budget.
-# Same global.environment block as default-values.yaml, see there.
-global:
-  environment:
-    name: ci
-    description: ArmoniK CI environment
 urlsSecretName: example-urls
 hpa:
   enabled: true

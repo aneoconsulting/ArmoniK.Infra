@@ -93,7 +93,9 @@ ok dependencies-defaults  armonik-dependencies --set seq.firstRunNoAuthenticatio
   --set postgresql.enabled=false
 ok operators-defaults     armonik-operators
 ok umbrella-defaults      armonik
-skip ingress-defaults "broken: chart values lack global.environment, static.environment.json hits a nil pointer; enable when fixed"
+# urlsSecretName has no chart default; ci/default-values.yaml covers the rest.
+fail_with ingress-defaults armonik-ingress \
+  "specify urlsSecretName or at least one of"
 
 # --- conditional variants --------------------------------------------------
 ok umbrella-minimal       armonik               -f charts/armonik/ci/minimal-values.yaml

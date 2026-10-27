@@ -1,13 +1,17 @@
 suite: chart defaults
 templates:
+  - validate.yaml
   - deployments/nginx.yaml
 tests:
-  - it: renders with plain chart defaults, no extra values
-    skip:
-      reason: >-
-        Broken render path: the chart ships no global.environment defaults, and
-        static."environment.json" tpl-renders global.environment.{name,description}
-        (nil pointer). Enable once the chart defines defaults for them.
+  - it: fails on plain chart defaults, urlsSecretName having none
+    template: validate.yaml
+    asserts:
+      - failedTemplate:
+          errorPattern: "specify urlsSecretName or at least one of"
+  - it: renders with chart defaults plus urlsSecretName
+    template: deployments/nginx.yaml
+    set:
+      urlsSecretName: example-urls
     asserts:
       - hasDocuments:
           count: 1

@@ -1,7 +1,2 @@
 # Near-default render. urlsSecretName is the one value templates/validate.yaml requires.
-# global.environment.name has no chart default and would show empty in the GUI's environment.json.
-global:
-  environment:
-    name: ci
-    description: ArmoniK CI environment
 urlsSecretName: example-urls

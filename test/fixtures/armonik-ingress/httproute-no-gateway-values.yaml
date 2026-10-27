@@ -1,9 +1,5 @@
 # Expected failure: httpRoute without a gateway or explicit parentRefs must be
 # rejected by templates/gateway/httproute.yaml.
-global:
-  environment:
-    name: ci
-    description: ArmoniK CI environment
 gateway:
   enabled: false
 httpRoute:

@@ -1,13 +1,5 @@
 data "google_client_openid_userinfo" "current" {}
 
-# Key rings are never deleted: a random suffix lets the example be applied again after a destroy
-resource "random_string" "suffix" {
-  length  = 5
-  special = false
-  upper   = false
-  numeric = true
-}
-
 locals {
   labels = {
     env    = "test"
@@ -33,7 +25,7 @@ module "vpc" {
 # Encrypts the Kubernetes secrets stored in etcd
 module "kms" {
   source        = "../../../../../security/gcp/kms"
-  key_ring_name = "gke-complete-${random_string.suffix.result}"
+  key_ring_name = "gke-complete"
   location      = var.region
   crypto_keys   = { "gke-secrets" = {} }
   labels        = local.labels

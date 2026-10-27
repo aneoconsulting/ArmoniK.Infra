@@ -3,10 +3,9 @@ name: Approval freshness relay
 # Only a trigger: its completion starts approval-freshness.yml as workflow_run,
 # which runs the default branch's workflow with a write token, whatever the
 # pull request's base and origin.
-# A rewritten branch changes the diff of the pull requests based on it without
-# sending them any event, so forced pushes are relayed too. A fast-forward keeps
-# their merge base: the job is skipped on other pushes, which the evaluator
-# ignores (workflow_run does not say whether a push was forced).
+# A push to a branch can change the diff of the pull requests based on it
+# without sending them any event, so pushes are relayed too: a rewrite, but also
+# a fast-forward to commits such a pull request already contains.
 
 on:
   pull_request:
@@ -29,7 +28,6 @@ jobs:
   relay:
     # Required status check: keep the name in sync with the ruleset.
     name: approval-freshness-relay
-    if: github.event_name != 'push' || github.event.forced
     runs-on: ubuntu-latest
     steps:
       - name: Relay

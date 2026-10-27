@@ -1,6 +1,7 @@
 # Availability zones
 data "aws_subnet" "private_subnet" {
   for_each   = toset(var.vpc_cidr_block_private)
+  region     = var.region
   cidr_block = each.key
 
   # dummy ternary impose dependency on subnets even though depends_on does not work here
@@ -13,6 +14,7 @@ locals {
 }
 
 resource "aws_efs_file_system" "efs" {
+  region                          = var.region
   creation_token                  = var.name
   encrypted                       = local.encrypt
   kms_key_id                      = (local.encrypt ? var.kms_key_id : null)
@@ -31,28 +33,33 @@ resource "aws_efs_file_system" "efs" {
 }
 
 resource "aws_security_group" "efs" {
+  region      = var.region
   name        = "${var.name}-sg"
   description = "Allow EFS inbound traffic on NFS port 2049"
   vpc_id      = var.vpc_id
   ingress {
-    description = "tcp from ArmoniK VPC"
-    from_port   = 2049
-    to_port     = 2049
-    protocol    = "tcp"
-    cidr_blocks = var.vpc_cidr_blocks
+    description      = "tcp from ArmoniK VPC"
+    from_port        = 2049
+    to_port          = 2049
+    protocol         = "tcp"
+    cidr_blocks      = var.vpc_cidr_blocks
+    ipv6_cidr_blocks = var.vpc_ipv6_cidr_blocks
   }
   tags = local.tags
 }
 
 resource "aws_efs_mount_target" "efs" {
   for_each        = data.aws_subnet.private_subnet
+  region          = var.region
   file_system_id  = aws_efs_file_system.efs.id
   subnet_id       = each.value.id
+  ip_address_type = var.mount_target_ip_address_type
   security_groups = [aws_security_group.efs.id]
 }
 
 resource "aws_efs_access_point" "efs" {
   for_each       = (var.access_point != null ? toset(var.access_point) : toset([]))
+  region         = var.region
   file_system_id = aws_efs_file_system.efs.id
   posix_user {
     gid = 1000

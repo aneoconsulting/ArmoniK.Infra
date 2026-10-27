@@ -5,6 +5,12 @@ variable "tags" {
   default     = {}
 }
 
+variable "region" {
+  description = "AWS region where the EFS resources will be managed. Defaults to the region set in the provider configuration"
+  type        = string
+  default     = null
+}
+
 # VPC infos
 variable "vpc_id" {
   description = "AWS VPC id"
@@ -14,6 +20,12 @@ variable "vpc_id" {
 variable "vpc_cidr_blocks" {
   description = "AWS VPC cidr block"
   type        = set(string)
+}
+
+variable "vpc_ipv6_cidr_blocks" {
+  description = "AWS VPC IPv6 cidr blocks allowed to reach the file system, for mount targets in IPV6_ONLY or DUAL_STACK mode"
+  type        = set(string)
+  default     = []
 }
 
 variable "vpc_cidr_block_private" {
@@ -54,8 +66,8 @@ variable "throughput_mode" {
   type        = string
   default     = "bursting"
   validation {
-    condition     = contains(["bursting", "provisioned"], var.throughput_mode)
-    error_message = "When using throughput_mode=\"provisioned\", also set \"provisioned_throughput_in_mibps\"."
+    condition     = contains(["bursting", "elastic", "provisioned"], var.throughput_mode)
+    error_message = "Possible values for the parameter throughput_mode are \"bursting\" | \"elastic\" | \"provisioned\"."
   }
 }
 
@@ -78,6 +90,16 @@ variable "transition_to_ia" {
       "AFTER_90_DAYS"
     ], var.transition_to_ia) : true
     error_message = "Possible values for the parameter transition_to_ia are \"AFTER_7_DAYS\" | \"AFTER_14_DAYS\" | \"AFTER_30_DAYS\", \"AFTER_60_DAYS\" | \"AFTER_90_DAYS\"."
+  }
+}
+
+variable "mount_target_ip_address_type" {
+  description = "IP address type of the mount targets: IPV4_ONLY, IPV6_ONLY or DUAL_STACK. IPv6 clients also need vpc_ipv6_cidr_blocks. Defaults to IPV4_ONLY"
+  type        = string
+  default     = null
+  validation {
+    condition     = contains(["IPV4_ONLY", "IPV6_ONLY", "DUAL_STACK"], coalesce(var.mount_target_ip_address_type, "IPV4_ONLY"))
+    error_message = "Possible values for the parameter mount_target_ip_address_type are \"IPV4_ONLY\" | \"IPV6_ONLY\" | \"DUAL_STACK\"."
   }
 }
 

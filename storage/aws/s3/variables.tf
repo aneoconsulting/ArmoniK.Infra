@@ -5,11 +5,27 @@ variable "tags" {
   default     = {}
 }
 
+variable "region" {
+  description = "AWS region where the bucket will be managed. Defaults to the region set in the provider configuration"
+  type        = string
+  default     = null
+}
+
 # S3 parameters
 variable "name" {
   description = "Name of S3 service"
   type        = string
   default     = "armonik-s3"
+}
+
+variable "bucket_namespace" {
+  description = "Naming scope of the bucket: global, or account-regional (the name must then follow the account regional naming rules). Changing it replaces the bucket. Defaults to global"
+  type        = string
+  default     = null
+  validation {
+    condition     = contains(["global", "account-regional"], coalesce(var.bucket_namespace, "global"))
+    error_message = "Valid values for \"bucket_namespace\": \"global\" | \"account-regional\"."
+  }
 }
 
 variable "policy" {
@@ -78,6 +94,16 @@ variable "sse_algorithm" {
   default     = "aws:kms"
 }
 
+variable "blocked_encryption_types" {
+  description = "Server-side encryption types blocked for object uploads: [\"SSE-C\"] blocks customer-provided keys, [\"NONE\"] unblocks everything. Null keeps the S3 default, which blocks SSE-C on new buckets"
+  type        = list(string)
+  default     = null
+  validation {
+    condition     = alltrue([for t in coalesce(var.blocked_encryption_types, []) : contains(["SSE-C", "NONE"], t)])
+    error_message = "Valid values for \"blocked_encryption_types\": \"SSE-C\" | \"NONE\"."
+  }
+}
+
 variable "ownership" {
   description = "Object ownership"
   type        = string
@@ -86,6 +112,12 @@ variable "ownership" {
     condition     = contains(["BucketOwnerPreferred", "ObjectWriter"], var.ownership)
     error_message = "Valid values for \"ownership\": \"BucketOwnerPreferred\" | \"ObjectWriter\"."
   }
+}
+
+variable "public_access_block_skip_destroy" {
+  description = "Keep the public access block when Terraform destroys it, only removing it from the state, so the bucket is never briefly unprotected before its own deletion. Defaults to false"
+  type        = bool
+  default     = null
 }
 
 variable "versioning" {

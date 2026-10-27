@@ -19,6 +19,9 @@ resource "null_resource" "timestamp" {
 module "kms_complete" {
   source = "../../../kms"
 
+  region                   = var.aws_region
+  customer_master_key_spec = "SYMMETRIC_DEFAULT"
+
   deletion_window_in_days = 7
   description             = "Complete key example showing various configurations available"
   enable_key_rotation     = false
@@ -52,7 +55,7 @@ module "kms_complete" {
       principals = [
         {
           type        = "Service"
-          identifiers = ["logs.${data.aws_region.current.name}.amazonaws.com"]
+          identifiers = ["logs.${data.aws_region.current.region}.amazonaws.com"]
         }
       ]
 

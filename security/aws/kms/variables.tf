@@ -1,3 +1,9 @@
+variable "region" {
+  description = "AWS region where the KMS key and its alias will be managed. Defaults to the region set in the provider configuration"
+  type        = string
+  default     = null
+}
+
 variable "create" {
   description = "Determines whether resources will be created (affects all resources)"
   type        = bool
@@ -17,13 +23,9 @@ variable "bypass_policy_lockout_safety_check" {
 }
 
 variable "customer_master_key_spec" {
-  description = "Specifies whether the key contains a symmetric key or an asymmetric key pair and the encryption algorithms or signing algorithms that the key supports. Valid values: `SYMMETRIC_DEFAULT`, `RSA_2048`, `RSA_3072`, `RSA_4096`, `HMAC_256`, `ECC_NIST_P256`, `ECC_NIST_P384`, `ECC_NIST_P521`, or `ECC_SECG_P256K1`. Defaults to `SYMMETRIC_DEFAULT`"
+  description = "Whether the key is symmetric or an asymmetric key pair, and the algorithms it supports, for example `SYMMETRIC_DEFAULT`, `RSA_4096`, `HMAC_512` or `ML_DSA_65`; the provider validates the value. Defaults to `SYMMETRIC_DEFAULT`"
   type        = string
   default     = "SYMMETRIC_DEFAULT"
-  validation {
-    condition     = contains(["SYMMETRIC_DEFAULT", "RSA_2048", "RSA_3072", "HMAC_256", "ECC_NIST_P256", "ECC_NIST_P256", "ECC_NIST_P384", "ECC_NIST_P521", "ECC_SECG_P256K1"], var.customer_master_key_spec)
-    error_message = "This argument must contains one of these values =\"SYMMETRIC_DEFAULT\", \"RSA_2048\",\"RSA_3072\",\"HMAC_256\",\"ECC_NIST_P256\",\"ECC_NIST_P384\",\"ECC_NIST_P521\",\"ECC_SECG_P256K1\"."
-  }
 }
 
 variable "deletion_window_in_days" {
@@ -51,7 +53,7 @@ variable "is_enabled" {
 }
 
 variable "key_usage" {
-  description = "Specifies the intended use of the key. Valid values: `ENCRYPT_DECRYPT` or `SIGN_VERIFY`. Defaults to `ENCRYPT_DECRYPT`"
+  description = "Specifies the intended use of the key: `ENCRYPT_DECRYPT`, `SIGN_VERIFY` (asymmetric and ML_DSA keys) or `GENERATE_VERIFY_MAC` (HMAC keys). Defaults to `ENCRYPT_DECRYPT`"
   type        = string
   default     = null
 }

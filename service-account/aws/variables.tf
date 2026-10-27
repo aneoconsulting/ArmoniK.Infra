@@ -17,8 +17,14 @@ variable "namespace" {
 }
 
 variable "name" {
-  description = "Name of the service account to create"
+  description = "Name of the service account, created by this module unless create_service_account is false"
   type        = string
+}
+
+variable "create_service_account" {
+  description = "Create the Kubernetes service account. Set false when another module owns it: only the IAM role (and its Pod Identity association) is created, and that module annotates its service account with service_account_iam_role_arn for IRSA"
+  type        = bool
+  default     = true
 }
 
 variable "automount_token" {

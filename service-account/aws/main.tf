@@ -63,6 +63,7 @@ resource "aws_iam_role" "armonik" {
 }
 
 resource "kubernetes_service_account" "armonik" {
+  count = var.create_service_account ? 1 : 0
   metadata {
     name      = var.name
     namespace = var.namespace
@@ -74,13 +75,19 @@ resource "kubernetes_service_account" "armonik" {
   automount_service_account_token = var.automount_token
 }
 
+moved {
+  from = kubernetes_service_account.armonik
+  to   = kubernetes_service_account.armonik[0]
+}
+
 resource "aws_eks_pod_identity_association" "armonik" {
   count           = var.pod_identity ? 1 : 0
   cluster_name    = var.cluster_name
   namespace       = var.namespace
-  service_account = kubernetes_service_account.armonik.metadata[0].name
+  service_account = var.name
   role_arn        = aws_iam_role.armonik.arn
   tags            = local.tags
+  depends_on      = [kubernetes_service_account.armonik]
   lifecycle {
     precondition {
       condition     = var.cluster_name != null

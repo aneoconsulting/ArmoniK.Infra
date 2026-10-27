@@ -3,8 +3,9 @@
 resource "kubernetes_service_account" "fluent_bit" {
   count = (local.fluent_bit_is_daemonset ? 1 : 0)
   metadata {
-    name      = "fluent-bit"
-    namespace = var.namespace
+    name        = "fluent-bit"
+    namespace   = var.namespace
+    annotations = var.service_account_annotations
   }
 }
 

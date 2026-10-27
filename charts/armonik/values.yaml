@@ -110,9 +110,7 @@ compute-plane:
 conf:
   log:
     minimumLevel: Information
-  # How often ESO re-reads the sources of every conf ExternalSecret (env and mount layers alike).
-  # The charts fall back to 1h0m0s when this key is removed; 0 syncs once and never refreshes.
-  # Raise it behind a metered store (Secret Manager bills per access).
+  # ESO re-sync period of the conf ExternalSecrets: 1h0m0s if removed, 0 syncs only once.
   refreshInterval: 1m0s
   # CreatedOnce, Periodic (the ESO default) or OnChange.
   refreshPolicy: Periodic

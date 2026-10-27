@@ -74,8 +74,8 @@ module.exports = async ({ github, context, core }) => {
     return runCache.get(sha);
   }
 
-  // Skipped when the latest run already says the same, so that the sweep does
-  // not pile up identical runs.
+  // Skipped when the latest run already says the same, so that re-evaluations
+  // do not pile up identical runs.
   async function writeRun(sha, conclusion, title, summary, prints) {
     const text = `<!-- approval-fingerprints ${JSON.stringify(prints)} -->`;
     const { run } = await latestRun(sha);

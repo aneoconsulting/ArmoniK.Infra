@@ -30,8 +30,8 @@ data "aws_subnets" "subnets" {
 module "elasticache" {
   source         = "../../../elasticache"
   name           = "test-elasticache"
-  engine         = "redis"
-  engine_version = "6.x"
+  engine         = "valkey"
+  engine_version = "9.1"
   tags = {
     env             = "test"
     app             = "simple"

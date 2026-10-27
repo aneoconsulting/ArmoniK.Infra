@@ -1,12 +1,16 @@
 # Current account
 data "aws_caller_identity" "current" {}
 
-data "aws_ecr_authorization_token" "current" {}
+data "aws_ecr_authorization_token" "current" {
+  region = var.region
+}
 
-data "aws_region" "current" {}
+data "aws_region" "current" {
+  region = var.region
+}
 
 locals {
-  region                      = data.aws_region.current.name
+  region                      = data.aws_region.current.region
   current_account             = data.aws_caller_identity.current.account_id
   only_pull_accounts_root     = formatlist("arn:aws:iam::%s:root", var.only_pull_accounts)
   push_and_pull_accounts_root = formatlist("arn:aws:iam::%s:root", var.push_and_pull_accounts)
@@ -38,8 +42,16 @@ locals {
 # create ECR repositories
 resource "aws_ecr_repository" "ecr" {
   for_each             = var.repositories
+  region               = var.region
   name                 = each.key
   image_tag_mutability = var.mutability
+  dynamic "image_tag_mutability_exclusion_filter" {
+    for_each = var.mutability_exclusion_filters
+    content {
+      filter      = image_tag_mutability_exclusion_filter.value
+      filter_type = "WILDCARD"
+    }
+  }
   dynamic "image_scanning_configuration" {
     for_each = can(coalesce(var.scan_on_push)) ? [1] : []
     content {
@@ -55,6 +67,12 @@ resource "aws_ecr_repository" "ecr" {
   }
   force_delete = var.force_delete
   tags         = local.tags
+  lifecycle {
+    precondition {
+      condition     = contains(["MUTABLE_WITH_EXCLUSION", "IMMUTABLE_WITH_EXCLUSION"], var.mutability) == (length(var.mutability_exclusion_filters) > 0)
+      error_message = "mutability_exclusion_filters must be set exactly when mutability is IMMUTABLE_WITH_EXCLUSION or MUTABLE_WITH_EXCLUSION."
+    }
+  }
 }
 
 # Allows specific accounts to pull images
@@ -108,6 +126,7 @@ data "aws_iam_policy_document" "permissions" {
 # Policy for ECR
 resource "aws_ecr_repository_policy" "policy" {
   for_each   = aws_ecr_repository.ecr
+  region     = var.region
   repository = each.key
   policy     = data.aws_iam_policy_document.permissions.json
 }
@@ -115,6 +134,7 @@ resource "aws_ecr_repository_policy" "policy" {
 # Lifecycle policy
 resource "aws_ecr_lifecycle_policy" "ecr_lifecycle_policy" {
   for_each   = can(coalesce(local.lifecycle_policy)) ? aws_ecr_repository.ecr : {}
+  region     = var.region
   repository = each.key
   policy     = local.lifecycle_policy
 }

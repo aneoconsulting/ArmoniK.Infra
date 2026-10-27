@@ -162,17 +162,19 @@ locals {
 
 # AWS ECR
 module "complete_ecr" {
-  source                 = "../../../ecr"
-  aws_profile            = var.aws_profile
-  kms_key_id             = null
-  repositories           = local.new_repositories
-  mutability             = "IMMUTABLE"
-  scan_on_push           = true
-  force_delete           = true
-  encryption_type        = "AES256"
-  only_pull_accounts     = ["125796369274"]
-  push_and_pull_accounts = ["125796369274"]
-  lifecycle_policy       = local.lifecycle_policy
+  source                       = "../../../ecr"
+  region                       = var.aws_region
+  aws_profile                  = var.aws_profile
+  kms_key_id                   = null
+  repositories                 = local.new_repositories
+  mutability                   = "IMMUTABLE_WITH_EXCLUSION"
+  mutability_exclusion_filters = ["dev-*"]
+  scan_on_push                 = true
+  force_delete                 = true
+  encryption_type              = "AES256"
+  only_pull_accounts           = [data.aws_caller_identity.current.account_id]
+  push_and_pull_accounts       = [data.aws_caller_identity.current.account_id]
+  lifecycle_policy             = local.lifecycle_policy
   tags = {
     env             = "test"
     app             = "complete"

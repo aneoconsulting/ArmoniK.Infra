@@ -53,6 +53,7 @@ Give for each endpoint object to be created the following information (variable 
   block present, tags with matching keys will overwrite those defined at the provider-level.
 * `vpc_endpoint_type`: (Optional) The VPC endpoint type, `Gateway`, `GatewayLoadBalancer`, `Interface`, `Resource`, or
   `ServiceNetwork`. Defaults to `Interface`.
+* `service_type`: (Optional) Alias of `vpc_endpoint_type`, used when `vpc_endpoint_type` is not set.
 
 <!-- BEGIN_TF_DOCS -->
 <!-- END_TF_DOCS -->

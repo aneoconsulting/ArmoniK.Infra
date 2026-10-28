@@ -83,6 +83,23 @@ tests:
             - --silence-ping-logging=true
             - --cookie-name=_armonik
 
+  # armonik.ingress.oauth2Proxy.address: nginx proxies to the address the sidecar listens on.
+  - it: listens on the address nginx proxies to
+    template: deployments/nginx.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[1].args
+          content: --http-address=127.0.0.1:4180
+  - it: proxies every oauth2-proxy route to that address
+    template: armonik-nginx-conf.yaml
+    asserts:
+      - matchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: '(?s)(proxy_pass http://127\.0\.0\.1:4180;.*){3}'
+      - notMatchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: '(?s)(proxy_pass http://127\.0\.0\.1:4180;.*){4}'
+
   - it: keeps the OAuth tokens and refreshes once sessionCookieMinimal is off
     template: deployments/nginx.yaml
     set:

@@ -221,6 +221,69 @@ tests:
     asserts:
       - notFailedTemplate: {}
 
+  # armonik.ingress.durationIsZero: any zero duration spelling, nothing else.
+  - it: accepts every zero spelling of cookieRefresh with a minimal session cookie
+    set:
+      sso:
+        oauth2Proxy:
+          cookieRefresh: 0h0m0.000s
+    asserts:
+      - notFailedTemplate: {}
+
+  - it: accepts an integer zero cookieRefresh
+    set:
+      sso:
+        oauth2Proxy:
+          cookieRefresh: 0
+    asserts:
+      - notFailedTemplate: {}
+
+  - it: counts a fractional refresh as non-zero
+    set:
+      sso:
+        oauth2Proxy:
+          cookieRefresh: 0.5s
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.oauth2Proxy.cookieRefresh must be 0 with sso.oauth2Proxy.sessionCookieMinimal, got "0.5s"'
+
+  - it: counts a refresh with a zero component as non-zero
+    set:
+      sso:
+        oauth2Proxy:
+          cookieRefresh: 0h10ms
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.oauth2Proxy.cookieRefresh must be 0 with sso.oauth2Proxy.sessionCookieMinimal, got "0h10ms"'
+
+  # armonik.ingress.isDuration
+  - it: accepts a compound duration
+    set:
+      sso:
+        oauth2Proxy:
+          cookieExpire: 1h30m
+    asserts:
+      - notFailedTemplate: {}
+
+  - it: refuses a duration without a unit
+    set:
+      sso:
+        oauth2Proxy:
+          cookieExpire: "30"
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.oauth2Proxy.cookieExpire must be a duration such as 8h or 30m, or 0, got "30"'
+
+  - it: refuses an unknown duration unit
+    set:
+      sso:
+        oauth2Proxy:
+          cookieRefresh: 1d
+          sessionCookieMinimal: false
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.oauth2Proxy.cookieRefresh must be a duration such as 8h or 30m, or 0, got "1d"'
+
   - it: accepts a cookie refresh once sessionCookieMinimal is off
     set:
       sso:
@@ -318,14 +381,139 @@ tests:
       - failedTemplate:
           errorPattern: 'sso.networkPolicy.idpEgressCidrs must list the IdP'
 
-  - it: refuses a malformed CIDR
+  - it: refuses the malformed CIDR example.com
     set:
       sso:
         networkPolicy:
-          idpEgressCidrs: [example.com]
+          idpEgressCidrs: [198.51.100.0/24, "example.com"]
     asserts:
       - failedTemplate:
-          errorPattern: 'sso.networkPolicy.idpEgressCidrs: "example.com" is not a CIDR'
+          errorPattern: 'sso.networkPolicy.idpEgressCidrs: "example\.com" is not a CIDR'
+
+  - it: refuses the malformed CIDR 10.0.0.0
+    set:
+      sso:
+        networkPolicy:
+          idpEgressCidrs: [198.51.100.0/24, "10.0.0.0"]
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.networkPolicy.idpEgressCidrs: "10\.0\.0\.0" is not a CIDR'
+
+  - it: refuses the malformed CIDR 256.0.0.0/8
+    set:
+      sso:
+        networkPolicy:
+          idpEgressCidrs: [198.51.100.0/24, "256.0.0.0/8"]
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.networkPolicy.idpEgressCidrs: "256\.0\.0\.0/8" is not a CIDR'
+
+  - it: refuses the malformed CIDR 10.0.0.300/32
+    set:
+      sso:
+        networkPolicy:
+          idpEgressCidrs: [198.51.100.0/24, "10.0.0.300/32"]
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.networkPolicy.idpEgressCidrs: "10\.0\.0\.300/32" is not a CIDR'
+
+  - it: refuses the malformed CIDR 010.0.0.0/8
+    set:
+      sso:
+        networkPolicy:
+          idpEgressCidrs: [198.51.100.0/24, "010.0.0.0/8"]
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.networkPolicy.idpEgressCidrs: "010\.0\.0\.0/8" is not a CIDR'
+
+  - it: refuses the malformed CIDR 10.0.0.0/33
+    set:
+      sso:
+        networkPolicy:
+          idpEgressCidrs: [198.51.100.0/24, "10.0.0.0/33"]
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.networkPolicy.idpEgressCidrs: "10\.0\.0\.0/33" is not a CIDR'
+
+  - it: refuses the malformed CIDR 10.0.0.0/08
+    set:
+      sso:
+        networkPolicy:
+          idpEgressCidrs: [198.51.100.0/24, "10.0.0.0/08"]
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.networkPolicy.idpEgressCidrs: "10\.0\.0\.0/08" is not a CIDR'
+
+  - it: refuses the malformed CIDR 10.0.0/8
+    set:
+      sso:
+        networkPolicy:
+          idpEgressCidrs: [198.51.100.0/24, "10.0.0/8"]
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.networkPolicy.idpEgressCidrs: "10\.0\.0/8" is not a CIDR'
+
+  - it: refuses the malformed CIDR 2001:db8::/129
+    set:
+      sso:
+        networkPolicy:
+          idpEgressCidrs: [198.51.100.0/24, "2001:db8::/129"]
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.networkPolicy.idpEgressCidrs: "2001:db8::/129" is not a CIDR'
+
+  - it: refuses the malformed CIDR 2001:db8:::/32
+    set:
+      sso:
+        networkPolicy:
+          idpEgressCidrs: [198.51.100.0/24, "2001:db8:::/32"]
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.networkPolicy.idpEgressCidrs: "2001:db8:::/32" is not a CIDR'
+
+  - it: refuses the malformed CIDR 2001:db8::g/64
+    set:
+      sso:
+        networkPolicy:
+          idpEgressCidrs: [198.51.100.0/24, "2001:db8::g/64"]
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.networkPolicy.idpEgressCidrs: "2001:db8::g/64" is not a CIDR'
+
+  - it: refuses the malformed CIDR 1:2:3:4:5:6:7:8:9/128
+    set:
+      sso:
+        networkPolicy:
+          idpEgressCidrs: [198.51.100.0/24, "1:2:3:4:5:6:7:8:9/128"]
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.networkPolicy.idpEgressCidrs: "1:2:3:4:5:6:7:8:9/128" is not a CIDR'
+
+  - it: refuses the malformed CIDR 2001:db8::/
+    set:
+      sso:
+        networkPolicy:
+          idpEgressCidrs: [198.51.100.0/24, "2001:db8::/"]
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.networkPolicy.idpEgressCidrs: "2001:db8::/" is not a CIDR'
+
+  - it: accepts IPv4 and IPv6 CIDRs at their bounds
+    set:
+      sso:
+        networkPolicy:
+          idpEgressCidrs:
+            - 0.0.0.0/0
+            - 255.255.255.255/32
+            - 203.0.113.7/32
+            - ::/0
+            - 2001:db8::/32
+            - fe80::1/128
+            - 2001:DB8:0:0:0:0:0:1/64
+            - ::1/128
+            - 2001:db8::/100
+    asserts:
+      - notFailedTemplate: {}
 
   - it: needs ESO for an external store
     set:

@@ -203,6 +203,10 @@ server {
     tcp_nopush on;
     {{- if $ssoWeb }}
 
+    # SSO: on the publicUrl host only, see $sso_redirect
+    if ($sso_redirect) {
+        return 302 {{ $sso.publicUrl }}$request_uri;
+    }
     # SSO: every location requires an oauth2-proxy session unless it turns auth_request off
     auth_request /oauth2/auth;
     error_page 401 = @sso_login;
@@ -294,6 +298,8 @@ under SSO, else from the client certificate with mTLS, else cleared. Takes the s
         {{- if $ssoWeb }}
         auth_request /oauth2/auth;
         error_page 401 = @grpc_unauthenticated;
+        # Authenticated but refused by oauth2-proxy (allowedGroups, emailDomains)
+        error_page 403 = @grpc_permission_denied;
         auth_request_set $auth_cookie $upstream_http_set_cookie;
         auth_request_set $sso_identity {{ $sso.identityVar }};
         auth_request_set $sso_groups $upstream_http_x_auth_request_groups;

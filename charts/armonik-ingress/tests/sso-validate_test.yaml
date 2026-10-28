@@ -14,6 +14,30 @@ tests:
     asserts:
       - notFailedTemplate: {}
 
+  - it: refuses a string enabled, even "false"
+    set:
+      sso:
+        enabled: "false"
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.enabled must be true or false, got the string "false"'
+
+  - it: refuses a numeric enabled
+    set:
+      sso:
+        enabled: 1
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.enabled must be true or false, got the (int|float64) "1"'
+
+  - it: reads a null enabled as off, the other values left unchecked
+    set:
+      sso:
+        enabled: null
+        publicUrl: ""
+    asserts:
+      - notFailedTemplate: {}
+
   - it: requires publicUrl
     set:
       sso:
@@ -310,6 +334,24 @@ tests:
     asserts:
       - failedTemplate:
           errorPattern: 'sso.oauth2Proxy.sessionCookieMinimal must be true or false'
+
+  - it: refuses a non-boolean cookieCsrfPerRequest
+    set:
+      sso:
+        oauth2Proxy:
+          cookieCsrfPerRequest: "true"
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.oauth2Proxy.cookieCsrfPerRequest must be true or false'
+
+  - it: refuses a malformed CSRF cookie lifetime
+    set:
+      sso:
+        oauth2Proxy:
+          cookieCsrfExpire: 15 minutes
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.oauth2Proxy.cookieCsrfExpire must be a duration such as 8h or 30m, or 0, got "15 minutes"'
 
   - it: refuses the health check User-Agent flags (CVE-2026-34457)
     set:

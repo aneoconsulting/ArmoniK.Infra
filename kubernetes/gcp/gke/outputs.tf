@@ -82,7 +82,8 @@ output "identity_namespace" {
 
 output "node_pools_names" {
   description = "List of node pools names"
-  value       = module.gke.node_pools_names
+  # Upstream appends "" after the Linux and the Windows pool names
+  value = compact(module.gke.node_pools_names)
 }
 
 output "node_pools_versions" {

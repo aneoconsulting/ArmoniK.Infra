@@ -105,3 +105,30 @@ variable "flow_log_max_aggregation_interval" {
     error_message = "The valid values for the maximum interval of time during which a flow of packets is captured and aggregated into a flow log: \"INTERVAL_5_SEC\" | \"INTERVAL_30_SEC\" | \"INTERVAL_1_MIN\" | \"INTERVAL_5_MIN\" | \"INTERVAL_10_MIN\" | \"INTERVAL_15_MIN\"."
   }
 }
+
+variable "service_connection_policies" {
+  description = "Service connection policies, keyed by name. Each one lets a Google service of the given class (gcp-memorystore for Memorystore for Valkey for instance) create Private Service Connect endpoints in the listed subnets, which are names of \"subnets\" or of \"gke_subnet\" in a single region. A policy is unique per region and service class"
+  type = map(object({
+    service_class = string
+    subnets       = list(string)
+    limit         = optional(number)
+  }))
+  default  = {}
+  nullable = false
+  validation {
+    condition = alltrue(flatten([
+      for policy in values(var.service_connection_policies) : [
+        for subnet in policy.subnets : contains(keys(var.subnets), subnet) || try(var.gke_subnet.name, null) == subnet
+      ]
+    ]))
+    error_message = "Every subnet of \"service_connection_policies\" must be a name of \"subnets\" or of \"gke_subnet\"."
+  }
+  validation {
+    condition = alltrue([
+      for policy in values(var.service_connection_policies) : length(distinct([
+        for subnet in policy.subnets : try(var.subnets[subnet].region, var.gke_subnet.region, "")
+      ])) == 1
+    ])
+    error_message = "The subnets of a service connection policy must be at least one and all in the same region."
+  }
+}

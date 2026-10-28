@@ -54,7 +54,6 @@ module "complete_bucket" {
     log_bucket        = module.log_bucket.name
     log_object_prefix = "complete-gcs"
   }
-  default_kms_key_name = null
   roles = {
     "roles/storage.objectUser" = ["user:${data.google_client_openid_userinfo.current.email}"]
   }

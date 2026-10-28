@@ -323,14 +323,15 @@ variable "cluster_log_kms_key_id" {
 }
 
 variable "cluster_encryption_config" {
-  description = "ARN of the KMS key encrypting the cluster's secrets; empty to let the EKS module create one. EKS cannot change the key of an existing cluster, so it can only be set at cluster creation"
+  description = "ARN of the KMS key encrypting the cluster's secrets when cluster_create_kms_key is false; ignored otherwise"
   type        = string
 }
 
 variable "cluster_create_kms_key" {
-  description = "Whether the EKS module creates the key encrypting the cluster's secrets instead of using cluster_encryption_config. Null derives it from cluster_encryption_config being empty; set it when that key is only known after apply (created in the same run), or to true to keep the module's key on a cluster created before cluster_encryption_config was honored"
+  description = "Whether the EKS module creates the key encrypting the cluster's secrets; false uses cluster_encryption_config instead. EKS cannot change the key of an existing cluster, so it can only be set to false at cluster creation"
   type        = bool
-  default     = null
+  default     = true
+  nullable    = false
 }
 
 variable "ebs_kms_key_id" {

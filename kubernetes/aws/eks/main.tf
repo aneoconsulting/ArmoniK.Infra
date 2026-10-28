@@ -14,9 +14,8 @@ locals {
   tags                   = merge({ module = "eks-${var.name}" }, var.tags)
   kubeconfig_output_path = coalesce(var.kubeconfig_file, "${path.root}/generated/kubeconfig")
 
-  # Counts cannot depend on a key only known after apply, hence the explicit bools; unset, they follow the key.
-  cluster_create_kms_key = var.cluster_create_kms_key != null ? var.cluster_create_kms_key : !can(coalesce(var.cluster_encryption_config))
-  ebs_kms_key_enabled    = var.ebs_kms_key_enabled != null ? var.ebs_kms_key_enabled : can(coalesce(var.ebs_kms_key_id))
+  # Counts cannot depend on a key only known after apply, hence the explicit bool; unset, it follows the key.
+  ebs_kms_key_enabled = var.ebs_kms_key_enabled != null ? var.ebs_kms_key_enabled : can(coalesce(var.ebs_kms_key_id))
 
   # Node selector
   node_selector_keys   = keys(var.node_selector)
@@ -178,10 +177,9 @@ module "eks" {
 
   additional_security_group_ids = [module.eks.node_security_group_id]
 
-  # The module creates the secret encryption key unless one is given.
-  create_kms_key = local.cluster_create_kms_key
+  create_kms_key = var.cluster_create_kms_key
   encryption_config = {
-    provider_key_arn = local.cluster_create_kms_key ? null : var.cluster_encryption_config
+    provider_key_arn = var.cluster_create_kms_key ? null : var.cluster_encryption_config
     resources        = ["secrets"]
   }
 

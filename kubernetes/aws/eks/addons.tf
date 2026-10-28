@@ -108,13 +108,21 @@ resource "null_resource" "inputs_guard" {
       error_message = "vpc_cni_custom_networking requires vpc_pods_subnet_ids."
     }
     precondition {
-      condition     = local.cluster_create_kms_key || can(coalesce(var.cluster_encryption_config))
+      condition     = var.cluster_create_kms_key || can(coalesce(var.cluster_encryption_config))
       error_message = "cluster_create_kms_key = false requires cluster_encryption_config."
     }
     precondition {
       condition     = !local.ebs_kms_key_enabled || can(coalesce(var.ebs_kms_key_id))
       error_message = "ebs_kms_key_enabled = true requires ebs_kms_key_id."
     }
+  }
+}
+
+# A warning only: clusters created with the module's key must keep it, whatever cluster_encryption_config says.
+check "cluster_encryption_config_ignored" {
+  assert {
+    condition     = !var.cluster_create_kms_key || !can(coalesce(var.cluster_encryption_config))
+    error_message = "cluster_encryption_config is ignored while cluster_create_kms_key is true: the EKS module encrypts the cluster's secrets with its own key."
   }
 }
 

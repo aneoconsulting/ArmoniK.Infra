@@ -52,7 +52,7 @@ module "eks" {
   cluster_autoscaler_tag                                   = "v1.35.2"
   cluster_autoscaler_version                               = "9.59.0"
   cluster_encryption_config                                = ""
-  cluster_create_kms_key                                   = null
+  cluster_create_kms_key                                   = true
   cluster_endpoint_private_access                          = false
   cluster_endpoint_public_access                           = true
   cluster_endpoint_public_access_cidrs                     = ["0.0.0.0/0"]

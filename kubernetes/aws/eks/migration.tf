@@ -4,9 +4,8 @@
 # Upgrading a cluster that ran the EBS/EFS CSI drivers and the ENIConfigs as Helm releases (EKS module v20), where
 # <eks> is the address of this module, such as module.eks; helm takes HELM_DRIVER=configmap when its provider sets
 # helm_driver = "configmap", as the examples do:
-#   1. Such a cluster encrypts its secrets with the key the EKS module created, whatever cluster_encryption_config
-#      says, and EKS cannot change it: set cluster_create_kms_key = true to keep it. Otherwise the plan tries to swap
-#      the key and fails on a dependency cycle.
+#   1. Keep cluster_create_kms_key = true: such a cluster encrypts its secrets with the key the EKS module created,
+#      whatever cluster_encryption_config says, and EKS cannot change it.
 #   2. The node IMDS hop limit drops to 1, so once the nodes roll, pods no longer get the node role: first give every
 #      workload relying on it its own role, fluent-bit included (service-account/aws with create_service_account =
 #      false, and the service_account_annotations of the fluent-bit module).

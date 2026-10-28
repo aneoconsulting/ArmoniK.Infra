@@ -32,3 +32,20 @@
   ) }}
 
 {{- end }}
+
+
+{{- if and
+      $networkPolicyEnabled
+      (list .Values "networkPolicy" "podDeletionCost" "enabled"
+        | include "armonik.utils.index")
+      (list .Values "podDeletionCost" "enabled"
+        | include "armonik.utils.index")
+}}
+
+{{- include "armonik.netpol.render" (dict
+      "context" .
+      "component" "pod-deletion-cost"
+      "config" (include "armonik.netpol.podDeletionCost" . | fromYaml)
+  ) }}
+
+{{- end }}

@@ -1,0 +1,16 @@
+{{- $networkPolicyEnabled := list .Values "networkPolicy" "enabled" | include "armonik.utils.index" -}}
+
+{{/*
+  In-cluster PostgreSQL (CloudNativePG Cluster) NetworkPolicy. Built only once enabled: it fails
+  without the operator's namespace.
+*/}}
+{{- if $networkPolicyEnabled }}
+{{- $postgresqlServer := include "armonik.netpol.postgresqlServer" . | fromYaml -}}
+{{- if $postgresqlServer }}
+{{- include "armonik.netpol.render" (dict
+      "context" .
+      "component" "postgresql-server"
+      "config" $postgresqlServer
+  ) }}
+{{- end }}
+{{- end }}

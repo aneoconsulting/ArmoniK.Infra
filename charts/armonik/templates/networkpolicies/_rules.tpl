@@ -43,6 +43,44 @@
 
 
 {{/*
+  CloudNativePG operator's pod selector. armonik-operators pins nameOverride: cloudnative-pg.
+*/}}
+{{- define "armonik.netpol.podSelector.postgresqlOperator" -}}
+  {{- list . "postgresqlOperatorPodSelector" "cloudnative-pg" | include "armonik.netpol.podSelector.override" -}}
+{{- end -}}
+
+
+{{/*
+  Every pod of the in-cluster CloudNativePG Cluster: instances and the operator's initdb/join Jobs.
+  Labelled by the operator, with the Cluster's name. Context: the postgresql subchart.
+*/}}
+{{- define "armonik.netpol.podSelector.postgresqlCluster" -}}
+matchLabels:
+  cnpg.io/cluster: {{ include "cluster.fullname" . | quote }}
+{{- end -}}
+
+
+{{/*
+  The Cluster's instance pods only, the ones serving PostgreSQL. Context: the postgresql subchart.
+*/}}
+{{- define "armonik.netpol.podSelector.postgresql" -}}
+matchLabels:
+  cnpg.io/cluster: {{ include "cluster.fullname" . | quote }}
+  cnpg.io/podRole: instance
+{{- end -}}
+
+
+{{/*
+  namespaceSelector of the Cluster's namespace, which follows its own namespaceOverride.
+  Context: the postgresql subchart.
+*/}}
+{{- define "armonik.netpol.namespaceSelector.postgresql" -}}
+matchLabels:
+  kubernetes.io/metadata.name: {{ include "armonik.postgresql.namespace" . | quote }}
+{{- end -}}
+
+
+{{/*
   Generic ingress "from" rule: source namespace + given podSelector, restricted to the given port.
   Args (list): [root, podSelector, port]
 */}}
@@ -142,6 +180,19 @@ ports:
 */}}
 {{- define "armonik.netpol.rule.mongodb" -}}
   {{- list . "mongodb" (include "armonik.netpol.podSelector.mongodb" .) "armonik.mongodb.port" | include "armonik.netpol.rule.dependencyTo" -}}
+{{- end -}}
+
+
+{{/*
+  Egress to the in-cluster PostgreSQL instances, whichever is primary.
+*/}}
+{{- define "armonik.netpol.rule.postgresql" -}}
+  {{- with .Subcharts.dependencies.Subcharts.postgresql -}}
+    {{- $ns := include "armonik.netpol.namespaceSelector.postgresql" . -}}
+    {{- $podSelector := include "armonik.netpol.podSelector.postgresql" . -}}
+    {{- $port := include "armonik.postgresql.port" . | trim | int -}}
+    {{- list $ns $podSelector $port "to" | include "armonik.netpol.rule.peerOnPort" -}}
+  {{- end -}}
 {{- end -}}
 
 
@@ -353,11 +404,13 @@ ports:
 
 
 {{/*
-  Egress to mongo, rabbitmq, activemq, redis + DNS. Shared by control-plane and compute-plane.
+  Egress to mongo or postgresql, rabbitmq, activemq, redis + DNS. Shared by control-plane and
+  compute-plane.
 */}}
 {{- define "armonik.netpol.dependencyRules" -}}
   {{- $rules := dict
     "armonik.netpol.rule.mongodb" .
+    "armonik.netpol.rule.postgresql" .
     "armonik.netpol.rule.rabbitmq" .
     "armonik.netpol.rule.activemq" .
     "armonik.netpol.rule.redis" .
@@ -436,7 +489,7 @@ egress:
 
 
 {{/*
-  Metrics-exporter: ingress from KEDA, egress to MongoDB + DNS.
+  Metrics-exporter: ingress from KEDA, egress to the table storage (MongoDB or PostgreSQL) + DNS.
 */}}
 {{- define "armonik.netpol.controlPlaneMetricsExporter" -}}
 podSelector:
@@ -447,6 +500,7 @@ ingress:
 egress:
   {{- dict
         "armonik.netpol.rule.mongodb" .
+        "armonik.netpol.rule.postgresql" .
         "armonik.netpol.dnsRule" dict
     | include "armonik.netpol.mergeRules"
     | nindent 2
@@ -587,6 +641,108 @@ egress:
   {{- dict
         "armonik.netpol.rule.mongodbExporterTo" $root
         "armonik.netpol.dnsRule" dict
+    | include "armonik.netpol.mergeRules"
+    | nindent 2
+  }}
+{{- end -}}
+{{- end -}}
+
+
+{{/*
+  PostgreSQL ingress from the CloudNativePG operator, on the instance manager's status port (8000,
+  fixed by CloudNativePG): health, switchover and fencing calls. Found through armonik.operators
+  rather than .Subcharts, the operator being another release's in a layered install. Fails without
+  a namespace: an empty rule would lock the operator out of the instances with no error.
+*/}}
+{{- define "armonik.netpol.rule.postgresqlOperatorFrom" -}}
+{{- $ops := include "armonik.operators" . | fromYaml -}}
+{{- $ns := $ops.postgresqlOperator.namespace | required "networkPolicy.enabled with dependencies.postgresql.enabled needs global.armonik.operators.postgresqlOperator.namespace: the CloudNativePG operator must reach the instances on their status port (8000)." -}}
+from:
+  - namespaceSelector:
+      matchLabels:
+        kubernetes.io/metadata.name: {{ $ns | quote }}
+    podSelector:
+      {{- include "armonik.netpol.podSelector.postgresqlOperator" . | nindent 6 }}
+ports:
+  - protocol: TCP
+    port: 8000
+{{- end -}}
+
+
+{{/*
+  PostgreSQL ingress from Prometheus, on the instances' metrics port (9187, fixed by CloudNativePG),
+  which the Cluster's PodMonitor scrapes.
+*/}}
+{{- define "armonik.netpol.rule.postgresqlPrometheusFrom" -}}
+  {{- list . 9187 nil | include "armonik.netpol.rule.prometheusIngress" -}}
+{{- end -}}
+
+
+{{/*
+  PostgreSQL <-> PostgreSQL rule, on the PostgreSQL port: streaming replication between instances,
+  and pg_basebackup from a join Job, once cluster.instances > 1.
+  Args (list): [root, direction ("from" or "to")]
+*/}}
+{{- define "armonik.netpol.rule.postgresqlPeers" -}}
+{{- $root := index . 0 -}}
+{{- $direction := index . 1 -}}
+{{- with $root.Subcharts.dependencies.Subcharts.postgresql -}}
+{{- $ns := include "armonik.netpol.namespaceSelector.postgresql" . -}}
+{{- $podSelector := include "armonik.netpol.podSelector.postgresqlCluster" . -}}
+{{- $port := include "armonik.postgresql.port" . | trim | int -}}
+{{- list $ns $podSelector $port $direction | include "armonik.netpol.rule.peerOnPort" -}}
+{{- end -}}
+{{- end -}}
+
+
+{{/*
+  PostgreSQL ingress: from another pod of the Cluster.
+*/}}
+{{- define "armonik.netpol.rule.postgresqlPeersFrom" -}}
+  {{- list . "from" | include "armonik.netpol.rule.postgresqlPeers" -}}
+{{- end -}}
+
+
+{{/*
+  PostgreSQL egress: to another pod of the Cluster.
+*/}}
+{{- define "armonik.netpol.rule.postgresqlPeersTo" -}}
+  {{- list . "to" | include "armonik.netpol.rule.postgresqlPeers" -}}
+{{- end -}}
+
+
+{{/*
+  In-cluster PostgreSQL (CloudNativePG Cluster): ingress from control-plane/init, metrics-exporter,
+  compute-plane, the other Cluster pods, the operator and Prometheus; egress to the other Cluster
+  pods, DNS and the Kubernetes API, which the instance manager reports to. Kubelet probes on the
+  status port come from the node, which the usual CNIs admit without a rule. The operator itself
+  gets no policy: see charts/network-policies.md.
+*/}}
+{{- define "armonik.netpol.postgresqlServer" -}}
+{{- $root := . -}}
+{{- with $root.Subcharts.dependencies.Subcharts.postgresql -}}
+{{- $port := include "armonik.postgresql.port" . | trim | int -}}
+namespace: {{ include "armonik.postgresql.namespace" . | quote }}
+podSelector:
+  {{- include "armonik.netpol.podSelector.postgresqlCluster" . | nindent 2 }}
+
+ingress:
+  {{- dict
+        "armonik.netpol.rule.controlPlaneFrom" (list $root $port)
+        "armonik.netpol.rule.metricsExporterFrom" (list $root $port)
+        "armonik.netpol.rule.computePlaneFrom" (list $root $port)
+        "armonik.netpol.rule.postgresqlPeersFrom" $root
+        "armonik.netpol.rule.postgresqlOperatorFrom" $root
+        "armonik.netpol.rule.postgresqlPrometheusFrom" $root
+    | include "armonik.netpol.mergeRules"
+    | nindent 2
+  }}
+
+egress:
+  {{- dict
+        "armonik.netpol.rule.postgresqlPeersTo" $root
+        "armonik.netpol.dnsRule" dict
+        "armonik.netpol.kubeApiRule" dict
     | include "armonik.netpol.mergeRules"
     | nindent 2
   }}

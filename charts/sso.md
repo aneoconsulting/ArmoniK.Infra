@@ -231,7 +231,7 @@ ingress:
 oauth2-proxy runs in the nginx pod, so the nginx pod needs TCP 443 to the IdP. Once a
 NetworkPolicy selects that pod (`ingress.networkPolicy.enabled`, or the umbrella's
 `networkPolicy.enabled`), list the IdP's addresses in `sso.networkPolicy.idpEgressCidrs`; the render
-fails without them. The umbrella's nginx egress policy then also allows DNS.
+fails without them. The umbrella's nginx egress policy also allows DNS, as it does without SSO.
 
 ## Limits
 

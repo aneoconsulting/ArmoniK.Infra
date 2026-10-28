@@ -16,7 +16,8 @@ set:
         clientId: armonik
         existingSecret: armonik-oauth2-proxy
 tests:
-  - it: keeps the nginx egress to the control plane, Grafana and Seq alone without sso
+  # This policy can be the only one selecting nginx: without DNS its resolver resolves nothing.
+  - it: keeps the nginx egress to DNS, the control plane, Grafana and Seq alone without sso
     set:
       ingress:
         sso:
@@ -24,7 +25,22 @@ tests:
     asserts:
       - lengthEqual:
           path: spec.egress
-          count: 3
+          count: 4
+      - contains:
+          path: spec.egress
+          content:
+            to:
+              - namespaceSelector:
+                  matchLabels:
+                    kubernetes.io/metadata.name: kube-system
+                podSelector:
+                  matchLabels:
+                    k8s-app: kube-dns
+            ports:
+              - protocol: UDP
+                port: 53
+              - protocol: TCP
+                port: 53
       - notContains:
           path: spec.egress
           content:
@@ -35,7 +51,7 @@ tests:
 
   # This policy can be the only one selecting nginx (ingress.networkPolicy off): without DNS and
   # the IdP, oauth2-proxy could not log anyone in.
-  - it: adds DNS and the IdP to the nginx egress with sso
+  - it: adds the IdP to the nginx egress with sso, DNS listed once
     set:
       ingress:
         sso:

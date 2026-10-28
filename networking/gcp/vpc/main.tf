@@ -8,6 +8,14 @@ locals {
     [for key, value in local.nat_subnets : value.region],
     local.gke_subnet_nat ? [var.gke_subnet.region] : []
   ))
+  subnet_ids = merge(
+    { for key, subnet in google_compute_subnetwork.subnets : key => subnet.id },
+    { for subnet in google_compute_subnetwork.gke_subnet : subnet.name => subnet.id }
+  )
+  subnet_regions = merge(
+    { for key, value in var.subnets : key => value.region },
+    var.gke_subnet != null ? { (var.gke_subnet.name) = var.gke_subnet.region } : {}
+  )
 }
 
 # VPC
@@ -78,15 +86,15 @@ resource "google_compute_router" "routers" {
 
 # NAT gateway
 resource "google_compute_router_nat" "nat_gateway" {
-  for_each                           = google_compute_router.routers
-  name                               = "${google_compute_network.vpc.name}-nat-${each.value.region}"
+  for_each                           = local.nat_regions
+  name                               = "${google_compute_network.vpc.name}-nat-${each.value}"
   nat_ip_allocate_option             = "AUTO_ONLY"
   source_subnetwork_ip_ranges_to_nat = "LIST_OF_SUBNETWORKS"
-  router                             = each.value.name
-  region                             = each.value.region
+  router                             = google_compute_router.routers[each.key].name
+  region                             = each.value
   project                            = data.google_client_config.current.project
   dynamic "subnetwork" {
-    for_each = [for key, value in local.nat_subnets : key if value.region == each.value.region]
+    for_each = [for key, value in local.nat_subnets : key if value.region == each.value]
     content {
       name                    = google_compute_subnetwork.subnets[subnetwork.value].id
       source_ip_ranges_to_nat = ["PRIMARY_IP_RANGE"]
@@ -94,7 +102,7 @@ resource "google_compute_router_nat" "nat_gateway" {
   }
   # Secondary ranges included: Pod traffic keeps its Pod IP when default SNAT is disabled on the cluster
   dynamic "subnetwork" {
-    for_each = [for subnet in google_compute_subnetwork.gke_subnet : subnet.id if local.gke_subnet_nat && subnet.region == each.value.region]
+    for_each = [for subnet in google_compute_subnetwork.gke_subnet : subnet.id if local.gke_subnet_nat && subnet.region == each.value]
     content {
       name                    = subnetwork.value
       source_ip_ranges_to_nat = ["ALL_IP_RANGES"]
@@ -103,5 +111,20 @@ resource "google_compute_router_nat" "nat_gateway" {
   log_config {
     enable = true
     filter = "ALL"
+  }
+}
+
+# Private Service Connect: Google services of a class create their endpoints in these subnets
+resource "google_network_connectivity_service_connection_policy" "policies" {
+  for_each      = var.service_connection_policies
+  name          = "${google_compute_network.vpc.name}-${each.key}"
+  location      = local.subnet_regions[each.value.subnets[0]]
+  service_class = each.value.service_class
+  network       = google_compute_network.vpc.id
+  description   = "Private Service Connect endpoints of ${each.value.service_class} in VPC ${google_compute_network.vpc.name}"
+  project       = data.google_client_config.current.project
+  psc_config {
+    subnetworks = [for subnet in each.value.subnets : local.subnet_ids[subnet]]
+    limit       = each.value.limit != null ? tostring(each.value.limit) : null
   }
 }

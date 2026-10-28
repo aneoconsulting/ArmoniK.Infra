@@ -46,7 +46,7 @@ variable "engine" {
 }
 
 variable "engine_version" {
-  description = "Version number of the cache engine to be used for the cache clusters in this replication group, such as 9.1 for Valkey or 7.1 for Redis OSS. Its major version selects the parameter group family"
+  description = "Version number of the cache engine to be used for the cache clusters in this replication group, such as 9.1 for Valkey or 7.1 for Redis OSS. Its major version selects the parameter group family; changing the engine or the major version replaces the parameter group, which requires apply_immediately = true, the old group otherwise staying in use until the next maintenance window"
   type        = string
   default     = "9.1"
 }

@@ -69,9 +69,11 @@ resource "aws_elasticache_replication_group" "elasticache" {
   ]
 }
 
+# The family cannot change in place, so each family gets its own group, created before the old one is deleted; the
+# redis6.x group keeps the <name>-config name, so deployments staying on Redis 6 are not replaced.
 resource "aws_elasticache_parameter_group" "elasticache" {
   region = var.region
-  name   = "${var.name}-config"
+  name   = local.parameter_group_family == "redis6.x" ? "${var.name}-config" : "${var.name}-config-${replace(local.parameter_group_family, ".", "-")}"
   family = local.parameter_group_family
   parameter {
     name  = "maxmemory-policy"
@@ -86,6 +88,7 @@ resource "aws_elasticache_parameter_group" "elasticache" {
   }
   tags = local.tags
   lifecycle {
+    create_before_destroy = true
     precondition {
       condition     = var.engine != "valkey" || try(local.engine_major >= 7, false)
       error_message = "engine = valkey requires an engine_version of 7.2 or later, such as 9.1."

@@ -62,7 +62,11 @@ In addition, both `fix` and `feat` types of the header have the following effect
   .
 
 For more details about conventional commit rules, please refer
-to [Conventional commits](https://www.conventionalcommits.org/en/v1.0.0/). 
-  
+to [Conventional commits](https://www.conventionalcommits.org/en/v1.0.0/).
 
+## Reviews
 
+Approvals are dismissed only when the pull request diff changed since they were
+given, so restacking or rebasing an unchanged pull request keeps them. The
+`approval-freshness` check fails while a pull request waits for a rebase after
+its base moved. See [Approval freshness](.github/approval-freshness.md).

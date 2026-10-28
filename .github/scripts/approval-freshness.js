@@ -1,6 +1,7 @@
 // Keeps approvals that still match the pull request diff and dismisses the
 // others, replacing the ruleset's "dismiss stale approvals" setting, which also
-// dismisses on a merge-base move and so on every rebase of a stack.
+// dismisses on a merge-base move and so on every rebase of a stack. See
+// .github/approval-freshness.md.
 //
 // The diff fingerprint is `git patch-id --verbatim` of the diff between the head
 // and its merge base with the live tip of the base branch (the API's base.sha is

@@ -5,7 +5,7 @@ name: Approval freshness
 # Replaces the ruleset's "Dismiss stale pull request approvals when new commits
 # are pushed", which must be off, and is paired with the required status checks
 # `approval-freshness` and `approval-freshness-relay` (GitHub Actions source).
-# See .github/scripts/approval-freshness.js.
+# See .github/approval-freshness.md.
 #
 # Every pull request event reaches this workflow through the relay, so it always
 # runs from the default branch: a pull request can stop it from running, which

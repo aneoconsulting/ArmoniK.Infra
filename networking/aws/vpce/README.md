@@ -55,6 +55,14 @@ Give for each endpoint object to be created the following information (variable 
   `ServiceNetwork`. Defaults to `Interface`.
 * `service_type`: (Optional) Alias of `vpc_endpoint_type`, used when `vpc_endpoint_type` is not set.
 
+## Upgrading
+
+Earlier versions ignored `service_type`, so an endpoint declaring only `service_type` was created as an `Interface`
+endpoint without subnets, security groups nor private DNS. Now that it is honored, the first apply replaces such
+endpoints whose `service_type` is not `Interface` (a `Gateway` S3 endpoint, for instance, briefly interrupting S3 access
+from the subnets it serves), and updates the `Interface` ones in place with their subnets, security groups and private
+DNS setting.
+
 <!-- BEGIN_TF_DOCS -->
 <!-- END_TF_DOCS -->
 

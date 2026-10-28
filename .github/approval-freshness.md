@@ -64,6 +64,10 @@ flowchart LR
   dismissal is irreversible, and the head still holds what was approved.
   Rebasing re-evaluates the approval: fresh if the diff matches again, dismissed
   otherwise.
+- **Moving head.** The pull request is read again after its reviews: if its
+  head or base moved meanwhile, the evaluation starts over on the pull request
+  as it is now, at most 3 times, so an approval of a newer head is never
+  compared with an older one and dismissed.
 - **Stacks.** Moving a base branch sends no event to the pull requests based on
   it, so evaluating a pull request also evaluates the pull requests stacked on
   it.
@@ -79,7 +83,7 @@ blocks rather than dismisses.
 |---|---|
 | The base moved: rebase to re-evaluate N approval(s) | Rebase or restack the pull request. |
 | N stale approval(s) could not be dismissed | Check that GitHub Actions may dismiss reviews, then re-run the evaluator. |
-| Approvals could not be evaluated | Read the evaluator's log, then re-run it. |
+| Approvals could not be evaluated | Read the evaluator's log, then re-run it. A pull request that kept moving during the evaluation is evaluated again by its next event. |
 
 A head without any `approval-freshness` check means the relay did not run: the
 pull request has a merge conflict, the commit was pushed with `GITHUB_TOKEN`, or
@@ -127,6 +131,7 @@ a fork run awaits approval. The next pull request event, or a manual run of the
 - **Non-head records.** An approval first seen on a non-head commit records its
   fingerprint as a failing check run on that commit, so a forced push back to
   it stays blocked until evaluated.
-- **Cost.** Evaluating a pull request takes 2 REST API calls, plus 1 per
+- **Cost.** Evaluating a pull request takes 3 REST API calls, plus 1 per
   approved commit other than the head, plus the writes and dismissals that
-  something changed, against the `GITHUB_TOKEN` limit of 1,000 per hour.
+  something changed, against the `GITHUB_TOKEN` limit of 1,000 per hour. A
+  head that moved during the evaluation repeats it.

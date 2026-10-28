@@ -42,6 +42,7 @@ const { execFileSync } = require('child_process');
 const CHECK = 'approval-freshness';
 const MARKER = /<!-- approval-freshness (\{.*?\}) -->/;
 const BASE_REF = 'refs/approval-freshness/base';
+const ATTEMPTS = 3;
 
 function git(...args) {
   return execFileSync('git', args, { encoding: 'utf8' }).trim();
@@ -154,7 +155,7 @@ module.exports = async ({ github, context, core }) => {
 
   // False when the head is left failing: a stale approval could not be
   // dismissed, or only the base moved.
-  async function evaluate(pr) {
+  async function evaluate(pr, attempt = 1) {
     const number = pr.number;
     const head = pr.head.sha;
     git('fetch', '--quiet', '--no-tags', 'origin', `+refs/heads/${pr.base.ref}:${BASE_REF}`, `refs/pull/${number}/head`);
@@ -167,6 +168,14 @@ module.exports = async ({ github, context, core }) => {
     const reviews = await github.paginate(github.rest.pulls.listReviews, {
       owner, repo, pull_number: number, per_page: 100,
     });
+    // An approval of a newer head would be compared with this one and
+    // dismissed: start over on the pull request as it is now if it moved.
+    const { data: latest } = await github.rest.pulls.get({ owner, repo, pull_number: number });
+    if (latest.state !== 'open') return true;
+    if (latest.head.sha !== head || latest.base.ref !== pr.base.ref) {
+      if (attempt >= ATTEMPTS) throw new Error(`the pull request moved during ${ATTEMPTS} evaluations`);
+      return evaluate(latest, attempt + 1);
+    }
     const approvals = reviews.filter((review) => review.state === 'APPROVED');
 
     // Per commit, the record extended with the fingerprints first seen now.

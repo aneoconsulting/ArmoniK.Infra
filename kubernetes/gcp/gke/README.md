@@ -2,6 +2,7 @@
 
 Standard GKE cluster, built on the `private-cluster` module of
 [terraform-google-modules/kubernetes-engine](https://registry.terraform.io/modules/terraform-google-modules/kubernetes-engine/google/latest).
+For an Autopilot cluster, use the [gke-autopilot module](../gke-autopilot).
 
 This module creates:
 

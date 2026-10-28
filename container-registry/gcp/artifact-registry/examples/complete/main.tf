@@ -8,7 +8,6 @@ module "complete_artifact_registry" {
   source      = "../../../artifact-registry"
   name        = "complete-test"
   description = "A complete artifact registry"
-  kms_key_id  = null
   remote_repositories = {
     dockerhub = { public_repository = "DOCKER_HUB", priority = 20, description = "Docker Hub" }
     quay      = { uri = "https://quay.io", priority = 10 }

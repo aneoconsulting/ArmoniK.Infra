@@ -20,10 +20,12 @@ variable "labels" {
   nullable    = false
 }
 
-variable "kms_key_id" {
-  description = "KMS key name to encrypt the remote and standard repositories. Has the form: projects/{{my-project}}/locations/{{my-region}}/keyRings/{{my-kr}}/cryptoKeys/{{my-key}}"
-  type        = string
-  default     = null
+variable "kms_key" {
+  description = "Cloud KMS key, in the provider region, that encrypts the remote and standard repositories. An object, so that the key can be created in the same apply: its ID is unknown at plan time, the object is not."
+  type = object({
+    id = string
+  })
+  default = null
 }
 
 variable "remote_repositories" {

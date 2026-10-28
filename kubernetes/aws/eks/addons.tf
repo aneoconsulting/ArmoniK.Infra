@@ -17,12 +17,12 @@ locals {
     }
   }
 
-  # Drops null settings so the add-on keeps its own defaults for them.
+  # Drops null settings, nested resources fields included, so the add-on keeps its own defaults for them.
   ebs_csi_controller = { for k, v in {
     logLevel     = 2
     nodeSelector = var.node_selector
     tolerations  = local.tolerations.tolerations
-    resources    = var.ebs_csi.controller_resources
+    resources    = var.ebs_csi.controller_resources == null ? null : { for k, v in var.ebs_csi.controller_resources : k => v if v != null }
   } : k => v if v != null }
 
   efs_csi_controller = { for k, v in {
@@ -30,7 +30,7 @@ locals {
     deleteAccessPointRootDir = false
     nodeSelector             = var.node_selector
     tolerations              = local.tolerations.tolerations
-    resources                = var.efs_csi.controller_resources
+    resources                = var.efs_csi.controller_resources == null ? null : { for k, v in var.efs_csi.controller_resources : k => v if v != null }
   } : k => v if v != null }
 
   # One ENIConfig per pod subnet, named after its availability zone (ENI_CONFIG_LABEL_DEF).
@@ -99,12 +99,21 @@ locals {
   })
 }
 
-# Custom networking without ENIConfigs leaves pods without IPs. Cross-variable validation needs Terraform 1.9.
-resource "null_resource" "vpc_cni_custom_networking_guard" {
+# Cross-variable checks, cross-variable validation needing Terraform 1.9.
+resource "null_resource" "inputs_guard" {
   lifecycle {
+    # Custom networking without ENIConfigs leaves pods without IPs.
     precondition {
       condition     = !var.vpc_cni_custom_networking || length(var.vpc_pods_subnet_ids) > 0
       error_message = "vpc_cni_custom_networking requires vpc_pods_subnet_ids."
+    }
+    precondition {
+      condition     = local.cluster_create_kms_key || can(coalesce(var.cluster_encryption_config))
+      error_message = "cluster_create_kms_key = false requires cluster_encryption_config."
+    }
+    precondition {
+      condition     = !local.ebs_kms_key_enabled || can(coalesce(var.ebs_kms_key_id))
+      error_message = "ebs_kms_key_enabled = true requires ebs_kms_key_id."
     }
   }
 }
@@ -170,7 +179,7 @@ resource "aws_iam_role_policy_attachment" "ebs_csi_driver_managed" {
 
 # Lets the driver create and attach volumes encrypted with ebs_kms_key_id (key id, alias or ARN).
 data "aws_kms_key" "ebs" {
-  count  = can(coalesce(var.ebs_kms_key_id)) ? 1 : 0
+  count  = local.ebs_kms_key_enabled ? 1 : 0
   region = var.region
   key_id = var.ebs_kms_key_id
 }

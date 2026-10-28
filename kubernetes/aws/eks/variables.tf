@@ -327,9 +327,21 @@ variable "cluster_encryption_config" {
   type        = string
 }
 
+variable "cluster_create_kms_key" {
+  description = "Whether the EKS module creates the key encrypting the cluster's secrets instead of using cluster_encryption_config. Null derives it from cluster_encryption_config being empty; set it when that key is only known after apply (created in the same run), or to true to keep the module's key on a cluster created before cluster_encryption_config was honored"
+  type        = bool
+  default     = null
+}
+
 variable "ebs_kms_key_id" {
   description = "KMS key (id, alias or ARN) the EBS CSI driver is allowed to encrypt volumes with; empty for none. A StorageClass must still name it in its kmsKeyId parameter"
   type        = string
+}
+
+variable "ebs_kms_key_enabled" {
+  description = "Whether the EBS CSI driver gets access to ebs_kms_key_id. Null derives it from ebs_kms_key_id being set; set it when that key is only known after apply (created in the same run)"
+  type        = bool
+  default     = null
 }
 
 # List of self managed node groups

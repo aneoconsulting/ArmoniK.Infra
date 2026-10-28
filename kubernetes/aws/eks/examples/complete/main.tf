@@ -52,6 +52,7 @@ module "eks" {
   cluster_autoscaler_tag                                   = "v1.35.2"
   cluster_autoscaler_version                               = "9.59.0"
   cluster_encryption_config                                = ""
+  cluster_create_kms_key                                   = null
   cluster_endpoint_private_access                          = false
   cluster_endpoint_public_access                           = true
   cluster_endpoint_public_access_cidrs                     = ["0.0.0.0/0"]
@@ -62,6 +63,7 @@ module "eks" {
   cluster_kms_key_rotation_period_in_days                  = 365
   cluster_control_plane_egress_mode                        = "AWS_MANAGED"
   ebs_kms_key_id                                           = ""
+  ebs_kms_key_enabled                                      = null
   instance_refresh_image                                   = "public.ecr.aws/aws-ec2/aws-node-termination-handler"
   instance_refresh_namespace                               = "kube-system"
   instance_refresh_repository                              = "oci://public.ecr.aws/aws-ec2/helm"

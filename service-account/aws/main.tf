@@ -7,8 +7,9 @@ locals {
   oidc_url = trimprefix(var.oidc_issuer_url, "https://")
 }
 
-# Both mechanisms are always trusted, so switching pod_identity never breaks a running pod; the Pod Identity
-# statement follows https://docs.aws.amazon.com/eks/latest/userguide/pod-id-role.html.
+# Both mechanisms are trusted, so switching pod_identity never breaks a running pod; the Pod Identity statement
+# follows https://docs.aws.amazon.com/eks/latest/userguide/pod-id-role.html and needs cluster_name, which pins it to
+# that cluster: without it, any cluster of the account could associate a service account of the same name.
 data "aws_iam_policy_document" "armonik_trust" {
   statement {
     sid     = "Irsa"
@@ -28,30 +29,30 @@ data "aws_iam_policy_document" "armonik_trust" {
       values   = ["system:serviceaccount:${var.namespace}:${var.name}"]
     }
   }
-  statement {
-    sid     = "PodIdentity"
-    actions = ["sts:AssumeRole", "sts:TagSession"]
-    principals {
-      type        = "Service"
-      identifiers = ["pods.eks.amazonaws.com"]
-    }
-    dynamic "condition" {
-      for_each = var.cluster_name == null ? [] : [var.cluster_name]
-      content {
+  dynamic "statement" {
+    for_each = var.cluster_name == null ? [] : [var.cluster_name]
+    content {
+      sid     = "PodIdentity"
+      actions = ["sts:AssumeRole", "sts:TagSession"]
+      principals {
+        type        = "Service"
+        identifiers = ["pods.eks.amazonaws.com"]
+      }
+      condition {
         test     = "StringEquals"
         variable = "aws:RequestTag/eks-cluster-name"
-        values   = [condition.value]
+        values   = [statement.value]
       }
-    }
-    condition {
-      test     = "StringEquals"
-      variable = "aws:RequestTag/kubernetes-namespace"
-      values   = [var.namespace]
-    }
-    condition {
-      test     = "StringEquals"
-      variable = "aws:RequestTag/kubernetes-service-account"
-      values   = [var.name]
+      condition {
+        test     = "StringEquals"
+        variable = "aws:RequestTag/kubernetes-namespace"
+        values   = [var.namespace]
+      }
+      condition {
+        test     = "StringEquals"
+        variable = "aws:RequestTag/kubernetes-service-account"
+        values   = [var.name]
+      }
     }
   }
 }

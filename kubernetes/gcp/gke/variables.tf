@@ -1,3 +1,9 @@
+variable "autopilot" {
+  type        = bool
+  description = "Whether to create an Autopilot cluster instead of a Standard one. WARNING: changing this after cluster creation is destructive!"
+  default     = false
+}
+
 variable "name" {
   type        = string
   description = "The name of the cluster (required)"
@@ -26,22 +32,22 @@ variable "ip_range_services" {
 
 variable "region" {
   type        = string
-  description = "The region to host the cluster in. Defaults to the provider region for a regional cluster, ignored for a zonal cluster"
+  description = "The region to host the cluster in. Defaults to the provider region for a regional or Autopilot cluster, ignored for a zonal cluster"
   default     = null
 }
 
 variable "regional" {
   type        = bool
-  description = "Whether is a regional cluster (zonal cluster if set false. WARNING: changing this after cluster creation is destructive!)"
+  description = "Standard only, Autopilot clusters are regional. Whether is a regional cluster (zonal cluster if set false. WARNING: changing this after cluster creation is destructive!)"
   default     = true
 }
 
 variable "zones" {
   type        = list(string)
-  description = "The zones to host the cluster in (optional if regional cluster / required if zonal)"
+  description = "The zones to host the cluster in (optional if regional or Autopilot cluster / required if zonal). Defaults to every zone of the region"
   default     = []
   validation {
-    condition     = var.regional || length(var.zones) > 0
+    condition     = var.autopilot || var.regional || length(var.zones) > 0
     error_message = "\"zones\" must list at least one zone when \"regional\" is false."
   }
 }
@@ -77,8 +83,8 @@ variable "master_authorized_networks" {
 }
 
 variable "dns_allow_external_traffic" {
-  description = "(Optional) Controls whether external traffic is allowed over the dns endpoint."
   type        = bool
+  description = "(Optional) Controls whether external traffic is allowed over the dns endpoint."
   default     = null
 }
 
@@ -160,24 +166,24 @@ variable "cluster_autoscaling" {
     enable_integrity_monitoring  = true
     enable_default_compute_class = false
   }
-  description = "Cluster autoscaling configuration. See [more details](https://cloud.google.com/kubernetes-engine/docs/reference/rest/v1beta1/projects.locations.clusters#clusterautoscaling)"
+  description = "Standard only. Cluster autoscaling configuration. See [more details](https://cloud.google.com/kubernetes-engine/docs/reference/rest/v1beta1/projects.locations.clusters#clusterautoscaling)"
 }
 
 variable "cluster_dns_domain" {
   type        = string
-  description = "The suffix used for all cluster service records."
+  description = "Standard only. The suffix used for all cluster service records."
   default     = ""
 }
 
 variable "cluster_dns_provider" {
   type        = string
-  description = "Which in-cluster DNS provider should be used. PROVIDER_UNSPECIFIED (default) or PLATFORM_DEFAULT or CLOUD_DNS."
+  description = "Standard only. Which in-cluster DNS provider should be used. PROVIDER_UNSPECIFIED (default) or PLATFORM_DEFAULT or CLOUD_DNS."
   default     = "PROVIDER_UNSPECIFIED"
 }
 
 variable "cluster_dns_scope" {
   type        = string
-  description = "The scope of access to cluster DNS records. DNS_SCOPE_UNSPECIFIED (default) or CLUSTER_SCOPE or VPC_SCOPE. "
+  description = "Standard only. The scope of access to cluster DNS records. DNS_SCOPE_UNSPECIFIED (default) or CLUSTER_SCOPE or VPC_SCOPE. "
   default     = "DNS_SCOPE_UNSPECIFIED"
 }
 
@@ -195,13 +201,13 @@ variable "cluster_resource_labels" {
 
 variable "config_connector" {
   type        = bool
-  description = "Whether ConfigConnector is enabled for this cluster."
+  description = "Standard only. Whether ConfigConnector is enabled for this cluster."
   default     = false
 }
 
 variable "configure_ip_masq" {
   type        = bool
-  description = "Enables the installation of ip masquerading, which is usually no longer required when using aliasied IP addresses. IP masquerading uses a kubectl call, so when you have a private cluster, you will need access to the API server."
+  description = "Standard only. Enables the installation of ip masquerading, which is usually no longer required when using aliasied IP addresses. IP masquerading uses a kubectl call, so when you have a private cluster, you will need access to the API server."
   default     = false
 }
 
@@ -217,13 +223,13 @@ variable "database_encryption" {
 
 variable "datapath_provider" {
   type        = string
-  description = "The datapath provider of the cluster. `ADVANCED_DATAPATH` enables Dataplane V2, which enforces the network policies without the Calico add-on (`network_policy` is then ignored). `DATAPATH_PROVIDER_UNSPECIFIED` keeps the iptables-based kube-proxy. Changing it recreates the cluster."
+  description = "Standard only. The datapath provider of the cluster. `ADVANCED_DATAPATH` enables Dataplane V2, which enforces the network policies without the Calico add-on (`network_policy` is then ignored). `DATAPATH_PROVIDER_UNSPECIFIED` keeps the iptables-based kube-proxy. Changing it recreates the cluster."
   default     = "ADVANCED_DATAPATH"
 }
 
 variable "default_max_pods_per_node" {
   type        = number
-  description = "The maximum number of pods to schedule per node"
+  description = "Standard only. The maximum number of pods to schedule per node"
   default     = 110
 }
 
@@ -241,14 +247,14 @@ variable "disable_default_snat" {
 
 variable "disable_legacy_metadata_endpoints" {
   type        = bool
-  description = "Disable the /0.1/ and /v1beta1/ metadata server endpoints on the node. Changing this value will cause all node pools to be recreated."
+  description = "Standard only. Disable the /0.1/ and /v1beta1/ metadata server endpoints on the node. Changing this value will cause all node pools to be recreated."
   default     = true
 }
 
 variable "dns_cache" {
   type        = bool
-  description = "The status of the NodeLocal DNSCache addon."
-  default     = false
+  description = "The status of the NodeLocal DNSCache addon. Defaults to true on Autopilot, false on Standard"
+  default     = null
 }
 
 variable "enable_binary_authorization" {
@@ -271,19 +277,19 @@ variable "enable_cost_allocation" {
 
 variable "enable_identity_service" {
   type        = bool
-  description = "(Optional) Enable the Identity Service component, which allows customers to use external identity providers with the K8S API. NOTE: Starting on July 1, 2025, new Google Cloud organizations that you create won't support Identity Service for GKE."
+  description = "Standard only. (Optional) Enable the Identity Service component, which allows customers to use external identity providers with the K8S API. NOTE: Starting on July 1, 2025, new Google Cloud organizations that you create won't support Identity Service for GKE."
   default     = false
 }
 
 variable "enable_intranode_visibility" {
   type        = bool
-  description = "Whether Intra-node visibility is enabled for this cluster. This makes same node pod to pod traffic visible for VPC network"
+  description = "Standard only. Whether Intra-node visibility is enabled for this cluster. This makes same node pod to pod traffic visible for VPC network"
   default     = false
 }
 
 variable "enable_kubernetes_alpha" {
   type        = bool
-  description = "Whether to enable Kubernetes Alpha features for this cluster. Note that when this option is enabled, the cluster cannot be upgraded and will be automatically deleted after 30 days."
+  description = "Standard only. Whether to enable Kubernetes Alpha features for this cluster. Note that when this option is enabled, the cluster cannot be upgraded and will be automatically deleted after 30 days."
   default     = false
 }
 
@@ -307,7 +313,7 @@ variable "enable_resource_consumption_export" {
 
 variable "enable_shielded_nodes" {
   type        = bool
-  description = "Enable Shielded Nodes features on all nodes in this cluster"
+  description = "Standard only. Enable Shielded Nodes features on all nodes in this cluster"
   default     = true
 }
 
@@ -319,8 +325,8 @@ variable "enable_tpu" {
 
 variable "enable_vertical_pod_autoscaling" {
   type        = bool
-  description = "Vertical Pod Autoscaling automatically adjusts the resources of pods controlled by it"
-  default     = false
+  description = "Vertical Pod Autoscaling automatically adjusts the resources of pods controlled by it. Defaults to true on Autopilot, false on Standard"
+  default     = null
 }
 
 variable "filestore_csi_driver" {
@@ -349,7 +355,7 @@ variable "gateway_api_channel" {
 
 variable "gce_pd_csi_driver" {
   type        = bool
-  description = "Whether this cluster should enable the Google Compute Engine Persistent Disk Container Storage Interface (CSI) Driver."
+  description = "Standard only. Whether this cluster should enable the Google Compute Engine Persistent Disk Container Storage Interface (CSI) Driver."
   default     = true
 }
 
@@ -378,26 +384,26 @@ variable "http_load_balancing" {
 }
 
 variable "identity_namespace" {
-  description = "The workload pool to attach all Kubernetes service accounts to. (Default value of `enabled` automatically sets project-based pool `[project_id].svc.id.goog`)"
   type        = string
+  description = "The workload pool to attach all Kubernetes service accounts to. (Default value of `enabled` automatically sets project-based pool `[project_id].svc.id.goog`)"
   default     = "enabled"
 }
 
 variable "initial_node_count" {
   type        = number
-  description = "The number of nodes to create in this cluster's default node pool."
+  description = "Standard only. The number of nodes to create in this cluster's default node pool."
   default     = 0
 }
 
 variable "ip_masq_link_local" {
   type        = bool
-  description = "Whether to masquerade traffic to the link-local prefix (169.254.0.0/16)."
+  description = "Standard only. Whether to masquerade traffic to the link-local prefix (169.254.0.0/16)."
   default     = false
 }
 
 variable "ip_masq_resync_interval" {
   type        = string
-  description = "The interval at which the agent attempts to sync its ConfigMap file from the disk."
+  description = "Standard only. The interval at which the agent attempts to sync its ConfigMap file from the disk."
   default     = "60s"
 }
 
@@ -437,7 +443,7 @@ variable "logging_enabled_components" {
 
 variable "logging_service" {
   type        = string
-  description = "The logging service that the cluster should write logs to. Available options include logging.googleapis.com, logging.googleapis.com/kubernetes (beta), and none"
+  description = "Standard only. The logging service that the cluster should write logs to. Available options include logging.googleapis.com, logging.googleapis.com/kubernetes (beta), and none"
   default     = "logging.googleapis.com/kubernetes"
 }
 
@@ -467,7 +473,7 @@ variable "maintenance_start_time" {
 
 variable "monitoring_enable_managed_prometheus" {
   type        = bool
-  description = "Configuration for Managed Service for Prometheus. Whether or not the managed collection is enabled."
+  description = "Standard only. Configuration for Managed Service for Prometheus. Whether or not the managed collection is enabled."
   default     = null
 }
 
@@ -502,19 +508,19 @@ variable "monitoring_enabled_components" {
 
 variable "monitoring_service" {
   type        = string
-  description = "The monitoring service that the cluster should write metrics to. Automatically send metrics from pods in the cluster to the Google Cloud Monitoring API. VM metrics will be collected by Google Compute Engine regardless of this setting Available options include monitoring.googleapis.com, monitoring.googleapis.com/kubernetes (beta) and none"
+  description = "Standard only. The monitoring service that the cluster should write metrics to. Automatically send metrics from pods in the cluster to the Google Cloud Monitoring API. VM metrics will be collected by Google Compute Engine regardless of this setting Available options include monitoring.googleapis.com, monitoring.googleapis.com/kubernetes (beta) and none"
   default     = "monitoring.googleapis.com/kubernetes"
 }
 
 variable "network_policy" {
   type        = bool
-  description = "Enable network policy addon"
+  description = "Standard only. Enable network policy addon"
   default     = false
 }
 
 variable "network_policy_provider" {
   type        = string
-  description = "The network policy provider."
+  description = "Standard only. The network policy provider."
   default     = "CALICO"
 }
 
@@ -525,7 +531,7 @@ variable "network_project_id" {
 }
 
 variable "node_metadata" {
-  description = "Specifies how node metadata is exposed to the workload running on the node"
+  description = "Standard only. Specifies how node metadata is exposed to the workload running on the node"
   default     = "GKE_METADATA"
   type        = string
 
@@ -537,7 +543,7 @@ variable "node_metadata" {
 
 variable "node_pools" {
   type        = list(map(any))
-  description = "List of maps containing node pools"
+  description = "Standard only. List of maps containing node pools"
 
   default = [
     {
@@ -548,7 +554,7 @@ variable "node_pools" {
 
 variable "node_pools_labels" {
   type        = map(map(string))
-  description = "Map of maps containing node labels by node-pool name"
+  description = "Standard only. Map of maps containing node labels by node-pool name"
 
   default = {
     all               = {}
@@ -558,7 +564,7 @@ variable "node_pools_labels" {
 
 variable "node_pools_linux_node_configs_sysctls" {
   type        = map(map(string))
-  description = "Map of maps containing linux node config sysctls by node-pool name"
+  description = "Standard only. Map of maps containing linux node config sysctls by node-pool name"
 
   default = {
     all               = {}
@@ -568,7 +574,7 @@ variable "node_pools_linux_node_configs_sysctls" {
 
 variable "node_pools_metadata" {
   type        = map(map(string))
-  description = "Map of maps containing node metadata by node-pool name"
+  description = "Standard only. Map of maps containing node metadata by node-pool name"
 
   default = {
     all               = {}
@@ -578,7 +584,7 @@ variable "node_pools_metadata" {
 
 variable "node_pools_oauth_scopes" {
   type        = map(list(string))
-  description = "Map of lists containing node oauth scopes by node-pool name"
+  description = "Standard only. Map of lists containing node oauth scopes by node-pool name"
 
   default = {
     all               = ["https://www.googleapis.com/auth/cloud-platform"]
@@ -588,7 +594,7 @@ variable "node_pools_oauth_scopes" {
 
 variable "node_pools_resource_labels" {
   type        = map(map(string))
-  description = "Map of maps containing resource labels by node-pool name"
+  description = "Standard only. Map of maps containing resource labels by node-pool name"
 
   default = {
     all               = {}
@@ -598,7 +604,7 @@ variable "node_pools_resource_labels" {
 
 variable "node_pools_tags" {
   type        = map(list(string))
-  description = "Map of lists containing node network tags by node-pool name"
+  description = "Standard only. Map of lists containing node network tags by node-pool name"
 
   default = {
     all               = []
@@ -608,7 +614,7 @@ variable "node_pools_tags" {
 
 variable "node_pools_taints" {
   type        = map(list(object({ key = string, value = string, effect = string })))
-  description = "Map of lists containing node taints by node-pool name"
+  description = "Standard only. Map of lists containing node taints by node-pool name"
 
   default = {
     all               = []
@@ -618,7 +624,7 @@ variable "node_pools_taints" {
 
 variable "non_masquerade_cidrs" {
   type        = list(string)
-  description = "List of strings in CIDR notation that specify the IP address ranges that do not use IP masquerading."
+  description = "Standard only. List of strings in CIDR notation that specify the IP address ranges that do not use IP masquerading."
   default     = ["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"]
 }
 
@@ -642,7 +648,7 @@ variable "release_channel" {
 
 variable "remove_default_node_pool" {
   type        = bool
-  description = "Remove default node pool while setting up the cluster"
+  description = "Standard only. Remove default node pool while setting up the cluster"
   default     = true
 }
 
@@ -692,7 +698,7 @@ variable "shadow_firewall_rules_priority" {
 
 variable "stub_domains" {
   type        = map(list(string))
-  description = "Map of stub domains and their resolvers to forward DNS queries for a certain domain to an external DNS server"
+  description = "Standard only. Map of stub domains and their resolvers to forward DNS queries for a certain domain to an external DNS server"
   default     = {}
 }
 
@@ -708,12 +714,30 @@ variable "timeouts" {
 
 variable "upstream_nameservers" {
   type        = list(string)
-  description = "If specified, the values replace the nameservers taken by default from the node's /etc/resolv.conf"
+  description = "Standard only. If specified, the values replace the nameservers taken by default from the node's /etc/resolv.conf"
   default     = []
 }
 
 variable "windows_node_pools" {
   type        = list(map(string))
-  description = "List of maps containing Windows node pools"
+  description = "Standard only. List of maps containing Windows node pools"
   default     = []
+}
+
+variable "network_tags" {
+  type        = list(string)
+  description = "Autopilot only. List of network tags applied to the Autopilot nodes"
+  default     = []
+}
+
+variable "allow_net_admin" {
+  type        = bool
+  description = "Autopilot only. Enable NET_ADMIN for the cluster"
+  default     = null
+}
+
+variable "default_compute_class_enabled" {
+  type        = bool
+  description = "Autopilot only. Enable the cluster-level default ComputeClass, which then needs a ComputeClass named `default`"
+  default     = null
 }

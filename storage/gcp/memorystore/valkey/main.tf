@@ -8,11 +8,6 @@ locals {
     for connection in flatten(google_memorystore_instance.valkey.endpoints[*].connections[*].psc_auto_connection[*]) :
     connection.connection_type => connection
   }
-  # Active tokens of the default user, by creation time: the latest one is the password during a rotation
-  auth_tokens = {
-    for token in try(jsondecode(data.http.auth_tokens[0].response_body).authTokens, []) :
-    token.createTime => token.token if token.state == "ACTIVE"
-  }
 }
 
 # The Memorystore service agent must exist before it can be granted the key
@@ -101,24 +96,4 @@ resource "google_memorystore_instance" "valkey" {
     }
   }
   depends_on = [google_kms_crypto_key_iam_member.kms]
-}
-
-# With TOKEN_AUTH, Memorystore creates the default user and its token along with the instance. The google provider
-# cannot read the tokens yet (GoogleCloudPlatform/magic-modules PR 19541): read them from the API.
-data "http" "auth_tokens" {
-  count = var.authorization_mode == "TOKEN_AUTH" ? 1 : 0
-  url   = "https://memorystore.googleapis.com/v1/${google_memorystore_instance.valkey.id}/tokenAuthUsers/default/authTokens"
-  request_headers = {
-    Authorization = "Bearer ${data.google_client_config.current.access_token}"
-  }
-  retry {
-    attempts     = 5
-    min_delay_ms = 2000
-  }
-  lifecycle {
-    postcondition {
-      condition     = self.status_code == 200
-      error_message = "Reading the auth tokens of the default user failed with HTTP status ${self.status_code}."
-    }
-  }
 }

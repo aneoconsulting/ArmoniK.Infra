@@ -2,12 +2,12 @@ data "google_client_config" "current" {}
 
 # GCS service agent, which encrypts the objects with the KMS key
 data "google_storage_project_service_account" "gcs" {
-  count = var.default_kms_key_name != null ? 1 : 0
+  count = var.kms_key != null ? 1 : 0
 }
 
 resource "google_kms_crypto_key_iam_member" "kms" {
-  count         = var.default_kms_key_name != null ? 1 : 0
-  crypto_key_id = var.default_kms_key_name
+  count         = var.kms_key != null ? 1 : 0
+  crypto_key_id = var.kms_key.id
   member        = "serviceAccount:${data.google_storage_project_service_account.gcs[0].email_address}"
   role          = "roles/cloudkms.cryptoKeyEncrypterDecrypter"
 }
@@ -79,7 +79,7 @@ resource "google_storage_bucket" "gcs" {
     }
   }
   dynamic "encryption" {
-    for_each = var.default_kms_key_name != null ? [var.default_kms_key_name] : []
+    for_each = var.kms_key != null ? [var.kms_key.id] : []
     content {
       default_kms_key_name = encryption.value
     }

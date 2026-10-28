@@ -102,10 +102,12 @@ variable "logging" {
   default = null
 }
 
-variable "default_kms_key_name" {
-  description = "The id of a Cloud KMS key that will be used to encrypt objects inserted into this bucket, if no encryption method is specified."
-  type        = string
-  default     = null
+variable "kms_key" {
+  description = "Cloud KMS key that encrypts the objects inserted into this bucket, if no encryption method is specified. An object, so that the key can be created in the same apply: its ID is unknown at plan time, the object is not."
+  type = object({
+    id = string
+  })
+  default = null
 }
 
 variable "public_access_prevention" {

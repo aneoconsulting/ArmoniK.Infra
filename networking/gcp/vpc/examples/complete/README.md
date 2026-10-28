@@ -1,6 +1,7 @@
 ## Complete VPC
 
-Subnets in several regions, a GKE subnet and the network settings. Uses the [vpc module](../..).
+Subnets in several regions, a GKE subnet, a Memorystore service connection policy and the network settings. Uses
+the [vpc module](../..).
 
 ```bash
 terraform init

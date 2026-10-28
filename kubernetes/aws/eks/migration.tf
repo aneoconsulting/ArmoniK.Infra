@@ -22,6 +22,9 @@
 #   5. Apply with Terraform >= 1.7, as an identity allowed iam:UpdateAssumeRolePolicy (the CSI roles gain the Pod
 #      Identity trust). The vpc-cni, kube-proxy and coredns add-ons adopt the running objects
 #      (resolve_conflicts_on_create = OVERWRITE); the CSI add-ons recreate the drivers; the nodes roll.
+#      Then apply a second time: the EKS module attaches AmazonEKSVPCResourceController to the cluster role under
+#      another address, and the first apply deletes the old attachment in parallel with creating the new one. If the
+#      deletion lands last, the policy is detached and Windows pods get no IP until the second apply re-attaches it.
 #   6. Release the ENIConfigs: with vpc_cni_custom_networking = true, the vpc-cni add-on owns them, so only delete the
 #      release record (in the former chart_namespace, default by default; a secret with Helm's default driver):
 #        kubectl -n default delete configmap -l owner=helm,name=add-subnet

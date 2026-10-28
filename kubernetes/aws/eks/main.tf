@@ -163,6 +163,12 @@ module "eks" {
   cloudwatch_log_group_retention_in_days = var.cluster_log_retention_in_days
   create_security_group                  = true
 
+  # The VPC resource controller assigns the IPs of Windows pods with the cluster role
+  # (https://docs.aws.amazon.com/eks/latest/userguide/windows-support.html).
+  iam_role_additional_policies = {
+    AmazonEKSVPCResourceController = "arn:${data.aws_partition.current.partition}:iam::aws:policy/AmazonEKSVPCResourceController"
+  }
+
   # Extend node-to-node security group rules
   node_security_group_additional_rules = {
     ingress_self_all = {

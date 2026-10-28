@@ -75,3 +75,14 @@ output "gke_subnet_svc_range_name" {
   description = "IP CIDR range name of GKE services"
   value       = try(google_compute_subnetwork.gke_subnet[0].secondary_ip_range[1].range_name, null)
 }
+
+output "service_connection_policies" {
+  description = "Map of the service connection policies, keyed by name, with their ID, service class and region"
+  value = {
+    for key, policy in google_network_connectivity_service_connection_policy.policies : key => {
+      id            = policy.id
+      service_class = policy.service_class
+      region        = policy.location
+    }
+  }
+}

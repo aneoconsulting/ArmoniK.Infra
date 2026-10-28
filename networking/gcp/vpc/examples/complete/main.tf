@@ -36,6 +36,13 @@ module "complete_vpc" {
         region     = "europe-west${k % 2 + 1}"
         enable_nat = true
       }
+    },
+    # Private Service Connect endpoints only: a fixed range to allow in firewall rules and NetworkPolicies
+    {
+      "psc-subnet" = {
+        cidr_block = "10.52.0.0/28"
+        region     = "europe-west9"
+      }
     }
   )
   gke_subnet = {
@@ -45,6 +52,12 @@ module "complete_vpc" {
     services_cidr_block = "192.168.1.0/24"
     region              = "europe-west9"
     enable_nat          = true
+  }
+  service_connection_policies = {
+    memorystore = {
+      service_class = "gcp-memorystore"
+      subnets       = ["psc-subnet"]
+    }
   }
   enable_google_access              = true
   flow_log_max_aggregation_interval = "INTERVAL_30_SEC"

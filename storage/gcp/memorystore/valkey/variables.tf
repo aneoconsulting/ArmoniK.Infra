@@ -44,9 +44,9 @@ variable "engine_configs" {
 }
 
 variable "authorization_mode" {
-  description = "AUTH_DISABLED, IAM_AUTH or TOKEN_AUTH, which cannot be disabled once set. With TOKEN_AUTH, the auth_token output is the password of the default user. The Redis adapter of Core reads a static password once, so it cannot use IAM_AUTH, whose tokens expire after one hour."
+  description = "AUTH_DISABLED, IAM_AUTH or TOKEN_AUTH, which cannot be disabled once set. Memorystore does not accept a chosen password: IAM_AUTH tokens expire after one hour, which the Redis adapter of Core cannot refresh, and the google provider cannot read the TOKEN_AUTH tokens yet."
   type        = string
-  default     = "TOKEN_AUTH"
+  default     = "AUTH_DISABLED"
   validation {
     condition     = contains(["AUTH_DISABLED", "IAM_AUTH", "TOKEN_AUTH"], var.authorization_mode)
     error_message = "Valid values for \"authorization_mode\" are: \"AUTH_DISABLED\" | \"IAM_AUTH\" | \"TOKEN_AUTH\"."

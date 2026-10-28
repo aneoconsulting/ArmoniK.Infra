@@ -4,13 +4,14 @@ name: Approval freshness
 # given, so rebasing a stack keeps the approvals of unchanged pull requests.
 # Replaces the ruleset's "Dismiss stale pull request approvals when new commits
 # are pushed", which must be off, and is paired with the required status checks
-# `approval-freshness` and `approval-freshness-relay` (GitHub Actions source).
+# `approval-freshness` (a commit status) and `approval-freshness-relay`, both
+# from the GitHub Actions source.
 # See .github/approval-freshness.md.
 #
 # Every pull request event reaches this workflow through the relay, so it always
 # runs from the default branch: a pull request can stop it from running, which
 # leaves its head without the required check, but cannot change what it does.
-# A pull request job named `approval-freshness` can still forge the check: this
+# A pull request workflow can still forge the `approval-freshness` status: this
 # guards against mistakes, not against an author with write access.
 # Nothing here runs code from the pull request: its commits are only diffed.
 
@@ -38,9 +39,10 @@ jobs:
   evaluate:
     name: Evaluate approvals
     permissions:
-      checks: write # to record fingerprints and report the required check
+      checks: write # to record fingerprints
       contents: read # to fetch and diff the pull request commits
       pull-requests: write # to dismiss stale approvals
+      statuses: write # to report the required check
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code

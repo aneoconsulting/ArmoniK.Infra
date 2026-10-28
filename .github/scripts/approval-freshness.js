@@ -7,7 +7,7 @@
 // and its merge base with the live tip of the base branch (the API's base.sha is
 // a snapshot): line numbers are ignored, whitespace, modes and binary content
 // are not. Each approval's fingerprint is recorded when the approval is first
-// seen, in the approval-freshness check runs of the commit it approved:
+// seen, in the approval-freshness-record check runs of the commit it approved:
 // recomputing it later would diff against a base that may have been rewritten
 // or squash-merged since. An approval seen for the first time is fingerprinted
 // against the current base, so it is fresh if its commit is still the head,
@@ -19,14 +19,16 @@
 // the pull request is rebased: dismissing would be irreversible, and the head
 // still holds what was approved.
 //
-// The check run on the head is the required check: it closes the window
-// between a push and the dismissals, except for a push back to a commit already
-// evaluated as head, whose last check stands until the next evaluation. Posted
-// with GITHUB_TOKEN, it joins the head's existing GitHub Actions check suite,
-// which the relay's pull_request run provides; that suite is what lets it
-// satisfy a required check from this non-PR context.
+// The approval-freshness commit status on the head is the required check: it
+// closes the window between a push and the dismissals, except for a push back to
+// a commit already evaluated as head, whose last status stands until the next
+// evaluation. It is a status rather than a check run because a check run created
+// through the API joins the commit's oldest GitHub Actions check suite, and a
+// pull request ignores that suite once its workflow ran again on the same commit
+// (two events for one push), check run included. Record check runs are read
+// whatever suite they are in.
 //
-// A commit's record is the union of all its check runs, the earliest
+// A commit's record is the union of all its record check runs, the earliest
 // fingerprint winning, so that concurrent runs (a stacked pull request is also
 // evaluated with its parent) cannot lose one; runs need no other ordering.
 //
@@ -39,7 +41,9 @@
 
 const { execFileSync } = require('child_process');
 
-const CHECK = 'approval-freshness';
+const STATUS = 'approval-freshness';
+// approval-freshness check runs predate the status and carry records too.
+const RECORDS = ['approval-freshness-record', 'approval-freshness'];
 const MARKER = /<!-- approval-freshness (\{.*?\}) -->/;
 const BASE_REF = 'refs/approval-freshness/base';
 const ATTEMPTS = 3;
@@ -74,15 +78,16 @@ function fingerprint(head, base) {
 module.exports = async ({ github, context, core }) => {
   const { owner, repo } = context.repo;
 
-  // The latest check run on a commit, and the record of all of them: the
-  // fingerprint of each approval of the commit, and the approvals found fresh
-  // while it was the head.
+  // The latest record check run on a commit, and the record of all of them:
+  // the fingerprint of each approval of the commit, and the approvals found
+  // fresh while it was the head.
   const runCache = new Map();
   async function latestRun(sha) {
     if (!runCache.has(sha)) {
       const runs = (await github.paginate(github.rest.checks.listForRef, {
-        owner, repo, ref: sha, check_name: CHECK, filter: 'all', per_page: 100,
-      })).filter((r) => r.app && r.app.slug === 'github-actions').sort((a, b) => a.id - b.id);
+        owner, repo, ref: sha, filter: 'all', per_page: 100,
+      })).filter((r) => RECORDS.includes(r.name) && r.app && r.app.slug === 'github-actions')
+        .sort((a, b) => a.id - b.id);
       const record = { prints: {}, fresh: [] };
       for (const run of runs) {
         const match = run.output && run.output.text && run.output.text.match(MARKER);
@@ -98,23 +103,28 @@ module.exports = async ({ github, context, core }) => {
     return runCache.get(sha);
   }
 
-  // Skipped when the latest run already says the same, so that re-evaluations
-  // do not pile up identical runs.
-  async function writeRun(sha, conclusion, title, summary, record) {
+  // Skipped when the latest record run already says the same, so that
+  // re-evaluations do not pile up identical statuses and runs. The status goes
+  // first: a record run written without its status would skip it next time.
+  async function writeRun(sha, state, title, summary, record) {
     const canonical = {
       prints: Object.fromEntries(Object.entries(record.prints).sort(([a], [b]) => a - b)),
       fresh: [...record.fresh].sort((a, b) => a - b),
     };
     const text = `<!-- approval-freshness ${JSON.stringify(canonical)} -->`;
     const { run } = await latestRun(sha);
-    if (!(run && run.conclusion === conclusion && run.output
+    if (!(run && run.name === RECORDS[0] && run.output && run.output.title === `${state}: ${title}`
           && run.output.summary === summary && run.output.text === text)) {
+      await github.rest.repos.createCommitStatus({
+        owner, repo, sha, state, context: STATUS, description: title,
+        target_url: `${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId}`,
+      });
       await github.rest.checks.create({
-        owner, repo, name: CHECK, head_sha: sha, status: 'completed', conclusion,
-        output: { title, summary, text },
+        owner, repo, name: RECORDS[0], head_sha: sha, status: 'completed', conclusion: 'neutral',
+        output: { title: `${state}: ${title}`, summary, text },
       });
     }
-    runCache.set(sha, { run: { conclusion, output: { summary, text } }, record: canonical });
+    runCache.set(sha, { run: { name: RECORDS[0], output: { title: `${state}: ${title}`, summary, text } }, record: canonical });
   }
 
   // Fetches a commit that may be gone: false when the API no longer knows it,

@@ -52,6 +52,15 @@ locals {
   fluent_bit_input_s3_path_windows          = "C:\\var\\log\\containers\\control-plane*.log, C:\\var\\log\\containers\\compute-plane*.log, C:\\var\\log\\containers\\init*.log, C:\\var\\log\\containers\\ingress*.log, C:\\var\\log\\containers\\mongodb*.log, C:\\var\\log\\containers\\keda*.log"
   fluent_bit_input_path_windows             = "C:\\var\\log\\containers\\"
   windows_and_daemonset                     = (local.fluent_bit_windows_is_daemonset && length(var.node_selector_windows) > 0)
+  service_account                           = local.fluent_bit_is_daemonset || local.windows_and_daemonset
+  # The shared credentials file comes before the EKS web identity in fluent-bit's credential chain, so it is mounted
+  # only when static credentials are given.
+  aws_static_credentials = can(coalesce(var.aws.aws_access_id))
+  # Credentials from IRSA or Pod Identity are injected at pod creation, so changing the service account annotations
+  # restarts the pods.
+  pod_annotations = length(var.service_account_annotations) == 0 ? {} : {
+    "armonik.fr/service-account-annotations" = sha256(jsonencode(var.service_account_annotations))
+  }
 
   #linux
   fluent_bit_kube_ca_file           = "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"

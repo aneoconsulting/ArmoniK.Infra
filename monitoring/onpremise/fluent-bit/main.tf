@@ -22,6 +22,7 @@ resource "kubernetes_daemonset" "fluent_bit" {
           version                         = "v1"
           "kubernetes.io/cluster-service" = "true"
         }
+        annotations = local.pod_annotations
       }
       spec {
         node_selector = local.node_selector
@@ -84,10 +85,13 @@ resource "kubernetes_daemonset" "fluent_bit" {
             mount_path = "/fluent-bit/etc/"
             read_only  = true
           }
-          volume_mount {
-            name       = "aws-auth-config"
-            mount_path = "/root/.aws"
-            read_only  = true
+          dynamic "volume_mount" {
+            for_each = local.aws_static_credentials ? [1] : []
+            content {
+              name       = "aws-auth-config"
+              mount_path = "/root/.aws"
+              read_only  = true
+            }
           }
         }
         volume {
@@ -120,10 +124,13 @@ resource "kubernetes_daemonset" "fluent_bit" {
             name = kubernetes_config_map.fluent_bit_config.metadata[0].name
           }
         }
-        volume {
-          name = "aws-auth-config"
-          secret {
-            secret_name = kubernetes_secret.aws_auth_config.metadata[0].name
+        dynamic "volume" {
+          for_each = local.aws_static_credentials ? [1] : []
+          content {
+            name = "aws-auth-config"
+            secret {
+              secret_name = kubernetes_secret.aws_auth_config.metadata[0].name
+            }
           }
         }
         host_network                     = false
@@ -175,6 +182,7 @@ resource "kubernetes_daemonset" "fluent_bit_windows" {
           version                         = "v1"
           "kubernetes.io/cluster-service" = "true"
         }
+        annotations = local.pod_annotations
       }
       spec {
         node_selector = local.node_selector_windows

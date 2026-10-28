@@ -25,7 +25,7 @@ variable "seq" {
 
 # Service account annotations
 variable "service_account_annotations" {
-  description = "Annotations of the fluent-bit service account, for instance `eks.amazonaws.com/role-arn` to give fluent-bit its own IAM role on EKS through IRSA"
+  description = "Annotations of the fluent-bit service account, for instance `eks.amazonaws.com/role-arn` to give fluent-bit its own IAM role on EKS through IRSA. DaemonSet only; static credentials in var.aws take precedence over the role"
   type        = map(string)
   default     = {}
 }

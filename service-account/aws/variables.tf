@@ -22,7 +22,7 @@ variable "name" {
 }
 
 variable "create_service_account" {
-  description = "Create the Kubernetes service account. Set false when another module owns it: only the IAM role (and its Pod Identity association) is created, and that module annotates its service account with service_account_iam_role_arn for IRSA"
+  description = "Create the Kubernetes service account. Set false when another module owns it: only the IAM role (and its Pod Identity association) is created, and that module annotates its service account with service_account_iam_role_arn for IRSA. The role trust and the association are created whether or not that service account exists, EKS accepting a name that does not exist yet, so a mismatched name or namespace leaves its pods without credentials"
   type        = bool
   default     = true
 }

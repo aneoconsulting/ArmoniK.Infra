@@ -227,8 +227,9 @@ ports:
 
 
 {{/*
-  Ingress (nginx) NetworkPolicy: egress-only, to control-plane + Grafana + Seq, plus the DNS and GUI
-  rules of armonik-ingress's own policy, since this one isolates nginx's egress without it.
+  Ingress (nginx) NetworkPolicy: egress-only, to DNS, control-plane, Grafana and Seq, plus the IdP
+  with sso. It can be the only policy selecting nginx (ingress.networkPolicy off), so it carries DNS
+  for nginx's resolver and the upstreams it resolves.
 */}}
 {{- define "armonik.netpol.ingressEgress" -}}
 {{- with .Subcharts.ingress -}}
@@ -238,6 +239,7 @@ podSelector:
     app.kubernetes.io/component: ingress
     {{- include "armonik.selectorLabels" . | nindent 4 }}
 {{- $rules := dict
+      "armonik.netpol.dnsRule" dict
       "armonik.netpol.rule.ingressToControlPlane" $
       "armonik.netpol.rule.ingressToGrafana" $
       "armonik.netpol.rule.ingressToSeq" $ }}
@@ -247,7 +249,6 @@ podSelector:
   {{- if and $required (list .Values "sso" "networkPolicy" "idpEgressCidrs" | include "armonik.utils.index" | empty) }}
     {{- fail "ingress.sso.networkPolicy.idpEgressCidrs must list the IdP's CIDRs with networkPolicy.enabled: oauth2-proxy reaches the IdP on TCP 443 from the nginx pod" }}
   {{- end }}
-  {{- $_ := set $rules "armonik.netpol.dnsRule" dict }}
   {{- $_ := set $rules "armonik.netpol.rule.ssoIdpTo" . }}
 {{- end }}
 egress:

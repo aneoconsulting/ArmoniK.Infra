@@ -84,3 +84,13 @@ tests:
     asserts:
       - hasDocuments:
           count: 0
+
+  # The umbrella reads ingress.sso through the ingress resolver, never on its own.
+  - it: refuses a string ingress.sso.enabled
+    set:
+      ingress:
+        sso:
+          enabled: "false"
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.enabled must be true or false, got the string "false"'

@@ -238,6 +238,11 @@ sso:
     # so it stays one cookie under 4 KB: nginx passes on one Set-Cookie per auth subrequest, and a
     # cookie split in _0/_1 breaks the session.
     sessionCookieMinimal: true
+    # -- One CSRF cookie per login attempt, named after its state: parallel requests without a
+    # session (a page and its favicon) each start a login without overwriting the other's cookie.
+    cookieCsrfPerRequest: true
+    # -- Lifetime of a CSRF cookie, so per-request cookies of abandoned logins expire.
+    cookieCsrfExpire: 15m
     # -- Appended to the generated flags. --ping-user-agent and --gcp-healthchecks are refused.
     extraArgs: []
     resources: {}

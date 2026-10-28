@@ -1,11 +1,15 @@
 {{/*
 sso values, validated, as YAML: `enabled: false` when sso is off, else the values plus publicUrl
-without a trailing slash, host (host[:port] of publicUrl), secure (publicUrl is https) and
-identityVar (the nginx variable carrying identityClaim from the auth subrequest). Takes the root.
+without a trailing slash, host (host[:port] of publicUrl), hostName (host alone, lowercased),
+secure (publicUrl is https) and identityVar (the nginx variable carrying identityClaim from the
+auth subrequest). Takes the root.
 The single entry point: the armonik.ingress.sso.validate* helpers below fail and render nothing.
 */}}
 {{- define "armonik.ingress.sso" -}}
   {{- $sso := .Values.sso | default dict -}}
+  {{- if not (or (kindIs "invalid" $sso.enabled) (kindIs "bool" $sso.enabled)) -}}
+    {{- printf "sso.enabled must be true or false, got the %s %q" (kindOf $sso.enabled) (toString $sso.enabled) | fail -}}
+  {{- end -}}
   {{- if not $sso.enabled -}}
 enabled: false
   {{- else -}}
@@ -17,6 +21,7 @@ enabled: false
     {{- $out := deepCopy $sso -}}
     {{- $_ := set $out "publicUrl" $url -}}
     {{- $_ := regexReplaceAll "^https?://" $url "" | set $out "host" -}}
+    {{- $_ := regexReplaceAll "^https?://|:[0-9]+$" $url "" | lower | set $out "hostName" -}}
     {{- $_ := hasPrefix "https://" $url | set $out "secure" -}}
     {{- $_ := index (include "armonik.ingress.sso.identityVars" . | fromYaml) $claim | set $out "identityVar" -}}
     {{- $_ := list $sso "networkPolicy" "idpEgressCidrs" | include "armonik.utils.index" | fromYamlArray | default list | set $out "idpEgressCidrs" -}}
@@ -144,14 +149,16 @@ user: $upstream_http_x_auth_request_user
 
 {{- define "armonik.ingress.sso.validateCookie" -}}
   {{- $proxy := .Values.sso.oauth2Proxy -}}
-  {{- range $key := list "cookieExpire" "cookieRefresh" -}}
+  {{- range $key := list "cookieExpire" "cookieRefresh" "cookieCsrfExpire" -}}
     {{- $value := index $proxy $key | toString -}}
     {{- if not (include "armonik.ingress.isDuration" $value) -}}
       {{- printf "sso.oauth2Proxy.%s must be a duration such as 8h or 30m, or 0, got %q" $key $value | fail -}}
     {{- end -}}
   {{- end -}}
-  {{- if kindIs "bool" $proxy.sessionCookieMinimal | not -}}
-    {{- printf "sso.oauth2Proxy.sessionCookieMinimal must be true or false, got %v" $proxy.sessionCookieMinimal | fail -}}
+  {{- range $key := list "sessionCookieMinimal" "cookieCsrfPerRequest" -}}
+    {{- if index $proxy $key | kindIs "bool" | not -}}
+      {{- printf "sso.oauth2Proxy.%s must be true or false, got %v" $key (index $proxy $key) | fail -}}
+    {{- end -}}
   {{- end -}}
   {{- /* oauth2-proxy refuses to start otherwise (pkg/validation/sessions.go). */ -}}
   {{- if and $proxy.sessionCookieMinimal (not (include "armonik.ingress.durationIsZero" ($proxy.cookieRefresh | toString))) -}}
@@ -286,16 +293,26 @@ trailers-only UNAUTHENTICATED. Takes the server dict.
 {{- dict "match" "/oauth2/" | include "armonik.ingress.conf.oauth2ProxyLocation" }}
 {{- dict "match" "= /oauth2/auth" "subrequest" true | include "armonik.ingress.conf.oauth2ProxyLocation" }}
 {{- dict "match" "@sso_login" "rewrite" "^ /oauth2/start? break" | include "armonik.ingress.conf.oauth2ProxyLocation" }}
-    location @grpc_unauthenticated {
+{{- dict "name" "unauthenticated" "status" 16 "message" "Unauthenticated" | include "armonik.ingress.conf.grpcErrorLocation" }}
+{{- dict "name" "permission_denied" "status" 7 "message" "Permission denied" | include "armonik.ingress.conf.grpcErrorLocation" }}
+{{- end -}}
+
+{{/*
+Named location @grpc_<name> answering a gRPC-web call with a trailers-only error: HTTP 200, the
+status in headers, no body, so the client reports the error instead of following a redirect.
+Takes {name, status, message}.
+*/}}
+{{- define "armonik.ingress.conf.grpcErrorLocation" }}
+    location @grpc_{{ .name }} {
         auth_request off;
         # default_type takes no variable: empty, it emits no Content-Type of its own
         default_type "";
         add_header Content-Type $grpc_error_content_type always;
-        add_header grpc-status 16 always;
-        add_header grpc-message "Unauthenticated" always;
+        add_header grpc-status {{ .status }} always;
+        add_header grpc-message {{ .message | quote }} always;
         return 200;
     }
-{{- end -}}
+{{- end }}
 
 {{/*
 http-level maps of the SSO identity: $sso_cn, the CN the web server sends, empty when the session
@@ -304,6 +321,14 @@ gRPC flavor. Takes the root.
 */}}
 {{- define "armonik.ingress.conf.ssoMaps" -}}
 {{- $sso := include "armonik.ingress.sso" . | fromYaml }}
+# 1 when a request must first move to the publicUrl host: a login started on another host (an IP)
+# sets its CSRF cookie there, and the IdP returns to publicUrl. The port is not compared, cookies
+# ignoring it. Exempt: the health path and the sidecar probes, whose Host is the pod IP.
+map "$host $uri" $sso_redirect {
+    default 1;
+    "~^{{ regexQuoteMeta $sso.hostName }} " 0;
+    "~ ({{ regexQuoteMeta $sso.healthPath }}|/oauth2/ping|/oauth2/ready)$" 0;
+}
 map $http_content_type $grpc_error_content_type {
     default application/grpc;
     ~*^application/grpc-web-text application/grpc-web-text+proto;
@@ -334,6 +359,7 @@ NOTES lines for SSO, empty without it. Takes the ingress chart's root, so the um
 SSO is enabled on the web port (admin GUI, gRPC-web, Grafana, Seq) through oauth2-proxy.
   Redirect URI to declare in the IdP client {{ $sso.oauth2Proxy.clientId | quote }}:
     {{ $sso.publicUrl }}/oauth2/callback
+  Browsers reaching the web port on another host (an IP, another name) are redirected to {{ $sso.publicUrl }}.
   The Secret {{ $sso.oauth2Proxy.existingSecret | quote }} must hold client-secret and cookie-secret.
   {{- if eq $sso.identityMode "user" }}
   Each user reaches ArmoniK as CN "{{ $sso.cnPrefix }}<{{ $sso.identityClaim }}>". Declare them without a fingerprint:

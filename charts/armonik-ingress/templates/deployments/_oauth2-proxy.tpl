@@ -40,6 +40,8 @@ args:
   - {{ printf "--cookie-expire=%s" $proxy.cookieExpire | quote }}
   - {{ printf "--cookie-refresh=%s" ($proxy.cookieRefresh | toString) | quote }}
   - {{ printf "--session-cookie-minimal=%t" $proxy.sessionCookieMinimal | quote }}
+  - {{ printf "--cookie-csrf-per-request=%t" $proxy.cookieCsrfPerRequest | quote }}
+  - {{ printf "--cookie-csrf-expire=%s" ($proxy.cookieCsrfExpire | toString) | quote }}
   - "--ping-path=/oauth2/ping"
   - "--ready-path=/oauth2/ready"
   - "--silence-ping-logging=true"

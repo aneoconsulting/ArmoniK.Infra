@@ -17,7 +17,7 @@ tests:
     asserts:
       - matchRegex:
           path: spec.target.template.data["armonik.conf"]
-          pattern: '# web port\n(.*\n)*?    tcp_nopush on;\n\n    # SSO[^\n]*\n    auth_request /oauth2/auth;\n    error_page 401 = @sso_login;\n    # [^\n]*\n    auth_request_set \$auth_cookie \$upstream_http_set_cookie;\n    add_header Set-Cookie \$auth_cookie;\n\n    location = /healthz'
+          pattern: '# web port\n(.*\n)*?    tcp_nopush on;\n\n    # SSO[^\n]*\n    if \(\$sso_redirect\) \{\n        return 302 http://armonik\.example\.com:5000\$request_uri;\n    \}\n    # SSO[^\n]*\n    auth_request /oauth2/auth;\n    error_page 401 = @sso_login;\n    # [^\n]*\n    auth_request_set \$auth_cookie \$upstream_http_set_cookie;\n    add_header Set-Cookie \$auth_cookie;\n\n    location = /healthz'
 
   # The only exemptions; every other location inherits the server-level auth_request.
   - it: exempts the health path and the oauth2-proxy routes alone
@@ -39,10 +39,13 @@ tests:
           pattern: 'location @grpc_unauthenticated \{\n        auth_request off;'
       - matchRegex:
           path: spec.target.template.data["armonik.conf"]
-          pattern: '(?s)(auth_request off;.*){5}'
-      - notMatchRegex:
+          pattern: 'location @grpc_permission_denied \{\n        auth_request off;'
+      - matchRegex:
           path: spec.target.template.data["armonik.conf"]
           pattern: '(?s)(auth_request off;.*){6}'
+      - notMatchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: '(?s)(auth_request off;.*){7}'
 
   # A 4 KB X-Auth-Request-Groups or a large Set-Cookie otherwise fails with "upstream sent too big
   # header": a 500 on every authenticated call, a 502 on the callback.
@@ -71,11 +74,54 @@ tests:
           path: spec.target.template.data["armonik.conf"]
           pattern: 'location @sso_login \{\n        auth_request off;\n        rewrite \^ /oauth2/start\? break;\n        proxy_pass http://127.0.0.1:4180;(\n        [^\n]*)*\n        proxy_set_header X-Auth-Request-Redirect \$request_uri;\n    \}'
 
+  # A page keeps its plain 403: only the API location maps it, to a gRPC status, never a login.
   - it: never turns a 403 into a login redirect
     asserts:
       - notMatchRegex:
           path: spec.target.template.data["armonik.conf"]
-          pattern: 'error_page[^;]*403'
+          pattern: 'error_page[^;]*403[^;]*@sso_login'
+      - notMatchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: '(?s)error_page 403.*error_page 403'
+      - matchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: '    location ~\* \^/armonik\\\. \{\n        auth_request /oauth2/auth;\n        error_page 401 = @grpc_unauthenticated;\n        # [^\n]*\n        error_page 403 = @grpc_permission_denied;\n'
+
+  - it: answers a refused gRPC-web call with a trailers-only PERMISSION_DENIED
+    asserts:
+      - matchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: 'location @grpc_permission_denied \{\n        auth_request off;\n        # [^\n]*\n        default_type "";\n        add_header Content-Type \$grpc_error_content_type always;\n        add_header grpc-status 7 always;\n        add_header grpc-message "Permission denied" always;\n        return 200;\n    \}'
+
+  # A login started on another host (an IP) sets its CSRF cookie there while the IdP returns to
+  # publicUrl: oauth2-proxy then fails with a missing CSRF cookie.
+  - it: moves a request on another host to the publicUrl host, before auth_request
+    asserts:
+      - matchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: '\nmap "\$host \$uri" \$sso_redirect \{\n    default 1;\n    "~\^armonik\\\.example\\\.com " 0;\n    "~ \(/healthz\|/oauth2/ping\|/oauth2/ready\)\$" 0;\n\}\n'
+      - matchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: '(?s)# web port.*if \(\$sso_redirect\) \{.*auth_request /oauth2/auth;.*# grpc port'
+
+  - it: compares the publicUrl host lowercased, without its port, and exempts a custom health path
+    set:
+      sso:
+        publicUrl: https://ArmoniK.Example.com:8443/
+        healthPath: /live.z
+    asserts:
+      - matchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: '"~\^armonik\\\.example\\\.com " 0;\n    "~ \(/live\\\.z\|/oauth2/ping\|/oauth2/ready\)\$" 0;'
+      - matchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: 'return 302 https://ArmoniK\.Example\.com:8443\$request_uri;'
+
+  - it: never redirects on the grpc server
+    asserts:
+      - notMatchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: '(?s)# grpc port.*sso_redirect'
 
   - it: answers an unauthenticated gRPC-web call with a trailers-only UNAUTHENTICATED
     asserts:
@@ -90,7 +136,7 @@ tests:
     asserts:
       - matchRegex:
           path: spec.target.template.data["armonik.conf"]
-          pattern: '# web port(.*\n)*?    location ~\* \^/armonik\\\. \{\n        auth_request /oauth2/auth;\n        error_page 401 = @grpc_unauthenticated;\n        auth_request_set \$auth_cookie \$upstream_http_set_cookie;\n        auth_request_set \$sso_identity \$upstream_http_x_auth_request_email;\n        auth_request_set \$sso_groups \$upstream_http_x_auth_request_groups;\n        # [^\n]*\n        grpc_set_header X-Certificate-Client-CN \$sso_cn;\n        grpc_set_header X-Certificate-Client-Fingerprint "sso";\n        grpc_set_header X-Impersonate-Username "";\n        grpc_set_header X-Impersonate-Id "";\n        grpc_pass grpc://armonik;'
+          pattern: '# web port(.*\n)*?    location ~\* \^/armonik\\\. \{\n        auth_request /oauth2/auth;\n        error_page 401 = @grpc_unauthenticated;\n        # [^\n]*\n        error_page 403 = @grpc_permission_denied;\n        auth_request_set \$auth_cookie \$upstream_http_set_cookie;\n        auth_request_set \$sso_identity \$upstream_http_x_auth_request_email;\n        auth_request_set \$sso_groups \$upstream_http_x_auth_request_groups;\n        # [^\n]*\n        grpc_set_header X-Certificate-Client-CN \$sso_cn;\n        grpc_set_header X-Certificate-Client-Fingerprint "sso";\n        grpc_set_header X-Impersonate-Username "";\n        grpc_set_header X-Impersonate-Id "";\n        grpc_pass grpc://armonik;'
 
   - it: builds the user-mode CN in an http-level map, empty without a claim
     set:

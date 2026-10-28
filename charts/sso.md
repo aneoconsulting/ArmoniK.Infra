@@ -24,6 +24,7 @@ web port and authenticate with the IdP.
    |                         |                                    127.0.0.1:4180         |
    |   <-- 302 to the IdP    |   401: page   -> /oauth2/start --->   |  (sidecar)        |
    |                         |   401: gRPC-web -> grpc-status 16      |                    |
+   |                         |   403: gRPC-web -> grpc-status 7       |                    |
    |   /oauth2/callback ---> |   /oauth2/*   ----------------------> |  ---> IdP (443)    |
    |                         |                                                            |
    |   gRPC-web + cookie --> |   CN <- session claim or group, fingerprint <- fixed     |
@@ -46,10 +47,29 @@ session on the web port. nginx sets them on every request, so a client never cho
 - **gRPC-web** without a session: HTTP 200 with `grpc-status: 16` (UNAUTHENTICATED) and an empty
   body, a trailers-only response the gRPC-web client reports as an error instead of following a
   redirect.
-- **Authenticated but refused** (oauth2-proxy answers 403, for instance `allowedGroups`): a plain
-  403, never a redirect, so no login loop.
+- **Authenticated but refused** (oauth2-proxy answers 403, for instance `allowedGroups` or
+  `emailDomains`): a page gets a plain 403, never a redirect, so no login loop; a gRPC-web call
+  gets HTTP 200 with `grpc-status: 7` (PERMISSION_DENIED), trailers-only like the 401 case.
 - **Unauthenticated routes**: `sso.healthPath` (default `/healthz`, 200 for load balancer health
   checks) and `/oauth2/*`.
+
+## Canonical host
+
+A login must start on the host the IdP returns to: oauth2-proxy sets its CSRF cookie on the host
+the browser used, and the callback goes to `publicUrl`. Opened on another name or on an IP, the
+callback finds no CSRF cookie and the login fails. So, before `auth_request`, the web port answers
+any request whose host differs from `publicUrl`'s with a 302 to `<publicUrl><request URI>`, gRPC-web
+calls included.
+
+- The host is compared without its port and case-insensitively. A request on the right host but
+  another port (a `kubectl port-forward`, a NodePort) is not redirected: cookies ignore the port, so
+  the login works and lands on the `publicUrl` port after the callback. That port must be reachable.
+- Exempt, answered on any host: `sso.healthPath`, and the sidecar probes `/oauth2/ping` and
+  `/oauth2/ready`, which the kubelet sends with the pod IP as host.
+
+oauth2-proxy also names each CSRF cookie after its login attempt (`cookieCsrfPerRequest`), so
+parallel requests without a session, a page and its favicon for instance, each start a login
+without overwriting each other's cookie. Each expires after `cookieCsrfExpire`.
 
 ## Identity
 
@@ -69,7 +89,7 @@ a `commonName` and no `fingerprint`, while nginx always sends `sso.fingerprint` 
 
 | Value | Default | Notes |
 |---|---|---|
-| `sso.enabled` | `false` | |
+| `sso.enabled` | `false` | A boolean: a string such as `"false"` fails the render |
 | `sso.publicUrl` | `""` | Required. `scheme://host[:port]`, no path. Redirect URI `<publicUrl>/oauth2/callback`; `https` makes the cookie Secure |
 | `sso.identityMode` | `user` | `user` or `group` |
 | `sso.identityClaim` | `email` | `email`, `preferred_username` or `user` (the `sub` claim, oauth2-proxy's user) |
@@ -90,6 +110,8 @@ a `commonName` and no `fingerprint`, while nginx always sends `sso.fingerprint` 
 | `sso.oauth2Proxy.cookieExpire` | `8h` | Session lifetime |
 | `sso.oauth2Proxy.cookieRefresh` | `0` | Disabled; must stay 0 with `sessionCookieMinimal` |
 | `sso.oauth2Proxy.sessionCookieMinimal` | `true` | Identity only in the cookie, no OAuth tokens |
+| `sso.oauth2Proxy.cookieCsrfPerRequest` | `true` | One CSRF cookie per login attempt |
+| `sso.oauth2Proxy.cookieCsrfExpire` | `15m` | CSRF cookie lifetime |
 | `sso.oauth2Proxy.extraArgs` | `[]` | `--ping-user-agent` and `--gcp-healthchecks` are refused |
 | `sso.oauth2Proxy.resources`, `securityContext` | `{}` | securityContext defaults to the chart's, read-only root filesystem |
 | `sso.networkPolicy.idpEgressCidrs` | `[]` | Required once a NetworkPolicy selects the nginx pod |

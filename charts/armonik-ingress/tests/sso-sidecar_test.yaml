@@ -78,6 +78,8 @@ tests:
             - --cookie-expire=8h
             - --cookie-refresh=0
             - --session-cookie-minimal=true
+            - --cookie-csrf-per-request=true
+            - --cookie-csrf-expire=15m
             - --ping-path=/oauth2/ping
             - --ready-path=/oauth2/ready
             - --silence-ping-logging=true
@@ -99,6 +101,21 @@ tests:
       - notMatchRegex:
           path: spec.target.template.data["armonik.conf"]
           pattern: '(?s)(proxy_pass http://127\.0\.0\.1:4180;.*){4}'
+
+  - it: shares one CSRF cookie across logins and sets its lifetime when asked
+    template: deployments/nginx.yaml
+    set:
+      sso:
+        oauth2Proxy:
+          cookieCsrfPerRequest: false
+          cookieCsrfExpire: 5m
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[1].args
+          content: --cookie-csrf-per-request=false
+      - contains:
+          path: spec.template.spec.containers[1].args
+          content: --cookie-csrf-expire=5m
 
   - it: keeps the OAuth tokens and refreshes once sessionCookieMinimal is off
     template: deployments/nginx.yaml

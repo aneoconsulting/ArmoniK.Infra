@@ -57,7 +57,8 @@ flowchart LR
   recomputing it later would diff against a lower branch that may have been
   amended or squash-merged since. A commit's record is the union of all its
   record check runs, the earliest fingerprint winning, so concurrent runs cannot
-  lose one.
+  lose one. A run is written only when the record grows, so a commit nobody
+  approved carries none.
 - **Dismissed** when the head changed since the approval was last fresh, or
   when the approved commit no longer exists or shares no history with the base.
 - **Kept, with the check failing,** when only the base moved: a lower pull
@@ -80,10 +81,13 @@ fetch error blocks rather than dismisses. Its details link to the evaluator run,
 whose log lists each approval.
 
 It is a commit status rather than a check run: a check run created through the
-API joins the commit's oldest GitHub Actions check suite, and a pull request
-ignores that suite, check run included, once its workflow ran again on the same
-commit, as when one push sends two events. The record check runs are read
-whatever suite they are in.
+API joins an existing GitHub Actions check suite of the commit, apparently the
+oldest, with no way to choose. A pull request keeps only the latest run of each
+workflow and hides the whole suite of an earlier one, so when that workflow
+runs again on the same commit, as when one push sends two events, the check run
+is hidden with it. A status belongs to no suite. The record cannot move to the
+status, whose description holds about 140 characters; the record check runs
+stay readable through the API whatever their suite.
 
 ## When the check fails
 
@@ -140,7 +144,8 @@ a fork run awaits approval. The next pull request event, or a manual run of the
 - **Non-head records.** An approval first seen on a non-head commit records its
   fingerprint on that commit with a failing status, so a forced push back to
   it stays blocked until evaluated.
-- **Cost.** Evaluating a pull request takes 3 REST API calls, plus 1 per
-  approved commit other than the head, plus the writes and dismissals that
-  something changed, against the `GITHUB_TOKEN` limit of 1,000 per hour. A
-  head that moved during the evaluation repeats it.
+- **Cost.** Evaluating a pull request takes 4 REST API calls, plus 1 per
+  approved commit other than the head, plus a status read per such commit
+  whose record grows, plus the writes and dismissals that something changed,
+  against the `GITHUB_TOKEN` limit of 1,000 per hour. A head that moved during
+  the evaluation repeats it.

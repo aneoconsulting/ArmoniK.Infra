@@ -1,0 +1,142 @@
+# GKE Autopilot profile, over the all-in-one defaults. Autopilot rejects at admission any pod with
+# host namespaces or a hostPath outside /var/log (read-only), which fails the whole helm install, and
+# bills a container without requests 0.5 vCPU and 2 GiB.
+#
+# Node metrics then come from GKE (Cloud Monitoring, Managed Service for Prometheus), not from
+# node-exporter.
+operators:
+  kube-prometheus:
+    # hostNetwork, hostPID and hostPath /proc and /sys
+    nodeExporter:
+      enabled: false
+    # hostNetwork and hostPID. Stated even though the kube-prometheus-stack default is false: rendered
+    # from this umbrella, three levels down, helm ignores that default in the subchart condition and
+    # deploys windows-exporter on every install (armonik-operators alone does not). Same trap for any
+    # condition of a kube-prometheus-stack subchart left at its default.
+    windowsMonitoring:
+      enabled: false
+    prometheusOperator:
+      resources:
+        requests:
+          cpu: 50m
+          memory: 128Mi
+      admissionWebhooks:
+        patch:
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+    kube-state-metrics:
+      resources:
+        requests:
+          cpu: 50m
+          memory: 128Mi
+  cert-manager:
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+    webhook:
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+    cainjector:
+      resources:
+        requests:
+          cpu: 50m
+          memory: 128Mi
+    startupapicheck:
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+  external-secrets:
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+    webhook:
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+    certController:
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+  mongodb-operator:
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+
+dependencies:
+  # Only /var/log stays mounted: the tail inputs read /var/log/containers, whose symlinks resolve
+  # under /var/log/pods.
+  fluent-bit:
+    daemonSetVolumes:
+      - name: varlog
+        hostPath:
+          path: /var/log
+          type: ''
+    daemonSetVolumeMounts:
+      - name: varlog
+        readOnly: true
+        mountPath: /var/log
+  grafana:
+    resources:
+      requests:
+        cpu: 50m
+        memory: 256Mi
+    sidecar:
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+  # Holds the objects when it is the object storage: size the memory to the dataset.
+  redis:
+    resources:
+      requests:
+        cpu: 250m
+        memory: 512Mi
+    initResources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+    metrics:
+      exporter:
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+  mongodb-exporter:
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+  seq:
+    resources:
+      requests:
+        cpu: 250m
+        memory: 1Gi
+
+compute-plane:
+  init:
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+  # The /cache emptyDir shared by the agent and the worker counts against the pod's ephemeral storage,
+  # 1 GiB by default and 10 GiB at most per pod on the general-purpose platform: payloads beyond it
+  # evict the pod.
+  partitionCommon:
+    agent:
+      resources:
+        requests:
+          ephemeral-storage: 1Gi
+    worker:
+      resources:
+        requests:
+          ephemeral-storage: 4Gi

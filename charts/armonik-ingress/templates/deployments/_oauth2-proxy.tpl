@@ -18,7 +18,7 @@ args:
   - "--provider=oidc"
   - {{ printf "--oidc-issuer-url=%s" $proxy.issuerUrl | quote }}
   - {{ printf "--client-id=%s" $proxy.clientId | quote }}
-  - "--http-address=127.0.0.1:4180"
+  - {{ include "armonik.ingress.oauth2Proxy.address" . | printf "--http-address=%s" | quote }}
   - "--reverse-proxy=true"
   - "--trusted-proxy-ip=127.0.0.1/32"
   - "--set-xauthrequest=true"

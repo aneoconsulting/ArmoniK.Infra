@@ -2,152 +2,272 @@
 sso values, validated, as YAML: `enabled: false` when sso is off, else the values plus publicUrl
 without a trailing slash, host (host[:port] of publicUrl), secure (publicUrl is https) and
 identityVar (the nginx variable carrying identityClaim from the auth subrequest). Takes the root.
+The single entry point: the armonik.ingress.sso.validate* helpers below fail and render nothing.
 */}}
 {{- define "armonik.ingress.sso" -}}
   {{- $sso := .Values.sso | default dict -}}
   {{- if not $sso.enabled -}}
 enabled: false
   {{- else -}}
-    {{- /* The default HTTPRoute matches content-type application/grpc exactly, so grpc+proto and
-           grpc+json reach the web port, and a Gateway terminating TLS leaves nginx unable to
-           verify client certificates on the grpc port. */ -}}
-    {{- if or .Values.gateway.enabled .Values.httpRoute.enabled -}}
-      {{- fail "sso.enabled is not supported with gateway mode yet: the HTTPRoute routes gRPC by an exact content-type match, so application/grpc+proto reaches the web port, and a Gateway terminating TLS leaves no client certificate for the grpc port to verify. Disable gateway.enabled and httpRoute.enabled." -}}
-    {{- end -}}
-    {{- $proxy := $sso.oauth2Proxy | default dict -}}
-    {{- $image := $proxy.image | default dict -}}
-    {{- $required := dict
-          "sso.publicUrl" $sso.publicUrl
-          "sso.oauth2Proxy.issuerUrl" $proxy.issuerUrl
-          "sso.oauth2Proxy.clientId" $proxy.clientId
-          "sso.oauth2Proxy.existingSecret" $proxy.existingSecret
-          "sso.oauth2Proxy.image.tag" $image.tag -}}
-    {{- range $key := keys $required | sortAlpha -}}
-      {{- if index $required $key | empty -}}
-        {{- printf "%s is required when sso.enabled" $key | fail -}}
-      {{- end -}}
+    {{- range list "Gateway" "Required" "Urls" "Image" "Identity" "Groups" "Health" "Cookie" "ExtraArgs" "ExternalSecret" "Network" -}}
+      {{- include (printf "armonik.ingress.sso.validate%s" .) $ -}}
     {{- end -}}
     {{- $url := $sso.publicUrl | toString | trimSuffix "/" -}}
-    {{- if not (regexMatch "^https?://[A-Za-z0-9.-]+(:[0-9]+)?$" $url) -}}
-      {{- printf "sso.publicUrl must be scheme://host[:port] with an http or https scheme and no path, got %q" $sso.publicUrl | fail -}}
-    {{- end -}}
-    {{- if not (regexMatch "^https?://[^ ]+$" ($proxy.issuerUrl | toString)) -}}
-      {{- printf "sso.oauth2Proxy.issuerUrl must be an http or https URL, got %q" $proxy.issuerUrl | fail -}}
-    {{- end -}}
-    {{- $version := regexFind "^v?[0-9]+\\.[0-9]+\\.[0-9]+" ($image.tag | toString) | trimPrefix "v" -}}
-    {{- if not $version -}}
-      {{- printf "sso.oauth2Proxy.image.tag must be an exact version tag such as v7.15.5, got %q" $image.tag | fail -}}
-    {{- end -}}
-    {{- if not (semverCompare ">=7.15.2" $version) -}}
-      {{- printf "sso.oauth2Proxy.image.tag %q is older than v7.15.2, which fixes CVE-2026-34457" $image.tag | fail -}}
-    {{- end -}}
-    {{- $mode := $sso.identityMode | default "" | toString -}}
-    {{- if not (has $mode (list "user" "group")) -}}
-      {{- printf "sso.identityMode must be user or group, got %q" $mode | fail -}}
-    {{- end -}}
-    {{- $vars := dict
-          "email" "$upstream_http_x_auth_request_email"
-          "preferred_username" "$upstream_http_x_auth_request_preferred_username"
-          "user" "$upstream_http_x_auth_request_user" -}}
-    {{- $claim := $sso.identityClaim | default "" | toString -}}
-    {{- if not (hasKey $vars $claim) -}}
-      {{- printf "sso.identityClaim must be email, preferred_username or user, got %q" $claim | fail -}}
-    {{- end -}}
-    {{- if $sso.fingerprint | empty -}}
-      {{- fail "sso.fingerprint must be non-empty: ArmoniK Core rejects a request without a fingerprint header" -}}
-    {{- end -}}
-    {{- /* These land inside quoted nginx strings and header values. */ -}}
-    {{- $safe := "^[A-Za-z0-9._:@+=/-]*$" -}}
-    {{- $literals := dict "sso.fingerprint" $sso.fingerprint "sso.cnPrefix" $sso.cnPrefix "sso.groupCnPrefix" $sso.groupCnPrefix -}}
-    {{- range $key := keys $literals | sortAlpha -}}
-      {{- $value := index $literals $key | default "" | toString -}}
-      {{- if not (regexMatch $safe $value) -}}
-        {{- printf "%s may only hold letters, digits and ._:@+=/-, got %q" $key $value | fail -}}
-      {{- end -}}
-    {{- end -}}
-    {{- if eq $mode "group" -}}
-      {{- if not $sso.groupMapping -}}
-        {{- fail "sso.groupMapping must list at least one {group, cn} with sso.identityMode=group" -}}
-      {{- end -}}
-      {{- range $i, $entry := $sso.groupMapping -}}
-        {{- $entry = $entry | default dict -}}
-        {{- $group := $entry.group | default "" | toString -}}
-        {{- $cn := $entry.cn | default "" | toString -}}
-        {{- if or (not $group) (not $cn) -}}
-          {{- printf "sso.groupMapping[%d] needs a non-empty group and cn" $i | fail -}}
-        {{- end -}}
-        {{- if regexMatch "[\"\\\\,[:cntrl:]]" $group -}}
-          {{- printf "sso.groupMapping[%d].group may not contain a double quote, a backslash, a comma or a control character, got %q" $i $group | fail -}}
-        {{- end -}}
-        {{- if not (regexMatch $safe $cn) -}}
-          {{- printf "sso.groupMapping[%d].cn may only hold letters, digits and ._:@+=/-, got %q" $i $cn | fail -}}
-        {{- end -}}
-      {{- end -}}
-    {{- end -}}
-    {{- $health := $sso.healthPath | default "" | toString -}}
-    {{- if or (not (regexMatch "^/[A-Za-z0-9._-]+$" $health)) (regexMatch "(?i)^/(oauth2|admin|static|seq|grafana)$|^/armonik\\." $health) -}}
-      {{- printf "sso.healthPath must be a single path segment such as /healthz, outside the routes nginx already serves, got %q" $health | fail -}}
-    {{- end -}}
-    {{- $duration := "^([0-9]+(\\.[0-9]+)?(ns|us|ms|s|m|h))+$" -}}
-    {{- range $key := list "cookieExpire" "cookieRefresh" -}}
-      {{- $value := index $proxy $key | toString -}}
-      {{- if not (or (eq $value "0") (regexMatch $duration $value)) -}}
-        {{- printf "sso.oauth2Proxy.%s must be a duration such as 8h or 30m, or 0, got %q" $key $value | fail -}}
-      {{- end -}}
-    {{- end -}}
-    {{- if kindIs "bool" $proxy.sessionCookieMinimal | not -}}
-      {{- printf "sso.oauth2Proxy.sessionCookieMinimal must be true or false, got %v" $proxy.sessionCookieMinimal | fail -}}
-    {{- end -}}
-    {{- /* oauth2-proxy refuses to start otherwise (pkg/validation/sessions.go). A valid duration
-           is zero when it has no non-zero digit. */ -}}
-    {{- if and $proxy.sessionCookieMinimal (regexMatch "[1-9]" ($proxy.cookieRefresh | toString)) -}}
-      {{- printf "sso.oauth2Proxy.cookieRefresh must be 0 with sso.oauth2Proxy.sessionCookieMinimal, got %q: refreshing needs the OAuth tokens a minimal cookie drops" ($proxy.cookieRefresh | toString) | fail -}}
-    {{- end -}}
-    {{- range $proxy.extraArgs -}}
-      {{- if regexMatch "^--?(ping-user-agent|gcp-healthchecks)(=|$)" (toString .) -}}
-        {{- printf "sso.oauth2Proxy.extraArgs: %q is refused, health check User-Agents bypass auth_request (CVE-2026-34457)" (toString .) | fail -}}
-      {{- end -}}
-    {{- end -}}
-    {{- $hc := .Values.healthCheckPolicy | default dict -}}
-    {{- if $hc.enabled -}}
-      {{- $hcConfig := list $hc "default" "config" | include "armonik.utils.index" | fromYaml | default dict -}}
-      {{- if eq ($hcConfig.type | default "TCP") "HTTP" -}}
-        {{- $path := list $hcConfig "httpHealthCheck" "requestPath" | include "armonik.utils.index" -}}
-        {{- if ne $path $health -}}
-          {{- printf "healthCheckPolicy.default.config.httpHealthCheck.requestPath must be sso.healthPath (%s) with sso.enabled, every other path requiring a session, got %q" $health $path | fail -}}
-        {{- end -}}
-      {{- end -}}
-    {{- end -}}
-    {{- $eso := $proxy.externalSecret | default dict -}}
-    {{- if $eso.storeName -}}
-      {{- $ops := include "armonik.operators" . | fromYaml -}}
-      {{- if not $ops.externalSecrets.available -}}
-        {{- fail "sso.oauth2Proxy.externalSecret.storeName needs global.armonik.operators.externalSecrets.available" -}}
-      {{- end -}}
-      {{- range $item := list "clientSecret" "cookieSecret" -}}
-        {{- if list $eso $item "key" | include "armonik.utils.index" | empty -}}
-          {{- printf "sso.oauth2Proxy.externalSecret.%s.key is required with externalSecret.storeName" $item | fail -}}
-        {{- end -}}
-      {{- end -}}
-    {{- end -}}
-    {{- $cidrs := list $sso "networkPolicy" "idpEgressCidrs" | include "armonik.utils.index" | fromYamlArray | default list -}}
-    {{- range $cidrs -}}
-      {{- if not (regexMatch "^[0-9A-Fa-f:.]+/[0-9]{1,3}$" (toString .)) -}}
-        {{- printf "sso.networkPolicy.idpEgressCidrs: %q is not a CIDR" (toString .) | fail -}}
-      {{- end -}}
-    {{- end -}}
-    {{- if and (list .Values "networkPolicy" "enabled" | include "armonik.utils.index") (empty $cidrs) -}}
-      {{- fail "sso.networkPolicy.idpEgressCidrs must list the IdP's CIDRs with networkPolicy.enabled: oauth2-proxy reaches the IdP on TCP 443 from the nginx pod" -}}
-    {{- end -}}
+    {{- $claim := $sso.identityClaim | toString -}}
     {{- $out := deepCopy $sso -}}
     {{- $_ := set $out "publicUrl" $url -}}
     {{- $_ := regexReplaceAll "^https?://" $url "" | set $out "host" -}}
     {{- $_ := hasPrefix "https://" $url | set $out "secure" -}}
-    {{- $_ := index $vars $claim | set $out "identityVar" -}}
-    {{- $_ := set $out "idpEgressCidrs" $cidrs -}}
+    {{- $_ := index (include "armonik.ingress.sso.identityVars" . | fromYaml) $claim | set $out "identityVar" -}}
+    {{- $_ := list $sso "networkPolicy" "idpEgressCidrs" | include "armonik.utils.index" | fromYamlArray | default list | set $out "idpEgressCidrs" -}}
     {{- $out | toYaml -}}
   {{- end -}}
 {{- end -}}
+
+{{/* nginx variable per identityClaim, read from the auth subrequest. */}}
+{{- define "armonik.ingress.sso.identityVars" -}}
+email: $upstream_http_x_auth_request_email
+preferred_username: $upstream_http_x_auth_request_preferred_username
+user: $upstream_http_x_auth_request_user
+{{- end -}}
+
+{{/* The default HTTPRoute matches content-type application/grpc exactly, so grpc+proto and
+     grpc+json reach the web port, and a Gateway terminating TLS leaves nginx unable to verify
+     client certificates on the grpc port. */}}
+{{- define "armonik.ingress.sso.validateGateway" -}}
+  {{- if or .Values.gateway.enabled .Values.httpRoute.enabled -}}
+    {{- fail "sso.enabled is not supported with gateway mode yet: the HTTPRoute routes gRPC by an exact content-type match, so application/grpc+proto reaches the web port, and a Gateway terminating TLS leaves no client certificate for the grpc port to verify. Disable gateway.enabled and httpRoute.enabled." -}}
+  {{- end -}}
+{{- end -}}
+
+{{- define "armonik.ingress.sso.validateRequired" -}}
+  {{- $sso := .Values.sso -}}
+  {{- $proxy := $sso.oauth2Proxy | default dict -}}
+  {{- $required := dict
+        "sso.publicUrl" $sso.publicUrl
+        "sso.oauth2Proxy.issuerUrl" $proxy.issuerUrl
+        "sso.oauth2Proxy.clientId" $proxy.clientId
+        "sso.oauth2Proxy.existingSecret" $proxy.existingSecret
+        "sso.oauth2Proxy.image.tag" (list $proxy "image" "tag" | include "armonik.utils.index") -}}
+  {{- range $key := keys $required | sortAlpha -}}
+    {{- if index $required $key | empty -}}
+      {{- printf "%s is required when sso.enabled" $key | fail -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+
+{{- define "armonik.ingress.sso.validateUrls" -}}
+  {{- $sso := .Values.sso -}}
+  {{- if not (regexMatch "^https?://[A-Za-z0-9.-]+(:[0-9]+)?$" ($sso.publicUrl | toString | trimSuffix "/")) -}}
+    {{- printf "sso.publicUrl must be scheme://host[:port] with an http or https scheme and no path, got %q" $sso.publicUrl | fail -}}
+  {{- end -}}
+  {{- if not (regexMatch "^https?://[^ ]+$" ($sso.oauth2Proxy.issuerUrl | toString)) -}}
+    {{- printf "sso.oauth2Proxy.issuerUrl must be an http or https URL, got %q" $sso.oauth2Proxy.issuerUrl | fail -}}
+  {{- end -}}
+{{- end -}}
+
+{{- define "armonik.ingress.sso.validateImage" -}}
+  {{- $tag := .Values.sso.oauth2Proxy.image.tag | toString -}}
+  {{- $version := regexFind "^v?[0-9]+\\.[0-9]+\\.[0-9]+" $tag | trimPrefix "v" -}}
+  {{- if not $version -}}
+    {{- printf "sso.oauth2Proxy.image.tag must be an exact version tag such as v7.15.5, got %q" $tag | fail -}}
+  {{- end -}}
+  {{- if not (semverCompare ">=7.15.2" $version) -}}
+    {{- printf "sso.oauth2Proxy.image.tag %q is older than v7.15.2, which fixes CVE-2026-34457" $tag | fail -}}
+  {{- end -}}
+{{- end -}}
+
+{{/* These land inside quoted nginx strings and header values. Takes {key, value}. */}}
+{{- define "armonik.ingress.sso.validateLiteral" -}}
+  {{- $value := .value | default "" | toString -}}
+  {{- if not (regexMatch "^[A-Za-z0-9._:@+=/-]*$" $value) -}}
+    {{- printf "%s may only hold letters, digits and ._:@+=/-, got %q" .key $value | fail -}}
+  {{- end -}}
+{{- end -}}
+
+{{- define "armonik.ingress.sso.validateIdentity" -}}
+  {{- $sso := .Values.sso -}}
+  {{- $mode := $sso.identityMode | default "" | toString -}}
+  {{- if not (has $mode (list "user" "group")) -}}
+    {{- printf "sso.identityMode must be user or group, got %q" $mode | fail -}}
+  {{- end -}}
+  {{- $claim := $sso.identityClaim | default "" | toString -}}
+  {{- if not (hasKey (include "armonik.ingress.sso.identityVars" . | fromYaml) $claim) -}}
+    {{- printf "sso.identityClaim must be email, preferred_username or user, got %q" $claim | fail -}}
+  {{- end -}}
+  {{- if $sso.fingerprint | empty -}}
+    {{- fail "sso.fingerprint must be non-empty: ArmoniK Core rejects a request without a fingerprint header" -}}
+  {{- end -}}
+  {{- range $key := list "cnPrefix" "fingerprint" "groupCnPrefix" -}}
+    {{- dict "key" (printf "sso.%s" $key) "value" (index $sso $key) | include "armonik.ingress.sso.validateLiteral" -}}
+  {{- end -}}
+{{- end -}}
+
+{{- define "armonik.ingress.sso.validateGroups" -}}
+  {{- $sso := .Values.sso -}}
+  {{- if eq ($sso.identityMode | toString) "group" -}}
+    {{- if not $sso.groupMapping -}}
+      {{- fail "sso.groupMapping must list at least one {group, cn} with sso.identityMode=group" -}}
+    {{- end -}}
+    {{- range $i, $entry := $sso.groupMapping -}}
+      {{- $entry = $entry | default dict -}}
+      {{- $group := $entry.group | default "" | toString -}}
+      {{- $cn := $entry.cn | default "" | toString -}}
+      {{- if or (not $group) (not $cn) -}}
+        {{- printf "sso.groupMapping[%d] needs a non-empty group and cn" $i | fail -}}
+      {{- end -}}
+      {{- if regexMatch "[\"\\\\,[:cntrl:]]" $group -}}
+        {{- printf "sso.groupMapping[%d].group may not contain a double quote, a backslash, a comma or a control character, got %q" $i $group | fail -}}
+      {{- end -}}
+      {{- dict "key" (printf "sso.groupMapping[%d].cn" $i) "value" $cn | include "armonik.ingress.sso.validateLiteral" -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+
+{{/* healthPath, and an HTTP HealthCheckPolicy probing it: every other path requires a session. */}}
+{{- define "armonik.ingress.sso.validateHealth" -}}
+  {{- $health := .Values.sso.healthPath | default "" | toString -}}
+  {{- if or (not (regexMatch "^/[A-Za-z0-9._-]+$" $health)) (regexMatch "(?i)^/(oauth2|admin|static|seq|grafana)$|^/armonik\\." $health) -}}
+    {{- printf "sso.healthPath must be a single path segment such as /healthz, outside the routes nginx already serves, got %q" $health | fail -}}
+  {{- end -}}
+  {{- $hc := .Values.healthCheckPolicy | default dict -}}
+  {{- if $hc.enabled -}}
+    {{- $hcConfig := list $hc "default" "config" | include "armonik.utils.index" | fromYaml | default dict -}}
+    {{- if eq ($hcConfig.type | default "TCP") "HTTP" -}}
+      {{- $path := list $hcConfig "httpHealthCheck" "requestPath" | include "armonik.utils.index" -}}
+      {{- if ne $path $health -}}
+        {{- printf "healthCheckPolicy.default.config.httpHealthCheck.requestPath must be sso.healthPath (%s) with sso.enabled, every other path requiring a session, got %q" $health $path | fail -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+
+{{- define "armonik.ingress.sso.validateCookie" -}}
+  {{- $proxy := .Values.sso.oauth2Proxy -}}
+  {{- range $key := list "cookieExpire" "cookieRefresh" -}}
+    {{- $value := index $proxy $key | toString -}}
+    {{- if not (include "armonik.ingress.isDuration" $value) -}}
+      {{- printf "sso.oauth2Proxy.%s must be a duration such as 8h or 30m, or 0, got %q" $key $value | fail -}}
+    {{- end -}}
+  {{- end -}}
+  {{- if kindIs "bool" $proxy.sessionCookieMinimal | not -}}
+    {{- printf "sso.oauth2Proxy.sessionCookieMinimal must be true or false, got %v" $proxy.sessionCookieMinimal | fail -}}
+  {{- end -}}
+  {{- /* oauth2-proxy refuses to start otherwise (pkg/validation/sessions.go). */ -}}
+  {{- if and $proxy.sessionCookieMinimal (not (include "armonik.ingress.durationIsZero" ($proxy.cookieRefresh | toString))) -}}
+    {{- printf "sso.oauth2Proxy.cookieRefresh must be 0 with sso.oauth2Proxy.sessionCookieMinimal, got %q: refreshing needs the OAuth tokens a minimal cookie drops" ($proxy.cookieRefresh | toString) | fail -}}
+  {{- end -}}
+{{- end -}}
+
+{{- define "armonik.ingress.sso.validateExtraArgs" -}}
+  {{- range .Values.sso.oauth2Proxy.extraArgs -}}
+    {{- if regexMatch "^--?(ping-user-agent|gcp-healthchecks)(=|$)" (toString .) -}}
+      {{- printf "sso.oauth2Proxy.extraArgs: %q is refused, health check User-Agents bypass auth_request (CVE-2026-34457)" (toString .) | fail -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+
+{{- define "armonik.ingress.sso.validateExternalSecret" -}}
+  {{- $eso := .Values.sso.oauth2Proxy.externalSecret | default dict -}}
+  {{- if $eso.storeName -}}
+    {{- $ops := include "armonik.operators" . | fromYaml -}}
+    {{- if not $ops.externalSecrets.available -}}
+      {{- fail "sso.oauth2Proxy.externalSecret.storeName needs global.armonik.operators.externalSecrets.available" -}}
+    {{- end -}}
+    {{- range $item := list "clientSecret" "cookieSecret" -}}
+      {{- if list $eso $item "key" | include "armonik.utils.index" | empty -}}
+        {{- printf "sso.oauth2Proxy.externalSecret.%s.key is required with externalSecret.storeName" $item | fail -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+
+{{- define "armonik.ingress.sso.validateNetwork" -}}
+  {{- $cidrs := list .Values.sso "networkPolicy" "idpEgressCidrs" | include "armonik.utils.index" | fromYamlArray | default list -}}
+  {{- range $cidrs -}}
+    {{- if not (toString . | include "armonik.ingress.isCidr") -}}
+      {{- printf "sso.networkPolicy.idpEgressCidrs: %q is not a CIDR" (toString .) | fail -}}
+    {{- end -}}
+  {{- end -}}
+  {{- if and (list .Values "networkPolicy" "enabled" | include "armonik.utils.index") (empty $cidrs) -}}
+    {{- fail "sso.networkPolicy.idpEgressCidrs must list the IdP's CIDRs with networkPolicy.enabled: oauth2-proxy reaches the IdP on TCP 443 from the nginx pod" -}}
+  {{- end -}}
+{{- end -}}
+
+{{/* "true" when the string is a Go duration oauth2-proxy accepts (8h, 1h30m, 0.5s) or 0, else empty. */}}
+{{- define "armonik.ingress.isDuration" -}}
+  {{- regexMatch "^0$|^([0-9]+(\\.[0-9]+)?(ns|us|ms|s|m|h))+$" . | ternary "true" "" -}}
+{{- end -}}
+
+{{/* "true" when the string is a zero duration (0, 0s, 0h0m, 0.0s), else empty. */}}
+{{- define "armonik.ingress.durationIsZero" -}}
+  {{- regexMatch "^0$|^(0+(\\.0+)?(ns|us|ms|s|m|h))+$" . | ternary "true" "" -}}
+{{- end -}}
+
+{{/* "true" when the string is an IPv4 CIDR (octets 0-255, prefix 0-32) or an IPv6 one in hex
+     notation (prefix 0-128), else empty. */}}
+{{- define "armonik.ingress.isCidr" -}}
+  {{- $octet := "(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])" -}}
+  {{- $ipv4 := printf "^(%s\\.){3}%s/(3[0-2]|[12]?[0-9])$" $octet $octet -}}
+  {{- $h := "[0-9A-Fa-f]{1,4}" -}}
+  {{- $forms := list
+        (printf "(%s:){7}%s" $h $h)
+        (printf "(%s:){1,7}:" $h)
+        (printf "(%s:){1,6}:%s" $h $h)
+        (printf "(%s:){1,5}(:%s){1,2}" $h $h)
+        (printf "(%s:){1,4}(:%s){1,3}" $h $h)
+        (printf "(%s:){1,3}(:%s){1,4}" $h $h)
+        (printf "(%s:){1,2}(:%s){1,5}" $h $h)
+        (printf "%s:(:%s){1,6}" $h $h)
+        (printf ":((:%s){1,7}|:)" $h) -}}
+  {{- $ipv6 := printf "^(%s)/(12[0-8]|1[01][0-9]|[1-9]?[0-9])$" (join "|" $forms) -}}
+  {{- or (regexMatch $ipv4 .) (regexMatch $ipv6 .) | ternary "true" "" -}}
+{{- end -}}
+
+{{/* Loopback address of the oauth2-proxy sidecar: its --http-address and nginx's proxy_pass. */}}
+{{- define "armonik.ingress.oauth2Proxy.address" -}}
+127.0.0.1:4180
+{{- end -}}
+
+{{/*
+One nginx location proxying to oauth2-proxy. subrequest: the internal auth_request target, sent no
+body and headers oauth2-proxy trusts from nginx; else a browser route carrying the original URI
+in X-Auth-Request-Redirect. Takes {match, subrequest, rewrite}.
+*/}}
+{{- define "armonik.ingress.conf.oauth2ProxyLocation" }}
+    location {{ .match }} {
+        {{- if .subrequest }}
+        internal;
+        {{- end }}
+        auth_request off;
+        {{- with .rewrite }}
+        rewrite {{ . }};
+        {{- end }}
+        proxy_pass http://{{ include "armonik.ingress.oauth2Proxy.address" . }};
+        # Response headers past the 4 KB default: X-Auth-Request-Groups, Set-Cookie
+        proxy_buffer_size 64k;
+        proxy_buffers 8 64k;
+        proxy_busy_buffers_size 128k;
+        {{- if .subrequest }}
+        proxy_pass_request_body off;
+        proxy_set_header Content-Length "";
+        {{- end }}
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $remote_addr;
+        proxy_set_header X-Forwarded-Proto $real_scheme;
+        {{- if .subrequest }}
+        proxy_set_header X-Original-URI $request_uri;
+        # Never the client's: oauth2-proxy trusts these from nginx (GHSA-7x63-xv5r-3p2x)
+        proxy_set_header X-Forwarded-Uri $request_uri;
+        # Never a health check User-Agent (CVE-2026-34457)
+        proxy_set_header User-Agent "nginx-auth-request";
+        {{- else }}
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Auth-Request-Redirect $request_uri;
+        {{- end }}
+    }
+{{- end }}
 
 {{/*
 nginx locations of the web server under SSO: the health path, the oauth2-proxy routes, and the two
@@ -163,55 +283,9 @@ trailers-only UNAUTHENTICATED. Takes the server dict.
         default_type text/plain;
         return 200 "ok\n";
     }
-    location /oauth2/ {
-        auth_request off;
-        proxy_pass http://127.0.0.1:4180;
-        # Response headers past the 4 KB default: X-Auth-Request-Groups, Set-Cookie
-        proxy_buffer_size 64k;
-        proxy_buffers 8 64k;
-        proxy_busy_buffers_size 128k;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $remote_addr;
-        proxy_set_header X-Forwarded-Proto $real_scheme;
-        proxy_set_header X-Forwarded-Host $host;
-        proxy_set_header X-Auth-Request-Redirect $request_uri;
-    }
-    location = /oauth2/auth {
-        internal;
-        auth_request off;
-        proxy_pass http://127.0.0.1:4180;
-        # Response headers past the 4 KB default: X-Auth-Request-Groups, Set-Cookie
-        proxy_buffer_size 64k;
-        proxy_buffers 8 64k;
-        proxy_busy_buffers_size 128k;
-        proxy_pass_request_body off;
-        proxy_set_header Content-Length "";
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $remote_addr;
-        proxy_set_header X-Forwarded-Proto $real_scheme;
-        proxy_set_header X-Original-URI $request_uri;
-        # Never the client's: oauth2-proxy trusts these from nginx (GHSA-7x63-xv5r-3p2x)
-        proxy_set_header X-Forwarded-Uri $request_uri;
-        # Never a health check User-Agent (CVE-2026-34457)
-        proxy_set_header User-Agent "nginx-auth-request";
-    }
-    location @sso_login {
-        auth_request off;
-        rewrite ^ /oauth2/start? break;
-        proxy_pass http://127.0.0.1:4180;
-        # Response headers past the 4 KB default: X-Auth-Request-Groups, Set-Cookie
-        proxy_buffer_size 64k;
-        proxy_buffers 8 64k;
-        proxy_busy_buffers_size 128k;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $remote_addr;
-        proxy_set_header X-Forwarded-Proto $real_scheme;
-        proxy_set_header X-Forwarded-Host $host;
-        proxy_set_header X-Auth-Request-Redirect $request_uri;
-    }
+{{- dict "match" "/oauth2/" | include "armonik.ingress.conf.oauth2ProxyLocation" }}
+{{- dict "match" "= /oauth2/auth" "subrequest" true | include "armonik.ingress.conf.oauth2ProxyLocation" }}
+{{- dict "match" "@sso_login" "rewrite" "^ /oauth2/start? break" | include "armonik.ingress.conf.oauth2ProxyLocation" }}
     location @grpc_unauthenticated {
         auth_request off;
         # default_type takes no variable: empty, it emits no Content-Type of its own

@@ -18,15 +18,15 @@ locals {
 
 # The Artifact Registry service agent must exist before it can be granted the key
 resource "google_project_service_identity" "kms" {
-  count    = var.kms_key_id != null ? 1 : 0
+  count    = var.kms_key != null ? 1 : 0
   provider = google-beta
   project  = local.project
   service  = "artifactregistry.googleapis.com"
 }
 
 resource "google_kms_crypto_key_iam_member" "kms" {
-  count         = var.kms_key_id != null ? 1 : 0
-  crypto_key_id = var.kms_key_id
+  count         = var.kms_key != null ? 1 : 0
+  crypto_key_id = var.kms_key.id
   member        = "serviceAccount:${google_project_service_identity.kms[0].email}"
   role          = "roles/cloudkms.cryptoKeyEncrypterDecrypter"
 }
@@ -40,7 +40,7 @@ resource "google_artifact_registry_repository" "remote" {
   description   = coalesce(each.value.description, "Cache of ${coalesce(each.value.uri, each.value.public_repository)}")
   format        = "DOCKER"
   mode          = "REMOTE_REPOSITORY"
-  kms_key_name  = var.kms_key_id
+  kms_key_name  = try(var.kms_key.id, null)
   labels        = local.labels
   remote_repository_config {
     docker_repository {
@@ -65,7 +65,7 @@ resource "google_artifact_registry_repository" "standard" {
   description   = "Private images of ${var.name}"
   format        = "DOCKER"
   mode          = "STANDARD_REPOSITORY"
-  kms_key_name  = var.kms_key_id
+  kms_key_name  = try(var.kms_key.id, null)
   labels        = local.labels
   docker_config {
     immutable_tags = var.standard_repository.immutable_tags

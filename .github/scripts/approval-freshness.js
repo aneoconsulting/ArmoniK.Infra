@@ -132,10 +132,14 @@ module.exports = async ({ github, context, core }) => {
     }
     const extended = canonical(record);
     if (JSON.stringify(extended) !== JSON.stringify(await recordOf(sha))) {
+      const prints = Object.keys(extended.prints).length;
+      const fresh = extended.fresh.length;
       await github.rest.checks.create({
         owner, repo, name: RECORDS[0], head_sha: sha, status: 'completed', conclusion: 'neutral',
         output: {
-          title: `${Object.keys(extended.prints).length} approval fingerprint(s)`, summary,
+          title: [prints && `${prints} approval fingerprint(s)`, fresh && `${fresh} fresh approval(s)`]
+            .filter(Boolean).join(', '),
+          summary,
           text: `<!-- approval-freshness ${JSON.stringify(extended)} -->`,
         },
       });

@@ -12,7 +12,7 @@ variable "name" {
 
 # Docker image
 variable "docker_image" {
-  description = "Docker image for windows exporter"
+  description = "Docker image for windows exporter, version 0.31 or later"
   type = object({
     image              = string
     tag                = string

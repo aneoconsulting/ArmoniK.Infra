@@ -19,8 +19,8 @@ resource "google_storage_bucket" "gcs" {
   project       = data.google_client_config.current.project
   storage_class = var.storage_class
   labels        = merge(var.labels, { module = "gcs" })
-  # Access goes through IAM only (var.roles): no ACL on the bucket nor on its objects
-  uniform_bucket_level_access = true
+  # Access goes through IAM only (var.roles) by default, ACLs being kept only for the S3 adapter of Core
+  uniform_bucket_level_access = var.uniform_bucket_level_access
   # "enforced" rejects any grant to allUsers or allAuthenticatedUsers, whatever the organization policy
   public_access_prevention = var.public_access_prevention
   dynamic "autoclass" {

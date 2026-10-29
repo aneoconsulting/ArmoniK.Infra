@@ -42,7 +42,8 @@ module "complete_gke" {
   regional            = false
   zones               = ["${var.region}-a"]
   deletion_protection = false
-  # Only this CIDR block reaches the public endpoint; the DNS endpoint accepts any caller with IAM permissions
+  # Public IP endpoint reachable from this CIDR block only; the DNS endpoint accepts any caller with IAM permissions
+  enable_private_endpoint = false
   master_authorized_networks = [
     {
       cidr_block   = var.authorized_cidr_block
@@ -50,37 +51,23 @@ module "complete_gke" {
     }
   ]
   dns_allow_external_traffic = true
-  database_encryption = [
-    {
-      state    = "ENCRYPTED"
-      key_name = module.kms.crypto_key_ids["gke-secrets"]
-    }
-  ]
-  node_pools = [
-    {
-      name         = "system"
+  kms_key                    = { id = module.kms.crypto_key_ids["gke-secrets"] }
+  node_pools = {
+    system = {
       machine_type = "e2-standard-4"
       min_count    = 1
       max_count    = 3
       disk_type    = "pd-balanced"
-    },
-    {
-      name         = "compute"
+    }
+    compute = {
       machine_type = "n2d-standard-4"
       min_count    = 0
       max_count    = 10
       spot         = true
       disk_type    = "pd-balanced"
-    },
-  ]
-  node_pools_labels = {
-    compute = { workload = "compute" }
+      labels       = { workload = "compute" }
+      taints       = [{ key = "workload", value = "compute", effect = "NO_SCHEDULE" }]
+    }
   }
-  node_pools_taints = {
-    compute = [{ key = "workload", value = "compute", effect = "NO_SCHEDULE" }]
-  }
-  node_pools_resource_labels = {
-    all = local.labels
-  }
-  cluster_resource_labels = local.labels
+  labels = local.labels
 }

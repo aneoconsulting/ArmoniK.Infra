@@ -13,9 +13,9 @@ output "endpoint_dns" {
   value       = module.complete_gke.endpoint_dns
 }
 
-output "node_pools_names" {
-  description = "List of node pools names"
-  value       = module.complete_gke.node_pools_names
+output "node_pools" {
+  description = "Kubernetes version of each node pool, keyed by name"
+  value       = module.complete_gke.node_pools
 }
 
 output "service_account" {

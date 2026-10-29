@@ -145,7 +145,7 @@ variable "vpc_private_subnet_ids" {
 }
 
 variable "vpc_pods_subnet_ids" {
-  description = "List of VPC pods subnet ids, one per availability zone, in the order of the region's zones. Pods only use them when vpc_cni_custom_networking is true"
+  description = "List of VPC pods subnet ids, at most one per availability zone. Pods only use them when vpc_cni_custom_networking is true"
   type        = list(string)
 }
 

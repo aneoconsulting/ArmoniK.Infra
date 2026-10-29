@@ -1,3 +1,10 @@
+# Counted rather than keyed, so subnets created in the same run are read at apply.
+data "aws_subnet" "pods" {
+  count  = length(var.vpc_pods_subnet_ids)
+  region = var.region
+  id     = var.vpc_pods_subnet_ids[count.index]
+}
+
 locals {
   pod_identity = var.pod_identity
 
@@ -33,10 +40,11 @@ locals {
     resources                = var.efs_csi.controller_resources == null ? null : { for k, v in var.efs_csi.controller_resources : k => v if v != null }
   } : k => v if v != null }
 
-  # One ENIConfig per pod subnet, named after its availability zone (ENI_CONFIG_LABEL_DEF).
+  # One ENIConfig per pod subnet, named after its availability zone (ENI_CONFIG_LABEL_DEF); two subnets in the same
+  # zone fail on a duplicate key.
   eni_configs = {
-    for index, id in var.vpc_pods_subnet_ids : element(data.aws_availability_zones.available.names, index) => {
-      id             = id
+    for subnet in data.aws_subnet.pods : subnet.availability_zone => {
+      id             = subnet.id
       securityGroups = [module.eks.node_security_group_id]
     }
   }
@@ -58,7 +66,7 @@ locals {
           AWS_VPC_K8S_CNI_CUSTOM_NETWORK_CFG = tostring(var.vpc_cni_custom_networking)
           ENI_CONFIG_LABEL_DEF               = "topology.kubernetes.io/zone"
         }
-        }, length(local.eni_configs) == 0 ? {} : {
+        }, length(var.vpc_pods_subnet_ids) == 0 ? {} : {
         eniConfig = {
           create  = true
           region  = local.region

@@ -4,11 +4,6 @@ data "aws_region" "current" {
 
 data "aws_partition" "current" {}
 
-# Available zones
-data "aws_availability_zones" "available" {
-  region = var.region
-}
-
 locals {
   region                 = data.aws_region.current.region
   tags                   = merge({ module = "eks-${var.name}" }, var.tags)
@@ -35,11 +30,10 @@ locals {
   }
 
   # Node group defaults; the upstream module has no *_defaults inputs, so they are merged here, the node group winning.
-  # A hop limit of 1 keeps pods off the node role; workloads get AWS credentials through IRSA.
   node_metadata_options = {
     http_endpoint               = "enabled"
     http_tokens                 = "required"
-    http_put_response_hop_limit = 1
+    http_put_response_hop_limit = 2
     instance_metadata_tags      = "disabled"
   }
   # The sysctls fs.inotify.max_user_instances defines user limits on the number of inotify resources.

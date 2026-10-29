@@ -53,8 +53,10 @@ resource "google_container_cluster" "cluster" {
   networking_mode     = "VPC_NATIVE"
   resource_labels     = var.labels
   deletion_protection = var.deletion_protection
-  enable_autopilot    = var.autopilot
-  min_master_version  = var.kubernetes_version == "latest" ? null : var.kubernetes_version
+  # Null rather than false on Standard: the provider counts any value as set, and enable_autopilot conflicts
+  # with the Standard-only arguments below
+  enable_autopilot   = var.autopilot ? true : null
+  min_master_version = var.kubernetes_version == "latest" ? null : var.kubernetes_version
 
   # Standard only. GKE cannot create a cluster without its default node pool: one node, removed right after,
   # run by the node service account rather than the Compute Engine default one

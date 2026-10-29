@@ -30,10 +30,11 @@ locals {
   }
 
   # Node group defaults; the upstream module has no *_defaults inputs, so they are merged here, the node group winning.
+  # A hop limit of 1 keeps pods off the node role; workloads get AWS credentials through IRSA or Pod Identity.
   node_metadata_options = {
     http_endpoint               = "enabled"
     http_tokens                 = "required"
-    http_put_response_hop_limit = 2
+    http_put_response_hop_limit = 1
     instance_metadata_tags      = "disabled"
   }
   # The sysctls fs.inotify.max_user_instances defines user limits on the number of inotify resources.

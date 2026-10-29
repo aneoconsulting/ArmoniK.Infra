@@ -11,7 +11,8 @@ locals {
   location = local.regional ? local.region : var.zones[0]
   # The zone of a zonal cluster is not repeated in its node locations
   node_locations = local.regional ? (length(var.zones) > 0 ? var.zones : null) : (length(var.zones) > 1 ? slice(var.zones, 1, length(var.zones)) : null)
-  node_pools     = var.autopilot ? {} : coalesce(var.node_pools, { "default-node-pool" = {} })
+  # A for expression keeps the type of the variable, where a conditional with {} would unify it away
+  node_pools = { for name, pool in var.node_pools : name => pool if !var.autopilot }
 
   service_account = coalesce(var.service_account, one(google_service_account.nodes[*].email))
   node_roles      = concat(["roles/container.defaultNodeServiceAccount"], var.grant_registry_access ? ["roles/artifactregistry.reader"] : [])

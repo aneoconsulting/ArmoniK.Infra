@@ -77,8 +77,8 @@ flowchart LR
 The `approval-freshness` commit status on the head passes when every remaining
 approval matches the current diff. It fails when the base moved, when a stale
 approval could not be dismissed, or when the evaluation failed; a transient
-fetch error blocks rather than dismisses. Its details link to the evaluator run,
-whose log lists each approval.
+fetch error blocks rather than dismisses. Its details link to the latest
+evaluator run, whose log lists each approval.
 
 It is a commit status rather than a check run: a check run created through the
 API joins an existing GitHub Actions check suite of the commit, apparently the
@@ -144,8 +144,9 @@ a fork run awaits approval. The next pull request event, or a manual run of the
 - **Non-head records.** An approval first seen on a non-head commit records its
   fingerprint on that commit with a failing status, so a forced push back to
   it stays blocked until evaluated.
-- **Cost.** Evaluating a pull request takes 4 REST API calls, plus 1 per
-  approved commit other than the head, plus a status read per such commit
-  whose record grows, plus the writes and dismissals that something changed,
-  against the `GITHUB_TOKEN` limit of 1,000 per hour. A head that moved during
-  the evaluation repeats it.
+- **Cost.** Evaluating a pull request takes 5 REST API calls (the status
+  write included), plus 2 per approved commit other than the head, plus the
+  record writes and dismissals that something changed, against the
+  `GITHUB_TOKEN` limit of 1,000 per hour. A head that moved during the
+  evaluation repeats it. GitHub keeps at most 1,000 statuses per commit and
+  context, so a head evaluated more often than that keeps its last status.

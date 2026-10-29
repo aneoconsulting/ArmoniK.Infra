@@ -42,8 +42,9 @@
 const { execFileSync } = require('child_process');
 
 const STATUS = 'approval-freshness';
-// approval-freshness check runs predate the status and carry records too.
-const RECORDS = ['approval-freshness-record', 'approval-freshness'];
+const RECORD = 'approval-freshness-record';
+// Check runs named like the status hold records too.
+const RECORD_NAMES = [RECORD, STATUS];
 const MARKER = /<!-- approval-freshness (\{.*?\}) -->/;
 const BASE_REF = 'refs/approval-freshness/base';
 const ATTEMPTS = 3;
@@ -92,12 +93,16 @@ module.exports = async ({ github, context, core }) => {
   const records = new Map();
   async function recordOf(sha) {
     if (!records.has(sha)) {
-      const runs = (await github.paginate(github.rest.checks.listForRef, {
-        owner, repo, ref: sha, filter: 'all', per_page: 100,
-      })).filter((r) => RECORDS.includes(r.name) && r.app && r.app.slug === 'github-actions')
-        .sort((a, b) => a.id - b.id);
+      const runs = [];
+      for (const name of RECORD_NAMES) {
+        runs.push(...await github.paginate(github.rest.checks.listForRef, {
+          owner, repo, ref: sha, check_name: name, filter: 'all', per_page: 100,
+        }));
+      }
+      runs.sort((a, b) => a.id - b.id);
       const record = { prints: {}, fresh: [] };
       for (const run of runs) {
+        if (!run.app || run.app.slug !== 'github-actions') continue;
         const match = run.output && run.output.text && run.output.text.match(MARKER);
         if (!match) continue;
         const { prints = {}, fresh = [] } = JSON.parse(match[1]);
@@ -111,40 +116,39 @@ module.exports = async ({ github, context, core }) => {
     return records.get(sha);
   }
 
-  // The latest approval-freshness status of a commit, read uncached since an
-  // overlapping run may have reported on it since.
-  async function statusOf(sha) {
-    const { data } = await github.rest.repos.getCombinedStatusForRef({ owner, repo, ref: sha, per_page: 100 });
-    const status = data.statuses.find((s) => s.context === STATUS);
-    return status ? `${status.state}: ${status.description}` : null;
+  // Reports a verdict on a commit, written every time so that its details link
+  // to the run that reached it.
+  async function writeStatus(sha, state, title) {
+    await github.rest.repos.createCommitStatus({
+      owner, repo, sha, state, context: STATUS, description: title,
+      target_url: `${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId}`,
+    });
   }
 
-  // Reports a verdict on a commit and extends its record. Each write is skipped
-  // when it would repeat what the commit already carries, so re-evaluations do
-  // not pile up identical statuses, and a commit gets a record run only once it
-  // has an approval to record.
-  async function report(sha, state, title, summary, record) {
-    if (await statusOf(sha) !== `${state}: ${title}`) {
-      await github.rest.repos.createCommitStatus({
-        owner, repo, sha, state, context: STATUS, description: title,
-        target_url: `${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId}`,
-      });
-    }
+  // Extends the record of a commit, skipped unless it grows, so a commit gets a
+  // record run only once it has an approval to record.
+  async function writeRecord(sha, summary, record) {
     const extended = canonical(record);
-    if (JSON.stringify(extended) !== JSON.stringify(await recordOf(sha))) {
-      const prints = Object.keys(extended.prints).length;
-      const fresh = extended.fresh.length;
-      await github.rest.checks.create({
-        owner, repo, name: RECORDS[0], head_sha: sha, status: 'completed', conclusion: 'neutral',
-        output: {
-          title: [prints && `${prints} approval fingerprint(s)`, fresh && `${fresh} fresh approval(s)`]
-            .filter(Boolean).join(', '),
-          summary,
-          text: `<!-- approval-freshness ${JSON.stringify(extended)} -->`,
-        },
-      });
-      records.set(sha, extended);
-    }
+    if (JSON.stringify(extended) === JSON.stringify(await recordOf(sha))) return;
+    const prints = Object.keys(extended.prints).length;
+    const fresh = extended.fresh.length;
+    await github.rest.checks.create({
+      owner, repo, name: RECORD, head_sha: sha, status: 'completed', conclusion: 'neutral',
+      output: {
+        title: [prints && `${prints} approval fingerprint(s)`, fresh && `${fresh} fresh approval(s)`]
+          .filter(Boolean).join(', '),
+        summary,
+        text: `<!-- approval-freshness ${JSON.stringify(extended)} -->`,
+      },
+    });
+    records.set(sha, extended);
+  }
+
+  // The record goes first: a verdict written without it could keep a head
+  // passing whose fresh approvals a later base move would then dismiss.
+  async function report(sha, state, title, summary, record) {
+    await writeRecord(sha, summary, record);
+    await writeStatus(sha, state, title);
   }
 
   // Fetches a commit that may be gone: false when the API no longer knows it,
@@ -184,10 +188,12 @@ module.exports = async ({ github, context, core }) => {
   }
 
   // False when the head is left failing: a stale approval could not be
-  // dismissed, or only the base moved.
-  async function evaluate(pr, attempt = 1) {
+  // dismissed, or only the base moved. reached.head is the head a failure
+  // belongs to, which moves when the evaluation starts over.
+  async function evaluate(pr, reached, attempt = 1) {
     const number = pr.number;
     const head = pr.head.sha;
+    reached.head = head;
     git('fetch', '--quiet', '--no-tags', 'origin', `+refs/heads/${pr.base.ref}:${BASE_REF}`, `refs/pull/${number}/head`);
     const base = git('rev-parse', BASE_REF);
     if (!await fetchCommit(head)) throw new Error(`head ${head} not found`);
@@ -203,8 +209,11 @@ module.exports = async ({ github, context, core }) => {
     const { data: latest } = await github.rest.pulls.get({ owner, repo, pull_number: number });
     if (latest.state !== 'open') return true;
     if (latest.head.sha !== head || latest.base.ref !== pr.base.ref) {
-      if (attempt >= ATTEMPTS) throw new Error(`the pull request moved during ${ATTEMPTS} evaluations`);
-      return evaluate(latest, attempt + 1);
+      if (attempt >= ATTEMPTS) {
+        reached.head = latest.head.sha;
+        throw new Error(`the pull request moved during ${ATTEMPTS} evaluations`);
+      }
+      return evaluate(latest, reached, attempt + 1);
     }
     const approvals = reviews.filter((review) => review.state === 'APPROVED');
 
@@ -309,15 +318,16 @@ module.exports = async ({ github, context, core }) => {
 
   let failures = 0;
   for (const [number, pr] of queue) {
+    const reached = { head: pr.head.sha };
     try {
-      if (!await evaluate(pr)) failures += 1;
+      if (!await evaluate(pr, reached)) failures += 1;
     } catch (error) {
       failures += 1;
       core.error(`#${number}: ${error.message}`);
-      // An approval may be stale and not dismissed: block until a run succeeds.
+      // An approval may be stale and not dismissed: block until a run succeeds,
+      // whatever the record holds.
       try {
-        await report(pr.head.sha, 'failure', 'Approvals could not be evaluated', error.message,
-                     await recordOf(pr.head.sha));
+        await writeStatus(reached.head, 'failure', 'Approvals could not be evaluated');
       } catch (reportError) {
         core.error(`#${number}: cannot report the failure: ${reportError.message}`);
       }

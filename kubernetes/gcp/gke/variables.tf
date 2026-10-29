@@ -181,7 +181,7 @@ variable "disable_default_snat" {
 }
 
 variable "node_pools" {
-  description = "Standard only, ignored on Autopilot, which manages the nodes. Node pools keyed by name, with autoscaling between min_count and max_count. Default: a single \"default-node-pool\" with the defaults below."
+  description = "Standard only, ignored on Autopilot, which manages the nodes. Node pools keyed by name, with autoscaling between min_count and max_count nodes per zone, or between total_min_count and total_max_count nodes over all the zones of the pool when both are set. Default: a single \"default-node-pool\" with the defaults below."
   type = map(object({
     machine_type       = optional(string, "e2-medium")
     image_type         = optional(string, "COS_CONTAINERD")
@@ -190,6 +190,8 @@ variable "node_pools" {
     spot               = optional(bool, false)
     min_count          = optional(number, 1)
     max_count          = optional(number, 100)
+    total_min_count    = optional(number)
+    total_max_count    = optional(number)
     initial_node_count = optional(number)
     location_policy    = optional(string)
     node_locations     = optional(list(string))
@@ -209,6 +211,10 @@ variable "node_pools" {
     "default-node-pool" = {}
   }
   nullable = false
+  validation {
+    condition     = alltrue([for pool in values(var.node_pools) : (pool.total_min_count == null) == (pool.total_max_count == null)])
+    error_message = "\"total_min_count\" and \"total_max_count\" of a node pool must be set together."
+  }
 }
 
 variable "service_account" {

@@ -224,10 +224,13 @@ resource "google_container_node_pool" "pools" {
   initial_node_count = coalesce(each.value.initial_node_count, each.value.min_count)
   max_pods_per_node  = each.value.max_pods_per_node
 
+  # Bounds per zone, or over all the zones of the pool when the total ones are set: the provider rejects both
   autoscaling {
-    min_node_count  = each.value.min_count
-    max_node_count  = each.value.max_count
-    location_policy = each.value.location_policy
+    min_node_count       = each.value.total_min_count == null ? each.value.min_count : null
+    max_node_count       = each.value.total_max_count == null ? each.value.max_count : null
+    total_min_node_count = each.value.total_min_count
+    total_max_node_count = each.value.total_max_count
+    location_policy      = each.value.location_policy
   }
 
   # A release channel requires both

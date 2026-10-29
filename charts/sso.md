@@ -38,8 +38,8 @@ web port and authenticate with the IdP.
 ```
 
 ArmoniK Core needs no change: it still authenticates on the `X-Certificate-Client-CN` and
-`X-Certificate-Client-Fingerprint` headers (`identityHeaders`), which nginx now fills from the SSO
-session on the web port. nginx sets them on every request, so a client never chooses its identity.
+`X-Certificate-Client-Fingerprint` headers (`identityHeaders`, whose names the umbrella passes to
+the control plane), which nginx now fills from the SSO session on the web port. nginx sets them on every request, so a client never chooses its identity.
 
 - **Pages** (GUI, Grafana, Seq, `/static/`) without a session: nginx hands the request to
   `/oauth2/start`, which answers a 302 to the IdP. The original URI travels in

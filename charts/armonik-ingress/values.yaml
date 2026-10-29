@@ -166,9 +166,9 @@ mtls:
     existingSecret: ""
   trustedCommonNames: []
 
-# -- Identity headers nginx sets on gRPC requests to the control plane. They must match the
-# control plane's Authenticator header settings, which the charts leave at their ArmoniK Core
-# defaults. With mTLS, the CN and fingerprint come from the client certificate (or from a
+# -- Identity headers nginx sets on gRPC requests to the control plane. The umbrella passes these
+# names to the control plane (Authenticator__*Header in its control conf layer); a control plane
+# installed as its own release keeps ArmoniK Core's defaults, which are the values below. With mTLS, the CN and fingerprint come from the client certificate (or from a
 # trustedCommonNames proxy) and the impersonation headers pass through; without mTLS, all four are
 # cleared so a client cannot assert an identity. Letters, digits and dashes only.
 identityHeaders:

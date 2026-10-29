@@ -110,6 +110,13 @@ variable "kms_key" {
   default = null
 }
 
+variable "uniform_bucket_level_access" {
+  description = "Access through IAM only (var.roles), without ACL on the bucket nor on its objects. Set it to false for the S3 adapter of Core: through the XML API of GCS, it checks that the bucket exists with GetBucketAcl, which GCS rejects with \"Invalid argument\" on a bucket with uniform bucket-level access."
+  type        = bool
+  default     = true
+  nullable    = false
+}
+
 variable "public_access_prevention" {
   description = "Prevents public access to a bucket. Acceptable values are 'enforced' or 'inherited' (follows the organization policy)."
   type        = string

@@ -181,7 +181,7 @@ variable "disable_default_snat" {
 }
 
 variable "node_pools" {
-  description = "Standard only, must stay null on Autopilot. Node pools keyed by name, with autoscaling between min_count and max_count. Null: a single \"default-node-pool\" with the defaults below."
+  description = "Standard only, ignored on Autopilot, which manages the nodes. Node pools keyed by name, with autoscaling between min_count and max_count. Default: a single \"default-node-pool\" with the defaults below."
   type = map(object({
     machine_type       = optional(string, "e2-medium")
     image_type         = optional(string, "COS_CONTAINERD")
@@ -203,11 +203,12 @@ variable "node_pools" {
       effect = string
     })), [])
   }))
-  default = null
-  validation {
-    condition     = var.node_pools == null || !var.autopilot
-    error_message = "\"node_pools\" must be null on Autopilot, which manages the nodes."
+  # The default goes through the type above, which fills in the optional attributes. A default built in the
+  # module instead (coalesce) would be unified with this type into a map of strings, dropping them.
+  default = {
+    "default-node-pool" = {}
   }
+  nullable = false
 }
 
 variable "service_account" {

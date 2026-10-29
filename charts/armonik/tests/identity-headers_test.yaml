@@ -1,0 +1,78 @@
+suite: identity header names passed to the control plane
+release:
+  name: t
+templates:
+  - secrets/conf-secrets.yaml
+tests:
+  - it: passes the default header names to ArmoniK Core
+    documentSelector:
+      path: metadata.name
+      value: t-conf-control
+    asserts:
+      - equal:
+          path: stringData.Authenticator__CNHeader
+          value: X-Certificate-Client-CN
+      - equal:
+          path: stringData.Authenticator__FingerprintHeader
+          value: X-Certificate-Client-Fingerprint
+      - equal:
+          path: stringData.Authenticator__ImpersonationUsernameHeader
+          value: X-Impersonate-Username
+      - equal:
+          path: stringData.Authenticator__ImpersonationIdHeader
+          value: X-Impersonate-Id
+
+  # nginx sends the renamed header: Core must read that one.
+  - it: follows a renamed header in ingress.identityHeaders
+    documentSelector:
+      path: metadata.name
+      value: t-conf-control
+    set:
+      ingress:
+        identityHeaders:
+          commonName: X-User-Cn
+          impersonationId: X-As-Id
+    asserts:
+      - equal:
+          path: stringData.Authenticator__CNHeader
+          value: X-User-Cn
+      - equal:
+          path: stringData.Authenticator__ImpersonationIdHeader
+          value: X-As-Id
+      - equal:
+          path: stringData.Authenticator__FingerprintHeader
+          value: X-Certificate-Client-Fingerprint
+
+  - it: lets conf.control.env override them
+    documentSelector:
+      path: metadata.name
+      value: t-conf-control
+    set:
+      conf:
+        control:
+          env:
+            Authenticator__CNHeader: X-Other
+    asserts:
+      - equal:
+          path: stringData.Authenticator__CNHeader
+          value: X-Other
+
+  - it: renders none without the ingress
+    documentSelector:
+      path: metadata.name
+      value: t-conf-control
+    set:
+      ingress:
+        enabled: false
+    asserts:
+      - notExists:
+          path: stringData.Authenticator__CNHeader
+
+  - it: fails on a malformed header name, as the ingress does
+    set:
+      ingress:
+        identityHeaders:
+          fingerprint: "X Fp"
+    asserts:
+      - failedTemplate:
+          errorPattern: 'identityHeaders.fingerprint must be a header name'

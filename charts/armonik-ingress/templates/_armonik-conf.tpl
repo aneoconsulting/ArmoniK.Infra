@@ -173,8 +173,9 @@ server {
     # {{ .role }} port
     {{- if $tls }}
     # TLS enabled
-    listen {{ $port }} ssl http2;
-    listen [::]:{{ $port }} ssl http2;
+    listen {{ $port }} ssl;
+    listen [::]:{{ $port }} ssl;
+    http2 on;
     {{- if or $root.Values.tls.ssl.certificatePath $root.Values.tls.ssl.keyPath }}
     ssl_certificate     {{ default "/ingress/tls.crt" $root.Values.tls.ssl.certificatePath | quote}};
     ssl_certificate_key {{ default "/ingress/tls.key" $root.Values.tls.ssl.keyPath | quote}};

@@ -44,16 +44,20 @@ tests:
     asserts:
       - matchRegex:
           path: spec.target.template.data["armonik.conf"]
-          pattern: 'server \{\n    # web port\n    # TLS enabled\n    listen 8443 ssl http2;\n    listen \[::\]:8443 ssl http2;\n    ssl_certificate '
+          pattern: 'server \{\n    # web port\n    # TLS enabled\n    listen 8443 ssl;\n    listen \[::\]:8443 ssl;\n    http2 on;\n    ssl_certificate '
       - matchRegex:
           path: spec.target.template.data["armonik.conf"]
-          pattern: 'server \{\n    # grpc port\n    # TLS enabled\n    listen 9443 ssl http2;\n    listen \[::\]:9443 ssl http2;\n    ssl_certificate '
+          pattern: 'server \{\n    # grpc port\n    # TLS enabled\n    listen 9443 ssl;\n    listen \[::\]:9443 ssl;\n    http2 on;\n    ssl_certificate '
       - matchRegex:
           path: spec.target.template.data["armonik.conf"]
           pattern: '(?s)# web port.*ssl_verify_client off;.*ssl_protocols .*# grpc port.*ssl_verify_client off;.*ssl_protocols '
       - notMatchRegex:
           path: spec.target.template.data["armonik.conf"]
           pattern: 'listen (\[::\]:)?(8080|9080)'
+      # "listen ... http2" is deprecated since nginx 1.25.1
+      - notMatchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: 'listen [^;]*http2'
 
   - it: verifies client certificates on both servers with mTLS, the mTLS maps once
     values:

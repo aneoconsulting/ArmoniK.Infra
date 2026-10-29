@@ -302,7 +302,8 @@ variable "instance_refresh_namespace" {
 variable "eks_managed_node_groups" {
   description = "List of EKS managed node groups"
   type        = any
-  default     = null
+  default     = {}
+  nullable    = false
 }
 
 variable "efs_csi" {
@@ -389,12 +390,14 @@ variable "ebs_kms_key_id" {
 variable "self_managed_node_groups" {
   description = "List of self managed node groups"
   type        = any
-  default     = null
+  default     = {}
+  nullable    = false
 }
 
 # List of fargate profiles
 variable "fargate_profiles" {
   description = "List of fargate profiles"
   type        = any
-  default     = null
+  default     = {}
+  nullable    = false
 }

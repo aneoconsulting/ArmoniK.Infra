@@ -1,61 +1,335 @@
-output "name" {
-  description = "Name of the cluster"
-  value       = google_container_cluster.cluster.name
-}
-
-output "id" {
-  description = "ID of the cluster"
-  value       = google_container_cluster.cluster.id
-}
-
-output "location" {
-  description = "Location of the cluster: its region if regional or Autopilot, its zone if zonal"
-  value       = google_container_cluster.cluster.location
-}
-
-output "region" {
-  description = "Region of the cluster"
-  value       = local.region
-}
-
-output "zones" {
-  description = "Zones of the nodes"
-  value       = sort(google_container_cluster.cluster.node_locations)
-}
-
-output "endpoint" {
-  description = "IP address of the control plane: the private one with a private endpoint, else the public one"
-  value       = var.enable_private_endpoint ? google_container_cluster.cluster.private_cluster_config[0].private_endpoint : google_container_cluster.cluster.endpoint
-  sensitive   = true
-}
-
-output "endpoint_dns" {
-  description = "DNS endpoint of the control plane"
-  value       = google_container_cluster.cluster.control_plane_endpoints_config[0].dns_endpoint_config[0].endpoint
+output "autopilot_enabled" {
+  description = "Autopilot GKE cluster."
+  value       = var.autopilot
 }
 
 output "ca_certificate" {
-  description = "CA certificate of the control plane (base64 encoded)"
-  value       = google_container_cluster.cluster.master_auth[0].cluster_ca_certificate
   sensitive   = true
+  description = "Cluster ca certificate (base64 encoded)."
+  value = try(coalesce(
+    (local.public_gke ? module.gke[0].ca_certificate : null),
+    (local.private_gke ? module.private_gke[0].ca_certificate : null),
+    (local.public_autopilot ? module.autopilot[0].ca_certificate : null),
+    (local.private_autopilot ? module.private_autopilot[0].ca_certificate : null),
+  ), null)
 }
 
-output "master_version" {
-  description = "Current Kubernetes version of the control plane"
-  value       = google_container_cluster.cluster.master_version
+output "cloudrun_enabled" {
+  description = "Whether CloudRun enabled."
+  value = try(coalesce(
+    (local.public_gke ? module.gke[0].cloudrun_enabled : null),
+    (local.private_gke ? module.private_gke[0].cloudrun_enabled : null),
+    (local.public_autopilot ? module.autopilot[0].cloudrun_enabled : null),
+    (local.private_autopilot ? module.private_autopilot[0].cloudrun_enabled : null),
+  ), null)
 }
 
-output "service_account" {
-  description = "Email of the service account of the nodes"
-  value       = local.service_account
+output "cluster_id" {
+  description = "GKE cluster ID."
+  value = try(coalesce(
+    (local.public_gke ? module.gke[0].cluster_id : null),
+    (local.private_gke ? module.private_gke[0].cluster_id : null),
+    (local.public_autopilot ? module.autopilot[0].cluster_id : null),
+    (local.private_autopilot ? module.private_autopilot[0].cluster_id : null),
+  ), null)
+}
+
+output "dns_cache_enabled" {
+  description = "Whether DNS Cache enabled"
+  value = try(coalesce(
+    (local.public_gke ? module.gke[0].dns_cache_enabled : null),
+    (local.private_gke ? module.private_gke[0].dns_cache_enabled : null),
+    (local.public_autopilot ? module.autopilot[0].dns_cache_enabled : null),
+    (local.private_autopilot ? module.private_autopilot[0].dns_cache_enabled : null),
+  ), null)
+}
+
+output "endpoint" {
+  description = "Cluster endpoint."
+  value = try(coalesce(
+    (local.public_gke ? module.gke[0].endpoint : null),
+    (local.private_gke ? module.private_gke[0].endpoint : null),
+    (local.public_autopilot ? module.autopilot[0].endpoint : null),
+    (local.private_autopilot ? module.private_autopilot[0].endpoint : null),
+  ), null)
+  sensitive = true
 }
 
 output "identity_namespace" {
-  description = "Workload Identity pool of the cluster"
-  value       = google_container_cluster.cluster.workload_identity_config[0].workload_pool
+  description = "Workload Identity pool."
+  value = try(coalesce(
+    (local.public_gke ? module.gke[0].identity_namespace : null),
+    (local.private_gke ? module.private_gke[0].identity_namespace : null),
+    (local.public_autopilot ? module.autopilot[0].identity_namespace : null),
+    (local.private_autopilot ? module.private_autopilot[0].identity_namespace : null),
+  ), null)
 }
 
-output "node_pools" {
-  description = "Standard only, empty on Autopilot. Kubernetes version of each node pool, keyed by name"
-  value       = { for name, pool in google_container_node_pool.pools : name => pool.version }
+output "identity_service_enabled" {
+  description = "Whether Identity Service is enabled."
+  value = try(coalesce(
+    (local.public_gke ? module.gke[0].identity_service_enabled : null),
+    (local.private_gke ? module.private_gke[0].identity_service_enabled : null),
+    (local.public_autopilot ? module.autopilot[0].identity_service_enabled : null),
+    (local.private_autopilot ? module.private_autopilot[0].identity_service_enabled : null),
+  ), null)
+}
+
+output "instance_group_urls" {
+  description = "List of GKE generated instance groups."
+  value = try(coalesce(
+    (local.public_gke ? module.gke[0].instance_group_urls : null),
+    (local.private_gke ? module.private_gke[0].instance_group_urls : null),
+  ), null)
+}
+
+output "intranode_visibility_enabled" {
+  description = "Whether intra-node visibility is enabled."
+  value = try(coalesce(
+    (local.public_gke ? module.gke[0].intranode_visibility_enabled : null),
+    (local.private_gke ? module.private_gke[0].intranode_visibility_enabled : null),
+    (local.public_autopilot ? module.autopilot[0].intranode_visibility_enabled : null),
+    (local.private_autopilot ? module.private_autopilot[0].intranode_visibility_enabled : null),
+  ), null)
+}
+
+output "istio_enabled" {
+  description = "Whether Istio is enabled."
+  value = try(coalesce(
+    (local.public_gke ? module.gke[0].istio_enabled : null),
+    (local.private_gke ? module.private_gke[0].istio_enabled : null),
+    (local.public_autopilot ? module.autopilot[0].istio_enabled : null),
+    (local.private_autopilot ? module.private_autopilot[0].istio_enabled : null),
+  ), null)
+}
+
+output "kubeconfig_path" {
+  description = "Path where the kubeconfig file is saved."
+  value       = can(coalesce(var.kubeconfig_path)) ? abspath(var.kubeconfig_path) : ""
+}
+
+output "location" {
+  description = "Cluster location (region if regional cluster, zone if zonal cluster)."
+  value = try(coalesce(
+    (local.public_gke ? module.gke[0].location : null),
+    (local.private_gke ? module.private_gke[0].location : null),
+    (local.public_autopilot ? module.autopilot[0].location : null),
+    (local.private_autopilot ? module.private_autopilot[0].location : null),
+  ), null)
+}
+
+output "master_version" {
+  description = "Current master kubernetes version."
+  value = try(coalesce(
+    (local.public_gke ? module.gke[0].master_version : null),
+    (local.private_gke ? module.private_gke[0].master_version : null),
+    (local.public_autopilot ? module.autopilot[0].master_version : null),
+    (local.private_autopilot ? module.private_autopilot[0].master_version : null),
+  ), null)
+}
+
+output "master_ipv4_cidr_block" {
+  description = "The IP range in CIDR notation used for the hosted master network."
+  value = try(coalesce(
+    (local.private_gke ? module.private_gke[0].master_ipv4_cidr_block : null),
+    (local.private_autopilot ? module.private_autopilot[0].master_ipv4_cidr_block : null),
+  ), null)
+}
+
+output "min_master_version" {
+  description = "Minimum master kubernetes version."
+  value = try(coalesce(
+    (local.public_gke ? module.gke[0].master_version : null),
+    (local.private_gke ? module.private_gke[0].master_version : null),
+    (local.public_autopilot ? module.autopilot[0].min_master_version : null),
+    (local.private_autopilot ? module.private_autopilot[0].min_master_version : null),
+  ), null)
+}
+
+output "name" {
+  description = "GKE cluster name."
+  value = try(coalesce(
+    (local.public_gke ? module.gke[0].name : null),
+    (local.private_gke ? module.private_gke[0].name : null),
+    (local.public_autopilot ? module.autopilot[0].name : null),
+    (local.private_autopilot ? module.private_autopilot[0].name : null),
+  ), null)
+}
+
+output "node_pools_names" {
+  description = "List of node pools names."
+  value = try(coalesce(
+    (local.public_gke ? module.gke[0].node_pools_names : null),
+    (local.private_gke ? module.private_gke[0].node_pools_names : null),
+  ), null)
+}
+
+output "region" {
+  description = "Cluster region."
+  value = try(coalesce(
+    (local.public_gke ? module.gke[0].region : null),
+    (local.private_gke ? module.private_gke[0].region : null),
+    (local.public_autopilot ? module.autopilot[0].region : null),
+    (local.private_autopilot ? module.private_autopilot[0].region : null),
+  ), null)
+}
+
+output "service_account" {
+  description = "The service account to default running nodes as if not overridden in `node_pools`."
+  value = try(coalesce(
+    (local.public_gke ? module.gke[0].service_account : null),
+    (local.private_gke ? module.private_gke[0].service_account : null),
+    (local.public_autopilot ? module.autopilot[0].service_account : null),
+    (local.private_autopilot ? module.private_autopilot[0].service_account : null),
+  ), null)
+}
+
+output "type" {
+  description = "GKE cluster type (regional / zonal)."
+  value = try(coalesce(
+    (local.public_gke ? module.gke[0].type : null),
+    (local.private_gke ? module.private_gke[0].type : null),
+    (local.public_autopilot ? module.autopilot[0].type : null),
+    (local.private_autopilot ? module.private_autopilot[0].type : null),
+  ), null)
+}
+
+output "peering_name" {
+  description = "The name of the peering between this cluster and the Google owned VPC."
+  value = try(coalesce(
+    (local.private_gke ? module.private_gke[0].peering_name : null),
+    (local.private_autopilot ? module.private_autopilot[0].peering_name : null),
+  ), null)
+}
+
+output "pod_security_policy_enabled" {
+  description = "Whether pod security policy is enabled."
+  value = try(coalesce(
+    (local.public_gke ? module.gke[0].pod_security_policy_enabled : null),
+    (local.private_gke ? module.private_gke[0].pod_security_policy_enabled : null),
+    (local.public_autopilot ? module.autopilot[0].pod_security_policy_enabled : null),
+    (local.private_autopilot ? module.private_autopilot[0].pod_security_policy_enabled : null),
+  ), null)
+}
+
+output "tpu_ipv4_cidr_block" {
+  description = "The IP range in CIDR notation used for the TPUs"
+  value = try(coalesce(
+    (local.public_gke ? module.gke[0].tpu_ipv4_cidr_block : null),
+    (local.private_gke ? module.private_gke[0].tpu_ipv4_cidr_block : null),
+    (local.public_autopilot ? module.autopilot[0].tpu_ipv4_cidr_block : null),
+    (local.private_autopilot ? module.private_autopilot[0].tpu_ipv4_cidr_block : null),
+  ), null)
+}
+
+output "zones" {
+  description = "List of zones in which the cluster resides"
+  value = try(coalesce(
+    (local.public_gke ? module.gke[0].zones : null),
+    (local.private_gke ? module.private_gke[0].zones : null),
+    (local.public_autopilot ? module.autopilot[0].zones : null),
+    (local.private_autopilot ? module.private_autopilot[0].zones : null),
+  ), null)
+}
+
+# Not needed yet
+output "gateway_api_channel" {
+  description = "The gateway api channel of this cluster."
+  value = try(coalesce(
+    (local.public_gke ? module.gke[0].gateway_api_channel : null),
+    (local.private_gke ? module.private_gke[0].gateway_api_channel : null),
+    (local.public_autopilot ? module.autopilot[0].gateway_api_channel : null),
+    (local.private_autopilot ? module.private_autopilot[0].gateway_api_channel : null),
+  ), null)
+}
+
+output "horizontal_pod_autoscaling_enabled" {
+  description = "Whether horizontal pod autoscaling enabled."
+  value = try(coalesce(
+    (local.public_gke ? module.gke[0].horizontal_pod_autoscaling_enabled : null),
+    (local.private_gke ? module.private_gke[0].horizontal_pod_autoscaling_enabled : null),
+    (local.public_autopilot ? module.autopilot[0].horizontal_pod_autoscaling_enabled : null),
+    (local.private_autopilot ? module.private_autopilot[0].horizontal_pod_autoscaling_enabled : null),
+  ), null)
+}
+
+output "http_load_balancing_enabled" {
+  description = "Whether http load balancing enabled."
+  value = try(coalesce(
+    (local.public_gke ? module.gke[0].http_load_balancing_enabled : null),
+    (local.private_gke ? module.private_gke[0].http_load_balancing_enabled : null),
+    (local.public_autopilot ? module.autopilot[0].http_load_balancing_enabled : null),
+    (local.private_autopilot ? module.private_autopilot[0].http_load_balancing_enabled : null),
+  ), null)
+}
+
+output "logging_service" {
+  description = "Logging service used."
+  value = try(coalesce(
+    (local.public_gke ? module.gke[0].logging_service : null),
+    (local.private_gke ? module.private_gke[0].logging_service : null),
+    (local.public_autopilot ? module.autopilot[0].logging_service : null),
+    (local.private_autopilot ? module.private_autopilot[0].logging_service : null),
+  ), null)
+}
+
+output "master_authorized_networks_config" {
+  description = "Networks from which access to master is permitted."
+  value = try(coalesce(
+    (local.public_gke ? module.gke[0].master_authorized_networks_config : null),
+    (local.private_gke ? module.private_gke[0].master_authorized_networks_config : null),
+    (local.public_autopilot ? module.autopilot[0].master_authorized_networks_config : null),
+    (local.private_autopilot ? module.private_autopilot[0].master_authorized_networks_config : null),
+  ), null)
+}
+
+output "monitoring_service" {
+  description = "Monitoring service used."
+  value = try(coalesce(
+    (local.public_gke ? module.gke[0].monitoring_service : null),
+    (local.private_gke ? module.private_gke[0].monitoring_service : null),
+    (local.public_autopilot ? module.autopilot[0].monitoring_service : null),
+    (local.private_autopilot ? module.private_autopilot[0].monitoring_service : null),
+  ), null)
+}
+
+output "network_policy_enabled" {
+  description = "Whether network policy enabled."
+  value = try(coalesce(
+    (local.public_gke ? module.gke[0].network_policy_enabled : null),
+    (local.private_gke ? module.private_gke[0].network_policy_enabled : null),
+  ), null)
+}
+
+output "node_pools_versions" {
+  description = "Node pool versions by node pool name."
+  value = try(coalesce(
+    (local.public_gke ? module.gke[0].node_pools_versions : null),
+    (local.private_gke ? module.private_gke[0].node_pools_versions : null),
+  ), null)
+}
+
+output "private_enabled" {
+  description = "Private GKE cluster."
+  value       = var.private
+}
+
+output "release_channel" {
+  description = "The release channel of this cluster."
+  value = try(coalesce(
+    (local.public_gke ? module.gke[0].release_channel : null),
+    (local.private_gke ? module.private_gke[0].release_channel : null),
+    (local.public_autopilot ? module.autopilot[0].release_channel : null),
+    (local.private_autopilot ? module.private_autopilot[0].release_channel : null),
+  ), null)
+}
+
+output "vertical_pod_autoscaling_enabled" {
+  description = "Whether vertical pod autoscaling enabled."
+  value = try(coalesce(
+    (local.public_gke ? module.gke[0].vertical_pod_autoscaling_enabled : null),
+    (local.private_gke ? module.private_gke[0].vertical_pod_autoscaling_enabled : null),
+    (local.public_autopilot ? module.autopilot[0].vertical_pod_autoscaling_enabled : null),
+    (local.private_autopilot ? module.private_autopilot[0].vertical_pod_autoscaling_enabled : null),
+  ), null)
 }

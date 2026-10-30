@@ -1,19 +1,21 @@
-# GCP GKE
+# GKE Module
 
-GKE cluster, Standard or Autopilot, on a single `google_container_cluster` resource.
+```{warning}
+This module is deprecated and will be removed. Use the `kubernetes/gcp/gke-cluster` module instead.
+Every plan using this module emits a deprecation warning.
+```
 
-This module creates:
+Google Kubernetes Engine (GKE) is the most scalable and fully automated Kubernetes service. This module handles opinionated
+GKE cluster creation and configurations based on
+the [Terraform module](https://registry.terraform.io/modules/terraform-google-modules/kubernetes-engine/google/latest) of
+GKE developed by Google.
 
-* A GKE cluster with private nodes, no public IP endpoint, Dataplane V2 and Workload Identity by default: Standard, or
-  Autopilot with `autopilot = true`.
-* The node pools of a Standard cluster, and the service account of the nodes.
-* Optional encryption of the Kubernetes secrets with a Cloud KMS key.
+This module deploy:
 
-> Note: the control plane is reachable from the VPC only by default. `dns_allow_external_traffic = true` opens its DNS
-> endpoint to IAM-authenticated callers from anywhere; `enable_private_endpoint = false` adds a public IP endpoint,
-> reachable from the `master_authorized_networks` only. The variables and outputs that apply to one mode only say so
-> in their description ("Standard only"). An Autopilot cluster is always regional, and rejects privileged pods, host
-> namespaces and `hostPath` volumes other than `/var/log` read-only.
+* Public/Private GKE standard with beta functionalities.
+* Public/Private GCP Autopilot with beta functionalities.
+* By default, the GCP Kubernetes cluster is autopilot and private. Otherwise, you set: `private = false`
+  and/or `var.autopilot = false`.
 
 <!-- BEGIN_TF_DOCS -->
 <!-- END_TF_DOCS -->
@@ -23,6 +25,8 @@ This module creates:
 ```{toctree}
 :maxdepth: 2
 :glob:
+:glob:
 
 examples/**
 ```
+

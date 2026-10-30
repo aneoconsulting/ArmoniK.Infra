@@ -1,7 +1,7 @@
-## Complete GKE
+## Complete GKE Cluster
 
 A zonal cluster with a system pool and a tainted spot pool, secrets encrypted with Cloud KMS, the public IP endpoint
-restricted to an authorized network and the DNS endpoint open to IAM-authenticated callers. Uses the [gke module](../..).
+restricted to an authorized network and the DNS endpoint open to IAM-authenticated callers. Uses the [gke-cluster module](../..).
 
 ```bash
 terraform init

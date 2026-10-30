@@ -20,6 +20,7 @@ module "simple_gke" {
   subnetwork          = module.vpc.gke_subnet_name
   ip_range_pods       = module.vpc.gke_subnet_pods_range_name
   ip_range_services   = module.vpc.gke_subnet_svc_range_name
+  enable_dataplane_v2 = true
   regional            = false
   zones               = ["${var.region}-a"]
   deletion_protection = false

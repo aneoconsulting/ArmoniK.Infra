@@ -10,13 +10,22 @@ locals {
   region   = local.regional ? coalesce(var.region, data.google_client_config.current.region) : join("-", slice(split("-", var.zones[0]), 0, 2))
   location = local.regional ? local.region : var.zones[0]
   # The zone of a zonal cluster is not repeated in its node locations
-  node_locations = local.regional ? (length(var.zones) > 0 ? var.zones : null) : (length(var.zones) > 1 ? slice(var.zones, 1, length(var.zones)) : null)
+  node_locations    = local.regional ? (length(var.zones) > 0 ? var.zones : null) : (length(var.zones) > 1 ? slice(var.zones, 1, length(var.zones)) : null)
+  datapath_provider = coalesce(var.enable_dataplane_v2, false) ? "ADVANCED_DATAPATH" : "LEGACY_DATAPATH"
   # A for expression keeps the type of the variable, where a conditional with {} would unify it away
   node_pools = { for name, pool in var.node_pools : name => pool if !var.autopilot }
 
   service_account = coalesce(var.service_account, one(google_service_account.nodes[*].email))
   node_roles      = concat(["roles/container.defaultNodeServiceAccount"], var.grant_registry_access ? ["roles/artifactregistry.reader"] : [])
   oauth_scopes    = ["https://www.googleapis.com/auth/cloud-platform"]
+}
+
+# A warning only: a cluster cannot change its datapath in place, so the default cannot change silently later
+check "dataplane_v2_unset" {
+  assert {
+    condition     = var.autopilot || var.enable_dataplane_v2 != null
+    error_message = "enable_dataplane_v2 is not set: the cluster uses the legacy datapath (kube-proxy). Dataplane V2 will become the default, and switching recreates the cluster. Set it to true to adopt Dataplane V2, or to false to keep the legacy datapath and silence this warning."
+  }
 }
 
 # Nodes of the cluster, with the roles GKE needs and nothing else
@@ -63,7 +72,7 @@ resource "google_container_cluster" "cluster" {
   # run by the node service account rather than the Compute Engine default one
   remove_default_node_pool  = var.autopilot ? null : true
   initial_node_count        = var.autopilot ? null : 1
-  datapath_provider         = var.autopilot ? null : var.datapath_provider
+  datapath_provider         = var.autopilot ? null : local.datapath_provider
   default_max_pods_per_node = var.autopilot ? null : var.default_max_pods_per_node
   enable_shielded_nodes     = var.autopilot ? null : true
   dynamic "node_config" {
@@ -215,6 +224,10 @@ resource "google_container_cluster" "cluster" {
     precondition {
       condition     = var.autopilot || var.regional || length(var.zones) > 0
       error_message = "\"zones\" must list at least one zone when \"regional\" is false."
+    }
+    precondition {
+      condition     = !var.autopilot || var.enable_dataplane_v2 != false
+      error_message = "An Autopilot cluster always uses Dataplane V2: \"enable_dataplane_v2\" cannot be false."
     }
     precondition {
       condition     = !var.enable_private_endpoint || var.enable_private_nodes

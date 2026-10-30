@@ -5,8 +5,8 @@ resource "google_compute_global_address" "reserved_service_range" {
   address       = var.address
   description   = var.description
   ip_version    = var.ip_version
-  prefix_length = var.prefix_length
-  address_type  = "INTERNAL"
+  prefix_length = coalesce(var.prefix_length, 24)
+  address_type  = var.address_type
   purpose       = "VPC_PEERING"
   network       = var.network
   project       = data.google_client_config.current.project

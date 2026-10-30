@@ -1,5 +1,5 @@
 variable "region" {
-  description = "The GCP region used by the provider."
+  description = "The GCP region to deploy the Memorystore for Memcached Instance."
   type        = string
   default     = "europe-west9"
 }

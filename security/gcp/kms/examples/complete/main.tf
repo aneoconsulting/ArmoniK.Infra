@@ -1,37 +1,67 @@
 data "google_client_openid_userinfo" "current" {}
 
-locals {
-  current_user = "user:${data.google_client_openid_userinfo.current.email}"
-  labels = {
-    env    = "test"
-    app    = "complete"
-    module = "kms"
-    # Label values only allow lowercase letters, digits, "_" and "-"
-    created_by = replace(lower(split("@", data.google_client_openid_userinfo.current.email)[0]), "/[^a-z0-9_-]/", "_")
+resource "local_file" "date_sh" {
+  filename = "${path.module}/generated/date.sh"
+  content  = local.date
+}
+
+data "external" "static_timestamp" {
+  program     = ["bash", "date.sh"]
+  working_dir = "${path.module}/generated"
+  depends_on  = [local_file.date_sh]
+}
+
+resource "null_resource" "timestamp" {
+  triggers = {
+    date = data.external.static_timestamp.result.date
   }
+  lifecycle {
+    ignore_changes = [triggers]
+  }
+}
+
+locals {
+  date = <<-EOT
+#!/bin/bash
+set -e
+DATE=$(date +%F-%H-%M-%S)
+jq -n --arg date "$DATE" '{"date":$date}'
+  EOT
+  labels = {
+    env             = "test"
+    app             = "complete"
+    module          = "kms"
+    "create_by"     = split("@", data.google_client_openid_userinfo.current.email)[0]
+    "creation_date" = null_resource.timestamp.triggers["date"]
+  }
+  current_user = "user:${data.google_client_openid_userinfo.current.email}"
   key_ring_roles = {
-    "roles/cloudkms.admin"  = [local.current_user]
-    "roles/cloudkms.viewer" = [local.current_user]
+    "roles/cloudkms.admin" = [local.current_user],
+    "roles/editor"         = [local.current_user]
   }
   crypto_keys = {
-    "symmetric" = {
+    "key-1" = {
+      purpose                       = "ENCRYPT_DECRYPT"
       rotation_period               = "86400s"
+      import_only                   = false
       skip_initial_version_creation = true
       version_template = {
-        algorithm = "GOOGLE_SYMMETRIC_ENCRYPTION"
+        algorithm = "CRYPTO_KEY_VERSION_ALGORITHM_UNSPECIFIED"
       }
     }
-    "signing" = {
+    "key-4" = {
       purpose = "ASYMMETRIC_SIGN"
       version_template = {
         algorithm        = "EC_SIGN_P384_SHA384"
         protection_level = "SOFTWARE"
       }
     }
-    "scheduled" = {
+    "key-3" = {
+      purpose                    = "ENCRYPT_DECRYPT"
       destroy_scheduled_duration = "86400s"
       roles = {
-        "roles/cloudkms.cryptoKeyEncrypterDecrypter" = [local.current_user]
+        "roles/cloudkms.cryptoKeyEncrypter" = [local.current_user],
+        "roles/cloudkms.admin"              = [local.current_user]
       }
     }
   }

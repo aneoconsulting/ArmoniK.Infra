@@ -32,7 +32,7 @@ resource "google_kms_crypto_key" "keys" {
   for_each                      = var.crypto_keys
   key_ring                      = google_kms_key_ring.key_ring.id
   name                          = each.key
-  labels                        = var.labels
+  labels                        = can(coalesce(each.value.description)) ? merge(var.labels, { description = each.value.description }) : var.labels
   purpose                       = each.value.purpose
   rotation_period               = each.value.rotation_period
   destroy_scheduled_duration    = each.value.destroy_scheduled_duration

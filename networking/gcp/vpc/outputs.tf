@@ -6,6 +6,8 @@ output "name" {
 output "id" {
   description = "The ID of the VPC"
   value       = google_compute_network.vpc.id
+  # Private Service Connect consumers (Memorystore) need the service connection policies first, and before deletion
+  depends_on = [google_network_connectivity_service_connection_policy.policies]
 }
 
 output "gateway_ipv4" {
@@ -16,19 +18,48 @@ output "gateway_ipv4" {
 output "self_link" {
   description = "The URI of the created resource"
   value       = google_compute_network.vpc.self_link
+  # Private Service Connect consumers (Memorystore) need the service connection policies first, and before deletion
+  depends_on = [google_network_connectivity_service_connection_policy.policies]
 }
 
-output "subnets" {
-  description = "Map of the subnets, keyed by name, with their ID, CIDR block, self link, region and whether their outbound traffic goes through Cloud NAT"
-  value = {
-    for key, subnet in google_compute_subnetwork.subnets : key => {
-      id         = subnet.id
-      cidr_block = subnet.ip_cidr_range
-      self_link  = subnet.self_link
-      region     = subnet.region
-      enable_nat = var.subnets[key].enable_nat
-    }
-  }
+output "private_subnet_ids" {
+  description = "List of private subnet IDs"
+  value       = { for subnet, _ in local.private_subnets : subnet => google_compute_subnetwork.subnets[subnet].id }
+}
+
+output "private_subnet_cidr_blocks" {
+  description = "List of private subnet CIDR blocks"
+  value       = { for subnet, _ in local.private_subnets : subnet => google_compute_subnetwork.subnets[subnet].ip_cidr_range }
+}
+
+output "private_subnet_self_links" {
+  description = "List of private subnet self links"
+  value       = { for subnet, _ in local.private_subnets : subnet => google_compute_subnetwork.subnets[subnet].self_link }
+}
+
+output "private_subnet_regions" {
+  description = "List of private subnet regions"
+  value       = { for subnet, _ in local.private_subnets : subnet => google_compute_subnetwork.subnets[subnet].region }
+}
+
+output "public_subnet_ids" {
+  description = "List of public subnet IDs"
+  value       = { for subnet, _ in local.public_subnets : subnet => google_compute_subnetwork.subnets[subnet].id }
+}
+
+output "public_subnet_cidr_blocks" {
+  description = "List of public subnet CIDR blocks"
+  value       = { for subnet, _ in local.public_subnets : subnet => google_compute_subnetwork.subnets[subnet].ip_cidr_range }
+}
+
+output "public_subnet_self_links" {
+  description = "List of public subnet self links"
+  value       = { for subnet, _ in local.public_subnets : subnet => google_compute_subnetwork.subnets[subnet].self_link }
+}
+
+output "public_subnet_regions" {
+  description = "List of public subnet regions"
+  value       = { for subnet, _ in local.public_subnets : subnet => google_compute_subnetwork.subnets[subnet].region }
 }
 
 output "gke_subnet_name" {

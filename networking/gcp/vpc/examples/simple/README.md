@@ -1,6 +1,6 @@
 ## Simple VPC
 
-Two subnets, one behind Cloud NAT. Uses the [vpc module](../..).
+A private and a public subnet. Uses the [vpc module](../..).
 
 ```bash
 terraform init

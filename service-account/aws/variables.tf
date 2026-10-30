@@ -17,8 +17,14 @@ variable "namespace" {
 }
 
 variable "name" {
-  description = "Name of the service account to create"
+  description = "Name of the service account, created by this module unless create_service_account is false"
   type        = string
+}
+
+variable "create_service_account" {
+  description = "Create the Kubernetes service account. Set false when another module owns it: only the IAM role (and its Pod Identity association) is created, and that module annotates its service account with service_account_iam_role_arn for IRSA. The role trust and the association are created whether or not that service account exists, EKS accepting a name that does not exist yet, so a mismatched name or namespace leaves its pods without credentials"
+  type        = bool
+  default     = true
 }
 
 variable "automount_token" {
@@ -35,4 +41,16 @@ variable "oidc_provider_arn" {
 variable "oidc_issuer_url" {
   description = "URL of the OIDC issuer"
   type        = string
+}
+
+variable "pod_identity" {
+  description = "Whether EKS Pod Identity is deployed on the cluster (the pod_identity output of kubernetes/aws/eks). When true, the service account gets its role through a Pod Identity association instead of the IRSA annotation, which requires an AWS SDK supporting it. The role trusts both when cluster_name is set, so switching only takes a pod restart"
+  type        = bool
+  default     = false
+}
+
+variable "cluster_name" {
+  description = "Name of the EKS cluster, required when pod_identity is true. The role trusts EKS Pod Identity only when it is set, and only for this cluster"
+  type        = string
+  default     = null
 }

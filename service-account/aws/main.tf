@@ -7,39 +7,92 @@ locals {
   oidc_url = trimprefix(var.oidc_issuer_url, "https://")
 }
 
-resource "aws_iam_role" "armonik" {
-  name = "${local.prefix}-eks-pod-identity-${var.name}"
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Principal = {
-          Federated = local.oidc_arn
-        }
-        Action = "sts:AssumeRoleWithWebIdentity"
-        Condition = {
-          StringEquals = {
-            "${local.oidc_url}:aud" = "sts.amazonaws.com"
-            "${local.oidc_url}:sub" = [
-              "system:serviceaccount:${var.namespace}:${var.name}",
-            ]
-          }
-        }
+# Both mechanisms are trusted, so switching pod_identity never breaks a running pod; the Pod Identity statement
+# follows https://docs.aws.amazon.com/eks/latest/userguide/pod-id-role.html and needs cluster_name, which pins it to
+# that cluster: without it, any cluster of the account could associate a service account of the same name.
+data "aws_iam_policy_document" "armonik_trust" {
+  statement {
+    sid     = "Irsa"
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+    principals {
+      type        = "Federated"
+      identifiers = [local.oidc_arn]
+    }
+    condition {
+      test     = "StringEquals"
+      variable = "${local.oidc_url}:aud"
+      values   = ["sts.amazonaws.com"]
+    }
+    condition {
+      test     = "StringEquals"
+      variable = "${local.oidc_url}:sub"
+      values   = ["system:serviceaccount:${var.namespace}:${var.name}"]
+    }
+  }
+  dynamic "statement" {
+    for_each = var.cluster_name == null ? [] : [var.cluster_name]
+    content {
+      sid     = "PodIdentity"
+      actions = ["sts:AssumeRole", "sts:TagSession"]
+      principals {
+        type        = "Service"
+        identifiers = ["pods.eks.amazonaws.com"]
       }
-    ]
-  })
-  tags = local.tags
+      condition {
+        test     = "StringEquals"
+        variable = "aws:RequestTag/eks-cluster-name"
+        values   = [statement.value]
+      }
+      condition {
+        test     = "StringEquals"
+        variable = "aws:RequestTag/kubernetes-namespace"
+        values   = [var.namespace]
+      }
+      condition {
+        test     = "StringEquals"
+        variable = "aws:RequestTag/kubernetes-service-account"
+        values   = [var.name]
+      }
+    }
+  }
+}
+
+resource "aws_iam_role" "armonik" {
+  name               = "${local.prefix}-eks-pod-identity-${var.name}"
+  assume_role_policy = data.aws_iam_policy_document.armonik_trust.json
+  tags               = local.tags
 }
 
 resource "kubernetes_service_account" "armonik" {
+  count = var.create_service_account ? 1 : 0
   metadata {
     name      = var.name
     namespace = var.namespace
 
-    annotations = {
+    annotations = var.pod_identity ? {} : {
       "eks.amazonaws.com/role-arn" = aws_iam_role.armonik.arn
     }
   }
   automount_service_account_token = var.automount_token
+}
+
+moved {
+  from = kubernetes_service_account.armonik
+  to   = kubernetes_service_account.armonik[0]
+}
+
+resource "aws_eks_pod_identity_association" "armonik" {
+  count           = var.pod_identity ? 1 : 0
+  cluster_name    = var.cluster_name
+  namespace       = var.namespace
+  service_account = var.name
+  role_arn        = aws_iam_role.armonik.arn
+  tags            = local.tags
+  depends_on      = [kubernetes_service_account.armonik]
+  lifecycle {
+    precondition {
+      condition     = var.cluster_name != null
+      error_message = "pod_identity requires cluster_name."
+    }
+  }
 }

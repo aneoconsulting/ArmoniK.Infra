@@ -28,15 +28,18 @@ data "aws_subnets" "subnets" {
 }
 
 module "efs" {
-  source                 = "../../../efs"
-  vpc_cidr_blocks        = [data.aws_vpc.default.cidr_block]
-  vpc_cidr_block_private = []
-  vpc_id                 = data.aws_vpc.default.id
-  vpc_subnet_ids         = data.aws_subnets.subnets.ids
-  name                   = "efs-test"
-  transition_to_ia       = "AFTER_30_DAYS"
-  throughput_mode        = "bursting"
-  performance_mode       = "generalPurpose"
+  source                       = "../../../efs"
+  region                       = var.aws_region
+  vpc_cidr_blocks              = [data.aws_vpc.default.cidr_block]
+  vpc_ipv6_cidr_blocks         = []
+  mount_target_ip_address_type = "IPV4_ONLY"
+  vpc_cidr_block_private       = []
+  vpc_id                       = data.aws_vpc.default.id
+  vpc_subnet_ids               = data.aws_subnets.subnets.ids
+  name                         = "efs-test"
+  transition_to_ia             = "AFTER_30_DAYS"
+  throughput_mode              = "bursting"
+  performance_mode             = "generalPurpose"
   tags = {
     env             = "test"
     app             = "complete"

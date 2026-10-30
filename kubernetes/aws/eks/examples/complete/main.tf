@@ -30,6 +30,8 @@ data "aws_subnets" "subnets" {
 # AWS EKS
 module "eks" {
   source                                                   = "../.."
+  region                                                   = var.aws_region
+  pod_identity                                             = true
   name                                                     = "eks-complete-test"
   profile                                                  = "default"
   cluster_autoscaler_expander                              = "least-waste"
@@ -47,16 +49,21 @@ module "eks" {
   cluster_autoscaler_scale_down_utilization_threshold      = 0.5
   cluster_autoscaler_scan_interval                         = "10s"
   cluster_autoscaler_skip_nodes_with_system_pods           = true
-  cluster_autoscaler_tag                                   = "v1.32.0"
-  cluster_autoscaler_version                               = "9.46.6"
+  cluster_autoscaler_tag                                   = "v1.35.2"
+  cluster_autoscaler_version                               = "9.59.0"
   cluster_encryption_config                                = ""
+  cluster_create_kms_key                                   = true
   cluster_endpoint_private_access                          = false
   cluster_endpoint_public_access                           = true
   cluster_endpoint_public_access_cidrs                     = ["0.0.0.0/0"]
   cluster_log_kms_key_id                                   = ""
   cluster_log_retention_in_days                            = 30
-  cluster_version                                          = "1.32"
+  cluster_version                                          = "1.35"
+  cluster_deletion_protection                              = false
+  cluster_kms_key_rotation_period_in_days                  = 365
+  cluster_control_plane_egress_mode                        = "AWS_MANAGED"
   ebs_kms_key_id                                           = ""
+  ebs_kms_key_enabled                                      = null
   instance_refresh_image                                   = "public.ecr.aws/aws-ec2/aws-node-termination-handler"
   instance_refresh_namespace                               = "kube-system"
   instance_refresh_repository                              = "oci://public.ecr.aws/aws-ec2/helm"
@@ -65,42 +72,60 @@ module "eks" {
   kubeconfig_file                                          = "generated/kubeconfig"
   vpc_id                                                   = data.aws_vpc.default.id
   vpc_pods_subnet_ids                                      = data.aws_subnets.subnets.ids
+  vpc_cni_custom_networking                                = false
   vpc_private_subnet_ids                                   = data.aws_subnets.subnets.ids
 
   efs_csi = {
-    image      = "public.ecr.aws/efs-csi-driver/amazon/aws-efs-csi-driver"
-    tag        = "v2.1.8"
-    repository = "https://kubernetes-sigs.github.io/aws-efs-csi-driver/"
-    version    = "3.1.9"
+    addon_version = "v3.5.2-eksbuild.1"
+    name          = "eks-complete-test-efs-csi-driver"
+    controller_resources = {
+      limits   = { memory = "256Mi" }
+      requests = { cpu = "10m", memory = "40Mi" }
+    }
   }
 
   ebs_csi = {
-    image      = "public.ecr.aws/ebs-csi-driver/aws-ebs-csi-driver"
-    tag        = "v1.44.0"
-    repository = "https://kubernetes-sigs.github.io/aws-ebs-csi-driver/"
-    version    = "2.44.0"
+    addon_version = "v1.67.1-eksbuild.1"
+    name          = "eks-complete-test-ebs-csi-driver"
+    controller_resources = {
+      limits   = { memory = "256Mi" }
+      requests = { cpu = "10m", memory = "40Mi" }
+    }
   }
 
-  csi_liveness_probe = {
-    image = "public.ecr.aws/eks-distro/kubernetes-csi/livenessprobe"
-    tag   = "v2.15.0-eks-1-32-14"
+  # The control plane settings below restate the EKS and Kubernetes defaults.
+  cluster_control_plane_scaling_config = {
+    tier = "standard"
   }
 
-  csi_node_driver_registrar = {
-    image = "public.ecr.aws/eks-distro/kubernetes-csi/node-driver-registrar"
-    tag   = "v2.13.0-eks-1-32-14"
+  cluster_kube_api_server_config = {
+    event_ttl = "1h"
+    service_node_port_range = {
+      min_port = 30000
+      max_port = 32767
+    }
   }
 
-  csi_external_provisioner = {
-    image = "public.ecr.aws/eks-distro/kubernetes-csi/external-provisioner"
-    tag   = "v5.2.0-eks-1-32-14"
+  # horizontal_pod_autoscaler_sync_period is rejected on the standard tier; it needs tier-xl or higher.
+  cluster_kube_controller_manager_config = null
+
+  cluster_kube_scheduler_config = {
+    node_resources_fit = {
+      scoring_strategy = {
+        type = "LeastAllocated"
+        resources = [
+          { name = "cpu", weight = 1 },
+          { name = "memory", weight = 1 },
+        ]
+      }
+    }
   }
 
   eks_managed_node_groups = {
     test = {
       name                        = "workers"
       launch_template_description = "Node group for test"
-      ami_type                    = "AL2_x86_64"
+      ami_type                    = "AL2023_x86_64_STANDARD"
       instance_types              = ["c5.large"]
       capacity_type               = "SPOT"
       min_size                    = 0
@@ -133,11 +158,20 @@ module "eks" {
       desired_size                = 1
       max_size                    = 5
       force_delete                = true
-      force_delete_warm_pool      = true
       instance_market_options = {
         market_type = "spot"
       }
-      bootstrap_extra_args     = "--kubelet-extra-args '--node-labels=node.kubernetes.io/lifecycle=spot'"
+      cloudinit_pre_nodeadm = [{
+        content_type = "application/node.eks.aws"
+        content      = <<-EOT
+          apiVersion: node.eks.aws/v1alpha1
+          kind: NodeConfig
+          spec:
+            kubelet:
+              flags:
+                - --node-labels=node.kubernetes.io/lifecycle=spot
+        EOT
+      }]
       iam_role_use_name_prefix = false
       iam_role_additional_policies = {
         AmazonSSMManagedInstanceCore = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
@@ -151,23 +185,27 @@ module "eks" {
       max_size                    = 5
       use_mixed_instances_policy  = true
       mixed_instances_policy = {
-        on_demand_allocation_strategy            = "lowest-price"
-        on_demand_base_capacity                  = 0
-        on_demand_percentage_above_base_capacity = 20 # 20% On-Demand Instances, 80% Spot Instances
-        spot_allocation_strategy                 = "price-capacity-optimized"
-        spot_instance_pools                      = null
-        spot_max_price                           = null
+        instances_distribution = {
+          on_demand_allocation_strategy            = "lowest-price"
+          on_demand_base_capacity                  = 0
+          on_demand_percentage_above_base_capacity = 20 # 20% On-Demand Instances, 80% Spot Instances
+          spot_allocation_strategy                 = "price-capacity-optimized"
+          spot_instance_pools                      = null
+          spot_max_price                           = null
+        }
+        launch_template = {
+          override = [
+            {
+              instance_type     = "c5.4xlarge"
+              weighted_capacity = "1"
+            },
+            {
+              instance_type     = "c5.2xlarge"
+              weighted_capacity = "2"
+            },
+          ]
+        }
       }
-      override = [
-        {
-          instance_type     = "c5.4xlarge"
-          weighted_capacity = "1"
-        },
-        {
-          instance_type     = "c5.2xlarge"
-          weighted_capacity = "2"
-        },
-      ]
       iam_role_use_name_prefix = false
       iam_role_additional_policies = {
         AmazonSSMManagedInstanceCore = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"

@@ -4,12 +4,15 @@ locals {
 }
 
 resource "aws_s3_bucket" "s3_bucket" {
-  bucket        = var.name
-  force_destroy = true
-  tags          = local.tags
+  region           = var.region
+  bucket           = var.name
+  bucket_namespace = var.bucket_namespace
+  force_destroy    = true
+  tags             = local.tags
 }
 
 resource "aws_s3_bucket_versioning" "versioning" {
+  region = var.region
   bucket = aws_s3_bucket.s3_bucket.id
   versioning_configuration {
     status = var.versioning
@@ -17,6 +20,7 @@ resource "aws_s3_bucket_versioning" "versioning" {
 }
 
 resource "aws_s3_bucket_ownership_controls" "ownership" {
+  region = var.region
   bucket = aws_s3_bucket.s3_bucket.id
   rule {
     object_ownership = var.ownership
@@ -24,6 +28,7 @@ resource "aws_s3_bucket_ownership_controls" "ownership" {
 }
 
 resource "aws_s3_bucket_acl" "acl" {
+  region = var.region
   bucket = aws_s3_bucket.s3_bucket.id
   acl    = "private"
   depends_on = [
@@ -33,8 +38,10 @@ resource "aws_s3_bucket_acl" "acl" {
 }
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "encryption" {
+  region = var.region
   bucket = aws_s3_bucket.s3_bucket.bucket
   rule {
+    blocked_encryption_types = var.blocked_encryption_types
     apply_server_side_encryption_by_default {
       sse_algorithm     = var.sse_algorithm
       kms_master_key_id = var.kms_key_id
@@ -105,6 +112,7 @@ data "aws_iam_policy_document" "combined" {
 
 resource "aws_s3_bucket_policy" "s3_bucket" {
   count  = (local.attach_policy ? 1 : 0)
+  region = var.region
   bucket = aws_s3_bucket.s3_bucket.id
   policy = data.aws_iam_policy_document.combined[0].json
 }
@@ -115,6 +123,8 @@ resource "aws_s3_bucket_public_access_block" "s3_bucket" {
   # Ref: https://github.com/hashicorp/terraform-provider-aws/issues/7628
 
   count                   = (var.attach_public_policy ? 1 : 0)
+  region                  = var.region
+  skip_destroy            = var.public_access_block_skip_destroy
   bucket                  = local.attach_policy ? aws_s3_bucket_policy.s3_bucket[0].id : aws_s3_bucket.s3_bucket.id
   block_public_acls       = var.block_public_acls
   block_public_policy     = var.block_public_policy

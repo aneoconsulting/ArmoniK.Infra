@@ -3,6 +3,12 @@ variable "aws_profile" {
   description = "AWS Profile used to login and push container images on ECR"
   type        = string
 }
+variable "region" {
+  description = "AWS region where the ECR repositories will be managed. Defaults to the region set in the provider configuration"
+  type        = string
+  default     = null
+}
+
 # Tags
 variable "tags" {
   description = "Tags for resource"
@@ -19,13 +25,19 @@ variable "kms_key_id" {
 
 # Variable to enable mutability
 variable "mutability" {
-  description = "The tag mutability setting for the repository"
+  description = "The tag mutability setting for the repository. The *_WITH_EXCLUSION values apply the opposite setting to the tags matching mutability_exclusion_filters"
   type        = string
   default     = "MUTABLE"
   validation {
-    condition     = contains(["MUTABLE", "IMMUTABLE"], var.mutability)
-    error_message = "Valid values for \"mutability\" : \"MUTABLE\" | \"IMMUTABLE\"."
+    condition     = contains(["MUTABLE", "IMMUTABLE", "MUTABLE_WITH_EXCLUSION", "IMMUTABLE_WITH_EXCLUSION"], var.mutability)
+    error_message = "Valid values for \"mutability\" : \"MUTABLE\" | \"IMMUTABLE\" | \"MUTABLE_WITH_EXCLUSION\" | \"IMMUTABLE_WITH_EXCLUSION\"."
   }
+}
+
+variable "mutability_exclusion_filters" {
+  description = "Tag patterns (letters, digits, ._-, at most two * wildcards) excluded from the mutability setting. Required with, and only with, the *_WITH_EXCLUSION mutability values"
+  type        = list(string)
+  default     = []
 }
 
 # List of ECR repositories to create

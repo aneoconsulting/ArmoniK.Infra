@@ -4,12 +4,16 @@ locals {
   num_cache_clusters         = (var.automatic_failover_enabled && var.num_cache_clusters < 2) ? 2 : var.num_cache_clusters
   slow_log_name              = try(var.slow_log, "") == "" ? "/aws/elasticache/${var.name}/slow-log" : var.slow_log
   engine_log_name            = try(var.engine_log, "") == "" ? "/aws/elasticache/${var.name}/engine-log" : var.engine_log
-  data_tiering_enabled       = var.node_type == "r6gd" ? true : var.data_tiering_enabled
+  data_tiering_enabled       = can(regex("^cache\\.r6gd\\.", var.node_type)) ? true : var.data_tiering_enabled
+  # Parameter group families per engine major version: valkeyN and redisN from 7, redis6.x for 6, redisN.0 before.
+  engine_major           = try(tonumber(split(".", var.engine_version)[0]), null)
+  parameter_group_family = var.engine == "valkey" ? "valkey${local.engine_major == null ? "" : local.engine_major}" : (try(local.engine_major >= 7, false) ? "redis${local.engine_major}" : (try(local.engine_major <= 5, false) ? "redis${local.engine_major}.0" : "redis6.x"))
 }
 
 # Slow log and engine log not yet available in Terraform
 module "slow_log" {
   source            = "../../../monitoring/aws/cloudwatch-log-group"
+  region            = var.region
   name              = local.slow_log_name
   kms_key_id        = var.log_kms_key_id
   retention_in_days = var.log_retention_in_days
@@ -18,6 +22,7 @@ module "slow_log" {
 
 module "engine_log" {
   source            = "../../../monitoring/aws/cloudwatch-log-group"
+  region            = var.region
   name              = local.engine_log_name
   kms_key_id        = var.log_kms_key_id
   retention_in_days = var.log_retention_in_days
@@ -25,6 +30,7 @@ module "engine_log" {
 }
 
 resource "aws_elasticache_replication_group" "elasticache" {
+  region                      = var.region
   description                 = "Replication group for stdin and stdout elasticache cluster"
   replication_group_id        = var.name
   engine                      = var.engine
@@ -63,9 +69,12 @@ resource "aws_elasticache_replication_group" "elasticache" {
   ]
 }
 
+# The family cannot change in place, so each family gets its own group, created before the old one is deleted; the
+# redis6.x group keeps the <name>-config name, so deployments staying on Redis 6 are not replaced.
 resource "aws_elasticache_parameter_group" "elasticache" {
-  name   = "${var.name}-config"
-  family = "redis6.x"
+  region = var.region
+  name   = local.parameter_group_family == "redis6.x" ? "${var.name}-config" : "${var.name}-config-${replace(local.parameter_group_family, ".", "-")}"
+  family = local.parameter_group_family
   parameter {
     name  = "maxmemory-policy"
     value = "allkeys-lru"
@@ -78,9 +87,17 @@ resource "aws_elasticache_parameter_group" "elasticache" {
     }
   }
   tags = local.tags
+  lifecycle {
+    create_before_destroy = true
+    precondition {
+      condition     = var.engine != "valkey" || try(local.engine_major >= 7, false)
+      error_message = "engine = valkey requires an engine_version of 7.2 or later, such as 9.1."
+    }
+  }
 }
 
 resource "aws_security_group" "elasticache" {
+  region      = var.region
   name        = "${var.name}-sg"
   description = "Allow Redis Elasticache inbound traffic on port 6379"
   vpc_id      = var.vpc_id
@@ -102,6 +119,7 @@ resource "aws_security_group" "elasticache" {
 
 # Subnet group for Elasticache IP
 resource "aws_elasticache_subnet_group" "elasticache" {
+  region      = var.region
   description = "Subnet ids for IO of ArmoniK AWS Elasticache"
   name        = "${var.name}-io"
   subnet_ids  = var.vpc_subnet_ids

@@ -4,7 +4,7 @@ Amazon Elastic Container Registry (Amazon ECR) is a fully managed container regi
 
 This module creates AWS ECR with these possibilities :
 
-* Enable or disable mutability
+* Enable or disable mutability, optionally excluding tag patterns from that setting
 * Enable or disable the scan on push
 * Enable or disable the force delete
 * Choose the encryption type 

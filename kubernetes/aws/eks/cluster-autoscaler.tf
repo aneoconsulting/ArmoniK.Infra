@@ -20,6 +20,18 @@ resource "helm_release" "cluster_autoscaler" {
     value = "aws"
   }
   set {
+    name  = "rbac.serviceAccount.name"
+    value = "cluster-autoscaler"
+  }
+  dynamic "set" {
+    for_each = local.pod_identity ? [] : [aws_iam_role.cluster_autoscaler.arn]
+    content {
+      name  = "rbac.serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn"
+      value = set.value
+      type  = "string"
+    }
+  }
+  set {
     name  = "image.repository"
     value = var.cluster_autoscaler_image
   }
@@ -127,55 +139,63 @@ resource "helm_release" "cluster_autoscaler" {
     yamlencode(local.node_selector),
     yamlencode(local.tolerations)
   ]
+  # Pod Identity credentials are injected at pod creation, so the association must exist first.
   depends_on = [
     module.eks,
-    null_resource.update_kubeconfig
+    null_resource.update_kubeconfig,
+    aws_eks_pod_identity_association.cluster_autoscaler,
   ]
 }
 
-# Workers Auto Scaling policy
-data "aws_iam_policy_document" "worker_autoscaling" {
+# Cluster Autoscaler's own role, allowed to resize only the ASGs tagged as owned by this cluster.
+resource "aws_iam_role" "cluster_autoscaler" {
+  name               = "${var.name}-cluster-autoscaler"
+  assume_role_policy = data.aws_iam_policy_document.workload_trust["cluster_autoscaler"].json
+  tags               = local.tags
+}
+
+data "aws_iam_policy_document" "cluster_autoscaler" {
   statement {
-    sid    = "eksWorkerAutoscalingAll"
-    effect = "Allow"
     actions = [
       "autoscaling:DescribeAutoScalingGroups",
       "autoscaling:DescribeAutoScalingInstances",
       "autoscaling:DescribeLaunchConfigurations",
       "autoscaling:DescribeScalingActivities",
       "autoscaling:DescribeTags",
-      "ec2:DescribeInstanceTypes",
       "ec2:DescribeLaunchTemplateVersions",
+      "ec2:DescribeInstanceTypes",
+      "eks:DescribeNodegroup",
+      "ec2:DescribeImages",
+      "ec2:GetInstanceTypesFromInstanceRequirements",
     ]
     resources = ["*"]
   }
   statement {
-    sid    = "eksWorkerAutoscalingOwn"
-    effect = "Allow"
     actions = [
       "autoscaling:SetDesiredCapacity",
       "autoscaling:TerminateInstanceInAutoScalingGroup",
-      "ec2:DescribeImages",
-      "ec2:GetInstanceTypesFromInstanceRequirements",
-      "autoscaling:UpdateAutoScalingGroup",
-      "eks:DescribeNodegroup"
     ]
     resources = ["*"]
+    condition {
+      test     = "StringEquals"
+      variable = "autoscaling:ResourceTag/kubernetes.io/cluster/${module.eks.cluster_name}"
+      values   = ["owned"]
+    }
   }
 }
 
-resource "aws_iam_policy" "worker_autoscaling" {
-  name_prefix = local.iam_worker_autoscaling_policy_name
-  description = "EKS worker node autoscaling policy for cluster ${module.eks.cluster_name}"
-  policy      = data.aws_iam_policy_document.worker_autoscaling.json
-  tags        = local.tags
+resource "aws_iam_role_policy" "cluster_autoscaler" {
+  name   = "cluster-autoscaler"
+  role   = aws_iam_role.cluster_autoscaler.id
+  policy = data.aws_iam_policy_document.cluster_autoscaler.json
 }
 
-resource "aws_iam_policy_attachment" "workers_autoscaling" {
-  name = "eks-worker-node-autoscaling-${module.eks.cluster_name}"
-  roles = concat(
-    values(module.eks.eks_managed_node_groups)[*].iam_role_name,
-    values(module.eks.self_managed_node_groups)[*].iam_role_name,
-  values(module.eks.fargate_profiles)[*].iam_role_name)
-  policy_arn = aws_iam_policy.worker_autoscaling.arn
+resource "aws_eks_pod_identity_association" "cluster_autoscaler" {
+  count           = local.pod_identity ? 1 : 0
+  region          = var.region
+  cluster_name    = module.eks.cluster_name
+  namespace       = var.cluster_autoscaler_namespace
+  service_account = "cluster-autoscaler"
+  role_arn        = aws_iam_role.cluster_autoscaler.arn
+  tags            = local.tags
 }

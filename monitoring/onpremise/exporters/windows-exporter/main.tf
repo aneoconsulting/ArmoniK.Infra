@@ -133,11 +133,12 @@ resource "kubernetes_config_map" "windows_exporter_config" {
   data = {
     "config.yml" = yamlencode({
       collectors = {
-        enabled = "cpu_info,container,logical_disk,memory,net,os"
+        enabled = "cpu_info,container,logical_disk,memory,net,os,service"
       }
       collector = {
+        # The exporter rejects unknown keys, and include only exists from windows-exporter 0.31.
         service = {
-          services-where = "Name='containerd' or Name='kubelet'"
+          include = "^(containerd|kubelet)$"
         }
       }
     })

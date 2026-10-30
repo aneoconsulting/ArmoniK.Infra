@@ -2,19 +2,23 @@
 data "aws_caller_identity" "current" {}
 
 # Current AWS region
-data "aws_region" "current" {}
+data "aws_region" "current" {
+  region = var.region
+}
 
 # Current partition
 data "aws_partition" "current" {}
 
 # KMS alias
 resource "aws_kms_alias" "kms_alias" {
+  region        = var.region
   name          = "alias/${var.name}"
   target_key_id = aws_kms_key.kms.id
 }
 
 # KMS key
 resource "aws_kms_key" "kms" {
+  region                             = var.region
   bypass_policy_lockout_safety_check = var.bypass_policy_lockout_safety_check
   customer_master_key_spec           = var.customer_master_key_spec
   deletion_window_in_days            = var.deletion_window_in_days
@@ -393,13 +397,13 @@ data "aws_iam_policy_document" "policy" {
     condition {
       test = "StringEquals"
       values = [
-        "ec2.${data.aws_region.current.name}.amazonaws.com",
-        "s3.${data.aws_region.current.name}.amazonaws.com",
-        "dynamodb.${data.aws_region.current.name}.amazonaws.com",
-        "ecr.${data.aws_region.current.name}.amazonaws.com",
-        "eks.${data.aws_region.current.name}.amazonaws.com",
-        "elasticache.${data.aws_region.current.name}.amazonaws.com",
-        "mq.${data.aws_region.current.name}.amazonaws.com",
+        "ec2.${data.aws_region.current.region}.amazonaws.com",
+        "s3.${data.aws_region.current.region}.amazonaws.com",
+        "dynamodb.${data.aws_region.current.region}.amazonaws.com",
+        "ecr.${data.aws_region.current.region}.amazonaws.com",
+        "eks.${data.aws_region.current.region}.amazonaws.com",
+        "elasticache.${data.aws_region.current.region}.amazonaws.com",
+        "mq.${data.aws_region.current.region}.amazonaws.com",
       ]
       variable = "kms:ViaService"
     }

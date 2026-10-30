@@ -78,7 +78,7 @@ charts/armonik (umbrella)
 
 Target release layout: **operators release -> ArmoniK application release(s)**. Operators and their CRDs are installed once per cluster, never per application release. `charts/armonik` defaults to the all-in-one shape (it installs the operators itself through the `armonik-operators` subchart) so a plain `helm install` works; a layered install sets `global.armonik.operators.<op>.deploy=false` and states each operator's namespace.
 
-`charts/eniconfig` and `charts/keda-hpa` are legacy standalone charts, not part of the umbrella.
+`charts/keda-hpa` is a legacy standalone chart, not part of the umbrella.
 
 ### Configuration: the conf layers
 

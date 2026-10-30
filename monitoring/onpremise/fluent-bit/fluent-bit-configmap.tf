@@ -1,5 +1,12 @@
 # configmap with all the variables
 resource "kubernetes_config_map" "fluent_bit_config" {
+  lifecycle {
+    # As a sidecar, fluent-bit runs under the service account of the pod it is injected in.
+    precondition {
+      condition     = local.service_account || length(var.service_account_annotations) == 0
+      error_message = "service_account_annotations requires fluent-bit as a DaemonSet; as a sidecar, annotate the service account of the pods instead."
+    }
+  }
   metadata {
     name      = "fluent-bit-configmap"
     namespace = var.namespace

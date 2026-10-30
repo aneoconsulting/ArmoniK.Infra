@@ -4,34 +4,6 @@ variable "profile" {
   type        = string
 }
 
-# Namespace helm chart
-variable "chart_namespace" {
-  type        = string
-  description = "Version for chart"
-  default     = "default" # Enter your desired namespace of helm chart here
-}
-
-# Version helm chart
-variable "chart_version" {
-  type        = string
-  description = "Version for chart"
-  default     = "0.1.0" # Enter your desired version of helm chart here
-}
-
-# Name helm chart
-variable "chart_name" {
-  type        = string
-  description = "Name for chart"
-  default     = "eniconfig" # Enter your desired name of Helm chart here
-}
-
-# Path helm chart
-variable "chart_repository" {
-  type        = string
-  description = "Path to the charts repository"
-  default     = "../../../charts" # Enter your desired relative path here
-}
-
 # Kubeconfig file path
 variable "kubeconfig_file" {
   description = "Kubeconfig file path"
@@ -50,6 +22,18 @@ variable "name" {
   description = "AWS EKS service name"
   type        = string
   default     = "armonik-eks"
+}
+
+variable "pod_identity" {
+  description = "Deploy EKS Pod Identity (the eks-pod-identity-agent add-on) and use it for the EBS/EFS CSI drivers and the cluster autoscaler instead of IRSA. Private clusters then need the eks-auth VPC endpoint. Their roles trust both, so switching only takes a pod restart"
+  type        = bool
+  default     = false
+}
+
+variable "region" {
+  description = "AWS region where the EKS resources will be managed. Defaults to the region set in the provider configuration"
+  type        = string
+  default     = null
 }
 
 # Node selector
@@ -85,6 +69,70 @@ variable "cluster_log_retention_in_days" {
   type        = number
 }
 
+variable "cluster_deletion_protection" {
+  description = "Whether to enable deletion protection for the cluster; it must be disabled before the cluster can be deleted"
+  type        = bool
+  default     = null
+}
+
+variable "cluster_kms_key_rotation_period_in_days" {
+  description = "Period in days between two rotations of the KMS key created for secret encryption, between 90 and 2560. Defaults to 365"
+  type        = number
+  default     = null
+}
+
+variable "cluster_control_plane_scaling_config" {
+  description = "EKS Provisioned Control Plane scaling tier. Valid values for tier are `standard`, `tier-xl`, `tier-2xl`, `tier-4xl` and `tier-8xl`"
+  type = object({
+    tier = string
+  })
+  default = null
+}
+
+variable "cluster_control_plane_egress_mode" {
+  description = "Egress mode for the EKS control plane. Valid values are `AWS_MANAGED` and `CUSTOMER_ROUTED`"
+  type        = string
+  default     = null
+}
+
+variable "cluster_kube_api_server_config" {
+  description = "Configuration of the Kubernetes API server"
+  type = object({
+    event_ttl = optional(string)
+    service_node_port_range = optional(object({
+      min_port = optional(number)
+      max_port = optional(number)
+    }))
+  })
+  default = null
+}
+
+variable "cluster_kube_controller_manager_config" {
+  description = "Configuration of the Kubernetes controller manager"
+  type = object({
+    horizontal_pod_autoscaler_controller_config = optional(object({
+      horizontal_pod_autoscaler_sync_period = optional(string)
+    }))
+  })
+  default = null
+}
+
+variable "cluster_kube_scheduler_config" {
+  description = "Configuration of the Kubernetes scheduler. Valid values for `scoring_strategy.type` are `LeastAllocated` and `MostAllocated`; a resource `weight` must be between 1 and 100"
+  type = object({
+    node_resources_fit = optional(object({
+      scoring_strategy = optional(object({
+        type = optional(string)
+        resources = optional(list(object({
+          name   = string
+          weight = optional(number)
+        })))
+      }))
+    }))
+  })
+  default = null
+}
+
 # VPC infos
 variable "vpc_id" {
   description = "Id of VPC"
@@ -97,8 +145,14 @@ variable "vpc_private_subnet_ids" {
 }
 
 variable "vpc_pods_subnet_ids" {
-  description = "List of VPC pods subnet ids"
+  description = "List of VPC pods subnet ids, at most one per availability zone. Pods only use them when vpc_cni_custom_networking is true"
   type        = list(string)
+}
+
+variable "vpc_cni_custom_networking" {
+  description = "Whether pods take their IPs from vpc_pods_subnet_ids (VPC CNI custom networking) instead of the node subnets. Switching it on an existing cluster only applies to nodes created afterwards"
+  type        = bool
+  default     = false
 }
 
 # Cluster autoscaler
@@ -232,71 +286,34 @@ variable "instance_refresh_namespace" {
 variable "eks_managed_node_groups" {
   description = "List of EKS managed node groups"
   type        = any
-  default     = null
+  default     = {}
+  nullable    = false
 }
 
 variable "efs_csi" {
-  description = "Container Storage Interface for EFS volume provisioning on EKS"
+  description = "EFS CSI driver, deployed as the aws-efs-csi-driver EKS add-on. A null addon_version tracks the latest version compatible with the cluster; name is the IAM role name"
   type = object({
-    repository         = optional(string, "https://kubernetes-sigs.github.io/aws-efs-csi-driver/")
-    version            = string
-    image              = optional(string, "public.ecr.aws/efs-csi-driver/amazon/aws-efs-csi-driver")
-    tag                = string
-    name               = optional(string)
-    namespace          = optional(string)
-    image_pull_secrets = optional(string)
+    addon_version = optional(string)
+    name          = optional(string)
     controller_resources = optional(object({
-      limits = optional(object({
-        storage = string
-      }))
-      requests = optional(object({
-        storage = string
-      }))
+      limits   = optional(map(string))
+      requests = optional(map(string))
     }))
   })
+  default = {}
 }
 
 variable "ebs_csi" {
-  description = "Container Storage Interface for EBS volume provisioning on EKS"
+  description = "EBS CSI driver, deployed as the aws-ebs-csi-driver EKS add-on. A null addon_version tracks the latest version compatible with the cluster; name is the IAM role name"
   type = object({
-    repository         = optional(string, "https://kubernetes-sigs.github.io/aws-ebs-csi-driver/")
-    version            = string
-    image              = optional(string, "public.ecr.aws/ebs-csi-driver/aws-ebs-csi-driver")
-    tag                = string
-    name               = optional(string)
-    namespace          = optional(string)
-    image_pull_secrets = optional(string)
+    addon_version = optional(string)
+    name          = optional(string)
     controller_resources = optional(object({
-      limits = optional(object({
-        storage = string
-      }))
-      requests = optional(object({
-        storage = string
-      }))
+      limits   = optional(map(string))
+      requests = optional(map(string))
     }))
   })
-}
-
-variable "csi_liveness_probe" {
-  description = "CSI liveness probe for both EFS and EBS"
-  type = object({
-    image = optional(string, "public.ecr.aws/csi-components/livenessprobe")
-    tag   = string
-  })
-}
-variable "csi_node_driver_registrar" {
-  description = "CSI node driver registrar for both EFS and EBS"
-  type = object({
-    image = optional(string, "public.ecr.aws/csi-components/csi-node-driver-registrar")
-    tag   = string
-  })
-}
-variable "csi_external_provisioner" {
-  description = "CSI external provisioner for both EFS and EBS"
-  type = object({
-    image = optional(string, "public.ecr.aws/csi-components/csi-provisioner")
-    tag   = string
-  })
+  default = {}
 }
 
 # Encryption keys
@@ -306,25 +323,40 @@ variable "cluster_log_kms_key_id" {
 }
 
 variable "cluster_encryption_config" {
-  description = "Configuration block with encryption configuration for the cluster. To disable secret encryption, set this value to {}"
+  description = "ARN of the KMS key encrypting the cluster's secrets when cluster_create_kms_key is false; ignored otherwise"
   type        = string
 }
 
+variable "cluster_create_kms_key" {
+  description = "Whether the EKS module creates the key encrypting the cluster's secrets; false uses cluster_encryption_config instead. EKS cannot change the key of an existing cluster, so it can only be set to false at cluster creation"
+  type        = bool
+  default     = true
+  nullable    = false
+}
+
 variable "ebs_kms_key_id" {
-  description = "KMS key id to encrypt/decrypt EBS"
+  description = "KMS key (id, alias or ARN) the EBS CSI driver is allowed to encrypt volumes with; empty for none. A StorageClass must still name it in its kmsKeyId parameter"
   type        = string
+}
+
+variable "ebs_kms_key_enabled" {
+  description = "Whether the EBS CSI driver gets access to ebs_kms_key_id. Null derives it from ebs_kms_key_id being set; set it when that key is only known after apply (created in the same run)"
+  type        = bool
+  default     = null
 }
 
 # List of self managed node groups
 variable "self_managed_node_groups" {
   description = "List of self managed node groups"
   type        = any
-  default     = null
+  default     = {}
+  nullable    = false
 }
 
 # List of fargate profiles
 variable "fargate_profiles" {
   description = "List of fargate profiles"
   type        = any
-  default     = null
+  default     = {}
+  nullable    = false
 }

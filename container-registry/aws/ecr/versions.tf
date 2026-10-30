@@ -6,19 +6,19 @@ provider "skopeo2" {
 }
 
 terraform {
-  required_version = ">= 1.0"
+  required_version = ">= 1.2"
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = ">= 5.61"
+      version = ">= 6.28"
     }
     skopeo2 = {
       source  = "bsquare-corp/skopeo2"
-      version = ">= 1.1.1"
+      version = ">= 1.3.0"
     }
     generic = {
       source  = "aneoconsulting.github.io/aneoconsulting/generic"
-      version = ">= 0.1.1"
+      version = ">= 0.1.2"
     }
   }
 }

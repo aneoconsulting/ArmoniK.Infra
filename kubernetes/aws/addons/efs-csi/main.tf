@@ -1,3 +1,12 @@
+# A check block warns on every plan without failing it; the `deprecated` argument needs Terraform 1.15.
+# An assertion must reference the configuration, hence an always-false expression on a required input.
+check "deprecated" {
+  assert {
+    condition     = !can(var.tags)
+    error_message = "The kubernetes/aws/addons/efs-csi module is deprecated and will be removed. Use the efs_csi input of the kubernetes/aws/eks module instead."
+  }
+}
+
 locals {
   tags                 = merge(var.tags, { module = "pv-efs" })
   efs_csi_name         = try(var.csi_driver_name, "efs-csi-driver")

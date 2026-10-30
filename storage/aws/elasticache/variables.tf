@@ -1,3 +1,9 @@
+variable "region" {
+  description = "AWS region where the ElastiCache resources will be managed. Defaults to the region set in the provider configuration"
+  type        = string
+  default     = null
+}
+
 # Tags
 variable "tags" {
   description = "Tags for resource"
@@ -32,17 +38,17 @@ variable "vpc_subnet_ids" {
 variable "engine" {
   description = "Name of the cache engine to be used for the clusters in this replication group"
   type        = string
-  default     = "redis"
+  default     = "valkey"
   validation {
-    condition     = contains(["redis"], var.engine)
-    error_message = "The only valid value for \"engine\" : \"redis\" ."
+    condition     = contains(["redis", "valkey"], var.engine)
+    error_message = "Valid values for \"engine\" : \"redis\" | \"valkey\"."
   }
 }
 
 variable "engine_version" {
-  description = "Version number of the cache engine to be used for the cache clusters in this replication group"
+  description = "Version number of the cache engine to be used for the cache clusters in this replication group, such as 9.1 for Valkey or 7.1 for Redis OSS. Its major version selects the parameter group family; changing the engine or the major version replaces the parameter group, which requires apply_immediately = true, the old group otherwise staying in use until the next maintenance window"
   type        = string
-  default     = "engine_version_actual"
+  default     = "9.1"
 }
 
 variable "node_type" {

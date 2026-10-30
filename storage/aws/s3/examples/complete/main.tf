@@ -25,7 +25,11 @@ resource "random_string" "random_name" {
 
 module "complete_s3" {
   source                                = "../../../s3"
+  region                                = var.aws_region
   name                                  = "test-s3-${random_string.random_name.result}"
+  bucket_namespace                      = "global"
+  blocked_encryption_types              = ["SSE-C"]
+  public_access_block_skip_destroy      = false
   policy                                = ""
   attach_policy                         = false
   attach_deny_insecure_transport_policy = true

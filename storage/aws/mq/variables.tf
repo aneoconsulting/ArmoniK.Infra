@@ -1,3 +1,15 @@
+variable "region" {
+  description = "AWS region where the Amazon MQ resources will be managed. Defaults to the region set in the provider configuration"
+  type        = string
+  default     = null
+}
+
+variable "configuration_skip_destroy" {
+  description = "Keep the ActiveMQ configuration in AWS when Terraform destroys it, instead of deleting it (which requires the mq:DeleteConfiguration permission). Defaults to false"
+  type        = bool
+  default     = null
+}
+
 # Tags
 variable "tags" {
   description = "Tags for resource"

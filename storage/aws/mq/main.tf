@@ -27,6 +27,7 @@ resource "random_password" "password" {
 }
 
 resource "aws_mq_broker" "mq" {
+  region                     = var.region
   broker_name                = var.name
   engine_type                = var.engine_type
   engine_version             = var.engine_version
@@ -66,6 +67,8 @@ resource "aws_mq_broker" "mq" {
 # MQ configuration only if engine type is ActiveMQ
 resource "aws_mq_configuration" "mq_configuration" {
   count          = var.engine_type == "ActiveMQ" ? 1 : 0
+  region         = var.region
+  skip_destroy   = var.configuration_skip_destroy
   description    = "ArmoniK ActiveMQ Configuration"
   name           = var.name
   engine_type    = var.engine_type
@@ -119,6 +122,7 @@ DATA
 
 # MQ security group
 resource "aws_security_group" "mq" {
+  region      = var.region
   name        = "${var.name}-sg"
   description = "Allow Amazon MQ inbound traffic on port 5672"
   vpc_id      = var.vpc_id
@@ -165,6 +169,7 @@ data "aws_iam_policy_document" "mq_logs_policy" {
 }
 
 resource "aws_cloudwatch_log_resource_policy" "mq_logs_publishing_policy" {
+  region          = var.region
   policy_document = data.aws_iam_policy_document.mq_logs_policy.json
   policy_name     = "mq-logs-publishing-policy"
 }

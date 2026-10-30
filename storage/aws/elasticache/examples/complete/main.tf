@@ -29,9 +29,10 @@ data "aws_subnets" "subnets" {
 
 module "elasticache" {
   source                      = "../../../elasticache"
+  region                      = var.aws_region
   name                        = "test-elasticache"
-  engine                      = "redis"
-  engine_version              = "6.x"
+  engine                      = "valkey"
+  engine_version              = "9.1"
   node_type                   = "cache.r4.large"
   apply_immediately           = true
   multi_az_enabled            = false

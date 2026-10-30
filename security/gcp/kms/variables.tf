@@ -11,8 +11,9 @@ variable "key_ring_roles" {
 }
 
 variable "crypto_keys" {
-  description = "Map of crypto keys to create in the KeyRing, keyed by name. The fields follow the [google_kms_crypto_key](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/kms_crypto_key) arguments; `roles` binds roles on the key, as a map of role to members."
+  description = "Map of crypto keys to create in the KeyRing, keyed by name. The fields follow the [google_kms_crypto_key](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/kms_crypto_key) arguments; `description` is set as a label of the key; `roles` binds roles on the key, as a map of role to members."
   type = map(object({
+    description                   = optional(string)
     purpose                       = optional(string, "ENCRYPT_DECRYPT")
     rotation_period               = optional(string)
     destroy_scheduled_duration    = optional(string)

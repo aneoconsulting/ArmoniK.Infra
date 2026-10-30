@@ -14,6 +14,6 @@ output "key_ring_id" {
 }
 
 output "crypto_key_ids" {
-  description = "The IDs of the created crypto keys, keyed by name."
+  description = "The Map of the created crypto keys."
   value       = module.simple_kms.crypto_key_ids
 }

@@ -1,14 +1,14 @@
 # GCP Service Account
 
-IAM roles for a Kubernetes service account through Workload Identity Federation for GKE, with no GCP service account.
+IAM roles for a Kubernetes service account of a GKE cluster with Workload Identity enabled.
 
 This module creates:
 
-* The IAM member of the Kubernetes service account, as an output to grant roles on each resource.
-* Optional IAM roles on the whole project.
-
-> Note: the GKE cluster must have Workload Identity enabled. The Kubernetes service account needs no annotation and
-> may be created after the roles are granted.
+* An optional Kubernetes service account (`create_service_account`).
+* By default, an IAM service account with the roles, which the Kubernetes service account impersonates through its
+  annotation. With `iam_service_account = false`, Workload Identity Federation for GKE grants the roles to the
+  Kubernetes service account itself, with no IAM service account nor annotation.
+* The IAM member holding the roles, as an output to grant roles on each resource.
 
 <!-- BEGIN_TF_DOCS -->
 <!-- END_TF_DOCS -->
@@ -16,7 +16,7 @@ This module creates:
 ## Examples
 
 ```{toctree}
-:maxdepth: 2
+:maxdepth: 4
 :glob:
 
 examples/**

@@ -17,7 +17,7 @@ spec:
   {{- if .Values.httpRoute.parentRefs }}
   {{- range .Values.httpRoute.parentRefs }}
     - name: {{ .name | default (include "armonik.fullname" $) | quote }}
-    - namespace: {{ .namespace | default (include "armonik.namespace" .) | quote }}
+      namespace: {{ .namespace | default (include "armonik.namespace" $) | quote }} # namespace of the Gateway ressource
   {{- end }}
   {{- else if .Values.gateway.enabled }}
     - name: {{ include "armonik.fullname" . | quote }}

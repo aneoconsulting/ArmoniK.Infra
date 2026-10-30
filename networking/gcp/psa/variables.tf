@@ -30,10 +30,19 @@ variable "ip_version" {
 }
 
 variable "prefix_length" {
-  description = "The prefix length of the reserved range."
+  description = "The prefix length of the reserved range, 24 by default."
   type        = number
-  default     = 24
-  nullable    = false
+  default     = null
+}
+
+variable "address_type" {
+  description = "The type of the address to reserve."
+  type        = string
+  default     = "INTERNAL"
+  validation {
+    condition     = contains(["EXTERNAL", "INTERNAL"], coalesce(var.address_type, "EXTERNAL"))
+    error_message = "Valid values for `address_type` are : EXTERNAL | INTERNAL."
+  }
 }
 
 variable "network" {

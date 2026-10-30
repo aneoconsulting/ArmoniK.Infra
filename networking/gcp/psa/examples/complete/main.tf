@@ -9,5 +9,6 @@ module "complete" {
   description     = "Complete example for PSA"
   ip_version      = "IPV4"
   prefix_length   = 24
+  address_type    = "INTERNAL"
   deletion_policy = "REMOVE_PEERING"
 }

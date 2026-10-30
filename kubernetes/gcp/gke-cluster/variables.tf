@@ -143,15 +143,10 @@ variable "kms_key" {
   default = null
 }
 
-variable "datapath_provider" {
-  description = "Standard only, always ADVANCED_DATAPATH on Autopilot. ADVANCED_DATAPATH enables Dataplane V2, which enforces the network policies; LEGACY_DATAPATH keeps kube-proxy, without network policies. Changing it recreates the cluster."
-  type        = string
-  default     = "ADVANCED_DATAPATH"
-  nullable    = false
-  validation {
-    condition     = contains(["ADVANCED_DATAPATH", "LEGACY_DATAPATH"], var.datapath_provider)
-    error_message = "Valid values for \"datapath_provider\" are: \"ADVANCED_DATAPATH\" | \"LEGACY_DATAPATH\"."
-  }
+variable "enable_dataplane_v2" {
+  description = "Standard only, Autopilot always uses Dataplane V2. true: Dataplane V2 (ADVANCED_DATAPATH), which enforces the network policies. false: kube-proxy (LEGACY_DATAPATH), without network policies, as the gke module. Null behaves as false with a warning: Dataplane V2 will become the default. Changing it recreates the cluster."
+  type        = bool
+  default     = null
 }
 
 variable "default_max_pods_per_node" {

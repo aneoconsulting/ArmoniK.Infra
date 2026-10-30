@@ -18,20 +18,21 @@ resource "google_project_service_identity" "kms" {
   service  = "memorystore.googleapis.com"
 }
 
-# The email comes back before the account exists: granting it the key right away fails on the first use of
-# Memorystore in a project
+# The email comes back before IAM knows the account: granting it the key right away fails on the first use of
+# Memorystore in a project. IAM changes are eventually consistent, typically within 2 minutes:
+# https://cloud.google.com/iam/docs/access-change-propagation
 resource "time_sleep" "kms" {
   count           = var.kms_key != null ? 1 : 0
   create_duration = "30s"
   triggers = {
-    email = google_project_service_identity.kms[0].email
+    member = google_project_service_identity.kms[0].member
   }
 }
 
 resource "google_kms_crypto_key_iam_member" "kms" {
   count         = var.kms_key != null ? 1 : 0
   crypto_key_id = var.kms_key.id
-  member        = "serviceAccount:${time_sleep.kms[0].triggers.email}"
+  member        = time_sleep.kms[0].triggers.member
   role          = "roles/cloudkms.cryptoKeyEncrypterDecrypter"
 }
 

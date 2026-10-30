@@ -3,8 +3,9 @@ module "vpc" {
   name   = "valkey-simple"
   subnets = {
     "valkey-simple-psc" = {
-      cidr_block = "10.44.0.0/28"
-      region     = var.region
+      cidr_block    = "10.44.0.0/28"
+      region        = var.region
+      public_access = false
     }
   }
   service_connection_policies = {
@@ -20,6 +21,4 @@ module "simple_valkey" {
   name                = "valkey-simple"
   network             = module.vpc.id
   deletion_protection = false
-  # The endpoints are only created where a service connection policy exists
-  depends_on = [module.vpc]
 }

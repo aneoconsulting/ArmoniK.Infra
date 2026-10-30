@@ -23,8 +23,9 @@ module "vpc" {
   # The endpoints get an address of this range, known before the instance exists, to allow in NetworkPolicies
   subnets = {
     "valkey-complete-psc" = {
-      cidr_block = "10.44.0.0/28"
-      region     = var.region
+      cidr_block    = "10.44.0.0/28"
+      region        = var.region
+      public_access = false
     }
   }
   service_connection_policies = {
@@ -69,6 +70,4 @@ module "complete_valkey" {
   kms_key             = { id = module.kms.crypto_key_ids["valkey"] }
   deletion_protection = false
   labels              = local.labels
-  # The endpoints are only created where a service connection policy exists
-  depends_on = [module.vpc]
 }

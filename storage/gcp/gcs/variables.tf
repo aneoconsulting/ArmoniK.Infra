@@ -1,5 +1,5 @@
 variable "name" {
-  description = "The name of the bucket, unique across all of GCP."
+  description = "The name of the bucket."
   type        = string
 }
 
@@ -19,63 +19,82 @@ variable "storage_class" {
   type        = string
   default     = "STANDARD"
   validation {
-    condition     = contains(["STANDARD", "NEARLINE", "COLDLINE", "ARCHIVE"], var.storage_class)
-    error_message = "Valid values for \"storage_class\" are: \"STANDARD\", \"NEARLINE\", \"COLDLINE\", \"ARCHIVE\"."
+    condition = contains([
+      "STANDARD", "MULTI_REGIONAL", "REGIONAL", "NEARLINE", "COLDLINE", "ARCHIVE"
+    ], var.storage_class)
+    error_message = "Valid values for \"storage_class\" are: \"STANDARD\", \"MULTI_REGIONAL\", \"REGIONAL\", \"NEARLINE\", \"COLDLINE\", \"ARCHIVE\"."
   }
 }
 
 variable "autoclass" {
-  description = "The bucket's Autoclass configuration. Incompatible with lifecycle rules that change the storage class."
+  description = "The bucket's Autoclass configuration."
   type        = bool
   default     = null
-  validation {
-    condition     = var.autoclass != true || !anytrue([for rule in values(var.lifecycle_rule) : rule.action.type == "SetStorageClass"])
-    error_message = "\"autoclass\" cannot be combined with a \"SetStorageClass\" lifecycle rule."
-  }
 }
 
 variable "lifecycle_rule" {
-  description = "The bucket's lifecycle rules configuration, keyed by rule name."
+  description = "The bucket's lifecycle rules configuration."
   type = map(object({
     action = object({
       type          = string
-      storage_class = optional(string)
+      storage_class = string
     })
     condition = object({
-      age                        = optional(number)
-      created_before             = optional(string)
-      with_state                 = optional(string)
-      matches_storage_class      = optional(list(string))
-      matches_prefix             = optional(list(string))
-      matches_suffix             = optional(list(string))
-      num_newer_versions         = optional(number)
-      custom_time_before         = optional(string)
-      days_since_custom_time     = optional(number)
-      days_since_noncurrent_time = optional(number)
-      noncurrent_time_before     = optional(string)
+      age                        = number
+      created_before             = string
+      with_state                 = string
+      matches_storage_class      = list(string)
+      matches_prefix             = list(string)
+      matches_suffix             = list(string)
+      num_newer_versions         = number
+      custom_time_before         = string
+      days_since_custom_time     = string
+      days_since_noncurrent_time = string
+      noncurrent_time_before     = string
     })
   }))
-  default  = {}
-  nullable = false
+  default = null
 }
 
 variable "versioning" {
-  description = "The bucket's Versioning configuration. Incompatible with a retention policy."
+  description = "The bucket's Versioning configuration."
+  type        = bool
+  default     = null
+}
+
+variable "website" {
+  description = "Configuration if the bucket acts as a website. Structure is documented below."
+  type = object({
+    main_page_suffix = string
+    not_found_page   = string
+  })
+  default = null
+}
+
+variable "cors" {
+  description = "The bucket's Cross-Origin Resource Sharing (CORS) configuration."
+  type = object({
+    origin          = list(string)
+    method          = list(string)
+    response_header = list(string)
+    max_age_seconds = number
+  })
+  default = null
+}
+
+variable "default_event_based_hold" {
+  description = "Whether or not to automatically apply an eventBasedHold to new objects added to the bucket."
   type        = bool
   default     = null
 }
 
 variable "retention_policy" {
-  description = "Configuration of the bucket's data retention policy for how long objects in the bucket should be retained, `retention_period` in seconds."
+  description = "Configuration of the bucket's data retention policy for how long objects in the bucket should be retained."
   type = object({
-    is_locked        = optional(bool, false)
-    retention_period = string
+    is_locked        = bool
+    retention_period = number
   })
   default = null
-  validation {
-    condition     = var.retention_policy == null || var.versioning != true
-    error_message = "\"retention_policy\" cannot be combined with \"versioning\"."
-  }
 }
 
 # The ArmoniK object storage bucket deletes temporary results all the time: set 0 there to stop paying for them
@@ -90,14 +109,13 @@ variable "labels" {
   description = "A map of key/value label pairs to assign to the bucket."
   type        = map(string)
   default     = {}
-  nullable    = false
 }
 
 variable "logging" {
   description = "The bucket's Access & Storage Logs configuration."
   type = object({
     log_bucket        = string
-    log_object_prefix = optional(string)
+    log_object_prefix = string
   })
   default = null
 }
@@ -110,19 +128,30 @@ variable "kms_key" {
   default = null
 }
 
+variable "default_kms_key_name" {
+  description = "Deprecated, use `kms_key`. The id of a Cloud KMS key that will be used to encrypt objects inserted into this bucket, if no encryption method is specified."
+  type        = string
+  default     = null
+}
+
+variable "requester_pays" {
+  description = "Enables Requester Pays on a storage bucket."
+  type        = bool
+  default     = null
+}
+
 variable "uniform_bucket_level_access" {
   description = "Access through IAM only (var.roles), without ACL on the bucket nor on its objects. Set it to false for the S3 adapter of Core: through the XML API of GCS, it checks that the bucket exists with GetBucketAcl, which GCS rejects with \"Invalid argument\" on a bucket with uniform bucket-level access."
   type        = bool
-  default     = true
-  nullable    = false
+  default     = null
 }
 
 variable "public_access_prevention" {
-  description = "Prevents public access to a bucket. Acceptable values are 'enforced' or 'inherited' (follows the organization policy)."
+  description = "Prevents public access to a bucket. Acceptable values are 'inherited' or 'enforced'"
   type        = string
-  default     = "enforced"
+  default     = null
   validation {
-    condition     = contains(["enforced", "inherited"], var.public_access_prevention)
+    condition     = contains(["enforced", "inherited"], coalesce(var.public_access_prevention, "enforced"))
     error_message = "Valid values for \"public_access_prevention\" are: \"enforced\" | \"inherited\"."
   }
 }
@@ -133,9 +162,78 @@ variable "data_locations" {
   default     = null
 }
 
+variable "entity_bucket_access_control" {
+  description = "The entity holding the permission."
+  type        = string
+  default     = null
+}
+
+variable "role_bucket_access_control" {
+  description = "The access permission for the entity."
+  type        = string
+  default     = null
+  validation {
+    condition     = contains(["OWNER", "READER", "WRITER"], coalesce(var.role_bucket_access_control, "OWNER"))
+    error_message = "Valid values for \"role_bucket_access_control\" are: \"OWNER\" | \"READER\" | \"WRITER\"."
+  }
+}
+
+variable "default_acl" {
+  description = "Configure this ACL to be the default ACL."
+  type        = string
+  default     = null
+}
+
+variable "predefined_acl" {
+  description = "The canned GCS ACL to apply."
+  type        = string
+  default     = null
+}
+
+variable "role_entity_acl" {
+  description = "List of role/entity pairs in the form \"ROLE:entity\"."
+  type        = list(string)
+  default     = null
+}
+
 variable "roles" {
-  description = "Roles to bind on the bucket, as a map of role to members."
+  description = "Roles to bind to the bucket"
   type        = map(set(string))
-  default     = {}
-  nullable    = false
+  default     = null
+}
+
+variable "object_storage_adapter" {
+  description = "Name of the ArmoniK adapter to use for the storage"
+  type        = string
+  default     = "ArmoniK.Adapters.S3.ObjectStorage"
+}
+
+variable "namespace" {
+  description = "Namespace of ArmoniK storage resources"
+  type        = string
+  default     = "armonik"
+}
+
+variable "username" {
+  description = "Google Cloud storage access id to use as username"
+  type        = string
+  default     = ""
+}
+
+variable "password" {
+  description = "Google Cloud storage secret to use as password"
+  type        = string
+  default     = ""
+}
+
+variable "adapter_class_name" {
+  description = "Name of the adapter's class"
+  type        = string
+  default     = "ArmoniK.Core.Adapters.S3.ObjectBuilder"
+}
+
+variable "adapter_absolute_path" {
+  description = "The adapter's absolute path"
+  type        = string
+  default     = "/adapters/object/s3/ArmoniK.Core.Adapters.S3.dll"
 }

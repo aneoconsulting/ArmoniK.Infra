@@ -1,7 +1,7 @@
 ## Complete GCS
 
-A dual-region versioned bucket with lifecycle rules, no soft delete, access logs and IAM roles for the current user.
-Uses the [gcs module](../..).
+A dual-region bucket with lifecycle rules, a retention policy, a website, CORS, ACLs and IAM roles for the current
+user, and no soft delete. Uses the [gcs module](../..).
 
 ```bash
 terraform init

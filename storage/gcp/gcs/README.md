@@ -4,10 +4,11 @@ Bucket for ArmoniK object storage (native GCS adapter) or for shared files such 
 
 This module creates:
 
-* A bucket with uniform bucket-level access and public access prevention enforced by default.
-* Optional lifecycle rules, versioning or retention policy, Autoclass, soft delete retention, access logs and
-  dual-region placement.
-* Optional encryption with a Cloud KMS key, and IAM roles on the bucket.
+* A bucket, with optional uniform bucket-level access and public access prevention.
+* Optional lifecycle rules, versioning or retention policy, Autoclass, soft delete retention, access logs, website,
+  CORS and dual-region placement.
+* Optional encryption with a Cloud KMS key, IAM roles and ACLs on the bucket.
+* A Kubernetes secret with the HMAC credentials of the S3 adapter of Core, whose settings are in the `env` output.
 
 > Note: the S3 adapter of Core, used on GCS through the XML API and an HMAC key, checks that the bucket exists
 > with GetBucketAcl, which GCS rejects on a bucket with uniform bucket-level access: set

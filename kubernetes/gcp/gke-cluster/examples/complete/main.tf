@@ -19,6 +19,8 @@ module "vpc" {
     pods_cidr_block     = "172.16.0.0/16"
     services_cidr_block = "172.17.17.0/24"
     region              = var.region
+    # Private nodes reach public registries through Cloud NAT
+    public_access = true
   }
 }
 
@@ -32,7 +34,7 @@ module "kms" {
 }
 
 module "complete_gke" {
-  source              = "../../../gke"
+  source              = "../../../gke-cluster"
   name                = "gke-complete"
   description         = "Complete GKE example"
   network             = module.vpc.name

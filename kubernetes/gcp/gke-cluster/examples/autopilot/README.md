@@ -1,7 +1,7 @@
-## Autopilot GKE
+## Autopilot GKE Cluster
 
 A regional Autopilot cluster restricted to two zones, secrets encrypted with Cloud KMS, no public IP endpoint
-and the DNS endpoint open to IAM-authenticated callers. Uses the [gke module](../..) with `autopilot = true`.
+and the DNS endpoint open to IAM-authenticated callers. Uses the [gke-cluster module](../..) with `autopilot = true`.
 
 ```bash
 terraform init

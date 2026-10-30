@@ -10,7 +10,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = ">= 6.28"
+      version = ">= 6.70.0"
     }
     skopeo2 = {
       source  = "bsquare-corp/skopeo2"

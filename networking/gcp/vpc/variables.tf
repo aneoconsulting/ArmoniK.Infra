@@ -36,13 +36,9 @@ variable "enable_ula_internal_ipv6" {
 }
 
 variable "internal_ipv6_range" {
-  description = "Specify the /48 range they want from the google defined ULA prefix fd20::/20. Requires `enable_ula_internal_ipv6`"
+  description = "Specify the /48 range they want from the google defined ULA prefix fd20::/20"
   type        = string
   default     = null
-  validation {
-    condition     = var.internal_ipv6_range == null || var.enable_ula_internal_ipv6 == true
-    error_message = "\"internal_ipv6_range\" requires \"enable_ula_internal_ipv6\" to be true."
-  }
 }
 
 variable "network_firewall_policy_enforcement_order" {
@@ -64,30 +60,26 @@ variable "delete_default_routes_on_create" {
 }
 
 variable "subnets" {
-  description = "A map of subnets inside the VPC. Each subnet object has a CIDR block, a region, and a boolean set to true if its outbound internet traffic goes through Cloud NAT"
+  description = "A map of subnets inside the VPC. Each subnet object has a CIDR block, a region, and a boolean set to true if the subnet is public, or false if the subnet is private"
   type = map(object({
-    cidr_block = string
-    region     = string
-    enable_nat = optional(bool, false)
+    cidr_block    = string
+    region        = string
+    public_access = bool
   }))
   default = {}
 }
 
 variable "gke_subnet" {
-  description = "The GKE subnet. The subnet contains a name, a CIDR block for nodes, a CIDR block for Pods, a CIDR block for services, a region, and a boolean set to true if its outbound internet traffic goes through Cloud NAT, which private nodes need to pull public images"
+  description = "The GKE subnet. The subnet contains a name, a CIDR block for nodes, a CIDR block for Pods, a CIDR block for services, a region, and an optional boolean set to true if the subnet is public, which private nodes need to pull public images"
   type = object({
     name                = string
     nodes_cidr_block    = string
     pods_cidr_block     = string
     services_cidr_block = string
     region              = string
-    enable_nat          = optional(bool, true)
+    public_access       = optional(bool, false)
   })
   default = null
-  validation {
-    condition     = var.gke_subnet == null || !contains(keys(var.subnets), try(var.gke_subnet.name, ""))
-    error_message = "The name of \"gke_subnet\" must differ from the names of \"subnets\"."
-  }
 }
 
 variable "enable_google_access" {
@@ -115,20 +107,4 @@ variable "service_connection_policies" {
   }))
   default  = {}
   nullable = false
-  validation {
-    condition = alltrue(flatten([
-      for policy in values(var.service_connection_policies) : [
-        for subnet in policy.subnets : contains(keys(var.subnets), subnet) || try(var.gke_subnet.name, null) == subnet
-      ]
-    ]))
-    error_message = "Every subnet of \"service_connection_policies\" must be a name of \"subnets\" or of \"gke_subnet\"."
-  }
-  validation {
-    condition = alltrue([
-      for policy in values(var.service_connection_policies) : length(distinct([
-        for subnet in policy.subnets : try(var.subnets[subnet].region, var.gke_subnet.region, "")
-      ])) == 1
-    ])
-    error_message = "The subnets of a service connection policy must be at least one and all in the same region."
-  }
 }

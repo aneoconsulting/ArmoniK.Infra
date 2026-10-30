@@ -12,14 +12,14 @@ module "simple_vpc" {
   name   = "simple-${random_string.suffix.result}"
   subnets = {
     "private-subnet-1" = {
-      cidr_block = "10.0.0.0/16"
-      region     = "europe-west9"
-      enable_nat = false
+      cidr_block    = "10.0.0.0/16"
+      region        = "europe-west9"
+      public_access = false
     }
-    "nat-subnet-1" = {
-      cidr_block = "10.1.0.0/16"
-      region     = "europe-west9"
-      enable_nat = true
+    "public-subnet-1" = {
+      cidr_block    = "10.1.0.0/16"
+      region        = "europe-west9"
+      public_access = true
     }
   }
 }

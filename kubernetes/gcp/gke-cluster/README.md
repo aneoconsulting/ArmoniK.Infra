@@ -5,8 +5,8 @@ GKE cluster, Standard or Autopilot, on a single `google_container_cluster` resou
 
 This module creates:
 
-* A GKE cluster with private nodes, no public IP endpoint, Dataplane V2 and Workload Identity by default: Standard, or
-  Autopilot with `autopilot = true`.
+* A GKE cluster with private nodes, no public IP endpoint and Workload Identity by default: Standard, with
+  Dataplane V2 through `enable_dataplane_v2`, or Autopilot with `autopilot = true`.
 * The node pools of a Standard cluster, and the service account of the nodes.
 * Optional encryption of the Kubernetes secrets with a Cloud KMS key.
 

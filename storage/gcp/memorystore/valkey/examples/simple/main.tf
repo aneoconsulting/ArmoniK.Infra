@@ -3,8 +3,9 @@ module "vpc" {
   name   = "valkey-simple"
   subnets = {
     "valkey-simple-psc" = {
-      cidr_block = "10.44.0.0/28"
-      region     = var.region
+      cidr_block    = "10.44.0.0/28"
+      region        = var.region
+      public_access = false
     }
   }
   service_connection_policies = {

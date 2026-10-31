@@ -19,7 +19,7 @@ output "key_ring_roles" {
 }
 
 output "crypto_key_ids" {
-  description = "The Map of the created crypto keys."
+  description = "The IDs of the created crypto keys, keyed by name."
   value       = { for key, value in google_kms_crypto_key.keys : key => value.id }
 }
 

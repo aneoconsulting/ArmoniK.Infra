@@ -13,28 +13,21 @@ variable "description" {
   default     = null
 }
 
-variable "autopilot" {
-  description = "Create an Autopilot cluster instead of a Standard one. Changing it recreates the cluster."
-  type        = bool
-  default     = false
-  nullable    = false
-}
-
 variable "regional" {
-  description = "Standard only, Autopilot clusters are regional. Create a regional cluster, or a zonal one in the first of \"zones\". Changing it recreates the cluster."
+  description = "Create a regional cluster, or a zonal one in the first of \"zones\". Changing it recreates the cluster."
   type        = bool
   default     = true
   nullable    = false
 }
 
 variable "region" {
-  description = "Region of a regional or Autopilot cluster. Defaults to the provider region; ignored for a zonal cluster, whose region is the one of its zone."
+  description = "Region of a regional cluster. Defaults to the provider region; ignored for a zonal cluster, whose region is the one of its zone."
   type        = string
   default     = null
 }
 
 variable "zones" {
-  description = "Zones of the nodes. Regional or Autopilot cluster: every zone of the region by default. Zonal cluster: required, the first one is the zone of the cluster."
+  description = "Zones of the nodes. Regional cluster: every zone of the region by default. Zonal cluster: required, the first one is the zone of the cluster."
   type        = list(string)
   default     = []
   nullable    = false
@@ -66,6 +59,13 @@ variable "ip_range_services" {
   type        = string
 }
 
+variable "additional_ip_ranges_pods" {
+  description = "Names of more secondary ranges of the subnetwork for the Pods, to grow the cluster without recreating it."
+  type        = list(string)
+  default     = []
+  nullable    = false
+}
+
 variable "release_channel" {
   description = "Release channel of the cluster, which upgrades the control plane and the nodes automatically."
   type        = string
@@ -84,54 +84,17 @@ variable "kubernetes_version" {
   nullable    = false
 }
 
-variable "enable_private_nodes" {
-  description = "Nodes get internal IP addresses only. They reach the internet through Cloud NAT."
-  type        = bool
-  default     = true
-  nullable    = false
-}
-
-variable "enable_private_endpoint" {
-  description = "The control plane has no public IP endpoint: it is reachable from the VPC, and through the DNS endpoint when \"dns_allow_external_traffic\" is true. Requires \"enable_private_nodes\"."
-  type        = bool
-  default     = true
-  nullable    = false
-}
-
-variable "master_ipv4_cidr_block" {
-  description = "/28 range of the control plane in the VPC. GKE chooses one by default."
-  type        = string
-  default     = null
-}
-
-variable "master_global_access_enabled" {
-  description = "With a private endpoint, it is reachable from every region of the VPC, not only from the region of the cluster."
-  type        = bool
-  default     = true
-  nullable    = false
-}
-
-variable "master_authorized_networks" {
-  description = "CIDR blocks allowed to reach the IP endpoints of the control plane, besides the nodes. Empty: no external IP reaches the public endpoint."
-  type = list(object({
-    cidr_block   = string
-    display_name = optional(string)
-  }))
-  default  = []
-  nullable = false
-}
-
-variable "dns_allow_external_traffic" {
-  description = "The DNS endpoint of the control plane accepts calls from outside the VPC, authenticated by IAM, whatever their IP."
-  type        = bool
-  default     = false
-  nullable    = false
-}
-
 variable "deletion_protection" {
   description = "Refuse the deletion of the cluster by Terraform."
   type        = bool
   default     = true
+  nullable    = false
+}
+
+variable "labels" {
+  description = "Labels of the cluster and of the nodes of its node pools."
+  type        = map(string)
+  default     = {}
   nullable    = false
 }
 
@@ -143,45 +106,272 @@ variable "kms_key" {
   default = null
 }
 
-variable "enable_dataplane_v2" {
-  description = "Standard only, Autopilot always uses Dataplane V2. true: Dataplane V2 (ADVANCED_DATAPATH), which enforces the network policies. false: kube-proxy (LEGACY_DATAPATH), without network policies, as the gke module. Null behaves as false with a warning: Dataplane V2 will become the default. Changing it recreates the cluster."
-  type        = bool
+variable "boot_disk_kms_key" {
+  description = "Cloud KMS key, in the region of the cluster, that encrypts the boot disks of the nodes, auto-provisioned ones included. An object for the same reason as \"kms_key\"."
+  type = object({
+    id = string
+  })
+  default = null
+}
+
+variable "service_account" {
+  description = "Email of an existing service account for the nodes. Null: the module creates one with the roles/container.defaultNodeServiceAccount role."
+  type        = string
   default     = null
 }
 
-variable "default_max_pods_per_node" {
-  description = "Standard only. Maximum number of Pods per node, which sizes the Pod range of each node. Changing it recreates the cluster."
-  type        = number
-  default     = 110
+variable "service_account_name" {
+  description = "Account ID of the node service account the module creates. Defaults to gke-<first 20 characters of the name>-nodes."
+  type        = string
+  default     = null
+}
+
+variable "grant_registry_access" {
+  description = "Grant the Artifact Registry reader role to the node service account the module creates, on the project and on \"registry_project_ids\"."
+  type        = bool
+  default     = true
   nullable    = false
 }
 
-variable "disable_default_snat" {
-  description = "Disable the SNAT of the Pod traffic to the node IP, to keep the Pod IP behind Cloud NAT or to use public IP ranges privately."
-  type        = bool
-  default     = false
+variable "registry_project_ids" {
+  description = "More projects whose Artifact Registry the nodes read from, with \"grant_registry_access\"."
+  type        = list(string)
+  default     = []
   nullable    = false
+}
+
+variable "fleet_project" {
+  description = "Project of the fleet to register the cluster in. Null: not registered."
+  type        = string
+  default     = null
+}
+
+variable "kubeconfig_path" {
+  description = "Path of a kubeconfig file to write the credentials of the cluster to, with gcloud, after its creation. Null: no file."
+  type        = string
+  default     = null
+}
+
+variable "control_plane" {
+  description = <<-EOT
+    Access to the control plane.
+    * enable_private_endpoint: no public IP endpoint, only the private one in the VPC. Requires private nodes.
+    * enable_ip_endpoint: false leaves the DNS endpoint only, authenticated by IAM, with no IP to protect.
+    * master_ipv4_cidr_block: /28 range of the private endpoint. GKE takes an IP of the node subnetwork by default.
+    * global_access: the private endpoint is reachable from every region of the VPC.
+    * authorized_networks: CIDR blocks allowed to reach the IP endpoints, besides the nodes. Empty: no external IP
+      reaches the public endpoint.
+    * authorized_networks_on_private_endpoint: also enforce them on the private endpoint, so that a VM of the VPC outside
+      the node subnetwork, a bastion for one, has to be listed.
+    * dns_allow_external_traffic: the DNS endpoint accepts IAM-authenticated calls from outside the VPC.
+  EOT
+  type = object({
+    enable_private_endpoint = optional(bool, true)
+    enable_ip_endpoint      = optional(bool, true)
+    master_ipv4_cidr_block  = optional(string)
+    global_access           = optional(bool, true)
+    authorized_networks = optional(list(object({
+      cidr_block   = string
+      display_name = optional(string)
+    })), [])
+    authorized_networks_on_private_endpoint = optional(bool, true)
+    dns_allow_external_traffic              = optional(bool, false)
+  })
+  default  = {}
+  nullable = false
+}
+
+variable "networking" {
+  description = <<-EOT
+    Networking of the cluster, always on Dataplane V2 (eBPF, network policies enforced, no kube-proxy).
+    * enable_private_nodes: nodes get internal IP addresses only and reach the internet through Cloud NAT.
+    * default_max_pods_per_node: sizes the Pod range of each node. Changing it recreates the cluster.
+    * disable_default_snat: keep the Pod IP behind Cloud NAT, or use public IP ranges privately.
+    * cloud_dns: Cloud DNS in cluster scope instead of kube-dns, which no longer has to scale with the nodes.
+    * cluster_dns_domain, additive_vpc_scope_dns_domain: Cloud DNS only.
+    * dns_cache: NodeLocal DNSCache on every node.
+    * gateway_api: install the Gateway API CRDs of the standard channel, managed by GKE, and the GKE Gateway controller.
+    * service_external_ips: allow spec.externalIPs on Services.
+    * fqdn_network_policy, cilium_clusterwide_network_policy: the matching Dataplane V2 policy kinds.
+    * in_transit_encryption: transparent encryption of the traffic between nodes.
+    * intranode_visibility, l4_ilb_subsetting: as the GKE options of the same name.
+  EOT
+  type = object({
+    enable_private_nodes              = optional(bool, true)
+    default_max_pods_per_node         = optional(number, 110)
+    disable_default_snat              = optional(bool, false)
+    cloud_dns                         = optional(bool, true)
+    cluster_dns_domain                = optional(string)
+    additive_vpc_scope_dns_domain     = optional(string)
+    dns_cache                         = optional(bool, true)
+    gateway_api                       = optional(bool, true)
+    service_external_ips              = optional(bool, false)
+    fqdn_network_policy               = optional(bool, false)
+    cilium_clusterwide_network_policy = optional(bool, false)
+    in_transit_encryption             = optional(bool, false)
+    intranode_visibility              = optional(bool, false)
+    l4_ilb_subsetting                 = optional(bool, false)
+  })
+  default  = {}
+  nullable = false
+}
+
+variable "autoscaling" {
+  description = <<-EOT
+    Cluster autoscaling.
+    * profile: OPTIMIZE_UTILIZATION removes the underused nodes faster than BALANCED. Pods that must not be evicted
+      carry the cluster-autoscaler.kubernetes.io/safe-to-evict: "false" annotation.
+    * hpa_profile: PERFORMANCE allows more HorizontalPodAutoscalers per cluster, KEDA creating one per ScaledObject,
+      and collects their metrics faster. NONE opts out.
+    * default_compute_class: let a ComputeClass named "default" apply to the Pods that select none.
+    * node_auto_provisioning: null disables it. Limits are over the whole cluster. The nodes it creates use the node
+      service account and the boot disk key of the module. ComputeClasses with nodePoolAutoCreation create node pools
+      without it on GKE 1.33.3 and later; they set their service account themselves.
+  EOT
+  type = object({
+    profile               = optional(string, "OPTIMIZE_UTILIZATION")
+    hpa_profile           = optional(string, "PERFORMANCE")
+    default_compute_class = optional(bool)
+    node_auto_provisioning = optional(object({
+      min_cpu_cores = optional(number, 0)
+      max_cpu_cores = number
+      min_memory_gb = optional(number, 0)
+      max_memory_gb = number
+      gpu_resources = optional(list(object({
+        resource_type = string
+        minimum       = optional(number, 0)
+        maximum       = number
+      })), [])
+      locations        = optional(list(string))
+      image_type       = optional(string, "COS_CONTAINERD")
+      disk_type        = optional(string, "pd-balanced")
+      disk_size_gb     = optional(number, 100)
+      min_cpu_platform = optional(string)
+    }))
+  })
+  default  = {}
+  nullable = false
+  validation {
+    condition     = contains(["OPTIMIZE_UTILIZATION", "BALANCED"], var.autoscaling.profile)
+    error_message = "Valid values for \"autoscaling.profile\" are: \"OPTIMIZE_UTILIZATION\" | \"BALANCED\"."
+  }
+  validation {
+    condition     = contains(["PERFORMANCE", "NONE"], var.autoscaling.hpa_profile)
+    error_message = "Valid values for \"autoscaling.hpa_profile\" are: \"PERFORMANCE\" | \"NONE\"."
+  }
 }
 
 variable "node_pools" {
-  description = "Standard only, ignored on Autopilot, which manages the nodes. Node pools keyed by name, with autoscaling between min_count and max_count nodes per zone, or between total_min_count and total_max_count nodes over all the zones of the pool when both are set. Default: a single \"default-node-pool\" with the defaults below."
+  description = <<-EOT
+    Node pools keyed by name. The defaults below apply to an attribute left unset.
+    * Size: autoscaling between min_count and max_count nodes per zone, or between total_min_count and total_max_count
+      over all the zones of the pool when both are set; a fixed node_count per zone disables autoscaling. location_policy
+      ANY suits Spot VMs.
+    * Provisioning: spot, flex_start (Dynamic Workload Scheduler), max_run_duration ("3600s"), queued_provisioning,
+      best_effort_min_nodes, reservation_affinity, placement_policy ("COMPACT", low latency between nodes).
+    * Disks: disk_type pd-balanced by default, hyperdisk-balanced on the machine families that only support Hyperdisk
+      (C4, C4D, N4); local SSDs as raw scratch (local_ssd_count), as ephemeral storage (ephemeral_local_ssd_count) or as
+      raw block devices (local_nvme_ssd_block_count); secondary_boot_disks preload container images.
+    * Startup: image_streaming and gvnic, on by default.
+    * Compute: gpu (with driver installation and sharing), threads_per_core (1 disables SMT), sandbox (gVisor),
+      confidential_instance_type (SEV, SEV_SNP, TDX), kubelet and linux node settings.
+    * upgrade: SURGE (max_surge, max_unavailable) or BLUE_GREEN (node_pool_soak_duration, batch_percentage,
+      batch_soak_duration); drain: node drain settings.
+  EOT
   type = map(object({
-    machine_type       = optional(string, "e2-medium")
-    image_type         = optional(string, "COS_CONTAINERD")
-    disk_size_gb       = optional(number, 100)
-    disk_type          = optional(string, "pd-standard")
-    spot               = optional(bool, false)
-    min_count          = optional(number, 1)
-    max_count          = optional(number, 100)
-    total_min_count    = optional(number)
-    total_max_count    = optional(number)
-    initial_node_count = optional(number)
-    location_policy    = optional(string)
-    node_locations     = optional(list(string))
-    max_pods_per_node  = optional(number)
-    labels             = optional(map(string), {})
-    resource_labels    = optional(map(string), {})
-    tags               = optional(list(string), [])
+    machine_type               = optional(string, "e2-medium")
+    image_type                 = optional(string, "COS_CONTAINERD")
+    min_cpu_platform           = optional(string)
+    node_locations             = optional(list(string))
+    service_account            = optional(string)
+    min_count                  = optional(number, 1)
+    max_count                  = optional(number, 100)
+    total_min_count            = optional(number)
+    total_max_count            = optional(number)
+    location_policy            = optional(string)
+    node_count                 = optional(number)
+    initial_node_count         = optional(number)
+    max_pods_per_node          = optional(number)
+    pod_range                  = optional(string)
+    tier_1_networking          = optional(bool, false)
+    spot                       = optional(bool, false)
+    flex_start                 = optional(bool, false)
+    max_run_duration           = optional(string)
+    queued_provisioning        = optional(bool, false)
+    best_effort_min_nodes      = optional(number)
+    placement_policy           = optional(string)
+    disk_type                  = optional(string, "pd-balanced")
+    disk_size_gb               = optional(number, 100)
+    local_ssd_count            = optional(number)
+    ephemeral_local_ssd_count  = optional(number)
+    local_nvme_ssd_block_count = optional(number)
+    secondary_boot_disks = optional(list(object({
+      disk_image = string
+      mode       = optional(string)
+    })), [])
+    image_streaming            = optional(bool, true)
+    gvnic                      = optional(bool, true)
+    logging_variant            = optional(string)
+    secure_boot                = optional(bool, true)
+    sandbox                    = optional(bool, false)
+    confidential_instance_type = optional(string)
+    threads_per_core           = optional(number)
+    gpu = optional(object({
+      type                       = string
+      count                      = number
+      driver_version             = optional(string, "DEFAULT")
+      partition_size             = optional(string)
+      sharing_strategy           = optional(string)
+      max_shared_clients_per_gpu = optional(number)
+    }))
+    reservation_affinity = optional(object({
+      type   = string
+      key    = optional(string)
+      values = optional(list(string))
+    }))
+    kubelet = optional(object({
+      cpu_manager_policy                          = optional(string)
+      cpu_cfs_quota                               = optional(bool)
+      cpu_cfs_quota_period                        = optional(string)
+      pod_pids_limit                              = optional(number)
+      max_parallel_image_pulls                    = optional(number)
+      image_gc_high_threshold_percent             = optional(number)
+      image_gc_low_threshold_percent              = optional(number)
+      container_log_max_size                      = optional(string)
+      container_log_max_files                     = optional(number)
+      single_process_oom_kill                     = optional(bool)
+      shutdown_grace_period_seconds               = optional(number)
+      shutdown_grace_period_critical_pods_seconds = optional(number)
+      allowed_unsafe_sysctls                      = optional(list(string))
+      topology_manager_policy                     = optional(string)
+      topology_manager_scope                      = optional(string)
+      memory_manager_policy                       = optional(string)
+    }), {})
+    linux = optional(object({
+      cgroup_mode                  = optional(string, "CGROUP_MODE_V2")
+      sysctls                      = optional(map(string), {})
+      hugepages_2m                 = optional(number)
+      hugepages_1g                 = optional(number)
+      transparent_hugepage_enabled = optional(string)
+      transparent_hugepage_defrag  = optional(string)
+    }), {})
+    upgrade = optional(object({
+      strategy                = optional(string, "SURGE")
+      max_surge               = optional(number, 1)
+      max_unavailable         = optional(number, 0)
+      node_pool_soak_duration = optional(string)
+      batch_percentage        = optional(number)
+      batch_soak_duration     = optional(string)
+    }), {})
+    drain = optional(object({
+      grace_termination_duration            = optional(string)
+      pdb_timeout_duration                  = optional(string)
+      respect_pdb_during_node_pool_deletion = optional(bool)
+    }))
+    labels          = optional(map(string), {})
+    resource_labels = optional(map(string), {})
+    tags            = optional(list(string), [])
+    metadata        = optional(map(string), {})
     taints = optional(list(object({
       key    = string
       value  = string
@@ -198,69 +388,115 @@ variable "node_pools" {
     condition     = alltrue([for pool in values(var.node_pools) : (pool.total_min_count == null) == (pool.total_max_count == null)])
     error_message = "\"total_min_count\" and \"total_max_count\" of a node pool must be set together."
   }
+  validation {
+    condition     = alltrue([for pool in values(var.node_pools) : contains(["SURGE", "BLUE_GREEN"], pool.upgrade.strategy)])
+    error_message = "Valid values for \"upgrade.strategy\" of a node pool are: \"SURGE\" | \"BLUE_GREEN\"."
+  }
+  validation {
+    condition     = alltrue([for pool in values(var.node_pools) : pool.upgrade.strategy != "BLUE_GREEN" || pool.upgrade.node_pool_soak_duration != null])
+    error_message = "A BLUE_GREEN upgrade of a node pool requires \"upgrade.node_pool_soak_duration\"."
+  }
+  validation {
+    condition     = alltrue(flatten([for pool in values(var.node_pools) : [for taint in pool.taints : contains(["NO_SCHEDULE", "PREFER_NO_SCHEDULE", "NO_EXECUTE"], taint.effect)]]))
+    error_message = "Valid values for the effect of a taint are: \"NO_SCHEDULE\" | \"PREFER_NO_SCHEDULE\" | \"NO_EXECUTE\"."
+  }
 }
 
-variable "service_account" {
-  description = "Email of an existing service account for the nodes. Null: the module creates one with the roles/container.defaultNodeServiceAccount role."
-  type        = string
-  default     = null
+variable "addons" {
+  description = "GKE add-ons. The Compute Engine persistent disk CSI driver is always on."
+  type = object({
+    http_load_balancing        = optional(bool, true)
+    horizontal_pod_autoscaling = optional(bool, true)
+    vertical_pod_autoscaling   = optional(bool, false)
+    filestore_csi_driver       = optional(bool, false)
+    gcs_fuse_csi_driver        = optional(bool, false)
+    lustre_csi_driver          = optional(bool, false)
+    backup_agent               = optional(bool, false)
+    config_connector           = optional(bool, false)
+    stateful_ha                = optional(bool, false)
+  })
+  default  = {}
+  nullable = false
 }
 
-variable "grant_registry_access" {
-  description = "Grant the Artifact Registry reader role on the project to the node service account the module creates."
-  type        = bool
-  default     = true
-  nullable    = false
+variable "security" {
+  description = <<-EOT
+    Security options. Anonymous authentication limited to the health checks, the insecure system RBAC bindings, the
+    kubelet read-only port, the legacy metadata endpoints and the client certificates are always off.
+    * posture_mode, vulnerability_mode: security posture dashboard and workload vulnerability scanning. Null: GKE default.
+    * binary_authorization: evaluation mode, PROJECT_SINGLETON_POLICY_ENFORCE for one. Null: off.
+    * security_group: Google Group gke-security-groups@<domain> for Kubernetes RBAC on Google Groups.
+    * identity_service: authentication through third-party identity providers.
+    * secret_manager: Secret Manager add-on, mounting secrets as CSI volumes.
+  EOT
+  type = object({
+    posture_mode         = optional(string, "BASIC")
+    vulnerability_mode   = optional(string)
+    binary_authorization = optional(string)
+    security_group       = optional(string)
+    identity_service     = optional(bool, false)
+    secret_manager       = optional(bool, false)
+  })
+  default  = {}
+  nullable = false
 }
 
-variable "http_load_balancing" {
-  description = "Enable the HTTP load balancing add-on (GKE Ingress, NEG)."
-  type        = bool
-  default     = true
-  nullable    = false
-}
-
-variable "horizontal_pod_autoscaling" {
-  description = "Enable the horizontal Pod autoscaling add-on, which KEDA relies on."
-  type        = bool
-  default     = true
-  nullable    = false
-}
-
-variable "dns_cache" {
-  description = "Standard only, always on with Autopilot. Enable NodeLocal DNSCache."
-  type        = bool
-  default     = false
-  nullable    = false
-}
-
-variable "enable_vertical_pod_autoscaling" {
-  description = "Standard only, always on with Autopilot. Enable vertical Pod autoscaling."
-  type        = bool
-  default     = false
-  nullable    = false
+variable "observability" {
+  description = <<-EOT
+    Logs, metrics and cost.
+    * logging_components, monitoring_components: sent to Cloud Logging and Cloud Monitoring. Null: GKE default, which
+      sends the workload logs to Cloud Logging, billed by volume.
+    * logging_variant: DEFAULT, or MAX_THROUGHPUT for nodes writing many logs.
+    * managed_prometheus: Google Cloud Managed Service for Prometheus collection.
+    * dataplane_v2_metrics, dataplane_v2_relay: Dataplane V2 observability metrics, and the Hubble relay.
+    * cost_allocation: cluster and namespace of the workloads in the billing export.
+    * usage_export_dataset: BigQuery dataset of the resource consumption metering; network_egress_metering adds a
+      DaemonSet metering the egress.
+  EOT
+  type = object({
+    logging_components      = optional(list(string))
+    monitoring_components   = optional(list(string))
+    logging_variant         = optional(string, "DEFAULT")
+    managed_prometheus      = optional(bool, false)
+    dataplane_v2_metrics    = optional(bool, false)
+    dataplane_v2_relay      = optional(bool, false)
+    cost_allocation         = optional(bool, true)
+    usage_export_dataset    = optional(string)
+    network_egress_metering = optional(bool, false)
+  })
+  default  = {}
+  nullable = false
 }
 
 variable "maintenance" {
-  description = "Maintenance window. Without recurrence, a daily window starting at start_time (HH:MM, UTC). With recurrence (RFC 5545 RRULE), start_time and end_time are RFC 3339 dates."
+  description = <<-EOT
+    Upgrades of the cluster.
+    * start_time, end_time, recurrence: without recurrence, a daily window starting at start_time (HH:MM, UTC). With
+      recurrence (RFC 5545 RRULE), start_time and end_time are RFC 3339 dates.
+    * exclusions: windows without upgrades of the given scope: NO_UPGRADES, NO_MINOR_UPGRADES or
+      NO_MINOR_OR_NODE_UPGRADES.
+    * patch_mode: ACCELERATED upgrades to the latest patch of the minor version as soon as it is out.
+    * rollback_soak_duration: upgrade the control plane in two steps, rollbackable for this duration ("86400s").
+    * notification_topic: Pub/Sub topic (projects/<project>/topics/<topic>) of the upgrade notifications.
+  EOT
   type = object({
-    start_time = string
+    start_time = optional(string, "05:00")
     end_time   = optional(string)
     recurrence = optional(string)
+    exclusions = optional(list(object({
+      name       = string
+      start_time = string
+      end_time   = string
+      scope      = optional(string, "NO_UPGRADES")
+    })), [])
+    patch_mode             = optional(string)
+    rollback_soak_duration = optional(string)
+    notification_topic     = optional(string)
   })
-  default = {
-    start_time = "05:00"
-  }
+  default  = {}
   nullable = false
   validation {
     condition     = (var.maintenance.end_time == null) == (var.maintenance.recurrence == null)
     error_message = "\"maintenance.end_time\" and \"maintenance.recurrence\" go together."
   }
-}
-
-variable "labels" {
-  description = "Labels of the cluster and of the nodes of its node pools."
-  type        = map(string)
-  default     = {}
-  nullable    = false
 }

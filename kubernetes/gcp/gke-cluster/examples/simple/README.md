@@ -1,8 +1,7 @@
 ## Simple GKE Cluster
 
-A zonal cluster with the default settings: private nodes, no public IP endpoint (the
-control plane is reachable from the VPC only), and Dataplane V2 (`enable_dataplane_v2 = true`).
-Uses the [gke-cluster module](../..).
+A zonal cluster with the default settings: private nodes, and no public IP endpoint (the control plane is reachable
+from the VPC only). Uses the [gke-cluster module](../..).
 
 ```bash
 terraform init

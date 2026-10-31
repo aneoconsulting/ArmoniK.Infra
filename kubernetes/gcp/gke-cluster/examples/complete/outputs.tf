@@ -22,3 +22,8 @@ output "service_account" {
   description = "The service account of the nodes"
   value       = module.complete_gke.service_account
 }
+
+output "kubeconfig_path" {
+  description = "Path of the kubeconfig file of the cluster"
+  value       = module.complete_gke.kubeconfig_path
+}

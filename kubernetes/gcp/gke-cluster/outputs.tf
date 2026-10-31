@@ -9,7 +9,7 @@ output "id" {
 }
 
 output "location" {
-  description = "Location of the cluster: its region if regional or Autopilot, its zone if zonal"
+  description = "Location of the cluster: its region if regional, its zone if zonal"
   value       = google_container_cluster.cluster.location
 }
 
@@ -24,8 +24,8 @@ output "zones" {
 }
 
 output "endpoint" {
-  description = "IP address of the control plane: the private one with a private endpoint, else the public one"
-  value       = var.enable_private_endpoint ? google_container_cluster.cluster.private_cluster_config[0].private_endpoint : google_container_cluster.cluster.endpoint
+  description = "IP address of the control plane: the private one with a private endpoint, else the public one. Null without IP endpoints"
+  value       = !var.control_plane.enable_ip_endpoint ? null : local.private_endpoint ? google_container_cluster.cluster.private_cluster_config[0].private_endpoint : google_container_cluster.cluster.endpoint
   sensitive   = true
 }
 
@@ -35,7 +35,7 @@ output "endpoint_dns" {
 }
 
 output "ca_certificate" {
-  description = "CA certificate of the control plane (base64 encoded)"
+  description = "CA certificate of the IP endpoints of the control plane (base64 encoded)"
   value       = google_container_cluster.cluster.master_auth[0].cluster_ca_certificate
   sensitive   = true
 }
@@ -46,7 +46,7 @@ output "master_version" {
 }
 
 output "service_account" {
-  description = "Email of the service account of the nodes"
+  description = "Email of the service account of the nodes, to set in the ComputeClasses that create node pools"
   value       = local.service_account
 }
 
@@ -56,6 +56,11 @@ output "identity_namespace" {
 }
 
 output "node_pools" {
-  description = "Standard only, empty on Autopilot. Kubernetes version of each node pool, keyed by name"
+  description = "Kubernetes version of each node pool, keyed by name"
   value       = { for name, pool in google_container_node_pool.pools : name => pool.version }
+}
+
+output "kubeconfig_path" {
+  description = "Absolute path of the kubeconfig file written by the module, null without one"
+  value       = can(coalesce(var.kubeconfig_path)) ? abspath(var.kubeconfig_path) : null
 }

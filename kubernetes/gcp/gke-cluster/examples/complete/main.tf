@@ -24,13 +24,16 @@ module "vpc" {
   }
 }
 
-# Encrypts the Kubernetes secrets stored in etcd
+# Encrypts the Kubernetes secrets stored in etcd and the boot disks of the nodes
 module "kms" {
   source        = "../../../../../security/gcp/kms"
   key_ring_name = "gke-complete"
   location      = var.region
-  crypto_keys   = { "gke-secrets" = {} }
-  labels        = local.labels
+  crypto_keys = {
+    "gke-secrets" = {}
+    "gke-disks"   = {}
+  }
+  labels = local.labels
 }
 
 module "complete_gke" {
@@ -41,35 +44,43 @@ module "complete_gke" {
   subnetwork          = module.vpc.gke_subnet_name
   ip_range_pods       = module.vpc.gke_subnet_pods_range_name
   ip_range_services   = module.vpc.gke_subnet_svc_range_name
-  enable_dataplane_v2 = true
   regional            = false
   zones               = ["${var.region}-a"]
   deletion_protection = false
-  # Public IP endpoint reachable from this CIDR block only; the DNS endpoint accepts any caller with IAM permissions
-  enable_private_endpoint = false
-  master_authorized_networks = [
-    {
-      cidr_block   = var.authorized_cidr_block
-      display_name = "authorized"
+  kms_key             = { id = module.kms.crypto_key_ids["gke-secrets"] }
+  boot_disk_kms_key   = { id = module.kms.crypto_key_ids["gke-disks"] }
+  kubeconfig_path     = "generated/kubeconfig"
+  # No IP endpoint at all: the DNS endpoint accepts any caller with IAM permissions
+  control_plane = {
+    enable_ip_endpoint         = false
+    dns_allow_external_traffic = true
+  }
+  autoscaling = {
+    node_auto_provisioning = {
+      max_cpu_cores = 64
+      max_memory_gb = 256
     }
-  ]
-  dns_allow_external_traffic = true
-  kms_key                    = { id = module.kms.crypto_key_ids["gke-secrets"] }
+  }
   node_pools = {
     system = {
       machine_type = "e2-standard-4"
       min_count    = 1
       max_count    = 3
-      disk_type    = "pd-balanced"
     }
+    # Spot nodes from 0, a local SSD for the emptyDir volumes, a grace period to drain on preemption
     compute = {
-      machine_type = "n2d-standard-4"
-      min_count    = 0
-      max_count    = 10
-      spot         = true
-      disk_type    = "pd-balanced"
-      labels       = { workload = "compute" }
-      taints       = [{ key = "workload", value = "compute", effect = "NO_SCHEDULE" }]
+      machine_type              = "n2d-standard-8"
+      spot                      = true
+      total_min_count           = 0
+      total_max_count           = 10
+      location_policy           = "ANY"
+      ephemeral_local_ssd_count = 1
+      kubelet = {
+        max_parallel_image_pulls      = 5
+        shutdown_grace_period_seconds = 30
+      }
+      labels = { workload = "compute" }
+      taints = [{ key = "workload", value = "compute", effect = "NO_SCHEDULE" }]
     }
   }
   labels = local.labels

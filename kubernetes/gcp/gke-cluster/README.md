@@ -1,20 +1,21 @@
 # GCP GKE Cluster
 
-GKE cluster, Standard or Autopilot, on a single `google_container_cluster` resource. It replaces the deprecated
-[gke](../gke) and [node-pool](../node-pool) modules.
+GKE Standard cluster on a single `google_container_cluster` resource, tuned for batch workloads that scale fast. It
+replaces the deprecated [gke](../gke) and [node-pool](../node-pool) modules.
 
 This module creates:
 
-* A GKE cluster with private nodes, no public IP endpoint and Workload Identity by default: Standard, with
-  Dataplane V2 through `enable_dataplane_v2`, or Autopilot with `autopilot = true`.
-* The node pools of a Standard cluster, and the service account of the nodes.
-* Optional encryption of the Kubernetes secrets with a Cloud KMS key.
+* A GKE cluster on Dataplane V2 with private nodes, no public IP endpoint, Workload Identity, Cloud DNS, NodeLocal
+  DNSCache, image streaming, the Gateway API and the performance HPA profile by default.
+* Its node pools, the service account of the nodes, and optionally node auto-provisioning.
+* Optional encryption of the Kubernetes secrets and of the node boot disks with Cloud KMS keys.
+* Optionally a kubeconfig file, written with `gcloud`.
 
-> Note: the control plane is reachable from the VPC only by default. `dns_allow_external_traffic = true` opens its DNS
-> endpoint to IAM-authenticated callers from anywhere; `enable_private_endpoint = false` adds a public IP endpoint,
-> reachable from the `master_authorized_networks` only. The variables and outputs that apply to one mode only say so
-> in their description ("Standard only"). An Autopilot cluster is always regional, and rejects privileged pods, host
-> namespaces and `hostPath` volumes other than `/var/log` read-only.
+> Note: the control plane is reachable from the VPC only by default. `control_plane.dns_allow_external_traffic = true`
+> opens its DNS endpoint to IAM-authenticated callers from anywhere; `control_plane.enable_private_endpoint = false`
+> adds a public IP endpoint, reachable from the `control_plane.authorized_networks` only. Autopilot is not a mode of this
+> module: Pods that select the `autopilot` or `autopilot-spot` ComputeClass run in Autopilot mode (GKE 1.34.1 and
+> later), and custom ComputeClasses, applied apart from this module, create node pools on demand.
 
 <!-- BEGIN_TF_DOCS -->
 <!-- END_TF_DOCS -->

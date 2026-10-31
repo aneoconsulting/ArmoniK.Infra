@@ -1,3 +1,12 @@
+# A check block warns on every plan without failing it; the `deprecated` argument needs Terraform 1.15.
+# An assertion must reference the configuration, hence an always-false expression on a required input.
+check "deprecated" {
+  assert {
+    condition     = !can(var.name)
+    error_message = "The storage/gcp/memorystore/memcache module is deprecated and will be removed. Google deprecated Memorystore for Memcached."
+  }
+}
+
 data "google_client_config" "current" {}
 
 resource "google_memcache_instance" "cache" {

@@ -1,20 +1,9 @@
 ## Simple GCS
 
-Terraform scripts to create a simple GCS using the [module gcs](../..).
-
-To create a simple GCS:
+A bucket with the default settings. Uses the [gcs module](../..).
 
 ```bash
 terraform init
-terraform plan
-terraform apply
+terraform apply -var project=<project>
+terraform destroy -var project=<project>
 ```
-
-To delete all resource:
-
-```bash
-terraform destroy
-```
-
-
-

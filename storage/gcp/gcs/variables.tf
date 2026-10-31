@@ -97,6 +97,14 @@ variable "retention_policy" {
   default = null
 }
 
+# The ArmoniK object storage bucket deletes temporary results all the time: set 0 there to stop paying for them
+# 7 more days. Keep the default for buckets whose objects are worth recovering, such as the worker DLLs.
+variable "soft_delete_retention_days" {
+  description = "Days during which deleted objects stay recoverable, and billed. 0 disables soft delete. Null keeps the server value (7 days by default); going back to null after setting it does not restore 7 days, set 7 explicitly."
+  type        = number
+  default     = null
+}
+
 variable "labels" {
   description = "A map of key/value label pairs to assign to the bucket."
   type        = map(string)
@@ -112,8 +120,16 @@ variable "logging" {
   default = null
 }
 
+variable "kms_key" {
+  description = "Cloud KMS key that encrypts the objects inserted into this bucket, if no encryption method is specified. An object, so that the key can be created in the same apply: its ID is unknown at plan time, the object is not."
+  type = object({
+    id = string
+  })
+  default = null
+}
+
 variable "default_kms_key_name" {
-  description = "The id of a Cloud KMS key that will be used to encrypt objects inserted into this bucket, if no encryption method is specified."
+  description = "Deprecated, use `kms_key`. The id of a Cloud KMS key that will be used to encrypt objects inserted into this bucket, if no encryption method is specified."
   type        = string
   default     = null
 }
@@ -125,7 +141,7 @@ variable "requester_pays" {
 }
 
 variable "uniform_bucket_level_access" {
-  description = "Enables Uniform bucket-level access access to a bucket"
+  description = "Access through IAM only (var.roles), without ACL on the bucket nor on its objects. Set it to false for the S3 adapter of Core: through the XML API of GCS, it checks that the bucket exists with GetBucketAcl, which GCS rejects with \"Invalid argument\" on a bucket with uniform bucket-level access."
   type        = bool
   default     = null
 }
@@ -205,7 +221,7 @@ variable "username" {
 }
 
 variable "password" {
-  description = "Google Cloud storage secret to use as passeword"
+  description = "Google Cloud storage secret to use as password"
   type        = string
   default     = ""
 }

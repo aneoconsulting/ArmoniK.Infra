@@ -40,7 +40,7 @@ resource "null_resource" "timestamp" {
 
 module "vpc" {
   source = "../../../../networking/gcp/vpc"
-  name   = "vcp-test-sa"
+  name   = "vpc-test-sa"
   gke_subnet = {
     name                = "gke-alpha"
     nodes_cidr_block    = "10.51.0.0/16",

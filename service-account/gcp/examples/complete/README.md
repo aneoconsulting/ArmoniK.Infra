@@ -1,20 +1,10 @@
-## Complete service account for Pods
+## Complete Service Account
 
-Terraform scripts to create a GCP service account for Pods using the [module service-account](../..).
-
-To create a GCP service account for Pods:
+A GKE cluster, and a test pod running as a Kubernetes service account that impersonates an IAM service account with
+Redis and Pub/Sub roles. Uses the [service-account module](../..).
 
 ```bash
 terraform init
-terraform plan
-terraform apply
+terraform apply -var project=<project>
+terraform destroy -var project=<project>
 ```
-
-To delete all resource:
-
-```bash
-terraform destroy
-```
-
-
-

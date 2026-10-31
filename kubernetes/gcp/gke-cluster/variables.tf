@@ -27,7 +27,7 @@ variable "region" {
 }
 
 variable "zones" {
-  description = "Zones of the nodes. Regional cluster: every zone of the region by default. Zonal cluster: required, the first one is the zone of the cluster."
+  description = "Zones of the nodes. Regional cluster: three zones of the region chosen by GKE by default. Zonal cluster: required, the first one is the zone of the cluster."
   type        = list(string)
   default     = []
   nullable    = false
@@ -158,6 +158,7 @@ variable "control_plane" {
     * enable_private_endpoint: no public IP endpoint, only the private one in the VPC. Requires private nodes.
     * enable_ip_endpoint: false leaves the DNS endpoint only, authenticated by IAM, with no IP to protect.
     * master_ipv4_cidr_block: /28 range of the private endpoint. GKE takes an IP of the node subnetwork by default.
+      Permanent, and unique in the VPC.
     * global_access: the private endpoint is reachable from every region of the VPC.
     * authorized_networks: CIDR blocks allowed to reach the IP endpoints, besides the nodes. Empty: no external IP
       reaches the public endpoint.
@@ -226,7 +227,7 @@ variable "autoscaling" {
     * default_compute_class: let a ComputeClass named "default" apply to the Pods that select none.
     * node_auto_provisioning: null disables it. Limits are over the whole cluster. The nodes it creates use the node
       service account and the boot disk key of the module. ComputeClasses with nodePoolAutoCreation create node pools
-      without it on GKE 1.33.3 and later; they set their service account themselves.
+      without it on GKE 1.33.3-gke.1136000 and later; they set their service account themselves.
   EOT
   type = object({
     profile               = optional(string, "OPTIMIZE_UTILIZATION")
@@ -269,6 +270,8 @@ variable "node_pools" {
       ANY suits Spot VMs.
     * Provisioning: spot, flex_start (Dynamic Workload Scheduler), max_run_duration ("3600s"), queued_provisioning,
       best_effort_min_nodes, reservation_affinity, placement_policy ("COMPACT", low latency between nodes).
+      flex_start and queued_provisioning (which requires flex_start) go with autoscaling, location_policy ANY, no Spot
+      VM and no reservation, and turn off auto-repair.
     * Disks: disk_type pd-balanced by default, hyperdisk-balanced on the machine families that only support Hyperdisk
       (C4, C4D, N4); local SSDs as raw scratch (local_ssd_count), as ephemeral storage (ephemeral_local_ssd_count) or as
       raw block devices (local_nvme_ssd_block_count); secondary_boot_disks preload container images.
@@ -395,6 +398,16 @@ variable "node_pools" {
   validation {
     condition     = alltrue([for pool in values(var.node_pools) : pool.upgrade.strategy != "BLUE_GREEN" || pool.upgrade.node_pool_soak_duration != null])
     error_message = "A BLUE_GREEN upgrade of a node pool requires \"upgrade.node_pool_soak_duration\"."
+  }
+  validation {
+    condition     = alltrue([for pool in values(var.node_pools) : !pool.queued_provisioning || pool.flex_start])
+    error_message = "\"queued_provisioning\" of a node pool requires \"flex_start\"."
+  }
+  validation {
+    condition = alltrue([for pool in values(var.node_pools) : !pool.flex_start || (
+      pool.node_count == null && pool.location_policy == "ANY" && !pool.spot && try(pool.reservation_affinity.type, "NO_RESERVATION") == "NO_RESERVATION"
+    )])
+    error_message = "A \"flex_start\" node pool requires autoscaling (no \"node_count\"), \"location_policy\" ANY, no \"spot\" and no \"reservation_affinity\" other than NO_RESERVATION."
   }
   validation {
     condition     = alltrue(flatten([for pool in values(var.node_pools) : [for taint in pool.taints : contains(["NO_SCHEDULE", "PREFER_NO_SCHEDULE", "NO_EXECUTE"], taint.effect)]]))

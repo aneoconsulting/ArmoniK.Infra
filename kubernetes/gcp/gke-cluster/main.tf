@@ -448,6 +448,10 @@ resource "google_container_cluster" "cluster" {
       condition     = !local.private_endpoint || var.networking.enable_private_nodes
       error_message = "\"control_plane.enable_private_endpoint\" requires \"networking.enable_private_nodes\"."
     }
+    precondition {
+      condition     = !var.networking.gateway_api || var.addons.http_load_balancing
+      error_message = "\"networking.gateway_api\" requires \"addons.http_load_balancing\": the GKE Gateway controller runs in the HttpLoadBalancing add-on."
+    }
   }
 
   depends_on = [
@@ -468,14 +472,15 @@ check "control_plane_psc" {
 }
 
 resource "google_container_node_pool" "pools" {
-  for_each           = var.node_pools
-  name               = each.key
-  project            = local.project
-  location           = google_container_cluster.cluster.location
-  cluster            = google_container_cluster.cluster.name
-  node_locations     = each.value.node_locations
-  node_count         = each.value.node_count
-  initial_node_count = each.value.node_count == null ? coalesce(each.value.initial_node_count, each.value.min_count) : null
+  for_each       = var.node_pools
+  name           = each.key
+  project        = local.project
+  location       = google_container_cluster.cluster.location
+  cluster        = google_container_cluster.cluster.name
+  node_locations = each.value.node_locations
+  node_count     = each.value.node_count
+  # Per zone: with total bounds, the autoscaler brings the pool up to total_min_count from no node
+  initial_node_count = each.value.node_count == null ? coalesce(each.value.initial_node_count, each.value.total_min_count != null ? 0 : each.value.min_count) : null
   max_pods_per_node  = each.value.max_pods_per_node
   # The autoscaler moves the node count: reading it from the instance groups only costs API calls
   ignore_node_count_changes = true
@@ -492,9 +497,9 @@ resource "google_container_node_pool" "pools" {
     }
   }
 
-  # A release channel requires both
+  # The nodes of the Dynamic Workload Scheduler (flex-start, queued provisioning) do not support auto-repair
   management {
-    auto_repair  = true
+    auto_repair  = !(each.value.flex_start || each.value.queued_provisioning)
     auto_upgrade = true
   }
 

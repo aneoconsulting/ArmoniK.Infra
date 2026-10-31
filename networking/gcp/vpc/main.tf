@@ -4,7 +4,19 @@ data "google_client_config" "current" {}
 locals {
   public_subnets  = { for key, value in var.subnets : key => value if value.public_access }
   private_subnets = { for key, value in var.subnets : key => value if !value.public_access }
-  public_regions  = toset([for key, value in local.public_subnets : value.region])
+  public_regions = setunion(
+    [for key, value in local.public_subnets : value.region],
+    local.gke_subnet_public ? [var.gke_subnet.region] : []
+  )
+  gke_subnet_public = try(var.gke_subnet.public_access, false)
+  subnet_ids = merge(
+    { for key, subnet in google_compute_subnetwork.subnets : key => subnet.id },
+    { for subnet in google_compute_subnetwork.gke_subnet : subnet.name => subnet.id }
+  )
+  subnet_regions = merge(
+    { for key, value in var.subnets : key => value.region },
+    var.gke_subnet != null ? { (var.gke_subnet.name) = var.gke_subnet.region } : {}
+  )
 }
 
 # VPC
@@ -60,6 +72,12 @@ resource "google_compute_subnetwork" "gke_subnet" {
       range_name    = secondary_ip_range.value == "pods_cidr_block" ? "${var.gke_subnet.name}-pod-ranges" : "${var.gke_subnet.name}-svc-ranges"
     }
   }
+  lifecycle {
+    precondition {
+      condition     = !contains(keys(var.subnets), var.gke_subnet.name)
+      error_message = "The name of \"gke_subnet\" must differ from the names of \"subnets\"."
+    }
+  }
 }
 
 # External access for public subnets
@@ -89,8 +107,41 @@ resource "google_compute_router_nat" "nat_gateway" {
       source_ip_ranges_to_nat = ["PRIMARY_IP_RANGE"]
     }
   }
+  # Secondary ranges included: Pod traffic keeps its Pod IP when default SNAT is disabled on the cluster
+  dynamic "subnetwork" {
+    for_each = [for subnet in google_compute_subnetwork.gke_subnet : subnet.id if local.gke_subnet_public && subnet.region == each.value.region]
+    content {
+      name                    = subnetwork.value
+      source_ip_ranges_to_nat = ["ALL_IP_RANGES"]
+    }
+  }
   log_config {
     enable = true
     filter = "ALL"
+  }
+}
+
+# Private Service Connect: Google services of a class create their endpoints in these subnets
+resource "google_network_connectivity_service_connection_policy" "policies" {
+  for_each      = var.service_connection_policies
+  name          = "${google_compute_network.vpc.name}-${each.key}"
+  location      = local.subnet_regions[each.value.subnets[0]]
+  service_class = each.value.service_class
+  network       = google_compute_network.vpc.id
+  description   = "Private Service Connect endpoints of ${each.value.service_class} in VPC ${google_compute_network.vpc.name}"
+  project       = data.google_client_config.current.project
+  psc_config {
+    subnetworks = [for subnet in each.value.subnets : local.subnet_ids[subnet]]
+    limit       = each.value.limit != null ? tostring(each.value.limit) : null
+  }
+  lifecycle {
+    precondition {
+      condition     = alltrue([for subnet in each.value.subnets : contains(keys(local.subnet_regions), subnet)])
+      error_message = "Every subnet of the service connection policy \"${each.key}\" must be a name of \"subnets\" or of \"gke_subnet\"."
+    }
+    precondition {
+      condition     = length(distinct([for subnet in each.value.subnets : lookup(local.subnet_regions, subnet, "")])) == 1
+      error_message = "The subnets of the service connection policy \"${each.key}\" must be at least one and all in the same region."
+    }
   }
 }

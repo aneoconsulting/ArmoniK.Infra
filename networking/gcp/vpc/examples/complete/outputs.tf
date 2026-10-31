@@ -45,3 +45,8 @@ output "gke_subnet" {
     region              = module.complete_vpc.gke_subnet_region
   }
 }
+
+output "service_connection_policies" {
+  description = "Service connection policies"
+  value       = module.complete_vpc.service_connection_policies
+}

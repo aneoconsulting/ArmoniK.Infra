@@ -1,5 +1,10 @@
 # GKE node pool
 
+```{warning}
+This module is deprecated and will be removed. Use the `kubernetes/gcp/gke-cluster` module instead.
+Every plan using this module emits a deprecation warning.
+```
+
 This module creates and manages a node pool in a Google Kubernetes Engine (GKE) cluster separately from the cluster control
 plane. For more
 information see the [official documentation](https://cloud.google.com/container-engine/docs/node-pools) and

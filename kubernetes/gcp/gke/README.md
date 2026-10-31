@@ -1,5 +1,10 @@
 # GKE Module
 
+```{warning}
+This module is deprecated and will be removed. Use the `kubernetes/gcp/gke-cluster` module instead.
+Every plan using this module emits a deprecation warning.
+```
+
 Google Kubernetes Engine (GKE) is the most scalable and fully automated Kubernetes service. This module handles opinionated
 GKE cluster creation and configurations based on
 the [Terraform module](https://registry.terraform.io/modules/terraform-google-modules/kubernetes-engine/google/latest) of

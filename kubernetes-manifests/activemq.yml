@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: queue
+spec:
+  selector:
+    app.kubernetes.io/name: queue
+  ports:
+    - port: 5672
+      targetPort: conn
+  # type: LoadBalancer
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: queue-admin
+spec:
+  selector:
+    app.kubernetes.io/name: queue
+  ports:
+    - port: 8161
+      targetPort: admin
+  type: LoadBalancer
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: queue
+  labels:
+    app.kubernetes.io/name: queue
+spec:
+  containers:
+  - name: queue
+    image: symptoma/activemq:5.16.3
+    ports:
+      - containerPort: 5672
+        name: conn
+      - containerPort: 8161
+        name: admin

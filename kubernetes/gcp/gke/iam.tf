@@ -1,4 +1,4 @@
-# Nodes of the cluster, with the roles GKE needs and nothing else
+# Nodes of the cluster, with the roles GKE needs
 resource "google_service_account" "nodes" {
   count        = var.service_account == null ? 1 : 0
   project      = local.project

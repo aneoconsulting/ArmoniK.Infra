@@ -1,3 +1,6 @@
+# Same entry as `gcloud container clusters get-credentials` (context gke_<project>_<location>_<name>,
+# gke-gcloud-auth-plugin, CA data only for an IP endpoint, as with --dns-endpoint / --internal-ip):
+# https://cloud.google.com/kubernetes-engine/docs/how-to/cluster-access-for-kubectl#store_info
 # Kubeconfig rendered from the cluster attributes rather than written by gcloud: Terraform tracks the file, so a
 # missing or edited file is rewritten on the next apply, a change of endpoint rewrites it and a destroy deletes it.
 # It holds no credentials: kubectl gets a token through gke-gcloud-auth-plugin at each call. The file is replaced

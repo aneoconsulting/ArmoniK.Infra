@@ -373,7 +373,7 @@ fluentBit:
     registry:
     repository: fluent/fluent-bit
     # Third party, so the tag is required. Keep it in step with the fluent-bit subchart (DaemonSet).
-    tag: "5.1.2"
+    tag: "5.1.5"
     pullPolicy: IfNotPresent
   # FIXME: the sidecar reads fluentBit.configMapName instead, so this key is ignored.
   configMapRef: "fluent-bit-config"

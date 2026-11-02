@@ -434,12 +434,11 @@ networkPolicy:
     # submitter.extraEgressRules example.
     extraEgressRules: []
 
-  # Rendered when podDeletionCost.enabled too.
+  # Rendered only when podDeletionCost.enabled is also true.
   podDeletionCost:
     enabled: true
-    # Same default as submitter.prometheusPodSelector, for the egress to Prometheus.
+    # Same default as submitter.prometheusPodSelector.
     prometheusPodSelector:
-    # Egress is Prometheus, the Kubernetes API and DNS by default. Prometheus is found through
-    # podDeletionCost.prometheusUrl, else global.armonik.monitoring.prometheusUrl, else the
-    # Prometheus operator's namespace on 9090; an out-of-cluster Prometheus needs a rule here.
+    # Egress is Prometheus, the Kubernetes API and DNS by default. An out-of-cluster Prometheus
+    # needs a rule here.
     extraEgressRules: []

@@ -11,7 +11,8 @@
 
 {{/*
   Submitter NetworkPolicy spec: Prometheus ingress, DNS egress, plus the extra*Rules. Its selector
-  matches every pod of the release, the metrics-exporter and init Job included.
+  matches every pod of the release, the metrics-exporter, pod-deletion-cost controller and init Job
+  included.
 */}}
 {{- define "armonik.netpol.submitter" -}}
 podSelector:
@@ -41,11 +42,10 @@ egress:
 
 
 {{/*
-  Egress to the Prometheus the pod-deletion-cost controller queries: podDeletionCost.prometheusUrl,
-  else global.armonik.monitoring.prometheusUrl (the pdc layer's default), else the Prometheus
-  operator's namespace on 9090. The port is the URL's (80 or 443 when it names none),
-  kube-prometheus-stack serving Prometheus on its Service port. No rule for an out-of-cluster URL,
-  which extraEgressRules covers.
+  Prometheus egress for the pod-deletion-cost controller: podDeletionCost.prometheusUrl, else
+  global.armonik.monitoring.prometheusUrl, else the Prometheus operator's namespace on 9090. The
+  port is the URL's (80/443 by default), which holds as kube-prometheus-stack serves Prometheus on
+  its Service port. Out-of-cluster URLs need extraEgressRules.
 */}}
 {{- define "armonik.netpol.podDeletionCost.prometheusEgress" -}}
   {{- $ops := include "armonik.operators" . | fromYaml -}}
@@ -76,9 +76,8 @@ ports:
 
 
 {{/*
-  Pod-deletion-cost controller NetworkPolicy spec: egress to Prometheus, which ranks the busy
-  compute-plane pods, to the Kubernetes API, through which it annotates them, and to DNS, plus the
-  extraEgressRules. The submitter policy selects this pod too and only grants DNS.
+  Pod-deletion-cost controller NetworkPolicy spec: Prometheus, Kubernetes API and DNS egress, plus
+  the extraEgressRules.
 */}}
 {{- define "armonik.netpol.podDeletionCost" -}}
 podSelector:

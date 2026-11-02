@@ -11,7 +11,7 @@ This module creates:
 * Its static node pools (a small `system` pool by default), the service account of the nodes, and optionally node
   auto-provisioning.
 * Optional encryption of the Kubernetes secrets and of the node boot disks with Cloud KMS keys.
-* Optionally a kubeconfig file, written with `gcloud`.
+* Optionally a kubeconfig file dedicated to the cluster, authenticated through `gke-gcloud-auth-plugin`.
 
 > Note: the control plane is reachable from the VPC only by default. `control_plane.dns_allow_external_traffic = true`
 > opens its DNS endpoint to IAM-authenticated callers from anywhere; `control_plane.enable_private_endpoint = false`

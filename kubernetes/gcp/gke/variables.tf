@@ -147,7 +147,7 @@ variable "fleet_project" {
 }
 
 variable "kubeconfig_path" {
-  description = "Path of a kubeconfig file to write the credentials of the cluster to, with gcloud, after its creation. Null: no file."
+  description = "Path of a kubeconfig file dedicated to the cluster, managed by Terraform and replaced whole. Null: no file."
   type        = string
   default     = null
 }

@@ -82,11 +82,11 @@ global:
       # renovate: datasource=github-releases depName=aneoconsulting/ArmoniK.Infra.Plugins
       infraPlugins: "0.3.3"
       # renovate: datasource=github-releases depName=aneoconsulting/ArmoniK.Extensions.CSharp.New
-      extCsharp: "0.22.0"
+      extCsharp: "0.23.1"
       # renovate: datasource=github-releases depName=aneoconsulting/ArmoniK.Extensions.Cpp
-      extCpp: "0.5.7"
+      extCpp: "0.5.8"
       # renovate: datasource=github-releases depName=aneoconsulting/ArmoniK.Extensions.Java
-      extJava: "0.1.4"
+      extJava: "0.2.1"
       activemq: ""
     # -- Component of each image repository. A listed repository gets a default tag; any other needs
     # an explicit tag, the safer default for a user-supplied image.

@@ -37,7 +37,10 @@ jobs:
       id: snapshot
       uses: codacy/git-version@5cabe6920ad6a182ba6d653ee8cb5ec65b8b4cfd # 2.9.0
       with:
-        minor-identifier: "feat:"
+        # 0.x: a breaking change bumps the minor; the never-matching major
+        # identifier overrides git-version's Conventional Commits default.
+        minor-identifier: '/^(feature|feat)(\(.+\))?!?:|^[a-z]+(\(.+\))?!:|^breaking([ -]change|\(.+\))?:/'
+        major-identifier: '/(?!)/'
         release-branch: ${{ github.ref_name }}-pre
         dev-branch: ${{ steps.rev.outputs.current-branch }}
 
@@ -45,7 +48,10 @@ jobs:
       id: release
       uses: codacy/git-version@5cabe6920ad6a182ba6d653ee8cb5ec65b8b4cfd # 2.9.0
       with:
-        minor-identifier: "feat:"
+        # 0.x: a breaking change bumps the minor; the never-matching major
+        # identifier overrides git-version's Conventional Commits default.
+        minor-identifier: '/^(feature|feat)(\(.+\))?!?:|^[a-z]+(\(.+\))?!:|^breaking([ -]change|\(.+\))?:/'
+        major-identifier: '/(?!)/'
         release-branch: ${{ steps.rev.outputs.current-branch }}
         dev-branch: main
 

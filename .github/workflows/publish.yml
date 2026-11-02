@@ -101,7 +101,10 @@ jobs:
         if: github.ref_type == 'tag'
         uses: codacy/git-version@5cabe6920ad6a182ba6d653ee8cb5ec65b8b4cfd # 2.9.0
         with:
-          minor-identifier: "feat:"
+          # 0.x: a breaking change bumps the minor; the never-matching major
+          # identifier overrides git-version's Conventional Commits default.
+          minor-identifier: '/^(feature|feat)(\(.+\))?!?:|^[a-z]+(\(.+\))?!:|^breaking([ -]change|\(.+\))?:/'
+          major-identifier: '/(?!)/'
           # `git describe` as the release branch is what makes a detached HEAD
           # resolve to the plain X.Y.Z the tag must equal.
           release-branch: ${{ steps.rev.outputs.current-branch }}
@@ -114,7 +117,10 @@ jobs:
         if: github.event_name != 'workflow_dispatch' && github.ref_type != 'tag'
         uses: codacy/git-version@5cabe6920ad6a182ba6d653ee8cb5ec65b8b4cfd # 2.9.0
         with:
-          minor-identifier: "feat:"
+          # 0.x: a breaking change bumps the minor; the never-matching major
+          # identifier overrides git-version's Conventional Commits default.
+          minor-identifier: '/^(feature|feat)(\(.+\))?!?:|^[a-z]+(\(.+\))?!:|^breaking([ -]change|\(.+\))?:/'
+          major-identifier: '/(?!)/'
           # Never the current branch as release-branch: a push to main would
           # claim the version the next tag releases. main as dev-branch, so a
           # branch build carries its name rather than the shared -SNAPSHOT form

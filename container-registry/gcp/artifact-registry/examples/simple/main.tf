@@ -1,10 +1,4 @@
 locals {
-  docker_images = {
-    prometheus = [{
-      image = "prom/prometheus"
-      tag   = "v2.46.0"
-    }]
-  }
   date = <<-EOT
 #!/bin/bash
 set -e
@@ -36,10 +30,10 @@ resource "null_resource" "timestamp" {
 data "google_client_openid_userinfo" "current" {}
 
 module "simple_artifact_registry" {
-  source        = "../../../artifact-registry"
-  docker_images = local.docker_images
-  name          = "simple-test"
-  description   = "A simple artifact registry"
+  source             = "../../../artifact-registry"
+  name               = "simple-test"
+  description        = "A simple artifact registry"
+  pull_through_cache = {}
   labels = {
     env             = "test"
     app             = "simple"

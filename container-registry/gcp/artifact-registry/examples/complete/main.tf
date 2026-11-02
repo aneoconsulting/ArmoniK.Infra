@@ -1,36 +1,6 @@
 data "google_client_openid_userinfo" "current" {}
 
 locals {
-  docker_images = {
-    prometheus = [{
-      image = "prom/prometheus"
-      tag   = "latest"
-    }],
-    node-exporter = [{
-      image = "prom/node-exporter"
-      tag   = "latest"
-    }],
-    redis = [{
-      image = "redis"
-      tag   = "latest"
-    }],
-    grafana = [{
-      image = "grafana/grafana"
-      tag   = "latest"
-    }],
-    nginx = [{
-      image = "nginx"
-      tag   = "latest"
-    }],
-    rabbitmq = [{
-      image = "rabbitmq"
-      tag   = "latest"
-    }],
-    busybox = [{
-      image = "busybox"
-      tag   = "latest"
-    }]
-  }
   registry_iam = {
     "roles/artifactregistry.repoAdmin" = [],
     "roles/artifactregistry.reader"    = [],
@@ -66,12 +36,21 @@ resource "null_resource" "timestamp" {
 
 module "complete_artifact_registry" {
   source         = "../../../artifact-registry"
-  docker_images  = local.docker_images
   name           = "complete-test"
   description    = "A complete artifact registry"
   immutable_tags = true
   kms_key_id     = null
   iam_roles      = local.registry_iam
+  pull_through_cache = {
+    remote_repositories = {
+      dockerhub = { public_repository = "DOCKER_HUB", priority = 50 }
+      ghcr      = { uri = "https://ghcr.io", priority = 20 }
+    }
+    standard_priority = 100
+    iam_roles = {
+      "roles/artifactregistry.reader" = []
+    }
+  }
   labels = {
     env             = "test"
     app             = "complete"

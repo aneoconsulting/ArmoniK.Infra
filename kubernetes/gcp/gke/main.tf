@@ -5,7 +5,7 @@ data "google_project" "project" {}
 locals {
   project            = data.google_client_config.current.project
   network_project_id = coalesce(var.network_project_id, local.project)
-  # try: a zonal cluster without zones fails on the precondition of the cluster rather than here
+  # try: a zonal cluster without zones fails on the precondition of the cluster
   region   = var.regional ? coalesce(var.region, data.google_client_config.current.region) : try(join("-", slice(split("-", var.zones[0]), 0, 2)), null)
   location = var.regional ? local.region : try(var.zones[0], null)
   # The zone of a zonal cluster is not repeated in its node locations
@@ -43,8 +43,7 @@ resource "google_container_cluster" "cluster" {
   skip_node_pool_refresh = true
 
   # GKE creates a cluster without a default node pool from 1.36.4-gke.1469000 only, when initial_node_count and
-  # node_config are omitted; remove_default_node_pool is deprecated for that. Until every release channel is there:
-  # one node, removed right after, run by the node service account rather than the Compute Engine default one.
+  # node_config are omitted; remove_default_node_pool is deprecated for that.
   remove_default_node_pool = true
   initial_node_count       = 1
   node_config {
@@ -121,8 +120,7 @@ resource "google_container_cluster" "cluster" {
   }
 
   # GKE owns the Gateway API CRDs of the standard channel. Envoy Gateway then installs its own CRDs only
-  # (gateway-crds-helm with crds.envoyGateway.enabled=true, then its chart with --skip-crds), once checked that the
-  # Gateway API version GKE installs fits the Envoy Gateway release. Two copies of the Gateway API CRDs break both.
+  # Two copies of the Gateway API CRDs break both.
   gateway_api_config {
     channel = var.networking.gateway_api ? "CHANNEL_STANDARD" : "CHANNEL_DISABLED"
   }

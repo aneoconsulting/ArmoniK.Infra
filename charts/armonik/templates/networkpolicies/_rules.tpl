@@ -227,9 +227,9 @@ ports:
 
 
 {{/*
-  Ingress (nginx) NetworkPolicy: egress-only, to DNS, control-plane, Grafana and Seq, plus the IdP
-  with sso. It can be the only policy selecting nginx (ingress.networkPolicy off), so it carries DNS
-  for nginx's resolver and the upstreams it resolves.
+  Ingress (nginx) NetworkPolicy: egress-only, to DNS, the GUI, control-plane, Grafana and Seq, plus
+  the IdP with sso. It can be the only policy selecting nginx (ingress.networkPolicy off), so it
+  repeats the DNS and GUI rules of armonik-ingress's own policy.
 */}}
 {{- define "armonik.netpol.ingressEgress" -}}
 {{- with .Subcharts.ingress -}}
@@ -240,6 +240,7 @@ podSelector:
     {{- include "armonik.selectorLabels" . | nindent 4 }}
 {{- $rules := dict
       "armonik.netpol.dnsRule" dict
+      "armonik.netpol.rule.guiTo" .
       "armonik.netpol.rule.ingressToControlPlane" $
       "armonik.netpol.rule.ingressToGrafana" $
       "armonik.netpol.rule.ingressToSeq" $ }}

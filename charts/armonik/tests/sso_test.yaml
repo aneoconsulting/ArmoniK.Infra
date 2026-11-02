@@ -17,7 +17,7 @@ set:
         existingSecret: armonik-oauth2-proxy
 tests:
   # This policy can be the only one selecting nginx: without DNS its resolver resolves nothing.
-  - it: keeps the nginx egress to DNS, the control plane, Grafana and Seq alone without sso
+  - it: keeps the nginx egress to DNS, the GUI, the control plane, Grafana and Seq alone without sso
     set:
       ingress:
         sso:
@@ -25,7 +25,7 @@ tests:
     asserts:
       - lengthEqual:
           path: spec.egress
-          count: 4
+          count: 5
       - contains:
           path: spec.egress
           content:
@@ -60,7 +60,7 @@ tests:
     asserts:
       - lengthEqual:
           path: spec.egress
-          count: 5
+          count: 6
       - contains:
           path: spec.egress
           content:

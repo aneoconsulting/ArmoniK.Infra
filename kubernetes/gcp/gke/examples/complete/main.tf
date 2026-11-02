@@ -37,7 +37,7 @@ module "kms" {
 }
 
 module "complete_gke" {
-  source              = "../../../gke-cluster"
+  source              = "../../../gke"
   name                = "gke-complete"
   description         = "Complete GKE example"
   network             = module.vpc.name

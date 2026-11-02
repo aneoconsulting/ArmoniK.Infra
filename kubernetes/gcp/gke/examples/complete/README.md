@@ -2,7 +2,7 @@
 
 A zonal cluster with a system pool and a tainted spot pool scaling from zero on local SSDs, node auto-provisioning,
 secrets and boot disks encrypted with Cloud KMS, and a control plane reachable through its DNS endpoint only, written
-to `generated/kubeconfig`. Uses the [gke-cluster module](../..).
+to `generated/kubeconfig`. Uses the [gke module](../..).
 
 ```bash
 terraform init

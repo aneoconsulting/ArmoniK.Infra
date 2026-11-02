@@ -1,0 +1,11 @@
+# PostgreSQL as the table storage with the umbrella's NetworkPolicies: client egress to the
+# CloudNativePG instances and the instances' own policy.
+networkPolicy:
+  enabled: true
+dependencies:
+  mongodb:
+    enabled: false
+  mongodb-exporter:
+    enabled: false
+  postgresql:
+    enabled: true

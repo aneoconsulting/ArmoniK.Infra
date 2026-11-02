@@ -1,0 +1,363 @@
+suite: umbrella network policies, in-cluster PostgreSQL
+release:
+  name: t
+  namespace: default
+templates:
+  - templates/networkpolicies/postgresql.yaml
+  - templates/networkpolicies/control-plane.yaml
+  - templates/networkpolicies/compute-plane.yaml
+set:
+  networkPolicy:
+    enabled: true
+  dependencies:
+    mongodb:
+      enabled: false
+    mongodb-exporter:
+      enabled: false
+    postgresql:
+      enabled: true
+tests:
+  - it: renders nothing with networkPolicy.enabled=false
+    template: templates/networkpolicies/postgresql.yaml
+    set:
+      networkPolicy:
+        enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: renders nothing with MongoDB as the table storage
+    template: templates/networkpolicies/postgresql.yaml
+    set:
+      dependencies:
+        mongodb:
+          enabled: true
+        postgresql:
+          enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: selects every pod of the Cluster, instances and operator Jobs alike
+    template: templates/networkpolicies/postgresql.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: metadata.name
+          value: t-armonik-postgresql-server
+      - equal:
+          path: metadata.namespace
+          value: default
+      - equal:
+          path: spec.podSelector
+          value:
+            matchLabels:
+              cnpg.io/cluster: t-postgresql
+      - equal:
+          path: spec.policyTypes
+          value:
+            - Ingress
+            - Egress
+
+  - it: admits control-plane/init, metrics-exporter and compute-plane on the PostgreSQL port
+    template: templates/networkpolicies/postgresql.yaml
+    asserts:
+      - contains:
+          path: spec.ingress
+          content:
+            from:
+              - namespaceSelector:
+                  matchLabels:
+                    kubernetes.io/metadata.name: default
+                podSelector:
+                  matchExpressions:
+                    - key: app.kubernetes.io/component
+                      operator: In
+                      values:
+                        - control-plane
+                        - init
+            ports:
+              - protocol: TCP
+                port: 5432
+      - contains:
+          path: spec.ingress
+          content:
+            from:
+              - namespaceSelector:
+                  matchLabels:
+                    kubernetes.io/metadata.name: default
+                podSelector:
+                  matchLabels:
+                    app.kubernetes.io/component: metrics-exporter
+            ports:
+              - protocol: TCP
+                port: 5432
+      - contains:
+          path: spec.ingress
+          content:
+            from:
+              - namespaceSelector:
+                  matchLabels:
+                    kubernetes.io/metadata.name: default
+                podSelector:
+                  matchLabels:
+                    app.kubernetes.io/part-of: compute-plane
+            ports:
+              - protocol: TCP
+                port: 5432
+
+  - it: lets the Cluster pods reach each other on both ingress and egress (replication once
+      cluster.instances > 1)
+    template: templates/networkpolicies/postgresql.yaml
+    asserts:
+      - contains:
+          path: spec.ingress
+          content:
+            from:
+              - namespaceSelector:
+                  matchLabels:
+                    kubernetes.io/metadata.name: default
+                podSelector:
+                  matchLabels:
+                    cnpg.io/cluster: t-postgresql
+            ports:
+              - protocol: TCP
+                port: 5432
+      - contains:
+          path: spec.egress
+          content:
+            to:
+              - namespaceSelector:
+                  matchLabels:
+                    kubernetes.io/metadata.name: default
+                podSelector:
+                  matchLabels:
+                    cnpg.io/cluster: t-postgresql
+            ports:
+              - protocol: TCP
+                port: 5432
+
+  - it: admits the CloudNativePG operator on the status port and Prometheus on the metrics port
+    template: templates/networkpolicies/postgresql.yaml
+    asserts:
+      - contains:
+          path: spec.ingress
+          content:
+            from:
+              - namespaceSelector:
+                  matchLabels:
+                    kubernetes.io/metadata.name: default
+                podSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: cloudnative-pg
+            ports:
+              - protocol: TCP
+                port: 8000
+      - contains:
+          path: spec.ingress
+          content:
+            from:
+              - namespaceSelector:
+                  matchLabels:
+                    kubernetes.io/metadata.name: default
+                podSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: prometheus
+            ports:
+              - protocol: TCP
+                port: 9187
+
+  - it: grants the Cluster pods egress to DNS and the Kubernetes API
+    template: templates/networkpolicies/postgresql.yaml
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            to:
+              - namespaceSelector:
+                  matchLabels:
+                    kubernetes.io/metadata.name: kube-system
+                podSelector:
+                  matchLabels:
+                    k8s-app: kube-dns
+            ports:
+              - protocol: UDP
+                port: 53
+              - protocol: TCP
+                port: 53
+      - contains:
+          path: spec.egress
+          content:
+            ports:
+              - protocol: TCP
+                port: 443
+              - protocol: TCP
+                port: 6443
+
+  - it: finds a layered operator through its stated namespace
+    template: templates/networkpolicies/postgresql.yaml
+    set:
+      global:
+        armonik:
+          operators:
+            postgresqlOperator:
+              deploy: false
+              available: true
+              namespace: operators
+    asserts:
+      - contains:
+          path: spec.ingress
+          content:
+            from:
+              - namespaceSelector:
+                  matchLabels:
+                    kubernetes.io/metadata.name: operators
+                podSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: cloudnative-pg
+            ports:
+              - protocol: TCP
+                port: 8000
+
+  - it: fails on a layered operator with no stated namespace rather than locking it out
+    template: templates/networkpolicies/postgresql.yaml
+    set:
+      global:
+        armonik:
+          operators:
+            postgresqlOperator:
+              deploy: false
+              available: true
+    asserts:
+      - failedTemplate:
+          errorPattern: needs global\.armonik\.operators\.postgresqlOperator\.namespace
+
+  - it: honours networkPolicy.postgresqlOperatorPodSelector
+    template: templates/networkpolicies/postgresql.yaml
+    set:
+      networkPolicy:
+        postgresqlOperatorPodSelector:
+          matchLabels:
+            app.kubernetes.io/name: my-cnpg
+    asserts:
+      - contains:
+          path: spec.ingress
+          content:
+            from:
+              - namespaceSelector:
+                  matchLabels:
+                    kubernetes.io/metadata.name: default
+                podSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: my-cnpg
+            ports:
+              - protocol: TCP
+                port: 8000
+
+  - it: follows the Cluster's namespaceOverride on both sides
+    templates:
+      - templates/networkpolicies/postgresql.yaml
+      - templates/networkpolicies/compute-plane.yaml
+    set:
+      dependencies:
+        postgresql:
+          namespaceOverride: db
+    asserts:
+      - equal:
+          path: metadata.namespace
+          value: db
+        template: templates/networkpolicies/postgresql.yaml
+      - contains:
+          path: spec.egress
+          content:
+            to:
+              - namespaceSelector:
+                  matchLabels:
+                    kubernetes.io/metadata.name: db
+                podSelector:
+                  matchLabels:
+                    cnpg.io/cluster: t-postgresql
+                    cnpg.io/podRole: instance
+            ports:
+              - protocol: TCP
+                port: 5432
+        template: templates/networkpolicies/compute-plane.yaml
+
+  - it: grants the control-plane submitter and init egress to the instances
+    template: templates/networkpolicies/control-plane.yaml
+    documentSelector:
+      path: metadata.name
+      value: t-armonik-control-plane-submitter-connectivity
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            to:
+              - namespaceSelector:
+                  matchLabels:
+                    kubernetes.io/metadata.name: default
+                podSelector:
+                  matchLabels:
+                    cnpg.io/cluster: t-postgresql
+                    cnpg.io/podRole: instance
+            ports:
+              - protocol: TCP
+                port: 5432
+
+  - it: renders the metrics-exporter policy with PostgreSQL as the table storage, egress to the
+      instances included
+    template: templates/networkpolicies/control-plane.yaml
+    documentSelector:
+      path: metadata.name
+      value: t-armonik-control-plane-metrics-exporter-connectivity
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            to:
+              - namespaceSelector:
+                  matchLabels:
+                    kubernetes.io/metadata.name: default
+                podSelector:
+                  matchLabels:
+                    cnpg.io/cluster: t-postgresql
+                    cnpg.io/podRole: instance
+            ports:
+              - protocol: TCP
+                port: 5432
+
+  - it: grants the compute-plane egress to the instances
+    template: templates/networkpolicies/compute-plane.yaml
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            to:
+              - namespaceSelector:
+                  matchLabels:
+                    kubernetes.io/metadata.name: default
+                podSelector:
+                  matchLabels:
+                    cnpg.io/cluster: t-postgresql
+                    cnpg.io/podRole: instance
+            ports:
+              - protocol: TCP
+                port: 5432
+
+  - it: grants no PostgreSQL egress with MongoDB as the table storage
+    template: templates/networkpolicies/compute-plane.yaml
+    set:
+      dependencies:
+        mongodb:
+          enabled: true
+        postgresql:
+          enabled: false
+    asserts:
+      - notContains:
+          path: spec.egress
+          any: true
+          content:
+            ports:
+              - protocol: TCP
+                port: 5432

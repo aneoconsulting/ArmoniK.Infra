@@ -20,7 +20,8 @@ output "region" {
 
 output "zones" {
   description = "Zones of the nodes"
-  value       = sort(google_container_cluster.cluster.node_locations)
+  # The zone of a zonal cluster is not part of its node locations
+  value = sort(distinct(concat(var.regional ? [] : [google_container_cluster.cluster.location], google_container_cluster.cluster.node_locations)))
 }
 
 output "endpoint" {

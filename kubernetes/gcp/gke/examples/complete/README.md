@@ -12,12 +12,24 @@ terraform destroy -var project=<project>
 ```
 
 A key ring cannot be deleted, and a deleted crypto key keeps its name retired for good: `terraform destroy` merely
-drops them from the state and schedules the key versions for destruction. Before applying again, import what is left:
+drops them from the state and schedules the key versions for destruction. Before applying again, import what is left
+with import blocks, Terraform >= 1.7 (`terraform import` rejects this configuration, the NAT of the VPC depending on
+values known only after apply):
 
 ```bash
-terraform import -var project=<project> 'module.kms.google_kms_key_ring.key_ring' projects/<project>/locations/europe-west9/keyRings/gke-complete
-terraform import -var project=<project> 'module.kms.google_kms_crypto_key.keys["gke-secrets"]' projects/<project>/locations/europe-west9/keyRings/gke-complete/cryptoKeys/gke-secrets
-terraform import -var project=<project> 'module.kms.google_kms_crypto_key.keys["gke-disks"]' projects/<project>/locations/europe-west9/keyRings/gke-complete/cryptoKeys/gke-disks
+cat > imports.tf <<'EOF'
+import {
+  to = module.kms.google_kms_key_ring.key_ring
+  id = "projects/${var.project}/locations/${var.region}/keyRings/gke-complete"
+}
+import {
+  for_each = toset(["gke-secrets", "gke-disks"])
+  to       = module.kms.google_kms_crypto_key.keys[each.key]
+  id       = "projects/${var.project}/locations/${var.region}/keyRings/gke-complete/cryptoKeys/${each.key}"
+}
+EOF
+terraform apply -var project=<project>
+rm imports.tf
 ```
 
 An imported key whose versions are scheduled for destruction has no usable version until restored

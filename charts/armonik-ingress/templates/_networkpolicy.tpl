@@ -73,7 +73,7 @@ ports:
   {{- $rules := dict
         "armonik.netpol.dnsRule" dict
         "armonik.netpol.rule.guiTo" . -}}
-  {{- if list .Values "sso" "enabled" | include "armonik.utils.index" -}}
+  {{- if include "armonik.ingress.sso" . | fromYaml | dig "enabled" false -}}
     {{- $_ := set $rules "armonik.netpol.rule.ssoIdpTo" . -}}
   {{- end -}}
   {{- $rules | include "armonik.netpol.mergeRules" -}}

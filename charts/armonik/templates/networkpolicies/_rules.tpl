@@ -243,10 +243,12 @@ podSelector:
       "armonik.netpol.rule.ingressToControlPlane" $
       "armonik.netpol.rule.ingressToGrafana" $
       "armonik.netpol.rule.ingressToSeq" $ }}
-{{- /* This policy alone selecting nginx would cut its oauth2-proxy sidecar off DNS and the IdP. */}}
-{{- if list .Values "sso" "enabled" | include "armonik.utils.index" }}
+{{- /* This policy alone selecting nginx would cut its oauth2-proxy sidecar off the IdP. sso is read
+       through the ingress resolver, so a malformed value fails with its own message first. */}}
+{{- $sso := include "armonik.ingress.sso" . | fromYaml }}
+{{- if $sso.enabled }}
   {{- $required := list $.Values "networkPolicy" "enabled" | include "armonik.utils.index" }}
-  {{- if and $required (list .Values "sso" "networkPolicy" "idpEgressCidrs" | include "armonik.utils.index" | empty) }}
+  {{- if and $required (empty $sso.idpEgressCidrs) }}
     {{- fail "ingress.sso.networkPolicy.idpEgressCidrs must list the IdP's CIDRs with networkPolicy.enabled: oauth2-proxy reaches the IdP on TCP 443 from the nginx pod" }}
   {{- end }}
   {{- $_ := set $rules "armonik.netpol.rule.ssoIdpTo" . }}

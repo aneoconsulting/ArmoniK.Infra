@@ -79,7 +79,7 @@ volumeMounts:
 {{- $deployment := $v.deployment | default dict -}}
 {{- $container := list (include "armonik.ingress.nginx.container" .) $v.containerPatch "containerPatch" | include "armonik.utils.patch" | fromYaml -}}
 {{- $containers := list $container -}}
-{{- if list $v "sso" "enabled" | include "armonik.utils.index" -}}
+{{- if include "armonik.ingress.sso" $root | fromYaml | dig "enabled" false -}}
   {{- $containers = include "armonik.ingress.oauth2Proxy.container" . | fromYaml | append $containers -}}
 {{- end -}}
 {{- $containers = $v.extraContainers | default list | concat $containers -}}

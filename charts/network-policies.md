@@ -30,7 +30,8 @@ DNS-only egress also isolates the metrics-exporter and the pod-deletion-cost con
 policy of its own adding what it needs. The controller finds Prometheus through
 `podDeletionCost.prometheusUrl`, else `global.armonik.monitoring.prometheusUrl`, else the Prometheus
 operator's namespace on 9090; an out-of-cluster Prometheus needs
-`networkPolicy.podDeletionCost.extraEgressRules`.
+`networkPolicy.podDeletionCost.extraEgressRules`. Its ingress is the submitter's (Prometheus);
+`networkPolicy.podDeletionCost.extraIngressRules` admits more to the controller alone.
 
 The submitter admits nginx alone: under mTLS it trusts the identity headers nginx sets. Do not open
 it to another pod, least of all the compute-plane, whose workers run user code.

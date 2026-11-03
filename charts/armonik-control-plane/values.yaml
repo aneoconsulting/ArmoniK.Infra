@@ -439,6 +439,7 @@ networkPolicy:
     enabled: true
     # Same default as submitter.prometheusPodSelector.
     prometheusPodSelector:
+    extraIngressRules: []
     # Egress is Prometheus, the Kubernetes API and DNS by default. An out-of-cluster Prometheus
     # needs a rule here.
     extraEgressRules: []

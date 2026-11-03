@@ -218,6 +218,56 @@ tests:
               - protocol: TCP
                 port: 8443
 
+  - it: renders no pod-deletion-cost ingress by default
+    template: networkpolicy.yaml
+    set:
+      networkPolicy:
+        enabled: true
+    documentSelector:
+      path: metadata.name
+      value: RELEASE-NAME-armonik-control-plane-pod-deletion-cost
+    asserts:
+      - equal:
+          path: spec.policyTypes
+          value:
+            - Egress
+      - notExists:
+          path: spec.ingress
+
+  - it: adds extraIngressRules as pod-deletion-cost ingress
+    template: networkpolicy.yaml
+    set:
+      networkPolicy:
+        enabled: true
+        podDeletionCost:
+          extraIngressRules:
+            - from:
+                - namespaceSelector:
+                    matchLabels:
+                      kubernetes.io/metadata.name: tools
+              ports:
+                - protocol: TCP
+                  port: 8080
+    documentSelector:
+      path: metadata.name
+      value: RELEASE-NAME-armonik-control-plane-pod-deletion-cost
+    asserts:
+      - equal:
+          path: spec.policyTypes
+          value:
+            - Ingress
+            - Egress
+      - equal:
+          path: spec.ingress
+          value:
+            - from:
+                - namespaceSelector:
+                    matchLabels:
+                      kubernetes.io/metadata.name: tools
+              ports:
+                - protocol: TCP
+                  port: 8080
+
   - it: skips the pod-deletion-cost policy when the controller or its policy is disabled
     template: networkpolicy.yaml
     set:

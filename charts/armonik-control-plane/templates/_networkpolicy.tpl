@@ -77,13 +77,17 @@ ports:
 
 {{/*
   Pod-deletion-cost controller NetworkPolicy spec: Prometheus, Kubernetes API and DNS egress, plus
-  the extraEgressRules.
+  the extra*Rules.
 */}}
 {{- define "armonik.netpol.podDeletionCost" -}}
 podSelector:
   matchLabels:
     app.kubernetes.io/component: pod-deletion-cost
     {{- include "armonik.selectorLabels" $ | nindent 4 }}
+ingress:
+  {{- include "armonik.netpol.mergeExtra" (dict
+        "extra" .Values.networkPolicy.podDeletionCost.extraIngressRules
+    ) | nindent 2 }}
 egress:
   {{- include "armonik.netpol.mergeExtra" (dict
         "rules" (dict

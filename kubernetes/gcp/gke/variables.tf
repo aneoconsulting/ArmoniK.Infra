@@ -115,7 +115,7 @@ variable "boot_disk_kms_key" {
 }
 
 variable "service_account" {
-  description = "Email of an existing service account for the nodes. Null: the module creates one with the roles/container.defaultNodeServiceAccount role."
+  description = "Email of an existing service account for the nodes. Null: the module creates one with the \"service_account_roles\"."
   type        = string
   default     = null
 }
@@ -124,6 +124,13 @@ variable "service_account_name" {
   description = "Account ID of the node service account the module creates. Defaults to gke-<first 20 characters of the name>-nodes."
   type        = string
   default     = null
+}
+
+variable "service_account_roles" {
+  description = "Project roles of the node service account the module creates. Without roles/container.defaultNodeServiceAccount, the nodes cannot write their logs and metrics."
+  type        = set(string)
+  default     = ["roles/container.defaultNodeServiceAccount"]
+  nullable    = false
 }
 
 variable "grant_registry_access" {

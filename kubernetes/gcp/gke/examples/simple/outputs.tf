@@ -56,7 +56,7 @@ output "identity_namespace" {
 }
 
 output "node_pools" {
-  description = "Kubernetes version of each node pool, keyed by name"
+  description = "Node pools, keyed by name"
   value       = module.simple_gke.node_pools
 }
 

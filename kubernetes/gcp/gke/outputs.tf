@@ -57,8 +57,8 @@ output "identity_namespace" {
 }
 
 output "node_pools" {
-  description = "Kubernetes version of each node pool, keyed by name"
-  value       = { for name, pool in google_container_node_pool.pools : name => pool.version }
+  description = "Node pools, keyed by name"
+  value       = google_container_node_pool.pools
 }
 
 output "kubeconfig_path" {

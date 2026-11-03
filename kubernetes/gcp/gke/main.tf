@@ -55,7 +55,7 @@ resource "google_container_cluster" "cluster" {
   }
 
   default_max_pods_per_node                = var.networking.default_max_pods_per_node
-  enable_shielded_nodes                    = true
+  enable_shielded_nodes                    = var.security.shielded_nodes
   enable_legacy_abac                       = false
   enable_intranode_visibility              = var.networking.intranode_visibility
   enable_l4_ilb_subsetting                 = var.networking.l4_ilb_subsetting

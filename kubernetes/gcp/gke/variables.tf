@@ -187,8 +187,9 @@ variable "networking" {
     Networking of the cluster.
     * dataplane_v2: Dataplane V2 (ADVANCED_DATAPATH: eBPF, no kube-proxy), which always enforces the network policies.
       false: the legacy datapath (LEGACY_DATAPATH, kube-proxy). Changing it recreates the cluster.
-    * network_policy: legacy datapath only, enforce the network policies with Calico. Without it, the legacy datapath
-      ignores them silently. No effect on Dataplane V2.
+    * network_policy: the network policies are enforced. Requires dataplane_v2 or calico: the legacy datapath alone
+      ignores them silently.
+    * calico: legacy datapath only, enforce the network policies with Calico.
     * enable_private_nodes: nodes get internal IP addresses only and reach the internet through Cloud NAT.
     * default_max_pods_per_node: sizes the Pod range of each node. Changing it recreates the cluster.
     * disable_default_snat: keep the Pod IP behind Cloud NAT, or use public IP ranges privately.
@@ -202,8 +203,10 @@ variable "networking" {
     * intranode_visibility, l4_ilb_subsetting: as the GKE options of the same name.
   EOT
   type = object({
-    dataplane_v2                      = optional(bool, true)
-    network_policy                    = optional(bool, false)
+    dataplane_v2 = optional(bool, true)
+    # True by default: Dataplane V2 always enforces them, and leaving it forces a choice between calico and false
+    network_policy                    = optional(bool, true)
+    calico                            = optional(bool, false)
     enable_private_nodes              = optional(bool, true)
     default_max_pods_per_node         = optional(number, 110)
     disable_default_snat              = optional(bool, false)
@@ -221,6 +224,14 @@ variable "networking" {
   })
   default  = {}
   nullable = false
+  validation {
+    condition     = !(var.networking.calico && var.networking.dataplane_v2)
+    error_message = "\"networking.calico\" requires \"networking.dataplane_v2\" = false: Dataplane V2 enforces the network policies itself."
+  }
+  validation {
+    condition     = !var.networking.network_policy || var.networking.dataplane_v2 || var.networking.calico
+    error_message = "\"networking.network_policy\" requires \"networking.dataplane_v2\" or \"networking.calico\": the legacy datapath alone ignores the network policies."
+  }
 }
 
 variable "autoscaling" {

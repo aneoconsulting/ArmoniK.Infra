@@ -20,8 +20,6 @@ locals {
   boot_disk_kms_key = try(var.boot_disk_kms_key.id, null)
   nap               = var.autoscaling.node_auto_provisioning
   private_endpoint  = var.control_plane.enable_ip_endpoint && var.control_plane.enable_private_endpoint
-  # Dataplane V2 enforces the network policies itself: Calico only goes with the legacy datapath
-  calico = !var.networking.dataplane_v2 && var.networking.network_policy
 }
 
 resource "google_container_cluster" "cluster" {
@@ -67,7 +65,7 @@ resource "google_container_cluster" "cluster" {
   in_transit_encryption_config = var.networking.in_transit_encryption ? "IN_TRANSIT_ENCRYPTION_INTER_NODE_TRANSPARENT" : null
 
   dynamic "network_policy" {
-    for_each = local.calico ? [1] : []
+    for_each = var.networking.calico ? [1] : []
     content {
       enabled  = true
       provider = "CALICO"
@@ -309,7 +307,7 @@ resource "google_container_cluster" "cluster" {
       enabled = var.networking.dns_cache
     }
     dynamic "network_policy_config" {
-      for_each = local.calico ? [1] : []
+      for_each = var.networking.calico ? [1] : []
       content {
         disabled = false
       }

@@ -37,19 +37,18 @@ module "kms" {
 }
 
 module "complete_gke" {
-  source              = "../../../gke"
-  name                = "gke-complete"
-  description         = "Complete GKE example"
-  network             = module.vpc.name
-  subnetwork          = module.vpc.gke_subnet_name
-  ip_range_pods       = module.vpc.gke_subnet_pods_range_name
-  ip_range_services   = module.vpc.gke_subnet_svc_range_name
-  regional            = false
-  zone                = "${var.region}-a"
-  deletion_protection = false
-  kms_key             = { id = module.kms.crypto_key_ids["gke-secrets"] }
-  boot_disk_kms_key   = { id = module.kms.crypto_key_ids["gke-disks"] }
-  kubeconfig_path     = "generated/kubeconfig"
+  source            = "../../../gke"
+  name              = "gke-complete"
+  description       = "Complete GKE example"
+  network           = module.vpc.name
+  subnetwork        = module.vpc.gke_subnet_name
+  ip_range_pods     = module.vpc.gke_subnet_pods_range_name
+  ip_range_services = module.vpc.gke_subnet_svc_range_name
+  regional          = false
+  zone              = "${var.region}-a"
+  kms_key           = { id = module.kms.crypto_key_ids["gke-secrets"] }
+  boot_disk_kms_key = { id = module.kms.crypto_key_ids["gke-disks"] }
+  kubeconfig_path   = "generated/kubeconfig"
   # No IP endpoint at all: the DNS endpoint accepts any caller with IAM permissions
   control_plane = {
     enable_ip_endpoint         = false

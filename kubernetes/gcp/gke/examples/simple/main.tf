@@ -14,13 +14,12 @@ module "vpc" {
 
 # Zonal cluster with the default settings
 module "simple_gke" {
-  source              = "../../../gke"
-  name                = "gke-simple"
-  network             = module.vpc.name
-  subnetwork          = module.vpc.gke_subnet_name
-  ip_range_pods       = module.vpc.gke_subnet_pods_range_name
-  ip_range_services   = module.vpc.gke_subnet_svc_range_name
-  regional            = false
-  zone                = "${var.region}-a"
-  deletion_protection = false
+  source            = "../../../gke"
+  name              = "gke-simple"
+  network           = module.vpc.name
+  subnetwork        = module.vpc.gke_subnet_name
+  ip_range_pods     = module.vpc.gke_subnet_pods_range_name
+  ip_range_services = module.vpc.gke_subnet_svc_range_name
+  regional          = false
+  zone              = "${var.region}-a"
 }

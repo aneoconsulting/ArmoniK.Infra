@@ -91,9 +91,9 @@ variable "kubernetes_version" {
 }
 
 variable "deletion_protection" {
-  description = "Refuse the deletion of the cluster by Terraform."
+  description = "Refuse the deletion of the cluster by Terraform, recreations included: several settings recreate the cluster, and this guards against an unwanted one. The google provider defaults it to true; recommended in production."
   type        = bool
-  default     = true
+  default     = false
   nullable    = false
 }
 

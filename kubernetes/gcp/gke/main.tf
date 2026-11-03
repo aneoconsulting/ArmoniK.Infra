@@ -1,7 +1,5 @@
 data "google_client_config" "current" {}
 
-data "google_project" "project" {}
-
 locals {
   project            = data.google_client_config.current.project
   network_project_id = coalesce(var.network_project_id, local.project)

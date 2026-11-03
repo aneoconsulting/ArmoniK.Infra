@@ -1,3 +1,5 @@
+data "google_project" "project" {}
+
 # Nodes of the cluster, with the roles GKE needs
 resource "google_service_account" "nodes" {
   count        = var.service_account == null ? 1 : 0

@@ -16,6 +16,7 @@ output "location" {
 output "region" {
   description = "Region of the cluster"
   value       = local.region
+  depends_on  = [google_container_cluster.cluster]
 }
 
 output "zones" {

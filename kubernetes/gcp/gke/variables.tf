@@ -475,6 +475,7 @@ variable "security" {
     * security_group: Google Group gke-security-groups@<domain> for Kubernetes RBAC on Google Groups.
     * identity_service: authentication through third-party identity providers.
     * secret_manager: Secret Manager add-on, mounting secrets as CSI volumes.
+    * shielded_nodes: the nodes prove their identity to the control plane before joining it.
   EOT
   type = object({
     posture_mode         = optional(string, "BASIC")
@@ -483,6 +484,7 @@ variable "security" {
     security_group       = optional(string)
     identity_service     = optional(bool, false)
     secret_manager       = optional(bool, false)
+    shielded_nodes       = optional(bool, true)
   })
   default  = {}
   nullable = false

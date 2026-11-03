@@ -14,7 +14,7 @@ variable "description" {
 }
 
 variable "regional" {
-  description = "Create a regional cluster, or a zonal one in the first of \"zones\". Changing it recreates the cluster."
+  description = "Create a regional cluster, or a zonal one in \"zone\". Changing it recreates the cluster."
   type        = bool
   default     = true
   nullable    = false
@@ -26,9 +26,15 @@ variable "region" {
   default     = null
 }
 
+variable "zone" {
+  description = "Zone of a zonal cluster, required then; ignored for a regional cluster. Changing it recreates the cluster."
+  type        = string
+  default     = null
+}
+
 variable "zones" {
-  description = "Zones of the nodes. Regional cluster: three zones of the region chosen by GKE by default. Zonal cluster: required, the first one is the zone of the cluster."
-  type        = list(string)
+  description = "Zones of the nodes. Regional cluster: three zones of the region chosen by GKE by default. Zonal cluster: more zones besides \"zone\", none by default."
+  type        = set(string)
   default     = []
   nullable    = false
 }

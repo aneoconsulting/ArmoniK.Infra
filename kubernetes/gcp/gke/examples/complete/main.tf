@@ -45,7 +45,7 @@ module "complete_gke" {
   ip_range_pods       = module.vpc.gke_subnet_pods_range_name
   ip_range_services   = module.vpc.gke_subnet_svc_range_name
   regional            = false
-  zones               = ["${var.region}-a"]
+  zone                = "${var.region}-a"
   deletion_protection = false
   kms_key             = { id = module.kms.crypto_key_ids["gke-secrets"] }
   boot_disk_kms_key   = { id = module.kms.crypto_key_ids["gke-disks"] }

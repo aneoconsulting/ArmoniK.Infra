@@ -13,7 +13,7 @@ locals {
   # Keyed by project and role, both known at plan time
   registry_projects = var.grant_registry_access ? distinct(concat([local.project], var.registry_project_ids)) : []
   node_roles = merge(
-    { "${local.project} roles/container.defaultNodeServiceAccount" = { project = local.project, role = "roles/container.defaultNodeServiceAccount" } },
+    { for role in var.service_account_roles : "${local.project} ${role}" => { project = local.project, role = role } },
     { for project in local.registry_projects : "${project} roles/artifactregistry.reader" => { project = project, role = "roles/artifactregistry.reader" } },
   )
   oauth_scopes      = ["https://www.googleapis.com/auth/cloud-platform"]

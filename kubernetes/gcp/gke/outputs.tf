@@ -64,5 +64,5 @@ output "node_pools" {
 
 output "kubeconfig_path" {
   description = "Absolute path of the kubeconfig file written by the module, null without one"
-  value       = can(coalesce(var.kubeconfig_path)) ? abspath(var.kubeconfig_path) : null
+  value       = one(local_sensitive_file.kubeconfig[*].filename)
 }

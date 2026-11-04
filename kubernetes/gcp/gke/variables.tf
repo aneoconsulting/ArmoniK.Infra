@@ -196,7 +196,7 @@ variable "networking" {
       false: the legacy datapath (LEGACY_DATAPATH, kube-proxy). Changing it recreates the cluster.
     * network_policy: the network policies are enforced. Requires dataplane_v2 or calico: the legacy datapath alone
       ignores them silently.
-    * calico: legacy datapath only, enforce the network policies with Calico.
+    * calico: legacy datapath only, enforce network_policy with Calico.
     * enable_private_nodes: nodes get internal IP addresses only and reach the internet through Cloud NAT.
     * default_max_pods_per_node: sizes the Pod range of each node. Changing it recreates the cluster.
     * disable_default_snat: keep the Pod IP behind Cloud NAT, or use public IP ranges privately.

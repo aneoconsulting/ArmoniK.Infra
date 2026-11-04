@@ -65,7 +65,7 @@ resource "google_container_cluster" "cluster" {
   in_transit_encryption_config = var.networking.in_transit_encryption ? "IN_TRANSIT_ENCRYPTION_INTER_NODE_TRANSPARENT" : null
 
   dynamic "network_policy" {
-    for_each = var.networking.calico ? [1] : []
+    for_each = var.networking.calico && var.networking.network_policy ? [1] : []
     content {
       enabled  = true
       provider = "CALICO"
@@ -307,7 +307,7 @@ resource "google_container_cluster" "cluster" {
       enabled = var.networking.dns_cache
     }
     dynamic "network_policy_config" {
-      for_each = var.networking.calico ? [1] : []
+      for_each = var.networking.calico && var.networking.network_policy ? [1] : []
       content {
         disabled = false
       }

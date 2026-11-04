@@ -867,6 +867,15 @@ operators:
               - protocol: TCP
                 port: 9090
 
+          - from:
+              - namespaceSelector: {}
+                podSelector:
+                  matchLabels:
+                    app.kubernetes.io/component: pod-deletion-cost
+            ports:
+              - protocol: TCP
+                port: 9090
+
         egress:
           - to:
               - namespaceSelector:

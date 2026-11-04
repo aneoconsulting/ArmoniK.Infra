@@ -113,6 +113,9 @@ startupProbe:
   successThreshold: 1
   failureThreshold: 20
 
+# -- Node class of the pods (armonik.placement), with global.armonik.nodeProvisioner: its node
+# selector and toleration are added to nodeSelector and tolerations. Empty: the cluster default class.
+nodeClass: ""
 nodeSelector: {}
 tolerations: []
 annotations: {}
@@ -219,6 +222,8 @@ metricsExporter:
     pullPolicy:
   imagePullSecrets:
   resources:
+  # -- Node class, the chart-level nodeClass when empty.
+  nodeClass:
   nodeSelector:
   tolerations:
   annotations:
@@ -317,6 +322,8 @@ podDeletionCost:
   # default: 2
   granularity:
   resources:
+  # -- Node class, the chart-level nodeClass when empty.
+  nodeClass:
   nodeSelector:
   tolerations:
   annotations:
@@ -348,6 +355,8 @@ init:
     pullPolicy:
   imagePullSecrets:
   resources:
+  # -- Node class, the chart-level nodeClass when empty.
+  nodeClass:
   nodeSelector:
   tolerations:
   annotations:

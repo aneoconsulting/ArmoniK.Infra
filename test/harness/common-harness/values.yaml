@@ -13,3 +13,6 @@ patch:
 pullSecrets:
 # securityContext: {input: <container securityContext>} for armonik.securityContext
 securityContext:
+# placement: input for armonik.placement, without root (path, nodeClass, nodeSelector, tolerations,
+#   podAnnotations, disruptionProtection)
+placement:

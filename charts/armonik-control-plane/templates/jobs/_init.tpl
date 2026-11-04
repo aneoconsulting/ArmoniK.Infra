@@ -42,6 +42,13 @@ securityContext:
 {{- $root := .root -}}
 {{- $v := $root.Values -}}
 {{- $init := $v.init -}}
+{{- $placement := dict
+    "root" $root
+    "path" "init"
+    "nodeClass" (coalesce $init.nodeClass $v.nodeClass)
+    "nodeSelector" (coalesce $init.nodeSelector $v.nodeSelector)
+    "tolerations" (coalesce $init.tolerations $v.tolerations)
+  | include "armonik.placement" | fromYaml -}}
 {{- $global := $v.global | default dict -}}
 {{- $container := list (include "armonik.control.init.container" .) $init.containerPatch "init.containerPatch" | include "armonik.utils.patch" | fromYaml -}}
 automountServiceAccountToken: true
@@ -61,7 +68,7 @@ imagePullSecrets: {{- . | nindent 2 }}
 serviceAccountName: {{ include "armonik.serviceAccountName" $root | quote }}
 serviceAccount: {{ include "armonik.serviceAccountName" $root | quote }}
 shareProcessNamespace: false
-{{- with coalesce $init.nodeSelector $v.nodeSelector }}
+{{- with $placement.nodeSelector }}
 nodeSelector:
   {{- toYaml . | nindent 2 }}
 {{- end }}
@@ -69,7 +76,7 @@ nodeSelector:
 affinity:
   {{- toYaml . | nindent 2 }}
 {{- end }}
-{{- with coalesce $init.tolerations $v.tolerations }}
+{{- with $placement.tolerations }}
 tolerations:
   {{- toYaml . | nindent 2 }}
 {{- end }}

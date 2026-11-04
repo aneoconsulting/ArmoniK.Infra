@@ -254,17 +254,20 @@ variable "autoscaling" {
       carry the cluster-autoscaler.kubernetes.io/safe-to-evict: "false" annotation.
     * hpa_profile: PERFORMANCE allows more HorizontalPodAutoscalers per cluster, KEDA creating one per ScaledObject,
       and collects their metrics faster. NONE opts out.
-    * default_compute_class: let a ComputeClass named "default" apply to the Pods that select none. The ComputeClasses
-      are Kubernetes objects, applied apart from this module (with the workloads they place).
+    * default_compute_class: let a ComputeClass named "default" apply to the Pods that select none (GKE
+      1.33.1-gke.1744000 and later). The ComputeClasses are Kubernetes objects, applied apart from this module (chart
+      armonik-nodes); the output compute_class_defaults carries the settings their node pools take from this module.
     * node_auto_provisioning: null disables it. Limits are over the whole cluster. The nodes it creates use the node
-      service account and the boot disk key of the module. ComputeClasses with nodePoolAutoCreation create node pools
-      without it on GKE 1.33.3-gke.1136000 and later; they set their service account themselves. Required without any
-      node pool: the Pods that select no ComputeClass (kube-system first) would find no node.
+      service account and the boot disk key of the module, as do the Autopilot ComputeClasses. ComputeClasses with
+      nodePoolAutoCreation create node pools without it on GKE 1.33.3-gke.1136000 and later; they set their service
+      account themselves.
+    Without any node pool, node_auto_provisioning or default_compute_class is required: the Pods that select no
+    ComputeClass (kube-system first) would find no node.
   EOT
   type = object({
     profile               = optional(string, "OPTIMIZE_UTILIZATION")
     hpa_profile           = optional(string, "PERFORMANCE")
-    default_compute_class = optional(bool, true)
+    default_compute_class = optional(bool, false)
     node_auto_provisioning = optional(object({
       min_cpu_cores = optional(number, 0)
       max_cpu_cores = number
@@ -298,7 +301,8 @@ variable "node_pools" {
   description = <<-EOT
     Static node pools keyed by name, next to the ones that ComputeClasses create. The default is a "system" pool for the
     Pods that select no ComputeClass. Empty: every node comes from node auto-provisioning or from the ComputeClasses,
-    which requires "autoscaling.node_auto_provisioning". The defaults below apply to an attribute left unset.
+    which requires "autoscaling.node_auto_provisioning" or "autoscaling.default_compute_class". The defaults below apply
+    to an attribute left unset.
     * Size: autoscaling between min_count and max_count nodes per zone, or between total_min_count and total_max_count
       over all the zones of the pool when both are set; a fixed node_count per zone disables autoscaling. location_policy
       ANY suits Spot VMs.

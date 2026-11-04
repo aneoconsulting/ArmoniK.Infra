@@ -1,0 +1,134 @@
+suite: armonik.placement node classes
+templates:
+  - placement.yaml
+tests:
+  - it: returns the inputs unchanged without a provider
+    set:
+      placement:
+        path: p
+        nodeSelector: {pool: a}
+        tolerations: [{key: pool, operator: Exists}]
+        podAnnotations: {a: b}
+        disruptionProtection: true
+    asserts:
+      - equal:
+          path: data.result
+          value: '{"nodeSelector":{"pool":"a"},"podAnnotations":{"a":"b"},"tolerations":[{"key":"pool","operator":"Exists"}]}'
+  - it: returns an empty object for empty inputs
+    set:
+      placement:
+        path: p
+    asserts:
+      - equal:
+          path: data.result
+          value: '{}'
+  - it: refuses a nodeClass without a provider
+    set:
+      placement:
+        path: p
+        nodeClass: workers
+    asserts:
+      - failedTemplate:
+          errorPattern: 'p.nodeClass "workers" requires global.armonik.nodeProvisioner'
+  - it: names a chart-level nodeClass without a path
+    set:
+      placement:
+        nodeClass: workers
+    asserts:
+      - failedTemplate:
+          errorPattern: '^nodeClass "workers" requires global.armonik.nodeProvisioner'
+  - it: refuses an unknown provider (schema)
+    set:
+      global.armonik.nodeProvisioner: karpenter
+      placement:
+        path: p
+    asserts:
+      - failedTemplate:
+          errorPattern: "/global/armonik/nodeProvisioner': value must be one of"
+  - it: selects and tolerates the ComputeClass on gke, next to the own ones
+    set:
+      global.armonik.nodeProvisioner: gke
+      placement:
+        path: p
+        nodeClass: workers
+        nodeSelector: {pool: a}
+        tolerations: [{key: pool, operator: Exists}]
+    asserts:
+      - equal:
+          path: data.result
+          value: '{"nodeSelector":{"cloud.google.com/compute-class":"workers","pool":"a"},"tolerations":[{"key":"pool","operator":"Exists"},{"effect":"NoSchedule","key":"cloud.google.com/compute-class","operator":"Equal","value":"workers"}]}'
+  - it: does not repeat a toleration already written
+    set:
+      global.armonik.nodeProvisioner: gke
+      placement:
+        path: p
+        nodeClass: workers
+        tolerations: [{key: cloud.google.com/compute-class, operator: Equal, value: workers, effect: NoSchedule}]
+    asserts:
+      - equal:
+          path: data.result
+          value: '{"nodeSelector":{"cloud.google.com/compute-class":"workers"},"tolerations":[{"effect":"NoSchedule","key":"cloud.google.com/compute-class","operator":"Equal","value":"workers"}]}'
+  - it: accepts a nodeSelector naming the same ComputeClass
+    set:
+      global.armonik.nodeProvisioner: gke
+      placement:
+        path: p
+        nodeClass: workers
+        nodeSelector: {cloud.google.com/compute-class: workers}
+    asserts:
+      - notFailedTemplate: {}
+  - it: refuses a nodeSelector naming another ComputeClass
+    set:
+      global.armonik.nodeProvisioner: gke
+      placement:
+        path: p
+        nodeClass: workers
+        nodeSelector: {cloud.google.com/compute-class: other}
+    asserts:
+      - failedTemplate:
+          errorPattern: 'p.nodeClass "workers" conflicts with nodeSelector cloud.google.com/compute-class="other"'
+  - it: leaves the pod to the cluster default class without a nodeClass
+    set:
+      global.armonik.nodeProvisioner: gke
+      placement:
+        path: p
+        nodeSelector: {pool: a}
+    asserts:
+      - equal:
+          path: data.result
+          value: '{"nodeSelector":{"pool":"a"}}'
+  - it: protects the pod from eviction on gke
+    set:
+      global.armonik.nodeProvisioner: gke
+      placement:
+        path: p
+        disruptionProtection: true
+        podAnnotations: {a: b}
+    asserts:
+      - equal:
+          path: data.result
+          value: '{"podAnnotations":{"a":"b","cluster-autoscaler.kubernetes.io/safe-to-evict":"false"}}'
+  - it: keeps a safe-to-evict annotation written by the user
+    set:
+      global.armonik.nodeProvisioner: gke
+      placement:
+        path: p
+        disruptionProtection: true
+        podAnnotations: {cluster-autoscaler.kubernetes.io/safe-to-evict: "true"}
+    asserts:
+      - equal:
+          path: data.result
+          value: '{"podAnnotations":{"cluster-autoscaler.kubernetes.io/safe-to-evict":"true"}}'
+  - it: leaves the inputs untouched
+    set:
+      global.armonik.nodeProvisioner: gke
+      placement:
+        path: p
+        nodeClass: workers
+        nodeSelector: {pool: a}
+        disruptionProtection: true
+        podAnnotations: {a: b}
+    asserts:
+      - equal:
+          path: data.result
+          value: '{"nodeSelector":{"cloud.google.com/compute-class":"workers","pool":"a"},"podAnnotations":{"a":"b","cluster-autoscaler.kubernetes.io/safe-to-evict":"false"},"tolerations":[{"effect":"NoSchedule","key":"cloud.google.com/compute-class","operator":"Equal","value":"workers"}]}'

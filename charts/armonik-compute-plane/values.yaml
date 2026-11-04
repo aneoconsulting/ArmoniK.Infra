@@ -88,6 +88,8 @@ init:
     pullPolicy:
   imagePullSecrets:
   resources:
+  # -- Node class of the init Job (armonik.placement), the cluster default class when empty.
+  nodeClass:
   nodeSelector:
   tolerations:
   affinity:
@@ -227,6 +229,14 @@ partitionCommon:
     # -- Merged over the agent container, last. Lists the chart builds are refused: use extra*.
     containerPatch: {}
   annotations: {}
+  # -- Node class of the partition pods, with global.armonik.nodeProvisioner (charts/node-classes.md):
+  # its node selector and toleration are added to nodeSelector and tolerations. Empty: the cluster
+  # default class.
+  nodeClass: ""
+  # -- With global.armonik.nodeProvisioner, annotate the pods so the node autoscaler never evicts one
+  # to remove its node (cluster-autoscaler.kubernetes.io/safe-to-evict on gke): a task is never cut
+  # short, and the nodes go away as KEDA scales the partition in. An annotation set in podAnnotations wins.
+  disruptionProtection: true
   nodeSelector: {}
   tolerations: []
   affinity: {}

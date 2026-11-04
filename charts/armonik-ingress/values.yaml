@@ -51,6 +51,9 @@ podDisruptionBudget:
   labels: {}
   annotations: {}
 
+# -- Node class of the nginx pods, also the gui and load-balancer default (armonik.placement), with global.armonik.nodeProvisioner: its node
+# selector and toleration are added to nodeSelector and tolerations. Empty: the cluster default class.
+nodeClass: ""
 nodeSelector: {}
 tolerations: []
 annotations: {}
@@ -195,6 +198,8 @@ loadBalancer:
     annotations: {}
   resources: {}
 
+  # -- Node class, the chart-level nodeClass when empty.
+  nodeClass: ""
   nodeSelector: {}
   tolerations: []
   affinity: {}
@@ -271,6 +276,8 @@ gui:
       cpu: 100m
       memory: 128Mi
 
+  # -- Node class, the chart-level nodeClass when empty.
+  nodeClass: ""
   nodeSelector: {}
   tolerations: []
   annotations: {}

@@ -75,6 +75,12 @@ volumeMounts:
 {{- define "armonik.ingress.nginx.podSpec" -}}
 {{- $root := .root -}}
 {{- $v := $root.Values -}}
+{{- $placement := dict
+    "root" $root
+    "nodeClass" $v.nodeClass
+    "nodeSelector" $v.nodeSelector
+    "tolerations" $v.tolerations
+  | include "armonik.placement" | fromYaml -}}
 {{- $global := $v.global | default dict -}}
 {{- $deployment := $v.deployment | default dict -}}
 {{- $container := list (include "armonik.ingress.nginx.container" .) $v.containerPatch "containerPatch" | include "armonik.utils.patch" | fromYaml -}}
@@ -90,7 +96,7 @@ shareProcessNamespace: false
 {{- with list $deployment.imagePullSecrets $v.imagePullSecrets $global.imagePullSecrets | include "armonik.imagePullSecrets" }}
 imagePullSecrets: {{- . | nindent 2 }}
 {{- end }}
-{{- with $v.nodeSelector }}
+{{- with $placement.nodeSelector }}
 nodeSelector:
   {{- toYaml . | nindent 2 }}
 {{- end }}
@@ -98,7 +104,7 @@ nodeSelector:
 affinity:
   {{- toYaml . | nindent 2 }}
 {{- end }}
-{{- with $v.tolerations }}
+{{- with $placement.tolerations }}
 tolerations:
   {{- toYaml . | nindent 2 }}
 {{- end }}

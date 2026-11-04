@@ -59,7 +59,7 @@ imagePullSecrets: {{- . | nindent 2 }}
 serviceAccountName: {{ include "armonik.serviceAccountName" $root | quote }}
 serviceAccount: {{ include "armonik.serviceAccountName" $root | quote }}
 shareProcessNamespace: false
-{{- with $init.nodeSelector }}
+{{- with .placement.nodeSelector }}
 nodeSelector:
   {{- toYaml . | nindent 2 }}
 {{- end }}
@@ -67,7 +67,7 @@ nodeSelector:
 affinity:
   {{- toYaml . | nindent 2 }}
 {{- end }}
-{{- with $init.tolerations }}
+{{- with .placement.tolerations }}
 tolerations:
   {{- toYaml . | nindent 2 }}
 {{- end }}

@@ -162,6 +162,18 @@
                 "string",
                 "null"
               ]
+            },
+            "nodeProvisioner": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "enum": [
+                "",
+                "gke",
+                null
+              ],
+              "description": "Node autoscaler targeted by the nodeClass of the ArmoniK components; empty disables node classes."
             }
           }
         },

@@ -519,4 +519,5 @@ Full details: [`cert-manager-issuer.md`](cert-manager-issuer.md).
 - [`cert-manager-issuer.md`](cert-manager-issuer.md) — issuer resolution and providers in depth
 - [`uninstall.md`](uninstall.md) — teardown procedure per deployment mode
 - [`network-policies.md`](network-policies.md) — NetworkPolicy for standalone releases
+- [`node-classes.md`](node-classes.md) - GKE ComputeClasses for the ArmoniK pods (armonik-nodes)
 - [`airgap.md`](airgap.md) — packaging and offline installation

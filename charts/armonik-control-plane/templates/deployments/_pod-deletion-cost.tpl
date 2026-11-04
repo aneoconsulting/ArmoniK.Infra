@@ -35,6 +35,13 @@ volumeMounts:
 {{- $root := .root -}}
 {{- $v := $root.Values -}}
 {{- $pdc := $v.podDeletionCost -}}
+{{- $placement := dict
+    "root" $root
+    "path" "podDeletionCost"
+    "nodeClass" (coalesce $pdc.nodeClass $v.nodeClass)
+    "nodeSelector" (coalesce $pdc.nodeSelector $v.nodeSelector)
+    "tolerations" (coalesce $pdc.tolerations $v.tolerations)
+  | include "armonik.placement" | fromYaml -}}
 {{- $global := $v.global | default dict -}}
 {{- $container := list (include "armonik.control.podDeletionCost.container" .) $pdc.containerPatch "podDeletionCost.containerPatch" | include "armonik.utils.patch" | fromYaml -}}
 {{- $containers := $pdc.extraContainers | default list | concat (list $container) -}}
@@ -54,7 +61,7 @@ serviceAccountName: {{ .serviceAccount | quote }}
 serviceAccount: {{ .serviceAccount | quote }}
 automountServiceAccountToken: true
 shareProcessNamespace: false
-{{- with coalesce $pdc.nodeSelector $v.nodeSelector }}
+{{- with $placement.nodeSelector }}
 nodeSelector:
   {{- toYaml . | nindent 2 }}
 {{- end }}
@@ -62,7 +69,7 @@ nodeSelector:
 affinity:
   {{- toYaml . | nindent 2 }}
 {{- end }}
-{{- with coalesce $pdc.tolerations $v.tolerations }}
+{{- with $placement.tolerations }}
 tolerations:
   {{- toYaml . | nindent 2 }}
 {{- end }}

@@ -1,0 +1,28 @@
+{{- if ne .Values.provider "gke" }}
+  {{- printf "provider %q is not supported: expected \"gke\"." .Values.provider | fail }}
+{{- end }}
+{{- range $name, $class := .Values.classes }}
+  {{- if not (kindIs "invalid" $class) }}
+    {{- if not (and (kindIs "map" $class) $class.spec) }}
+      {{- printf "classes.%s.spec is required: the ComputeClass spec of the class." $name | fail }}
+    {{- end }}
+    {{- if eq $name "default" }}
+      {{- $taints := dig "nodePoolConfig" "taints" list $class.spec }}
+      {{- range $class.spec.priorities | default list }}
+        {{- $taints = concat $taints (.taints | default list) }}
+      {{- end }}
+      {{- if $taints }}
+        {{- fail "classes.default must stay untainted: it places the pods that select no class, which tolerate none." }}
+      {{- end }}
+    {{- end }}
+---
+apiVersion: cloud.google.com/v1
+kind: ComputeClass
+metadata:
+  name: {{ $name | quote }}
+  labels:
+    {{- include "armonik.nodes.labels" $ | nindent 4 }}
+spec:
+  {{- dict "root" $ "spec" $class.spec | include "armonik.nodes.gke.spec" | nindent 2 }}
+  {{- end }}
+{{- end }}

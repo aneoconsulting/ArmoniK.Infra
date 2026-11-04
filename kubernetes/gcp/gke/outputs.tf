@@ -52,6 +52,15 @@ output "service_account" {
   value       = local.service_account
 }
 
+# Keys in camelCase: the value of gke.defaults in the armonik-nodes chart, as is (yamlencode)
+output "compute_class_defaults" {
+  description = "Settings of the node pools that ComputeClasses create, taken from this module: the node service account and the boot disk key"
+  value = {
+    serviceAccount = local.service_account
+    bootDiskKMSKey = local.boot_disk_kms_key
+  }
+}
+
 output "identity_namespace" {
   description = "Workload Identity pool of the cluster"
   value       = google_container_cluster.cluster.workload_identity_config[0].workload_pool

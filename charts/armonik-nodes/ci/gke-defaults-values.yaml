@@ -1,0 +1,13 @@
+# The gke.defaults that the Terraform module kubernetes/gcp/gke passes (output compute_class_defaults),
+# plus an Autopilot class.
+gke:
+  defaults:
+    serviceAccount: gke-armonik-nodes@project.iam.gserviceaccount.com
+    bootDiskKMSKey: projects/project/locations/europe-west1/keyRings/armonik/cryptoKeys/gke-disks
+classes:
+  serverless:
+    spec:
+      autopilot:
+        enabled: true
+      priorities:
+        - podFamily: general-purpose

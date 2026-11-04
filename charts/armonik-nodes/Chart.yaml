@@ -1,0 +1,20 @@
+apiVersion: v2
+name: armonik-nodes
+description: Node classes of an ArmoniK cluster (GKE ComputeClasses), installed once per cluster before the operators and the ArmoniK releases that select them.
+icon: https://25070129.fs1.hubspotusercontent-eu1.net/hubfs/25070129/Website/Images%20-%20Website/ArmoniK/logo_armonik_by_aneo%201.svg
+# ComputeClasses appear in GKE 1.30.3-gke.1451000; the ones below create node pools without node
+# auto-provisioning from 1.33.3-gke.1136000.
+kubeVersion: ">=v1.30.0-0"
+keywords:
+  - armonik
+  - helm
+  - gke
+  - computeclass
+type: application
+version: 0.1.0
+sources:
+  - https://github.com/aneoconsulting/ArmoniK.Infra
+maintainers:
+  - name: Aneo
+    email: armonik@aneo.fr
+    url: armonik.fr

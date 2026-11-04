@@ -1,7 +1,8 @@
 {{/*
 Pod-template fragments, one define per patchable object, since armonik.utils.patch parses what it
 patches. Each takes the partition context built in deployment.yaml:
-  root, name, partition, agentConf, workerConf, agentImage, workerImage, fluentBit, fluentBitImage
+  root, name, partition, agentConf, workerConf, agentImage, workerImage, fluentBit, fluentBitImage,
+  placement (armonik.placement)
 */}}
 
 {{/* Polling agent container, before agent.containerPatch. */}}
@@ -171,7 +172,7 @@ containers' included.
 {{- $initContainers = append ($partition.extraInitContainers | default list | concat $initContainers) $worker -}}
 {{/* Extras go last: container 0 is what `kubectl logs` picks by default. */}}
 {{- $containers := $partition.extraContainers | default list | concat (list $agent) -}}
-{{- with $partition.nodeSelector }}
+{{- with .placement.nodeSelector }}
 nodeSelector:
   {{- toYaml . | nindent 2 }}
 {{- end }}
@@ -182,7 +183,7 @@ affinity:
 serviceAccountName: {{ include "armonik.serviceAccountName" $root | quote }}
 serviceAccount: {{ include "armonik.serviceAccountName" $root | quote }}
 automountServiceAccountToken: true
-{{- with $partition.tolerations }}
+{{- with .placement.tolerations }}
 tolerations:
   {{- toYaml . | nindent 2 }}
 {{- end }}

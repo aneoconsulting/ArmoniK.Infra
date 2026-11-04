@@ -49,6 +49,12 @@ volumeMounts:
 {{- define "armonik.control.podSpec" -}}
 {{- $root := .root -}}
 {{- $v := $root.Values -}}
+{{- $placement := dict
+    "root" $root
+    "nodeClass" $v.nodeClass
+    "nodeSelector" $v.nodeSelector
+    "tolerations" $v.tolerations
+  | include "armonik.placement" | fromYaml -}}
 {{- $global := $v.global | default dict -}}
 {{- $deployment := $v.deployment | default dict -}}
 {{- $container := list (include "armonik.control.container" .) $v.containerPatch "containerPatch" | include "armonik.utils.patch" | fromYaml -}}
@@ -70,7 +76,7 @@ serviceAccountName: {{ include "armonik.serviceAccountName" $root | quote }}
 serviceAccount: {{ include "armonik.serviceAccountName" $root | quote }}
 automountServiceAccountToken: true
 shareProcessNamespace: false
-{{- with $v.nodeSelector }}
+{{- with $placement.nodeSelector }}
 nodeSelector:
   {{- toYaml . | nindent 2 }}
 {{- end }}
@@ -78,7 +84,7 @@ nodeSelector:
 affinity:
   {{- toYaml . | nindent 2 }}
 {{- end }}
-{{- with $v.tolerations }}
+{{- with $placement.tolerations }}
 tolerations:
   {{- toYaml . | nindent 2 }}
 {{- end }}

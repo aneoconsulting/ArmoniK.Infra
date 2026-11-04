@@ -53,6 +53,13 @@ volumeMounts:
 {{- $root := .root -}}
 {{- $v := $root.Values -}}
 {{- $me := $v.metricsExporter -}}
+{{- $placement := dict
+    "root" $root
+    "path" "metricsExporter"
+    "nodeClass" (coalesce $me.nodeClass $v.nodeClass)
+    "nodeSelector" (coalesce $me.nodeSelector $v.nodeSelector)
+    "tolerations" (coalesce $me.tolerations $v.tolerations)
+  | include "armonik.placement" | fromYaml -}}
 {{- $global := $v.global | default dict -}}
 {{- $container := list (include "armonik.control.metrics.container" .) $me.containerPatch "metricsExporter.containerPatch" | include "armonik.utils.patch" | fromYaml -}}
 {{- $containers := $me.extraContainers | default list | concat (list $container) -}}
@@ -73,7 +80,7 @@ serviceAccountName: {{ include "armonik.serviceAccountName" $root | quote }}
 serviceAccount: {{ include "armonik.serviceAccountName" $root | quote }}
 automountServiceAccountToken: true
 shareProcessNamespace: false
-{{- with coalesce $me.nodeSelector $v.nodeSelector }}
+{{- with $placement.nodeSelector }}
 nodeSelector:
   {{- toYaml . | nindent 2 }}
 {{- end }}
@@ -81,7 +88,7 @@ nodeSelector:
 affinity:
   {{- toYaml . | nindent 2 }}
 {{- end }}
-{{- with coalesce $me.tolerations $v.tolerations }}
+{{- with $placement.tolerations }}
 tolerations:
   {{- toYaml . | nindent 2 }}
 {{- end }}

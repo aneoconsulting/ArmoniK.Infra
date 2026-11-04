@@ -22,6 +22,7 @@ jobs:
         chart:
           - armonik
           - armonik-operators
+          - armonik-nodes
           - armonik-control-plane
           - armonik-compute-plane
           - armonik-ingress

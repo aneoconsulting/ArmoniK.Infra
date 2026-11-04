@@ -25,6 +25,7 @@ charts/armonik-ingress/index
 charts/armonik-common/index
 charts/armonik-dependencies/index
 charts/armonik-operators/index
+charts/armonik-nodes/index
 charts/activemq/index
 charts/keda-hpa/index
 ```

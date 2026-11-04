@@ -1,0 +1,83 @@
+suite: node classes, per partition and on the init Job
+templates:
+  - deployment.yaml
+  - init.yaml
+values:
+  - ../ci/partitions-values.yaml
+release:
+  name: t
+tests:
+  - it: renders the pods as written without a provider
+    template: deployment.yaml
+    asserts:
+      - notExists:
+          path: spec.template.spec.nodeSelector
+      - notExists:
+          path: spec.template.metadata.annotations
+  - it: places every partition on the common class, protected from eviction
+    template: deployment.yaml
+    set:
+      global.armonik.nodeProvisioner: gke
+      partitionCommon.nodeClass: workers
+    asserts:
+      - equal:
+          path: spec.template.spec.nodeSelector
+          value:
+            cloud.google.com/compute-class: workers
+      - contains:
+          path: spec.template.spec.tolerations
+          content:
+            key: cloud.google.com/compute-class
+            operator: Equal
+            value: workers
+            effect: NoSchedule
+      - equal:
+          path: spec.template.metadata.annotations
+          value:
+            cluster-autoscaler.kubernetes.io/safe-to-evict: "false"
+  - it: lets a partition pick its own class and drop the protection
+    template: deployment.yaml
+    set:
+      global.armonik.nodeProvisioner: gke
+      partitionCommon.nodeClass: workers
+      partitions.htcmock.nodeClass: gpu
+      partitions.htcmock.disruptionProtection: false
+    asserts:
+      - equal:
+          path: spec.template.spec.nodeSelector
+          value:
+            cloud.google.com/compute-class: gpu
+        documentSelector:
+          path: metadata.name
+          value: "t-armonik-compute-plane-htcmock"
+      - notExists:
+          path: spec.template.metadata.annotations
+        documentSelector:
+          path: metadata.name
+          value: "t-armonik-compute-plane-htcmock"
+      - equal:
+          path: spec.template.spec.nodeSelector
+          value:
+            cloud.google.com/compute-class: workers
+        documentSelector:
+          path: metadata.name
+          value: "t-armonik-compute-plane-bench"
+  - it: refuses a partition nodeClass without a provider
+    template: deployment.yaml
+    set:
+      partitions.htcmock.nodeClass: workers
+    asserts:
+      - failedTemplate:
+          errorPattern: 'partitions.htcmock.nodeClass "workers" requires global.armonik.nodeProvisioner'
+  - it: places the init Job on its class, without eviction protection
+    template: init.yaml
+    set:
+      global.armonik.nodeProvisioner: gke
+      init.nodeClass: system
+    asserts:
+      - equal:
+          path: spec.template.spec.nodeSelector
+          value:
+            cloud.google.com/compute-class: system
+      - notExists:
+          path: spec.template.metadata.annotations

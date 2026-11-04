@@ -56,6 +56,13 @@ volumeMounts:
 {{- $root := .root -}}
 {{- $v := $root.Values -}}
 {{- $gui := $v.gui -}}
+{{- $placement := dict
+    "root" $root
+    "path" "gui"
+    "nodeClass" (coalesce $gui.nodeClass $v.nodeClass)
+    "nodeSelector" (coalesce $gui.nodeSelector $v.nodeSelector)
+    "tolerations" (coalesce $gui.tolerations $v.tolerations)
+  | include "armonik.placement" | fromYaml -}}
 {{- $global := $v.global | default dict -}}
 {{- $container := list (include "armonik.ingress.gui.container" .) $gui.containerPatch "gui.containerPatch" | include "armonik.utils.patch" | fromYaml -}}
 {{- $containers := $gui.extraContainers | default list | concat (list $container) -}}
@@ -70,7 +77,7 @@ shareProcessNamespace: false
 {{- with list $gui.imagePullSecrets $v.imagePullSecrets $global.imagePullSecrets | include "armonik.imagePullSecrets" }}
 imagePullSecrets: {{- . | nindent 2 }}
 {{- end }}
-{{- with coalesce $gui.nodeSelector $v.nodeSelector }}
+{{- with $placement.nodeSelector }}
 nodeSelector:
   {{- toYaml . | nindent 2 }}
 {{- end }}
@@ -78,7 +85,7 @@ nodeSelector:
 affinity:
   {{- toYaml . | nindent 2 }}
 {{- end }}
-{{- with coalesce $gui.tolerations $v.tolerations }}
+{{- with $placement.tolerations }}
 tolerations:
   {{- toYaml . | nindent 2 }}
 {{- end }}

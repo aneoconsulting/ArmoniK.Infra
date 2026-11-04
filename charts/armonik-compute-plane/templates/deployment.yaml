@@ -35,6 +35,15 @@
 {{- $workerImage := list $ (printf "partitions.%s.worker.image" $partitionName) $worker.image ($partitionCommon.worker | default dict).image | include "armonik.utils.imageConf" | fromYaml -}}
 {{/* Third party: the chart AppVersion must not become its tag. */}}
 {{- $fluentBitImage := list $ "fluentBit.image" $fluentBit.image | include "armonik.utils.imageConf" | fromYaml -}}
+{{- $placement := dict
+    "root" $
+    "path" (printf "partitions.%s" $partitionName)
+    "nodeClass" $partition.nodeClass
+    "nodeSelector" $partition.nodeSelector
+    "tolerations" $partition.tolerations
+    "podAnnotations" $partition.podAnnotations
+    "disruptionProtection" $partition.disruptionProtection
+  | include "armonik.placement" | fromYaml -}}
 {{/* Context of the _deployment.tpl fragments. */}}
 {{- $ctx := dict
     "root" $
@@ -46,6 +55,7 @@
     "workerImage" $workerImage
     "fluentBit" $fluentBit
     "fluentBitImage" $fluentBitImage
+    "placement" $placement
 -}}
 {{/* Trailing `}}` keeps the newline that separates this document from the previous partition's. */}}
 {{- $podSpec := list (include "armonik.compute.podSpec" $ctx) $partition.podSpecPatch "podSpecPatch" | include "armonik.utils.patch" }}
@@ -93,7 +103,7 @@ spec:
         {{- with $partition.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
-      {{- with $partition.podAnnotations }}
+      {{- with $placement.podAnnotations }}
       annotations:
         {{- toYaml . | nindent 8 }}
       {{- end }}

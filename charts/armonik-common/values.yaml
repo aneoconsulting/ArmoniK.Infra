@@ -121,6 +121,10 @@ global:
     # -- Container runAsGroup of the same processes, unless set on the container. Set alongside
     # runAsUser: an image without a passwd entry for that uid would otherwise run it in group 0.
     runAsGroup: 5000
+    # -- Node autoscaler that the `nodeClass` of each ArmoniK component targets (armonik.placement,
+    # charts/node-classes.md): `gke` for the ComputeClasses of the armonik-nodes chart. Empty leaves the pods
+    # as written, and refuses any `nodeClass`.
+    nodeProvisioner: ""
   # Outside `global.armonik`, which is all `import-values` lifts: a default here would reach no root
   # chart, so each consumer resolves its own.
   # -- Cluster DNS domain. Empty stops service hostnames at `.svc`, except where a full name is needed

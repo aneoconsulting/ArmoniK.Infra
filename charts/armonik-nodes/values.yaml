@@ -1,0 +1,70 @@
+# Node classes of the cluster: one release per cluster, installed before the operators and the ArmoniK
+# releases, whose pods select a class through their `nodeClass` (with global.armonik.nodeProvisioner set
+# to the same provider). See charts/node-classes.md.
+
+# -- Node autoscaler the classes are written for. `gke`: one ComputeClass per class.
+provider: gke
+
+gke:
+  # -- Settings of the node pools that every class creates, unless its spec sets them: the output
+  # `compute_class_defaults` of the Terraform module kubernetes/gcp/gke, as is. Injected into the
+  # standard classes only: an Autopilot class (`spec.autopilot.enabled`) takes the node
+  # auto-provisioning settings of the cluster, and a `nodepools` or `podFamily` rule no storage.
+  defaults:
+    # -- `spec.nodePoolConfig.serviceAccount`. Empty: GKE picks one, the Compute Engine default service
+    # account unless node auto-provisioning sets another.
+    serviceAccount: ""
+    # -- `storage.bootDiskKMSKey` of every priority rule
+    # (projects/<project>/locations/<location>/keyRings/<ring>/cryptoKeys/<key>). Empty: Google-managed keys.
+    bootDiskKMSKey: ""
+
+# -- Node classes keyed by name, each `{spec: <ComputeClass spec>}`, passed through as written apart from
+# the gke.defaults above, `nodePoolAutoCreation.enabled: true` and `whenUnsatisfiable: DoNotScaleUp`
+# (set unless the spec does). Maps merge across values files: `<name>: null` drops a class.
+# `default` places every pod that selects no class once the cluster sets
+# `autoscaling.default_compute_class` (GKE 1.33.1-gke.1744000 and later): kube-system, the operators,
+# third-party charts. It must stay untainted, and general purpose.
+classes:
+  default:
+    spec:
+      priorities:
+        - machineFamily: n2d
+          minCores: 4
+        - machineFamily: e2
+          minCores: 4
+  # Compute plane: Spot first, on demand as the last resort. Partition pods carry safe-to-evict "false"
+  # (disruptionProtection), so neither consolidation nor optimizeRulePriority moves a running task: a node
+  # goes away once KEDA has scaled its pods in.
+  workers:
+    spec:
+      priorities:
+        - machineFamily: n2d
+          spot: true
+          minCores: 8
+        - machineFamily: c3d
+          spot: true
+          minCores: 8
+        - machineFamily: e2
+          spot: true
+          minCores: 8
+        - machineFamily: n2d
+          minCores: 8
+      activeMigration:
+        optimizeRulePriority: true
+      autoscalingPolicy:
+        consolidationDelayMinutes: 5
+  # Databases: on demand, never migrated (a persistent disk does not follow), slow to consolidate. The
+  # database charts select it through their own nodeSelector and tolerations (charts/node-classes.md).
+  database:
+    spec:
+      priorities:
+        - machineFamily: n2d
+          minCores: 2
+          minMemoryGb: 8
+        - machineFamily: e2
+          minCores: 2
+          minMemoryGb: 8
+      activeMigration:
+        optimizeRulePriority: false
+      autoscalingPolicy:
+        consolidationDelayMinutes: 60

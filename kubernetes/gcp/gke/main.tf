@@ -445,8 +445,8 @@ resource "google_container_cluster" "cluster" {
       error_message = "\"networking.fqdn_network_policy\", \"networking.cilium_clusterwide_network_policy\", \"networking.in_transit_encryption\", \"observability.dataplane_v2_metrics\" and \"observability.dataplane_v2_relay\" require \"networking.dataplane_v2\"."
     }
     precondition {
-      condition     = length(var.node_pools) > 0 || local.nap != null
-      error_message = "Without \"node_pools\", \"autoscaling.node_auto_provisioning\" is required: the Pods that select no ComputeClass (kube-system first) would find no node."
+      condition     = length(var.node_pools) > 0 || local.nap != null || var.autoscaling.default_compute_class
+      error_message = "Without \"node_pools\", \"autoscaling.node_auto_provisioning\" or \"autoscaling.default_compute_class\" is required: the Pods that select no ComputeClass (kube-system first) would find no node."
     }
   }
 

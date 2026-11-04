@@ -1,0 +1,8 @@
+{{- with .Values.placement }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: placement-result
+data:
+  result: {{ set (deepCopy .) "root" $ | include "armonik.placement" | fromYaml | toJson | quote }}
+{{- end }}

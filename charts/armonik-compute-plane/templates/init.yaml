@@ -6,7 +6,14 @@
   | include "armonik.conf.merge" | fromYaml -}}
 {{- $conf = list $conf $ | include "armonik.conf.resolve" | fromYaml -}}
 {{- $image := list . "init.image" .Values.init.image .Values.partitionCommon.agent.image | include "armonik.utils.imageConf" | fromYaml }}
-{{- $ctx := dict "root" $ "conf" $conf "image" $image -}}
+{{- $placement := dict
+    "root" $
+    "path" "init"
+    "nodeClass" .Values.init.nodeClass
+    "nodeSelector" .Values.init.nodeSelector
+    "tolerations" .Values.init.tolerations
+  | include "armonik.placement" | fromYaml -}}
+{{- $ctx := dict "root" $ "conf" $conf "image" $image "placement" $placement -}}
 {{- $podSpec := list (include "armonik.compute.init.podSpec" $ctx) .Values.init.podSpecPatch "init.podSpecPatch" | include "armonik.utils.patch" -}}
 apiVersion: batch/v1
 kind: Job

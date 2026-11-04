@@ -58,9 +58,10 @@ mkdir -p "$outdir"
 outdir=$(cd "$outdir" && pwd)
 cd "$here"
 
-# The release roots, in install order. armonik-common is a library every
-# consumer vendors; activemq ships alone too, being the one dependency we own.
-charts="armonik-operators armonik armonik-control-plane armonik-compute-plane armonik-ingress armonik-dependencies activemq"
+# The release roots, in install order (armonik-nodes first: the operators may run on
+# its classes). armonik-common is a library every consumer vendors; activemq ships
+# alone too, being the one dependency we own.
+charts="armonik-nodes armonik-operators armonik armonik-control-plane armonik-compute-plane armonik-ingress armonik-dependencies activemq"
 
 # Archives from a run at another version would otherwise land in the index.
 rm -f "$outdir"/*.tgz "$outdir"/index.yaml

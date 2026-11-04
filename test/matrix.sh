@@ -81,6 +81,7 @@ skip() { # <name> <reason>
 # --- defaults, one per chart ---------------------------------------------
 ok activemq-defaults      activemq
 ok control-plane-defaults armonik-control-plane
+ok nodes-defaults         armonik-nodes
 # partitions-guard makes a partition-less compute-plane a render error, so the
 # chart has no valid default render; ci/partitions-values.yaml covers the rest.
 fail_with compute-plane-defaults armonik-compute-plane \
@@ -118,6 +119,10 @@ ok ingress-tls-mtls       armonik-ingress       -f charts/armonik-ingress/ci/tls
 ok ingress-gateway        armonik-ingress       -f charts/armonik-ingress/ci/gateway-values.yaml
 ok ingress-lb             armonik-ingress       -f charts/armonik-ingress/ci/lb-values.yaml
 ok ingress-patches        armonik-ingress       -f charts/armonik-ingress/ci/patch-values.yaml
+ok nodes-gke-defaults     armonik-nodes         -f charts/armonik-nodes/ci/gke-defaults-values.yaml
+# Every ArmoniK pod on a ComputeClass: the partitions on workers, the rest on the chart-level classes.
+ok umbrella-node-classes  armonik -f charts/armonik/ci/minimal-values.yaml --set global.armonik.nodeProvisioner=gke \
+  --set compute-plane.partitionCommon.nodeClass=workers --set control-plane.nodeClass=system --set ingress.nodeClass=system
 ok activemq-pdb           activemq              -f charts/activemq/ci/pdb-values.yaml
 ok activemq-tls           activemq              -f charts/activemq/ci/tls-values.yaml
 ok activemq-patches       activemq              -f charts/activemq/ci/patch-values.yaml

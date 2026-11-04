@@ -1,0 +1,122 @@
+suite: ComputeClasses of the armonik-nodes chart
+templates:
+  - computeclasses.yaml
+release:
+  name: t
+tests:
+  - it: renders the shipped classes, cluster-scoped
+    asserts:
+      - hasDocuments:
+          count: 3
+      - isKind:
+          of: ComputeClass
+      - notExists:
+          path: metadata.namespace
+      - equal:
+          path: spec.whenUnsatisfiable
+          value: DoNotScaleUp
+      - equal:
+          path: spec.nodePoolAutoCreation.enabled
+          value: true
+  - it: drops a class set to null
+    set:
+      classes.database: null
+    asserts:
+      - hasDocuments:
+          count: 2
+  - it: injects the gke defaults into a standard class
+    set:
+      gke.defaults.serviceAccount: nodes@p.iam.gserviceaccount.com
+      gke.defaults.bootDiskKMSKey: projects/p/locations/l/keyRings/r/cryptoKeys/k
+    asserts:
+      - equal:
+          path: spec.nodePoolConfig.serviceAccount
+          value: nodes@p.iam.gserviceaccount.com
+        documentSelector:
+          path: metadata.name
+          value: workers
+      - equal:
+          path: spec.priorities[3].storage.bootDiskKMSKey
+          value: projects/p/locations/l/keyRings/r/cryptoKeys/k
+        documentSelector:
+          path: metadata.name
+          value: workers
+  - it: keeps what the spec sets over the gke defaults
+    set:
+      gke.defaults.serviceAccount: nodes@p.iam.gserviceaccount.com
+      gke.defaults.bootDiskKMSKey: projects/p/locations/l/keyRings/r/cryptoKeys/k
+      classes:
+        default: null
+        database: null
+        workers:
+          spec:
+            whenUnsatisfiable: ScaleUpAnyway
+            nodePoolAutoCreation: {enabled: false}
+            nodePoolConfig: {serviceAccount: own@p.iam.gserviceaccount.com}
+            priorities:
+              - machineFamily: n2d
+                storage: {bootDiskKMSKey: own}
+              - nodepools: [static]
+              - podFamily: general-purpose
+    asserts:
+      - equal:
+          path: spec
+          value:
+            activeMigration: {optimizeRulePriority: true}
+            autoscalingPolicy: {consolidationDelayMinutes: 5}
+            whenUnsatisfiable: ScaleUpAnyway
+            nodePoolAutoCreation: {enabled: false}
+            nodePoolConfig: {serviceAccount: own@p.iam.gserviceaccount.com}
+            priorities:
+              - machineFamily: n2d
+                storage: {bootDiskKMSKey: own}
+              - nodepools: [static]
+              - podFamily: general-purpose
+  - it: injects nothing but whenUnsatisfiable into an Autopilot class
+    set:
+      gke.defaults.serviceAccount: nodes@p.iam.gserviceaccount.com
+      gke.defaults.bootDiskKMSKey: projects/p/locations/l/keyRings/r/cryptoKeys/k
+      classes:
+        default: null
+        database: null
+        workers: null
+        serverless:
+          spec:
+            autopilot: {enabled: true}
+            priorities:
+              - machineFamily: n2d
+    asserts:
+      - equal:
+          path: spec
+          value:
+            autopilot: {enabled: true}
+            priorities:
+              - machineFamily: n2d
+            whenUnsatisfiable: DoNotScaleUp
+  - it: refuses a tainted default class
+    set:
+      classes.default.spec.nodePoolConfig.taints:
+        - {key: a, value: b, effect: NoSchedule}
+    asserts:
+      - failedTemplate:
+          errorPattern: classes.default must stay untainted
+  - it: refuses a taint on a rule of the default class
+    set:
+      classes.default.spec.priorities:
+        - machineFamily: e2
+          taints: [{key: a, value: b, effect: NoSchedule}]
+    asserts:
+      - failedTemplate:
+          errorPattern: classes.default must stay untainted
+  - it: refuses a class without spec
+    set:
+      classes.empty: {}
+    asserts:
+      - failedTemplate:
+          errorPattern: classes.empty.spec is required
+  - it: refuses another provider
+    set:
+      provider: karpenter
+    asserts:
+      - failedTemplate:
+          errorPattern: provider "karpenter" is not supported

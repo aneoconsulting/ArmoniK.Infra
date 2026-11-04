@@ -63,6 +63,13 @@ volumeMounts:
 {{- $root := .root -}}
 {{- $v := $root.Values -}}
 {{- $lb := $v.loadBalancer -}}
+{{- $placement := dict
+    "root" $root
+    "path" "loadBalancer"
+    "nodeClass" (coalesce $lb.nodeClass $v.nodeClass)
+    "nodeSelector" (coalesce $lb.nodeSelector $v.nodeSelector)
+    "tolerations" (coalesce $lb.tolerations $v.tolerations)
+  | include "armonik.placement" | fromYaml -}}
 {{- $global := $v.global | default dict -}}
 {{- $container := list (include "armonik.ingress.lb.container" .) $lb.containerPatch "loadBalancer.containerPatch" | include "armonik.utils.patch" | fromYaml -}}
 {{- $containers := $lb.extraContainers | default list | concat (list $container) -}}
@@ -77,7 +84,7 @@ initContainers:
 containers: {{- $containers | toYaml | nindent 2 }}
 dnsPolicy: ClusterFirst
 shareProcessNamespace: false
-{{- with coalesce $lb.nodeSelector $v.nodeSelector }}
+{{- with $placement.nodeSelector }}
 nodeSelector:
   {{- toYaml . | nindent 2 }}
 {{- end }}
@@ -85,7 +92,7 @@ nodeSelector:
 affinity:
   {{- toYaml . | nindent 2 }}
 {{- end }}
-{{- with coalesce $lb.tolerations $v.tolerations }}
+{{- with $placement.tolerations }}
 tolerations:
   {{- toYaml . | nindent 2 }}
 {{- end }}

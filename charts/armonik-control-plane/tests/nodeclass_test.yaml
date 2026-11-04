@@ -1,0 +1,45 @@
+suite: node classes of the control-plane pods
+templates:
+  - deployments/control-plane.yaml
+  - deployments/metrics-exporter.yaml
+release:
+  name: t
+tests:
+  - it: places the control plane on the chart-level class
+    template: deployments/control-plane.yaml
+    set:
+      global.armonik.nodeProvisioner: gke
+      nodeClass: system
+    asserts:
+      - equal:
+          path: spec.template.spec.nodeSelector
+          value:
+            cloud.google.com/compute-class: system
+      - contains:
+          path: spec.template.spec.tolerations
+          content:
+            key: cloud.google.com/compute-class
+            operator: Equal
+            value: system
+            effect: NoSchedule
+  - it: falls back to the chart-level class on the metrics exporter
+    template: deployments/metrics-exporter.yaml
+    set:
+      global.armonik.nodeProvisioner: gke
+      nodeClass: system
+    asserts:
+      - equal:
+          path: spec.template.spec.nodeSelector
+          value:
+            cloud.google.com/compute-class: system
+  - it: lets the metrics exporter pick its own class
+    template: deployments/metrics-exporter.yaml
+    set:
+      global.armonik.nodeProvisioner: gke
+      nodeClass: system
+      metricsExporter.nodeClass: metrics
+    asserts:
+      - equal:
+          path: spec.template.spec.nodeSelector
+          value:
+            cloud.google.com/compute-class: metrics

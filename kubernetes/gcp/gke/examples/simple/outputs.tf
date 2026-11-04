@@ -50,6 +50,11 @@ output "service_account" {
   value       = module.simple_gke.service_account
 }
 
+output "compute_class_defaults" {
+  description = "Settings of the node pools that ComputeClasses create"
+  value       = module.simple_gke.compute_class_defaults
+}
+
 output "identity_namespace" {
   description = "Workload Identity pool of the cluster"
   value       = module.simple_gke.identity_namespace

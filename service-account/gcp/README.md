@@ -1,13 +1,14 @@
-# GCP service account for Pods
+# GCP Service Account
 
-This module facilitates the creation of a GCP service account assigned with the "workLoadIdentityUser" role, along with
-other necessary roles. Additionally, it establishes a Kubernetes service account that assumes the identity of the GCP
-service account. This Kubernetes service account is meant to be associated with the pods within the GKE cluster.
+IAM roles for a Kubernetes service account of a GKE cluster with Workload Identity enabled.
 
-This module performs the following actions:
-* Create a GCP service account assigned with "workLoadIdentityUser" role.
-* Add a list of IAM roles for the GCP service account.
-* Create a kubernetes service account associated with the GCP service account.
+This module creates:
+
+* An optional Kubernetes service account (`create_service_account`).
+* By default, an IAM service account with the roles, which the Kubernetes service account impersonates through its
+  annotation. With `iam_service_account = false`, Workload Identity Federation for GKE grants the roles to the
+  Kubernetes service account itself, with no IAM service account nor annotation.
+* The IAM member holding the roles, as an output to grant roles on each resource.
 
 <!-- BEGIN_TF_DOCS -->
 <!-- END_TF_DOCS -->
@@ -20,4 +21,3 @@ This module performs the following actions:
 
 examples/**
 ```
-

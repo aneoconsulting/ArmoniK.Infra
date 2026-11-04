@@ -1,20 +1,10 @@
 ## Complete VPC
 
-Terraform scripts to create a GCP VPC for a GKE using the [module vpc](../..).
-
-To create a GCP VPC for a GKE:
+Subnets in several regions, a GKE subnet, a Memorystore service connection policy and the network settings. Uses
+the [vpc module](../..).
 
 ```bash
 terraform init
-terraform plan
-terraform apply
+terraform apply -var project=<project>
+terraform destroy -var project=<project>
 ```
-
-To delete all resource:
-
-```bash
-terraform destroy
-```
-
-
-

@@ -1,20 +1,16 @@
 # GCP VPC
 
-With Google Virtual Private Cloud networks (Google VPC), you can launch GCP resources in a logically isolated virtual network that
-you've defined. This virtual network closely resembles a traditional network that you'd operate in your own data center,
-with the benefits of using the scalable infrastructure of GCP.
+Network of a deployment, with outbound internet access through Cloud NAT and an optional subnet for GKE.
 
-This module creates a GCP VPC with these constraints:
+This module creates:
 
-* By default, the VPC is global
-* All subnets are in the same region chosen by user
-* List of public and private subnets can be created
-* List of private subnets for VPC-native Kubernetes clusters can be created
-* All created subnets are of purpose `PRIVATE_RFC_1918`
-* Create subnet flow logs in Stackdriver
-* All traffic are captured in flow logs
-* Subnetwork without external IP addresses can access Google APIs and services by using Private Google Access
-* If external access enabled, use a NAT router for public subnets
+* A VPC (global routing by default).
+* Subnets with flow logs and Private Google Access; public subnets (`public_access`) reach the internet through Cloud NAT.
+* An optional GKE subnet with its Pod and Service ranges, optionally behind Cloud NAT (`public_access`) so that
+  private nodes can pull public images.
+* One Cloud Router and NAT gateway per region with a public subnet.
+* Optional service connection policies, which let Google services such as Memorystore for Valkey create their
+  Private Service Connect endpoints in chosen subnets.
 
 <!-- BEGIN_TF_DOCS -->
 <!-- END_TF_DOCS -->
@@ -27,4 +23,3 @@ This module creates a GCP VPC with these constraints:
 
 examples/**
 ```
-

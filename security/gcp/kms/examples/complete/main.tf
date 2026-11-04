@@ -34,9 +34,10 @@ jq -n --arg date "$DATE" '{"date":$date}'
     "create_by"     = split("@", data.google_client_openid_userinfo.current.email)[0]
     "creation_date" = null_resource.timestamp.triggers["date"]
   }
+  current_user = "user:${data.google_client_openid_userinfo.current.email}"
   key_ring_roles = {
-    "roles/cloudkms.admin" = ["user:hbitoun@aneo.fr", "user:lzianekhodja@aneo.fr"],
-    "roles/editor"         = ["user:hbitoun@aneo.fr"]
+    "roles/cloudkms.admin" = [local.current_user],
+    "roles/editor"         = [local.current_user]
   }
   crypto_keys = {
     "key-1" = {
@@ -58,9 +59,9 @@ jq -n --arg date "$DATE" '{"date":$date}'
     "key-3" = {
       purpose                    = "ENCRYPT_DECRYPT"
       destroy_scheduled_duration = "86400s"
-      crypto_key_roles = {
-        "roles/cloudkms.cryptoKeyEncrypter" = ["user:hbitoun@aneo.fr"],
-        "roles/cloudkms.admin"              = ["user:hbitoun@aneo.fr", "user:lzianekhodja@aneo.fr"]
+      roles = {
+        "roles/cloudkms.cryptoKeyEncrypter" = [local.current_user],
+        "roles/cloudkms.admin"              = [local.current_user]
       }
     }
   }

@@ -1,11 +1,28 @@
 data "google_client_config" "current" {}
 
-data "google_project" "project" {}
+# A check block warns on every plan without failing it
+check "deprecated_default_kms_key_name" {
+  assert {
+    condition     = var.default_kms_key_name == null
+    error_message = "The default_kms_key_name input of the storage/gcp/gcs module is deprecated and will be removed. Use kms_key instead."
+  }
+}
+
+locals {
+  # kms_key is known at plan time even when the key is created in the same apply, default_kms_key_name is not
+  kms_enabled = var.kms_key != null ? true : can(coalesce(var.default_kms_key_name))
+  kms_key_id  = var.kms_key != null ? var.kms_key.id : var.default_kms_key_name
+}
+
+# GCS service agent, which encrypts the objects with the KMS key
+data "google_storage_project_service_account" "gcs" {
+  count = local.kms_enabled ? 1 : 0
+}
 
 resource "google_kms_crypto_key_iam_member" "kms" {
-  count         = can(coalesce(var.default_kms_key_name)) ? 1 : 0
-  crypto_key_id = var.default_kms_key_name
-  member        = "serviceAccount:service-${data.google_project.project.number}@gs-project-accounts.iam.gserviceaccount.com"
+  count         = local.kms_enabled ? 1 : 0
+  crypto_key_id = local.kms_key_id
+  member        = data.google_storage_project_service_account.gcs[0].member
   role          = "roles/cloudkms.cryptoKeyEncrypterDecrypter"
 }
 
@@ -77,6 +94,13 @@ resource "google_storage_bucket" "gcs" {
       retention_period = can(coalesce(retention_policy.value["retention_period"])) ? retention_policy.value["retention_period"] : 0
     }
   }
+  # Without the block, the bucket keeps the server value (7 days by default)
+  dynamic "soft_delete_policy" {
+    for_each = var.soft_delete_retention_days != null ? [var.soft_delete_retention_days] : []
+    content {
+      retention_duration_seconds = soft_delete_policy.value * 86400
+    }
+  }
   dynamic "logging" {
     for_each = var.logging != null ? [var.logging] : []
     content {
@@ -85,15 +109,21 @@ resource "google_storage_bucket" "gcs" {
     }
   }
   dynamic "encryption" {
-    for_each = can(coalesce(var.default_kms_key_name)) ? [var.default_kms_key_name] : []
+    for_each = local.kms_enabled ? [local.kms_key_id] : []
     content {
-      default_kms_key_name = var.default_kms_key_name
+      default_kms_key_name = encryption.value
     }
   }
   dynamic "custom_placement_config" {
     for_each = can(coalesce(var.data_locations)) ? [var.data_locations] : []
     content {
       data_locations = var.data_locations
+    }
+  }
+  lifecycle {
+    precondition {
+      condition     = var.kms_key == null || var.default_kms_key_name == null
+      error_message = "Set \"kms_key\" or the deprecated \"default_kms_key_name\", not both."
     }
   }
   depends_on = [google_kms_crypto_key_iam_member.kms]

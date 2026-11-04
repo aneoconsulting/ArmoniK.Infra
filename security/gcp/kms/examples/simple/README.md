@@ -1,20 +1,20 @@
-## Simple Cloud KMS
+## Simple KMS
 
-Terraform scripts to create a simple GCP Cloud KMS using the [module kms](../..).
-
-To create a simple GCP Cloud KMS:
+A key ring with one default key. Uses the [kms module](../..).
 
 ```bash
 terraform init
-terraform plan
-terraform apply
+terraform apply -var project=<project>
+terraform destroy -var project=<project>
 ```
 
-To delete all resource:
+A key ring cannot be deleted, and a deleted crypto key keeps its name retired for good: `terraform destroy` merely
+drops them from the state and schedules the key versions for destruction. Before applying again, import what is left:
 
 ```bash
-terraform destroy
+terraform import -var project=<project> 'module.simple_kms.google_kms_key_ring.key_ring' projects/<project>/locations/global/keyRings/simple-kms
+terraform import -var project=<project> 'module.simple_kms.google_kms_crypto_key.keys["simple-key"]' projects/<project>/locations/global/keyRings/simple-kms/cryptoKeys/simple-key
 ```
 
-
-
+An imported key whose versions are scheduled for destruction has no usable version until restored
+(`gcloud kms keys versions restore` then `enable`).

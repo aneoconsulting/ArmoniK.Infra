@@ -47,10 +47,10 @@ locals {
     main_page_suffix = "test"
     not_found_page   = "/error-page.fr"
   }
-  role_entity_acl = ["OWNER:user-hbitoun@aneo.fr", "READER:group-gcp.armonik.devops@aneo.fr"]
+  role_entity_acl = ["OWNER:user-${data.google_client_openid_userinfo.current.email}"]
   roles = {
-    "roles/storage.objectCreator" = ["user:hbitoun@aneo.fr", "user:lzianekhodja@aneo.fr"],
-    "roles/storage.admin"         = ["user:hbitoun@aneo.fr"]
+    "roles/storage.objectCreator" = ["user:${data.google_client_openid_userinfo.current.email}"],
+    "roles/storage.admin"         = ["user:${data.google_client_openid_userinfo.current.email}"]
   }
   date = <<-EOT
 #!/bin/bash
@@ -106,4 +106,5 @@ module "complete_gcs_bucket" {
   predefined_acl               = null
   role_entity_acl              = local.role_entity_acl
   roles                        = local.roles
+  soft_delete_retention_days   = 0
 }

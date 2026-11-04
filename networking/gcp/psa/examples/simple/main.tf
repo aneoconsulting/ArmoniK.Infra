@@ -4,6 +4,6 @@ data "google_compute_network" "vpc" {
 
 module "simple" {
   source  = "../../../psa"
-  name    = "simaple-psa"
+  name    = "simple-psa"
   network = data.google_compute_network.vpc.self_link
 }

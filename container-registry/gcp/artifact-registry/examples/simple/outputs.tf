@@ -1,5 +1,5 @@
 output "docker_repositories" {
-  description = "Docker repositories in Artifactory Registry created on GCP"
+  description = "Docker repositories in Artifact Registry created on GCP"
   value       = module.simple_artifact_registry.docker_repositories
 }
 

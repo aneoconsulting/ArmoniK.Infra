@@ -1,20 +1,9 @@
 ## Simple PSA
 
-Terraform scripts to create a simple GCP PSA using the [module psa](../..).
-
-To create a simple PSA:
+A /24 range on the `default` network. Uses the [psa module](../..).
 
 ```bash
 terraform init
-terraform plan
-terraform apply
+terraform apply -var project=<project>
+terraform destroy -var project=<project>
 ```
-
-To delete all resource:
-
-```bash
-terraform destroy
-```
-
-
-

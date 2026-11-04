@@ -70,13 +70,14 @@ variable "subnets" {
 }
 
 variable "gke_subnet" {
-  description = "The GKE subnet. The subnet contains a name, a CIDR block for nodes, a CIDR block for Pods, a CIDR block for services and a region"
+  description = "The GKE subnet. The subnet contains a name, a CIDR block for nodes, a CIDR block for Pods, a CIDR block for services, a region, and an optional boolean set to true if the subnet is public, which private nodes need to pull public images"
   type = object({
     name                = string
     nodes_cidr_block    = string
     pods_cidr_block     = string
     services_cidr_block = string
     region              = string
+    public_access       = optional(bool, false)
   })
   default = null
 }
@@ -95,4 +96,15 @@ variable "flow_log_max_aggregation_interval" {
     condition     = contains(["INTERVAL_5_SEC", "INTERVAL_30_SEC", "INTERVAL_1_MIN", "INTERVAL_5_MIN", "INTERVAL_10_MIN", "INTERVAL_15_MIN"], var.flow_log_max_aggregation_interval)
     error_message = "The valid values for the maximum interval of time during which a flow of packets is captured and aggregated into a flow log: \"INTERVAL_5_SEC\" | \"INTERVAL_30_SEC\" | \"INTERVAL_1_MIN\" | \"INTERVAL_5_MIN\" | \"INTERVAL_10_MIN\" | \"INTERVAL_15_MIN\"."
   }
+}
+
+variable "service_connection_policies" {
+  description = "Service connection policies, keyed by name. Each one lets a Google service of the given class (gcp-memorystore for Memorystore for Valkey for instance) create Private Service Connect endpoints in the listed subnets, which are names of \"subnets\" or of \"gke_subnet\" in a single region. A policy is unique per region and service class"
+  type = map(object({
+    service_class = string
+    subnets       = list(string)
+    limit         = optional(number)
+  }))
+  default  = {}
+  nullable = false
 }

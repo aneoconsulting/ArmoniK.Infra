@@ -1,5 +1,10 @@
 # GCP Memorystore for Memcached instance
 
+```{warning}
+This module is deprecated and will be removed: Google deprecated Memorystore for Memcached.
+Every plan using this module emits a deprecation warning.
+```
+
 Memorystore for Memcached enables creating a fully-managed Memcached cluster. Before using the service, it is important to
 understand some key concepts and terms. Memcached Instance represents one instance of a Memcached cluster. An instance can
 be comprised of a single node or a collection of nodes. The official

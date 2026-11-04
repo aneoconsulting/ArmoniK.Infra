@@ -3,11 +3,11 @@ data "google_client_config" "current" {}
 locals {
   project            = data.google_client_config.current.project
   network_project_id = coalesce(var.network_project_id, local.project)
-  # try: a zonal cluster without zone fails on the precondition of the cluster
-  region   = var.regional ? coalesce(var.region, data.google_client_config.current.region) : try(join("-", slice(split("-", var.zone), 0, 2)), null)
-  location = var.regional ? local.region : var.zone
-  # The zone of a zonal cluster is not repeated in its node locations
-  node_locations = var.regional || var.zone == null ? var.zones : setsubtract(var.zones, [var.zone])
+  # try: a zonal cluster without exactly one zone fails on the precondition of the cluster
+  region   = var.regional ? coalesce(var.region, data.google_client_config.current.region) : try(join("-", slice(split("-", one(var.zones)), 0, 2)), null)
+  location = var.regional ? local.region : try(one(var.zones), null)
+  # The single zone of a zonal cluster is its location, not a node location
+  node_locations = var.regional && length(var.zones) > 0 ? var.zones : null
 
   service_account = coalesce(var.service_account, one(google_service_account.nodes[*].email))
   # Keyed by project and role, both known at plan time
@@ -27,7 +27,7 @@ resource "google_container_cluster" "cluster" {
   description         = var.description
   project             = local.project
   location            = local.location
-  node_locations      = length(local.node_locations) > 0 ? local.node_locations : null
+  node_locations      = local.node_locations
   network             = "projects/${local.network_project_id}/global/networks/${var.network}"
   subnetwork          = "projects/${local.network_project_id}/regions/${local.region}/subnetworks/${var.subnetwork}"
   networking_mode     = "VPC_NATIVE"
@@ -423,8 +423,9 @@ resource "google_container_cluster" "cluster" {
     # The default node pool and its settings only exist during the creation of the cluster
     ignore_changes = [node_pool, node_config, initial_node_count]
     precondition {
-      condition     = var.regional || var.zone != null
-      error_message = "\"zone\" is required when \"regional\" is false."
+      # The control plane of a zonal cluster runs in a single zone: nodes in other zones would not make it highly available
+      condition     = var.regional || length(var.zones) == 1
+      error_message = "\"zones\" must hold exactly one zone when \"regional\" is false."
     }
     precondition {
       condition     = !local.private_endpoint || var.networking.enable_private_nodes

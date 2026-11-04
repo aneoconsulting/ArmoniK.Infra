@@ -21,5 +21,5 @@ module "simple_gke" {
   ip_range_pods     = module.vpc.gke_subnet_pods_range_name
   ip_range_services = module.vpc.gke_subnet_svc_range_name
   regional          = false
-  zone              = "${var.region}-a"
+  zones             = ["${var.region}-a"]
 }

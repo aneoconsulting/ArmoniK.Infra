@@ -80,7 +80,7 @@ global:
       core: ""
       gui: ""
       # renovate: datasource=github-releases depName=aneoconsulting/ArmoniK.Infra.Plugins
-      infraPlugins: "0.3.3"
+      infraPlugins: "0.3.4"
       # renovate: datasource=github-releases depName=aneoconsulting/ArmoniK.Extensions.CSharp.New
       extCsharp: "0.23.1"
       # renovate: datasource=github-releases depName=aneoconsulting/ArmoniK.Extensions.Cpp

@@ -33,7 +33,7 @@ output "password" {
 output "bucket_name" {
   description = "Name of the SeaweedFS bucket"
   value       = var.seaweedfs.bucket_name
-  # The bucket exists once the release and its creation hook are done
+  # Known at plan time: makes its readers wait for the release, bucket creation hook included
   depends_on = [helm_release.seaweedfs]
 }
 
@@ -54,6 +54,7 @@ output "env" {
     "S3__UseChunkEncoding"                                          = local.use_chunk_encoding
     "S3__EndpointUrl"                                               = local.url
   }
+  # Known at plan time: makes the Core wait for the release, bucket creation hook included
   depends_on = [helm_release.seaweedfs]
 }
 

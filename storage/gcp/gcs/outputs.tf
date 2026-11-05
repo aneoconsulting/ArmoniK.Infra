@@ -43,24 +43,23 @@ output "iam_members" {
   value       = google_storage_bucket_iam_member.role
 }
 
-#new outputs
 output "env" {
   description = "Elements to be set as environment variables"
   value = ({
-    "Components__ObjectStorage"                                     = var.object_storage_adapter
     "Components__ObjectStorageAdaptorSettings__ClassName"           = var.adapter_class_name
     "Components__ObjectStorageAdaptorSettings__AdapterAbsolutePath" = var.adapter_absolute_path
-    "S3__BucketName"                                                = google_storage_bucket.gcs.name
-    "S3__UseChecksum"                                               = false
-    "S3__MustForcePathStyle"                                        = false
-    "S3__UseChunkEncoding"                                          = false
-    "S3__EndpointUrl"                                               = "https://storage.googleapis.com"
+    "Gcs__ProjectId"                                                = google_storage_bucket.gcs.project
+    "Gcs__BucketName"                                               = google_storage_bucket.gcs.name
+    # Read only by the S3 adapter of Core, selected through adapter_class_name and adapter_absolute_path
+    "S3__BucketName"         = google_storage_bucket.gcs.name
+    "S3__UseChecksum"        = false
+    "S3__MustForcePathStyle" = false
+    "S3__UseChunkEncoding"   = false
+    "S3__EndpointUrl"        = "https://storage.googleapis.com"
   })
 }
 
 output "env_secret" {
-  description = "Secrets to be set as environment variables"
-  value = [
-    kubernetes_secret.s3_user_credentials.metadata[0].name
-  ]
+  description = "Secrets to be set as environment variables: the HMAC credentials of the S3 adapter of Core when username and password are set, none otherwise"
+  value       = kubernetes_secret.s3_user_credentials[*].metadata[0].name
 }

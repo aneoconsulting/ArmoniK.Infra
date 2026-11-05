@@ -141,7 +141,7 @@ variable "requester_pays" {
 }
 
 variable "uniform_bucket_level_access" {
-  description = "Access through IAM only (var.roles), without ACL on the bucket nor on its objects. Set it to false for the S3 adapter of Core: through the XML API of GCS, it checks that the bucket exists with GetBucketAcl, which GCS rejects with \"Invalid argument\" on a bucket with uniform bucket-level access."
+  description = "Access through IAM only (var.roles), without ACL on the bucket nor on its objects. The native GCS adapter of Core works with it, the S3 adapter does not: through the XML API of GCS, it checks that the bucket exists with GetBucketAcl, which GCS rejects with \"Invalid argument\" on a bucket with uniform bucket-level access."
   type        = bool
   default     = null
 }
@@ -203,37 +203,37 @@ variable "roles" {
 }
 
 variable "object_storage_adapter" {
-  description = "Name of the ArmoniK adapter to use for the storage"
+  description = "Deprecated, unused: Core no longer reads Components__ObjectStorage."
   type        = string
-  default     = "ArmoniK.Adapters.S3.ObjectStorage"
+  default     = null
 }
 
 variable "namespace" {
-  description = "Namespace of ArmoniK storage resources"
+  description = "Namespace of the Kubernetes secret holding the HMAC credentials of the S3 adapter of Core"
   type        = string
   default     = "armonik"
 }
 
 variable "username" {
-  description = "Google Cloud storage access id to use as username"
+  description = "HMAC key access id for the S3 adapter of Core, with password to create its Kubernetes secret. The native GCS adapter uses Application Default Credentials (Workload Identity) instead."
   type        = string
-  default     = ""
+  default     = null
 }
 
 variable "password" {
-  description = "Google Cloud storage secret to use as password"
+  description = "HMAC key secret for the S3 adapter of Core, with username to create its Kubernetes secret. The native GCS adapter uses Application Default Credentials (Workload Identity) instead."
   type        = string
-  default     = ""
+  default     = null
 }
 
 variable "adapter_class_name" {
   description = "Name of the adapter's class"
   type        = string
-  default     = "ArmoniK.Core.Adapters.S3.ObjectBuilder"
+  default     = "ArmoniK.Core.Adapters.Gcs.ObjectBuilder"
 }
 
 variable "adapter_absolute_path" {
   description = "The adapter's absolute path"
   type        = string
-  default     = "/adapters/object/s3/ArmoniK.Core.Adapters.S3.dll"
+  default     = "/adapters/object/gcs/ArmoniK.Core.Adapters.Gcs.dll"
 }

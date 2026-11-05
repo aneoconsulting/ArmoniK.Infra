@@ -3,11 +3,16 @@ data "google_client_config" "current" {}
 locals {
   project = data.google_client_config.current.project
   region  = coalesce(var.region, data.google_client_config.current.region)
+  tls     = var.transit_encryption_mode == "SERVER_AUTHENTICATION"
   # Only the auto-created endpoints of var.network, by connection type (primary, reader)
   endpoints = {
     for connection in flatten(google_memorystore_instance.valkey.endpoints[*].connections[*].psc_auto_connection[*]) :
     connection.connection_type => connection
   }
+  primary = local.endpoints["CONNECTION_TYPE_PRIMARY"]
+  url     = "${local.primary.ip_address}:${local.primary.port}"
+  # Empty without TLS
+  ca_certificates = join("\n", flatten(google_memorystore_instance.valkey.managed_server_ca[*].ca_certs[*].certificates))
 }
 
 # The Memorystore service agent must exist before it can be granted the key

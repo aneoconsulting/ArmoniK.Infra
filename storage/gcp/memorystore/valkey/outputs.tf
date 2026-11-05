@@ -5,17 +5,17 @@ output "id" {
 
 output "host" {
   description = "IP address of the primary endpoint"
-  value       = local.endpoints["CONNECTION_TYPE_PRIMARY"].ip_address
+  value       = local.primary.ip_address
 }
 
 output "port" {
   description = "Port of the primary endpoint"
-  value       = local.endpoints["CONNECTION_TYPE_PRIMARY"].port
+  value       = local.primary.port
 }
 
 output "url" {
   description = "Address of the primary endpoint, as host:port (Redis__EndpointUrl of Core)"
-  value       = "${local.endpoints["CONNECTION_TYPE_PRIMARY"].ip_address}:${local.endpoints["CONNECTION_TYPE_PRIMARY"].port}"
+  value       = local.url
 }
 
 output "reader_url" {
@@ -25,5 +25,30 @@ output "reader_url" {
 
 output "ca_certificates" {
   description = "PEM certificates of the CA that signs the server certificate (Redis__CaPath of Core). Null without TLS"
-  value       = try(join("\n", flatten(google_memorystore_instance.valkey.managed_server_ca[0].ca_certs[*].certificates)), null)
+  value       = local.tls ? local.ca_certificates : null
+}
+
+output "env" {
+  description = "Elements to be set as environment variables"
+  value = {
+    "Components__ObjectStorage"                                     = var.object_storage_adapter
+    "Components__ObjectStorageAdaptorSettings__ClassName"           = var.adapter_class_name
+    "Components__ObjectStorageAdaptorSettings__AdapterAbsolutePath" = var.adapter_absolute_path
+    "Redis__EndpointUrl"                                            = local.url
+    "Redis__Ssl"                                                    = coalesce(var.ssl_option, tostring(local.tls))
+    "Redis__ClientName"                                             = var.client_name
+    "Redis__InstanceName"                                           = var.instance_name
+    "Redis__CaPath"                                                 = "/redis/chain.pem"
+  }
+}
+
+output "mount_secret" {
+  description = "Secrets to be mounted as volumes"
+  value = {
+    "redis-secret1" = {
+      secret = kubernetes_secret.redis_ca.metadata[0].name
+      path   = "/redis"
+      mode   = "0644"
+    }
+  }
 }

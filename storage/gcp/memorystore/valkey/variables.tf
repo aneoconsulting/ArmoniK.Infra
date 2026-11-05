@@ -125,3 +125,45 @@ variable "labels" {
   default     = {}
   nullable    = false
 }
+
+variable "namespace" {
+  description = "Namespace of the Kubernetes secret holding the CA of the instance, mounted by Core."
+  type        = string
+  default     = "armonik"
+}
+
+variable "object_storage_adapter" {
+  description = "Name of the ArmoniK object storage adapter (Components__ObjectStorage of Core)."
+  type        = string
+  default     = "ArmoniK.Adapters.Redis.ObjectStorage"
+}
+
+variable "adapter_class_name" {
+  description = "Class name of the object storage adapter."
+  type        = string
+  default     = "ArmoniK.Core.Adapters.Redis.ObjectBuilder"
+}
+
+variable "adapter_absolute_path" {
+  description = "Absolute path of the object storage adapter in the Core images."
+  type        = string
+  default     = "/adapters/object/redis/ArmoniK.Core.Adapters.Redis.dll"
+}
+
+variable "client_name" {
+  description = "Client name of the Core connections to the instance."
+  type        = string
+  default     = "ArmoniK.Core"
+}
+
+variable "instance_name" {
+  description = "Instance name used by Core as a prefix for its keys."
+  type        = string
+  default     = "ArmoniKRedis"
+}
+
+variable "ssl_option" {
+  description = "Whether Core connects with TLS (Redis__Ssl), as \"true\" or \"false\". Defaults to the transit_encryption_mode."
+  type        = string
+  default     = null
+}

@@ -8,6 +8,10 @@ provider "google-beta" {
   region  = var.region
 }
 
+provider "kubernetes" {
+  config_path = var.kube_config_path
+}
+
 terraform {
   required_version = ">= 1.3"
   required_providers {
@@ -18,6 +22,10 @@ terraform {
     google-beta = {
       source  = "hashicorp/google-beta"
       version = "~> 8.8"
+    }
+    kubernetes = {
+      source  = "hashicorp/kubernetes"
+      version = "~> 2.38"
     }
   }
 }

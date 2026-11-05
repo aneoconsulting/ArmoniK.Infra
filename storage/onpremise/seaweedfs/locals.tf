@@ -5,7 +5,7 @@ locals {
   console_port = 8888 # filer web UI
   url          = "http://${local.host}:${local.port}"
 
-  # The Core S3 adapter settings, same as for MinIO
+  # The Core S3 adapter settings
   must_force_path_style = true # http://host:port/bucket, no per-bucket DNS name in cluster
   use_chunk_encoding    = true
   use_checksum          = true

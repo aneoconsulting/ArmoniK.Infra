@@ -103,6 +103,20 @@ user: $upstream_http_x_auth_request_user
   {{- if $sso.fingerprint | empty -}}
     {{- fail "sso.fingerprint must be non-empty: ArmoniK Core rejects a request without a fingerprint header" -}}
   {{- end -}}
+  {{- /* A real certificate fingerprint here would let that certificate match the SSO entries. */ -}}
+  {{- if $sso.fingerprint | toString | replace ":" "" | regexMatch "^[0-9A-Fa-f]{32,}$" -}}
+    {{- printf "sso.fingerprint must not look like a certificate fingerprint (32 or more hex digits, with or without colons), got %q" ($sso.fingerprint | toString) | fail -}}
+  {{- end -}}
+  {{- /* The prefixes keep SSO identities apart from certificate CNs. */ -}}
+  {{- $prefixes := list "cnPrefix" -}}
+  {{- if eq $mode "group" -}}
+    {{- $prefixes = append $prefixes "groupCnPrefix" -}}
+  {{- end -}}
+  {{- range $key := $prefixes -}}
+    {{- if index $sso $key | empty -}}
+      {{- printf "sso.%s must not be empty: SSO identities would share the certificate CN namespace" $key | fail -}}
+    {{- end -}}
+  {{- end -}}
   {{- range $key := list "cnPrefix" "fingerprint" "groupCnPrefix" -}}
     {{- dict "key" (printf "sso.%s" $key) "value" (index $sso $key) | include "armonik.ingress.sso.validateLiteral" -}}
   {{- end -}}
@@ -362,15 +376,19 @@ SSO is enabled on the web port (admin GUI, gRPC-web, Grafana, Seq) through oauth
   Browsers reaching the web port on another host (an IP, another name) are redirected to {{ $sso.publicUrl }}.
   The Secret {{ $sso.oauth2Proxy.existingSecret | quote }} must hold client-secret and cookie-secret.
   {{- if eq $sso.identityMode "user" }}
-  Each user reaches ArmoniK as CN "{{ $sso.cnPrefix }}<{{ $sso.identityClaim }}>". Declare them without a fingerprint:
+  Each user reaches ArmoniK as CN "{{ $sso.cnPrefix }}<{{ $sso.identityClaim }}>" and fingerprint {{ $sso.fingerprint | quote }}. Declare them with both:
     control-plane.rbac.userCertificates.<user>.commonName: "{{ $sso.cnPrefix }}<{{ $sso.identityClaim }}>"
+    control-plane.rbac.userCertificates.<user>.fingerprint: {{ $sso.fingerprint | quote }}
   {{- else }}
-  Each groupMapping entry reaches ArmoniK as one CN; a user in no mapped group is rejected.
-  Declare them without a fingerprint:
+  Each groupMapping entry reaches ArmoniK as one CN, with fingerprint {{ $sso.fingerprint | quote }}; a user in no
+  mapped group is rejected. Declare them with both:
     {{- range $sso.groupMapping }}
     control-plane.rbac.userCertificates.<user>.commonName: "{{ $sso.groupCnPrefix }}{{ .cn }}"   (group {{ .group | quote }})
     {{- end }}
+    control-plane.rbac.userCertificates.<user>.fingerprint: {{ $sso.fingerprint | quote }}
   {{- end }}
+  A client certificate always presents its real fingerprint, so it never matches these entries,
+  even one whose CA signed a "{{ $sso.cnPrefix }}..." CN.
   {{- if not $sso.oauth2Proxy.sessionCookieMinimal }}
   WARNING: sessionCookieMinimal is off, so the session cookie also carries the OAuth tokens. Past
   4 KB (common with Keycloak or Entra ID) oauth2-proxy splits it in _0/_1, and nginx passes on only

@@ -190,10 +190,13 @@ sso:
   # -- oauth2-proxy session field the user-mode CN is built from: email, preferred_username, or
   # user (the OIDC subject).
   identityClaim: email
+  # -- Keeps SSO CNs apart from certificate CNs: non-empty.
   cnPrefix: "sso:"
-  # -- Fingerprint header sent with every SSO identity. ArmoniK Core requires it non-empty; declare
-  # the matching userCertificates without a fingerprint so it matches any.
+  # -- Fingerprint header sent with every SSO identity. Declare the SSO userCertificates with this
+  # fingerprint: a client certificate presents its real one, so it cannot match them. Non-empty, and
+  # not a hex string of 32 digits or more.
   fingerprint: sso
+  # -- Same as cnPrefix for the group-mode CNs: non-empty in group mode.
   groupCnPrefix: "sso-group:"
   # -- group mode: ordered list of {group, cn}, the first IdP group present wins. A user in none of
   # them gets an empty CN, which ArmoniK Core rejects.

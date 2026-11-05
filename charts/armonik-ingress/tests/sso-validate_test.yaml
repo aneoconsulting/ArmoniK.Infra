@@ -153,6 +153,64 @@ tests:
       - failedTemplate:
           errorPattern: 'sso.fingerprint must be non-empty'
 
+  # A certificate presenting that fingerprint would match the SSO entries.
+  - it: refuses a SHA-1 hex fingerprint
+    set:
+      sso:
+        fingerprint: 0123456789abcdef0123456789ABCDEF01234567
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.fingerprint must not look like a certificate fingerprint \(32 or more hex digits, with or without colons\), got "0123456789abcdef0123456789ABCDEF01234567"'
+
+  - it: refuses a colon-separated hex fingerprint
+    set:
+      sso:
+        fingerprint: "01:23:45:67:89:ab:cd:ef:01:23:45:67:89:ab:cd:ef"
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.fingerprint must not look like a certificate fingerprint'
+
+  - it: accepts a short hex fingerprint
+    set:
+      sso:
+        fingerprint: 0123456789abcdef0123456789abcde
+    asserts:
+      - notFailedTemplate: {}
+
+  - it: checks no fingerprint with sso off
+    set:
+      sso:
+        enabled: false
+        fingerprint: 0123456789abcdef0123456789abcdef01234567
+    asserts:
+      - notFailedTemplate: {}
+
+  # An empty prefix puts SSO identities in the certificate CN namespace.
+  - it: refuses an empty cnPrefix
+    set:
+      sso:
+        cnPrefix: ""
+    asserts:
+      - failedTemplate:
+          errorMessage: 'sso.cnPrefix must not be empty: SSO identities would share the certificate CN namespace'
+
+  - it: refuses an empty groupCnPrefix in group mode
+    values:
+      - ../ci/sso-group-values.yaml
+    set:
+      sso:
+        groupCnPrefix: ""
+    asserts:
+      - failedTemplate:
+          errorMessage: 'sso.groupCnPrefix must not be empty: SSO identities would share the certificate CN namespace'
+
+  - it: accepts an empty groupCnPrefix in user mode
+    set:
+      sso:
+        groupCnPrefix: ""
+    asserts:
+      - notFailedTemplate: {}
+
   - it: refuses an unsafe fingerprint
     set:
       sso:

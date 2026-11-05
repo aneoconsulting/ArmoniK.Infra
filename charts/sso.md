@@ -73,9 +73,17 @@ without overwriting each other's cookie. Each expires after `cookieCsrfExpire`.
 
 ## Identity
 
-ArmoniK Core requires both headers non-empty, and a `userCertificates` entry without a fingerprint
-matches any fingerprint for its CN. So SSO identities are declared in `rbac.userCertificates` with
-a `commonName` and no `fingerprint`, while nginx always sends `sso.fingerprint` (default `sso`).
+ArmoniK Core requires both headers non-empty, and nginx always sends `sso.fingerprint` (default
+`sso`) with an SSO identity. So SSO identities are declared in `rbac.userCertificates` with their
+`commonName` and `fingerprint: <sso.fingerprint>`. A client certificate always presents its real
+fingerprint on the grpc port, never `sso`, so it cannot match an SSO entry, even when the CA signed
+a `sso:...` CN. An entry without a fingerprint would match any fingerprint for its CN, such a
+certificate included: with SSO on, the umbrella refuses any `userCertificates` entry whose
+`commonName` starts with `cnPrefix` or `groupCnPrefix` (case-insensitive) unless its `fingerprint`
+is `sso.fingerprint`, and the ingress refuses an `sso.fingerprint` that looks like a certificate
+fingerprint. The prefixes keep SSO identities apart from certificate CNs, so the ingress refuses an
+empty `cnPrefix`, and an empty `groupCnPrefix` in group mode; an empty `groupCnPrefix` in user mode
+is ignored by the umbrella check.
 
 - `identityMode: user`: CN is `<cnPrefix><identityClaim>`, by default `sso:<email>`. A session
   without that claim gets an empty CN, which Core rejects.
@@ -93,9 +101,9 @@ a `commonName` and no `fingerprint`, while nginx always sends `sso.fingerprint` 
 | `sso.publicUrl` | `""` | Required. `scheme://host[:port]`, no path. Redirect URI `<publicUrl>/oauth2/callback`; `https` makes the cookie Secure |
 | `sso.identityMode` | `user` | `user` or `group` |
 | `sso.identityClaim` | `email` | `email`, `preferred_username` or `user` (the `sub` claim, oauth2-proxy's user) |
-| `sso.cnPrefix` | `sso:` | user mode |
-| `sso.fingerprint` | `sso` | Non-empty |
-| `sso.groupCnPrefix` | `sso-group:` | group mode |
+| `sso.cnPrefix` | `sso:` | Non-empty |
+| `sso.fingerprint` | `sso` | Non-empty, not 32 or more hex digits. Every SSO `userCertificates` entry carries it |
+| `sso.groupCnPrefix` | `sso-group:` | group mode, non-empty there |
 | `sso.groupMapping` | `[]` | group mode, ordered `{group, cn}` |
 | `sso.healthPath` | `/healthz` | |
 | `sso.oauth2Proxy.image` | `quay.io/oauth2-proxy/oauth2-proxy:v7.15.5` | Exact tag, v7.15.2 or later |
@@ -146,8 +154,10 @@ control-plane:
     userCertificates:
       alice:
         commonName: "sso:alice@example.com"
+        fingerprint: sso
       bob:
         commonName: "sso:bob@example.com"
+        fingerprint: sso
 ```
 
 ## Example: group mode
@@ -180,8 +190,10 @@ control-plane:
     userCertificates:
       sso-admins:
         commonName: "sso-group:admins"
+        fingerprint: sso
       sso-users:
         commonName: "sso-group:users"
+        fingerprint: sso
 ```
 
 ## The Secret

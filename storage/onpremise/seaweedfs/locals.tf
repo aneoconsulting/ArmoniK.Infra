@@ -10,9 +10,6 @@ locals {
   use_chunk_encoding    = true
   use_checksum          = true
 
-  # To ensure image pull secrets are passed as a list with no empty string or null
-  image_pull_secrets = compact(try(tolist(var.seaweedfs.image_pull_secrets), [tostring(var.seaweedfs.image_pull_secrets)]))
-
   resources = { for key, value in var.resources : key => value if value != null }
 
   persistence = { for key, value in {

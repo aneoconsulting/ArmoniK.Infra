@@ -12,7 +12,7 @@ resource "helm_release" "seaweedfs" {
       fullnameOverride = var.name
 
       global = {
-        imagePullSecrets = local.image_pull_secrets
+        imagePullSecrets = compact([var.seaweedfs.image_pull_secrets])
         seaweedfs = {
           image = {
             name = var.seaweedfs.image

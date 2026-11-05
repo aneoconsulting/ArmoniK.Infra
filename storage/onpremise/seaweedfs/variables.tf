@@ -24,8 +24,8 @@ variable "seaweedfs" {
     helm_chart_version    = string
     image                 = optional(string, "chrislusf/seaweedfs")
     registry              = optional(string, "")
-    tag                   = optional(string)  # defaults to the chart appVersion
-    image_pull_secrets    = optional(any, []) # can be a string or a list of strings
+    tag                   = optional(string) # defaults to the chart appVersion
+    image_pull_secrets    = optional(string, "")
     node_selector         = optional(map(string), {})
     bucket_name           = optional(string, "armonik")
     persistence = optional(object({

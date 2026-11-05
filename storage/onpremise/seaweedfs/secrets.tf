@@ -18,7 +18,7 @@ resource "kubernetes_secret_v1" "s3_config" {
   }
 }
 
-# Connection information, same keys as the MinIO module
+# Connection information
 resource "kubernetes_secret_v1" "s3" {
   metadata {
     name      = "${var.name}-s3"

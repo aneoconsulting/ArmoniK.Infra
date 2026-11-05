@@ -18,7 +18,6 @@ locals {
     storageClass = var.seaweedfs.persistence.storage_class
   } : key => value if value != null }
 
-  # Same toleration convention as the other onpremise storage modules
   tolerations = [
     for key, value in var.seaweedfs.node_selector : {
       key      = key

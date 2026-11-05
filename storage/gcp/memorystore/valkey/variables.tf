@@ -132,12 +132,6 @@ variable "namespace" {
   default     = "armonik"
 }
 
-variable "object_storage_adapter" {
-  description = "Name of the ArmoniK object storage adapter (Components__ObjectStorage of Core)."
-  type        = string
-  default     = "ArmoniK.Adapters.Redis.ObjectStorage"
-}
-
 variable "adapter_class_name" {
   description = "Class name of the object storage adapter."
   type        = string

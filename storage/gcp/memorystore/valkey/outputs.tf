@@ -31,7 +31,6 @@ output "ca_certificates" {
 output "env" {
   description = "Elements to be set as environment variables"
   value = {
-    "Components__ObjectStorage"                                     = var.object_storage_adapter
     "Components__ObjectStorageAdaptorSettings__ClassName"           = var.adapter_class_name
     "Components__ObjectStorageAdaptorSettings__AdapterAbsolutePath" = var.adapter_absolute_path
     "Redis__EndpointUrl"                                            = local.url

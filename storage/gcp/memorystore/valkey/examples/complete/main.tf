@@ -49,6 +49,7 @@ module "complete_valkey" {
   source         = "../../../valkey"
   name           = "valkey-complete"
   network        = module.vpc.id
+  namespace      = "default"
   node_type      = "STANDARD_SMALL"
   replica_count  = 1
   engine_version = "VALKEY_8_0"

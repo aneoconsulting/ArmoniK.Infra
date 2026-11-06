@@ -20,5 +20,6 @@ module "simple_valkey" {
   source              = "../../../valkey"
   name                = "valkey-simple"
   network             = module.vpc.id
+  namespace           = "default"
   deletion_protection = false
 }

@@ -2,6 +2,7 @@
 
 An instance with a replica over several zones, RDB snapshots, a maintenance window and encryption with Cloud KMS,
 in a VPC with a dedicated subnet for the Private Service Connect endpoints. Uses the [valkey module](../..).
+The CA secret for Core is created in the `default` namespace of the cluster of `~/.kube/config`.
 
 ```bash
 terraform init

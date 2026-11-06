@@ -2,9 +2,9 @@
 resource "helm_release" "seaweedfs" {
   name       = var.name
   namespace  = var.namespace
-  repository = var.seaweedfs.helm_chart_repository
-  chart      = var.seaweedfs.helm_chart_name
-  version    = var.seaweedfs.helm_chart_version
+  repository = var.helm_chart_repository
+  chart      = var.helm_chart_name
+  version    = var.helm_chart_version
   timeout    = var.timeout
 
   values = [
@@ -12,10 +12,10 @@ resource "helm_release" "seaweedfs" {
       fullnameOverride = var.name
 
       global = {
-        imagePullSecrets = compact([var.seaweedfs.image_pull_secrets])
+        imagePullSecrets = compact([var.image_pull_secrets])
         seaweedfs = {
           image = {
-            name = var.seaweedfs.image
+            name = var.image
           }
           # The chart always renders this ServiceAccount: one per release avoids a clash between two releases
           serviceAccountName = var.name
@@ -25,8 +25,8 @@ resource "helm_release" "seaweedfs" {
       }
 
       image = merge(
-        { registry = var.seaweedfs.registry },
-        var.seaweedfs.tag != null ? { tag = var.seaweedfs.tag } : {},
+        { registry = var.registry },
+        var.tag != null ? { tag = var.tag } : {},
       )
 
       # The distributed components are rendered independently of allInOne
@@ -42,11 +42,11 @@ resource "helm_release" "seaweedfs" {
           enableAuth           = true
           existingConfigSecret = kubernetes_secret_v1.s3_config.metadata[0].name
           # post-install/post-upgrade hook Job
-          createBuckets = [{ name = var.seaweedfs.bucket_name }]
+          createBuckets = [{ name = var.bucket_name }]
         }
         data = local.persistence
         # The chart renders these two through tpl: they are YAML strings
-        nodeSelector = length(var.seaweedfs.node_selector) > 0 ? yamlencode(var.seaweedfs.node_selector) : ""
+        nodeSelector = length(var.node_selector) > 0 ? yamlencode(var.node_selector) : ""
         tolerations  = length(local.tolerations) > 0 ? yamlencode(local.tolerations) : ""
       }, length(local.resources) > 0 ? { resources = local.resources } : {})
     })

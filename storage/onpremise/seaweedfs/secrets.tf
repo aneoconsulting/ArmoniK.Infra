@@ -30,7 +30,7 @@ resource "kubernetes_secret_v1" "s3" {
     url                   = local.url
     host                  = local.host
     port                  = local.port
-    bucket_name           = var.seaweedfs.bucket_name
+    bucket_name           = var.bucket_name
     must_force_path_style = local.must_force_path_style
     use_chunk_encoding    = local.use_chunk_encoding
     use_check_sum         = local.use_checksum

@@ -13,13 +13,13 @@ locals {
   resources = { for key, value in var.resources : key => value if value != null }
 
   persistence = { for key, value in {
-    type         = var.seaweedfs.persistence.type
-    size         = var.seaweedfs.persistence.size
-    storageClass = var.seaweedfs.persistence.storage_class
+    type         = var.persistence_type
+    size         = var.persistence_size
+    storageClass = var.persistence_storage_class
   } : key => value if value != null }
 
   tolerations = [
-    for key, value in var.seaweedfs.node_selector : {
+    for key, value in var.node_selector : {
       key      = key
       operator = "Equal"
       value    = value

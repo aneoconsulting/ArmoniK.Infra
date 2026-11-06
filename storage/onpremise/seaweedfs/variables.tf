@@ -16,28 +16,79 @@ variable "name" {
 }
 
 # Parameters for SeaweedFS
-variable "seaweedfs" {
-  description = "Parameters of the SeaweedFS S3 payload storage, deployed as a single all-in-one pod"
-  type = object({
-    helm_chart_repository = optional(string, "https://seaweedfs.github.io/seaweedfs/helm")
-    helm_chart_name       = optional(string, "seaweedfs")
-    helm_chart_version    = string
-    image                 = optional(string, "chrislusf/seaweedfs")
-    registry              = optional(string, "")
-    tag                   = optional(string) # defaults to the chart appVersion
-    image_pull_secrets    = optional(string, "")
-    node_selector         = optional(map(string), {})
-    bucket_name           = optional(string, "armonik")
-    persistence = optional(object({
-      type          = optional(string, "emptyDir")
-      size          = optional(string)
-      storage_class = optional(string)
-    }), {})
-  })
+variable "helm_chart_repository" {
+  description = "Repository of the SeaweedFS Helm chart"
+  type        = string
+  default     = "https://seaweedfs.github.io/seaweedfs/helm"
+}
+
+variable "helm_chart_name" {
+  description = "Name of the SeaweedFS Helm chart"
+  type        = string
+  default     = "seaweedfs"
+}
+
+variable "helm_chart_version" {
+  description = "Version of the SeaweedFS Helm chart"
+  type        = string
+}
+
+variable "image" {
+  description = "SeaweedFS image name"
+  type        = string
+  default     = "chrislusf/seaweedfs"
+}
+
+variable "registry" {
+  description = "Registry of the SeaweedFS image"
+  type        = string
+  default     = ""
+}
+
+variable "tag" {
+  description = "Tag of the SeaweedFS image, defaults to the chart appVersion"
+  type        = string
+  default     = null
+}
+
+variable "image_pull_secrets" {
+  description = "Image pull secret of the SeaweedFS image"
+  type        = string
+  default     = ""
+}
+
+variable "node_selector" {
+  description = "Node selector of the SeaweedFS pod, also turned into tolerations"
+  type        = map(string)
+  default     = {}
+}
+
+variable "bucket_name" {
+  description = "Name of the S3 bucket created for ArmoniK"
+  type        = string
+  default     = "armonik"
+}
+
+variable "persistence_type" {
+  description = "Type of the SeaweedFS data volume: emptyDir or persistentVolumeClaim"
+  type        = string
+  default     = "emptyDir"
   validation {
-    condition     = contains(["emptyDir", "persistentVolumeClaim"], var.seaweedfs.persistence.type)
-    error_message = "seaweedfs.persistence.type must be either emptyDir or persistentVolumeClaim."
+    condition     = contains(["emptyDir", "persistentVolumeClaim"], var.persistence_type)
+    error_message = "persistence_type must be either emptyDir or persistentVolumeClaim."
   }
+}
+
+variable "persistence_size" {
+  description = "Size of the SeaweedFS data volume, the chart default applies when null"
+  type        = string
+  default     = null
+}
+
+variable "persistence_storage_class" {
+  description = "Storage class of the SeaweedFS persistent volume claim, the cluster default applies when null"
+  type        = string
+  default     = null
 }
 
 variable "resources" {
@@ -53,12 +104,6 @@ variable "timeout" {
   description = "Timeout in seconds of the helm release, bucket creation hook included"
   type        = number
   default     = 300
-}
-
-variable "object_storage_adapter" {
-  description = "Name of the ArmoniK adapter to use for the storage"
-  type        = string
-  default     = "ArmoniK.Adapters.S3.ObjectStorage"
 }
 
 variable "adapter_class_name" {

@@ -1,0 +1,7 @@
+# Expected failure: in ingress mode=gateway Grafana must serve /grafana itself; the umbrella's
+# path-less root_url default is refused.
+ingress:
+  mode: gateway
+  gateway:
+    enabled: true
+    gatewayClassName: example-gateway-class

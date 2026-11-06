@@ -8,7 +8,7 @@
 */}}
 {{- $ingressEgress := include "armonik.netpol.ingressEgress" . | fromYaml -}}
 
-{{- if and $networkPolicyEnabled $ingressEgress }}
+{{- if and $networkPolicyEnabled $ingressEgress (not (include "armonik.ingress.gatewayMode" .)) }}
 {{- include "armonik.netpol.render" (dict
       "context" .
       "component" "nginx-egress"

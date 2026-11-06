@@ -6,7 +6,10 @@
   Get the application URL by running these commands:
     kubectl port-forward -n armonik service/admin-gui 1080:1080
 ***********************************************************************
-{{- if list .Values "networkPolicy" "enabled" | include "armonik.utils.index" }}
+{{- if not (include "armonik.ingress.nginx" .) }}
+  mode=gateway: no nginx. The GUI is at /admin/ on the Gateway's address; with the umbrella, the
+  ArmoniK API, /grafana/ and /seq/ are routed there too.
+{{- else if list .Values "networkPolicy" "enabled" | include "armonik.utils.index" }}
   NetworkPolicy is enabled for the ingress and GUI pods. The chart's own nginx egress allows DNS
   and the GUI only: add a rule for each backend under networkPolicy.nginx.extraEgressRules.
 {{- end }}

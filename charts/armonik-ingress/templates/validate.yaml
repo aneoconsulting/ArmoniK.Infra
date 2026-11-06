@@ -1,3 +1,5 @@
+{{- $nginx := include "armonik.ingress.nginx" . -}}
+
 {{- if and .Values.mtls.enabled (not .Values.tls.enabled) -}}
 {{- fail "Invalid configuration: mTLS requires TLS to be enabled. Please set tls.enabled=true when enabling mTLS." -}}
 {{- end -}}
@@ -6,6 +8,28 @@
 {{- fail "Invalid configuration: gateway.enabled=true requires gateway.gatewayClassName to be set. Please specify a valid GatewayClass (e.g. gateway.gatewayClassName=traefik). Run 'kubectl get gatewayclasses.gateway.networking.k8s.io -A' to list available GatewayClasses" -}}
 {{- end -}}
 
-{{- if and (empty .Values.urlsSecretName) (empty .Values.control_plane_url) (empty .Values.grafana_url) (empty .Values.seq_url) -}}
-{{- fail "Invalid configuration: specify urlsSecretName or at least one of control_plane_url, grafana_url, or seq_url." -}}
+{{- if $nginx -}}
+  {{- if and (empty .Values.urlsSecretName) (empty .Values.control_plane_url) (empty .Values.grafana_url) (empty .Values.seq_url) -}}
+    {{- fail "Invalid configuration: specify urlsSecretName or at least one of control_plane_url, grafana_url, or seq_url." -}}
+  {{- end -}}
+{{- else -}}
+  {{- /* Refused rather than silently dropped, each with where it goes instead. */ -}}
+  {{- $proxy := "it targets the nginx pods; the Gateway's own proxies scale through the implementation (Envoy Gateway: EnvoyProxy envoyHpa/envoyPDB, referenced by gateway.infrastructure.parametersRef or the GatewayClass)" -}}
+  {{- $refused := dict
+        "tls.enabled" (list .Values.tls.enabled "TLS on the Gateway is not implemented yet")
+        "mtls.enabled" (list .Values.mtls.enabled "mTLS on the Gateway is not implemented yet")
+        "gateway.tls.enabled" (list (list .Values "gateway" "tls" "enabled" | include "armonik.utils.index") "TLS on the Gateway is not implemented yet")
+        "loadBalancer.enabled" (list (list .Values "loadBalancer" "enabled" | include "armonik.utils.index") "the multi-cluster load balancer is wired to nginx only for now")
+        "hpa.enabled" (list (list .Values "hpa" "enabled" | include "armonik.utils.index") $proxy)
+        "podDisruptionBudget.enabled" (list (list .Values "podDisruptionBudget" "enabled" | include "armonik.utils.index") $proxy)
+        "httpRoute.enabled" (list .Values.httpRoute.enabled "it routes to nginx; set httpRoute.parentRefs alone to attach to an existing Gateway")
+        "healthCheckPolicy.enabled" (list (list .Values "healthCheckPolicy" "enabled" | include "armonik.utils.index") "it health-checks nginx") -}}
+  {{- range $key := keys $refused | sortAlpha -}}
+    {{- $entry := index $refused $key -}}
+    {{- if index $entry 0 -}}
+      {{- printf "mode=gateway does not support %s: %s" $key (index $entry 1) | fail -}}
+    {{- end -}}
+  {{- end -}}
+  {{- /* Fails when the routes have no Gateway to attach to. */ -}}
+  {{- $_ := include "armonik.ingress.parentRefs" . -}}
 {{- end -}}

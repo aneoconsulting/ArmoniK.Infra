@@ -27,7 +27,9 @@ spec:
     app.kubernetes.io/component: control-plane
     {{- include "armonik.selectorLabels" . | nindent 4 }}
   ports:
+    {{- /* Kestrel serves cleartext HTTP/2 only on the control port: a Gateway API proxy must speak h2c. */}}
     - name: {{ .Values.service.name }}
+      appProtocol: kubernetes.io/h2c
     {{- if (eq .Values.service.serviceType "HeadLess") -}}
       {{ $firstPort := index .Values.ports 0 }}
       port: {{ $firstPort.containerPort }}

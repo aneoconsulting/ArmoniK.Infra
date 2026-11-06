@@ -9,14 +9,14 @@ The one exception is the Bitnami RabbitMQ chart, whose own `networkPolicy.enable
 
 | Component | Rendered by | Default egress | Default ingress |
 |---|---|---|---|
-| control-plane submitter + init | umbrella `armonik/templates/networkpolicies/control-plane.yaml` | MongoDB, RabbitMQ/ActiveMQ, Redis, DNS | nginx (control-port) only, see below |
+| control-plane submitter + init | umbrella `armonik/templates/networkpolicies/control-plane.yaml` | MongoDB, RabbitMQ/ActiveMQ, Redis, DNS | nginx, or the Gateway in gateway mode (control-port) only, see below |
 | control-plane submitter (chart-local) | `armonik-control-plane` | DNS | Prometheus |
 | control-plane metrics-exporter | umbrella + `armonik-control-plane` | MongoDB, DNS | KEDA (umbrella), Prometheus (chart-local) |
 | control-plane pod-deletion-cost controller | `armonik-control-plane` | Prometheus, kube-api, DNS | - |
 | compute-plane | umbrella `.../compute-plane.yaml` + `armonik-compute-plane` | MongoDB, RabbitMQ/ActiveMQ, Redis, DNS | Prometheus |
-| nginx (ingress) | `armonik-ingress` + umbrella `.../nginx-egress.yaml` | DNS, GUI (both); control-plane, Grafana, Seq (umbrella only) | any source, 8080/9080 |
-| GUI | `armonik-ingress` | DNS | nginx |
-| gateway/httpRoute health check | `armonik-ingress`, with `gateway` or `httpRoute` enabled | - | `networkPolicy.healthCheckRules` |
+| nginx (ingress), nginx mode | `armonik-ingress` + umbrella `.../nginx-egress.yaml` | DNS, GUI (both); control-plane, Grafana, Seq (umbrella only) | any source, 8080/9080 |
+| GUI | `armonik-ingress` | DNS | nginx, or the Gateway in gateway mode |
+| gateway/httpRoute health check, nginx mode | `armonik-ingress`, with `gateway` or `httpRoute` enabled | - | `networkPolicy.healthCheckRules` |
 | MongoDB operator | umbrella `.../mongodb.yaml` | MongoDB server, DNS, kube-api | MongoDB server |
 | MongoDB server | umbrella `.../mongodb.yaml` | operator, replset peers, DNS | operator, replset peers, control-plane/init, metrics-exporter, compute-plane, mongodb-exporter |
 | mongodb-exporter | umbrella `.../mongodb-exporter.yaml` | MongoDB, DNS | Prometheus |
@@ -38,6 +38,13 @@ submitter's (Prometheus);
 
 The submitter admits nginx alone: under mTLS it trusts the identity headers nginx sets. Do not open
 it to another pod, least of all the compute-plane, whose workers run user code.
+
+In `ingress.mode=gateway` there is no nginx: the submitter and the GUI admit
+`ingress.networkPolicy.gatewayPeers` instead, the Gateway's data plane as NetworkPolicy peers (proxy
+pods for Envoy Gateway, the load balancer's source ranges for a cloud-managed Gateway), and the
+render fails while it is empty. Grafana's chart admits any source by default. Seq's ingress rule in
+the umbrella values selects `app.kubernetes.io/name: ingress`: replace its peer with the same
+`gatewayPeers`.
 
 The umbrella owns the policies of MongoDB, Redis/valkey and mongodb-exporter outright, their charts
 shipping none. The other dependencies (ActiveMQ, RabbitMQ, Grafana, Seq, fluent-bit) also have

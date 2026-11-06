@@ -1,0 +1,28 @@
+# ingress mode=gateway: no nginx, Gateway API routes to the GUI (armonik-ingress), control plane,
+# Grafana and Seq (templates/gateway/routes.yaml), Envoy Gateway timeouts and NetworkPolicies.
+ingress:
+  mode: gateway
+  gateway:
+    enabled: true
+    gatewayClassName: example-gateway-class
+  envoyGateway:
+    enabled: true
+  networkPolicy:
+    enabled: true
+    gatewayPeers:
+      - namespaceSelector:
+          matchLabels:
+            kubernetes.io/metadata.name: envoy-gateway-system
+        podSelector:
+          matchLabels:
+            app.kubernetes.io/name: envoy
+networkPolicy:
+  enabled: true
+dependencies:
+  grafana:
+    grafana.ini:
+      server:
+        root_url: "%(protocol)s://%(domain)s:%(http_port)s/grafana/"
+        serve_from_sub_path: true
+    serviceMonitor:
+      path: /grafana/metrics

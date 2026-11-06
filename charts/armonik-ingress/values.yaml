@@ -6,6 +6,14 @@ nameOverride: ""
 fullnameOverride: ""
 # -- Namespace of every resource, the release namespace when empty.
 namespaceOverride: ""
+# -- `nginx`: an nginx Deployment fronts ArmoniK, the GUI and `/static/` behind it. `gateway`: no nginx;
+# a Gateway API implementation (Envoy Gateway, ...) routes straight to the backends: this chart renders
+# the GUI route (`/`, `/admin/`, `/static/`, the GUI serving `/static/` itself), the umbrella the
+# control-plane, Grafana and Seq ones. See the `gateway` block. Refused in gateway mode: TLS and mTLS
+# (not implemented yet), the multi-cluster load balancer (wired to nginx only), and `hpa` and
+# `podDisruptionBudget`, which target the nginx pods: the Gateway's proxies scale through the
+# implementation instead (Envoy Gateway: EnvoyProxy `envoyHpa`/`envoyPDB`, see `gateway.infrastructure`).
+mode: nginx
 imagePullSecrets: []
 # The nginx pod alone, on top of the chart-wide values.
 deployment:
@@ -314,26 +322,68 @@ static:
 
 
 # ==== Gateway API ====
+# nginx mode: an optional Gateway in front of nginx (GKE), with httpRoute and healthCheckPolicy below.
+# gateway mode: the entry point itself, one HTTP listener per `ports` entry (servicePort and name), so
+# clients keep their endpoints. Every route attaches to every listener, as nginx served everything on
+# both ports. Off: the routes attach to `httpRoute.parentRefs`, a Gateway someone else owns.
 gateway:
   enabled: false
+  # -- Required with enabled. `kubectl get gatewayclasses` lists the cluster's.
+  gatewayClassName: ""
+  # -- Gateway `spec.infrastructure` (`annotations`, `labels`, `parametersRef`), which the
+  # implementation copies onto what it creates, e.g. a load-balancer IP annotation on its Service.
+  infrastructure: {}
+  # -- Gateway `spec.addresses`.
+  addresses: []
   tls:
     enabled: false
+  # -- Namespaces whose routes the Gateway accepts. Same suits a single-namespace install; in gateway
+  # mode each umbrella route lives in its backend's namespace.
   allowedRoutes:
     namespaces:
       from: Same
 
+# ==== Envoy Gateway, gateway mode ====
+# Envoy cuts each call after 15 s and each stream after 5 min of silence: GetEvents streams and long
+# unary calls such as PurgeSession then fail. Standard Gateway API cannot lift the idle one, so under
+# Envoy Gateway enable this BackendTrafficPolicy (rendered by the umbrella on the control-plane route;
+# its CRD must exist). Other implementations: check their own defaults.
+envoyGateway:
+  enabled: false
+  # -- Longest silence on an ArmoniK API stream: a client waits on it for as long as its tasks run.
+  # nginx's grpc_read_timeout is 30 days.
+  streamIdleTimeout: 720h
+
 # ==== HTTPRoute ====
+# enabled: nginx mode only, a route to nginx. parentRefs (`name`, `namespace`, `sectionName`): the
+# Gateway every route of this chart and of the umbrella attaches to when gateway.enabled is off.
 httpRoute:
   enabled: false
+  parentRefs: []
 
-# ==== GKE HealthCheckPolicy ====
+# ==== GKE HealthCheckPolicy, nginx mode ====
 healthCheckPolicy:
   enabled: false
 
 networkPolicy:
   enabled: false
 
-  # Health-check NetworkPolicy, rendered with gateway.enabled or httpRoute.enabled: its podSelector
+  # -- gateway mode: NetworkPolicy peers (`from` entries) of the Gateway's data plane, admitted by the
+  # GUI here and by the control plane in the umbrella. Required once either renders its policy. Its
+  # shape depends on the implementation: proxy pods for Envoy Gateway, the load balancer's source
+  # ranges (ipBlock) for a cloud-managed one. Envoy Gateway, proxies in its own namespace:
+  # gatewayPeers:
+  #   - namespaceSelector:
+  #       matchLabels:
+  #         kubernetes.io/metadata.name: envoy-gateway-system
+  #     podSelector:
+  #       matchLabels:
+  #         app.kubernetes.io/name: envoy
+  #         gateway.envoyproxy.io/owning-gateway-name: <gateway name>
+  #         gateway.envoyproxy.io/owning-gateway-namespace: <gateway namespace>
+  gatewayPeers: []
+
+  # Health-check NetworkPolicy, nginx mode with gateway.enabled or httpRoute.enabled: its podSelector
   # and its ingress rules (each a full rule with "from" and "ports").
   healthCheckPodSelector: {}
   healthCheckRules: []

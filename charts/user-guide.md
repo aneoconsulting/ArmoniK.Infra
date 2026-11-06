@@ -33,7 +33,7 @@ flowchart TD
 | `armonik-operators` | KEDA, cert-manager, External Secrets, Percona operator, Prometheus stack | `global.armonik.operators.<op>.deploy` |
 | `armonik-control-plane` | Submitter, metrics-exporter, init job | `control-plane.enabled` |
 | `armonik-compute-plane` | Partitions (polling-agent + worker), one Deployment each | `compute-plane.enabled` |
-| `armonik-ingress` | Nginx (gRPC/HTTP), admin GUI, TLS/mTLS | `ingress.enabled` |
+| `armonik-ingress` | Nginx (gRPC/HTTP) or Gateway API routes (`ingress.mode`), admin GUI, TLS/mTLS (nginx) | `ingress.enabled` |
 | `armonik-dependencies` | MongoDB, Redis, ActiveMQ, RabbitMQ, Grafana, Fluent Bit, Seq | `dependencies.<name>.enabled` |
 | `armonik-common` | Library chart: shared helpers and `global.armonik` defaults | none (not deployable) |
 
@@ -238,6 +238,47 @@ conf:
 ingress:
   enabled: false
 ```
+
+### Example 3b — Gateway API instead of nginx
+
+`ingress.mode: gateway` drops nginx and routes through a Gateway API implementation already
+installed in the cluster (Envoy Gateway here). One address, the nginx ports, path-based routing:
+
+| Path | Backend |
+| --- | --- |
+| `/` (redirect), `/admin/`, `/static/` | admin GUI, which serves `/static/` itself |
+| `/grafana/` | Grafana, serving its own sub-path |
+| `/seq/` | Seq, prefix stripped |
+| anything else (the ArmoniK API, gRPC or the GUI's grpc-web) | control plane, over h2c |
+
+```yaml
+ingress:
+  mode: gateway
+  gateway:
+    enabled: true                 # or httpRoute.parentRefs to attach to an existing Gateway
+    gatewayClassName: envoy
+    infrastructure:
+      annotations: {}             # e.g. a load-balancer IP annotation
+  envoyGateway:
+    enabled: true                 # lifts Envoy's 15 s call and 5 min stream idle timeouts
+  networkPolicy:
+    gatewayPeers: []              # the Gateway's proxies, once NetworkPolicies are on
+dependencies:
+  grafana:
+    grafana.ini:
+      server:
+        root_url: "%(protocol)s://%(domain)s:%(http_port)s/grafana/"   # its public URL, ending in /grafana/
+        serve_from_sub_path: true
+    serviceMonitor:
+      path: /grafana/metrics
+  seq:
+    baseURI: http://<gateway address>:5000/seq/
+```
+
+Not supported yet in this mode, and refused at render: TLS and mTLS, the multi-cluster load
+balancer. The nginx `hpa` and `podDisruptionBudget` have their counterpart on the implementation's
+side (Envoy Gateway: `EnvoyProxy` `envoyHpa` and `envoyPDB`, through
+`ingress.gateway.infrastructure.parametersRef`).
 
 ### Example 4 — Remove a default partition
 

@@ -13,3 +13,10 @@ fluentBit: {{ include "armonik.utils.index" (list .Values "dependencies" "fluent
 seq: {{ include "armonik.utils.index" (list .Values "dependencies" "seq" "enabled") | empty | not }}
 {{- /* Operators are not listed here: see the armonik.operators helper. */}}
 {{- end }}
+
+{{/* "true" when the ingress subchart runs in gateway mode (no nginx), else empty. */}}
+{{- define "armonik.ingress.gatewayMode" -}}
+  {{- with .Subcharts.ingress -}}
+    {{- include "armonik.ingress.nginx" . | empty | ternary "true" "" -}}
+  {{- end -}}
+{{- end -}}

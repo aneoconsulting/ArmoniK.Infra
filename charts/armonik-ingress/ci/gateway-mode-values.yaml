@@ -1,0 +1,18 @@
+# mode=gateway: no nginx; the Gateway (one listener per port), the GUI route and the static ConfigMap
+# mounted in the GUI. No urlsSecretName: nginx-only.
+mode: gateway
+gateway:
+  enabled: true
+  gatewayClassName: example-gateway-class
+  infrastructure:
+    annotations:
+      example.com/load-balancer-ip: 192.0.2.10
+networkPolicy:
+  enabled: true
+  gatewayPeers:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: envoy-gateway-system
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/name: envoy

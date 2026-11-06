@@ -367,20 +367,25 @@ ports:
 {{- end -}}
 
 {{/*
-  Allows nginx as a source on the control-plane's control port.
+  Allows the ingress as a source on the control-plane's control port: nginx, or in gateway mode the
+  Gateway's data plane (ingress networkPolicy.gatewayPeers).
 */}}
 {{- define "armonik.netpol.rule.ingressFrom" -}}
   {{- with .Subcharts.ingress -}}
     {{- $controlPort := include "armonik.netpol.controlPlane.controlPort" $ | int -}}
-    {{- $ns := include "armonik.netpol.namespaceSelector" . -}}
-    {{- $podSelector := dict "matchLabels" (dict "app.kubernetes.io/component" "ingress") | toYaml -}}
-    {{- list $ns $podSelector $controlPort "from" | include "armonik.netpol.rule.peerOnPort" -}}
+    {{- if include "armonik.ingress.nginx" . -}}
+      {{- $ns := include "armonik.netpol.namespaceSelector" . -}}
+      {{- $podSelector := dict "matchLabels" (dict "app.kubernetes.io/component" "ingress") | toYaml -}}
+      {{- list $ns $podSelector $controlPort "from" | include "armonik.netpol.rule.peerOnPort" -}}
+    {{- else -}}
+      {{- dict "from" (include "armonik.ingress.gatewayPeers" . | fromYamlArray) "ports" (list (dict "protocol" "TCP" "port" $controlPort)) | toYaml -}}
+    {{- end -}}
   {{- end -}}
 {{- end -}}
 
 
 {{/*
-  Submitter ingress: nginx only, the submitter trusting the identity headers nginx sets under mTLS.
+  Submitter ingress: the ingress only, the submitter trusting the identity headers nginx sets under mTLS.
   Prometheus scraping is armonik-control-plane's own policy.
 */}}
 {{- define "armonik.netpol.rule.submitterIngress" -}}

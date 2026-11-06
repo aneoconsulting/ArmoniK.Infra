@@ -44,7 +44,13 @@ env:
 envFrom:
   {{- toYaml . | nindent 2 }}
 {{- end }}
-{{- with $gui.extraVolumeMounts }}
+{{- $mounts := $gui.extraVolumeMounts | default list -}}
+{{- if not (include "armonik.ingress.nginx" .root) -}}
+  {{- /* gateway mode: the GUI's nginx serves its html root, /static/ included. */ -}}
+  {{- $static := dict "name" "static" "mountPath" "/usr/share/nginx/html/static" "readOnly" true -}}
+  {{- $mounts = prepend $mounts $static -}}
+{{- end }}
+{{- with $mounts }}
 volumeMounts:
   {{- toYaml . | nindent 2 }}
 {{- end }}
@@ -90,7 +96,12 @@ securityContext:
   {{- toYaml . | nindent 2 }}
 {{- end }}
 enableServiceLinks: true
-{{- with $gui.extraVolumes }}
+{{- $volumes := $gui.extraVolumes | default list -}}
+{{- if not (include "armonik.ingress.nginx" $root) -}}
+  {{- $static := dict "name" "static" "configMap" (dict "name" (include "armonik.fullname" $root | printf "%s-static") "defaultMode" 420 "optional" false) -}}
+  {{- $volumes = prepend $volumes $static -}}
+{{- end }}
+{{- with $volumes }}
 volumes:
   {{- toYaml . | nindent 2 }}
 {{- end }}

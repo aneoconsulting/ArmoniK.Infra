@@ -4,8 +4,8 @@ output "arn" {
 }
 
 output "cluster_endpoint" {
-  description = "Endpoint for EKS control plane"
-  value       = module.eks.cluster_endpoint
+  description = "Endpoint for EKS control plane, available once the cluster access policies are in effect"
+  value       = time_sleep.access_propagation.triggers["cluster_endpoint"]
 }
 
 output "aws_eks_module" {

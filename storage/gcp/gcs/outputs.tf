@@ -60,6 +60,8 @@ output "env" {
 }
 
 output "env_secret" {
-  description = "Secrets to be set as environment variables: the HMAC credentials of the S3 adapter of Core when username and password are set, none otherwise"
-  value       = kubernetes_secret.s3_user_credentials[*].metadata[0].name
+  description = "Secrets to be set as environment variables: the HMAC credentials of the S3 adapter of Core"
+  value = [
+    kubernetes_secret.s3_user_credentials.metadata[0].name
+  ]
 }

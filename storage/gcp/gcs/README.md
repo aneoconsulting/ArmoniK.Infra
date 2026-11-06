@@ -8,7 +8,8 @@ This module creates:
 * Optional lifecycle rules, versioning or retention policy, Autoclass, soft delete retention, access logs, website,
   CORS and dual-region placement.
 * Optional encryption with a Cloud KMS key, IAM roles and ACLs on the bucket.
-* Optionally, a Kubernetes secret with the HMAC credentials of the S3 adapter of Core.
+* A Kubernetes secret with the HMAC credentials of the S3 adapter of Core, empty unless `username` and `password`
+  are set.
 
 > Note: set `soft_delete_retention_days = 0` on the object storage bucket, whose deleted objects are not worth
 > paying 7 more days for.
@@ -38,7 +39,7 @@ module "object_storage" {
 ### S3 adapter
 
 Core reaches the bucket through the XML API of GCS with an HMAC key. Select the adapter and give the key: the module
-then creates the Kubernetes secret holding it, listed in `env_secret`.
+stores it in the Kubernetes secret listed in `env_secret`.
 
 ```hcl
 resource "google_storage_hmac_key" "core" {

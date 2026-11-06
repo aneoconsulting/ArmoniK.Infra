@@ -215,15 +215,15 @@ variable "namespace" {
 }
 
 variable "username" {
-  description = "HMAC key access id for the S3 adapter of Core, with password to create its Kubernetes secret. The native GCS adapter uses Application Default Credentials (Workload Identity) instead."
+  description = "HMAC key access id for the S3 adapter of Core, stored in its Kubernetes secret. The native GCS adapter uses Application Default Credentials (Workload Identity) instead."
   type        = string
-  default     = null
+  default     = ""
 }
 
 variable "password" {
-  description = "HMAC key secret for the S3 adapter of Core, with username to create its Kubernetes secret. The native GCS adapter uses Application Default Credentials (Workload Identity) instead."
+  description = "HMAC key secret for the S3 adapter of Core, stored in its Kubernetes secret. The native GCS adapter uses Application Default Credentials (Workload Identity) instead."
   type        = string
-  default     = null
+  default     = ""
 }
 
 variable "adapter_class_name" {

@@ -53,3 +53,8 @@ output "windows_configmaps" {
     config  = var.fluent_bit_windows != null ? kubernetes_config_map.fluent_bit_config_windows[0].metadata[0].name : ""
   }
 }
+
+output "service_account" {
+  description = "Whether the module creates the fluent-bit service account, which only a DaemonSet uses. It depends on input variables alone, so it is known at plan time and can drive a count."
+  value       = local.service_account
+}

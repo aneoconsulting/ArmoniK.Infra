@@ -69,26 +69,19 @@ variable "bucket_name" {
   default     = "armonik"
 }
 
-variable "persistence_type" {
-  description = "Type of the SeaweedFS data volume: emptyDir or persistentVolumeClaim"
-  type        = string
-  default     = "emptyDir"
+variable "persistence" {
+  description = "Data volume of SeaweedFS: emptyDir by default, or persistentVolumeClaim; size and storage_class default to the chart and cluster defaults"
+  type = object({
+    type          = optional(string, "emptyDir")
+    size          = optional(string)
+    storage_class = optional(string)
+  })
+  default  = {}
+  nullable = false
   validation {
-    condition     = contains(["emptyDir", "persistentVolumeClaim"], var.persistence_type)
-    error_message = "persistence_type must be either emptyDir or persistentVolumeClaim."
+    condition     = contains(["emptyDir", "persistentVolumeClaim"], var.persistence.type)
+    error_message = "persistence.type must be either emptyDir or persistentVolumeClaim."
   }
-}
-
-variable "persistence_size" {
-  description = "Size of the SeaweedFS data volume, the chart default applies when null"
-  type        = string
-  default     = null
-}
-
-variable "persistence_storage_class" {
-  description = "Storage class of the SeaweedFS persistent volume claim, the cluster default applies when null"
-  type        = string
-  default     = null
 }
 
 variable "resources" {

@@ -13,9 +13,9 @@ locals {
   resources = { for key, value in var.resources : key => value if value != null }
 
   persistence = { for key, value in {
-    type         = var.persistence_type
-    size         = var.persistence_size
-    storageClass = var.persistence_storage_class
+    type         = var.persistence.type
+    size         = var.persistence.size
+    storageClass = var.persistence.storage_class
   } : key => value if value != null }
 
   tolerations = [

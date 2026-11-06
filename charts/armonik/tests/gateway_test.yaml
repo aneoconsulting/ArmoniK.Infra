@@ -1,0 +1,173 @@
+suite: ingress gateway mode
+release:
+  name: t
+  namespace: default
+templates:
+  - templates/gateway/routes.yaml
+  - templates/secrets/armonik-urls.yaml
+  - templates/networkpolicies/control-plane.yaml
+  - templates/networkpolicies/nginx-egress.yaml
+  - templates/validate.yaml
+values:
+  - ../ci/gateway-values.yaml
+tests:
+  - it: routes everything else to the control plane, Grafana and Seq, plus the Envoy Gateway policy
+    template: templates/gateway/routes.yaml
+    asserts:
+      - hasDocuments:
+          count: 4
+      - equal:
+          path: spec.rules
+          value:
+            - matches:
+                - path:
+                    type: PathPrefix
+                    value: /
+              backendRefs:
+                - name: t-control-plane
+                  port: 1080
+        documentIndex: 0
+      - equal:
+          path: spec.parentRefs
+          value:
+            - name: t-ingress
+              namespace: default
+        documentSelector:
+          path: metadata.name
+          value: t-grafana
+      - equal:
+          path: spec.rules[0].backendRefs
+          value:
+            - name: t-grafana
+              port: 80
+        documentSelector:
+          path: metadata.name
+          value: t-grafana
+      - equal:
+          path: spec.rules[1].filters[0].urlRewrite.path.replacePrefixMatch
+          value: /
+        documentSelector:
+          path: metadata.name
+          value: t-seq
+      - equal:
+          path: spec.timeout.http
+          value:
+            requestTimeout: 0s
+            streamIdleTimeout: 720h
+        documentSelector:
+          path: kind
+          value: BackendTrafficPolicy
+
+  - it: renders no Envoy Gateway policy unless asked
+    template: templates/gateway/routes.yaml
+    set:
+      ingress:
+        envoyGateway:
+          enabled: false
+    asserts:
+      - hasDocuments:
+          count: 3
+      - isKind:
+          of: HTTPRoute
+
+  - it: attaches to the Gateway named in ingress.httpRoute.parentRefs
+    template: templates/gateway/routes.yaml
+    set:
+      ingress:
+        gateway:
+          enabled: false
+        httpRoute:
+          parentRefs:
+            - name: shared
+              namespace: gateways
+    documentSelector:
+      path: metadata.name
+      value: t-seq
+    asserts:
+      - equal:
+          path: spec.parentRefs
+          value:
+            - name: shared
+              namespace: gateways
+
+  - it: renders no route in nginx mode
+    template: templates/gateway/routes.yaml
+    set:
+      ingress:
+        mode: nginx
+      dependencies:
+        grafana:
+          grafana.ini:
+            server:
+              root_url: http://grafana
+              serve_from_sub_path: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: renders no URLs Secret, which only nginx reads
+    template: templates/secrets/armonik-urls.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: renders no nginx egress policy
+    template: templates/networkpolicies/nginx-egress.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: admits the Gateway's data plane into the control plane
+    template: templates/networkpolicies/control-plane.yaml
+    documentSelector:
+      path: metadata.name
+      value: t-armonik-control-plane-submitter-connectivity
+    asserts:
+      - equal:
+          path: spec.ingress
+          value:
+            - from:
+                - namespaceSelector:
+                    matchLabels:
+                      kubernetes.io/metadata.name: envoy-gateway-system
+                  podSelector:
+                    matchLabels:
+                      app.kubernetes.io/name: envoy
+              ports:
+                - protocol: TCP
+                  port: 1080
+
+  - it: fails on a path-less Grafana root_url
+    template: templates/validate.yaml
+    set:
+      dependencies:
+        grafana:
+          grafana.ini:
+            server:
+              root_url: http://grafana
+    asserts:
+      - failedTemplate:
+          errorPattern: "ingress.mode=gateway routes /grafana to Grafana as is"
+
+  - it: fails when Grafana does not serve its sub-path
+    template: templates/validate.yaml
+    set:
+      dependencies:
+        grafana:
+          grafana.ini:
+            server:
+              serve_from_sub_path: false
+    asserts:
+      - failedTemplate:
+          errorPattern: "serve_from_sub_path=true"
+
+  - it: fails when the Grafana ServiceMonitor scrapes /metrics
+    template: templates/validate.yaml
+    set:
+      dependencies:
+        grafana:
+          serviceMonitor:
+            path: /metrics
+    asserts:
+      - failedTemplate:
+          errorPattern: "serviceMonitor.path=/grafana/metrics"

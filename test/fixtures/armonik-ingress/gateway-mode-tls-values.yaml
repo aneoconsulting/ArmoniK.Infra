@@ -1,0 +1,7 @@
+# Expected failure: TLS configures nginx, refused in mode=gateway.
+mode: gateway
+gateway:
+  enabled: true
+  gatewayClassName: example-gateway-class
+tls:
+  enabled: true

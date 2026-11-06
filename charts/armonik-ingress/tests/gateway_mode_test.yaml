@@ -1,0 +1,194 @@
+suite: gateway mode
+templates:
+  - armonik-nginx-conf.yaml
+  - deployments/nginx.yaml
+  - deployments/gui.yaml
+  - services/ingress.yaml
+  - secrets/secret-store.yaml
+  - gateway/gateway.yaml
+  - gateway/gui-route.yaml
+  - networkpolicy.yaml
+  - validate.yaml
+values:
+  - ../ci/gateway-mode-values.yaml
+tests:
+  - it: renders no nginx Deployment, Service, conf or URLs SecretStore
+    templates:
+      - armonik-nginx-conf.yaml
+      - deployments/nginx.yaml
+      - services/ingress.yaml
+      - secrets/secret-store.yaml
+    set:
+      global:
+        armonik:
+          operators:
+            externalSecrets:
+              available: true
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: renders one HTTP listener per ingress port, with the infrastructure block
+    template: gateway/gateway.yaml
+    asserts:
+      - isKind:
+          of: Gateway
+      - equal:
+          path: apiVersion
+          value: gateway.networking.k8s.io/v1
+      - equal:
+          path: spec.listeners
+          value:
+            - name: ingress-grpc
+              port: 5001
+              protocol: HTTP
+              allowedRoutes:
+                namespaces:
+                  from: Same
+            - name: ingress-http
+              port: 5000
+              protocol: HTTP
+              allowedRoutes:
+                namespaces:
+                  from: Same
+      - equal:
+          path: spec.infrastructure.annotations
+          value:
+            example.com/load-balancer-ip: 192.0.2.10
+
+  - it: routes /admin and /static to the GUI and redirects / to the English GUI
+    template: gateway/gui-route.yaml
+    asserts:
+      - isKind:
+          of: HTTPRoute
+      - equal:
+          path: spec.parentRefs
+          value:
+            - name: RELEASE-NAME-armonik-ingress
+              namespace: NAMESPACE
+      - contains:
+          path: spec.rules
+          content:
+            matches:
+              - path:
+                  type: Exact
+                  value: /
+            filters:
+              - type: RequestRedirect
+                requestRedirect:
+                  path:
+                    type: ReplaceFullPath
+                    replaceFullPath: /admin/en/
+                  statusCode: 302
+      - contains:
+          path: spec.rules
+          content:
+            matches:
+              - path:
+                  type: PathPrefix
+                  value: /admin
+              - path:
+                  type: PathPrefix
+                  value: /static
+            backendRefs:
+              - name: RELEASE-NAME-armonik-ingress-gui
+                port: 1080
+
+  - it: attaches to httpRoute.parentRefs when the chart renders no Gateway
+    template: gateway/gui-route.yaml
+    set:
+      gateway:
+        enabled: false
+      httpRoute:
+        parentRefs:
+          - name: shared
+            namespace: gateways
+            sectionName: http
+          - name: local
+    asserts:
+      - equal:
+          path: spec.parentRefs
+          value:
+            - name: shared
+              namespace: gateways
+              sectionName: http
+            - name: local
+              namespace: NAMESPACE
+
+  - it: mounts the static ConfigMap in the GUI, which serves /static/
+    template: deployments/gui.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: static
+            mountPath: /usr/share/nginx/html/static
+            readOnly: true
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: static
+            configMap:
+              name: RELEASE-NAME-armonik-ingress-static
+              defaultMode: 420
+              optional: false
+
+  - it: leaves the GUI pod as is in nginx mode
+    template: deployments/gui.yaml
+    set:
+      mode: nginx
+      urlsSecretName: example-urls
+    asserts:
+      - notExists:
+          path: spec.template.spec.volumes
+      - notExists:
+          path: spec.template.spec.containers[0].volumeMounts
+
+  - it: admits the Gateway's data plane into the GUI and renders no nginx policy
+    template: networkpolicy.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-armonik-ingress-gui
+      - equal:
+          path: spec.ingress
+          value:
+            - from:
+                - namespaceSelector:
+                    matchLabels:
+                      kubernetes.io/metadata.name: envoy-gateway-system
+                  podSelector:
+                    matchLabels:
+                      app.kubernetes.io/name: envoy
+              ports:
+                - protocol: TCP
+                  port: 1080
+
+  - it: fails when NetworkPolicies are on without gatewayPeers
+    template: networkpolicy.yaml
+    set:
+      networkPolicy:
+        gatewayPeers: []
+    asserts:
+      - failedTemplate:
+          errorPattern: "requires ingress networkPolicy.gatewayPeers"
+
+  - it: refuses the nginx autoscaler and points at the implementation's
+    template: validate.yaml
+    set:
+      hpa:
+        enabled: true
+    asserts:
+      - failedTemplate:
+          errorPattern: "mode=gateway does not support hpa.enabled: it targets the nginx pods"
+
+  - it: refuses the route to nginx
+    template: validate.yaml
+    set:
+      httpRoute:
+        enabled: true
+    asserts:
+      - failedTemplate:
+          errorPattern: "mode=gateway does not support httpRoute.enabled"

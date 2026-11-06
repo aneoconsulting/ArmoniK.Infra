@@ -118,6 +118,8 @@ ok ingress-tls-mtls       armonik-ingress       -f charts/armonik-ingress/ci/tls
 ok ingress-gateway        armonik-ingress       -f charts/armonik-ingress/ci/gateway-values.yaml
 ok ingress-lb             armonik-ingress       -f charts/armonik-ingress/ci/lb-values.yaml
 ok ingress-patches        armonik-ingress       -f charts/armonik-ingress/ci/patch-values.yaml
+ok ingress-gateway-mode   armonik-ingress       -f charts/armonik-ingress/ci/gateway-mode-values.yaml
+ok umbrella-gateway-mode  armonik               -f charts/armonik/ci/gateway-values.yaml
 ok activemq-pdb           activemq              -f charts/activemq/ci/pdb-values.yaml
 ok activemq-tls           activemq              -f charts/activemq/ci/tls-values.yaml
 ok activemq-patches       activemq              -f charts/activemq/ci/patch-values.yaml
@@ -136,6 +138,15 @@ fail_with ingress-mtls-without-tls armonik-ingress \
 fail_with ingress-httproute-no-gateway armonik-ingress \
   "httpRoute.enabled=true requires either gateway.enabled=true or httpRoute.parentRefs" \
   -f test/fixtures/armonik-ingress/httproute-no-gateway-values.yaml
+fail_with ingress-gateway-mode-no-parent armonik-ingress \
+  "mode=gateway requires gateway.enabled=true or httpRoute.parentRefs" \
+  -f test/fixtures/armonik-ingress/gateway-mode-no-parent-values.yaml
+fail_with ingress-gateway-mode-tls armonik-ingress \
+  "mode=gateway does not support tls.enabled" \
+  -f test/fixtures/armonik-ingress/gateway-mode-tls-values.yaml
+fail_with umbrella-gateway-grafana-root-url armonik \
+  "ingress.mode=gateway routes /grafana to Grafana as is" \
+  -f test/fixtures/armonik/gateway-grafana-root-url-values.yaml
 fail_with control-authz-without-authn armonik-control-plane \
   "Authorization requires authentication to be enabled" \
   -f test/fixtures/armonik-control-plane/authz-values.yaml

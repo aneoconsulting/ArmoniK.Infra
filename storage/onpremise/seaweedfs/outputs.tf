@@ -65,9 +65,16 @@ output "env" {
   depends_on = [helm_release.seaweedfs]
 }
 
-output "env_secret" {
-  description = "Secrets to be set as environment variables"
-  value = [
-    kubernetes_secret_v1.s3_user_credentials.metadata[0].name
-  ]
+output "env_from_secret" {
+  description = "Environment variables from secrets"
+  value = {
+    "S3__Login" = {
+      secret = kubernetes_secret_v1.s3.metadata[0].name
+      field  = "username"
+    }
+    "S3__Password" = {
+      secret = kubernetes_secret_v1.s3.metadata[0].name
+      field  = "password"
+    }
+  }
 }

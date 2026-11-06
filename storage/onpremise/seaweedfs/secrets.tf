@@ -36,27 +36,3 @@ resource "kubernetes_secret_v1" "s3" {
     use_check_sum         = local.use_checksum
   }
 }
-
-resource "kubernetes_secret_v1" "s3_user" {
-  metadata {
-    name      = "${var.name}-s3-user"
-    namespace = var.namespace
-  }
-  data = {
-    username = random_string.access_key.result
-    password = random_password.secret_key.result
-  }
-  type = "kubernetes.io/basic-auth"
-}
-
-# Credentials injected in the Core as environment variables
-resource "kubernetes_secret_v1" "s3_user_credentials" {
-  metadata {
-    name      = "${var.name}-s3-user-credentials"
-    namespace = var.namespace
-  }
-  data = {
-    "S3__Login"    = random_string.access_key.result
-    "S3__Password" = random_password.secret_key.result
-  }
-}

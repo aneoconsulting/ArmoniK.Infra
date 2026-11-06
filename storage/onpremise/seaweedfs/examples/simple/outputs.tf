@@ -13,7 +13,7 @@ output "env" {
   value       = module.simple_seaweedfs_instance.env
 }
 
-output "env_secret" {
-  description = "Secrets to be set as environment variables"
-  value       = module.simple_seaweedfs_instance.env_secret
+output "env_from_secret" {
+  description = "Environment variables from secrets"
+  value       = module.simple_seaweedfs_instance.env_from_secret
 }

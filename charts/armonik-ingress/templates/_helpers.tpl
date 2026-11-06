@@ -59,3 +59,53 @@ without a gateway), else 8080/9080.
     {{ .Values.service.type }}
   {{- end -}}
 {{- end -}}
+
+{{/* "true" in nginx mode, empty in gateway mode; fails on any other mode. */}}
+{{- define "armonik.ingress.nginx" -}}
+  {{- $mode := .Values.mode | default "nginx" -}}
+  {{- if not (has $mode (list "nginx" "gateway")) -}}
+    {{- printf "mode must be nginx or gateway, got %q" $mode | fail -}}
+  {{- end -}}
+  {{- eq $mode "nginx" | ternary "true" "" -}}
+{{- end -}}
+
+{{/* Name of the Gateway this chart renders. */}}
+{{- define "armonik.ingress.gateway.name" -}}
+  {{- .Values.gateway.name | default (include "armonik.fullname" .) -}}
+{{- end -}}
+
+{{/*
+gateway mode: parentRefs of every route, the chart's Gateway or httpRoute.parentRefs. No sectionName
+on the chart's Gateway: a route attaches to all its listeners. Also called by the umbrella with this
+chart's scope (.Subcharts.ingress).
+*/}}
+{{- define "armonik.ingress.parentRefs" -}}
+{{- if .Values.gateway.enabled }}
+- name: {{ include "armonik.ingress.gateway.name" . | quote }}
+  namespace: {{ include "armonik.namespace" . | quote }}
+{{- else }}
+  {{- $refs := list .Values "httpRoute" "parentRefs" | include "armonik.utils.index" | fromYamlArray -}}
+  {{- if not $refs -}}
+    {{- fail "mode=gateway requires gateway.enabled=true or httpRoute.parentRefs naming an existing Gateway" -}}
+  {{- end -}}
+  {{- range $refs }}
+- name: {{ required "httpRoute.parentRefs[].name is required" .name | quote }}
+  namespace: {{ .namespace | default (include "armonik.namespace" $) | quote }}
+    {{- with .sectionName }}
+  sectionName: {{ . | quote }}
+    {{- end }}
+  {{- end }}
+{{- end }}
+{{- end -}}
+
+{{/*
+gateway mode: networkPolicy.gatewayPeers as a "from" list. Fails when empty: the backends would
+admit nothing.
+*/}}
+{{- define "armonik.ingress.gatewayPeers" -}}
+  {{- $peers := list .Values "networkPolicy" "gatewayPeers" | include "armonik.utils.index" | fromYamlArray -}}
+  {{- if not $peers -}}
+    {{- fail "mode=gateway with NetworkPolicies requires ingress networkPolicy.gatewayPeers: the Gateway's data plane, as NetworkPolicy peers (see values.yaml)" -}}
+  {{- end -}}
+  {{- toYaml $peers -}}
+{{- end -}}

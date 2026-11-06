@@ -1,3 +1,5 @@
+{{- /* nginx mode only. */ -}}
+{{- if include "armonik.ingress.nginx" . }}
 {{- $image := list $ "image" .Values.image | include "armonik.utils.imageConf" | fromYaml }}
 {{- $ctx := dict "root" $ "image" $image -}}
 {{- $podSpec := list (include "armonik.ingress.nginx.podSpec" $ctx) .Values.podSpecPatch "podSpecPatch" | include "armonik.utils.patch" -}}
@@ -42,3 +44,5 @@ spec:
         {{- toYaml . | nindent 8 }}
         {{- end }}
     spec: {{- $podSpec | nindent 6 }}
+
+{{- end }}

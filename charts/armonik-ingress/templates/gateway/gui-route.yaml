@@ -1,0 +1,56 @@
+{{- /*
+gateway mode: the GUI and /static/, which the GUI serves from the static ConfigMap it mounts. The
+umbrella routes the rest (/armonik.*, /grafana, /seq). Exact matches outrank the prefixes, here and
+across routes. Gateway API has no Accept-Language match: / goes to the English GUI.
+*/ -}}
+{{- if not (include "armonik.ingress.nginx" .) }}
+{{- $guiPort := 0 }}
+{{- range .Values.gui.ports }}
+  {{- if eq .name "gui" }}
+    {{- $guiPort = eq $.Values.gui.service.type "HeadLess" | ternary .containerPort .servicePort }}
+  {{- end }}
+{{- end }}
+{{- if not $guiPort }}
+  {{- fail "gui.ports needs an entry named gui for the GUI route" }}
+{{- end }}
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: {{ include "armonik.fullname" . | printf "%s-gui" | trunc 63 | trimSuffix "-" | quote }}
+  namespace: {{ include "armonik.namespace" . | quote }}
+  labels:
+    app.kubernetes.io/component: gui
+    {{- include "armonik.labels" . | nindent 4 }}
+  {{- with .Values.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  parentRefs:
+    {{- include "armonik.ingress.parentRefs" . | trim | nindent 4 }}
+  rules:
+    {{- $redirects := dict "/" "/admin/en/" "/admin" "/admin/en/" "/admin/" "/admin/en/" "/admin/en" "/admin/en/" "/admin/fr" "/admin/fr/" }}
+    {{- range $from := keys $redirects | sortAlpha }}
+    - matches:
+        - path:
+            type: Exact
+            value: {{ $from | quote }}
+      filters:
+        - type: RequestRedirect
+          requestRedirect:
+            path:
+              type: ReplaceFullPath
+              replaceFullPath: {{ index $redirects $from | quote }}
+            statusCode: 302
+    {{- end }}
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /admin
+        - path:
+            type: PathPrefix
+            value: /static
+      backendRefs:
+        - name: {{ include "armonik.fullname" . | printf "%s-gui" | trunc 63 | trimSuffix "-" | quote }}
+          port: {{ $guiPort }}
+{{- end }}

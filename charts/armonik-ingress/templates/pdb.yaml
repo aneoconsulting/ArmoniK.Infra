@@ -1,1 +1,5 @@
+{{- /* nginx mode only. */ -}}
+{{- if include "armonik.ingress.nginx" . }}
 {{- dict "root" $ "component" "ingress" "values" .Values.podDisruptionBudget | include "armonik.pdb" }}
+
+{{- end }}

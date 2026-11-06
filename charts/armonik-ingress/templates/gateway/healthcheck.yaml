@@ -1,3 +1,5 @@
+{{- /* nginx mode only. */ -}}
+{{- if include "armonik.ingress.nginx" . }}
 {{- if .Values.healthCheckPolicy.enabled }}
 apiVersion: networking.gke.io/v1
 kind: HealthCheckPolicy
@@ -40,4 +42,6 @@ spec:
     kind: Service
     name: {{ list .Values "healthCheckPolicy" "targetRef" "name" | include "armonik.utils.index" | default (include "armonik.fullname" .) | quote }}
     namespace: {{ include "armonik.namespace" . | quote }}
+{{- end }}
+
 {{- end }}

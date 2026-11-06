@@ -19,12 +19,12 @@ dependencies:
   version: 16.0.14
 - name: grafana
   repository: https://grafana-community.github.io/helm-charts
-  version: 14.3.0
+  version: 14.4.0
 - name: fluent-bit
   repository: https://fluent.github.io/helm-charts
   version: 0.58.3
 - name: seq
   repository: https://helm.datalust.co
   version: 2026.1.1
-digest: sha256:e68cdcfe86087e8a45dd34bf1df0b1379ddae879681576cbdbbdb29837798864
-generated: "2026-11-02T14:46:37.380249752Z"
+digest: sha256:93fea3e6f48b424510352cbfc6f55bb72f7b38872439921d80ac1e0858900b80
+generated: "2026-11-06T14:48:17.334107583Z"

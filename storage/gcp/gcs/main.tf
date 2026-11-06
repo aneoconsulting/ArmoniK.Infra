@@ -8,6 +8,13 @@ check "deprecated_default_kms_key_name" {
   }
 }
 
+check "deprecated_object_storage_adapter" {
+  assert {
+    condition     = var.object_storage_adapter == null
+    error_message = "The object_storage_adapter input of the storage/gcp/gcs module is unused, Core no longer reading Components__ObjectStorage, and will be removed."
+  }
+}
+
 locals {
   # kms_key is known at plan time even when the key is created in the same apply, default_kms_key_name is not
   kms_enabled = var.kms_key != null ? true : can(coalesce(var.default_kms_key_name))

@@ -3,20 +3,20 @@ terraform {
   required_providers {
     google = {
       source  = "hashicorp/google"
-      version = ">= 8.0"
+      version = ">= 8.10.0"
     }
     kubernetes = {
       source  = "hashicorp/kubernetes"
-      version = ">= 2.7.1"
+      version = ">= 2.38.0"
     }
     time = {
       source  = "hashicorp/time"
-      version = ">= 0.12"
+      version = ">= 0.14.2"
     }
     # google_project_service_identity only exists in google-beta
     google-beta = {
       source  = "hashicorp/google-beta"
-      version = ">= 8.0"
+      version = ">= 8.10.0"
     }
   }
 }

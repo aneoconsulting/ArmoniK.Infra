@@ -237,11 +237,17 @@ server {
         proxy_set_header X-Certificate-Client-Fingerprint $ssl_client_fingerprint;
 %{endif~}
         proxy_set_header Host $http_host;
+        # sub_filter needs an uncompressed body
+        proxy_set_header Accept-Encoding "";
         proxy_pass $grafana_${cluster_name}_upstream$uri$is_args$args;
+        # Grafana runs with a path-less root_url: <base> covers its relative URLs (assets, API), appSubUrl the
+        # absolute ones it builds itself (preloaded app plugins, login redirect, ...)
         sub_filter '<head>' '<head><base href="$${scheme}://$${http_host}/${cluster_name}/grafana/">';
+        sub_filter '"appSubUrl":""' '"appSubUrl":"/${cluster_name}/grafana"';
         sub_filter_once on;
-        proxy_intercept_errors on;
-        error_page 301 302 307 =302 $${scheme}://$${http_host}$${upstream_http_location};
+        # Location headers, relative or upstream-absolute
+        proxy_redirect / $scheme://$http_host/${cluster_name}/grafana/;
+        proxy_redirect $grafana_${cluster_name}_upstream/ $scheme://$http_host/${cluster_name}/grafana/;
     }
     location /${cluster_name}/grafana/api/live {
         rewrite  ^/${cluster_name}/grafana/(.*)  /$1 break;

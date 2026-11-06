@@ -20,9 +20,17 @@ ports:
 
 
 {{/*
-  GUI ingress: from the nginx front pod only.
+  GUI ingress: from the nginx front pod only, or in gateway mode from networkPolicy.gatewayPeers on
+  the gui port.
 */}}
 {{- define "armonik.netpol.rule.guiFrom" -}}
+{{- if not (include "armonik.ingress.nginx" .) }}
+from:
+  {{- include "armonik.ingress.gatewayPeers" . | nindent 2 }}
+ports:
+  - protocol: TCP
+    port: {{ include "armonik.netpol.port" (dict "ports" .Values.gui.ports "name" "gui") | int }}
+{{- else }}
 from:
   - namespaceSelector:
       {{- include "armonik.netpol.namespaceSelector" . | nindent 6 }}
@@ -30,6 +38,7 @@ from:
       matchLabels:
         app.kubernetes.io/component: ingress
         {{- include "armonik.selectorLabels" . | nindent 8 }}
+{{- end }}
 {{- end -}}
 
 
@@ -102,7 +111,8 @@ ingress:
 
 
 {{/*
-  GUI NetworkPolicy config: ingress from nginx, egress to DNS, plus networkPolicy.gui.extra*Rules.
+  GUI NetworkPolicy config: ingress from nginx or the Gateway, egress to DNS, plus
+  networkPolicy.gui.extra*Rules.
 */}}
 {{- define "armonik.netpol.ingressGui" -}}
 podSelector:

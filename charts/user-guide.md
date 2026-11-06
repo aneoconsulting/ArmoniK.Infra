@@ -519,4 +519,5 @@ Full details: [`cert-manager-issuer.md`](cert-manager-issuer.md).
 - [`cert-manager-issuer.md`](cert-manager-issuer.md) — issuer resolution and providers in depth
 - [`uninstall.md`](uninstall.md) — teardown procedure per deployment mode
 - [`network-policies.md`](network-policies.md) — NetworkPolicy for standalone releases
+- [`sso.md`](sso.md) - OIDC single sign-on on the web port (oauth2-proxy)
 - [`airgap.md`](airgap.md) — packaging and offline installation

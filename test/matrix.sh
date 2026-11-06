@@ -118,6 +118,14 @@ ok ingress-tls-mtls       armonik-ingress       -f charts/armonik-ingress/ci/tls
 ok ingress-gateway        armonik-ingress       -f charts/armonik-ingress/ci/gateway-values.yaml
 ok ingress-lb             armonik-ingress       -f charts/armonik-ingress/ci/lb-values.yaml
 ok ingress-patches        armonik-ingress       -f charts/armonik-ingress/ci/patch-values.yaml
+ok ingress-sso            armonik-ingress       -f charts/armonik-ingress/ci/sso-values.yaml
+ok ingress-sso-tls-mtls   armonik-ingress       -f charts/armonik-ingress/ci/sso-tls-mtls-values.yaml
+ok ingress-sso-group      armonik-ingress       -f charts/armonik-ingress/ci/sso-group-values.yaml
+ok umbrella-sso-netpol    armonik               --set networkPolicy.enabled=true \
+  --set ingress.sso.enabled=true --set ingress.sso.publicUrl=https://armonik.example.com \
+  --set ingress.sso.oauth2Proxy.issuerUrl=https://idp.example.com \
+  --set ingress.sso.oauth2Proxy.clientId=armonik --set ingress.sso.oauth2Proxy.existingSecret=oauth2 \
+  --set 'ingress.sso.networkPolicy.idpEgressCidrs={198.51.100.0/24}'
 ok activemq-pdb           activemq              -f charts/activemq/ci/pdb-values.yaml
 ok activemq-tls           activemq              -f charts/activemq/ci/tls-values.yaml
 ok activemq-patches       activemq              -f charts/activemq/ci/patch-values.yaml
@@ -136,6 +144,9 @@ fail_with ingress-mtls-without-tls armonik-ingress \
 fail_with ingress-httproute-no-gateway armonik-ingress \
   "httpRoute.enabled=true requires either gateway.enabled=true or httpRoute.parentRefs" \
   -f test/fixtures/armonik-ingress/httproute-no-gateway-values.yaml
+fail_with ingress-sso-gateway armonik-ingress \
+  "sso.enabled is not supported with gateway mode yet" \
+  -f charts/armonik-ingress/ci/sso-values.yaml -f test/fixtures/armonik-ingress/sso-gateway-values.yaml
 fail_with control-authz-without-authn armonik-control-plane \
   "Authorization requires authentication to be enabled" \
   -f test/fixtures/armonik-control-plane/authz-values.yaml

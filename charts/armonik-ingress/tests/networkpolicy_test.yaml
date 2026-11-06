@@ -27,6 +27,42 @@ tests:
           value: RELEASE-NAME-armonik-ingress-gui
         documentIndex: 1
 
+  - it: admits nginx on its plain ports without TLS
+    template: networkpolicy.yaml
+    set:
+      networkPolicy:
+        enabled: true
+    documentIndex: 0
+    asserts:
+      - equal:
+          path: spec.ingress
+          value:
+            - from: []
+              ports:
+                - protocol: TCP
+                  port: 8080
+                - protocol: TCP
+                  port: 9080
+
+  - it: admits nginx on its TLS ports with TLS
+    template: networkpolicy.yaml
+    set:
+      networkPolicy:
+        enabled: true
+      tls:
+        enabled: true
+    documentIndex: 0
+    asserts:
+      - equal:
+          path: spec.ingress
+          value:
+            - from: []
+              ports:
+                - protocol: TCP
+                  port: 8443
+                - protocol: TCP
+                  port: 9443
+
   - it: does not grant nginx a default cross-namespace egress to control-plane/grafana/seq
     template: networkpolicy.yaml
     set:

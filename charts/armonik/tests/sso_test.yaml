@@ -1,0 +1,112 @@
+suite: umbrella sso
+release:
+  name: t
+  namespace: default
+templates:
+  - templates/networkpolicies/nginx-egress.yaml
+set:
+  networkPolicy:
+    enabled: true
+  ingress:
+    sso:
+      enabled: true
+      publicUrl: https://armonik.example.com
+      oauth2Proxy:
+        issuerUrl: https://idp.example.com
+        clientId: armonik
+        existingSecret: armonik-oauth2-proxy
+tests:
+  # This policy can be the only one selecting nginx: without DNS its resolver resolves nothing.
+  - it: keeps the nginx egress to DNS, the GUI, the control plane, Grafana and Seq alone without sso
+    set:
+      ingress:
+        sso:
+          enabled: false
+    asserts:
+      - lengthEqual:
+          path: spec.egress
+          count: 5
+      - contains:
+          path: spec.egress
+          content:
+            to:
+              - namespaceSelector:
+                  matchLabels:
+                    kubernetes.io/metadata.name: kube-system
+                podSelector:
+                  matchLabels:
+                    k8s-app: kube-dns
+            ports:
+              - protocol: UDP
+                port: 53
+              - protocol: TCP
+                port: 53
+      - notContains:
+          path: spec.egress
+          content:
+            ports:
+              - protocol: TCP
+                port: 443
+          any: true
+
+  # This policy can be the only one selecting nginx (ingress.networkPolicy off): without DNS and
+  # the IdP, oauth2-proxy could not log anyone in.
+  - it: adds the IdP to the nginx egress with sso, DNS listed once
+    set:
+      ingress:
+        sso:
+          networkPolicy:
+            idpEgressCidrs: [198.51.100.0/24, 2001:db8::/32]
+    asserts:
+      - lengthEqual:
+          path: spec.egress
+          count: 6
+      - contains:
+          path: spec.egress
+          content:
+            to:
+              - namespaceSelector:
+                  matchLabels:
+                    kubernetes.io/metadata.name: kube-system
+                podSelector:
+                  matchLabels:
+                    k8s-app: kube-dns
+            ports:
+              - protocol: UDP
+                port: 53
+              - protocol: TCP
+                port: 53
+      - contains:
+          path: spec.egress
+          content:
+            to:
+              - ipBlock:
+                  cidr: 198.51.100.0/24
+              - ipBlock:
+                  cidr: 2001:db8::/32
+            ports:
+              - protocol: TCP
+                port: 443
+
+  - it: fails without the IdP CIDRs once the umbrella NetworkPolicies are on
+    asserts:
+      - failedTemplate:
+          errorPattern: 'ingress.sso.networkPolicy.idpEgressCidrs must list the IdP'
+
+  - it: needs no CIDR while the NetworkPolicies are off
+    set:
+      networkPolicy:
+        enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  # The umbrella reads ingress.sso through the ingress resolver, never on its own.
+  - it: refuses a string ingress.sso.enabled
+    set:
+      ingress:
+        sso:
+          enabled: "false"
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.enabled must be true or false, got the string "false"'

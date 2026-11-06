@@ -51,6 +51,30 @@ without a gateway), else 8080/9080.
   {{- end -}}
 {{- end -}}
 
+{{/*
+identityHeaders as YAML: per key, the header name and the nginx variable carrying the client's own
+value ($http_ plus the name lowercased, dashes as underscores). Fails on a malformed or repeated
+name. Takes .Values.
+*/}}
+{{- define "armonik.ingress.identityHeaders" -}}
+  {{- $headers := .identityHeaders | default dict -}}
+  {{- $out := dict -}}
+  {{- $seen := dict -}}
+  {{- range $key := list "commonName" "fingerprint" "impersonationUsername" "impersonationId" -}}
+    {{- $name := index $headers $key | default "" | toString -}}
+    {{- if not (regexMatch "^[A-Za-z0-9]+(-[A-Za-z0-9]+)*$" $name) -}}
+      {{- printf "identityHeaders.%s must be a header name of letters, digits and dashes, got %q" $key $name | fail -}}
+    {{- end -}}
+    {{- $var := $name | lower | replace "-" "_" -}}
+    {{- if hasKey $seen $var -}}
+      {{- printf "identityHeaders.%s repeats identityHeaders.%s (%q): header names are case-insensitive" $key (index $seen $var) $name | fail -}}
+    {{- end -}}
+    {{- $_ := set $seen $var $key -}}
+    {{- $_ := set $out $key (dict "name" $name "var" (printf "$http_%s" $var)) -}}
+  {{- end -}}
+  {{- $out | toYaml -}}
+{{- end -}}
+
 {{/* ingress Service type: ClusterIP behind an HTTPRoute, else service.type. */}}
 {{- define "armonik.ingress.serviceType" -}}
   {{- if .Values.httpRoute.enabled -}}

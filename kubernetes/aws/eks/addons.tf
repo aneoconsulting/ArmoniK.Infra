@@ -74,7 +74,11 @@ locals {
         }
       }))
     }
+    # EKS no longer installs kube-proxy with the cluster (bootstrap_self_managed_addons = false in EKS module v21): a
+    # node joining before it has no Service routing, and pods already pending there, such as KEDA and metrics-server,
+    # crash until it comes. coredns stays after compute, a Deployment add-on not becoming active without nodes.
     kube-proxy = {
+      before_compute              = true
       resolve_conflicts_on_create = "OVERWRITE"
     }
     coredns = {
@@ -105,6 +109,13 @@ locals {
       configuration_values = jsonencode({ controller = local.efs_csi_controller })
     }
   })
+}
+
+# kube-proxy now comes before compute: the add-on of an existing cluster keeps its state under the new address. Otherwise
+# Terraform deletes it and creates it again, unordered, and the creation can fail while the old add-on still exists.
+moved {
+  from = module.eks.aws_eks_addon.this["kube-proxy"]
+  to   = module.eks.aws_eks_addon.before_compute["kube-proxy"]
 }
 
 # Cross-variable checks, cross-variable validation needing Terraform 1.9.

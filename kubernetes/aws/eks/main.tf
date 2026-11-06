@@ -196,3 +196,15 @@ module "eks" {
   self_managed_node_groups = local.self_managed_node_groups
   fargate_profiles         = local.fargate_profiles
 }
+
+# The EKS module's cluster_endpoint waits for the access entries and their policies to be created, not to be in effect:
+# EKS applies them seconds later, and the API server caches a refusal of its EKS authorizer for 30 s, so a Kubernetes
+# call made in between, and the same call retried within 30 s, fail as forbidden. The cluster_endpoint output goes
+# through this delay, so that providers configured from it only call the cluster once the policies are in effect.
+# It only runs when the cluster is created or replaced.
+resource "time_sleep" "access_propagation" {
+  create_duration = "60s"
+  triggers = {
+    cluster_endpoint = module.eks.cluster_endpoint
+  }
+}

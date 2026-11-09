@@ -147,6 +147,10 @@ fail_with ingress-httproute-no-gateway armonik-ingress \
 fail_with ingress-sso-gateway armonik-ingress \
   "sso.enabled is not supported with gateway mode yet" \
   -f charts/armonik-ingress/ci/sso-values.yaml -f test/fixtures/armonik-ingress/sso-gateway-values.yaml
+# The later --kube-version wins: oauth2-proxy is a native sidecar, refused before 1.29.
+fail_with ingress-sso-before-1.29 armonik-ingress \
+  "sso.enabled needs Kubernetes 1.29 or later" \
+  -f charts/armonik-ingress/ci/sso-values.yaml --kube-version 1.28.0
 fail_with control-authz-without-authn armonik-control-plane \
   "Authorization requires authentication to be enabled" \
   -f test/fixtures/armonik-control-plane/authz-values.yaml

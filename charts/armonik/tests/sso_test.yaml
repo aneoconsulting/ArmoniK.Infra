@@ -1,4 +1,8 @@
 suite: umbrella sso
+# sso needs Kubernetes 1.29 (native sidecar); helm-unittest defaults to 1.20.
+capabilities:
+  majorVersion: 1
+  minorVersion: 31
 release:
   name: t
   namespace: default

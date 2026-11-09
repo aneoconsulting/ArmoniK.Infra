@@ -1,4 +1,8 @@
 suite: sso oauth2-proxy sidecar, Secret and NetworkPolicy
+# sso needs Kubernetes 1.29 (native sidecar); helm-unittest defaults to 1.20.
+capabilities:
+  majorVersion: 1
+  minorVersion: 31
 templates:
   - deployments/nginx.yaml
   # The deployment's checksum/config annotation includes it.
@@ -10,7 +14,7 @@ values:
 release:
   name: t
 tests:
-  - it: renders the nginx container alone with sso disabled
+  - it: renders the nginx container alone, and no init container, with sso disabled
     template: deployments/nginx.yaml
     set:
       sso:
@@ -19,29 +23,90 @@ tests:
       - lengthEqual:
           path: spec.template.spec.containers
           count: 1
+      - notExists:
+          path: spec.template.spec.initContainers
 
-  - it: adds the pinned oauth2-proxy sidecar after nginx, extraContainers last
+  - it: keeps extraInitContainers alone with sso disabled
     template: deployments/nginx.yaml
     set:
+      sso:
+        enabled: false
+      extraInitContainers:
+        - name: init
+          image: busybox:1.36.1
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers
+          value:
+            - name: init
+              image: busybox:1.36.1
+
+  # A native sidecar: nginx starts once it is started, and it stops after nginx.
+  - it: runs the pinned oauth2-proxy as a native sidecar, not a regular container
+    template: deployments/nginx.yaml
+    asserts:
+      - lengthEqual:
+          path: spec.template.spec.initContainers
+          count: 1
+      - equal:
+          path: spec.template.spec.initContainers[0].name
+          value: oauth2-proxy
+      - equal:
+          path: spec.template.spec.initContainers[0].restartPolicy
+          value: Always
+      - equal:
+          path: spec.template.spec.initContainers[0].image
+          value: quay.io/oauth2-proxy/oauth2-proxy:v7.15.5
+      - lengthEqual:
+          path: spec.template.spec.containers
+          count: 1
+      - equal:
+          path: spec.template.spec.containers[0].name
+          value: ingress
+
+  - it: starts oauth2-proxy after extraInitContainers, extraContainers after nginx
+    template: deployments/nginx.yaml
+    set:
+      extraInitContainers:
+        - name: init
+          image: busybox:1.36.1
       extraContainers:
         - name: extra
           image: busybox:1.36.1
     asserts:
       - lengthEqual:
+          path: spec.template.spec.initContainers
+          count: 2
+      - equal:
+          path: spec.template.spec.initContainers[0].name
+          value: init
+      - equal:
+          path: spec.template.spec.initContainers[1].name
+          value: oauth2-proxy
+      - equal:
+          path: spec.template.spec.initContainers[1].restartPolicy
+          value: Always
+      - lengthEqual:
           path: spec.template.spec.containers
-          count: 3
+          count: 2
       - equal:
           path: spec.template.spec.containers[0].name
           value: ingress
       - equal:
           path: spec.template.spec.containers[1].name
-          value: oauth2-proxy
-      - equal:
-          path: spec.template.spec.containers[2].name
           value: extra
-      - equal:
-          path: spec.template.spec.containers[1].image
-          value: quay.io/oauth2-proxy/oauth2-proxy:v7.15.5
+
+  # The chart builds initContainers with sso: a patch would replace the sidecar.
+  - it: refuses a podSpecPatch initContainers list with sso
+    template: deployments/nginx.yaml
+    set:
+      podSpecPatch:
+        initContainers:
+          - name: init
+            image: busybox:1.36.1
+    asserts:
+      - failedTemplate:
+          errorPattern: 'podSpecPatch.initContainers: the chart builds initContainers'
 
   - it: configures oauth2-proxy for nginx auth_request on loopback
     template: deployments/nginx.yaml
@@ -53,7 +118,7 @@ tests:
           extraArgs: [--cookie-name=_armonik]
     asserts:
       - equal:
-          path: spec.template.spec.containers[1].args
+          path: spec.template.spec.initContainers[0].args
           value:
             - --provider=oidc
             - --oidc-issuer-url=https://idp.example.com/realms/armonik
@@ -83,6 +148,7 @@ tests:
             - --ping-path=/oauth2/ping
             - --ready-path=/oauth2/ready
             - --silence-ping-logging=true
+            - --metrics-address=:44180
             - --cookie-name=_armonik
 
   # armonik.ingress.oauth2Proxy.address: nginx proxies to the address the sidecar listens on.
@@ -90,7 +156,7 @@ tests:
     template: deployments/nginx.yaml
     asserts:
       - contains:
-          path: spec.template.spec.containers[1].args
+          path: spec.template.spec.initContainers[0].args
           content: --http-address=127.0.0.1:4180
   - it: proxies every oauth2-proxy route to that address
     template: armonik-nginx-conf.yaml
@@ -111,10 +177,10 @@ tests:
           cookieCsrfExpire: 5m
     asserts:
       - contains:
-          path: spec.template.spec.containers[1].args
+          path: spec.template.spec.initContainers[0].args
           content: --cookie-csrf-per-request=false
       - contains:
-          path: spec.template.spec.containers[1].args
+          path: spec.template.spec.initContainers[0].args
           content: --cookie-csrf-expire=5m
 
   - it: keeps the OAuth tokens and refreshes once sessionCookieMinimal is off
@@ -126,10 +192,10 @@ tests:
           cookieRefresh: 1h
     asserts:
       - contains:
-          path: spec.template.spec.containers[1].args
+          path: spec.template.spec.initContainers[0].args
           content: --session-cookie-minimal=false
       - contains:
-          path: spec.template.spec.containers[1].args
+          path: spec.template.spec.initContainers[0].args
           content: --cookie-refresh=1h
 
   - it: marks the cookie Secure behind an https publicUrl
@@ -139,20 +205,20 @@ tests:
         publicUrl: https://armonik.example.com/
     asserts:
       - contains:
-          path: spec.template.spec.containers[1].args
+          path: spec.template.spec.initContainers[0].args
           content: --cookie-secure=true
       - contains:
-          path: spec.template.spec.containers[1].args
+          path: spec.template.spec.initContainers[0].args
           content: --redirect-url=https://armonik.example.com/oauth2/callback
       - contains:
-          path: spec.template.spec.containers[1].args
+          path: spec.template.spec.initContainers[0].args
           content: --whitelist-domain=armonik.example.com
 
   - it: reads the client and cookie secrets from existingSecret
     template: deployments/nginx.yaml
     asserts:
       - equal:
-          path: spec.template.spec.containers[1].env
+          path: spec.template.spec.initContainers[0].env
           value:
             - name: OAUTH2_PROXY_CLIENT_SECRET
               valueFrom:
@@ -169,7 +235,7 @@ tests:
     template: deployments/nginx.yaml
     asserts:
       - equal:
-          path: spec.template.spec.containers[1].securityContext
+          path: spec.template.spec.initContainers[0].securityContext
           value:
             allowPrivilegeEscalation: false
             capabilities:
@@ -196,41 +262,75 @@ tests:
               memory: 64Mi
     asserts:
       - equal:
-          path: spec.template.spec.containers[1].securityContext
+          path: spec.template.spec.initContainers[0].securityContext
           value:
             runAsUser: 65532
       - equal:
-          path: spec.template.spec.containers[1].resources.limits.memory
+          path: spec.template.spec.initContainers[0].resources.limits.memory
           value: 64Mi
 
-  # The sidecar listens on loopback, out of the kubelet's reach: its probes go through nginx.
-  - it: probes the sidecar through nginx's web port
+  # Startup and liveness hit the metrics listener (pod IP, /metrics only), never nginx: nginx starts
+  # after the startupProbe passes, and an nginx failure must not restart the sidecar. Readiness
+  # goes through nginx to the loopback listener; it gates no start and restarts nothing.
+  - it: probes start and liveness on the metrics port, readiness through nginx's web port
     template: deployments/nginx.yaml
     asserts:
+      - contains:
+          path: spec.template.spec.initContainers[0].args
+          content: --metrics-address=:44180
       - equal:
-          path: spec.template.spec.containers[1].livenessProbe.httpGet
+          path: spec.template.spec.initContainers[0].ports
           value:
-            path: /oauth2/ping
-            port: 8080
-            scheme: HTTP
+            - name: sso-metrics
+              containerPort: 44180
+              protocol: TCP
       - equal:
-          path: spec.template.spec.containers[1].readinessProbe.httpGet
+          path: spec.template.spec.initContainers[0].startupProbe
           value:
-            path: /oauth2/ready
-            port: 8080
-            scheme: HTTP
+            httpGet:
+              path: /metrics
+              port: sso-metrics
+            periodSeconds: 2
+            failureThreshold: 30
+      - equal:
+          path: spec.template.spec.initContainers[0].livenessProbe
+          value:
+            httpGet:
+              path: /metrics
+              port: sso-metrics
+            periodSeconds: 10
+            failureThreshold: 3
+      - equal:
+          path: spec.template.spec.initContainers[0].readinessProbe
+          value:
+            httpGet:
+              path: /oauth2/ready
+              port: 8080
+              scheme: HTTP
+            periodSeconds: 10
 
-  - it: probes over HTTPS on the TLS web port
+  - it: probes readiness over HTTPS on the TLS web port
     template: deployments/nginx.yaml
     values:
       - ../ci/sso-tls-mtls-values.yaml
     asserts:
       - equal:
-          path: spec.template.spec.containers[1].livenessProbe.httpGet
+          path: spec.template.spec.initContainers[0].readinessProbe.httpGet
           value:
-            path: /oauth2/ping
+            path: /oauth2/ready
             port: 8443
             scheme: HTTPS
+      - equal:
+          path: spec.template.spec.initContainers[0].livenessProbe.httpGet
+          value:
+            path: /metrics
+            port: sso-metrics
+
+  - it: leaves nginx without a startupProbe of its own
+    template: deployments/nginx.yaml
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].startupProbe
 
   - it: rolls the pod when the nginx conf changes with SSO
     template: deployments/nginx.yaml

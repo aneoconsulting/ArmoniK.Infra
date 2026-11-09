@@ -64,8 +64,9 @@ calls included.
 - The host is compared without its port and case-insensitively. A request on the right host but
   another port (a `kubectl port-forward`, a NodePort) is not redirected: cookies ignore the port, so
   the login works and lands on the `publicUrl` port after the callback. That port must be reachable.
-- Exempt, answered on any host: `sso.healthPath`, and the sidecar probes `/oauth2/ping` and
-  `/oauth2/ready`, which the kubelet sends with the pod IP as host.
+- Exempt, answered on any host: `sso.healthPath`, and the oauth2-proxy `/oauth2/ping` and
+  `/oauth2/ready`; the kubelet sends the sidecar readiness probe to the latter with the pod IP as
+  host.
 
 oauth2-proxy also names each CSRF cookie after its login attempt (`cookieCsrfPerRequest`), so
 parallel requests without a session, a page and its favicon for instance, each start a login
@@ -237,6 +238,55 @@ ingress:
 - For group mode, add a "Group Membership" mapper to the client's dedicated scope, token claim
   name `groups`. With "Full group path" on, groups read `/armonik-admins`: write them so in
   `groupMapping` and `allowedGroups`.
+
+## The sidecar
+
+oauth2-proxy is a native sidecar: the last entry of the nginx pod's `initContainers`, after
+`extraInitContainers`, with `restartPolicy: Always`. `extraContainers` still follow nginx in
+`containers`, and a `podSpecPatch.initContainers` list is refused with SSO (use
+`extraInitContainers`). So `sso.enabled` needs Kubernetes 1.29 or later, where native sidecars are
+on by default (GA in 1.33): an older API server drops `restartPolicy`, leaving an init container
+that never exits and an nginx that never starts. The render fails below 1.29, read from the API
+server by `helm install` and from `--kube-version` by `helm template`. The ingress chart itself
+still installs on 1.25 with SSO off.
+
+**Startup.** nginx starts once the sidecar's `startupProbe` passes, so nginx never serves a request
+oauth2-proxy cannot answer. oauth2-proxy runs OIDC discovery before listening and exits if the IdP
+is unreachable: the sidecar then restarts with a back-off and nginx waits, the grpc port included.
+That port has no use for oauth2-proxy, but an IdP outage at pod start now delays it; a running pod
+is not affected.
+
+**Probes.** oauth2-proxy listens on 127.0.0.1:4180, out of the kubelet's reach, and its image has
+no shell for an `exec` probe. It also opens its metrics listener on the pod IP (`--metrics-address`,
+port 44180, named `sso-metrics`), which answers `/metrics` on every path and nothing else: no ping,
+no auth endpoint. No Service targets it and no NetworkPolicy rule admits it; kubelet probes do not
+go through NetworkPolicies.
+
+| Probe | Target | Why |
+|---|---|---|
+| startup | `/metrics` on `sso-metrics`, every 2 s, 60 s budget | Gates nginx's start; must not go through nginx, which is not running yet |
+| liveness | `/metrics` on `sso-metrics` | Restarts a hung process; an nginx failure does not restart the sidecar |
+| readiness | `/oauth2/ready` through nginx's web port | Checks the real listener end to end; it only takes the pod out of the endpoints, never restarts or gates a start |
+
+A crashed oauth2-proxy exits and is restarted by `restartPolicy: Always` without a probe.
+
+Set aside:
+
+- Probes through nginx for startup and liveness (the previous setup): the startup probe would
+  deadlock (nginx starts after it), and a liveness probe would restart oauth2-proxy whenever nginx
+  fails.
+- No startup probe: nginx would start as soon as the process runs, before oauth2-proxy listens,
+  and answer its first requests with 500.
+- oauth2-proxy listening on the pod IP: it would expose `/oauth2/auth` and `/oauth2/start` beside
+  nginx, where only a NetworkPolicy, often absent, would stop a client.
+- `tcpSocket` on the metrics port: same reach as `httpGet`, without the HTTP round trip.
+- `exec`: the image is distroless.
+
+**Shutdown.** The kubelet sends SIGTERM to the sidecar only after nginx has exited, so oauth2-proxy
+answers auth subrequests while nginx drains. Both share `terminationGracePeriodSeconds` (Kubernetes'
+default 30 s, the chart sets none, `podSpecPatch` can): nginx uses most of it, oauth2-proxy stops
+within a second of its SIGTERM. A gRPC stream still open at the deadline is cut as before SSO, and
+both containers are then killed together.
 
 ## Network policies
 

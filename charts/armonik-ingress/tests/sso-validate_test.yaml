@@ -1,4 +1,8 @@
 suite: sso validation guards
+# sso needs Kubernetes 1.29 (native sidecar); helm-unittest defaults to 1.20.
+capabilities:
+  majorVersion: 1
+  minorVersion: 31
 templates:
   - validate.yaml
 values:
@@ -184,6 +188,50 @@ tests:
         fingerprint: 0123456789abcdef0123456789abcdef01234567
     asserts:
       - notFailedTemplate: {}
+
+  # Before 1.29 the API server drops restartPolicy: the sidecar never exits and nginx never starts.
+  - it: refuses sso before Kubernetes 1.29
+    capabilities:
+      majorVersion: 1
+      minorVersion: 28
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.enabled needs Kubernetes 1.29 or later, oauth2-proxy running as a native sidecar \(an init container with restartPolicy Always\), got v1.28'
+
+  - it: accepts sso on Kubernetes 1.29
+    capabilities:
+      majorVersion: 1
+      minorVersion: 29
+    asserts:
+      - notFailedTemplate: {}
+
+  - it: still renders before 1.29 with sso off
+    capabilities:
+      majorVersion: 1
+      minorVersion: 25
+    set:
+      sso:
+        enabled: false
+    asserts:
+      - notFailedTemplate: {}
+
+  - it: refuses an extraArgs metrics address, which the probes depend on
+    set:
+      sso:
+        oauth2Proxy:
+          extraArgs: ["--metrics-address=:9100"]
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.oauth2Proxy.extraArgs: "--metrics-address=:9100" is refused, the chart sets the metrics listener its probes use'
+
+  - it: refuses an extraArgs metrics secure address
+    set:
+      sso:
+        oauth2Proxy:
+          extraArgs: ["--metrics-secure-address", ":9100"]
+    asserts:
+      - failedTemplate:
+          errorPattern: 'is refused, the chart sets the metrics listener'
 
   # An empty prefix puts SSO identities in the certificate CN namespace.
   - it: refuses an empty cnPrefix

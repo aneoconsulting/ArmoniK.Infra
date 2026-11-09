@@ -13,7 +13,7 @@ The single entry point: the armonik.ingress.sso.validate* helpers below fail and
   {{- if not $sso.enabled -}}
 enabled: false
   {{- else -}}
-    {{- range list "Gateway" "Required" "Urls" "Image" "Identity" "Groups" "Health" "Cookie" "ExtraArgs" "ExternalSecret" "Network" -}}
+    {{- range list "KubeVersion" "Gateway" "Required" "Urls" "Image" "Identity" "Groups" "Health" "Cookie" "ExtraArgs" "ExternalSecret" "Network" -}}
       {{- include (printf "armonik.ingress.sso.validate%s" .) $ -}}
     {{- end -}}
     {{- $url := $sso.publicUrl | toString | trimSuffix "/" -}}
@@ -34,6 +34,14 @@ enabled: false
 email: $upstream_http_x_auth_request_email
 preferred_username: $upstream_http_x_auth_request_preferred_username
 user: $upstream_http_x_auth_request_user
+{{- end -}}
+
+{{/* oauth2-proxy is a native sidecar, on by default from Kubernetes 1.29. Older API servers drop
+     its restartPolicy, leaving an init container that never exits and an nginx that never starts. */}}
+{{- define "armonik.ingress.sso.validateKubeVersion" -}}
+  {{- if semverCompare "<1.29.0-0" .Capabilities.KubeVersion.Version -}}
+    {{- printf "sso.enabled needs Kubernetes 1.29 or later, oauth2-proxy running as a native sidecar (an init container with restartPolicy Always), got %s" .Capabilities.KubeVersion.Version | fail -}}
+  {{- end -}}
 {{- end -}}
 
 {{/* The default HTTPRoute matches content-type application/grpc exactly, so grpc+proto and
@@ -185,6 +193,9 @@ user: $upstream_http_x_auth_request_user
     {{- if regexMatch "^--?(ping-user-agent|gcp-healthchecks)(=|$)" (toString .) -}}
       {{- printf "sso.oauth2Proxy.extraArgs: %q is refused, health check User-Agents bypass auth_request (CVE-2026-34457)" (toString .) | fail -}}
     {{- end -}}
+    {{- if regexMatch "^--?metrics-(secure-)?address(=|$)" (toString .) -}}
+      {{- printf "sso.oauth2Proxy.extraArgs: %q is refused, the chart sets the metrics listener its probes use" (toString .) | fail -}}
+    {{- end -}}
   {{- end -}}
 {{- end -}}
 
@@ -248,6 +259,12 @@ user: $upstream_http_x_auth_request_user
 {{/* Loopback address of the oauth2-proxy sidecar: its --http-address and nginx's proxy_pass. */}}
 {{- define "armonik.ingress.oauth2Proxy.address" -}}
 127.0.0.1:4180
+{{- end -}}
+
+{{/* Pod-IP port of the oauth2-proxy metrics listener, probed by the kubelet; no Service or
+     NetworkPolicy rule exposes it. */}}
+{{- define "armonik.ingress.oauth2Proxy.metricsPort" -}}
+44180
 {{- end -}}
 
 {{/*

@@ -1,5 +1,9 @@
-{{/* oauth2-proxy sidecar of the nginx pod, rendered with sso.enabled. It listens on loopback only,
-     so its probes go through nginx's web port, where its ping and ready paths sit under /oauth2/.
+{{/* oauth2-proxy native sidecar of the nginx pod (an init container restarted Always), rendered
+     with sso.enabled: nginx starts once its startupProbe passes, and it stops after nginx.
+     It serves on loopback only. The startup and liveness probes hit the metrics listener, which
+     serves /metrics on every path and nothing else, so they neither wait for nginx (it starts
+     after them) nor restart oauth2-proxy when only nginx fails. The readiness probe goes through
+     nginx's web port to the real listener; it gates no start and restarts nothing.
      No --ping-user-agent or --gcp-healthchecks: with auth_request they bypass authentication
      (CVE-2026-34457). */}}
 {{- define "armonik.ingress.oauth2Proxy.container" -}}
@@ -11,9 +15,15 @@
 {{- $probe := dict
       "port" (dict "protocol" "http" "root" $root | include "armonik.ingress.containerPort" | int)
       "scheme" ($v.tls.enabled | empty | ternary "HTTP" "HTTPS") -}}
+{{- $metricsPort := include "armonik.ingress.oauth2Proxy.metricsPort" . | int -}}
 name: oauth2-proxy
 image: {{ $image.fullname | quote }}
 imagePullPolicy: {{ $image.pullPolicy | quote }}
+restartPolicy: Always
+ports:
+  - name: sso-metrics
+    containerPort: {{ $metricsPort }}
+    protocol: TCP
 args:
   - "--provider=oidc"
   - {{ printf "--oidc-issuer-url=%s" $proxy.issuerUrl | quote }}
@@ -45,6 +55,7 @@ args:
   - "--ping-path=/oauth2/ping"
   - "--ready-path=/oauth2/ready"
   - "--silence-ping-logging=true"
+  - {{ printf "--metrics-address=:%d" $metricsPort | quote }}
   {{- range $proxy.extraArgs }}
   - {{ . | toString | quote }}
   {{- end }}
@@ -59,11 +70,16 @@ env:
       secretKeyRef:
         name: {{ $proxy.existingSecret | quote }}
         key: cookie-secret
+startupProbe:
+  httpGet:
+    path: /metrics
+    port: sso-metrics
+  periodSeconds: 2
+  failureThreshold: 30
 livenessProbe:
   httpGet:
-    path: /oauth2/ping
-    port: {{ $probe.port }}
-    scheme: {{ $probe.scheme }}
+    path: /metrics
+    port: sso-metrics
   periodSeconds: 10
   failureThreshold: 3
 readinessProbe:

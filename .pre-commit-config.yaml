@@ -46,6 +46,8 @@ repos:
           - "--autofix"
           - "--indent=2"
           - "--no-sort-keys"
+        # Kept minified: they count against the 1 MiB Helm release Secret (see AGENTS.md).
+        exclude: ^charts/armonik/static-confs/grafana-dashboards/
       - id: mixed-line-ending
         args:
           - "--fix=lf"

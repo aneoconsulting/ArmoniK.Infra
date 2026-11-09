@@ -8,9 +8,14 @@ output "connection_name" {
   value       = google_sql_database_instance.postgresql.connection_name
 }
 
+# The name of the DNS automation, recorded by Cloud SQL in the network with the endpoint and carried by the server
+# certificate. The other name of the instance, dns_name (<uid>.<region>.sql.goog), has no record unless one is created.
 output "host" {
   description = "DNS name of the instance in the client network, the one its server certificate carries."
-  value       = trimsuffix(google_sql_database_instance.postgresql.dns_name, ".")
+  value = one([
+    for dns in google_sql_database_instance.postgresql.dns_names : trimsuffix(dns.name, ".")
+    if endswith(trimsuffix(dns.name, "."), ".sql-psc.goog")
+  ])
 }
 
 output "ip_address" {

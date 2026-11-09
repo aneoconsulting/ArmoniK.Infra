@@ -2,6 +2,11 @@
 # from the shared issuer instead of the CloudNativePG operator's own CA.
 global:
   armonik:
+    # Off by default in the umbrella; this release installs the operator, so the Cluster CR takes the
+    # CRD-ordering hook path.
+    operators:
+      postgresqlOperator:
+        deploy: true
     certManager:
       issuer:
         enabled: true

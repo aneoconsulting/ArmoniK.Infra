@@ -165,6 +165,28 @@ helm install armonik ./charts/armonik -n armonik --create-namespace
 
 This is the same procedure the release's own `NOTES.txt` prints for this mode (see [Check and uninstall](#check-and-uninstall) below).
 
+#### Release too large
+
+```text
+Error: INSTALLATION FAILED: create: failed to create: Secret "sh.helm.release.v1.armonik.v1" is invalid: data: Too long: must have at most 1048576 bytes
+```
+
+Helm stores each release revision (the rendered manifest, the root chart's files and the values, compressed) in a Secret, and Kubernetes caps a Secret at 1 MiB. Most operators render their CRDs as part of the manifest, so an all-in-one release that deploys more operators than the defaults (`postgresqlOperator`, `googleCasIssuer`), or carries large value overrides, can cross that cap. Nothing of the application is created. CRDs that some charts ship in a `crds/` directory may already be applied, which is harmless: they are reused on the next attempt.
+
+In order of preference:
+
+1. **Switch to the [two-step install](#two-step-in-detail).** The operators and their CRDs move to their own release, which keeps the application release small. An operator the umbrella does not deploy by default, such as the PostgreSQL one, is enabled in the operators release.
+2. **Deploy only the operators you need in this release.** Set `global.armonik.operators.<op>.deploy=false` for each one you do not use, and also `available=false` when nothing else in the cluster provides it.
+3. **Use another Helm storage backend.** The `sql` driver (`HELM_DRIVER=sql`, beta, see the [Helm documentation](https://helm.sh/docs/topics/advanced/#storage-backends)) has no such cap, but needs a PostgreSQL database for Helm itself. The `configmap` driver has the same 1 MiB cap.
+
+GitOps tools that render with `helm template`, such as Argo CD, store no release Secret and never hit this error.
+
+To check how close a configuration is before installing, measure its compressed manifest. It is a lower bound of the stored size, which also includes the chart files, so keep a comfortable margin under 1048576:
+
+```bash
+helm template armonik ./charts/armonik -f my-values.yaml | gzip -9 | base64 -w0 | wc -c
+```
+
 ### Check and uninstall
 
 The release `NOTES.txt` reports the status of each operator:

@@ -19,8 +19,8 @@ global:
     #               error for anything that needs it. Set it for an externally installed operator, or
     #               when the operator subchart's own namespaceOverride moves it (the umbrella fails on
     #               the two disagreeing).
-    # Defaults consume operators installed elsewhere. The umbrella and armonik-operators set deploy=true
-    # for all but googleCasIssuer.
+    # Defaults consume operators installed elsewhere. armonik-operators sets deploy=true for all but
+    # googleCasIssuer; the umbrella also leaves postgresqlOperator off.
     operators:
       externalSecrets:
         deploy: false

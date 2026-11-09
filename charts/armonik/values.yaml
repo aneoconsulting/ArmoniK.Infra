@@ -32,7 +32,7 @@ global:
     # release (e.g. --set global.armonik.controlPlane=my-cp); a top-level controlPlane.source on this
     # chart wins over it.
     controlPlane: '{{ .Release.Name }}'
-    # All-in-one default: this release installs every operator through the armonik-operators subchart.
+    # All-in-one default: this release installs the operators through the armonik-operators subchart.
     operators:
       externalSecrets:
         deploy: true
@@ -42,8 +42,9 @@ global:
         deploy: true
       mongodbOperator:
         deploy: true
+      # Needed only by dependencies.postgresql.
       postgresqlOperator:
-        deploy: true
+        deploy: false
       prometheusOperator:
         deploy: true
       # GCP-specific, only needed by a googleCas issuer (certManagerIssuer.provider=googleCas, for one).

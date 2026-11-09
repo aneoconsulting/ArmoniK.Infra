@@ -10,6 +10,7 @@ module "complete_cloudsql" {
   name              = "cloudsql-complete-${random_string.suffix.result}"
   region            = var.region
   network           = var.network
+  psc_subnets       = var.psc_subnets
   database_version  = "POSTGRES_18"
   edition           = "ENTERPRISE"
   tier              = "db-custom-4-16384"

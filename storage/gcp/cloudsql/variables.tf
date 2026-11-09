@@ -14,8 +14,15 @@ variable "region" {
 }
 
 variable "network" {
-  description = "VPC the clients connect from, projects/<project>/global/networks/<name> or its self link. Cloud SQL creates a Private Service Connect endpoint in it, with a DNS record of the instance name (the host output), from a service connection policy it also creates."
+  description = "VPC the clients connect from, projects/<project>/global/networks/<name> or its self link. Cloud SQL creates a Private Service Connect endpoint in it, with a DNS record of the instance name (the host output), from the service connection policy of the network (psc_subnets)."
   type        = string
+}
+
+variable "psc_subnets" {
+  description = "Subnets of network, in the region of the instance, where the Private Service Connect endpoints of Cloud SQL take their IP address: the module creates the service connection policy of the network for Cloud SQL with them. Empty when the network already has that policy (one per network, region and service class)."
+  type        = list(string)
+  default     = []
+  nullable    = false
 }
 
 variable "database_version" {

@@ -13,3 +13,8 @@ variable "network" {
   description = "VPC of the clients, projects/<project>/global/networks/<name>"
   type        = string
 }
+
+variable "psc_subnets" {
+  description = "Subnets of network where the Private Service Connect endpoints take their IP address"
+  type        = list(string)
+}

@@ -6,7 +6,8 @@ locals {
   labels  = merge(var.labels, { module = "cloudsql" })
 
   # The self link of a network is accepted too: the API wants projects/<project>/global/networks/<name>
-  network = regex("projects/[^/]+/global/networks/[^/]+$", var.network)
+  network         = regex("projects/[^/]+/global/networks/[^/]+$", var.network)
+  network_project = regex("^projects/([^/]+)/", local.network)[0]
 
   database_flags = merge({
     # Core streams the changes of its tables through logical replication (publication armonik_pub)
@@ -15,6 +16,25 @@ locals {
     # dozen pods
     max_connections = "500"
   }, var.database_flags)
+}
+
+# Where the endpoints of Cloud SQL instances in the network take their IP address. Cloud SQL creates the endpoint of
+# an instance from it, in each network of its auto-connections, the policy existing before the instance:
+# https://cloud.google.com/sql/docs/postgres/configure-private-service-connect#create-endpoint-automatically
+# One policy per network, region and service class: without subnets, the module uses the existing one.
+resource "google_network_connectivity_service_connection_policy" "cloudsql" {
+  count         = length(var.psc_subnets) > 0 ? 1 : 0
+  name          = "${var.name}-cloudsql"
+  project       = local.network_project
+  location      = local.region
+  service_class = "google-cloud-sql"
+  network       = local.network
+  description   = "Private Service Connect endpoints of Cloud SQL instances"
+  labels        = local.labels
+
+  psc_config {
+    subnetworks = var.psc_subnets
+  }
 }
 
 resource "google_sql_database_instance" "postgresql" {
@@ -45,18 +65,17 @@ resource "google_sql_database_instance" "postgresql" {
     }
 
     # No public IP, no VPC peering: one Private Service Connect endpoint in the client network, created by Cloud SQL
-    # with its DNS record. The server certificate, issued by a Google-managed CA, carries that DNS name, so clients
-    # can verify both the CA and the host (verify-full).
+    # with its DNS record (DNS automation). The server certificate is issued by a Google-managed CA hierarchy shared
+    # by the instances of the region.
     ip_configuration {
       ipv4_enabled   = false
       ssl_mode       = "ENCRYPTED_ONLY"
       server_ca_mode = "GOOGLE_MANAGED_CAS_CA"
 
       psc_config {
-        psc_enabled                        = true
-        allowed_consumer_projects          = [local.project]
-        psc_auto_connection_policy_enabled = true
-        psc_auto_dns_enabled               = true
+        psc_enabled               = true
+        allowed_consumer_projects = [local.project]
+        psc_auto_dns_enabled      = true
         psc_auto_connections {
           consumer_network            = local.network
           consumer_service_project_id = local.project
@@ -82,6 +101,9 @@ resource "google_sql_database_instance" "postgresql" {
       }
     }
   }
+
+  # The endpoint is only created when the instance is, from the policy then in place
+  depends_on = [google_network_connectivity_service_connection_policy.cloudsql]
 }
 
 resource "google_sql_database" "armonik" {

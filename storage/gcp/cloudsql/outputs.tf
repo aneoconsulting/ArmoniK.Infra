@@ -1,0 +1,48 @@
+output "name" {
+  description = "Name of the Cloud SQL instance."
+  value       = google_sql_database_instance.postgresql.name
+}
+
+output "connection_name" {
+  description = "Connection name of the instance, <project>:<region>:<name>."
+  value       = google_sql_database_instance.postgresql.connection_name
+}
+
+output "host" {
+  description = "DNS name of the instance in the client network, the one its server certificate carries."
+  value       = trimsuffix(google_sql_database_instance.postgresql.dns_name, ".")
+}
+
+output "ip_address" {
+  description = "IP address of the Private Service Connect endpoint in the client network."
+  value       = google_sql_database_instance.postgresql.settings[0].ip_configuration[0].psc_config[0].psc_auto_connections[0].ip_address
+}
+
+output "port" {
+  description = "PostgreSQL port."
+  value       = 5432
+}
+
+output "database" {
+  description = "Name of the database."
+  value       = google_sql_database.armonik.name
+}
+
+output "username" {
+  description = "PostgreSQL user, owner of the database."
+  value       = google_sql_user.armonik.name
+  # Usable by Core once it holds the REPLICATION attribute
+  depends_on = [google_sql_provision_script.replication]
+}
+
+output "password" {
+  description = "Password of the PostgreSQL user."
+  value       = random_password.user.result
+  sensitive   = true
+  depends_on  = [google_sql_provision_script.replication]
+}
+
+output "ca_cert" {
+  description = "PEM certificates of the CA that issues the server certificate, to verify it against."
+  value       = join("\n", [for cert in google_sql_database_instance.postgresql.server_ca_cert : cert.cert])
+}

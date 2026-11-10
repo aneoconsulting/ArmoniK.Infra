@@ -17,7 +17,8 @@
 # sarif/images.sarif and sarif/charts.sarif under <scan-dir>.
 #
 # SARIF_SEVERITY (default MEDIUM,HIGH,CRITICAL) filters the SARIF files only:
-# the summary and the JSON reports keep every severity.
+# the summary and the JSON reports keep every severity. A SARIF file over
+# code scanning's limits loses its lowest severities until it fits.
 
 set -eu
 
@@ -32,6 +33,57 @@ sarif_severity=${SARIF_SEVERITY:-MEDIUM,HIGH,CRITICAL}
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
 mkdir -p "$scan/sarif"
+: > "$work/warnings"
+: > "$work/warnings-images"
+: > "$work/sarif-notes"
+
+# Annotations are capped at 10 warnings per step
+# (https://github.com/actions/toolkit/blob/main/docs/problem-matchers.md), so
+# they are collected and emitted at the end, the run-wide ones first.
+warn() { # <title> <message>
+  printf '%s\t%s\n' "$1" "$2" >> "$work/warnings"
+}
+
+# Code scanning rejects a SARIF file past 25,000 results or rules per run, or
+# 10 MB gzipped
+# (https://docs.github.com/en/code-security/reference/code-scanning/sarif-files/sarif-support).
+# Severities are dropped from the lowest up until the file fits; trivy tags
+# each rule with its severity.
+fit_sarif() { # <in> <out> <label>
+  drop=
+  for severity in "" UNKNOWN LOW MEDIUM HIGH; do
+    if [ -n "$severity" ]; then
+      # Only what SARIF_SEVERITY let in.
+      case ",$sarif_severity," in
+        *",$severity,"*) drop="$drop${drop:+,}$severity" ;;
+        *) continue ;;
+      esac
+    fi
+    jq --arg drop "$drop" '
+      ($drop | split(",") | map({key: ., value: true}) | from_entries) as $drop
+      | .runs |= map(
+          ([.tool.driver.rules[]?
+            | {key: .id,
+               value: ([.properties.tags[]? | select(test("^(CRITICAL|HIGH|MEDIUM|LOW|UNKNOWN)$"))][0] // "UNKNOWN")}]
+           | from_entries) as $severity
+          | .results = [.results[]? | select($drop[$severity[.ruleId] // "UNKNOWN"] | not)]
+          | ([.results[].ruleId] | map({key: ., value: true}) | from_entries) as $used
+          | .tool.driver.rules = [.tool.driver.rules[]? | select($used[.id])])' "$1" > "$2"
+    results=$(jq '[.runs[] | .results | length] | max // 0' "$2")
+    rules=$(jq '[.runs[] | .tool.driver.rules | length] | max // 0' "$2")
+    bytes=$(gzip -c "$2" | wc -c | tr -d ' ')
+    if [ "$results" -le 25000 ] && [ "$rules" -le 25000 ] && [ "$bytes" -le 10000000 ]; then
+      [ -z "$drop" ] || {
+        printf '%s: %s left out to fit the code scanning limits.\n' "$3" "$drop" >> "$work/sarif-notes"
+        warn "code scanning gets no $drop $3 finding" "the SARIF file exceeds code scanning's limits with them; the job summary and the trivy-reports artifact keep them"
+      }
+      return 0
+    fi
+  done
+  printf '%s: still over the code scanning limits with CRITICAL alone (%s results, %s rules, %s bytes gzipped); the upload may be rejected.\n' \
+    "$3" "$results" "$rules" "$bytes" >> "$work/sarif-notes"
+  warn "the $3 SARIF file exceeds code scanning's limits" "$results results, $rules rules, $bytes bytes gzipped, with CRITICAL alone"
+}
 
 # Images ArmoniK builds; only the report tells them apart.
 origin() {
@@ -107,7 +159,7 @@ while IFS="$(printf '\t')" read -r image uses owners status_image status reason;
     printf '%s\t%s\t%s\t%s\t%s\n' "$image" "$failure" "$use" "$charts" "$reason" >> "$work/failed"
     # Placeholders never get here (charts/scan-inputs.sh drops them), so an
     # unreadable image is one a user can deploy.
-    printf '::warning title=%s::%s\n' "$title" "$reason"
+    printf '%s\t%s\n' "$title" "$reason" >> "$work/warnings-images"
     continue
   fi
 
@@ -150,9 +202,10 @@ if [ -s "$work/sarif-list" ]; then
         | del(.properties)
         | .tool.driver.rules = ([$runs[].tool.driver.rules[]?] | unique_by(.id))
         | .results = [$runs[].results[]? | del(.ruleIndex)]
-      ]' $(cat "$work/sarif-list") > "$scan/sarif/images.sarif"
+      ]' $(cat "$work/sarif-list") > "$work/images.sarif"
+  fit_sarif "$work/images.sarif" "$scan/sarif/images.sarif" image
 else
-  echo "::warning title=trivy scanned no image::every image scan failed, see the job summary"
+  warn "trivy scanned no image" "every image scan failed, see the job summary"
   # An empty run still clears alerts no longer found.
   jq -n '{
     "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
@@ -172,9 +225,10 @@ if [ -s "$charts_report" ]; then
       + (["CRITICAL", "HIGH", "MEDIUM", "LOW", "UNKNOWN"] | map(. as $s | $m | map(select(.Severity == $s)) | length))
     | @tsv' "$charts_report" | sort > "$work/charts"
   trivy convert --quiet --format sarif --severity "$sarif_severity" \
-    --output "$scan/sarif/charts.sarif" "$charts_report"
+    --output "$work/charts.sarif" "$charts_report"
+  fit_sarif "$work/charts.sarif" "$scan/sarif/charts.sarif" chart
 else
-  echo "::warning title=trivy did not scan the charts::reports/charts.json is missing or empty"
+  warn "trivy did not scan the charts" "reports/charts.json is missing or empty"
   : > "$work/charts"
 fi
 
@@ -222,12 +276,28 @@ fi
     echo "|-|-|"
     awk -F '\t' '$3 == "failed" { gsub(/\|/, "\\|", $4); printf "| `%s/%s` | %s |\n", $1, $2, $4 }' "$scan/renders.tsv"
   fi
+  if [ -s "$work/sarif-notes" ]; then
+    echo ""
+    echo "### Code scanning"
+    echo ""
+    sed 's/^/- /' "$work/sarif-notes"
+  fi
 } >> "$summary"
 
+# --- annotations ---------------------------------------------------------------
+
 while IFS="$(printf '\t')" read -r image operator; do
-  printf '::warning title=charts/operator-images.yaml is stale::%s is listed as the default of %s, which no render carries any more: review it against the new operator\n' "$image" "$operator"
+  warn "charts/operator-images.yaml is stale" "$image is listed as the default of $operator, which no render carries any more: review it against the new operator"
 done < "$scan/stale.tsv"
 
 # A fixture is a valid render by contract (test/matrix.sh); defaults need not be.
 awk -F '\t' '$3 == "failed" && $2 != "defaults" {
-  printf "::warning title=%s/%s did not render::%s\n", $1, $2, $4 }' "$scan/renders.tsv"
+  printf "%s/%s did not render\t%s\n", $1, $2, $4 }' "$scan/renders.tsv" >> "$work/warnings"
+
+cat "$work/warnings" "$work/warnings-images" | awk -F '\t' '
+  { title[NR] = $1; message[NR] = $2 }
+  END {
+    shown = NR > 10 ? 9 : NR
+    for (i = 1; i <= shown; i++) printf "::warning title=%s::%s\n", title[i], message[i]
+    if (NR > shown) printf "::warning title=%d more warnings::see the job summary\n", NR - shown
+  }'

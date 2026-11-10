@@ -258,8 +258,10 @@ dependencies:
       caPublicKey: ca.crt
     metrics:
       enabled: true
-      image:
-        registry: public.ecr.aws
+      exporter:
+        image:
+          # Ahead of the chart's default for its security fixes.
+          tag: "v1.97.0"
       serviceMonitor:
         enabled: true
         port: http-metrics
@@ -351,6 +353,10 @@ dependencies:
       # What ArmoniK.Core tests the adaptor against, rather than this chart's own default of 16.
       postgresql: "18"
     cluster:
+      # The major above, under a tag naming the image type and Debian release: CloudNativePG
+      # deprecates the bare major tags. The chart reads that major as a number, so the tag cannot go
+      # there; keep the two in step.
+      imageName: ghcr.io/cloudnative-pg/postgresql:18-system-trixie
       # Single instance, for a development/test cluster.
       instances: 1
       initdb:
@@ -464,6 +470,9 @@ dependencies:
   # == fluent-bit (DaemonSet) ==
   fluent-bit:
     enabled: true
+    image:
+      # The compute-plane sidecar's release (armonik-compute-plane fluentBit.image.tag).
+      tag: "5.1.5"
     # priorityClassName:
     daemonSetVolumes:
       - name: runlogjournal

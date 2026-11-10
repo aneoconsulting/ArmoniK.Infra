@@ -7,7 +7,8 @@
 #
 # Reads, under <scan-dir> (charts/scan-inputs.sh writes the first two):
 #   renders.tsv              <chart> <case> <ok|failed> <reason>
-#   images.tsv               <image> <chart/case,...>
+#   images.tsv               <image> <uses> <owners>
+#   stale.tsv                <image> <operator>, operator-images.yaml entries to review
 #   image-status.tsv         <image> <ok|failed> <reason>, in images.tsv order
 #   reports/images/<n>.json  trivy image report of images.tsv line <n>
 #   reports/charts.json      trivy config report of manifests/
@@ -46,28 +47,47 @@ paste "$scan/images.tsv" "$scan/image-status.tsv" > "$work/images"
 : > "$work/failed"
 : > "$work/sarif-list"
 n=0
-while IFS="$(printf '\t')" read -r image sources status_image status reason; do
+while IFS="$(printf '\t')" read -r image uses owners status_image status reason; do
   n=$((n + 1))
   if [ "$image" != "$status_image" ]; then
     printf '%s: images.tsv and image-status.tsv disagree on line %s (%s, %s)\n' \
       "$0" "$n" "$image" "$status_image" >&2
     exit 1
   fi
-  charts=$(printf '%s\n' "$sources" | tr ',' '\n' | sed 's#/.*##' | sort -u | paste -sd, - | sed 's/,/, /g')
-  # How the image comes in: a chart's own values render it, only a fixture
-  # does, or no render at all.
-  use=$(printf '%s\n' "$sources" | tr ',' '\n' | awk -F / '
-    $2 == "defaults" { d = 1 } $2 != "defaults" && $2 != "values" { f = 1 }
-    END { print d ? "default install" : f ? "fixture" : "values only" }')
+  # How the image comes in: rendered by a chart's defaults, only by some
+  # fixtures (named), through ArmoniK's image map, or picked by an operator.
+  use=$(printf '%s\n' "$uses" | tr ',' '\n' | awk -F / '
+    $0 == "image-map" { m = 1; next }
+    $0 == "operator" { o = 1; next }
+    $2 == "defaults" { d = 1; next }
+    !($2 in seen) { seen[$2] = 1; f = f (f == "" ? "" : ", ") $2 }
+    END {
+      if (d) print "default install"
+      else if (f != "") print "fixture: " f
+      else if (o) print "operator default"
+      else if (m) print "image map"
+    }')
+  # Who holds it: the charts whose templates name it, seen from the umbrella
+  # when the umbrella renders it, from the other release roots otherwise.
+  charts=$(printf '%s\n' "$owners" | tr ',' '\n' | awk -F = '
+    { path[NR] = $1; owner[NR] = $2; if ($1 == "armonik" || $1 ~ /^armonik\//) umbrella = 1 }
+    END {
+      for (i = 1; i <= NR; i++) {
+        if (umbrella && path[i] != "armonik" && path[i] !~ /^armonik\//) continue
+        o = owner[i]; sub(/@/, " ", o)
+        p = path[i]; gsub(/\//, " > ", p)
+        line = o " (" p ")"
+        if (!(line in seen)) { seen[line] = 1; out = out (out == "" ? "" : "<br>") line }
+      }
+      print out
+    }')
   report="$scan/reports/images/$n.json"
 
   if [ "$status" != ok ] || [ ! -s "$report" ]; then
     printf '%s\t%s\t%s\t%s\n' "$image" "$use" "$charts" "${reason:-no report}" >> "$work/failed"
-    # What a default install deploys must be readable; a tag derived from
-    # values (see charts/scan-inputs.sh) may be a wrong guess.
-    if [ "$use" = "default install" ]; then
-      printf '::warning title=trivy did not scan %s::%s (used by %s)\n' "$image" "${reason:-no report}" "$charts"
-    fi
+    # Placeholders never get here (charts/scan-inputs.sh drops them), so an
+    # unreadable image is one a user can deploy.
+    printf '::warning title=trivy did not scan %s::%s\n' "$image" "${reason:-no report}"
     continue
   fi
 
@@ -150,17 +170,17 @@ fi
   printf '### Images: %s scanned, %s not scanned\n' \
     "$(wc -l < "$work/scanned" | tr -d ' ')" "$(wc -l < "$work/failed" | tr -d ' ')"
   echo ""
-  echo "Every image a chart references: rendered with its defaults (\`default install\`), rendered only with a \`ci/\` fixture (\`fixture\`, the images a fixture names being placeholders and left out), or named by its values without being rendered (\`values only\`). Vulnerabilities count once per affected package."
+  echo "Every image the charts can deploy: rendered with a chart's defaults (\`default install\`), rendered only with the named \`ci/\` fixtures, which enable the optional components (an image a fixture names is a placeholder and left out), a worker or other image from ArmoniK's image map (\`image map\`), or an image an operator picks itself (\`operator default\`, from \`charts/operator-images.yaml\`). The owner is the chart whose templates name the image, with its path from the release root. Vulnerabilities count once per affected package."
   echo ""
-  echo "| Image | Origin | Critical | High | Medium | Low | Unknown | Fixable | Use | Charts |"
+  echo "| Image | Origin | Critical | High | Medium | Low | Unknown | Fixable | Use | Owner |"
   echo "|-|-|-:|-:|-:|-:|-:|-:|-|-|"
   sort -t "$(printf '\t')" -k1,1nr -k2,2nr -k3,3nr -k4,4nr -k7,7 "$work/scanned" |
     awk -F '\t' '{ printf "| `%s` | %s | %s | %s | %s | %s | %s | %s | %s | %s |\n", $7, $8, $1, $2, $3, $4, $5, $6, $9, $10 }'
   if [ -s "$work/failed" ]; then
     echo ""
-    echo "Not scanned (a \`values only\` tag the values leave empty is derived from the chart AppVersion, which may not be the tag the chart would render):"
+    echo "Not scanned:"
     echo ""
-    echo "| Image | Use | Charts | Reason |"
+    echo "| Image | Use | Owner | Reason |"
     echo "|-|-|-|-|"
     # A pipe would end the table cell.
     sort "$work/failed" | sed 's/|/\\|/g' |
@@ -176,13 +196,17 @@ fi
   awk -F '\t' '{ sub(/\.yaml$/, "", $1); printf "| `%s` | %s | %s | %s | %s | %s |\n", $1, $2, $3, $4, $5, $6 }' "$work/charts"
   if grep -q '	failed	' "$scan/renders.tsv"; then
     echo ""
-    echo "Not rendered, so not scanned, their values still being searched for images (a chart's bare defaults may be invalid on purpose):"
+    echo "Not rendered, so neither scanned nor searched for images (a chart's bare defaults may be invalid on purpose):"
     echo ""
     echo "| Render | Reason |"
     echo "|-|-|"
     awk -F '\t' '$3 == "failed" { gsub(/\|/, "\\|", $4); printf "| `%s/%s` | %s |\n", $1, $2, $4 }' "$scan/renders.tsv"
   fi
 } >> "$summary"
+
+while IFS="$(printf '\t')" read -r image operator; do
+  printf '::warning title=charts/operator-images.yaml is stale::%s is listed as the default of %s, which no render carries any more: review it against the new operator\n' "$image" "$operator"
+done < "$scan/stale.tsv"
 
 # A fixture is a valid render by contract (test/matrix.sh); defaults need not be.
 awk -F '\t' '$3 == "failed" && $2 != "defaults" {

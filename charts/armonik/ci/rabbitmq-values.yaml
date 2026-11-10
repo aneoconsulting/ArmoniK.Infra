@@ -1,0 +1,13 @@
+# RabbitMQ as the queue, in place of ActiveMQ (one queue backend at a time, see
+# templates/validate.yaml), with persistence and its volume-permissions init
+# container: the RabbitMQ images, for the trivy scan of
+# .github/workflows/publish.yml among others.
+dependencies:
+  activemq:
+    enabled: false
+  rabbitmq:
+    enabled: true
+    persistence:
+      enabled: true
+    volumePermissions:
+      enabled: true

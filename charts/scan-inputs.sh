@@ -1,27 +1,40 @@
 #! /bin/sh
 
 # Renders every packaged release-root chart, with its defaults and with each of
-# its ci/*-values.yaml fixtures, and lists the container images the charts
-# reference: those the renders use, plus those their values name without
-# rendering them (a disabled component, a disabled subchart). Feeds the trivy
-# job of .github/workflows/publish.yml: the renders are scanned for
+# its ci/*-values.yaml fixtures, and lists the container images the charts can
+# deploy, each attributed to the chart that owns it. Feeds the trivy job of
+# .github/workflows/publish.yml: the renders are scanned for
 # misconfigurations, the images for vulnerabilities. Needs helm and mikefarah
 # yq v4.
+#
+# The images come from three places:
+#   - the renders. The images a user can turn on come in through fixtures
+#     enabling them (armonik/ci/optional-images-values.yaml and
+#     rabbitmq-values.yaml); an image a fixture names is a placeholder
+#     (busybox:0.0.0-test), so a fixture's render contributes no image of a
+#     repository that fixture names;
+#   - ArmoniK's image map (global.armonik.imageComponents and versions), for
+#     the images a user picks rather than enables, the workers chiefly;
+#   - operator-images.yaml, for the images an operator picks by itself.
 #
 # Outputs, under OUT:
 #   manifests/<chart>/<case>.yaml   one render per case
 #   renders.tsv                     <chart> <case> <ok|failed> <first error line>
-#   images.tsv                      <image> <chart/case,...>, one line per image,
-#                                   the case `values` meaning found in the values
-#                                   of that chart's archive, not in a render
+#   images.tsv                      <image> <uses> <owners>, one line per
+#                                   image, both comma-separated lists: uses are
+#                                   <chart>/<case>, `image-map` or `operator`;
+#                                   owners are <alias-path>=<name>@<version>,
+#                                   the charts whose templates hold the image,
+#                                   by their path from the release root
+#                                   (armonik/operators/kube-prometheus=
+#                                   kube-prometheus-stack@92.21.2)
+#   stale.tsv                       <image> <operator> for each operator-images.yaml
+#                                   entry whose operator no render carries
 #
 # A failed render is recorded, not fatal: a chart's bare defaults may be
 # invalid on purpose (armonik-compute-plane has no partition, armonik-ingress
 # no URLs Secret), its fixtures then covering it. test/matrix.sh is what
 # asserts which renders must succeed.
-#
-# An image a fixture names is a placeholder (busybox:0.0.0-test), so a
-# fixture's render contributes no image of a repository that fixture names.
 
 set -eu
 
@@ -36,7 +49,7 @@ usage() {
   cat <<USAGE
 Usage: $self [-d DIR] [-o DIR] [-k VERSION] [-h]
 
-Renders the packaged charts and lists the images they reference.
+Renders the packaged charts and lists the images they can deploy.
 
   -d DIR      directory holding the packaged charts (default: the repo's dist/)
   -o DIR      output directory, cleared first (default: the repo's scan/)
@@ -84,7 +97,8 @@ work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
 : > "$out/renders.tsv"
 : > "$work/rendered"
-: > "$work/values"
+: > "$work/graph"
+: > "$work/map"
 err="$work/stderr"
 
 # Shared by every awk below: one spelling per image, so that
@@ -107,11 +121,11 @@ awk_lib='
   function isref(r) { return r ~ /^[A-Za-z0-9][A-Za-z0-9._\/:@-]*$/ }
 '
 
-# Where an image hides in a render. CRDs are skipped: their schemas carry
-# `image` keys that are documentation. Beyond the `image` fields of pod specs
-# and of CRs (percona's PerconaServerMongoDB, the Prometheus CR), operators
-# take the images of what they spawn as flags (cert-manager's ACME solver,
-# prometheus-operator's config reloader) or env (cloudnative-pg).
+# Where an image hides in a render, as <document index> <image>. CRDs are
+# skipped: their schemas carry `image` keys that are documentation. Beyond the
+# `image` fields of pod specs and of CRs (percona's PerconaServerMongoDB, the
+# Prometheus CR), operators take the images of what they spawn as flags
+# (cert-manager's ACME solver, prometheus-operator's config reloader) or env.
 # shellcheck disable=SC2016 # yq expressions, not shell
 in_render='
   select(.kind != "CustomResourceDefinition") |
@@ -120,37 +134,10 @@ in_render='
     (.. | select(tag == "!!str") | select(test("^--(([a-z0-9-]*-)?image|prometheus-config-reloader)=")) | sub("^[^=]*=", "")),
     (.. | select(tag == "!!map" and has("name") and has("value")) | select(.name | test("(?i)image")) | .value | select(tag == "!!str"))
   )
+  | [di, .] | @tsv
 '
 
-# Where an image hides in values, as `map <registry> <repository> <tag>
-# <digest>`, `ref <reference>` or `component <component> <repository>
-# <version>`: a map with a repository under a key naming an image (whatever
-# else the chart composes it with, cert-manager's imageNamespace for one, is
-# missed, its rendered images covering it), a reference string under a key
-# ending in "image", and ArmoniK's own repository-to-component map.
-# shellcheck disable=SC2016
-in_values='
-  (
-    .. | select(tag == "!!map" and has("repository"))
-       | select(.repository | tag == "!!str" and . != "")
-       | select(path | map(tostring) | join(".") | test("(?i)image"))
-       | ["map", (.registry // "" | tostring), .repository, (.tag // "" | tostring), ((.digest // .sha // "") | tostring)]
-       | @tsv
-  ),
-  (
-    .. | select(tag == "!!str" and . != "")
-       | select(path | .[-1] | tostring | test("(?i)image$"))
-       | ["ref", .] | @tsv
-  ),
-  (
-    (.global.armonik.versions // {}) as $v
-    | (.global.armonik.imageComponents // {}) | to_entries | .[]
-    | .value as $c
-    | ["component", $c, .key, ($v[$c] // "" | tostring)] | @tsv
-  )
-'
-
-# The fixture side of the same: the repositories a fixture names.
+# The repositories a fixture names.
 # shellcheck disable=SC2016
 in_fixture='
   (
@@ -184,26 +171,52 @@ render() { # render <archive> <chart> <case> [<fixture>]
     printf '%s: %s/%s did not render: %s\n' "$self" "$chart" "$case_name" "$reason" >&2
     return 0
   fi
+
+  # helm heads every document with the template it comes from, whose path is
+  # the alias path of the owning chart: armonik/charts/operators/charts/
+  # kube-prometheus/templates/... is armonik/operators/kube-prometheus.
+  grep '^# Source: ' "$manifest" |
+    sed -e 's/^# Source: //' -e 's#/templates/.*##' -e 's#/charts/#/#g' > "$work/sources"
+  if [ "$(wc -l < "$work/sources")" -ne "$(grep -c '^---$' "$manifest")" ]; then
+    printf '%s: %s/%s: not one "# Source:" line per document, cannot attribute its images\n' \
+      "$self" "$chart" "$case_name" >&2
+    exit 1
+  fi
+
   : > "$work/placeholders"
   [ -z "$fixture" ] || yq ea -N "$in_fixture" "$fixture" > "$work/placeholders"
   yq ea -N "$in_render" "$manifest" |
-    awk -v src="$chart/$case_name" -v placeholders="$work/placeholders" "$awk_lib"'
-      BEGIN { while ((getline line < placeholders) > 0) if (isref(line)) skip[repo(norm(line))] = 1 }
-      !isref($0) { next }
-      { r = norm($0); if (!(repo(r) in skip)) print r "\t" src }' >> "$work/rendered"
+    awk -F '\t' -v use="$chart/$case_name" -v sources="$work/sources" \
+        -v placeholders="$work/placeholders" "$awk_lib"'
+      BEGIN {
+        while ((getline line < sources) > 0) source[n++] = line
+        while ((getline line < placeholders) > 0) if (isref(line)) skip[repo(norm(line))] = 1
+      }
+      !isref($2) { next }
+      { r = norm($2); if (!(repo(r) in skip)) print r "\t" use "\t" source[$1] }' >> "$work/rendered"
 }
 
-values() { # values <archive> <chart>
-  rm -rf "$work/chart"
-  mkdir -p "$work/chart"
-  tar -xzf "$1" -C "$work/chart"
-  # Every values.yaml of the archive, its subcharts' included, enabled or not;
-  # an empty tag means its own chart's AppVersion.
-  find "$work/chart" -name values.yaml | sort | while read -r file; do
-    app_version=$(yq '.appVersion // ""' "$(dirname "$file")/Chart.yaml")
-    yq -N "$in_values" "$file" |
-      awk -v av="$app_version" -v src="$2/values" '{ print $0 "\t" av "\t" src }'
-  done >> "$work/values"
+graph() { # graph <chart-dir> <alias-path>: <alias-path> <name>@<version>, recursively
+  yq -N '[.name, .version] | join("@")' "$1/Chart.yaml" | sed "s#^#$2	#"
+  yq -N '.dependencies[]? | [.name, (.alias // .name)] | @tsv' "$1/Chart.yaml" |
+    while IFS="$(printf '\t')" read -r name alias; do
+      # Subshell: the recursion reuses this function's variables.
+      [ ! -d "$1/charts/$name" ] || (graph "$1/charts/$name" "$2/$alias")
+    done
+}
+
+image_map() { # image_map <chart-dir> <chart>: component <name> <repository> <version> <alias-path>
+  common="$1/charts/armonik-common"
+  [ -d "$common" ] || return 0
+  # The root's own global.armonik over armonik-common's, as import-values does.
+  # shellcheck disable=SC2016
+  yq ea -N '
+    . as $f ireduce ({}; . * $f) | .global.armonik as $a
+    | ($a.versions // {}) as $v
+    | ($a.imageComponents // {}) | to_entries | .[]
+    | .value as $c
+    | ["component", $c, .key, ($v[$c] // "" | tostring)] | @tsv' \
+    "$common/values.yaml" "$1/values.yaml" | sed "s#\$#	$2/armonik-common#"
 }
 
 for archive in "$@"; do
@@ -213,60 +226,60 @@ for archive in "$@"; do
     [ -f "$fixture" ] || continue
     render "$archive" "$chart" "$(basename "$fixture" -values.yaml)" "$fixture"
   done
-  values "$archive" "$chart"
+  rm -rf "$work/chart"
+  mkdir -p "$work/chart"
+  tar -xzf "$archive" -C "$work/chart"
+  graph "$work/chart/$chart" "$chart" >> "$work/graph"
+  image_map "$work/chart/$chart" "$chart" >> "$work/map"
 done
 
-# Values carry no rendered truth: a tag left empty becomes whatever the chart
-# templates make of its AppVersion (a `v` prefix, a `-distroless` suffix). So
-# a guessed tag only stands for a repository no render uses, and an ArmoniK
-# component without a version takes the tag its rendered siblings carry.
-awk -F '\t' "$awk_lib"'
-  function add(r, src) {
-    if (!isref(r)) return
-    r = norm(r)
-    if (!(r in sources)) { sources[r] = src; return }
-    if (!index("," sources[r] ",", "," src ",")) sources[r] = sources[r] "," src
+yq -N '.[] | ["operator", .image, .operator] | @tsv' "$here/operator-images.yaml" > "$work/operators"
+
+# The image map and operator-images.yaml only add images no render shows. A map
+# component without a version takes the tag its rendered siblings carry, which
+# is what the charts default it to (their AppVersion); an operator's image
+# takes the operator's owners.
+awk -F '\t' -v stale="$out/stale.tsv" "$awk_lib"'
+  function addlist(list, item) {
+    if (item == "") return list
+    if (list == "") return item
+    return index("," list ",", "," item ",") ? list : list "," item
   }
-  FNR == NR {
-    add($1, $2)
+  function add(r, use, path) {
+    r = norm(r)
+    uses[r] = addlist(uses[r], use)
+    owners[r] = addlist(owners[r], path "=" (path in owner ? owner[path] : "unknown"))
+  }
+  FILENAME == ARGV[1] { owner[$1] = $2; next }
+  FILENAME == ARGV[2] {
+    add($1, $2, $3)
     rendered[repo($1)] = 1
     if (substr($1, length(repo($1)) + 1, 1) == ":")
-      tags[repo($1)] = tags[repo($1)] " " substr($1, length(repo($1)) + 2)
+      tags[repo($1)] = addlist(tags[repo($1)], substr($1, length(repo($1)) + 2))
     next
   }
-  $1 == "component" {
-    component[$3] = $2
-    if ($4 != "") add($3 ":" $4, $6)
-    else pending[$3] = pending[$3] "," $6
-    next
-  }
-  $1 == "ref" {
-    if (index($2, "{{") == 0) add($2, $4)
-    next
-  }
-  $1 == "map" {
-    registry = $2; repository = $3; tag = $4; digest = $5; av = $6; src = $7
-    gsub(/\{\{-? *\.Chart\.AppVersion *-?\}\}/, av, tag)
-    if (index(registry repository tag digest, "{{")) next
-    guessed = 0
-    if (tag == "" && digest == "") { tag = av; guessed = 1 }
-    if (tag == "" && digest == "") next
-    r = (registry != "" ? registry "/" : "") repository (tag != "" ? ":" tag : "") (digest != "" ? "@" digest : "")
-    if (guessed && repo(norm(r)) in rendered) next
-    add(r, src)
-  }
+  $1 == "component" { component[$3] = $2; version[$3] = $4; mapped[$3] = addlist(mapped[$3], $5); next }
+  $1 == "operator" { operators[$2] = $3; next }
   END {
-    for (r in pending) {
+    for (r in mapped) {
       if (r in rendered) continue
-      for (sibling in tags) {
-        if (component[sibling] != component[r]) continue
-        n = split(tags[sibling], t, " ")
-        m = split(pending[r], from, ",")
-        for (i = 1; i <= n; i++) for (j = 2; j <= m; j++) add(r ":" t[i], from[j])
-      }
+      list = version[r]
+      if (list == "")
+        for (sibling in tags)
+          if (component[sibling] == component[r]) list = addlist(list, tags[sibling])
+      n = split(list, t, ",")
+      m = split(mapped[r], p, ",")
+      for (i = 1; i <= n; i++) for (j = 1; j <= m; j++) add(r ":" t[i], "image-map", p[j])
     }
-    for (r in sources) print r "\t" sources[r]
-  }' "$work/rendered" "$work/values" | sort > "$out/images.tsv"
+    for (image in operators) {
+      op = norm(operators[image])
+      if (!(op in uses)) { print image "\t" operators[image] > stale; continue }
+      add(image, "operator", "")
+      owners[norm(image)] = owners[op]
+    }
+    for (r in uses) print r "\t" uses[r] "\t" owners[r]
+  }' "$work/graph" "$work/rendered" "$work/map" "$work/operators" | sort > "$out/images.tsv"
+touch "$out/stale.tsv"
 
 if ! grep -q '	ok	' "$out/renders.tsv"; then
   printf '%s: no chart rendered\n' "$self" >&2
@@ -276,10 +289,13 @@ if [ ! -s "$out/images.tsv" ]; then
   printf '%s: the charts reference no image, which means the extraction broke\n' "$self" >&2
   exit 1
 fi
+while IFS="$(printf '\t')" read -r image operator; do
+  printf '%s: operator-images.yaml lists %s as the default of %s, which no render carries any more: review it\n' \
+    "$self" "$image" "$operator" >&2
+done < "$out/stale.tsv"
 
-printf '%s: %s render(s), %s failed, %s image(s), %s from values only, in %s\n' "$self" \
+printf '%s: %s render(s), %s failed, %s image(s), in %s\n' "$self" \
   "$(wc -l < "$out/renders.tsv" | tr -d ' ')" \
   "$(grep -c '	failed	' "$out/renders.tsv" || true)" \
   "$(wc -l < "$out/images.tsv" | tr -d ' ')" \
-  "$(awk -F '\t' '{ n = split($2, s, ","); v = 1; for (i = 1; i <= n; i++) if (s[i] !~ /\/values$/) v = 0; c += v } END { print c + 0 }' "$out/images.tsv")" \
   "$out" >&2

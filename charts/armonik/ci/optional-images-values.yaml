@@ -1,0 +1,72 @@
+# Every optional component that brings an image of its own, so that the trivy
+# scan of .github/workflows/publish.yml (charts/scan-inputs.sh) sees the images
+# a user can turn on, not only those of a default install. RabbitMQ excludes
+# ActiveMQ, so it has its own fixture (rabbitmq-values.yaml). Extend this one
+# when a dependency gains an optional component with its own image.
+global:
+  armonik:
+    operators:
+      googleCasIssuer:
+        deploy: true
+operators:
+  external-secrets:
+    bitwarden-sdk-server:
+      enabled: true
+  kube-prometheus:
+    alertmanager:
+      enabled: true
+    crds:
+      upgradeJob:
+        enabled: true
+    prometheusOperator:
+      admissionWebhooks:
+        deployment:
+          enabled: true
+    kube-state-metrics:
+      kubeRBACProxy:
+        enabled: true
+    prometheus-node-exporter:
+      kubeRBACProxy:
+        enabled: true
+      # Any fix enables the permission init container.
+      permissionInitContainer:
+        fixes:
+          rapl: true
+dependencies:
+  mongodb:
+    clusterSync:
+      enabled: true
+      source:
+        uri: mongodb://source.example.invalid:27017
+  grafana:
+    # Persistence is what enables the initChownData container.
+    persistence:
+      enabled: true
+    imageRenderer:
+      enabled: true
+    # A dashboard fetched by URL is what adds the download init container.
+    dashboardProviders:
+      dashboardproviders.yaml:
+        apiVersion: 1
+        providers:
+          - name: remote
+            folder: remote
+            type: file
+            options:
+              path: /var/lib/grafana/dashboards/remote
+    dashboards:
+      remote:
+        example:
+          url: https://example.invalid/dashboard.json
+  fluent-bit:
+    hotReload:
+      enabled: true
+  seq:
+    gelf:
+      enabled: true
+    syslog:
+      enabled: true
+compute-plane:
+  # The per-pod sidecar, whose image is not the DaemonSet's.
+  fluentBit:
+    isDaemonSet: false

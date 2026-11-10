@@ -51,6 +51,30 @@ variable "tier" {
   default     = "db-custom-2-8192"
 }
 
+variable "data_cache" {
+  description = "Enable the data cache, reads served from a local SSD beyond the memory of the instance (ENTERPRISE_PLUS only, billed apart)."
+  type        = bool
+  default     = false
+  nullable    = false
+}
+
+variable "connection_pooling" {
+  description = <<-EOT
+    Managed Connection Pooling (ENTERPRISE_PLUS only): poolers in front of the instance, on port 6432 of its host
+    (pooler_port output), the server still answering on 5432 (port output). Turning it on or off restarts the instance.
+    * enabled: deploy the poolers, one per 4 vCPUs of the tier.
+    * flags: settings of the poolers, such as pool_mode (transaction by default), max_pool_size (server connections
+      per database and user, per pooler, 50 by default), max_client_connections (per pooler, 5000 by default) or
+      max_prepared_statements. See https://cloud.google.com/sql/docs/postgres/managed-connection-pooling.
+  EOT
+  type = object({
+    enabled = optional(bool, false)
+    flags   = optional(map(string), {})
+  })
+  default  = {}
+  nullable = false
+}
+
 variable "availability_type" {
   description = "ZONAL, or REGIONAL for a standby in another zone with automatic failover (twice the price)."
   type        = string
@@ -134,4 +158,16 @@ variable "labels" {
   type        = map(string)
   default     = {}
   nullable    = false
+}
+
+variable "monitoring_user" {
+  description = "Name of a read-only PostgreSQL user for the monitoring tools, with pg_monitor and SELECT on the tables of the database (monitoring_password output). Null creates none."
+  type        = string
+  default     = "armonik_monitoring"
+}
+
+variable "query_insights" {
+  description = "Enable Query Insights, the per-query statistics of the Cloud SQL console."
+  type        = bool
+  default     = true
 }

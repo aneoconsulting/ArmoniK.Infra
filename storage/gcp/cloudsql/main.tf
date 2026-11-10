@@ -56,6 +56,41 @@ resource "google_sql_database_instance" "postgresql" {
     # The provision script of the REPLICATION attribute goes through the ExecuteSql API
     data_api_access = "ALLOW_DATA_API"
 
+    # Reads served from a local SSD cache beyond the memory of the instance, ENTERPRISE_PLUS only
+    dynamic "data_cache_config" {
+      for_each = var.edition == "ENTERPRISE_PLUS" ? [1] : []
+      content {
+        data_cache_enabled = var.data_cache
+      }
+    }
+
+    # Managed Connection Pooling, ENTERPRISE_PLUS only: poolers in front of the instance, on port 6432 of the same
+    # host, the server still answering on 5432. Turning it on or off restarts the instance.
+    dynamic "connection_pool_config" {
+      for_each = var.connection_pooling.enabled ? [1] : []
+      content {
+        connection_pooling_enabled = true
+        dynamic "flags" {
+          for_each = var.connection_pooling.flags
+          content {
+            name  = flags.key
+            value = flags.value
+          }
+        }
+      }
+    }
+
+    # Per-query statistics in the console (Query Insights), free in the ENTERPRISE edition
+    dynamic "insights_config" {
+      for_each = var.query_insights ? [1] : []
+      content {
+        query_insights_enabled  = true
+        record_application_tags = true
+        # Not supported with Private Service Connect
+        record_client_address = false
+      }
+    }
+
     dynamic "database_flags" {
       for_each = local.database_flags
       content {
@@ -99,6 +134,17 @@ resource "google_sql_database_instance" "postgresql" {
         day  = maintenance_window.value.day
         hour = maintenance_window.value.hour
       }
+    }
+  }
+
+  lifecycle {
+    precondition {
+      condition     = var.edition != "ENTERPRISE_PLUS" || startswith(var.tier, "db-perf-optimized-N-")
+      error_message = "The ENTERPRISE_PLUS edition only runs the db-perf-optimized-N-<vCPUs> tiers."
+    }
+    precondition {
+      condition     = var.edition == "ENTERPRISE_PLUS" || !var.data_cache && !var.connection_pooling.enabled
+      error_message = "\"data_cache\" and \"connection_pooling\" need the ENTERPRISE_PLUS edition."
     }
   }
 
@@ -168,4 +214,53 @@ resource "google_sql_provision_script" "replication" {
   description             = "REPLICATION attribute of ${google_sql_user.armonik.name}"
   # Idempotent, run again only when the user changes
   script = "ALTER USER \"${google_sql_user.armonik.name}\" WITH REPLICATION;"
+}
+
+# Read-only user of the monitoring tools (postgres_exporter, Grafana). Created through the API, it is a member of
+# cloudsqlsuperuser, so it inherits pg_monitor (every session, statistics view and pg_stat_statements row). The
+# owner of the Core tables grants it SELECT on them, now and on the tables Core creates later.
+resource "random_password" "monitoring" {
+  count   = var.monitoring_user == null ? 0 : 1
+  length  = 32
+  special = false
+}
+
+resource "google_sql_user" "monitoring" {
+  count           = var.monitoring_user == null ? 0 : 1
+  name            = var.monitoring_user
+  project         = local.project
+  instance        = google_sql_database_instance.postgresql.name
+  type            = "BUILT_IN"
+  password        = random_password.monitoring[0].result
+  deletion_policy = "ABANDON"
+}
+
+resource "google_secret_manager_regional_secret" "user" {
+  count     = var.monitoring_user == null ? 0 : 1
+  secret_id = "${var.name}-${var.user}"
+  project   = local.project
+  location  = local.region
+  labels    = local.labels
+}
+
+resource "google_secret_manager_regional_secret_version" "user" {
+  count       = var.monitoring_user == null ? 0 : 1
+  secret      = google_secret_manager_regional_secret.user[0].id
+  secret_data = random_password.user.result
+}
+
+resource "google_sql_provision_script" "monitoring" {
+  count                   = var.monitoring_user == null ? 0 : 1
+  instance                = google_sql_database_instance.postgresql.name
+  project                 = local.project
+  database                = google_sql_database.armonik.name
+  user                    = google_sql_user.armonik.name
+  password_secret_version = google_secret_manager_regional_secret_version.user[0].name
+  description             = "Read access of ${google_sql_user.monitoring[0].name}"
+  # Idempotent, run again only when the users change
+  script = <<-EOT
+    CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
+    GRANT SELECT ON ALL TABLES IN SCHEMA public TO "${google_sql_user.monitoring[0].name}";
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO "${google_sql_user.monitoring[0].name}";
+  EOT
 }

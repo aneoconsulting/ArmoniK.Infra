@@ -14,6 +14,13 @@ This module creates:
 * The database and its owner, with a generated password, granted the `REPLICATION` attribute by a provision script
   run as `postgres` through the Cloud SQL API, whose password is kept in a regional Secret Manager secret.
 
+* Optionally (`monitoring_user`), a read-only user for the monitoring tools: `pg_monitor` (inherited from
+  `cloudsqlsuperuser`), `SELECT` on the tables granted by their owner, and the `pg_stat_statements` extension.
+* Query Insights (`query_insights`), the per-query statistics of the Cloud SQL console.
+* In the `ENTERPRISE_PLUS` edition, optionally, the data cache (`data_cache`) and Managed Connection Pooling
+  (`connection_pooling`): poolers on port 6432 of the same host (`pooler_port` output), the server still answering on
+  5432 (`port` output).
+
 > Note: a deleted instance keeps its name reserved for up to a week. A deployment destroyed and created again needs
 > a new name, such as one with a random suffix.
 

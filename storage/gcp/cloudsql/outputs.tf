@@ -28,6 +28,11 @@ output "port" {
   value       = 5432
 }
 
+output "pooler_port" {
+  description = "Port of the managed connection poolers on the host, null without connection_pooling. The poolers do not document logical replication connections, which the WAL broadcaster of Core opens on the same host and port as its pool."
+  value       = var.connection_pooling.enabled ? 6432 : null
+}
+
 output "database" {
   description = "Name of the database."
   value       = google_sql_database.armonik.name
@@ -50,4 +55,18 @@ output "password" {
 output "ca_cert" {
   description = "PEM certificates of the CA that issues the server certificate, to verify it against."
   value       = join("\n", [for cert in google_sql_database_instance.postgresql.server_ca_cert : cert.cert])
+}
+
+output "monitoring_username" {
+  description = "Read-only PostgreSQL user of the monitoring tools, null without monitoring_user."
+  value       = try(google_sql_user.monitoring[0].name, null)
+  # Usable once it can read the tables
+  depends_on = [google_sql_provision_script.monitoring]
+}
+
+output "monitoring_password" {
+  description = "Password of the monitoring user, null without monitoring_user."
+  value       = try(random_password.monitoring[0].result, null)
+  sensitive   = true
+  depends_on  = [google_sql_provision_script.monitoring]
 }

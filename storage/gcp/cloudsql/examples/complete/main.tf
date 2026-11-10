@@ -12,9 +12,17 @@ module "complete_cloudsql" {
   network           = var.network
   psc_subnets       = var.psc_subnets
   database_version  = "POSTGRES_18"
-  edition           = "ENTERPRISE"
-  tier              = "db-custom-4-16384"
+  edition           = "ENTERPRISE_PLUS"
+  tier              = "db-perf-optimized-N-4"
   availability_type = "REGIONAL"
+  data_cache        = true
+  connection_pooling = {
+    enabled = true
+    flags = {
+      max_pool_size           = "20"
+      max_prepared_statements = "100"
+    }
+  }
   disk = {
     size       = 50
     autoresize = true

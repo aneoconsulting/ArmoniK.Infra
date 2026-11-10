@@ -1,10 +1,11 @@
 output "connection" {
   description = "Connection parameters of the instance"
   value = {
-    host     = module.complete_cloudsql.host
-    port     = module.complete_cloudsql.port
-    database = module.complete_cloudsql.database
-    username = module.complete_cloudsql.username
+    host        = module.complete_cloudsql.host
+    port        = module.complete_cloudsql.port
+    pooler_port = module.complete_cloudsql.pooler_port
+    database    = module.complete_cloudsql.database
+    username    = module.complete_cloudsql.username
   }
 }
 

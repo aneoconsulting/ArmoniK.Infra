@@ -301,7 +301,7 @@ jobs:
   # Report only, and nothing waits for it: third-party images rarely go a week
   # without a new CVE, so a gate would hold every publication hostage.
   scan:
-    name: Scan charts and images with trivy
+    name: Scan the chart images with trivy
     needs: [context, package]
     runs-on: ubuntu-latest
     # No credentials: a Docker Hub token would reach a third-party scanner, and
@@ -366,12 +366,6 @@ jobs:
           trivy image --download-db-only
           trivy image --download-java-db-only
 
-      - name: Scan the rendered charts
-        run: |
-          mkdir -p scan/reports
-          trivy config --misconfig-scanners kubernetes \
-            --format json --output scan/reports/charts.json scan/manifests
-
       # Every image alike, ours and third-party: the report tells them apart.
       - name: Scan the images
         run: ./.github/scripts/trivy-images.sh scan .github/trivy.yaml
@@ -379,7 +373,7 @@ jobs:
       # Owners link to the files of the scanned commit, the checked-out one.
       - name: Report
         run: |
-          ./.github/scripts/trivy-report.sh scan "$GITHUB_STEP_SUMMARY" \
+          ./.github/scripts/trivy-images-report.sh scan "$GITHUB_STEP_SUMMARY" \
             "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/blob/$(git rev-parse HEAD)"
 
       # Not from a fork: its token cannot write security events.
@@ -391,15 +385,6 @@ jobs:
         with:
           sarif_file: scan/sarif/images.sarif
           category: trivy-images
-
-      - name: Upload the chart findings to code scanning
-        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
-        uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
-        # Report only: a rejected upload is reported, not fatal.
-        continue-on-error: true
-        with:
-          sarif_file: scan/sarif/charts.sarif
-          category: trivy-charts
 
       - name: Upload the reports
         if: always()

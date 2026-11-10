@@ -1,29 +1,27 @@
 #! /bin/sh
 
-# Turns the trivy reports of publish.yml's scan job into a job summary,
-# annotations, two SARIF files for code scanning and two CSV files.
-# Report-only: findings never fail it.
+# Turns the trivy image reports of publish.yml's scan job into a job summary,
+# annotations, a SARIF file for code scanning and a CSV file. Report-only:
+# findings never fail it.
 #
-# Usage: trivy-report.sh <scan-dir> <summary-file> [<blob-url>]
+# Usage: trivy-images-report.sh <scan-dir> <summary-file> [<blob-url>]
 #
 # <blob-url> browses the repository at the scanned commit
 # (https://github.com/<owner>/<repo>/blob/<sha>); owners link there when set.
 #
 # Reads, under <scan-dir>:
 #   renders.tsv, images.tsv,    charts/scan-inputs.sh
-#   documents.tsv, stale.tsv
+#   stale.tsv
 #   image-status.tsv            .github/scripts/trivy-images.sh
 #   reports/images/<n>.json     trivy image report of images.tsv line <n>
-#   reports/charts.json         trivy config report of manifests/
 # Writes the markdown summary to <summary-file>, annotations to stdout, and
 # under <scan-dir>:
-#   sarif/images.sarif, sarif/charts.sarif
+#   sarif/images.sarif
 #   reports/vulnerabilities.csv     every vulnerability, one row per image
 #                                   and affected package
-#   reports/misconfigurations.csv   every failed check, one row per document
 #
-# SARIF_SEVERITY (default MEDIUM,HIGH,CRITICAL) filters the SARIF files only:
-# the summary and the CSV files keep every severity. A SARIF file over code
+# SARIF_SEVERITY (default MEDIUM,HIGH,CRITICAL) filters the SARIF file only:
+# the summary and the CSV file keep every severity. A SARIF file over code
 # scanning's limits loses its lowest severities until it fits.
 
 set -eu
@@ -45,12 +43,8 @@ for f in warnings warnings-images sarif-notes scanned failed sarif-list; do
   : > "$work/$f"
 done
 
-# Annotations are capped at 10 warnings per step
-# (https://github.com/actions/toolkit/blob/main/docs/problem-matchers.md), so
-# they are collected and emitted at the end, the run-wide ones first.
-warn() { # <title> <message>
-  printf '%s\t%s\n' "$1" "$2" >> "$work/warnings"
-}
+# shellcheck source=trivy-lib.sh
+. "$(dirname "$0")/trivy-lib.sh"
 
 # Code scanning rejects a SARIF file past 25,000 results or rules per run, or
 # 10 MB gzipped
@@ -91,59 +85,6 @@ fit_sarif() { # <in> <out> <label>
   printf '%s: still over the code scanning limits with CRITICAL alone (%s results, %s rules, %s bytes gzipped); the upload may be rejected.\n' \
     "$3" "$results" "$rules" "$bytes" >> "$work/sarif-notes"
   warn "the $3 SARIF file exceeds code scanning's limits" "$results results, $rules rules, $bytes bytes gzipped, with CRITICAL alone"
-}
-
-# The owners of charts/scan-inputs.sh (<alias-path>=<name>@<version>=<location>,
-# comma-separated) as one table cell: a link per location, to a template or to
-# the line of our Chart.yaml that sets a chart's version, the chart's path from
-# the release root as the link title, the umbrella's path when it has one.
-# mode=charts names the chart alone, one link per chart, to its first
-# location; mode=names gives plain names for the CSV files; past max links, the
-# rest fold into a collapsed list.
-# shellcheck disable=SC2016 # awk program, not shell
-owners_awk='
-  {
-    n = split($0, entry, ",")
-    k = 0
-    for (i = 1; i <= n; i++) {
-      split(entry[i], f, "=")
-      key = f[3] != "" ? f[3] : f[2]
-      if (!(key in at)) { at[key] = ++k; path[k] = f[1]; owner[k] = f[2]; loc[k] = f[3] }
-      else if (f[1] == "armonik" || f[1] ~ /^armonik\//) { path[at[key]] = f[1]; owner[at[key]] = f[2] }
-    }
-    sep = mode == "names" ? "; " : "<br>"
-    for (i = 1; i <= k; i++) {
-      name = owner[i]; sub(/@.*$/, "", name)
-      version = owner[i]; sub(/^[^@]*@/, "", version)
-      if (loc[i] == "" || loc[i] ~ /\/Chart\.yaml(#L[0-9]+)?$/) text = name " " version
-      else if (loc[i] ~ /\/values\.yaml(#L[0-9]+)?$/) text = name ": image map"
-      else { text = loc[i]; sub(/^charts\/[^\/]*\/templates\//, "", text); text = name ": " text }
-      if (mode == "charts") {
-        if (name in seen) continue
-        seen[name] = 1
-        text = name
-      }
-      if (mode == "names" || blob == "" || loc[i] == "") item = text
-      else {
-        title = path[i]; gsub(/\//, " > ", title)
-        item = "[" text "](" blob "/" loc[i] " \"" title "\")"
-      }
-      if (item in seen) continue
-      seen[item] = 1
-      if (max && shown == max) { more++; rest = rest (rest == "" ? "" : sep) item; continue }
-      shown++
-      out = out (out == "" ? "" : sep) item
-    }
-    if (more) out = out sep "<details><summary>" more " more</summary>" rest "</details>"
-    print out
-  }'
-
-owners_cell() { # <owners> [<max> [<mode>]]
-  printf '%s\n' "$1" | awk -v blob="$blob" -v max="${2:-0}" -v mode="${3:-}" "$owners_awk"
-}
-
-owners_names() { # <owners>
-  printf '%s\n' "$1" | awk -v mode=names "$owners_awk"
 }
 
 # --- images ------------------------------------------------------------------
@@ -282,91 +223,7 @@ else
   }' > "$scan/sarif/images.sarif"
 fi
 
-# --- charts ------------------------------------------------------------------
-
-# Every failed check with the document it fails on, which documents.tsv
-# traces to its template: <document> <check> <severity> <title> <url> <message>
-# <owner-entry> <render>.
-charts_report="$scan/reports/charts.json"
-printf '"check","severity","title","owner","location","render","document","message","url"\n' \
-  > "$scan/reports/misconfigurations.csv"
-: > "$work/misconfigs"
-if [ -s "$charts_report" ]; then
-  jq -r '.Results[]? | .Target as $t | .Misconfigurations[]? | select(.Status == "FAIL")
-    | [$t, .ID, (.Severity // "UNKNOWN"), (.Title // ""), (.PrimaryURL // ""), (.Message // "" | gsub("[\t\n]"; " "))]
-    | @tsv' "$charts_report" |
-    awk -F '\t' -v documents="$scan/documents.tsv" '
-      BEGIN {
-        while ((getline line < documents) > 0) {
-          split(line, f, "\t")
-          entry[f[1]] = f[4] "=" f[2] "=" f[3]
-        }
-      }
-      {
-        doc = $1
-        if (!(doc in entry)) sub(/^.*manifests\//, "", doc)
-        render = doc; sub(/\/[^\/]*$/, "", render)
-        print $0 "\t" entry[doc] "\t" render
-      }' > "$work/misconfigs"
-  awk -F '\t' '
-    function csv(s) { gsub(/"/, "\"\"", s); return "\"" s "\"" }
-    {
-      split($7, f, "=")
-      owner = f[2]; sub(/@/, " ", owner)
-      print csv($2) "," csv($3) "," csv($4) "," csv(owner) "," csv(f[3]) "," csv($8) "," csv($1) "," csv($6) "," csv($5)
-    }' "$work/misconfigs" >> "$scan/reports/misconfigurations.csv"
-
-  # Code scanning shows a finding on the template that rendered it, or on the
-  # Chart.yaml line of a third-party chart; one result per check and place,
-  # whatever the number of renders it fails in.
-  trivy convert --quiet --format sarif --severity "$sarif_severity" \
-    --output "$work/charts-raw.sarif" "$charts_report"
-  jq --rawfile documents "$scan/documents.tsv" '
-    ($documents | split("\n") | map(select(. != "") | split("\t") | {key: .[0], value: .[2]})
-     | from_entries) as $where
-    | .runs |= map(
-        .results = ([.results[]?
-          | .locations |= map(.physicalLocation |= (
-              .artifactLocation.uri as $uri
-              | ($where[$uri] // $where[$uri | sub("^.*manifests/"; "")]) as $location
-              | if $location then
-                  .artifactLocation = {uri: ($location | sub("#L[0-9]+$"; ""))}
-                  | .region = {startLine: (($location | capture("#L(?<line>[0-9]+)$") | .line | tonumber) // 1)}
-                else . end))
-          | del(.ruleIndex)]
-          | unique_by([.ruleId, .locations[0].physicalLocation.artifactLocation.uri,
-                       .locations[0].physicalLocation.region.startLine])))' \
-    "$work/charts-raw.sarif" > "$work/charts.sarif"
-  fit_sarif "$work/charts.sarif" "$scan/sarif/charts.sarif" chart
-else
-  warn "trivy did not scan the charts" "reports/charts.json is missing or empty"
-fi
-
-# One row per check: <severity rank> <places> <check> <severity> <title> <url>
-# <owner entries>.
-awk -F '\t' '
-  {
-    if (!($2 in severity)) { severity[$2] = $3; title[$2] = $4; url[$2] = $5 }
-    if (!(($2, $7) in seen)) { seen[$2, $7] = 1; places[$2]++; owners[$2] = owners[$2] (owners[$2] == "" ? "" : ",") $7 }
-  }
-  END {
-    rank["CRITICAL"] = 0; rank["HIGH"] = 1; rank["MEDIUM"] = 2; rank["LOW"] = 3
-    for (c in severity)
-      print ((severity[c] in rank) ? rank[severity[c]] : 4) "\t" places[c] "\t" c "\t" severity[c] "\t" title[c] "\t" url[c] "\t" owners[c]
-  }' "$work/misconfigs" | sort -t "$tab" -k1,1n -k2,2nr -k3,3 > "$work/checks"
-
 # --- summary -----------------------------------------------------------------
-
-# shellcheck disable=SC2016
-md_awk='
-  function emoji(s) {
-    return s == "CRITICAL" ? ":red_circle:" : s == "HIGH" ? ":orange_circle:" : \
-      s == "MEDIUM" ? ":yellow_circle:" : s == "LOW" ? ":large_blue_circle:" : ":white_circle:"
-  }
-  # A table cell: no pipe, no tag, no line break.
-  function cell(s) { gsub(/\|/, "\\|", s); gsub(/</, "\\&lt;", s); gsub(/\\[tn]/, " ", s); return s }
-  function count(n, f, e) { return n == 0 ? "-" : e " " n " (" f ")" }
-'
 
 images_failed=$(wc -l < "$work/failed" | tr -d ' ')
 # Deployed images first, then those only helm test pods run.
@@ -374,23 +231,21 @@ sort -t "$tab" -k12,12n -k1,1nr -k3,3nr -k5,5nr -k7,7nr -k10,10 "$work/scanned" 
 tests=$(awk -F '\t' '$12' "$work/scanned.sorted" | wc -l | tr -d ' ')
 
 {
-  echo "## Trivy"
+  echo "## Trivy: images"
   echo ""
   printf 'Trivy %s, vulnerability database of %s. Report only: nothing here blocks a publication.\n' \
-    "$(trivy --version 2>/dev/null | sed -n 's/^Version: //p' | head -n1)" \
+    "$(trivy_version)" \
     "$(trivy --version 2>/dev/null | sed -n 's/^ *UpdatedAt: //p' | head -n1)"
   echo ""
-  awk -F '\t' -v failed="$images_failed" -v tests="$tests" -v checks="$(wc -l < "$work/checks" | tr -d ' ')" '
+  awk -F '\t' -v failed="$images_failed" -v tests="$tests" '
     $1 > 0 { critical++ } $3 > 0 { high++ } $2 + $4 > 0 { fixable++ }
     END {
       printf "**%d images scanned**", NR
       if (tests) printf " (%d only for helm tests)", tests
       printf ": :red_circle: %d with critical vulnerabilities, :orange_circle: %d with high ones, %d with a fix for at least one of those", critical, high, fixable
       if (failed) printf "; :x: %d not scanned", failed
-      printf ". **%d chart checks** fail.\n", checks
+      print "."
     }' "$work/scanned"
-  echo ""
-  echo "### Images"
   echo ""
   echo "Counts read found (fixable); low includes unknown severity. Every vulnerability, whatever its severity, is in \`vulnerabilities.csv\` of the \`trivy-reports\` artifact."
   echo ""
@@ -403,7 +258,7 @@ tests=$(awk -F '\t' '$12' "$work/scanned.sorted" | wc -l | tr -d ' ')
   }' "$work/scanned.sorted"
   if [ -s "$work/failed" ]; then
     echo ""
-    echo "#### Not scanned"
+    echo "### Not scanned"
     echo ""
     echo "Docker Hub answers a repository that does not exist as it does a private one: a missing Docker Hub image reads as pull denied."
     echo ""
@@ -441,34 +296,7 @@ details() { # <cap>
 }
 
 {
-  echo ""
-  echo "### Charts"
-  echo ""
-  if [ -s "$work/checks" ]; then
-    echo "Failed checks of every render, on the template that renders the resource, or the dependency line of a third-party chart. Each failing resource is in \`misconfigurations.csv\` of the \`trivy-reports\` artifact."
-    echo ""
-    echo "| | Check | Title | Where |"
-    echo "|-|-|-|-|"
-    while IFS="$tab" read -r _ _ check severity check_title url owners; do
-      printf '%s\t%s\t%s\t%s\t%s\n' "$severity" "$check" "$url" "$check_title" "$(owners_cell "$owners" 5)"
-    done < "$work/checks" |
-      awk -F '\t' "$md_awk"'{
-        id = $3 == "" ? $2 : "[" $2 "](" $3 ")"
-        printf "| %s | %s | %s | %s |\n", emoji($1), id, cell($4), $5
-      }'
-  else
-    echo "No check fails."
-  fi
-  if grep -q "${tab}failed${tab}" "$scan/renders.tsv"; then
-    echo ""
-    echo "#### Not rendered"
-    echo ""
-    echo "Neither scanned nor searched for images; a chart's bare defaults may be invalid on purpose."
-    echo ""
-    echo "| Render | Reason |"
-    echo "|-|-|"
-    awk -F '\t' "$md_awk"'$3 == "failed" { printf "| `%s/%s` | %s |\n", $1, $2, cell($4) }' "$scan/renders.tsv"
-  fi
+  not_rendered "Neither scanned nor searched for images"
   if [ -s "$work/sarif-notes" ]; then
     echo ""
     echo "### Code scanning"
@@ -508,14 +336,5 @@ while IFS="$tab" read -r image operator; do
   warn "charts/operator-images.yaml is stale" "$image is listed as the default of $operator, which no render carries any more: review it against the new operator"
 done < "$scan/stale.tsv"
 
-# A fixture is a valid render by contract (test/matrix.sh); defaults need not be.
-awk -F '\t' '$3 == "failed" && $2 != "defaults" {
-  printf "%s/%s did not render\t%s\n", $1, $2, $4 }' "$scan/renders.tsv" >> "$work/warnings"
-
-cat "$work/warnings" "$work/warnings-images" | awk -F '\t' '
-  { title[NR] = $1; message[NR] = $2 }
-  END {
-    shown = NR > 10 ? 9 : NR
-    for (i = 1; i <= shown; i++) printf "::warning title=%s::%s\n", title[i], message[i]
-    if (NR > shown) printf "::warning title=%d more warnings::see the job summary\n", NR - shown
-  }'
+warn_renders
+annotate "$work/warnings" "$work/warnings-images"

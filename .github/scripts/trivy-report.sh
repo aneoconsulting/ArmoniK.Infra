@@ -9,7 +9,8 @@
 #   renders.tsv              <chart> <case> <ok|failed> <reason>
 #   images.tsv               <image> <uses> <owners>
 #   stale.tsv                <image> <operator>, operator-images.yaml entries to review
-#   image-status.tsv         <image> <ok|failed> <reason>, in images.tsv order
+#   image-status.tsv         <image> <status> <reason>, in images.tsv order
+#                            (.github/scripts/trivy-images.sh)
 #   reports/images/<n>.json  trivy image report of images.tsv line <n>
 #   reports/charts.json      trivy config report of manifests/
 # Writes the markdown summary to <summary-file>, annotations to stdout, and
@@ -92,11 +93,21 @@ while IFS="$(printf '\t')" read -r image uses owners status_image status reason;
     }')
   report="$scan/reports/images/$n.json"
 
-  if [ "$status" != ok ] || [ ! -s "$report" ]; then
-    printf '%s\t%s\t%s\t%s\n' "$image" "$use" "$charts" "${reason:-no report}" >> "$work/failed"
+  if [ "$status" = ok ] && [ ! -s "$report" ]; then
+    status=error
+    reason="no report"
+  fi
+  if [ "$status" != ok ]; then
+    case "$status" in
+      not-found) failure="not found"; title="image not found: $image" ;;
+      denied) failure="pull denied"; title="image pull denied: $image" ;;
+      rate-limited) failure="rate limited"; title="trivy did not scan $image (rate limited)" ;;
+      *) failure="scan error"; title="trivy did not scan $image" ;;
+    esac
+    printf '%s\t%s\t%s\t%s\t%s\n' "$image" "$failure" "$use" "$charts" "$reason" >> "$work/failed"
     # Placeholders never get here (charts/scan-inputs.sh drops them), so an
     # unreadable image is one a user can deploy.
-    printf '::warning title=trivy did not scan %s::%s\n' "$image" "${reason:-no report}"
+    printf '::warning title=%s::%s\n' "$title" "$reason"
     continue
   fi
 
@@ -187,13 +198,13 @@ fi
     awk -F '\t' '{ printf "| `%s` | %s | %s | %s | %s | %s | %s | %s | %s | %s |\n", $7, $8, $1, $2, $3, $4, $5, $6, $9, $10 }'
   if [ -s "$work/failed" ]; then
     echo ""
-    echo "Not scanned:"
+    echo "Not scanned. \`not found\` and \`pull denied\` are the registry's own answer and break a deployment too; Docker Hub answers a repository that does not exist as it does a private one, so a missing Docker Hub image reads as \`pull denied\`. \`rate limited\` and \`scan error\` were retried, and may pass on the next run."
     echo ""
-    echo "| Image | Use | Owner | Reason |"
-    echo "|-|-|-|-|"
+    echo "| Image | Failure | Use | Owner | Reason |"
+    echo "|-|-|-|-|-|"
     # A pipe would end the table cell.
-    sort "$work/failed" | sed 's/|/\\|/g' |
-      awk -F '\t' '{ printf "| `%s` | %s | %s | %s |\n", $1, $2, $3, $4 }'
+    sort -t "$(printf '\t')" -k2,2 -k1,1 "$work/failed" | sed 's/|/\\|/g' |
+      awk -F '\t' '{ printf "| `%s` | %s | %s | %s | %s |\n", $1, $2, $3, $4, $5 }'
   fi
   echo ""
   echo "### Charts"

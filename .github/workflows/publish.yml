@@ -372,36 +372,9 @@ jobs:
           trivy config --misconfig-scanners kubernetes \
             --format json --output scan/reports/charts.json scan/manifests
 
+      # Every image alike, ours and third-party: the report tells them apart.
       - name: Scan the images
-        run: |
-          mkdir -p scan/reports/images
-          : > scan/image-status.tsv
-          n=0
-          # Every image alike, ours and third-party: the report tells them apart.
-          while IFS="$(printf '\t')" read -r image _; do
-            n=$((n + 1))
-            attempt=1
-            # Retried: registries answer 429 and 5xx under load.
-            while :; do
-              if trivy image --config .github/trivy.yaml \
-                   --image-src remote --scanners vuln \
-                   --skip-db-update --skip-java-db-update \
-                   --format json --output "scan/reports/images/$n.json" \
-                   "$image" 2>scan/trivy-stderr </dev/null; then
-                printf '%s\tok\t\n' "$image" >> scan/image-status.tsv
-                break
-              fi
-              if [ "$attempt" -ge 3 ]; then
-                reason=$(grep -m1 -E 'FATAL|ERROR' scan/trivy-stderr | tr '\t' ' ' | cut -c1-300)
-                printf '%s\tfailed\t%s\n' "$image" "${reason:-unknown error}" >> scan/image-status.tsv
-                rm -f "scan/reports/images/$n.json"
-                break
-              fi
-              attempt=$((attempt + 1))
-              sleep 10
-            done
-          done < scan/images.tsv
-          rm -f scan/trivy-stderr
+        run: ./.github/scripts/trivy-images.sh scan .github/trivy.yaml
 
       - name: Report
         run: ./.github/scripts/trivy-report.sh scan "$GITHUB_STEP_SUMMARY"

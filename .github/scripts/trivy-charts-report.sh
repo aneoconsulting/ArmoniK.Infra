@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# Turns the trivy config report of test-helm.yml's chart-checks job into a job
+# Turns the trivy config report of linter-helm.yml's chart-checks job into a job
 # summary, annotations and a CSV file. Report-only: findings never fail it.
 #
 # Usage: trivy-charts-report.sh <scan-dir> <summary-file> [<blob-url>]

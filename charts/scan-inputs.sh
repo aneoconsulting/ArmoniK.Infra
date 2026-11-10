@@ -18,20 +18,29 @@
 #   - operator-images.yaml, for the images an operator picks by itself.
 #
 # Outputs, under OUT:
-#   manifests/<chart>/<case>.yaml   one render per case
-#   renders.tsv                     <chart> <case> <ok|failed> <first error line>
-#   images.tsv                      <image> <uses> <owners>, one line per
-#                                   image, both comma-separated lists: uses are
-#                                   <chart>/<case>, <chart>/<case>/test when
-#                                   only a helm test pod runs it, `image-map`
-#                                   or `operator`;
-#                                   owners are <alias-path>=<name>@<version>,
-#                                   the charts whose templates hold the image,
-#                                   by their path from the release root
-#                                   (armonik/operators/kube-prometheus=
-#                                   kube-prometheus-stack@92.21.2)
-#   stale.tsv                       <image> <operator> for each operator-images.yaml
-#                                   entry whose operator no render carries
+#   manifests/<chart>/<case>/<n>.yml  document <n> of a render, one file each so
+#                                     that a finding names its document
+#   documents.tsv                     <chart>/<case>/<n>.yml <name>@<version>
+#                                     <location> <alias-path>, the chart whose
+#                                     template rendered the document
+#   renders.tsv                       <chart> <case> <ok|failed> <first error line>
+#   images.tsv                        <image> <uses> <owners>, one line per
+#                                     image, both comma-separated lists: uses
+#                                     are <chart>/<case>, <chart>/<case>/test
+#                                     when only a helm test pod runs it,
+#                                     `image-map` or `operator`; owners are
+#                                     <alias-path>=<name>@<version>=<location>,
+#                                     the charts whose templates hold the image
+#                                     by their path from the release root
+#   stale.tsv                         <image> <operator> for each
+#                                     operator-images.yaml entry whose operator
+#                                     no render carries
+#
+# A location is a path in this repository: the template of one of our charts,
+# or, for a third-party chart, the line of our Chart.yaml that declares it or
+# its nearest third-party ancestor, where its version is set
+# (charts/armonik-operators/Chart.yaml#L33). An image-map entry is located at
+# its line of armonik-common's values.yaml.
 #
 # A failed render is recorded, not fatal: a chart's bare defaults may be
 # invalid on purpose (armonik-compute-plane has no partition, armonik-ingress
@@ -101,6 +110,7 @@ trap 'rm -rf "$work"' EXIT
 : > "$work/rendered"
 : > "$work/graph"
 : > "$work/map"
+: > "$work/documents"
 err="$work/stderr"
 
 # Shared by every awk below: one spelling per image, so that
@@ -161,31 +171,38 @@ render() { # render <archive> <chart> <case> [<fixture>]
   chart=$2
   case_name=$3
   fixture=${4:-}
-  manifest="$out/manifests/$chart/$case_name.yaml"
-  mkdir -p "$out/manifests/$chart"
+  manifest="$work/render.yaml"
+  documents="$out/manifests/$chart/$case_name"
   set -- --kube-version "$kube_version"
   [ -z "$fixture" ] || set -- "$@" -f "$fixture"
   # stderr apart: helm warnings would corrupt the manifest stream.
   if helm template scan "$archive" "$@" >"$manifest" 2>"$err"; then
     printf '%s\t%s\tok\t\n' "$chart" "$case_name" >> "$out/renders.tsv"
   else
-    rm -f "$manifest"
     reason=$(grep -m1 -i 'error' "$err" || head -n1 "$err")
     printf '%s\t%s\tfailed\t%s\n' "$chart" "$case_name" "$reason" >> "$out/renders.tsv"
     printf '%s: %s/%s did not render: %s\n' "$self" "$chart" "$case_name" "$reason" >&2
     return 0
   fi
 
-  # helm heads every document with the template it comes from, whose path is
-  # the alias path of the owning chart: armonik/charts/operators/charts/
-  # kube-prometheus/templates/... is armonik/operators/kube-prometheus.
-  grep '^# Source: ' "$manifest" |
-    sed -e 's/^# Source: //' -e 's#/templates/.*##' -e 's#/charts/#/#g' > "$work/sources"
+  # helm heads every document with the template it comes from, whose path
+  # holds the alias path of the owning chart: armonik/charts/operators/charts/
+  # kube-prometheus/templates/x.yaml is templates/x.yaml of
+  # armonik/operators/kube-prometheus.
+  grep '^# Source: ' "$manifest" | sed 's/^# Source: //' | awk '{
+    i = index($0, "/templates/")
+    path = substr($0, 1, i - 1)
+    gsub(/\/charts\//, "/", path)
+    print path "\t" substr($0, i + 1)
+  }' > "$work/sources"
   if [ "$(wc -l < "$work/sources")" -ne "$(grep -c '^---$' "$manifest")" ]; then
     printf '%s: %s/%s: not one "# Source:" line per document, cannot attribute its images\n' \
       "$self" "$chart" "$case_name" >&2
     exit 1
   fi
+  mkdir -p "$documents"
+  yq -s "\"$documents/\" + \$index" "$manifest"
+  awk -v prefix="$chart/$case_name/" '{ print prefix (NR - 1) ".yml\t" $0 }' "$work/sources" >> "$work/documents"
 
   : > "$work/placeholders"
   [ -z "$fixture" ] || yq ea -N "$in_fixture" "$fixture" > "$work/placeholders"
@@ -226,6 +243,46 @@ image_map() { # image_map <chart-dir> <chart>: component <name> <repository> <ve
     "$common/values.yaml" "$1/values.yaml" | sed "s#\$#	$2/armonik-common#"
 }
 
+# Our charts, as `own <name> <dir>`, the line of each dependency they declare,
+# as `dep <name> <dir> <alias> <line>`, and the line of each image-map entry,
+# as `mapline <repository> <line>`: where a location points. Read from the
+# text, yq's line numbers drifting after a head comment.
+repo_charts() {
+  for chart_yaml in "$here"/*/Chart.yaml; do
+    dir="charts/$(basename "$(dirname "$chart_yaml")")"
+    name=$(yq '.name' "$chart_yaml")
+    printf 'own\t%s\t%s\n' "$name" "$dir"
+    # An item starts at the list's own indentation; its keys sit two further.
+    awk -v prefix="dep	$name	$dir	" '
+      function flush() { if (start) print prefix (alias != "" ? alias : dep) "\t" start }
+      function value(s) { sub(/^[^:]*:[ \t]*/, "", s); sub(/[ \t]+#.*$/, "", s); gsub(/["\047]/, "", s); return s }
+      /^dependencies:/ { in_deps = 1; next }
+      in_deps && /^[^ #-]/ { flush(); start = 0; in_deps = 0 }
+      !in_deps { next }
+      {
+        line = $0
+        match(line, /^ */)
+        indent = RLENGTH
+        if (item == "" && substr(line, indent + 1, 2) == "- ") item = indent
+        if (indent == item && substr(line, indent + 1, 2) == "- ") {
+          flush(); start = NR; dep = ""; alias = ""
+          line = substr(line, 1, indent) "  " substr(line, indent + 3)
+        }
+        match(line, /^ */)
+        if (RLENGTH != item + 2) next
+        if (line ~ /^ *name:/) dep = value(line)
+        if (line ~ /^ *alias:/) alias = value(line)
+      }
+      END { if (in_deps) flush() }' "$chart_yaml"
+  done
+  # shellcheck disable=SC2016
+  yq -N '.global.armonik.imageComponents | keys | .[]' "$here/armonik-common/values.yaml" |
+    while IFS= read -r key; do
+      printf 'mapline\t%s\t%s\n' "$key" \
+        "$(grep -n -m1 -F "  $key:" "$here/armonik-common/values.yaml" | cut -d: -f1)"
+    done
+}
+
 for archive in "$@"; do
   chart=$(helm show chart "$archive" | yq '.name')
   render "$archive" "$chart" defaults
@@ -241,25 +298,46 @@ for archive in "$@"; do
 done
 
 yq -N '.[] | ["operator", .image, .operator] | @tsv' "$here/operator-images.yaml" > "$work/operators"
+repo_charts > "$work/repo"
 
 # The image map and operator-images.yaml only add images no render shows. A map
 # component without a version takes the tag its rendered siblings carry, which
 # is what the charts default it to (their AppVersion); an operator's image
 # takes the operator's owners.
-awk -F '\t' -v stale="$out/stale.tsv" "$awk_lib"'
+awk -F '\t' -v stale="$out/stale.tsv" -v documents="$out/documents.tsv" "$awk_lib"'
   function addlist(list, item) {
     if (item == "") return list
     if (list == "") return item
     return index("," list ",", "," item ",") ? list : list "," item
   }
-  function add(r, use, path) {
+  function chartname(path,   name) { name = owner[path]; sub(/@[^@]*$/, "", name); return name }
+  # See "A location" above.
+  function locate(path, template,   name, child, parent) {
+    name = chartname(path)
+    if (name in own) return own[name] "/" template
+    for (child = path; match(child, /\/[^\/]*$/); child = parent) {
+      parent = substr(child, 1, RSTART - 1)
+      name = chartname(parent)
+      if (name in own)
+        return own[name] "/Chart.yaml" (((name, substr(child, RSTART + 1)) in depline) ? "#L" depline[name, substr(child, RSTART + 1)] : "")
+    }
+    return ""
+  }
+  function add(r, use, path, location) {
     r = norm(r)
     uses[r] = addlist(uses[r], use)
-    owners[r] = addlist(owners[r], path "=" (path in owner ? owner[path] : "unknown"))
+    owners[r] = addlist(owners[r], path "=" (path in owner ? owner[path] : "unknown") "=" location)
   }
   FILENAME == ARGV[1] { owner[$1] = $2; next }
   FILENAME == ARGV[2] {
-    add($1, $2, $3)
+    if ($1 == "own") own[$2] = $3
+    else if ($1 == "dep") depline[$2, $4] = $5
+    else if ($1 == "mapline") mapline[$2] = $3
+    next
+  }
+  FILENAME == ARGV[3] { print $1 "\t" owner[$2] "\t" locate($2, $3) "\t" $2 > documents; next }
+  FILENAME == ARGV[4] {
+    add($1, $2, $3, locate($3, $4))
     rendered[repo($1)] = 1
     if (substr($1, length(repo($1)) + 1, 1) == ":")
       tags[repo($1)] = addlist(tags[repo($1)], substr($1, length(repo($1)) + 2))
@@ -276,16 +354,18 @@ awk -F '\t' -v stale="$out/stale.tsv" "$awk_lib"'
           if (component[sibling] == component[r]) list = addlist(list, tags[sibling])
       n = split(list, t, ",")
       m = split(mapped[r], p, ",")
-      for (i = 1; i <= n; i++) for (j = 1; j <= m; j++) add(r ":" t[i], "image-map", p[j])
+      location = own["armonik-common"] "/values.yaml" ((r in mapline) ? "#L" mapline[r] : "")
+      for (i = 1; i <= n; i++) for (j = 1; j <= m; j++) add(r ":" t[i], "image-map", p[j], location)
     }
     for (image in operators) {
       op = norm(operators[image])
       if (!(op in uses)) { print image "\t" operators[image] > stale; continue }
-      add(image, "operator", "")
+      add(image, "operator", "", "")
       owners[norm(image)] = owners[op]
     }
     for (r in uses) print r "\t" uses[r] "\t" owners[r]
-  }' "$work/graph" "$work/rendered" "$work/map" "$work/operators" | sort > "$out/images.tsv"
+  }' "$work/graph" "$work/repo" "$work/documents" "$work/rendered" "$work/map" "$work/operators" |
+  sort > "$out/images.tsv"
 touch "$out/stale.tsv"
 
 if ! grep -q '	ok	' "$out/renders.tsv"; then

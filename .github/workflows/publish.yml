@@ -376,8 +376,11 @@ jobs:
       - name: Scan the images
         run: ./.github/scripts/trivy-images.sh scan .github/trivy.yaml
 
+      # Owners link to the files of the scanned commit, the checked-out one.
       - name: Report
-        run: ./.github/scripts/trivy-report.sh scan "$GITHUB_STEP_SUMMARY"
+        run: |
+          ./.github/scripts/trivy-report.sh scan "$GITHUB_STEP_SUMMARY" \
+            "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/blob/$(git rev-parse HEAD)"
 
       # Not from a fork: its token cannot write security events.
       - name: Upload the image findings to code scanning

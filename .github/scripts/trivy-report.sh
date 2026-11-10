@@ -213,7 +213,7 @@ while IFS="$tab" read -r image uses owners status_image status reason; do
       rate-limited) failure=":hourglass: rate limited"; title="trivy did not scan $image (rate limited)" ;;
       *) failure=":warning: scan error"; title="trivy did not scan $image" ;;
     esac
-    printf '%s\t%s\t%s\t%s\n' "$image" "$cell" "$failure" "$reason" >> "$work/failed"
+    printf '%s\t%s\t%s\t%s\t%s\n' "$image" "$cell" "$failure" "$reason" "$test_only" >> "$work/failed"
     # Placeholders never get here (charts/scan-inputs.sh drops them), so an
     # unreadable image is one a user can deploy.
     printf '%s\t%s\n' "$title" "$reason" >> "$work/warnings-images"
@@ -369,7 +369,19 @@ md_awk='
 '
 
 images_failed=$(wc -l < "$work/failed" | tr -d ' ')
-sort -t "$tab" -k1,1nr -k3,3nr -k5,5nr -k7,7nr -k10,10 "$work/scanned" > "$work/scanned.sorted"
+# Deployed images first, then those only helm test pods run.
+sort -t "$tab" -k12,12n -k1,1nr -k3,3nr -k5,5nr -k7,7nr -k10,10 "$work/scanned" > "$work/scanned.sorted"
+tests=$(awk -F '\t' '$12' "$work/scanned.sorted" | wc -l | tr -d ' ')
+
+images_table() { # <test-only>
+  echo "| Image | Owner | Critical | High | Medium | Low |"
+  echo "|-|-|-:|-:|-:|-:|"
+  awk -F '\t' -v group="$1" "$md_awk"'$12 == group {
+    printf "| `%s` | %s | %s | %s | %s | %s |\n", $10, $11,
+      count($1, $2, ":red_circle:"), count($3, $4, ":orange_circle:"),
+      count($5, $6, ":yellow_circle:"), count($7, $8, ":large_blue_circle:")
+  }' "$work/scanned.sorted"
+}
 
 {
   echo "## Trivy"
@@ -378,10 +390,12 @@ sort -t "$tab" -k1,1nr -k3,3nr -k5,5nr -k7,7nr -k10,10 "$work/scanned" > "$work/
     "$(trivy --version 2>/dev/null | sed -n 's/^Version: //p' | head -n1)" \
     "$(trivy --version 2>/dev/null | sed -n 's/^ *UpdatedAt: //p' | head -n1)"
   echo ""
-  awk -F '\t' -v failed="$images_failed" -v checks="$(wc -l < "$work/checks" | tr -d ' ')" '
+  awk -F '\t' -v failed="$images_failed" -v tests="$tests" -v checks="$(wc -l < "$work/checks" | tr -d ' ')" '
     $1 > 0 { critical++ } $3 > 0 { high++ } $2 + $4 > 0 { fixable++ }
     END {
-      printf "**%d images scanned**: :red_circle: %d with critical vulnerabilities, :orange_circle: %d with high ones, %d with a fix for at least one of those", NR, critical, high, fixable
+      printf "**%d images scanned**", NR
+      if (tests) printf " (%d only for helm tests)", tests
+      printf ": :red_circle: %d with critical vulnerabilities, :orange_circle: %d with high ones, %d with a fix for at least one of those", critical, high, fixable
       if (failed) printf "; :x: %d not scanned", failed
       printf ". **%d chart checks** fail.\n", checks
     }' "$work/scanned"
@@ -390,13 +404,19 @@ sort -t "$tab" -k1,1nr -k3,3nr -k5,5nr -k7,7nr -k10,10 "$work/scanned" > "$work/
   echo ""
   echo "Counts read found (fixable); low includes unknown severity. Every vulnerability, whatever its severity, is in \`vulnerabilities.csv\` of the \`trivy-reports\` artifact."
   echo ""
-  echo "| Image | Owner | Critical | High | Medium | Low |"
-  echo "|-|-|-:|-:|-:|-:|"
-  awk -F '\t' "$md_awk"'{
-    printf "| `%s`%s | %s | %s | %s | %s | %s |\n", $10, ($12 ? " <sub>helm test</sub>" : ""), $11,
-      count($1, $2, ":red_circle:"), count($3, $4, ":orange_circle:"),
-      count($5, $6, ":yellow_circle:"), count($7, $8, ":large_blue_circle:")
-  }' "$work/scanned.sorted"
+  if [ "$tests" -lt "$(wc -l < "$work/scanned.sorted")" ]; then
+    echo "#### Deployed"
+    echo ""
+    images_table 0
+  fi
+  if [ "$tests" -gt 0 ]; then
+    echo ""
+    echo "#### Helm tests"
+    echo ""
+    echo "Run only by \`helm test\` pods, never by an install."
+    echo ""
+    images_table 1
+  fi
   if [ -s "$work/failed" ]; then
     echo ""
     echo "#### Not scanned"
@@ -405,17 +425,19 @@ sort -t "$tab" -k1,1nr -k3,3nr -k5,5nr -k7,7nr -k10,10 "$work/scanned" > "$work/
     echo ""
     echo "| Image | Owner | Failure | Reason |"
     echo "|-|-|-|-|"
-    sort -t "$tab" -k3,3 -k1,1 "$work/failed" |
-      awk -F '\t' "$md_awk"'{ printf "| `%s` | %s | %s | %s |\n", $1, $2, $3, cell($4) }'
+    sort -t "$tab" -k5,5n -k3,3 -k1,1 "$work/failed" |
+      awk -F '\t' "$md_awk"'{ printf "| `%s`%s | %s | %s | %s |\n", $1, ($5 ? " <sub>helm test</sub>" : ""), $2, $3, cell($4) }'
   fi
 } > "$work/head.md"
 
-# The critical and high vulnerabilities of each image, the fixable first, in
-# the order of the table above; at most <cap> rows an image, 0 for no cap.
-details() { # <cap>
-  while IFS="$tab" read -r c cf h hf _ _ _ _ k image _ _; do
+# The critical and high vulnerabilities of each image of a group, the fixable
+# first, in the order of the tables above; at most <cap> rows an image, 0 for
+# no cap.
+details() { # <test-only> <cap>
+  while IFS="$tab" read -r c cf h hf _ _ _ _ k image _ test_only; do
+    [ "$test_only" = "$1" ] || continue
     [ $((c + h)) -gt 0 ] || continue
-    awk -F '\t' -v cap="$1" -v image="$image" -v c="$c" -v cf="$cf" -v h="$h" -v hf="$hf" "$md_awk"'
+    awk -F '\t' -v cap="$2" -v image="$image" -v c="$c" -v cf="$cf" -v h="$h" -v hf="$hf" "$md_awk"'
       BEGIN {
         printf "<details><summary>%s <code>%s</code>: ", (c ? ":red_circle:" : ":orange_circle:"), image
         if (c) printf "%d critical (%d fixable)%s", c, cf, (h ? ", " : "")
@@ -480,7 +502,18 @@ used=0
 [ ! -f "$summary" ] || used=$(wc -c < "$summary")
 budget=$((1000000 - used - $(wc -c < "$work/head.md") - $(wc -c < "$work/tail.md") - 200))
 for cap in 0 100 50 20 10 5; do
-  details "$cap" > "$work/details.md"
+  details 0 "$cap" > "$work/details-deployed.md"
+  details 1 "$cap" > "$work/details-tests.md"
+  {
+    if [ -s "$work/details-deployed.md" ] && [ -s "$work/details-tests.md" ]; then
+      printf '#### Deployed\n\n'
+      cat "$work/details-deployed.md"
+      printf '#### Helm tests\n\n'
+      cat "$work/details-tests.md"
+    else
+      cat "$work/details-deployed.md" "$work/details-tests.md"
+    fi
+  } > "$work/details.md"
   [ "$(wc -c < "$work/details.md")" -gt "$budget" ] || break
 done
 if [ "$(wc -c < "$work/details.md")" -gt "$budget" ]; then

@@ -97,8 +97,9 @@ fit_sarif() { # <in> <out> <label>
 # comma-separated) as one table cell: a link per location, to a template or to
 # the line of our Chart.yaml that sets a chart's version, the chart's path from
 # the release root as the link title, the umbrella's path when it has one.
-# mode=names gives plain names for the CSV files; past max links, the rest
-# fold into a collapsed list.
+# mode=charts names the chart alone, one link per chart, to its first
+# location; mode=names gives plain names for the CSV files; past max links, the
+# rest fold into a collapsed list.
 # shellcheck disable=SC2016 # awk program, not shell
 owners_awk='
   {
@@ -117,6 +118,11 @@ owners_awk='
       if (loc[i] == "" || loc[i] ~ /\/Chart\.yaml(#L[0-9]+)?$/) text = name " " version
       else if (loc[i] ~ /\/values\.yaml(#L[0-9]+)?$/) text = name ": image map"
       else { text = loc[i]; sub(/^charts\/[^\/]*\/templates\//, "", text); text = name ": " text }
+      if (mode == "charts") {
+        if (name in seen) continue
+        seen[name] = 1
+        text = name
+      }
       if (mode == "names" || blob == "" || loc[i] == "") item = text
       else {
         title = path[i]; gsub(/\//, " > ", title)
@@ -132,8 +138,8 @@ owners_awk='
     print out
   }'
 
-owners_cell() { # <owners> [<max>]
-  printf '%s\n' "$1" | awk -v blob="$blob" -v max="${2:-0}" "$owners_awk"
+owners_cell() { # <owners> [<max> [<mode>]]
+  printf '%s\n' "$1" | awk -v blob="$blob" -v max="${2:-0}" -v mode="${3:-}" "$owners_awk"
 }
 
 owners_names() { # <owners>
@@ -193,7 +199,7 @@ while IFS="$tab" read -r image uses owners status_image status reason; do
     "helm test"*) test_only=1 ;;
     *) test_only=0 ;;
   esac
-  cell=$(owners_cell "$owners")
+  cell=$(owners_cell "$owners" 0 charts)
   report="$scan/reports/images/$n.json"
 
   if [ "$status" = ok ] && [ ! -s "$report" ]; then

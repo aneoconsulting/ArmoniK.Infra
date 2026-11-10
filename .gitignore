@@ -53,3 +53,6 @@ kubeconfig_*
 generated
 .external_modules
 **.tgz
+
+# Renders and image list, written by charts/scan-inputs.sh
+/scan/

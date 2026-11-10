@@ -54,19 +54,20 @@ while IFS="$(printf '\t')" read -r image sources status_image status reason; do
     exit 1
   fi
   charts=$(printf '%s\n' "$sources" | tr ',' '\n' | sed 's#/.*##' | sort -u | paste -sd, - | sed 's/,/, /g')
-  case ",$sources," in
-    */defaults,*) default=yes ;;
-    *) default=no ;;
-  esac
+  # How the image comes in: a chart's own values render it, only a fixture
+  # does, or no render at all.
+  use=$(printf '%s\n' "$sources" | tr ',' '\n' | awk -F / '
+    $2 == "defaults" { d = 1 } $2 != "defaults" && $2 != "values" { f = 1 }
+    END { print d ? "default install" : f ? "fixture" : "values only" }')
   report="$scan/reports/images/$n.json"
 
   if [ "$status" != ok ] || [ ! -s "$report" ]; then
-    printf '%s\t%s\t%s\t%s\n' "$image" "$default" "$charts" "${reason:-no report}" >> "$work/failed"
-    # A chart's defaults pointing at an image trivy cannot read is worth a
-    # look; a fixture's placeholder image is not.
-    level=notice
-    [ "$default" = no ] || level=warning
-    printf '::%s title=trivy did not scan %s::%s (used by %s)\n' "$level" "$image" "${reason:-no report}" "$charts"
+    printf '%s\t%s\t%s\t%s\n' "$image" "$use" "$charts" "${reason:-no report}" >> "$work/failed"
+    # What a default install deploys must be readable; a tag derived from
+    # values (see charts/scan-inputs.sh) may be a wrong guess.
+    if [ "$use" = "default install" ]; then
+      printf '::warning title=trivy did not scan %s::%s (used by %s)\n' "$image" "${reason:-no report}" "$charts"
+    fi
     continue
   fi
 
@@ -76,7 +77,7 @@ while IFS="$(printf '\t')" read -r image sources status_image status reason; do
     | map(. as $s | $v | map(select(.Severity == $s)) | length)
       + [$v | map(select((.FixedVersion // "") != "")) | length]
     | @tsv' "$report")
-  printf '%s\t%s\t%s\t%s\t%s\n' "$counts" "$image" "$(origin "$image")" "$default" "$charts" >> "$work/scanned"
+  printf '%s\t%s\t%s\t%s\t%s\n' "$counts" "$image" "$(origin "$image")" "$use" "$charts" >> "$work/scanned"
 
   # One SARIF run per image, rewritten so that every location names its image:
   # trivy locates an OS package at the image repository and any other package
@@ -149,17 +150,17 @@ fi
   printf '### Images: %s scanned, %s not scanned\n' \
     "$(wc -l < "$work/scanned" | tr -d ' ')" "$(wc -l < "$work/failed" | tr -d ' ')"
   echo ""
-  echo "Every image a chart references, with its defaults or with one of its \`ci/\` fixtures. Vulnerabilities count once per affected package."
+  echo "Every image a chart references: rendered with its defaults (\`default install\`), rendered only with a \`ci/\` fixture (\`fixture\`, the images a fixture names being placeholders and left out), or named by its values without being rendered (\`values only\`). Vulnerabilities count once per affected package."
   echo ""
-  echo "| Image | Origin | Critical | High | Medium | Low | Unknown | Fixable | Default install | Charts |"
+  echo "| Image | Origin | Critical | High | Medium | Low | Unknown | Fixable | Use | Charts |"
   echo "|-|-|-:|-:|-:|-:|-:|-:|-|-|"
   sort -t "$(printf '\t')" -k1,1nr -k2,2nr -k3,3nr -k4,4nr -k7,7 "$work/scanned" |
     awk -F '\t' '{ printf "| `%s` | %s | %s | %s | %s | %s | %s | %s | %s | %s |\n", $7, $8, $1, $2, $3, $4, $5, $6, $9, $10 }'
   if [ -s "$work/failed" ]; then
     echo ""
-    echo "Not scanned (fixtures may reference placeholder images on purpose):"
+    echo "Not scanned (a \`values only\` tag the values leave empty is derived from the chart AppVersion, which may not be the tag the chart would render):"
     echo ""
-    echo "| Image | Default install | Charts | Reason |"
+    echo "| Image | Use | Charts | Reason |"
     echo "|-|-|-|-|"
     # A pipe would end the table cell.
     sort "$work/failed" | sed 's/|/\\|/g' |
@@ -175,7 +176,7 @@ fi
   awk -F '\t' '{ sub(/\.yaml$/, "", $1); printf "| `%s` | %s | %s | %s | %s | %s |\n", $1, $2, $3, $4, $5, $6 }' "$work/charts"
   if grep -q '	failed	' "$scan/renders.tsv"; then
     echo ""
-    echo "Not rendered, so neither scanned nor searched for images (a chart's bare defaults may be invalid on purpose):"
+    echo "Not rendered, so not scanned, their values still being searched for images (a chart's bare defaults may be invalid on purpose):"
     echo ""
     echo "| Render | Reason |"
     echo "|-|-|"

@@ -19,8 +19,9 @@ name: Publish Charts
 #
 # The `scan` job runs trivy on every channel, report only: the packaged charts
 # rendered with their defaults and ci/ fixtures (misconfigurations), and every
-# image those renders reference, ArmoniK's and third-party alike
-# (vulnerabilities). Results land in the job summary, the trivy-reports
+# image the charts reference, rendered or only named in their values, ArmoniK's
+# and third-party alike (vulnerabilities), the placeholders the fixtures name
+# left out. Results land in the job summary, the trivy-reports
 # artifact and code scanning; nothing waits for them.
 
 env:
@@ -381,7 +382,8 @@ jobs:
             attempt=1
             # Retried: registries answer 429 and 5xx under load.
             while :; do
-              if trivy image --image-src remote --scanners vuln \
+              if trivy image --config .github/trivy.yaml \
+                   --image-src remote --scanners vuln \
                    --skip-db-update --skip-java-db-update \
                    --format json --output "scan/reports/images/$n.json" \
                    "$image" 2>scan/trivy-stderr </dev/null; then

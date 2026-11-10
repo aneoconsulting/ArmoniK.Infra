@@ -1,0 +1,9 @@
+# trivy configuration of the scan job in workflows/publish.yml.
+
+# Docker Hub through Google's public mirror, as ArmoniK.Core's Docker daemons
+# do: anonymous Docker Hub pulls are rate limited per IP. The mirror caches
+# popular images only; trivy falls back to Docker Hub for the others.
+registry:
+  mirrors:
+    index.docker.io:
+      - mirror.gcr.io

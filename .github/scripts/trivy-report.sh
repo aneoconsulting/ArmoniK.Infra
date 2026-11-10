@@ -55,17 +55,26 @@ while IFS="$(printf '\t')" read -r image uses owners status_image status reason;
     exit 1
   fi
   # How the image comes in: rendered by a chart's defaults, only by some
-  # fixtures (named), through ArmoniK's image map, or picked by an operator.
+  # fixtures (named), through ArmoniK's image map, or picked by an operator;
+  # and apart, when a helm test pod runs it, unless a default install
+  # deploys it anyway.
   use=$(printf '%s\n' "$uses" | tr ',' '\n' | awk -F / '
+    function label(d, f) { return d ? "default install" : f != "" ? "fixture: " f : "" }
     $0 == "image-map" { m = 1; next }
     $0 == "operator" { o = 1; next }
+    $3 == "test" {
+      if ($2 == "defaults") td = 1
+      else if (!(($2) in tseen)) { tseen[$2] = 1; tf = tf (tf == "" ? "" : ", ") $2 }
+      next
+    }
     $2 == "defaults" { d = 1; next }
     !($2 in seen) { seen[$2] = 1; f = f (f == "" ? "" : ", ") $2 }
     END {
-      if (d) print "default install"
-      else if (f != "") print "fixture: " f
-      else if (o) print "operator default"
-      else if (m) print "image map"
+      out = label(d, f)
+      if (out == "" && o) out = "operator default"
+      if (out == "" && m) out = "image map"
+      if (!d && (td || tf != "")) out = out (out == "" ? "" : "<br>") "helm test, " label(td, tf)
+      print out
     }')
   # Who holds it: the charts whose templates name it, seen from the umbrella
   # when the umbrella renders it, from the other release roots otherwise.
@@ -170,7 +179,7 @@ fi
   printf '### Images: %s scanned, %s not scanned\n' \
     "$(wc -l < "$work/scanned" | tr -d ' ')" "$(wc -l < "$work/failed" | tr -d ' ')"
   echo ""
-  echo "Every image the charts can deploy: rendered with a chart's defaults (\`default install\`), rendered only with the named \`ci/\` fixtures, which enable the optional components (an image a fixture names is a placeholder and left out), a worker or other image from ArmoniK's image map (\`image map\`), or an image an operator picks itself (\`operator default\`, from \`charts/operator-images.yaml\`). The owner is the chart whose templates name the image, with its path from the release root. Vulnerabilities count once per affected package."
+  echo "Every image the charts can deploy: rendered with a chart's defaults (\`default install\`), rendered only with the named \`ci/\` fixtures, which enable the optional components (an image a fixture names is a placeholder and left out), a worker or other image from ArmoniK's image map (\`image map\`), or an image an operator picks itself (\`operator default\`, from \`charts/operator-images.yaml\`), and apart the images of helm test pods (\`helm test\`), which \`helm test\` alone runs. The owner is the chart whose templates name the image, with its path from the release root. Vulnerabilities count once per affected package."
   echo ""
   echo "| Image | Origin | Critical | High | Medium | Low | Unknown | Fixable | Use | Owner |"
   echo "|-|-|-:|-:|-:|-:|-:|-:|-|-|"

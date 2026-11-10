@@ -22,7 +22,9 @@
 #   renders.tsv                     <chart> <case> <ok|failed> <first error line>
 #   images.tsv                      <image> <uses> <owners>, one line per
 #                                   image, both comma-separated lists: uses are
-#                                   <chart>/<case>, `image-map` or `operator`;
+#                                   <chart>/<case>, <chart>/<case>/test when
+#                                   only a helm test pod runs it, `image-map`
+#                                   or `operator`;
 #                                   owners are <alias-path>=<name>@<version>,
 #                                   the charts whose templates hold the image,
 #                                   by their path from the release root
@@ -121,7 +123,8 @@ awk_lib='
   function isref(r) { return r ~ /^[A-Za-z0-9][A-Za-z0-9._\/:@-]*$/ }
 '
 
-# Where an image hides in a render, as <document index> <image>. CRDs are
+# Where an image hides in a render, as <document index> <image> <is a helm
+# test>. CRDs are
 # skipped: their schemas carry `image` keys that are documentation. Beyond the
 # `image` fields of pod specs and of CRs (percona's PerconaServerMongoDB, the
 # Prometheus CR), operators take the images of what they spawn as flags
@@ -129,12 +132,13 @@ awk_lib='
 # shellcheck disable=SC2016 # yq expressions, not shell
 in_render='
   select(.kind != "CustomResourceDefinition") |
+  (.metadata.annotations["helm.sh/hook"] // "" | tostring | test("(^|,) *test(-success)? *(,|$)")) as $test |
   (
     (.. | select(tag == "!!map") | (.image, .imageName) | select(tag == "!!str")),
     (.. | select(tag == "!!str") | select(test("^--(([a-z0-9-]*-)?image|prometheus-config-reloader)=")) | sub("^[^=]*=", "")),
     (.. | select(tag == "!!map" and has("name") and has("value")) | select(.name | test("(?i)image")) | .value | select(tag == "!!str"))
   )
-  | [di, .] | @tsv
+  | [di, ., $test] | @tsv
 '
 
 # The repositories a fixture names.
@@ -185,7 +189,7 @@ render() { # render <archive> <chart> <case> [<fixture>]
 
   : > "$work/placeholders"
   [ -z "$fixture" ] || yq ea -N "$in_fixture" "$fixture" > "$work/placeholders"
-  yq ea -N "$in_render" "$manifest" |
+  yq e -N "$in_render" "$manifest" |
     awk -F '\t' -v use="$chart/$case_name" -v sources="$work/sources" \
         -v placeholders="$work/placeholders" "$awk_lib"'
       BEGIN {
@@ -193,7 +197,10 @@ render() { # render <archive> <chart> <case> [<fixture>]
         while ((getline line < placeholders) > 0) if (isref(line)) skip[repo(norm(line))] = 1
       }
       !isref($2) { next }
-      { r = norm($2); if (!(repo(r) in skip)) print r "\t" use "\t" source[$1] }' >> "$work/rendered"
+      {
+        r = norm($2)
+        if (!(repo(r) in skip)) print r "\t" use ($3 == "true" ? "/test" : "") "\t" source[$1]
+      }' >> "$work/rendered"
 }
 
 graph() { # graph <chart-dir> <alias-path>: <alias-path> <name>@<version>, recursively

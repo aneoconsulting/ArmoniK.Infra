@@ -8,6 +8,8 @@ on:
     branches:
       - main
       - feat/revamp-helm
+env:
+  HELM_VERSION: v3.18.4
 jobs:
   HelmChartlint:
     name: Lint Helm charts
@@ -21,7 +23,7 @@ jobs:
       - name: Set up Helm
         uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5
         with:
-          version: v3.18.4
+          version: "${{ env.HELM_VERSION }}"
 
       - name: Set up Python
         uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
@@ -69,7 +71,7 @@ jobs:
       - name: Set up Helm
         uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5
         with:
-          version: v3.18.4
+          version: "${{ env.HELM_VERSION }}"
 
       - name: Cache helm repositories
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0

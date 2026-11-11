@@ -26,25 +26,15 @@
 
 set -eu
 
-if [ "$#" -lt 2 ] || [ "$#" -gt 3 ]; then
-  printf 'Usage: %s <scan-dir> <summary-file> [<blob-url>]\n' "$0" >&2
-  exit 2
-fi
-scan=$1
-summary=$2
-blob=${3:-}
-sarif_severity=${SARIF_SEVERITY:-MEDIUM,HIGH,CRITICAL}
-tab=$(printf '\t')
-
-work=$(mktemp -d)
-trap 'rm -rf "$work"' EXIT
-mkdir -p "$scan/sarif" "$scan/reports" "$work/vulns"
-for f in warnings warnings-images sarif-notes scanned failed sarif-list deploys; do
-  : > "$work/$f"
-done
-
 # shellcheck source=trivy-lib.sh
 . "$(dirname "$0")/trivy-lib.sh"
+report_init "$@"
+sarif_severity=${SARIF_SEVERITY:-MEDIUM,HIGH,CRITICAL}
+us=$(printf '\037')
+mkdir -p "$scan/sarif" "$scan/reports" "$work/vulns"
+for f in warnings-images sarif-notes scanned failed sarif-list; do
+  : > "$work/$f"
+done
 
 # Code scanning rejects a SARIF file past 25,000 results or rules per run, or
 # 10 MB gzipped
@@ -71,8 +61,9 @@ fit_sarif() { # <in> <out> <label>
           | .results = [.results[]? | select($drop[$severity[.ruleId] // "UNKNOWN"] | not)]
           | ([.results[].ruleId] | map({key: ., value: true}) | from_entries) as $used
           | .tool.driver.rules = [.tool.driver.rules[]? | select($used[.id])])' "$1" > "$2"
-    results=$(jq '[.runs[] | .results | length] | max // 0' "$2")
-    rules=$(jq '[.runs[] | .tool.driver.rules | length] | max // 0' "$2")
+    sizes=$(jq -r '[[.runs[] | .results | length], [.runs[] | .tool.driver.rules | length]] | map(max // 0) | @tsv' "$2")
+    results=${sizes%"$tab"*}
+    rules=${sizes#*"$tab"}
     bytes=$(gzip -c "$2" | wc -c | tr -d ' ')
     if [ "$results" -le 25000 ] && [ "$rules" -le 25000 ] && [ "$bytes" -le 10000000 ]; then
       [ -z "$drop" ] || {
@@ -89,18 +80,19 @@ fit_sarif() { # <in> <out> <label>
 
 # --- images ------------------------------------------------------------------
 
+# The most severe first, then the fixable.
+ranked_jq='def ranked: sort_by([
+  ({CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3}[.severity] // 4),
+  (if .fixed == "" then 1 else 0 end), .id, .pkg]);'
 # One entry per vulnerability and affected package: trivy repeats a package
 # found in several layers or targets.
-vulns_jq='
+vulns_jq="$ranked_jq"'
   [.Results[]? | .Vulnerabilities[]? | {
     id: .VulnerabilityID, pkg: .PkgName, path: (.PkgPath // ""),
     installed: (.InstalledVersion // ""), fixed: (.FixedVersion // ""),
     status: (.Status // ""), severity: (.Severity // "UNKNOWN"),
     title: (.Title // ""), url: (.PrimaryURL // "")}]
-  | unique_by([.id, .pkg, .path, .installed])
-  | sort_by([
-      ({CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3}[.severity] // 4),
-      (if .fixed == "" then 1 else 0 end), .id, .pkg])'
+  | unique_by([.id, .pkg, .path, .installed]) | ranked'
 
 # The report takes the umbrella chart's point of view: which of its values
 # deploy each image (charts/scan-inputs.sh -s), as <chart> <image>
@@ -143,28 +135,17 @@ switch_awk='
   function tags(deployed, test, off, on, note,   out, t) {
     out = test ? " <sub>helm test</sub>" : ""
     if (deployed == "always" || deployed == "") return out
-    if (deployed == "opt-out") t = "Removed by " lists(optional(off), 0)
+    if (deployed == "opt-out") t = "Removed by " lists(off, 0)
     else if (deployed == "opt-in")
       t = "Deployed with " (note != "" ? note : on == "" ? "values the analysis did not isolate" : lists(on, 0))
     else t = ""
     return out " <sub" (t == "" ? "" : " title=\"" attr(t) "\"") ">" deployed "</sub>"
   }
-  # Whether an image a default install deploys can be left out. The control
-  # and compute planes always run, in this release or as their own, so
-  # turning one off removes none of their images from the deployment.
-  function optional(off,   n, part, i, out) {
-    out = ""
-    n = split(off, part, / \| /)
-    for (i = 1; i <= n; i++)
-      if (part[i] !~ /^(control|compute)-plane\.enabled=false$/) out = out (out == "" ? "" : " | ") part[i]
-    return out
-  }
-  function optout(off) { return optional(off) != "" }
   # What the chart does with the image, as a sentence.
   function deployed(chart, def, off, on, note) {
     if (chart == "") return ""
-    if (def == "on" && !optout(off)) return "Always deployed by `" chart "`."
-    if (def == "on") return "Deployed by default by `" chart "`; removed by " list(optional(off)) "."
+    if (def == "on" && off == "") return "Always deployed by `" chart "`."
+    if (def == "on") return "Deployed by default by `" chart "`; removed by " list(off) "."
     if (note != "") return "Not deployed by default by `" chart "`; deployed with " note "."
     if (def == "off")
       return "Not deployed by default by `" chart "`; " (on == "" ? "the analysis did not isolate the values deploying it" : "deployed with " list(on)) "."
@@ -175,55 +156,60 @@ switch_awk='
 printf '"image","owners","deployed","off with","on with","severity","vulnerability","package","path","installed","fixed","status","title","url"\n' \
   > "$scan/reports/vulnerabilities.csv"
 
-paste "$scan/images.tsv" "$scan/image-status.tsv" > "$work/images"
+# Per image, joined to its switches: whether the umbrella runs it only in helm
+# test pods, and whether it deploys it always, opt-out (by default, a value
+# removing it) or opt-in. The image map and the operators deploy what no
+# render of the umbrella shows; an image that only another chart renders is
+# out of its reach, which a fixture of the umbrella should fix.
+# $work/deploys keeps <image> <default> <off with> <on with> <note> <tags>
+# <sentence>; $work/images joins images.tsv, image-status.tsv and <test only>
+# <deployed> <off with> <on with> <note> <tags>, with \037 between the fields
+# so that `read` keeps the empty ones.
+paste "$scan/images.tsv" "$scan/image-status.tsv" |
+  awk -F '\t' -v OFS="$us" -v chart="$switch_chart" -v switches="$switches" \
+    -v deploys="$work/deploys" -v warnings="$work/warnings-images" "$md_awk$switch_awk"'
+    BEGIN {
+      while ((getline line < switches) > 0) {
+        split(line, f, "\t"); defs[f[2]] = f[3]; offs[f[2]] = f[4]; ons[f[2]] = f[5]
+      }
+    }
+    {
+      image = $1
+      n = split($2, use, ",")
+      t = d = 0
+      for (i = 1; i <= n; i++) {
+        split(use[i], part, "/")
+        if (part[1] == chart) { if (part[3] == "test") t = 1; else d = 1 }
+      }
+      test = t && !d
+      dep = note = ""
+      if (chart == "") {}
+      else if (defs[image] == "on") dep = offs[image] != "" ? "opt-out" : "always"
+      else if (defs[image] == "off") dep = "opt-in"
+      else if (index("," $2 ",", ",image-map,")) {
+        dep = "opt-in"
+        note = "a value naming it as an image (a compute-plane partition'"'"'s worker, say), resolved through `global.armonik.imageComponents`"
+      } else if (index("," $2 ",", ",operator,")) {
+        dep = "opt-in"
+        note = "a resource having its operator run it, see `charts/operator-images.yaml`"
+      } else {
+        dep = "not in " chart
+        printf "%s does not deploy %s\tonly another chart renders it (%s): extend the ci fixtures of %s so that the report covers it\n", \
+          chart, image, $2, chart > warnings
+      }
+      t = tags(dep, test, offs[image], ons[image], note)
+      print image "\t" defs[image] "\t" offs[image] "\t" ons[image] "\t" note "\t" t "\t" \
+        deployed(chart, defs[image], offs[image], ons[image], note) > deploys
+      print $1, $2, $3, $4, $5, $6, test, dep, offs[image], ons[image], note, t
+    }' > "$work/images"
 n=0
-while IFS="$tab" read -r image uses owners status_image status reason; do
+while IFS=$us read -r image _ owners status_image status reason test_only deployed off_with on_with note tags; do
   n=$((n + 1))
   if [ "$image" != "$status_image" ]; then
     printf '%s: images.tsv and image-status.tsv disagree on line %s (%s, %s)\n' \
       "$0" "$n" "$image" "$status_image" >&2
     exit 1
   fi
-  # A helm test image is one the umbrella runs only in helm test pods.
-  test_only=$(printf '%s\n' "$uses" | tr ',' '\n' | awk -F / -v chart="$switch_chart" '
-    $1 == chart { if ($3 == "test") t = 1; else d = 1 }
-    END { print (t && !d) ? 1 : 0 }')
-  # Tab-separated fields: no read, whose IFS would merge the empty ones.
-  switch=$(awk -F '\t' -v image="$image" '$2 == image { print; exit }' "$switches")
-  default=$(printf '%s\n' "$switch" | cut -f3)
-  off_with=$(printf '%s\n' "$switch" | cut -f4)
-  on_with=$(printf '%s\n' "$switch" | cut -f5)
-  # Always deployed, opt-out (deployed by default, a value removes it) or
-  # opt-in. The image map and the operators deploy what no render of the
-  # umbrella shows; an image that only another chart renders is out of its
-  # reach, which a fixture of the umbrella should fix.
-  note=
-  deployed=
-  [ -z "$switch_chart" ] || case "$default" in
-    on)
-      deployed=$(printf '%s\n' "$off_with" |
-        awk "$md_awk$switch_awk"'{ print optout($0) ? "opt-out" : "always" }') ;;
-    off) deployed=opt-in ;;
-    *)
-      case ",$uses," in
-        *,image-map,*)
-          deployed=opt-in
-          note="a value naming it as an image (a compute-plane partition's worker, say), resolved through \`global.armonik.imageComponents\`" ;;
-        *,operator,*)
-          deployed=opt-in
-          note="a resource having its operator run it, see \`charts/operator-images.yaml\`" ;;
-        *)
-          deployed="not in $switch_chart"
-          printf '%s\t%s\n' "$switch_chart does not deploy $image" \
-            "only another chart renders it ($uses): extend the ci fixtures of $switch_chart so that the report covers it" \
-            >> "$work/warnings-images" ;;
-      esac ;;
-  esac
-  # Tags follow the image name; an image always deployed has none.
-  tags=$(printf '%s\t%s\t%s\t%s\t%s\n' "$deployed" "$test_only" "$off_with" "$on_with" "$note" |
-    awk -F '\t' "$md_awk$switch_awk"'{ print tags($1, $2, $3, $4, $5) }')
-  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$image" "$deployed" "$default" "$off_with" "$on_with" "$note" "$test_only" "$tags" \
-    >> "$work/deploys"
   cell=$(owners_cell "$owners" 0 charts)
   report="$scan/reports/images/$n.json"
 
@@ -245,25 +231,24 @@ while IFS="$tab" read -r image uses owners status_image status reason; do
     continue
   fi
 
+  jq -c "$vulns_jq" "$report" > "$work/vulns.json"
   # Found and fixable per severity, unknown folded into low.
-  counts=$(jq -r "$vulns_jq"' as $v
+  counts=$(jq -r '. as $v
     | [["CRITICAL"], ["HIGH"], ["MEDIUM"], ["LOW", "UNKNOWN"]]
     | map(. as $s | $v | map(select(.severity as $x | $s | index($x)))
           | [length, (map(select(.fixed != "")) | length)])
-    | flatten | @tsv' "$report")
+    | flatten | @tsv' "$work/vulns.json")
   printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$counts" "$n" "$image" "$cell" "$test_only" "$deployed" "$tags" >> "$work/scanned"
   # Critical and high for the summary, one row per package version.
-  jq -r "$vulns_jq"' | map(select(.severity == "CRITICAL" or .severity == "HIGH"))
-    | unique_by([.id, .pkg, .installed]) | sort_by([
-        (if .severity == "CRITICAL" then 0 else 1 end),
-        (if .fixed == "" then 1 else 0 end), .id, .pkg])
+  jq -r "$ranked_jq"' map(select(.severity == "CRITICAL" or .severity == "HIGH"))
+    | unique_by([.id, .pkg, .installed]) | ranked
     | .[] | [.severity, .id, .url, .pkg, .installed, .fixed, .title] | @tsv' \
-    "$report" > "$work/vulns/$n.tsv"
-  jq -r --arg image "$image" --arg owners "$(owners_names "$owners")" --arg deployed "$deployed" \
+    "$work/vulns.json" > "$work/vulns/$n.tsv"
+  jq -r --arg image "$image" --arg owners "$(owners_cell "$owners" 0 names)" --arg deployed "$deployed" \
     --arg off "$off_with" --arg on "${note:-$on_with}" \
-    "$vulns_jq"' | .[] | [$image, $owners, $deployed, $off, $on, .severity, .id, .pkg, .path,
+    '.[] | [$image, $owners, $deployed, $off, $on, .severity, .id, .pkg, .path,
       .installed, .fixed, .status, .title, .url] | @csv' \
-    "$report" >> "$scan/reports/vulnerabilities.csv"
+    "$work/vulns.json" >> "$scan/reports/vulnerabilities.csv"
 
   # One SARIF run per image, rewritten so that every location names its image:
   # trivy locates an OS package at the image repository and any other package
@@ -318,8 +303,7 @@ sort -t "$tab" -k12,12n -k1,1nr -k3,3nr -k5,5nr -k7,7nr -k10,10 "$work/scanned" 
   echo "## Trivy: images"
   echo ""
   printf 'Trivy %s, vulnerability database of %s. Report only: nothing here blocks a publication.\n' \
-    "$(trivy_version)" \
-    "$(trivy --version 2>/dev/null | sed -n 's/^ *UpdatedAt: //p' | head -n1)"
+    "$(trivy_info Version)" "$(trivy_info UpdatedAt)"
   echo ""
   awk -F '\t' -v failed="$images_failed" -v chart="$switch_chart" '
     $1 > 0 { critical++ } $3 > 0 { high++ } $2 + $4 > 0 { fixable++ }
@@ -347,8 +331,7 @@ sort -t "$tab" -k12,12n -k1,1nr -k3,3nr -k5,5nr -k7,7nr -k10,10 "$work/scanned" 
   echo "|-|-|-:|-:|-:|-:|"
   awk -F '\t' "$md_awk"'{
     printf "| `%s`%s | %s | %s | %s | %s | %s |\n", $10, $14, $11,
-      count($1, $2, ":red_circle:"), count($3, $4, ":orange_circle:"),
-      count($5, $6, ":yellow_circle:"), count($7, $8, ":large_blue_circle:")
+      count($1, $2, "CRITICAL"), count($3, $4, "HIGH"), count($5, $6, "MEDIUM"), count($7, $8, "LOW")
   }' "$work/scanned.sorted"
   if [ -s "$work/failed" ]; then
     echo ""
@@ -366,38 +349,29 @@ sort -t "$tab" -k12,12n -k1,1nr -k3,3nr -k5,5nr -k7,7nr -k10,10 "$work/scanned" 
 # The critical and high vulnerabilities of each image, the fixable first, in
 # the order of the table above; at most <cap> rows an image, 0 for no cap.
 details() { # <cap>
-  while IFS= read -r row; do
-    # Not read with a tab IFS, which merges an empty owner cell with the next
-    # field; the fields kept hold no blank.
-    # shellcheck disable=SC2046
-    set -- "$1" $(printf '%s\n' "$row" | awk -F '\t' '{ print $1, $2, $3, $4, $9, $10 }')
-    c=$2 cf=$3 h=$4 hf=$5 k=$6 image=$7
-    set -- "$1"
-    [ $((c + h)) -gt 0 ] || continue
-    # Through the environment: -v would read the escaped pipes as escapes.
-    TAGS=$(printf '%s\n' "$row" | cut -f14) \
-    DEPLOYED=$(awk -F '\t' -v image="$image" -v chart="$switch_chart" "$md_awk$switch_awk"'
-      $1 == image { print deployed(chart, $3, $4, $5, $6); exit }' "$work/deploys") \
-    awk -F '\t' -v cap="$1" -v image="$image" -v c="$c" -v cf="$cf" -v h="$h" -v hf="$hf" "$md_awk"'
-      BEGIN {
-        printf "<details><summary>%s <code>%s</code>%s: ", (c ? ":red_circle:" : ":orange_circle:"), image, ENVIRON["TAGS"]
-        if (c) printf "%d critical (%d fixable)%s", c, cf, (h ? ", " : "")
-        if (h) printf "%d high (%d fixable)", h, hf
-        print "</summary>\n"
-        if (ENVIRON["DEPLOYED"] != "") print ENVIRON["DEPLOYED"] "\n"
-        print "| | Vulnerability | Package | Installed | Fixed | Title |"
-        print "|-|-|-|-|-|-|"
+  awk -F '\t' -v cap="$1" -v vulns="$work/vulns" "$md_awk"'
+    FILENAME == ARGV[1] { sentence[$1] = $7; next }
+    $1 + $3 == 0 { next }
+    {
+      printf "<details><summary>%s <code>%s</code>%s: ", emoji($1 ? "CRITICAL" : "HIGH"), $10, $14
+      if ($1) printf "%d critical (%d fixable)%s", $1, $2, ($3 ? ", " : "")
+      if ($3) printf "%d high (%d fixable)", $3, $4
+      print "</summary>\n"
+      if (sentence[$10] != "") print sentence[$10] "\n"
+      print "| | Vulnerability | Package | Installed | Fixed | Title |"
+      print "|-|-|-|-|-|-|"
+      file = vulns "/" $9 ".tsv"
+      rows = more = 0
+      while ((getline line < file) > 0) {
+        if (cap && ++rows > cap) { more++; continue }
+        split(line, v, "\t")
+        id = v[3] == "" ? v[2] : "[" v[2] "](" v[3] ")"
+        printf "| %s | %s | `%s` | %s | %s | %s |\n", emoji(v[1]), id, cell(v[4]), cell(v[5]), (v[6] == "" ? "-" : cell(v[6])), cell(v[7])
       }
-      cap && NR > cap { more++; next }
-      {
-        id = $3 == "" ? $2 : "[" $2 "](" $3 ")"
-        printf "| %s | %s | `%s` | %s | %s | %s |\n", emoji($1), id, cell($4), cell($5), ($6 == "" ? "-" : cell($6)), cell($7)
-      }
-      END {
-        if (more) printf "| | and %d more in `vulnerabilities.csv` | | | | |\n", more
-        print "\n</details>\n"
-      }' "$work/vulns/$k.tsv"
-  done < "$work/scanned.sorted"
+      close(file)
+      if (more) printf "| | and %d more in `vulnerabilities.csv` | | | | |\n", more
+      print "\n</details>\n"
+    }' "$work/deploys" "$work/scanned.sorted"
 }
 
 {
@@ -413,9 +387,8 @@ details() { # <cap>
       awk -F '\t' "$md_awk$switch_awk"'
         BEGIN { print "| Image | Removed by | Deployed with |"; print "|-|-|-|" }
         {
-          printf "| `%s`%s | %s | %s |\n", $1, $8,
-            ($3 == "on" && optout($4) ? list(optional($4)) : "-"),
-            ($6 != "" ? $6 : $3 == "off" ? ($5 == "" ? "not isolated" : list($5)) : "-")
+          printf "| `%s`%s | %s | %s |\n", $1, $6, ($3 != "" ? list($3) : "-"),
+            ($5 != "" ? $5 : $2 == "off" ? ($4 == "" ? "not isolated" : list($4)) : "-")
         }'
     echo ""
     echo "</details>"

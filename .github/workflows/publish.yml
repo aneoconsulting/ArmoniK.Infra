@@ -17,11 +17,12 @@ name: Publish Charts
 # repository names: hyphenated armonik-* in dockerhubaneo is reserved for
 # charts, images keeping armonik_*.
 #
-# The `scan` job runs trivy on every channel, report only: the packaged charts
-# rendered with their defaults and ci/ fixtures (misconfigurations), and every
-# image they can deploy, ArmoniK's and third-party alike (vulnerabilities): the
-# renders' (the placeholders the fixtures name left out), ArmoniK's image map,
-# and the operators' own defaults listed in charts/operator-images.yaml.
+# The `scan` job runs trivy on every channel, report only, on every image the
+# packaged charts can deploy, ArmoniK's and third-party alike
+# (vulnerabilities): the renders' with their defaults and ci/ fixtures (the
+# placeholders the fixtures name left out), ArmoniK's image map, and the
+# operators' own defaults listed in charts/operator-images.yaml. The renders
+# themselves are checked by the chart-checks job of linter-helm.yml.
 # Results land in the job summary, the trivy-reports artifact and code
 # scanning; nothing waits for them.
 

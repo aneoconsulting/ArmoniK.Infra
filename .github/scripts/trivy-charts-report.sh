@@ -21,23 +21,11 @@
 
 set -eu
 
-if [ "$#" -lt 2 ] || [ "$#" -gt 3 ]; then
-  printf 'Usage: %s <scan-dir> <summary-file> [<blob-url>]\n' "$0" >&2
-  exit 2
-fi
-scan=$1
-summary=$2
-blob=${3:-}
-tab=$(printf '\t')
-
-work=$(mktemp -d)
-trap 'rm -rf "$work"' EXIT
-mkdir -p "$scan/reports"
-: > "$work/warnings"
-: > "$work/misconfigs"
-
 # shellcheck source=trivy-lib.sh
 . "$(dirname "$0")/trivy-lib.sh"
+report_init "$@"
+mkdir -p "$scan/reports"
+: > "$work/misconfigs"
 
 # Every failed check with the document it fails on, which documents.tsv
 # traces to its template: <document> <check> <severity> <title> <url>
@@ -81,7 +69,7 @@ awk -F '\t' '
 # <severity> <title> <url> <resolution> <owner entries>, a place being a
 # template, or a chart for a third-party one. An empty field reads `-`: `read`
 # merges the tabs around an empty one.
-awk -F '\t' '
+awk -F '\t' "$md_awk"'
   function orDash(s) { return s == "" ? "-" : s }
   {
     k = $10 SUBSEP $2
@@ -92,10 +80,9 @@ awk -F '\t' '
     if (!((k, $8) in seen)) { seen[k, $8] = 1; owners[k] = owners[k] (owners[k] == "" ? "" : ",") $8 }
   }
   END {
-    rank["CRITICAL"] = 0; rank["HIGH"] = 1; rank["MEDIUM"] = 2; rank["LOW"] = 3
     for (k in severity) {
       split(k, key, SUBSEP)
-      print key[1] "\t" ((severity[k] in rank) ? rank[severity[k]] : 4) "\t" places[k] "\t" key[2] "\t" \
+      print key[1] "\t" rank(severity[k]) "\t" places[k] "\t" key[2] "\t" \
         orDash(severity[k]) "\t" orDash(title[k]) "\t" orDash(url[k]) "\t" orDash(resolution[k]) "\t" owners[k]
     }
   }' "$work/misconfigs" | sort -t "$tab" -k1,1 -k2,2n -k3,3nr -k4,4 > "$work/checks"
@@ -114,14 +101,14 @@ checks_table() { # <scope> <owner-mode> <owner-heading>
     }'
 }
 
-ours=$(awk -F '\t' '$1 == "ours"' "$work/checks" | wc -l | tr -d ' ')
-theirs=$(awk -F '\t' '$1 == "third-party"' "$work/checks" | wc -l | tr -d ' ')
+ours=$(awk -F '\t' '$1 == "ours" { n++ } END { print n + 0 }' "$work/checks")
+theirs=$(awk -F '\t' '$1 == "third-party" { n++ } END { print n + 0 }' "$work/checks")
 
 {
   echo "## Trivy: charts"
   echo ""
   printf "Trivy %s, Kubernetes checks on every render. Report only: no finding fails the job. Each failing resource is in \`misconfigurations.csv\` of the \`trivy-chart-reports\` artifact.\n" \
-    "$(trivy_version)"
+    "$(trivy_info Version)"
   echo ""
   printf '**%d checks fail on our charts, %d on third-party charts.**\n' "$ours" "$theirs"
   echo ""

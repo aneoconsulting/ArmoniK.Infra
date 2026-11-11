@@ -1,7 +1,22 @@
-# shellcheck shell=sh disable=SC2154 # scan, blob, tab and work: see below
-# Helpers of the trivy report scripts, sourced once their caller has set
-# scan (the scan directory), blob (the blob URL, or empty), tab and work (a
-# scratch directory).
+# shellcheck shell=sh
+# Helpers of the trivy report scripts, sourced first, then report_init.
+
+# The arguments of a report script, `<scan-dir> <summary-file> [<blob-url>]`,
+# into scan, summary and blob; work, a scratch directory removed on exit.
+# shellcheck disable=SC2034 # summary is the caller's
+report_init() {
+  if [ "$#" -lt 2 ] || [ "$#" -gt 3 ]; then
+    printf 'Usage: %s <scan-dir> <summary-file> [<blob-url>]\n' "$0" >&2
+    exit 2
+  fi
+  scan=$1
+  summary=$2
+  blob=${3:-}
+  tab=$(printf '\t')
+  work=$(mktemp -d)
+  trap 'rm -rf "$work"' EXIT
+  : > "$work/warnings"
+}
 
 # Annotations are capped at 10 warnings per step
 # (https://github.com/actions/toolkit/blob/main/docs/problem-matchers.md), so
@@ -14,7 +29,7 @@ warn() { # <title> <message>
 # (https://github.com/actions/toolkit/blob/main/packages/core/src/command.ts):
 # a property also escapes the separators of the properties.
 annotate() { # <warnings-file>...
-  cat "$@" | awk -F '\t' '
+  awk -F '\t' '
     function data(s) { gsub(/%/, "%25", s); gsub(/\r/, "%0D", s); gsub(/\n/, "%0A", s); return s }
     function property(s) { s = data(s); gsub(/:/, "%3A", s); gsub(/,/, "%2C", s); return s }
     { title[NR] = $1; message[NR] = $2 }
@@ -22,7 +37,7 @@ annotate() { # <warnings-file>...
       shown = NR > 10 ? 9 : NR
       for (i = 1; i <= shown; i++) printf "::warning title=%s::%s\n", property(title[i]), data(message[i])
       if (NR > shown) printf "::warning title=%d more warnings::see the job summary\n", NR - shown
-    }'
+    }' "$@"
 }
 
 # A fixture is a valid render by contract (test/matrix.sh); defaults need not be.
@@ -80,10 +95,6 @@ owners_cell() { # <owners> [<max> [<mode>]]
   printf '%s\n' "$1" | awk -v blob="$blob" -v max="${2:-0}" -v mode="${3:-}" "$owners_awk"
 }
 
-owners_names() { # <owners>
-  printf '%s\n' "$1" | awk -v mode=names "$owners_awk"
-}
-
 # shellcheck disable=SC2016
 md_awk='
   function emoji(s) {
@@ -92,11 +103,14 @@ md_awk='
   }
   # A table cell: no pipe, no tag, no line break.
   function cell(s) { gsub(/\|/, "\\|", s); gsub(/</, "\\&lt;", s); gsub(/\\[tn]/, " ", s); return s }
-  function count(n, f, e) { return n == 0 ? "-" : e " " n " (" f ")" }
+  function count(n, f, s) { return n == 0 ? "-" : emoji(s) " " n " (" f ")" }
+  function rank(s) { return s == "CRITICAL" ? 0 : s == "HIGH" ? 1 : s == "MEDIUM" ? 2 : s == "LOW" ? 3 : 4 }
 '
 
-trivy_version() {
-  trivy --version 2>/dev/null | sed -n 's/^Version: //p' | head -n1
+# A field of `trivy --version`: Version is trivy's own, the database's
+# indented below it.
+trivy_info() { # <field>
+  trivy --version 2>/dev/null | sed -n "s/^ *$1: //p" | head -n1
 }
 
 # The renders that failed, as a summary section.

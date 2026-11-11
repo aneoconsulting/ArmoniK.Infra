@@ -32,6 +32,16 @@ operators:
       permissionInitContainer:
         fixes:
           rapl: true
+ingress:
+  # The multi-cluster gRPC load balancer, clusters only named: no certificate.
+  loadBalancer:
+    enabled: true
+    defaultCluster: cluster-a
+    clusters:
+      cluster-a:
+        controlPlaneUrl: http://control-plane.cluster-a.svc:5001
+      cluster-b:
+        controlPlaneUrl: http://control-plane.cluster-b.svc:5001
 dependencies:
   mongodb:
     backup:

@@ -335,7 +335,7 @@ jobs:
 
       # The runner image ships mikefarah yq v4, which the script checks. -s
       # measures which values deploy each image of the umbrella, a few hundred
-      # renders, for the report to tell an opt-in image from a default one.
+      # renders: the report takes the umbrella's point of view.
       - name: Render the charts and list their images
         run: ./charts/scan-inputs.sh -d dist -o scan -s armonik
 

@@ -227,6 +227,11 @@ dependencies:
     # resourcesPreset: nano
     persistence:
       enabled: false
+    # The chart's default, bitnami/os-shell, is gone from Docker Hub; Bitnami froze it under bitnamilegacy.
+    volumePermissions:
+      image:
+        registry: bitnamilegacy
+        repository: os-shell
     metrics:
       image:
         registry: public.ecr.aws
@@ -240,6 +245,9 @@ dependencies:
     enabled: true
     image:
       registry: public.ecr.aws
+      # The chart's release on the Alpine base, far less exposed than the Debian default. The chart
+      # does not tpl the tag, so keep it in step with the valkey chart's appVersion.
+      tag: "9.1.3-alpine"
     auth:
       enabled: true
       # tpl-rendered by valkey; templates/secrets/redis-users.yaml creates it under that same name.
@@ -285,13 +293,27 @@ dependencies:
   # Upstream values: https://github.com/percona/percona-helm-charts/tree/main/charts/psmdb-db
   mongodb:
     enabled: true
+    # The images below are the newest releases, ahead of the set Percona tests operator 1.23.1 with
+    # (https://check.percona.com/versions/v1/psmdb-operator/1.23.1), for their security fixes. Check
+    # them against that set whenever the operator moves.
+    image:
+      tag: "8.0.34-15"
     sharding:
       enabled: false
     backup:
       enabled: false
+      image:
+        tag: "2.17.0"
+    pmm:
+      image:
+        tag: "3.10.0"
+    clusterSync:
+      image: percona/percona-clustersync-mongodb:1.1.0
     # mongod already logs logv2 JSON to stdout, which fluent-bit collects: no Percona log sidecar.
     logcollector:
       enabled: false
+      image:
+        tag: "5.1.4-1"
     replsets:
       rs0:
         size: 1
@@ -425,6 +447,9 @@ dependencies:
   grafana:
     image:
       registry: docker.io
+      # The slim variant leaves out the plugins Grafana bundles, which ArmoniK does not use, and most
+      # of the exposure with them. GF_PLUGINS_PREINSTALL installs one back at startup.
+      tag: "{{ .Chart.AppVersion }}-distroless-slim"
     enabled: true
     serviceMonitor:
       enabled: true
@@ -472,7 +497,7 @@ dependencies:
     enabled: true
     image:
       # The compute-plane sidecar's release (armonik-compute-plane fluentBit.image.tag).
-      tag: "5.1.5"
+      tag: "5.2.0"
     # priorityClassName:
     daemonSetVolumes:
       - name: runlogjournal

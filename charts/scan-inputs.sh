@@ -55,8 +55,8 @@
 # default can be off in production (Seq), so -s CHART measures it on CHART's
 # renders, one value at a time:
 #   - each `enabled` or `deploy` value that is true in CHART's coalesced
-#     defaults is set to false on its own; the images that leave the render
-#     are off with it;
+#     defaults is set to false on its own, and each entry of a `partitions`
+#     map to null; the images that leave the render are off with it;
 #   - each setting of each fixture is dropped on its own; the images the
 #     fixture adds that leave the render need it, the images the fixture
 #     removes that come back are off with it, alongside the rest of that
@@ -416,6 +416,17 @@ switches() { # switches <chart-dir>: switches.tsv
     printf 'flip-%s\tflip\t\t%s=false\n' "$n" "$(KEYS=$keys yq -n 'env(KEYS) | join(".")')" >> "$work/meta"
     spawn "flip-$n" /dev/null "$settings/flip-$n.yaml"
   done < "$work/flips"
+  # A partition set to null is removed: the compute-plane's own switch for
+  # its workers.
+  yq -N '.. | select(tag == "!!map" and (path | length) > 0 and (path | .[-1]) == "partitions") | .[]
+         | select(tag != "!!null") | path | to_json(0)' "$work/coalesced.yaml" > "$work/partitions"
+  n=0
+  while IFS= read -r keys; do
+    n=$((n + 1))
+    KEYS=$keys yq -n 'setpath(env(KEYS); null)' > "$settings/null-$n.yaml"
+    printf 'null-%s\tflip\t\t%s=null\n' "$n" "$(KEYS=$keys yq -n 'env(KEYS) | join(".")')" >> "$work/meta"
+    spawn "null-$n" /dev/null "$settings/null-$n.yaml"
+  done < "$work/partitions"
 
   for fixture in "$here/$switch_chart"/ci/*-values.yaml; do
     [ -f "$fixture" ] || continue

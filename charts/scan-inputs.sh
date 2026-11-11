@@ -66,12 +66,14 @@
 # A setting several fixtures share is applied on its own once. The defaults,
 # the fixtures and every `global` setting are rendered whole. Any other
 # setting lies under one subchart, the deepest whose alias path prefixes its
-# keys, and is rendered on a copy of CHART keeping only that subchart's
-# templates and every helper: values, conditions and helpers still resolve as
-# in CHART, the images of the other subcharts are those of the defaults, and
-# a copy whose defaults do not render the images CHART's do is rendered whole
-# instead. CHART's own settings are rendered whole when its templates name an
-# image, skipped otherwise.
+# keys, and is rendered on a copy of CHART keeping that subchart's templates,
+# every helper, and only the charts it may read values from (its ancestors,
+# the libraries and the charts importing values into them): values,
+# conditions and helpers still resolve as in CHART, the images of the other
+# subcharts are those of the defaults, a render the copy breaks is retried
+# whole, and a copy whose defaults do not render the images CHART's do is
+# rendered whole instead. CHART's own settings are rendered whole when its
+# templates name an image, skipped otherwise.
 # <default> is `on` when the defaults deploy the image, `off` otherwise. <off>
 # and <on> list the alternatives turning it off and on, ` | `-separated, each
 # a `<key>=<value>` setting or several joined by ` & ` that a fixture needs
@@ -90,7 +92,9 @@ kube_version=1.31.0
 switch_chart=
 switch_archive=
 jobs=$(getconf _NPROCESSORS_ONLN 2>/dev/null || echo 2)
+probe_job=
 tab=$(printf '\t')
+sep=$(printf '\001')
 
 usage() {
   cat <<USAGE
@@ -108,7 +112,7 @@ Renders the packaged charts and lists the images they can deploy.
 USAGE
 }
 
-while getopts ':d:o:k:s:j:h' opt; do
+while getopts ':d:o:k:s:j:hP:' opt; do
   case "$opt" in
     d) dist=$OPTARG ;;
     o) out=$OPTARG ;;
@@ -116,6 +120,8 @@ while getopts ':d:o:k:s:j:h' opt; do
     s) switch_chart=$OPTARG ;;
     j) jobs=$OPTARG ;;
     h) usage; exit 0 ;;
+    # Internal: one probe of switches(), the script re-entering itself.
+    P) probe_job=$OPTARG ;;
     *)
       printf '%s: invalid option -- %s\n\n' "$self" "$OPTARG" >&2
       usage >&2
@@ -125,34 +131,36 @@ while getopts ':d:o:k:s:j:h' opt; do
 done
 shift $((OPTIND - 1))
 
-if [ "$#" -gt 0 ]; then
-  printf "%s: unexpected argument '%s'\n" "$self" "$1" >&2
-  exit 2
-fi
+if [ -z "$probe_job" ]; then
+  if [ "$#" -gt 0 ]; then
+    printf "%s: unexpected argument '%s'\n" "$self" "$1" >&2
+    exit 2
+  fi
 
-# The Python yq wrapper shares the name and takes jq syntax.
-if ! yq --version 2>/dev/null | grep -q mikefarah; then
-  printf '%s: needs mikefarah yq v4 (https://github.com/mikefarah/yq)\n' "$self" >&2
-  exit 2
-fi
+  # The Python yq wrapper shares the name and takes jq syntax.
+  if ! yq --version 2>/dev/null | grep -q mikefarah; then
+    printf '%s: needs mikefarah yq v4 (https://github.com/mikefarah/yq)\n' "$self" >&2
+    exit 2
+  fi
 
-set -- "$dist"/*.tgz
-if [ ! -f "$1" ]; then
-  printf '%s: no packaged chart in %s; run package-charts.sh first\n' "$self" "$dist" >&2
-  exit 2
-fi
+  set -- "$dist"/*.tgz
+  if [ ! -f "$1" ]; then
+    printf '%s: no packaged chart in %s; run package-charts.sh first\n' "$self" "$dist" >&2
+    exit 2
+  fi
 
-rm -rf "$out"
-mkdir -p "$out/manifests"
-out=$(cd "$out" && pwd)
-work=$(mktemp -d)
-trap 'rm -rf "$work"' EXIT
-: > "$out/renders.tsv"
-: > "$work/rendered"
-: > "$work/graph"
-: > "$work/map"
-: > "$work/documents"
-err="$work/stderr"
+  rm -rf "$out"
+  mkdir -p "$out/manifests"
+  out=$(cd "$out" && pwd)
+  work=$(mktemp -d)
+  trap 'rm -rf "$work"' EXIT
+  : > "$out/renders.tsv"
+  : > "$work/rendered"
+  : > "$work/graph"
+  : > "$work/map"
+  : > "$work/documents"
+  err="$work/stderr"
+fi
 
 # Shared by every awk below: one spelling per image, so that
 # "docker.io/library/busybox", "busybox" and "busybox:latest" are one image.
@@ -372,8 +380,13 @@ probe() { # probe <name> <placeholders> <scope> <base> [<values-file>...]
     [ -f "$probes/$base.pairs" ] || return 0
     chart=$(scope_copy "$scope")
   fi
+  # A copy lacks the charts its scope does not need, so a render it breaks
+  # is retried whole.
   if helm template scan "$chart" --kube-version "$kube_version" "$@" \
-       >"$probes/$name.yaml" 2>/dev/null; then
+       >"$probes/$name.yaml" 2>/dev/null ||
+     { [ -n "$scope" ] && [ "$name" != scope-check ] && scope= &&
+       helm template scan "$switch_archive" --kube-version "$kube_version" "$@" \
+         >"$probes/$name.yaml" 2>/dev/null; }; then
     images_of "$probes/$name.yaml" "$placeholders" > "$probes/$name.found"
     if [ -z "$scope" ]; then
       mv "$probes/$name.found" "$probes/$name.pairs"
@@ -390,13 +403,21 @@ probe() { # probe <name> <placeholders> <scope> <base> [<values-file>...]
 }
 
 # At most $jobs probes at once, a batch at a time.
-spawn() { # spawn <probe arguments>
-  probe "$@" &
-  running=$((running + 1))
-  if [ "$running" -ge "$jobs" ]; then
-    wait
-    running=0
-  fi
+# One probe per line, each argument ended by \001, so that the empty ones
+# survive the split.
+queue() { # queue <probe arguments>
+  for arg; do printf '%s%s' "$arg" "$sep"; done >> "$work/jobs"
+  printf '\n' >> "$work/jobs"
+}
+# Runs the queued probes, $jobs at a time. A probe that fails proves nothing,
+# as a render that fails.
+run_jobs() {
+  [ -s "$work/jobs" ] || return 0
+  tr '\n' '\000' < "$work/jobs" |
+    SCAN_WORK=$work SCAN_ARCHIVE=$switch_archive SCAN_CHART=$switch_chart \
+      xargs -0 -n 1 -P "$jobs" sh "$self" -k "$kube_version" -P ||
+    printf '%s: some switch probes failed\n' "$self" >&2
+  : > "$work/jobs"
 }
 
 
@@ -462,6 +483,29 @@ scope_copy() { # scope_copy <scope>: its chart directory
 
 # Prepares <scope> and prints it, or prints nothing when its copy renders the
 # defaults differently from the full render, which then stands in.
+# Removes from <dir> every dependency off the path to <rel> but those that can
+# still reach it: a library, or one importing values into its parent. A
+# sibling's values and conditions never reach a chart otherwise, its globals
+# flowing down only. Each Chart.yaml is replaced, not edited, the copy being
+# hard-linked to the archive.
+trim() { # trim <dir> <rel>: rel being charts/<name>/[charts/<name>/...]
+  rel=${2#charts/}
+  [ "$rel" != "$2" ] || return 0
+  on=${rel%%/*}
+  yq '.dependencies[] | select(has("import-values") | not) | .name' "$1/Chart.yaml" |
+    while IFS= read -r dep; do
+      [ "$dep" != "$on" ] || continue
+      [ "$(yq '.type // ""' "$1/charts/$dep/Chart.yaml" 2>/dev/null)" != library ] || continue
+      rm -rf "${1:?}/charts/$dep"
+      printf '%s\n' "$dep"
+    done > "$1/trimmed"
+  # shellcheck disable=SC2016
+  DROP=$(cat "$1/trimmed") yq '.dependencies |= map(select(.name as $n | strenv(DROP) | split("\n") | all_c(. != $n)))' \
+    "$1/Chart.yaml" > "$1/Chart.yaml.new"
+  rm -f "$1/trimmed" "$1/Chart.lock"
+  mv -f "$1/Chart.yaml.new" "$1/Chart.yaml"
+  trim "$1/charts/$on" "${rel#"$on"/}"
+}
 scope() { # scope <scope>
   if ! grep -q "^$1	" "$work/scopes.tsv"; then
     copy=$(scope_copy "$1")
@@ -474,6 +518,7 @@ scope() { # scope <scope>
     # The archive is already filtered; read as a directory, the root's
     # .helmignore (tests/) would also apply to every subchart's files.
     find "$copy" -name .helmignore -exec rm -f {} +
+    trim "$copy" "${keep#"$copy"/}"
     find "$copy" -path '*/templates/*' -type f ! -name '_*' ! -name '*.tpl' |
       while IFS= read -r file; do
         case "$file" in
@@ -502,22 +547,20 @@ switches() { # switches <chart-dir>: switches.tsv
   : > "$work/meta"
   : > "$work/scopes.tsv"
   : > "$work/seen"
-  sep=$(printf '\001')
-  running=0
+  : > "$work/jobs"
 
   # The full renders first: the defaults and each fixture, which the scoped
   # probes complete.
   printf 'base\tbase\t\t\n' >> "$work/meta"
-  spawn base /dev/null "" ""
+  queue base /dev/null "" ""
   for fixture in "$here/$switch_chart"/ci/*-values.yaml; do
     [ -f "$fixture" ] || continue
     case_name=$(basename "$fixture" -values.yaml)
     yq ea -N "$in_fixture" "$fixture" > "$settings/$case_name.placeholders"
     printf 'fix-%s\tfixture\t%s\t\n' "$case_name" "$case_name" >> "$work/meta"
-    spawn "fix-$case_name" "$settings/$case_name.placeholders" "" "" "$fixture"
+    queue "fix-$case_name" "$settings/$case_name.placeholders" "" "" "$fixture"
   done
-  wait
-  running=0
+  run_jobs
   if [ ! -f "$probes/base" ]; then
     printf '%s: %s does not render with its defaults, no switches.tsv\n' "$self" "$switch_chart" >&2
     return 0
@@ -545,7 +588,7 @@ switches() { # switches <chart-dir>: switches.tsv
     [ -z "$scope" ] || scope=$(scope "$scope")
     KEYS=$keys VALUE=$value yq -n 'setpath(env(KEYS); env(VALUE))' > "$settings/flip-$n.yaml"
     printf 'flip-%s\tflip\t\t%s=%s\n' "$n" "$(KEYS=$keys yq -n 'env(KEYS) | join(".")')" "$value" >> "$work/meta"
-    spawn "flip-$n" /dev/null "$scope" base "$settings/flip-$n.yaml"
+    queue "flip-$n" /dev/null "$scope" base "$settings/flip-$n.yaml"
   done < "$work/flips"
 
   for fixture in "$here/$switch_chart"/ci/*-values.yaml; do
@@ -589,16 +632,16 @@ switches() { # switches <chart-dir>: switches.tsv
       KEYS=$keys DEPTH=$depth yq 'env(KEYS) as $k | delpaths([$k | .[0:env(DEPTH)]])' "$fixture" \
         > "$settings/drop-$case_name-$n.yaml"
       printf 'drop-%s-%s\tdrop\t%s\t%s=%s\n' "$case_name" "$n" "$case_name" "$dotted" "$value" >> "$work/meta"
-      spawn "drop-$case_name-$n" "$placeholders" "$scope" "fix-$case_name" "$settings/drop-$case_name-$n.yaml"
+      queue "drop-$case_name-$n" "$placeholders" "$scope" "fix-$case_name" "$settings/drop-$case_name-$n.yaml"
       # A setting several fixtures share is applied once.
       ! grep -qxF "$keys$tab$json" "$work/seen" || continue
       printf '%s\t%s\n' "$keys" "$json" >> "$work/seen"
       KEYS=$keys VALUE=$json yq -n 'setpath(env(KEYS); env(VALUE))' > "$settings/set-$case_name-$n.yaml"
       printf 'set-%s-%s\tset\t%s\t%s=%s\n' "$case_name" "$n" "$case_name" "$dotted" "$value" >> "$work/meta"
-      spawn "set-$case_name-$n" "$placeholders" "$scope" base "$settings/set-$case_name-$n.yaml"
+      queue "set-$case_name-$n" "$placeholders" "$scope" base "$settings/set-$case_name-$n.yaml"
     done < "$work/leaves"
   done
-  wait
+  run_jobs
 
   for result in "$probes"/*; do
     case "$result" in
@@ -642,6 +685,21 @@ switches() { # switches <chart-dir>: switches.tsv
       }
     }' "$work/meta" "$work/members" | sort > "$out/switches.tsv"
 }
+
+if [ -n "$probe_job" ]; then
+  work=$SCAN_WORK
+  probes="$work/probes"
+  switch_archive=$SCAN_ARCHIVE
+  switch_chart=$SCAN_CHART
+  set -f
+  IFS=$sep
+  # shellcheck disable=SC2086
+  set -- $probe_job
+  unset IFS
+  set +f
+  probe "$@"
+  exit 0
+fi
 
 for archive in "$@"; do
   chart=$(helm show chart "$archive" | yq '.name')

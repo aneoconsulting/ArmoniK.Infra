@@ -92,13 +92,13 @@ kube_version=1.31.0
 switch_chart=
 switch_archive=
 jobs=$(getconf _NPROCESSORS_ONLN 2>/dev/null || echo 2)
-probe_job=
+internal_job=
 tab=$(printf '\t')
 sep=$(printf '\001')
 
 usage() {
   cat <<USAGE
-Usage: $self [-d DIR] [-o DIR] [-k VERSION] [-s CHART [-j N]] [-h]
+Usage: $self [-d DIR] [-o DIR] [-k VERSION] [-s CHART] [-j N] [-h]
 
 Renders the packaged charts and lists the images they can deploy.
 
@@ -107,7 +107,7 @@ Renders the packaged charts and lists the images they can deploy.
   -k VERSION  Kubernetes version to render for (default: $kube_version)
   -s CHART    also measure the values deciding which images CHART deploys
               (switches.tsv), a few hundred renders, most of one subchart alone
-  -j N        renders run at once for -s (default: $jobs)
+  -j N        renders run at once (default: $jobs)
   -h          show this help
 USAGE
 }
@@ -120,8 +120,8 @@ while getopts ':d:o:k:s:j:hP:' opt; do
     s) switch_chart=$OPTARG ;;
     j) jobs=$OPTARG ;;
     h) usage; exit 0 ;;
-    # Internal: one probe of switches(), the script re-entering itself.
-    P) probe_job=$OPTARG ;;
+    # Internal: one queued render or probe, the script re-entering itself.
+    P) internal_job=$OPTARG ;;
     *)
       printf '%s: invalid option -- %s\n\n' "$self" "$OPTARG" >&2
       usage >&2
@@ -131,7 +131,7 @@ while getopts ':d:o:k:s:j:hP:' opt; do
 done
 shift $((OPTIND - 1))
 
-if [ -z "$probe_job" ]; then
+if [ -z "$internal_job" ]; then
   if [ "$#" -gt 0 ]; then
     printf "%s: unexpected argument '%s'\n" "$self" "$1" >&2
     exit 2
@@ -159,7 +159,8 @@ if [ -z "$probe_job" ]; then
   : > "$work/graph"
   : > "$work/map"
   : > "$work/documents"
-  err="$work/stderr"
+  : > "$work/jobs"
+  : > "$work/order"
 fi
 
 # Shared by every awk below: one spelling per image, so that
@@ -224,16 +225,23 @@ render() { # render <archive> <chart> <case> [<fixture>]
   chart=$2
   case_name=$3
   fixture=${4:-}
-  manifest="$work/render.yaml"
+  # Each render keeps to its own directory, so that renders run at once.
+  r="$work/renders/$chart/$case_name"
+  mkdir -p "$r"
+  : > "$r/renders"
+  : > "$r/documents"
+  : > "$r/rendered"
+  manifest="$r/render.yaml"
+  err="$r/stderr"
   documents="$out/manifests/$chart/$case_name"
   set -- --kube-version "$kube_version"
   [ -z "$fixture" ] || set -- "$@" -f "$fixture"
   # stderr apart: helm warnings would corrupt the manifest stream.
   if helm template scan "$archive" "$@" >"$manifest" 2>"$err"; then
-    printf '%s\t%s\tok\t\n' "$chart" "$case_name" >> "$out/renders.tsv"
+    printf '%s\t%s\tok\t\n' "$chart" "$case_name" >> "$r/renders"
   else
     reason=$(grep -m1 -i 'error' "$err" || head -n1 "$err")
-    printf '%s\t%s\tfailed\t%s\n' "$chart" "$case_name" "$reason" >> "$out/renders.tsv"
+    printf '%s\t%s\tfailed\t%s\n' "$chart" "$case_name" "$reason" >> "$r/renders"
     printf '%s: %s/%s did not render: %s\n' "$self" "$chart" "$case_name" "$reason" >&2
     return 0
   fi
@@ -247,21 +255,21 @@ render() { # render <archive> <chart> <case> [<fixture>]
     path = substr($0, 1, i - 1)
     gsub(/\/charts\//, "/", path)
     print path "\t" substr($0, i + 1)
-  }' > "$work/sources"
-  if [ "$(wc -l < "$work/sources")" -ne "$(grep -c '^---$' "$manifest")" ]; then
+  }' > "$r/sources"
+  if [ "$(wc -l < "$r/sources")" -ne "$(grep -c '^---$' "$manifest")" ]; then
     printf '%s: %s/%s: not one "# Source:" line per document, cannot attribute its images\n' \
       "$self" "$chart" "$case_name" >&2
     exit 1
   fi
   mkdir -p "$documents"
   yq -s "\"$documents/\" + \$index" "$manifest"
-  awk -v prefix="$chart/$case_name/" '{ print prefix (NR - 1) ".yml\t" $0 }' "$work/sources" >> "$work/documents"
+  awk -v prefix="$chart/$case_name/" '{ print prefix (NR - 1) ".yml\t" $0 }' "$r/sources" >> "$r/documents"
 
-  : > "$work/placeholders"
-  [ -z "$fixture" ] || yq ea -N "$in_fixture" "$fixture" > "$work/placeholders"
+  : > "$r/placeholders"
+  [ -z "$fixture" ] || yq ea -N "$in_fixture" "$fixture" > "$r/placeholders"
   yq e -N "$in_render" "$manifest" |
-    awk -F '\t' -v use="$chart/$case_name" -v sources="$work/sources" \
-        -v placeholders="$work/placeholders" "$awk_lib"'
+    awk -F '\t' -v use="$chart/$case_name" -v sources="$r/sources" \
+        -v placeholders="$r/placeholders" "$awk_lib"'
       BEGIN {
         while ((getline line < sources) > 0) source[n++] = line
         while ((getline line < placeholders) > 0) if (isref(line)) skip[repo(norm(line))] = 1
@@ -270,7 +278,8 @@ render() { # render <archive> <chart> <case> [<fixture>]
       {
         r = norm($2)
         if (!(repo(r) in skip)) print r "\t" use ($3 == "true" ? "/test" : "") "\t" source[$1]
-      }' >> "$work/rendered"
+      }' >> "$r/rendered"
+  rm -f "$r/render.yaml"
 }
 
 graph() { # graph <chart-dir> <alias-path>: <alias-path> <name>@<version>, recursively
@@ -402,22 +411,21 @@ probe() { # probe <name> <placeholders> <scope> <base> [<values-file>...]
   rm -f "$probes/$name.yaml"
 }
 
-# At most $jobs probes at once, a batch at a time.
-# One probe per line, each argument ended by \001, so that the empty ones
-# survive the split.
-queue() { # queue <probe arguments>
+# One job per line, a function and its arguments, each ended by \001 so that
+# the empty ones survive the split.
+queue() { # queue render|probe <arguments>
   for arg; do printf '%s%s' "$arg" "$sep"; done >> "$work/jobs"
   printf '\n' >> "$work/jobs"
 }
-# Runs the queued probes, $jobs at a time. A probe that fails proves nothing,
-# as a render that fails.
+# Runs the queued jobs, $jobs at a time; fails when one of them did.
 run_jobs() {
   [ -s "$work/jobs" ] || return 0
+  status=0
   tr '\n' '\000' < "$work/jobs" |
-    SCAN_WORK=$work SCAN_ARCHIVE=$switch_archive SCAN_CHART=$switch_chart \
-      xargs -0 -n 1 -P "$jobs" sh "$self" -k "$kube_version" -P ||
-    printf '%s: some switch probes failed\n' "$self" >&2
+    SCAN_WORK=$work SCAN_OUT=$out SCAN_ARCHIVE=$switch_archive SCAN_CHART=$switch_chart \
+      xargs -0 -n 1 -P "$jobs" sh "$self" -k "$kube_version" -P || status=$?
   : > "$work/jobs"
+  return "$status"
 }
 
 
@@ -552,15 +560,16 @@ switches() { # switches <chart-dir>: switches.tsv
   # The full renders first: the defaults and each fixture, which the scoped
   # probes complete.
   printf 'base\tbase\t\t\n' >> "$work/meta"
-  queue base /dev/null "" ""
+  queue probe base /dev/null "" ""
   for fixture in "$here/$switch_chart"/ci/*-values.yaml; do
     [ -f "$fixture" ] || continue
     case_name=$(basename "$fixture" -values.yaml)
     yq ea -N "$in_fixture" "$fixture" > "$settings/$case_name.placeholders"
     printf 'fix-%s\tfixture\t%s\t\n' "$case_name" "$case_name" >> "$work/meta"
-    queue "fix-$case_name" "$settings/$case_name.placeholders" "" "" "$fixture"
+    queue probe "fix-$case_name" "$settings/$case_name.placeholders" "" "" "$fixture"
   done
-  run_jobs
+  # A probe that fails proves nothing, as a render that fails.
+  run_jobs || printf '%s: some switch probes failed\n' "$self" >&2
   if [ ! -f "$probes/base" ]; then
     printf '%s: %s does not render with its defaults, no switches.tsv\n' "$self" "$switch_chart" >&2
     return 0
@@ -588,7 +597,7 @@ switches() { # switches <chart-dir>: switches.tsv
     [ -z "$scope" ] || scope=$(scope "$scope")
     KEYS=$keys VALUE=$value yq -n 'setpath(env(KEYS); env(VALUE))' > "$settings/flip-$n.yaml"
     printf 'flip-%s\tflip\t\t%s=%s\n' "$n" "$(KEYS=$keys yq -n 'env(KEYS) | join(".")')" "$value" >> "$work/meta"
-    queue "flip-$n" /dev/null "$scope" base "$settings/flip-$n.yaml"
+    queue probe "flip-$n" /dev/null "$scope" base "$settings/flip-$n.yaml"
   done < "$work/flips"
 
   for fixture in "$here/$switch_chart"/ci/*-values.yaml; do
@@ -632,16 +641,16 @@ switches() { # switches <chart-dir>: switches.tsv
       KEYS=$keys DEPTH=$depth yq 'env(KEYS) as $k | delpaths([$k | .[0:env(DEPTH)]])' "$fixture" \
         > "$settings/drop-$case_name-$n.yaml"
       printf 'drop-%s-%s\tdrop\t%s\t%s=%s\n' "$case_name" "$n" "$case_name" "$dotted" "$value" >> "$work/meta"
-      queue "drop-$case_name-$n" "$placeholders" "$scope" "fix-$case_name" "$settings/drop-$case_name-$n.yaml"
+      queue probe "drop-$case_name-$n" "$placeholders" "$scope" "fix-$case_name" "$settings/drop-$case_name-$n.yaml"
       # A setting several fixtures share is applied once.
       ! grep -qxF "$keys$tab$json" "$work/seen" || continue
       printf '%s\t%s\n' "$keys" "$json" >> "$work/seen"
       KEYS=$keys VALUE=$json yq -n 'setpath(env(KEYS); env(VALUE))' > "$settings/set-$case_name-$n.yaml"
       printf 'set-%s-%s\tset\t%s\t%s=%s\n' "$case_name" "$n" "$case_name" "$dotted" "$value" >> "$work/meta"
-      queue "set-$case_name-$n" "$placeholders" "$scope" base "$settings/set-$case_name-$n.yaml"
+      queue probe "set-$case_name-$n" "$placeholders" "$scope" base "$settings/set-$case_name-$n.yaml"
     done < "$work/leaves"
   done
-  run_jobs
+  run_jobs || printf '%s: some switch probes failed\n' "$self" >&2
 
   for result in "$probes"/*; do
     case "$result" in
@@ -686,28 +695,36 @@ switches() { # switches <chart-dir>: switches.tsv
     }' "$work/meta" "$work/members" | sort > "$out/switches.tsv"
 }
 
-if [ -n "$probe_job" ]; then
+if [ -n "$internal_job" ]; then
   work=$SCAN_WORK
+  out=$SCAN_OUT
   probes="$work/probes"
   switch_archive=$SCAN_ARCHIVE
   switch_chart=$SCAN_CHART
   set -f
   IFS=$sep
   # shellcheck disable=SC2086
-  set -- $probe_job
+  set -- $internal_job
   unset IFS
   set +f
-  probe "$@"
+  case "$1" in
+    render|probe) ;;
+    *) exit 2 ;;
+  esac
+  "$@"
   exit 0
 fi
 
 for archive in "$@"; do
   chart=$(helm show chart "$archive" | yq '.name')
   [ "$chart" != "$switch_chart" ] || switch_archive=$archive
-  render "$archive" "$chart" defaults
+  queue render "$archive" "$chart" defaults
+  printf '%s/defaults\n' "$chart" >> "$work/order"
   for fixture in "$here/$chart"/ci/*-values.yaml; do
     [ -f "$fixture" ] || continue
-    render "$archive" "$chart" "$(basename "$fixture" -values.yaml)" "$fixture"
+    case_name=$(basename "$fixture" -values.yaml)
+    queue render "$archive" "$chart" "$case_name" "$fixture"
+    printf '%s/%s\n' "$chart" "$case_name" >> "$work/order"
   done
   rm -rf "$work/chart"
   mkdir -p "$work/chart"
@@ -715,6 +732,13 @@ for archive in "$@"; do
   graph "$work/chart/$chart" "$chart" >> "$work/graph"
   image_map "$work/chart/$chart" "$chart" >> "$work/map"
 done
+# A render that cannot attribute its images has said why.
+run_jobs || exit 1
+while IFS= read -r case_path; do
+  cat "$work/renders/$case_path/renders" >> "$out/renders.tsv"
+  cat "$work/renders/$case_path/documents" >> "$work/documents"
+  cat "$work/renders/$case_path/rendered" >> "$work/rendered"
+done < "$work/order"
 
 yq -N '.[] | ["operator", .image, .operator] | @tsv' "$here/operator-images.yaml" > "$work/operators"
 repo_charts > "$work/repo"

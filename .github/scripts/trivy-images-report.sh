@@ -105,11 +105,13 @@ vulns_jq='
 # The report takes the umbrella chart's point of view: which of its values
 # deploy each image (charts/scan-inputs.sh -s), as <chart> <image>
 # <on|off by default> <off with> <on with>.
+# Without it (the umbrella failed to render with its defaults, or -s was not
+# given), the report has no tag and no deployment notes.
 switches=$scan/switches.tsv
 switch_chart=$(awk -F '\t' 'NR == 1 { print $1 }' "$switches" 2>/dev/null || :)
 if [ -z "$switch_chart" ]; then
-  printf '%s: no %s: run charts/scan-inputs.sh with -s <umbrella chart>\n' "$0" "$switches" >&2
-  exit 1
+  warn "no image tags" "switches.tsv is missing or empty: charts/scan-inputs.sh ran without -s, or the umbrella did not render with its defaults"
+  switches=/dev/null
 fi
 
 # The lists of switches.tsv, in markdown or as plain text for a tag's hover
@@ -140,7 +142,7 @@ switch_awk='
   # values switching the image.
   function tags(deployed, test, off, on, note,   out, t) {
     out = test ? " <sub>helm test</sub>" : ""
-    if (deployed == "always") return out
+    if (deployed == "always" || deployed == "") return out
     if (deployed == "opt-out") t = "Removed by " lists(optional(off), 0)
     else if (deployed == "opt-in")
       t = "Deployed with " (note != "" ? note : on == "" ? "values the analysis did not isolate" : lists(on, 0))
@@ -160,6 +162,7 @@ switch_awk='
   function optout(off) { return optional(off) != "" }
   # What the chart does with the image, as a sentence.
   function deployed(chart, def, off, on, note) {
+    if (chart == "") return ""
     if (def == "on" && !optout(off)) return "Always deployed by `" chart "`."
     if (def == "on") return "Deployed by default by `" chart "`; removed by " list(optional(off)) "."
     if (note != "") return "Not deployed by default by `" chart "`; deployed with " note "."
@@ -195,7 +198,8 @@ while IFS="$tab" read -r image uses owners status_image status reason; do
   # umbrella shows; an image that only another chart renders is out of its
   # reach, which a fixture of the umbrella should fix.
   note=
-  case "$default" in
+  deployed=
+  [ -z "$switch_chart" ] || case "$default" in
     on)
       deployed=$(printf '%s\n' "$off_with" |
         awk "$md_awk$switch_awk"'{ print optout($0) ? "opt-out" : "always" }') ;;
@@ -321,7 +325,9 @@ sort -t "$tab" -k12,12n -k1,1nr -k3,3nr -k5,5nr -k7,7nr -k10,10 "$work/scanned" 
     $1 > 0 { critical++ } $3 > 0 { high++ } $2 + $4 > 0 { fixable++ }
     $12 { tests++; next } { kind[$13]++ }
     END {
-      printf "**%d images scanned** (%d always deployed, %d opt-out, %d opt-in", NR, kind["always"], kind["opt-out"], kind["opt-in"]
+      printf "**%d images scanned** (", NR
+      if (chart != "") printf "%d always deployed, %d opt-out, %d opt-in", kind["always"], kind["opt-out"], kind["opt-in"]
+      else printf "no tags: see the warnings"
       if (kind["not in " chart]) printf ", %d not in `%s`", kind["not in " chart], chart
       if (tests) printf ", %d only for helm tests", tests
       printf "): :red_circle: %d with critical vulnerabilities, :orange_circle: %d with high ones, %d with a fix for at least one of those", critical, high, fixable
@@ -331,7 +337,11 @@ sort -t "$tab" -k12,12n -k1,1nr -k3,3nr -k5,5nr -k7,7nr -k10,10 "$work/scanned" 
   echo ""
   echo "Counts: found (fixable), low including unknown. Every vulnerability is in \`vulnerabilities.csv\` of the \`trivy-reports\` artifact."
   echo ""
-  echo "No tag: always deployed. <sub>opt-out</sub>: deployed by default. <sub>opt-in</sub>: deployed on request. <sub>helm test</sub>: run by \`helm test\` only. Hover a tag for the values that switch it."
+  if [ -n "$switch_chart" ]; then
+    echo "No tag: always deployed. <sub>opt-out</sub>: deployed by default. <sub>opt-in</sub>: deployed on request. <sub>helm test</sub>: run by \`helm test\` only. Hover a tag for the values that switch it."
+  else
+    echo "<sub>helm test</sub>: run by \`helm test\` only."
+  fi
   echo ""
   echo "| Image | Owner | Critical | High | Medium | Low |"
   echo "|-|-|-:|-:|-:|-:|"
@@ -391,23 +401,25 @@ details() { # <cap>
 }
 
 {
-  # Every image, scanned or not, folded.
-  echo ""
-  echo "<details><summary>What deploys each image</summary>"
-  echo ""
-  # shellcheck disable=SC2016 # markdown backticks
-  printf 'Measured on the renders of `%s`, one change at a time from its defaults: each `enabled` or `deploy` value turned off, each default partition set to null, each setting of a `ci/*-values.yaml` fixture applied alone or dropped from it. Settings joined by `&` are needed together. The control and compute planes count as always deployed, in this release or in their own.\n' "$switch_chart"
-  echo ""
-  sort -t "$tab" -k1,1 "$work/deploys" |
-    awk -F '\t' "$md_awk$switch_awk"'
-      BEGIN { print "| Image | Removed by | Deployed with |"; print "|-|-|-|" }
-      {
-        printf "| `%s`%s | %s | %s |\n", $1, $8,
-          ($3 == "on" && optout($4) ? list(optional($4)) : "-"),
-          ($6 != "" ? $6 : $3 == "off" ? ($5 == "" ? "not isolated" : list($5)) : "-")
-      }'
-  echo ""
-  echo "</details>"
+  if [ -n "$switch_chart" ]; then
+    # Every image, scanned or not, folded.
+    echo ""
+    echo "<details><summary>What deploys each image</summary>"
+    echo ""
+    # shellcheck disable=SC2016 # markdown backticks
+    printf 'Measured on the renders of `%s`, one change at a time from its defaults: each `enabled` or `deploy` value turned off, each default partition set to null, each setting of a `ci/*-values.yaml` fixture applied alone or dropped from it. Settings joined by `&` are needed together. The control and compute planes count as always deployed, in this release or in their own.\n' "$switch_chart"
+    echo ""
+    sort -t "$tab" -k1,1 "$work/deploys" |
+      awk -F '\t' "$md_awk$switch_awk"'
+        BEGIN { print "| Image | Removed by | Deployed with |"; print "|-|-|-|" }
+        {
+          printf "| `%s`%s | %s | %s |\n", $1, $8,
+            ($3 == "on" && optout($4) ? list(optional($4)) : "-"),
+            ($6 != "" ? $6 : $3 == "off" ? ($5 == "" ? "not isolated" : list($5)) : "-")
+        }'
+    echo ""
+    echo "</details>"
+  fi
   not_rendered "Neither scanned nor searched for images"
   if [ -s "$work/sarif-notes" ]; then
     echo ""

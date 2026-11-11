@@ -25,8 +25,9 @@ if [ "$#" -lt 1 ] || [ "$#" -gt 2 ]; then
   exit 2
 fi
 scan=$1
+config=${2:-}
 set --
-[ -z "${2:-}" ] || set -- --config "$2"
+[ -z "$config" ] || set -- --config "$config"
 
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT

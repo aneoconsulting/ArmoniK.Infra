@@ -238,16 +238,9 @@ render() { # render <archive> <chart> <case> [<fixture>]
     return 0
   fi
 
-  # helm heads every document with the template it comes from, whose path
-  # holds the alias path of the owning chart: armonik/charts/operators/charts/
-  # kube-prometheus/templates/x.yaml is templates/x.yaml of
-  # armonik/operators/kube-prometheus.
-  grep '^# Source: ' "$manifest" | sed 's/^# Source: //' | awk '{
-    i = index($0, "/templates/")
-    path = substr($0, 1, i - 1)
-    gsub(/\/charts\//, "/", path)
-    print path "\t" substr($0, i + 1)
-  }' > "$work/sources"
+  : > "$work/placeholders"
+  [ -z "$fixture" ] || yq ea -N "$in_fixture" "$fixture" > "$work/placeholders"
+  images_of "$manifest" "$work/placeholders" "$work/sources" > "$work/images"
   if [ "$(wc -l < "$work/sources")" -ne "$(grep -c '^---$' "$manifest")" ]; then
     printf '%s: %s/%s: not one "# Source:" line per document, cannot attribute its images\n' \
       "$self" "$chart" "$case_name" >&2
@@ -256,29 +249,40 @@ render() { # render <archive> <chart> <case> [<fixture>]
   mkdir -p "$documents"
   yq -s "\"$documents/\" + \$index" "$manifest"
   awk -v prefix="$chart/$case_name/" '{ print prefix (NR - 1) ".yml\t" $0 }' "$work/sources" >> "$work/documents"
+  awk -F '\t' -v OFS='\t' -v use="$chart/$case_name" \
+    '{ print $1, use ($2 ? "/test" : ""), $3, $4 }' "$work/images" >> "$work/rendered"
+}
 
-  : > "$work/placeholders"
-  [ -z "$fixture" ] || yq ea -N "$in_fixture" "$fixture" > "$work/placeholders"
-  yq e -N "$in_render" "$manifest" |
-    awk -F '\t' -v use="$chart/$case_name" -v sources="$work/sources" \
-        -v placeholders="$work/placeholders" "$awk_lib"'
+# The images of a render but those its fixture names as placeholders, as
+# <image> <1 for a test pod, else 0> <alias path> <template>. helm heads every
+# document with the template it comes from, whose path holds the alias path of
+# the owning chart: armonik/charts/operators/charts/kube-prometheus/templates/
+# x.yaml is templates/x.yaml of armonik/operators/kube-prometheus. Those
+# sources, one line per document, go to <sources>.
+images_of() { # images_of <manifest> <placeholders> <sources>
+  grep '^# Source: ' "$1" | sed 's/^# Source: //' | awk '{
+    i = index($0, "/templates/")
+    path = substr($0, 1, i - 1)
+    gsub(/\/charts\//, "/", path)
+    print path "\t" substr($0, i + 1)
+  }' > "$3"
+  yq e -N "$in_render" "$1" |
+    awk -F '\t' -v sources="$3" -v placeholders="$2" "$awk_lib"'
       BEGIN {
         while ((getline line < sources) > 0) source[n++] = line
         while ((getline line < placeholders) > 0) if (isref(line)) skip[repo(norm(line))] = 1
       }
-      !isref($2) { next }
-      {
-        r = norm($2)
-        if (!(repo(r) in skip)) print r "\t" use ($3 == "true" ? "/test" : "") "\t" source[$1]
-      }' >> "$work/rendered"
+      isref($2) && !(repo(norm($2)) in skip) { print norm($2) "\t" ($3 == "true") "\t" source[$1] }'
 }
 
-graph() { # graph <chart-dir> <alias-path>: <alias-path> <name>@<version>, recursively
-  yq -N '[.name, .version] | join("@")' "$1/Chart.yaml" | sed "s#^#$2	#"
+# Every chart of a packaged chart as <alias path> <name>@<version> <directory>,
+# the alias path starting with the root's name.
+walk() { # walk <chart-dir> <alias-path>
+  printf '%s\t%s\t%s\n' "$2" "$(yq -N '[.name, .version] | join("@")' "$1/Chart.yaml")" "$1"
   yq -N '.dependencies[]? | [.name, (.alias // .name)] | @tsv' "$1/Chart.yaml" |
-    while IFS="$(printf '\t')" read -r name alias; do
+    while IFS="$tab" read -r name alias; do
       # Subshell: the recursion reuses this function's variables.
-      [ ! -d "$1/charts/$name" ] || (graph "$1/charts/$name" "$2/$alias")
+      [ ! -d "$1/charts/$name" ] || (walk "$1/charts/$name" "$2/$alias")
     done
 }
 
@@ -338,25 +342,6 @@ repo_charts() {
 
 # ---- Switches (-s), see the head comment.
 
-# The images of a render, as <image> <alias path of the chart whose template
-# holds it>, but for the repositories its fixture names.
-images_of() { # images_of <manifest> <placeholders>
-  grep '^# Source: ' "$1" | sed 's/^# Source: //' | awk '{
-    path = substr($0, 1, index($0, "/templates/") - 1)
-    gsub(/\/charts\//, "/", path)
-    print path
-  }' > "$1.sources"
-  yq e -N "$in_render" "$1" |
-    awk -F '\t' -v sources="$1.sources" -v placeholders="$2" "$awk_lib"'
-      BEGIN {
-        while ((getline line < sources) > 0) source[n++] = line
-        while ((getline line < placeholders) > 0) if (isref(line)) skip[repo(norm(line))] = 1
-      }
-      isref($2) && !(repo(norm($2)) in skip) { print norm($2) "\t" source[$1] }' |
-    sort -u
-  rm -f "$1.sources"
-}
-
 # One render of the switch chart over extra values files: $probes/<name> lists
 # its images, and is missing when the render fails. A full render (empty
 # <scope>) also keeps $probes/<name>.pairs, from images_of. A scoped one
@@ -387,7 +372,9 @@ probe() { # probe <name> <placeholders> <scope> <base> [<values-file>...]
      { [ -n "$scope" ] && [ "$name" != scope-check ] && scope= &&
        helm template scan "$switch_archive" --kube-version "$kube_version" "$@" \
          >"$probes/$name.yaml" 2>/dev/null; }; then
-    images_of "$probes/$name.yaml" "$placeholders" > "$probes/$name.found"
+    images_of "$probes/$name.yaml" "$placeholders" "$probes/$name.sources" | cut -f1,3 | sort -u \
+      > "$probes/$name.found"
+    rm -f "$probes/$name.sources"
     if [ -z "$scope" ]; then
       mv "$probes/$name.found" "$probes/$name.pairs"
       cut -f1 "$probes/$name.pairs"
@@ -420,19 +407,15 @@ run_jobs() {
   : > "$work/jobs"
 }
 
-
-tree() { # tree <chart-dir> <keys>: <depth> <chart-dir> <keys>, recursively, <keys> its dotted alias path
-  printf '%s\t%s\t%s\n' "$(printf '%s\n' "$2" | awk -F. '{ print NF }')" "$1" "$2"
-  yq -N '.dependencies[]? | [.name, (.alias // .name)] | @tsv' "$1/Chart.yaml" |
-    while IFS="$tab" read -r name alias; do
-      [ ! -d "$1/charts/$name" ] || (tree "$1/charts/$name" "${2:+$2.}$alias")
-    done
-}
-
 # A chart's default values as helm coalesces them: every chart's values.yaml
 # under its alias path, a parent's over its children's.
-coalesce() { # coalesce <chart-dir>
-  tree "$1" "" | sort -t "$tab" -k1,1nr > "$work/tree"
+coalesce() { # coalesce <chart>, its charts in $work/tree as <depth> <directory> <dotted alias path>
+  awk -F '\t' -v OFS='\t' '{
+    keys = $1
+    sub(/^[^\/]*\/?/, "", keys)
+    gsub(/\//, ".", keys)
+    print (keys == "" ? 0 : split(keys, part, ".")), $3, keys
+  }' "$work/walk-$1" | sort -t "$tab" -k1,1nr > "$work/tree"
   i=0
   set --
   while IFS="$tab" read -r _ dir keys; do
@@ -569,7 +552,7 @@ switches() { # switches <chart-dir>: switches.tsv
   root_images=$(awk -F '\t' -v root="$switch_chart" '$2 == root { print 1; exit }' "$probes/base.pairs")
   # A global reaches every chart from the root's global, wherever a chart
   # declares it.
-  coalesce "$1" > "$work/coalesced.yaml"
+  coalesce "$switch_chart" > "$work/coalesced.yaml"
   sort -t "$tab" -k3,3 "$work/tree" > "$work/charts"
   # shellcheck disable=SC2016
   { yq -N '.. | select(tag == "!!bool" and . == true) | path
@@ -619,11 +602,12 @@ switches() { # switches <chart-dir>: switches.tsv
               if (k + 1 > d) d = k + 1
             }
             split(line[i], f, "\t")
-            print f[1], f[2], (d < depth[i] ? d : depth[i]), f[3], f[4], f[5]
+            # The value last: `read` merges the tabs around an empty one.
+            print f[1], f[2], (d < depth[i] ? d : depth[i]), f[3], f[5], f[4]
           }
         }' > "$work/leaves"
     n=0
-    while IFS="$tab" read -r keys joined depth dotted value json; do
+    while IFS="$tab" read -r keys joined depth dotted json value; do
       n=$((n + 1))
       scope=$(scope_of "$joined")
       [ "$scope" != - ] || continue
@@ -712,7 +696,8 @@ for archive in "$@"; do
   rm -rf "$work/chart"
   mkdir -p "$work/chart"
   tar -xzf "$archive" -C "$work/chart"
-  graph "$work/chart/$chart" "$chart" >> "$work/graph"
+  walk "$work/chart/$chart" "$chart" > "$work/walk-$chart"
+  cut -f1,2 "$work/walk-$chart" >> "$work/graph"
   image_map "$work/chart/$chart" "$chart" >> "$work/map"
 done
 

@@ -10,12 +10,17 @@ warn() { # <title> <message>
   printf '%s\t%s\n' "$1" "$2" >> "$work/warnings"
 }
 
+# Workflow command escaping
+# (https://github.com/actions/toolkit/blob/main/packages/core/src/command.ts):
+# a property also escapes the separators of the properties.
 annotate() { # <warnings-file>...
   cat "$@" | awk -F '\t' '
+    function data(s) { gsub(/%/, "%25", s); gsub(/\r/, "%0D", s); gsub(/\n/, "%0A", s); return s }
+    function property(s) { s = data(s); gsub(/:/, "%3A", s); gsub(/,/, "%2C", s); return s }
     { title[NR] = $1; message[NR] = $2 }
     END {
       shown = NR > 10 ? 9 : NR
-      for (i = 1; i <= shown; i++) printf "::warning title=%s::%s\n", title[i], message[i]
+      for (i = 1; i <= shown; i++) printf "::warning title=%s::%s\n", property(title[i]), data(message[i])
       if (NR > shown) printf "::warning title=%d more warnings::see the job summary\n", NR - shown
     }'
 }
@@ -52,8 +57,8 @@ owners_awk='
       else if (loc[i] ~ /\/values\.yaml(#L[0-9]+)?$/) text = name ": image map"
       else { text = loc[i]; sub(/^charts\/[^\/]*\/templates\//, "", text); text = name ": " text }
       if (mode == "charts") {
-        if (name in seen) continue
-        seen[name] = 1
+        if (name in named) continue
+        named[name] = 1
         text = name
       }
       if (mode == "names" || blob == "" || loc[i] == "") item = text

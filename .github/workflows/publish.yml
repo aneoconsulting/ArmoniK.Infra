@@ -339,8 +339,9 @@ jobs:
       - name: Render the charts and list their images
         run: ./charts/scan-inputs.sh -d dist -o scan -s armonik
 
-      # Pinned by commit: the trivy-action and setup-trivy tags were
-      # force-pushed to malicious commits in March 2026 (GHSA-69fq-xp46-6x23).
+      # Never pin aquasecurity actions by tag: their tags are mutable and have
+      # served malicious commits (GHSA-69fq-xp46-6x23). Bump the commit and its
+      # version comment together.
       - name: Set up trivy
         uses: aquasecurity/setup-trivy@81e514348e19b6112ce2a7e3ecbafe19c1e1f567 # v0.3.1
         with:

@@ -79,8 +79,10 @@ awk -F '\t' '
 
 # One row per scope and check: <scope> <severity rank> <places> <check>
 # <severity> <title> <url> <resolution> <owner entries>, a place being a
-# template, or a chart for a third-party one.
+# template, or a chart for a third-party one. An empty field reads `-`: `read`
+# merges the tabs around an empty one.
 awk -F '\t' '
+  function orDash(s) { return s == "" ? "-" : s }
   {
     k = $10 SUBSEP $2
     if (!(k in severity)) { severity[k] = $3; title[k] = $4; url[k] = $5; resolution[k] = $7 }
@@ -93,7 +95,8 @@ awk -F '\t' '
     rank["CRITICAL"] = 0; rank["HIGH"] = 1; rank["MEDIUM"] = 2; rank["LOW"] = 3
     for (k in severity) {
       split(k, key, SUBSEP)
-      print key[1] "\t" ((severity[k] in rank) ? rank[severity[k]] : 4) "\t" places[k] "\t" key[2] "\t" severity[k] "\t" title[k] "\t" url[k] "\t" resolution[k] "\t" owners[k]
+      print key[1] "\t" ((severity[k] in rank) ? rank[severity[k]] : 4) "\t" places[k] "\t" key[2] "\t" \
+        orDash(severity[k]) "\t" orDash(title[k]) "\t" orDash(url[k]) "\t" orDash(resolution[k]) "\t" owners[k]
     }
   }' "$work/misconfigs" | sort -t "$tab" -k1,1 -k2,2n -k3,3nr -k4,4 > "$work/checks"
 
@@ -106,8 +109,8 @@ checks_table() { # <scope> <owner-mode> <owner-heading>
       "$(owners_cell "$owners" 5 "$2")"
   done < "$work/checks" |
     awk -F '\t' "$md_awk"'{
-      id = $3 == "" ? $2 : "[" $2 "](" $3 ")"
-      printf "| %s | %s | %s | %s | %s |\n", emoji($1), id, cell($4), ($5 == "" ? "-" : cell($5)), $6
+      id = $3 == "-" ? $2 : "[" $2 "](" $3 ")"
+      printf "| %s | %s | %s | %s | %s |\n", emoji($1), id, cell($4), cell($5), $6
     }'
 }
 

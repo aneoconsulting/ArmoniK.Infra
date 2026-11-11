@@ -53,23 +53,25 @@
 #
 # Switches. Whether a release deploys an image hangs on its values, and a
 # default can be off in production (Seq), so -s CHART measures it on CHART's
-# renders, one value at a time:
+# renders, one change at a time:
 #   - each `enabled` or `deploy` value that is true in CHART's coalesced
-#     defaults is set to false on its own, and each entry of a `partitions`
-#     map to null; the images that leave the render are off with it;
-#   - each setting of each fixture is dropped on its own; the images the
-#     fixture adds that leave the render need it, the images the fixture
-#     removes that come back are off with it, alongside the rest of that
+#     defaults is set to false on its own, each entry of a `partitions` map to
+#     null, and each setting of each fixture is applied on its own over the
+#     defaults: a change that removes an image turns it off, one that adds it
+#     turns it on;
+#   - each setting of each fixture is dropped from it, with the maps it alone
+#     fills: the images the fixture adds that leave the render need it, the
+#     images it removes that come back are off with it and the rest of the
 #     fixture (another table storage for MongoDB, say).
 # <default> is `on` when the defaults deploy the image, `off` otherwise. <off>
-# lists the settings turning it off, comma-separated, `<key>=<value>`, with
-# ` [<fixture>, ...]` when they need the rest of one of those fixtures; short
-# of any setting, `[<fixture>, ...]` alone names the fixtures removing the
-# image as a whole. <on> lists, ` | `-separated per fixture, the settings it
-# takes, joined by ` & ` and followed by ` [<fixture>]`; a fixture whose
-# settings each leave the image in its render appears bare, as `[<fixture>]`.
-# A render a change breaks proves nothing and is left out. Neither list
-# catches what takes two changes at once, nor a switch that is not a boolean.
+# and <on> list the alternatives turning it off and on, ` | `-separated, each
+# a `<key>=<value>` setting or several joined by ` & ` that a fixture needs
+# together. Short of any, the settings of a fixture changing the image whose
+# drop breaks its render (MongoDB off needs its exporter off) are applied
+# together over the defaults, then left out one by one while the image keeps
+# its switch. A render a change breaks proves nothing otherwise and is left
+# out. Neither list catches a switch that is not a boolean, nor settings
+# needed together that no fixture holds.
 
 set -eu
 
@@ -435,19 +437,44 @@ switches() { # switches <chart-dir>: switches.tsv
     yq ea -N "$in_fixture" "$fixture" > "$placeholders"
     printf 'fix-%s\tfixture\t%s\t\n' "$case_name" "$case_name" >> "$work/meta"
     spawn "fix-$case_name" "$placeholders" "$fixture"
-    # Every setting but those inside a list, a list counting as one; a
-    # multi-line value shows as one line.
+    # Every setting outside a list, a list counting as one, a multi-line value
+    # showing as one line; with its keys joined by \001 to find the maps it
+    # alone fills.
     # shellcheck disable=SC2016
-    TAB=$tab yq -N '.. | select(tag != "!!map" and tag != "!!null" and (parent | tag) == "!!map")
-           | [(path | to_json(0)), (path | join(".")),
-              ((select(tag == "!!seq") | to_json(0)) // tostring | sub("[\t\n]+"; " ") | sub(" $"; ""))]
-           | join(strenv(TAB))' "$fixture" > "$work/leaves"
+    TAB=$tab SEP=$(printf '\001') yq -N '
+           .. | select(tag != "!!map" and tag != "!!null" and (parent | tag) == "!!map"
+                       and (path | all_c(tag != "!!int")))
+           | [(path | to_json(0)), (path | join(strenv(SEP))), (path | join(".")),
+              ((select(tag == "!!seq") | to_json(0)) // tostring | sub("[\t\n]+"; " ") | sub(" $"; "")),
+              to_json(0)]
+           | join(strenv(TAB))' "$fixture" |
+      # The depth to drop at: the shortest key prefix no other setting shares.
+      awk -F '\t' -v OFS='\t' '
+        { line[NR] = $0; depth[NR] = n = split($2, part, "\001"); for (k = 1; k <= n; k++) keys[NR, k] = part[k] }
+        END {
+          for (i = 1; i <= NR; i++) {
+            d = 1
+            for (j = 1; j <= NR; j++) {
+              if (j == i) continue
+              k = 0
+              while (k < depth[i] && k < depth[j] && keys[i, k + 1] == keys[j, k + 1]) k++
+              if (k + 1 > d) d = k + 1
+            }
+            split(line[i], f, "\t")
+            print f[1], (d < depth[i] ? d : depth[i]), f[3], f[4], f[5]
+          }
+        }' > "$work/leaves"
     n=0
-    while IFS="$tab" read -r keys dotted value; do
+    while IFS="$tab" read -r keys depth dotted value json; do
       n=$((n + 1))
-      KEYS=$keys yq 'delpaths([env(KEYS)])' "$fixture" > "$settings/$case_name-$n.yaml"
+      # shellcheck disable=SC2016
+      KEYS=$keys DEPTH=$depth yq 'env(KEYS) as $k | delpaths([$k | .[0:env(DEPTH)]])' "$fixture" \
+        > "$settings/drop-$case_name-$n.yaml"
       printf 'drop-%s-%s\tdrop\t%s\t%s=%s\n' "$case_name" "$n" "$case_name" "$dotted" "$value" >> "$work/meta"
-      spawn "drop-$case_name-$n" "$placeholders" "$settings/$case_name-$n.yaml"
+      spawn "drop-$case_name-$n" "$placeholders" "$settings/drop-$case_name-$n.yaml"
+      KEYS=$keys VALUE=$json yq -n 'setpath(env(KEYS); env(VALUE))' > "$settings/set-$case_name-$n.yaml"
+      printf 'set-%s-%s\tset\t%s\t%s=%s\n' "$case_name" "$n" "$case_name" "$dotted" "$value" >> "$work/meta"
+      spawn "set-$case_name-$n" "$placeholders" "$settings/set-$case_name-$n.yaml"
     done < "$work/leaves"
   done
   wait
@@ -469,49 +496,92 @@ switches() { # switches <chart-dir>: switches.tsv
     END {
       for (image in images) {
         on = (("base", image) in has)
-        bare = ""; tagged = ""
-        delete need; delete with; delete removes
+        # A change switches the image when it moves it away from its default.
+        alts = ""
+        delete changes; delete need; delete broken
         for (i = 1; i <= probes; i++) {
           p = order[i]
-          if (!(p in ok)) continue
-          if (kind[p] == "flip" && on && !((p, image) in has)) bare = addto(bare, setting[p], ", ")
-          if (kind[p] == "fixture" && on && !((p, image) in has)) removes[fixture[p]] = 0
-          if (kind[p] != "drop" || !(("fix-" fixture[p]) in ok)) continue
-          inf = (("fix-" fixture[p], image) in has)
-          if (!on && inf && !((p, image) in has))
-            need[fixture[p]] = addto(need[fixture[p]], setting[p], " & ")
-          if (on && !inf && ((p, image) in has)) {
-            removes[fixture[p]] = 1
-            tagged = addto(tagged, setting[p], SUBSEP)
-            with[setting[p]] = addto(with[setting[p]], fixture[p], ", ")
+          f = fixture[p]
+          if (kind[p] == "fixture" && (p in ok) && ((p, image) in has) != on) changes[f] = 1
+          if (!(p in ok)) {
+            if (kind[p] == "drop") { q = p; sub(/^drop-/, "set-", q); broken[f] = addto(broken[f], q, " ") }
+            continue
           }
+          if ((kind[p] == "flip" || kind[p] == "set") && ((p, image) in has) != on)
+            alts = addto(alts, setting[p], " | ")
+          if (kind[p] == "drop" && ((p, image) in has) == on)
+            need[f] = addto(need[f], setting[p], " & ")
         }
-        # A setting that turns the image off alone needs no fixture; one that
-        # takes the rest of several fixtures names them all. Short of any, the
-        # fixtures removing the image whose settings each break the render
-        # when dropped are the switch as a whole.
-        off = bare
-        n = split(tagged, list, SUBSEP)
-        for (i = 1; i <= n; i++)
-          if (!index(", " bare ", ", ", " list[i] ", "))
-            off = addto(off, list[i] " [" with[list[i]] "]", ", ")
-        whole = ""
+        # A fixture adds the settings it needs together, unless one of them
+        # switches the image alone.
         for (i = 1; i <= probes; i++) {
-          p = order[i]
-          if (kind[p] == "fixture" && (fixture[p] in removes) && !removes[fixture[p]])
-            whole = addto(whole, fixture[p], ", ")
+          f = fixture[order[i]]
+          if (kind[order[i]] != "fixture" || !(f in changes) || !(f in need)) continue
+          n = split(need[f], part, " & ")
+          for (j = 1; j <= n; j++) if (index(" | " alts " | ", " | " part[j] " | ")) break
+          if (j > n) alts = addto(alts, need[f], " | ")
         }
-        if (off == "" && whole != "") off = "[" whole "]"
-        enable = ""
-        if (!on)
+        # Short of any, the settings of a fixture changing the image whose
+        # drop breaks its render, the fewest, are left to minimize.
+        least = ""
+        if (alts == "")
           for (i = 1; i <= probes; i++) {
-            p = order[i]
-            if (kind[p] == "fixture" && ((p, image) in has))
-              enable = addto(enable, (fixture[p] in need ? need[fixture[p]] " " : "") "[" fixture[p] "]", " | ")
+            f = fixture[order[i]]
+            if (kind[order[i]] != "fixture" || !(f in changes) || !(f in broken)) continue
+            if (least == "" || split(broken[f], part, " ") < split(broken[least], part, " ")) least = f
           }
-        print chart "\t" image "\t" (on ? "on" : "off") "\t" off "\t" enable
+        print chart "\t" image "\t" (on ? "on" : "off") "\t" alts "\t" least "\t" (least == "" ? "" : broken[least])
       }
-    }' "$work/meta" "$work/members" | sort > "$out/switches.tsv"
+    }' "$work/meta" "$work/members" | sort > "$work/switches"
+
+  # Those settings applied together over the defaults, each left out in turn
+  # while the image keeps its switch: what remains is needed together.
+  n=0
+  while IFS= read -r line; do
+    image=$(printf '%s\n' "$line" | cut -f2)
+    default=$(printf '%s\n' "$line" | cut -f3)
+    alts=$(printf '%s\n' "$line" | cut -f4)
+    least=$(printf '%s\n' "$line" | cut -f5)
+    keep=$(printf '%s\n' "$line" | cut -f6)
+    # shellcheck disable=SC2086 # one probe name per word
+    if [ -n "$keep" ] && switched "min-$n" "$least" "$image" "$default" $keep; then
+      for drop in $keep; do
+        n=$((n + 1))
+        # shellcheck disable=SC2086
+        rest=$(printf '%s\n' $keep | grep -vxF "$drop" || :)
+        # shellcheck disable=SC2086
+        [ -z "$rest" ] || ! switched "min-$n" "$least" "$image" "$default" $rest || keep=$rest
+      done
+      # shellcheck disable=SC2086
+      alts=$(printf '%s\n' $keep | awk -F '\t' '
+        FILENAME == ARGV[1] { setting[$1] = $4; next }
+        { out = out (out == "" ? "" : " & ") setting[$1] }
+        END { print out }' "$work/meta" -)
+    fi
+    n=$((n + 1))
+    if [ "$default" = on ]; then
+      printf '%s\t%s\ton\t%s\t\n' "$switch_chart" "$image" "$alts"
+    else
+      printf '%s\t%s\toff\t\t%s\n' "$switch_chart" "$image" "$alts"
+    fi
+  done < "$work/switches" > "$out/switches.tsv"
+}
+
+# Whether settings applied together over the defaults move an image away from
+# its default.
+switched() { # switched <probe> <fixture> <image> <on|off> <set-probe>...
+  name=$1
+  placeholders="$settings/$2.placeholders"
+  image=$3
+  default=$4
+  shift 4
+  for one in "$@"; do
+    set -- "$@" "$settings/$one.yaml"
+    shift
+  done
+  probe "$name" "$placeholders" "$@"
+  [ -f "$probes/$name" ] || return 1
+  if grep -qxF "$image" "$probes/$name"; then [ "$default" = off ]; else [ "$default" = on ]; fi
 }
 
 for archive in "$@"; do

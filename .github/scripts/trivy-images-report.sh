@@ -113,40 +113,23 @@ if [ -z "$switch_chart" ]; then
 fi
 
 # The lists of switches.tsv, in markdown or as plain text for a tag's hover
-# text. A fixture name in brackets ends an item, `[<fixture>, ...]`; any of
-# them goes. Settings are `key=value`, joined by ` & ` in an `on` item.
+# text: ` | `-separated alternatives, each a `key=value` setting or several
+# joined by ` & `.
 # shellcheck disable=SC2016 # awk program, not shell
 switch_awk='
-  function tagged(s,   out, m) { # the separators inside a fixture tag, protected
-    out = ""
-    while (match(s, / ?\[[a-z0-9][a-z0-9, -]*\]/)) {
-      m = substr(s, RSTART, RLENGTH); gsub(/, /, "\001", m)
-      out = out substr(s, 1, RSTART - 1) m; s = substr(s, RSTART + RLENGTH)
-    }
-    return out s
-  }
   function code(s, md) { return md ? "`" cell(s) "`" : s }
-  function item(s, md,   tag, n, part, i, out) {
-    tag = ""
-    if (match(s, /\[[^]]*\]$/)) {
-      tag = substr(s, RSTART + 1, RLENGTH - 2); s = substr(s, 1, RSTART - 1); sub(/ $/, "", s)
-      n = split(tag, part, /\001/)
-      tag = ""
-      for (i = 1; i <= n; i++) tag = tag (tag == "" ? "" : " or ") code(part[i], md)
-      tag = "fixture " tag
+  function lists(s, md,   n, part, i, m, set, j, item, out) {
+    out = ""
+    n = split(s, part, / \| /)
+    for (i = 1; i <= n; i++) {
+      m = split(part[i], set, / & /)
+      item = ""
+      for (j = 1; j <= m; j++) item = item (item == "" ? "" : " & ") code(set[j], md)
+      out = out (out == "" ? "" : " or ") item
     }
-    out = ""
-    n = split(s, part, / & /)
-    for (i = 1; i <= n; i++) out = out (out == "" ? "" : " & ") code(part[i], md)
-    return out == "" ? tag : tag == "" ? out : out " (with " tag ")"
-  }
-  function lists(s, sep, md,   n, part, i, out) {
-    out = ""
-    n = split(tagged(s), part, sep)
-    for (i = 1; i <= n; i++) out = out (out == "" ? "" : "; ") item(part[i], md)
     return out
   }
-  function list(s, sep) { return lists(s, sep, 1) }
+  function list(s) { return lists(s, 1) }
   # A title attribute inside a table cell.
   function attr(s) {
     gsub(/&/, "\\&amp;", s); gsub(/"/, "\\&quot;", s); gsub(/</, "\\&lt;", s)
@@ -158,32 +141,30 @@ switch_awk='
   function tags(deployed, test, off, on, note,   out, t) {
     out = test ? " <sub>helm test</sub>" : ""
     if (deployed == "always") return out
-    if (deployed == "opt-out") t = "Removed by " lists(optional(off), ", ", 0)
+    if (deployed == "opt-out") t = "Removed by " lists(optional(off), 0)
     else if (deployed == "opt-in")
-      t = "Deployed with " (note != "" ? note : on == "" ? "no single value" : lists(on, " \\| ", 0))
+      t = "Deployed with " (note != "" ? note : on == "" ? "values the analysis did not isolate" : lists(on, 0))
     else t = ""
     return out " <sub" (t == "" ? "" : " title=\"" attr(t) "\"") ">" deployed "</sub>"
   }
   # Whether an image a default install deploys can be left out. The control
   # and compute planes always run, in this release or as their own, so
   # turning one off removes none of their images from the deployment.
-  function optional(off,   n, part, i, s, out) {
+  function optional(off,   n, part, i, out) {
     out = ""
-    n = split(tagged(off), part, ", ")
-    for (i = 1; i <= n; i++) {
-      s = part[i]; sub(/ ?\[[^]]*\]$/, "", s)
-      if (s !~ /^(control|compute)-plane\.enabled=false$/) out = out (out == "" ? "" : ", ") part[i]
-    }
+    n = split(off, part, / \| /)
+    for (i = 1; i <= n; i++)
+      if (part[i] !~ /^(control|compute)-plane\.enabled=false$/) out = out (out == "" ? "" : " | ") part[i]
     return out
   }
   function optout(off) { return optional(off) != "" }
   # What the chart does with the image, as a sentence.
   function deployed(chart, def, off, on, note) {
     if (def == "on" && !optout(off)) return "Always deployed by `" chart "`."
-    if (def == "on") return "Deployed by default by `" chart "`; removed by " list(optional(off), ", ") "."
+    if (def == "on") return "Deployed by default by `" chart "`; removed by " list(optional(off)) "."
     if (note != "") return "Not deployed by default by `" chart "`; deployed with " note "."
     if (def == "off")
-      return "Not deployed by default by `" chart "`; " (on == "" ? "no fixture deploys it alone" : "deployed with " list(on, " \\| ")) "."
+      return "Not deployed by default by `" chart "`; " (on == "" ? "the analysis did not isolate the values deploying it" : "deployed with " list(on)) "."
     return "Not deployable through `" chart "`."
   }
 '
@@ -415,15 +396,15 @@ details() { # <cap>
   echo "<details><summary>What deploys each image</summary>"
   echo ""
   # shellcheck disable=SC2016 # markdown backticks
-  printf 'Measured on the renders of `%s`, one change at a time from its defaults: each `enabled` or `deploy` value turned off, each default partition set to null, each setting of a `ci/*-values.yaml` fixture dropped. A fixture named with a value is the context the value needs; a fixture alone takes several of its settings. The control and compute planes count as always deployed, in this release or in their own.\n' "$switch_chart"
+  printf 'Measured on the renders of `%s`, one change at a time from its defaults: each `enabled` or `deploy` value turned off, each default partition set to null, each setting of a `ci/*-values.yaml` fixture applied alone or dropped from it. Settings joined by `&` are needed together. The control and compute planes count as always deployed, in this release or in their own.\n' "$switch_chart"
   echo ""
   sort -t "$tab" -k1,1 "$work/deploys" |
     awk -F '\t' "$md_awk$switch_awk"'
       BEGIN { print "| Image | Removed by | Deployed with |"; print "|-|-|-|" }
       {
         printf "| `%s`%s | %s | %s |\n", $1, $8,
-          ($3 == "on" && optout($4) ? list(optional($4), ", ") : "-"),
-          ($6 != "" ? $6 : $3 == "off" ? ($5 == "" ? "no fixture alone" : list($5, " \\| ")) : "-")
+          ($3 == "on" && optout($4) ? list(optional($4)) : "-"),
+          ($6 != "" ? $6 : $3 == "off" ? ($5 == "" ? "not isolated" : list($5)) : "-")
       }'
   echo ""
   echo "</details>"

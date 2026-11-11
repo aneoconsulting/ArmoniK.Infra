@@ -112,9 +112,9 @@ if [ -z "$switch_chart" ]; then
   exit 1
 fi
 
-# The lists of switches.tsv in markdown. A fixture name in brackets ends an
-# item, `[<fixture>, ...]`; any of them goes. Settings are `key=value`, joined
-# by ` & ` in an `on` item.
+# The lists of switches.tsv, in markdown or as plain text for a tag's hover
+# text. A fixture name in brackets ends an item, `[<fixture>, ...]`; any of
+# them goes. Settings are `key=value`, joined by ` & ` in an `on` item.
 # shellcheck disable=SC2016 # awk program, not shell
 switch_awk='
   function tagged(s,   out, m) { # the separators inside a fixture tag, protected
@@ -125,41 +125,62 @@ switch_awk='
     }
     return out s
   }
-  function item(s,   tag, n, part, i, out) {
+  function code(s, md) { return md ? "`" cell(s) "`" : s }
+  function item(s, md,   tag, n, part, i, out) {
     tag = ""
     if (match(s, /\[[^]]*\]$/)) {
       tag = substr(s, RSTART + 1, RLENGTH - 2); s = substr(s, 1, RSTART - 1); sub(/ $/, "", s)
-      gsub(/\001/, "` or `", tag)
-      tag = "fixture `" tag "`"
+      n = split(tag, part, /\001/)
+      tag = ""
+      for (i = 1; i <= n; i++) tag = tag (tag == "" ? "" : " or ") code(part[i], md)
+      tag = "fixture " tag
     }
     out = ""
     n = split(s, part, / & /)
-    for (i = 1; i <= n; i++) out = out (out == "" ? "" : " & ") "`" cell(part[i]) "`"
+    for (i = 1; i <= n; i++) out = out (out == "" ? "" : " & ") code(part[i], md)
     return out == "" ? tag : tag == "" ? out : out " (with " tag ")"
   }
-  function list(s, sep,   n, part, i, out) {
+  function lists(s, sep, md,   n, part, i, out) {
     out = ""
     n = split(tagged(s), part, sep)
-    for (i = 1; i <= n; i++) out = out (out == "" ? "" : "; ") item(part[i])
+    for (i = 1; i <= n; i++) out = out (out == "" ? "" : "; ") item(part[i], md)
     return out
+  }
+  function list(s, sep) { return lists(s, sep, 1) }
+  # A title attribute inside a table cell.
+  function attr(s) {
+    gsub(/&/, "\\&amp;", s); gsub(/"/, "\\&quot;", s); gsub(/</, "\\&lt;", s)
+    gsub(/>/, "\\&gt;", s); gsub(/\|/, "\\&#124;", s); gsub(/`/, "", s)
+    return s
+  }
+  # The tags after an image name; hovering the deployment tag shows the
+  # values switching the image.
+  function tags(deployed, test, off, on, note,   out, t) {
+    out = test ? " <sub>helm test</sub>" : ""
+    if (deployed == "always") return out
+    if (deployed == "opt-out") t = "Removed by " lists(optional(off), ", ", 0)
+    else if (deployed == "opt-in")
+      t = "Deployed with " (note != "" ? note : on == "" ? "no single value" : lists(on, " \\| ", 0))
+    else t = ""
+    return out " <sub" (t == "" ? "" : " title=\"" attr(t) "\"") ">" deployed "</sub>"
   }
   # Whether an image a default install deploys can be left out. The control
   # and compute planes always run, in this release or as their own, so
   # turning one off removes none of their images from the deployment.
-  function optout(off,   n, part, i, s) {
+  function optional(off,   n, part, i, s, out) {
+    out = ""
     n = split(tagged(off), part, ", ")
     for (i = 1; i <= n; i++) {
       s = part[i]; sub(/ ?\[[^]]*\]$/, "", s)
-      if (s !~ /^(control|compute)-plane\.enabled=false$/) return 1
+      if (s !~ /^(control|compute)-plane\.enabled=false$/) out = out (out == "" ? "" : ", ") part[i]
     }
-    return 0
+    return out
   }
+  function optout(off) { return optional(off) != "" }
   # What the chart does with the image, as a sentence.
   function deployed(chart, def, off, on, note) {
-    if (def == "on" && !optout(off))
-      return "Always deployed by `" chart "`" (off == "" ? "" : ", or by the plane'"'"'s own release with " list(off, ", ")) "."
-    if (def == "on")
-      return "Deployed by default by `" chart "`; removed by " list(off, ", ") "."
+    if (def == "on" && !optout(off)) return "Always deployed by `" chart "`."
+    if (def == "on") return "Deployed by default by `" chart "`; removed by " list(optional(off), ", ") "."
     if (note != "") return "Not deployed by default by `" chart "`; deployed with " note "."
     if (def == "off")
       return "Not deployed by default by `" chart "`; " (on == "" ? "no fixture deploys it alone" : "deployed with " list(on, " \\| ")) "."
@@ -214,9 +235,8 @@ while IFS="$tab" read -r image uses owners status_image status reason; do
       esac ;;
   esac
   # Tags follow the image name; an image always deployed has none.
-  tags=
-  [ "$test_only" = 0 ] || tags=" <sub>helm test</sub>"
-  [ "$deployed" = always ] || tags="$tags <sub>$deployed</sub>"
+  tags=$(printf '%s\t%s\t%s\t%s\t%s\n' "$deployed" "$test_only" "$off_with" "$on_with" "$note" |
+    awk -F '\t' "$md_awk$switch_awk"'{ print tags($1, $2, $3, $4, $5) }')
   printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$image" "$deployed" "$default" "$off_with" "$on_with" "$note" "$test_only" "$tags" \
     >> "$work/deploys"
   cell=$(owners_cell "$owners" 0 charts)
@@ -328,10 +348,10 @@ sort -t "$tab" -k12,12n -k1,1nr -k3,3nr -k5,5nr -k7,7nr -k10,10 "$work/scanned" 
       print "."
     }' "$work/scanned"
   echo ""
-  echo "Counts read found (fixable); low includes unknown severity. Every vulnerability, whatever its severity, is in \`vulnerabilities.csv\` of the \`trivy-reports\` artifact."
+  echo "Counts: found (fixable), low including unknown. Every vulnerability is in \`vulnerabilities.csv\` of the \`trivy-reports\` artifact."
   echo ""
-  # shellcheck disable=SC2016 # markdown backticks
-  printf 'An image without a tag is always deployed by `%s`, the control and compute planes counting as always deployed, in this release or in their own. <sub>opt-out</sub>: deployed by default, one of its values removes it. <sub>opt-in</sub>: deployed once one of its values turns it on. <sub>helm test</sub>: only helm test pods run it. "What deploys each image", at the bottom, names the values.\n\n' "$switch_chart"
+  echo "No tag: always deployed. <sub>opt-out</sub>: deployed by default. <sub>opt-in</sub>: deployed on request. <sub>helm test</sub>: run by \`helm test\` only. Hover a tag for the values that switch it."
+  echo ""
   echo "| Image | Owner | Critical | High | Medium | Low |"
   echo "|-|-|-:|-:|-:|-:|"
   awk -F '\t' "$md_awk"'{
@@ -395,14 +415,14 @@ details() { # <cap>
   echo "<details><summary>What deploys each image</summary>"
   echo ""
   # shellcheck disable=SC2016 # markdown backticks
-  printf 'Measured on the renders of `%s` by `charts/scan-inputs.sh -s`, one change at a time from its defaults: each `enabled` or `deploy` value turned off, each setting of each `ci/*-values.yaml` fixture dropped. A fixture named with a setting is the context it needs (another table storage when MongoDB goes, say), any of those named; a fixture alone means it takes several of its settings at once. What takes two changes outside a fixture, or a value that is not a boolean, is not caught.\n' "$switch_chart"
+  printf 'Measured on the renders of `%s`, one change at a time from its defaults: each `enabled` or `deploy` value turned off, each default partition set to null, each setting of a `ci/*-values.yaml` fixture dropped. A fixture named with a value is the context the value needs; a fixture alone takes several of its settings. The control and compute planes count as always deployed, in this release or in their own.\n' "$switch_chart"
   echo ""
   sort -t "$tab" -k1,1 "$work/deploys" |
     awk -F '\t' "$md_awk$switch_awk"'
       BEGIN { print "| Image | Removed by | Deployed with |"; print "|-|-|-|" }
       {
         printf "| `%s`%s | %s | %s |\n", $1, $8,
-          ($3 == "on" ? ($4 == "" ? "no single value" : list($4, ", ")) : "-"),
+          ($3 == "on" && optout($4) ? list(optional($4), ", ") : "-"),
           ($6 != "" ? $6 : $3 == "off" ? ($5 == "" ? "no fixture alone" : list($5, " \\| ")) : "-")
       }'
   echo ""

@@ -121,6 +121,11 @@ postgresql-operator:
 # global.armonik.monitoring.prometheusUrl derives from its naming helpers in this release; other
 # releases set it, as NOTES.txt prints.
 kube-prometheus:
+  # kube-prometheus-stack defaults it to false, yet Helm ignores that default for the condition of
+  # its windows-exporter dependency when armonik-operators is itself a dependency: the umbrella
+  # deploys windows-exporter unless the value is set here. Windows nodes are out of scope.
+  windowsMonitoring:
+    enabled: false
   prometheus-node-exporter:
     # TODO: root filesystem mount disabled to avoid a Docker Desktop crash
     hostRootFsMount:

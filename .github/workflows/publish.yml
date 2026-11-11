@@ -333,9 +333,11 @@ jobs:
           name: packaged-charts
           path: dist
 
-      # The runner image ships mikefarah yq v4, which the script checks.
+      # The runner image ships mikefarah yq v4, which the script checks. -s
+      # measures which values deploy each image of the umbrella, a few hundred
+      # renders, for the report to tell an opt-in image from a default one.
       - name: Render the charts and list their images
-        run: ./charts/scan-inputs.sh -d dist -o scan
+        run: ./charts/scan-inputs.sh -d dist -o scan -s armonik
 
       # Pinned by commit: the trivy-action and setup-trivy tags were
       # force-pushed to malicious commits in March 2026 (GHSA-69fq-xp46-6x23).

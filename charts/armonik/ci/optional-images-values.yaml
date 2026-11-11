@@ -34,6 +34,12 @@ operators:
           rapl: true
 dependencies:
   mongodb:
+    backup:
+      enabled: true
+    logcollector:
+      enabled: true
+    pmm:
+      enabled: true
     clusterSync:
       enabled: true
       source:

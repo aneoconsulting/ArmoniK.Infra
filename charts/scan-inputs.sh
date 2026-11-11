@@ -35,6 +35,10 @@
 #   stale.tsv                         <image> <operator> for each
 #                                     operator-images.yaml entry whose operator
 #                                     no render carries
+#   switches.tsv                      with -s CHART: <chart> <image> <default>
+#                                     <off> <on>, the values deciding whether
+#                                     CHART deploys each image of its renders
+#                                     (see "Switches" below)
 #
 # A location is a path in this repository: the template of one of our charts,
 # or, for a third-party chart, the line of our Chart.yaml that declares it or
@@ -46,6 +50,26 @@
 # invalid on purpose (armonik-compute-plane has no partition, armonik-ingress
 # no URLs Secret), its fixtures then covering it. test/matrix.sh is what
 # asserts which renders must succeed.
+#
+# Switches. Whether a release deploys an image hangs on its values, and a
+# default can be off in production (Seq), so -s CHART measures it on CHART's
+# renders, one value at a time:
+#   - each `enabled` or `deploy` value that is true in CHART's coalesced
+#     defaults is set to false on its own; the images that leave the render
+#     are off with it;
+#   - each setting of each fixture is dropped on its own; the images the
+#     fixture adds that leave the render need it, the images the fixture
+#     removes that come back are off with it, alongside the rest of that
+#     fixture (another table storage for MongoDB, say).
+# <default> is `on` when the defaults deploy the image, `off` otherwise. <off>
+# lists the settings turning it off, comma-separated, `<key>=<value>`, with
+# ` [<fixture>, ...]` when they need the rest of one of those fixtures; short
+# of any setting, `[<fixture>, ...]` alone names the fixtures removing the
+# image as a whole. <on> lists, ` | `-separated per fixture, the settings it
+# takes, joined by ` & ` and followed by ` [<fixture>]`; a fixture whose
+# settings each leave the image in its render appears bare, as `[<fixture>]`.
+# A render a change breaks proves nothing and is left out. Neither list
+# catches what takes two changes at once, nor a switch that is not a boolean.
 
 set -eu
 
@@ -55,25 +79,34 @@ dist="$here/../dist"
 out="$here/../scan"
 # test/matrix.sh's default: the compute plane refuses anything below 1.29.
 kube_version=1.31.0
+switch_chart=
+switch_archive=
+jobs=$(getconf _NPROCESSORS_ONLN 2>/dev/null || echo 2)
+tab=$(printf '\t')
 
 usage() {
   cat <<USAGE
-Usage: $self [-d DIR] [-o DIR] [-k VERSION] [-h]
+Usage: $self [-d DIR] [-o DIR] [-k VERSION] [-s CHART [-j N]] [-h]
 
 Renders the packaged charts and lists the images they can deploy.
 
   -d DIR      directory holding the packaged charts (default: the repo's dist/)
   -o DIR      output directory, cleared first (default: the repo's scan/)
   -k VERSION  Kubernetes version to render for (default: $kube_version)
+  -s CHART    also measure the values deciding which images CHART deploys
+              (switches.tsv), a few hundred renders
+  -j N        renders run at once for -s (default: $jobs)
   -h          show this help
 USAGE
 }
 
-while getopts ':d:o:k:h' opt; do
+while getopts ':d:o:k:s:j:h' opt; do
   case "$opt" in
     d) dist=$OPTARG ;;
     o) out=$OPTARG ;;
     k) kube_version=$OPTARG ;;
+    s) switch_chart=$OPTARG ;;
+    j) jobs=$OPTARG ;;
     h) usage; exit 0 ;;
     *)
       printf '%s: invalid option -- %s\n\n' "$self" "$OPTARG" >&2
@@ -139,9 +172,13 @@ awk_lib='
 # `image` fields of pod specs and of CRs (percona's PerconaServerMongoDB, the
 # Prometheus CR), operators take the images of what they spawn as flags
 # (cert-manager's ACME solver, prometheus-operator's config reloader) or env.
+# A block marked `enabled: false` deploys nothing: a CR names the image of a
+# component it leaves off (the PerconaServerMongoDB's pmm, backup and
+# logcollector).
 # shellcheck disable=SC2016 # yq expressions, not shell
 in_render='
   select(.kind != "CustomResourceDefinition") |
+  del(.. | select(tag == "!!map" and .enabled == false)) |
   (.metadata.annotations["helm.sh/hook"] // "" | tostring | test("(^|,) *test(-success)? *(,|$)")) as $test |
   (
     (.. | select(tag == "!!map") | (.image, .imageName) | select(tag == "!!str")),
@@ -283,8 +320,192 @@ repo_charts() {
     done
 }
 
+# ---- Switches (-s), see the head comment.
+
+# The images of a render, one per line, but for the repositories its fixture
+# names.
+images_of() { # images_of <manifest> <placeholders>
+  yq e -N "$in_render" "$1" |
+    awk -F '\t' -v placeholders="$2" "$awk_lib"'
+      BEGIN { while ((getline line < placeholders) > 0) if (isref(line)) skip[repo(norm(line))] = 1 }
+      isref($2) && !(repo(norm($2)) in skip) { print norm($2) }' |
+    sort -u
+}
+
+# One render of the switch chart over extra values files: $probes/<name> lists
+# its images, and is missing when the render fails.
+probe() { # probe <name> <placeholders> [<values-file>...]
+  name=$1
+  placeholders=$2
+  shift 2
+  # Each values file becomes `-f <file>`, in order.
+  i=$#
+  while [ "$i" -gt 0 ]; do
+    set -- "$@" -f "$1"
+    shift
+    i=$((i - 1))
+  done
+  if helm template scan "$switch_archive" --kube-version "$kube_version" "$@" \
+       >"$probes/$name.yaml" 2>/dev/null; then
+    images_of "$probes/$name.yaml" "$placeholders" > "$probes/$name.part"
+    mv "$probes/$name.part" "$probes/$name"
+  fi
+  rm -f "$probes/$name.yaml"
+}
+
+# At most $jobs probes at once, a batch at a time.
+spawn() { # spawn <probe arguments>
+  probe "$@" &
+  running=$((running + 1))
+  if [ "$running" -ge "$jobs" ]; then
+    wait
+    running=0
+  fi
+}
+
+tree() { # tree <chart-dir> <keys>: <depth> <chart-dir> <keys>, recursively, <keys> its dotted alias path
+  printf '%s\t%s\t%s\n' "$(printf '%s\n' "$2" | awk -F. '{ print NF }')" "$1" "$2"
+  yq -N '.dependencies[]? | [.name, (.alias // .name)] | @tsv' "$1/Chart.yaml" |
+    while IFS="$tab" read -r name alias; do
+      [ ! -d "$1/charts/$name" ] || (tree "$1/charts/$name" "${2:+$2.}$alias")
+    done
+}
+
+# A chart's default values as helm coalesces them: every chart's values.yaml
+# under its alias path, a parent's over its children's.
+coalesce() { # coalesce <chart-dir>
+  tree "$1" "" | sort -t "$tab" -k1,1nr > "$work/tree"
+  i=0
+  set --
+  while IFS="$tab" read -r _ dir keys; do
+    i=$((i + 1))
+    [ -f "$dir/values.yaml" ] || continue
+    layer="$work/layer-$i.yaml"
+    if [ -z "$keys" ]; then
+      cp "$dir/values.yaml" "$layer"
+    else
+      # shellcheck disable=SC2016
+      KEYS=$keys VALUES=$dir/values.yaml \
+        yq -n 'load(strenv(VALUES)) as $v | setpath(strenv(KEYS) | split("."); $v)' > "$layer"
+    fi
+    set -- "$@" "$layer"
+  done < "$work/tree"
+  # shellcheck disable=SC2016
+  yq ea '. as $f ireduce ({}; . * $f)' "$@"
+}
+
+switches() { # switches <chart-dir>: switches.tsv
+  probes="$work/probes"
+  settings="$work/settings"
+  mkdir -p "$probes" "$settings"
+  : > "$work/meta"
+  running=0
+  printf 'base\tbase\t\t\n' >> "$work/meta"
+  spawn base /dev/null
+
+  # A global reaches every chart from the root's global, wherever a chart
+  # declares it.
+  coalesce "$1" > "$work/coalesced.yaml"
+  yq -N '.. | select(tag == "!!bool" and . == true) | path
+         | select(.[-1] == "enabled" or .[-1] == "deploy") | to_json(0)' "$work/coalesced.yaml" |
+    sed 's/^\[\("[^"]*",\)*"global",/["global",/' | sort -u > "$work/flips"
+  n=0
+  while IFS= read -r keys; do
+    n=$((n + 1))
+    KEYS=$keys yq -n 'setpath(env(KEYS); false)' > "$settings/flip-$n.yaml"
+    printf 'flip-%s\tflip\t\t%s=false\n' "$n" "$(KEYS=$keys yq -n 'env(KEYS) | join(".")')" >> "$work/meta"
+    spawn "flip-$n" /dev/null "$settings/flip-$n.yaml"
+  done < "$work/flips"
+
+  for fixture in "$here/$switch_chart"/ci/*-values.yaml; do
+    [ -f "$fixture" ] || continue
+    case_name=$(basename "$fixture" -values.yaml)
+    placeholders="$settings/$case_name.placeholders"
+    yq ea -N "$in_fixture" "$fixture" > "$placeholders"
+    printf 'fix-%s\tfixture\t%s\t\n' "$case_name" "$case_name" >> "$work/meta"
+    spawn "fix-$case_name" "$placeholders" "$fixture"
+    # Every setting but those inside a list, a list counting as one; a
+    # multi-line value shows as one line.
+    # shellcheck disable=SC2016
+    TAB=$tab yq -N '.. | select(tag != "!!map" and tag != "!!null" and (parent | tag) == "!!map")
+           | [(path | to_json(0)), (path | join(".")),
+              ((select(tag == "!!seq") | to_json(0)) // tostring | sub("[\t\n]+"; " ") | sub(" $"; ""))]
+           | join(strenv(TAB))' "$fixture" > "$work/leaves"
+    n=0
+    while IFS="$tab" read -r keys dotted value; do
+      n=$((n + 1))
+      KEYS=$keys yq 'delpaths([env(KEYS)])' "$fixture" > "$settings/$case_name-$n.yaml"
+      printf 'drop-%s-%s\tdrop\t%s\t%s=%s\n' "$case_name" "$n" "$case_name" "$dotted" "$value" >> "$work/meta"
+      spawn "drop-$case_name-$n" "$placeholders" "$settings/$case_name-$n.yaml"
+    done < "$work/leaves"
+  done
+  wait
+
+  if [ ! -f "$probes/base" ]; then
+    printf '%s: %s does not render with its defaults, no switches.tsv\n' "$self" "$switch_chart" >&2
+    return 0
+  fi
+  for result in "$probes"/*; do
+    sed "s#^#$(basename "$result")	#" "$result"
+  done > "$work/members"
+  awk -F '\t' -v chart="$switch_chart" '
+    function addto(list, item, sep) {
+      if (list == "") return item
+      return index(sep list sep, sep item sep) ? list : list sep item
+    }
+    FILENAME == ARGV[1] { order[++probes] = $1; kind[$1] = $2; fixture[$1] = $3; setting[$1] = $4; next }
+    { ok[$1] = 1; has[$1, $2] = 1; images[$2] = 1 }
+    END {
+      for (image in images) {
+        on = (("base", image) in has)
+        bare = ""; tagged = ""
+        delete need; delete with; delete removes
+        for (i = 1; i <= probes; i++) {
+          p = order[i]
+          if (!(p in ok)) continue
+          if (kind[p] == "flip" && on && !((p, image) in has)) bare = addto(bare, setting[p], ", ")
+          if (kind[p] == "fixture" && on && !((p, image) in has)) removes[fixture[p]] = 0
+          if (kind[p] != "drop" || !(("fix-" fixture[p]) in ok)) continue
+          inf = (("fix-" fixture[p], image) in has)
+          if (!on && inf && !((p, image) in has))
+            need[fixture[p]] = addto(need[fixture[p]], setting[p], " & ")
+          if (on && !inf && ((p, image) in has)) {
+            removes[fixture[p]] = 1
+            tagged = addto(tagged, setting[p], SUBSEP)
+            with[setting[p]] = addto(with[setting[p]], fixture[p], ", ")
+          }
+        }
+        # A setting that turns the image off alone needs no fixture; one that
+        # takes the rest of several fixtures names them all. Short of any, the
+        # fixtures removing the image whose settings each break the render
+        # when dropped are the switch as a whole.
+        off = bare
+        n = split(tagged, list, SUBSEP)
+        for (i = 1; i <= n; i++)
+          if (!index(", " bare ", ", ", " list[i] ", "))
+            off = addto(off, list[i] " [" with[list[i]] "]", ", ")
+        whole = ""
+        for (i = 1; i <= probes; i++) {
+          p = order[i]
+          if (kind[p] == "fixture" && (fixture[p] in removes) && !removes[fixture[p]])
+            whole = addto(whole, fixture[p], ", ")
+        }
+        if (off == "" && whole != "") off = "[" whole "]"
+        enable = ""
+        if (!on)
+          for (i = 1; i <= probes; i++) {
+            p = order[i]
+            if (kind[p] == "fixture" && ((p, image) in has))
+              enable = addto(enable, (fixture[p] in need ? need[fixture[p]] " " : "") "[" fixture[p] "]", " | ")
+          }
+        print chart "\t" image "\t" (on ? "on" : "off") "\t" off "\t" enable
+      }
+    }' "$work/meta" "$work/members" | sort > "$out/switches.tsv"
+}
+
 for archive in "$@"; do
   chart=$(helm show chart "$archive" | yq '.name')
+  [ "$chart" != "$switch_chart" ] || switch_archive=$archive
   render "$archive" "$chart" defaults
   for fixture in "$here/$chart"/ci/*-values.yaml; do
     [ -f "$fixture" ] || continue
@@ -367,6 +588,17 @@ awk -F '\t' -v stale="$out/stale.tsv" -v documents="$out/documents.tsv" "$awk_li
   }' "$work/graph" "$work/repo" "$work/documents" "$work/rendered" "$work/map" "$work/operators" |
   sort > "$out/images.tsv"
 touch "$out/stale.tsv"
+
+if [ -n "$switch_chart" ]; then
+  if [ -z "$switch_archive" ]; then
+    printf '%s: -s %s: no such packaged chart in %s\n' "$self" "$switch_chart" "$dist" >&2
+    exit 2
+  fi
+  rm -rf "$work/chart"
+  mkdir -p "$work/chart"
+  tar -xzf "$switch_archive" -C "$work/chart"
+  switches "$work/chart/$switch_chart"
+fi
 
 if ! grep -q '	ok	' "$out/renders.tsv"; then
   printf '%s: no chart rendered\n' "$self" >&2

@@ -143,10 +143,23 @@ switch_awk='
     for (i = 1; i <= n; i++) out = out (out == "" ? "" : "; ") item(part[i])
     return out
   }
+  # Whether an image a default install deploys can be left out. The control
+  # and compute planes always run, in this release or as their own, so
+  # turning one off removes none of their images from the deployment.
+  function optout(off,   n, part, i, s) {
+    n = split(tagged(off), part, ", ")
+    for (i = 1; i <= n; i++) {
+      s = part[i]; sub(/ ?\[[^]]*\]$/, "", s)
+      if (s !~ /^(control|compute)-plane\.enabled=false$/) return 1
+    }
+    return 0
+  }
   # What the chart does with the image, as a sentence.
   function deployed(chart, def, off, on, note) {
+    if (def == "on" && !optout(off))
+      return "Always deployed by `" chart "`" (off == "" ? "" : ", or by the plane'"'"'s own release with " list(off, ", ")) "."
     if (def == "on")
-      return "Deployed by default by `" chart "`; " (off == "" ? "no single value removes it" : "removed by " list(off, ", ")) "."
+      return "Deployed by default by `" chart "`; removed by " list(off, ", ") "."
     if (note != "") return "Not deployed by default by `" chart "`; deployed with " note "."
     if (def == "off")
       return "Not deployed by default by `" chart "`; " (on == "" ? "no fixture deploys it alone" : "deployed with " list(on, " \\| ")) "."
@@ -175,29 +188,36 @@ while IFS="$tab" read -r image uses owners status_image status reason; do
   default=$(printf '%s\n' "$switch" | cut -f3)
   off_with=$(printf '%s\n' "$switch" | cut -f4)
   on_with=$(printf '%s\n' "$switch" | cut -f5)
-  # The image map and the operators deploy what no render of the umbrella
-  # shows; an image that only another chart renders is out of its reach,
-  # which a fixture of the umbrella should fix.
+  # Always deployed, opt-out (deployed by default, a value removes it) or
+  # opt-in. The image map and the operators deploy what no render of the
+  # umbrella shows; an image that only another chart renders is out of its
+  # reach, which a fixture of the umbrella should fix.
   note=
   case "$default" in
-    on) deployed=default rank=0 ;;
-    off) deployed=opt-in rank=1 ;;
+    on)
+      deployed=$(printf '%s\n' "$off_with" |
+        awk "$md_awk$switch_awk"'{ print optout($0) ? "opt-out" : "always" }') ;;
+    off) deployed=opt-in ;;
     *)
       case ",$uses," in
         *,image-map,*)
-          deployed=opt-in rank=1
+          deployed=opt-in
           note="a value naming it as an image (a compute-plane partition's worker, say), resolved through \`global.armonik.imageComponents\`" ;;
         *,operator,*)
-          deployed=opt-in rank=1
+          deployed=opt-in
           note="a resource having its operator run it, see \`charts/operator-images.yaml\`" ;;
         *)
-          deployed="not in $switch_chart" rank=2
+          deployed="not in $switch_chart"
           printf '%s\t%s\n' "$switch_chart does not deploy $image" \
             "only another chart renders it ($uses): extend the ci fixtures of $switch_chart so that the report covers it" \
             >> "$work/warnings-images" ;;
       esac ;;
   esac
-  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$image" "$deployed" "$default" "$off_with" "$on_with" "$note" "$rank" "$test_only" \
+  # Tags follow the image name; an image always deployed has none.
+  tags=
+  [ "$test_only" = 0 ] || tags=" <sub>helm test</sub>"
+  [ "$deployed" = always ] || tags="$tags <sub>$deployed</sub>"
+  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$image" "$deployed" "$default" "$off_with" "$on_with" "$note" "$test_only" "$tags" \
     >> "$work/deploys"
   cell=$(owners_cell "$owners" 0 charts)
   report="$scan/reports/images/$n.json"
@@ -213,7 +233,7 @@ while IFS="$tab" read -r image uses owners status_image status reason; do
       rate-limited) failure=":hourglass: rate limited"; title="trivy did not scan $image (rate limited)" ;;
       *) failure=":warning: scan error"; title="trivy did not scan $image" ;;
     esac
-    printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$image" "$cell" "$failure" "$reason" "$test_only" "$deployed" "$rank" >> "$work/failed"
+    printf '%s\t%s\t%s\t%s\t%s\t%s\n' "$image" "$cell" "$failure" "$reason" "$test_only" "$tags" >> "$work/failed"
     # Placeholders never get here (charts/scan-inputs.sh drops them), so an
     # unreadable image is one a user can deploy.
     printf '%s\t%s\n' "$title" "$reason" >> "$work/warnings-images"
@@ -226,7 +246,7 @@ while IFS="$tab" read -r image uses owners status_image status reason; do
     | map(. as $s | $v | map(select(.severity as $x | $s | index($x)))
           | [length, (map(select(.fixed != "")) | length)])
     | flatten | @tsv' "$report")
-  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$counts" "$n" "$image" "$cell" "$test_only" "$deployed" "$rank" >> "$work/scanned"
+  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$counts" "$n" "$image" "$cell" "$test_only" "$deployed" "$tags" >> "$work/scanned"
   # Critical and high for the summary, one row per package version.
   jq -r "$vulns_jq"' | map(select(.severity == "CRITICAL" or .severity == "HIGH"))
     | unique_by([.id, .pkg, .installed]) | sort_by([
@@ -286,9 +306,8 @@ fi
 # --- summary -----------------------------------------------------------------
 
 images_failed=$(wc -l < "$work/failed" | tr -d ' ')
-# Images a default install deploys first, then the opt-in ones, then those
-# only helm test pods run.
-sort -t "$tab" -k12,12n -k14,14n -k1,1nr -k3,3nr -k5,5nr -k7,7nr -k10,10 "$work/scanned" > "$work/scanned.sorted"
+# Deployed images first, then those only helm test pods run.
+sort -t "$tab" -k12,12n -k1,1nr -k3,3nr -k5,5nr -k7,7nr -k10,10 "$work/scanned" > "$work/scanned.sorted"
 
 {
   echo "## Trivy: images"
@@ -299,10 +318,10 @@ sort -t "$tab" -k12,12n -k14,14n -k1,1nr -k3,3nr -k5,5nr -k7,7nr -k10,10 "$work/
   echo ""
   awk -F '\t' -v failed="$images_failed" -v chart="$switch_chart" '
     $1 > 0 { critical++ } $3 > 0 { high++ } $2 + $4 > 0 { fixable++ }
-    $12 { tests++; next } { rank[$14]++ }
+    $12 { tests++; next } { kind[$13]++ }
     END {
-      printf "**%d images scanned** (%d deployed by default by `%s`, %d opt-in", NR, rank[0], chart, rank[1]
-      if (rank[2]) printf ", %d outside it", rank[2]
+      printf "**%d images scanned** (%d always deployed, %d opt-out, %d opt-in", NR, kind["always"], kind["opt-out"], kind["opt-in"]
+      if (kind["not in " chart]) printf ", %d not in `%s`", kind["not in " chart], chart
       if (tests) printf ", %d only for helm tests", tests
       printf "): :red_circle: %d with critical vulnerabilities, :orange_circle: %d with high ones, %d with a fix for at least one of those", critical, high, fixable
       if (failed) printf "; :x: %d not scanned", failed
@@ -312,11 +331,11 @@ sort -t "$tab" -k12,12n -k14,14n -k1,1nr -k3,3nr -k5,5nr -k7,7nr -k10,10 "$work/
   echo "Counts read found (fixable); low includes unknown severity. Every vulnerability, whatever its severity, is in \`vulnerabilities.csv\` of the \`trivy-reports\` artifact."
   echo ""
   # shellcheck disable=SC2016 # markdown backticks
-  printf 'Deployed: whether a default install of `%s` deploys the image (default) or one of its values has to turn it on (opt-in); "What deploys each image" below names the values.\n\n' "$switch_chart"
-  echo "| Image | Owner | Deployed | Critical | High | Medium | Low |"
-  echo "|-|-|-|-:|-:|-:|-:|"
+  printf 'An image without a tag is always deployed by `%s`, the control and compute planes counting as always deployed, in this release or in their own. <sub>opt-out</sub>: deployed by default, one of its values removes it. <sub>opt-in</sub>: deployed once one of its values turns it on. <sub>helm test</sub>: only helm test pods run it. "What deploys each image", at the bottom, names the values.\n\n' "$switch_chart"
+  echo "| Image | Owner | Critical | High | Medium | Low |"
+  echo "|-|-|-:|-:|-:|-:|"
   awk -F '\t' "$md_awk"'{
-    printf "| `%s`%s | %s | %s | %s | %s | %s | %s |\n", $10, ($12 ? " <sub>helm test</sub>" : ""), $11, cell($13),
+    printf "| `%s`%s | %s | %s | %s | %s | %s |\n", $10, $14, $11,
       count($1, $2, ":red_circle:"), count($3, $4, ":orange_circle:"),
       count($5, $6, ":yellow_circle:"), count($7, $8, ":large_blue_circle:")
   }' "$work/scanned.sorted"
@@ -326,10 +345,10 @@ sort -t "$tab" -k12,12n -k14,14n -k1,1nr -k3,3nr -k5,5nr -k7,7nr -k10,10 "$work/
     echo ""
     echo "Docker Hub answers a repository that does not exist as it does a private one: a missing Docker Hub image reads as pull denied."
     echo ""
-    echo "| Image | Owner | Deployed | Failure | Reason |"
-    echo "|-|-|-|-|-|"
-    sort -t "$tab" -k5,5n -k7,7n -k3,3 -k1,1 "$work/failed" |
-      awk -F '\t' "$md_awk"'{ printf "| `%s`%s | %s | %s | %s | %s |\n", $1, ($5 ? " <sub>helm test</sub>" : ""), $2, cell($6), $3, cell($4) }'
+    echo "| Image | Owner | Failure | Reason |"
+    echo "|-|-|-|-|"
+    sort -t "$tab" -k5,5n -k3,3 -k1,1 "$work/failed" |
+      awk -F '\t' "$md_awk"'{ printf "| `%s`%s | %s | %s | %s |\n", $1, $6, $2, $3, cell($4) }'
   fi
 } > "$work/head.md"
 
@@ -340,16 +359,17 @@ details() { # <cap>
     # Not read with a tab IFS, which merges an empty owner cell with the next
     # field; the fields kept hold no blank.
     # shellcheck disable=SC2046
-    set -- "$1" $(printf '%s\n' "$row" | awk -F '\t' '{ print $1, $2, $3, $4, $9, $10, $12 }')
-    c=$2 cf=$3 h=$4 hf=$5 k=$6 image=$7 test_only=$8
+    set -- "$1" $(printf '%s\n' "$row" | awk -F '\t' '{ print $1, $2, $3, $4, $9, $10 }')
+    c=$2 cf=$3 h=$4 hf=$5 k=$6 image=$7
     set -- "$1"
     [ $((c + h)) -gt 0 ] || continue
     # Through the environment: -v would read the escaped pipes as escapes.
+    TAGS=$(printf '%s\n' "$row" | cut -f14) \
     DEPLOYED=$(awk -F '\t' -v image="$image" -v chart="$switch_chart" "$md_awk$switch_awk"'
       $1 == image { print deployed(chart, $3, $4, $5, $6); exit }' "$work/deploys") \
-    awk -F '\t' -v cap="$1" -v test="$test_only" -v image="$image" -v c="$c" -v cf="$cf" -v h="$h" -v hf="$hf" "$md_awk"'
+    awk -F '\t' -v cap="$1" -v image="$image" -v c="$c" -v cf="$cf" -v h="$h" -v hf="$hf" "$md_awk"'
       BEGIN {
-        printf "<details><summary>%s <code>%s</code>%s: ", (c ? ":red_circle:" : ":orange_circle:"), image, (test ? " <sub>helm test</sub>" : "")
+        printf "<details><summary>%s <code>%s</code>%s: ", (c ? ":red_circle:" : ":orange_circle:"), image, ENVIRON["TAGS"]
         if (c) printf "%d critical (%d fixable)%s", c, cf, (h ? ", " : "")
         if (h) printf "%d high (%d fixable)", h, hf
         print "</summary>\n"
@@ -370,21 +390,23 @@ details() { # <cap>
 }
 
 {
-  # Every image, scanned or not.
+  # Every image, scanned or not, folded.
   echo ""
-  echo "### What deploys each image"
+  echo "<details><summary>What deploys each image</summary>"
   echo ""
   # shellcheck disable=SC2016 # markdown backticks
   printf 'Measured on the renders of `%s` by `charts/scan-inputs.sh -s`, one change at a time from its defaults: each `enabled` or `deploy` value turned off, each setting of each `ci/*-values.yaml` fixture dropped. A fixture named with a setting is the context it needs (another table storage when MongoDB goes, say), any of those named; a fixture alone means it takes several of its settings at once. What takes two changes outside a fixture, or a value that is not a boolean, is not caught.\n' "$switch_chart"
   echo ""
-  sort -t "$tab" -k7,7n -k1,1 "$work/deploys" |
+  sort -t "$tab" -k1,1 "$work/deploys" |
     awk -F '\t' "$md_awk$switch_awk"'
-      BEGIN { print "| Image | Default | Removed by | Deployed with |"; print "|-|-|-|-|" }
+      BEGIN { print "| Image | Removed by | Deployed with |"; print "|-|-|-|" }
       {
-        printf "| `%s`%s | %s | %s | %s |\n", $1, ($8 ? " <sub>helm test</sub>" : ""), cell($2),
+        printf "| `%s`%s | %s | %s |\n", $1, $8,
           ($3 == "on" ? ($4 == "" ? "no single value" : list($4, ", ")) : "-"),
           ($6 != "" ? $6 : $3 == "off" ? ($5 == "" ? "no fixture alone" : list($5, " \\| ")) : "-")
       }'
+  echo ""
+  echo "</details>"
   not_rendered "Neither scanned nor searched for images"
   if [ -s "$work/sarif-notes" ]; then
     echo ""

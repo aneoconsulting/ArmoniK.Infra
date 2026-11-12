@@ -19,10 +19,12 @@ name: Publish Charts
 #
 # The `scan` job runs trivy on every channel, report only, on every image the
 # packaged charts can deploy, ArmoniK's and third-party alike
-# (vulnerabilities): the renders' with their defaults and ci/ fixtures (the
-# placeholders the fixtures name left out), ArmoniK's image map, and the
-# operators' own defaults listed in charts/operator-images.yaml. The renders
-# themselves are checked by the chart-checks job of linter-helm.yml.
+# (vulnerabilities): those of the renders with their defaults and ci/ fixtures
+# (the placeholders the fixtures name left out), and the operators' own
+# defaults listed in charts/operator-images.yaml. An optional image is thus
+# scanned only if a fixture deploys it; charts/scan-inputs.sh warns about any
+# global.armonik.imageComponents repository none does. The renders themselves
+# are checked by the chart-checks job of linter-helm.yml.
 # Results land in the job summary, the trivy-reports artifact and code
 # scanning; nothing waits for them.
 

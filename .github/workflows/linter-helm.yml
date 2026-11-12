@@ -115,6 +115,5 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
           path: |
-            scan/renders.tsv
-            scan/documents.tsv
+            scan/scan.json
             scan/reports/misconfigurations.csv

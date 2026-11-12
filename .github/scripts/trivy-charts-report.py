@@ -2,10 +2,9 @@
 """Turns the trivy config report of linter-helm.yml's chart-checks job into a
 job summary and a CSV file. Report-only: findings never fail it.
 
-Reads, under <scan-dir>:
-  renders.tsv, documents.tsv  charts/scan-inputs.py
-  reports/charts.json         trivy config report of manifests/
-Writes the markdown summary to <summary-file> and
+Reads <scan-dir>/scan.json (charts/scan-inputs.py) and
+<scan-dir>/reports/charts.json, the trivy config report of manifests/.
+Appends the markdown summary to <summary-file> and writes
 <scan-dir>/reports/misconfigurations.csv, every failed check, one row per
 document.
 
@@ -15,20 +14,9 @@ that chart can change.
 """
 
 import json
-import sys
 from typing import NamedTuple
 
-from trivy_lib import (
-    Owner, append_summary, cell, emoji, not_rendered, owners_cell, read_tsv, report_arguments, trivy_version,
-    write_csv)
-
-
-class Document(NamedTuple):
-    """A line of documents.tsv: the chart whose template rendered a document."""
-    file: str       # <chart>/<case>/<n>.yml
-    chart: str
-    location: str
-    path: str
+from trivy_lib import append_summary, cell, emoji, not_rendered, owners_cell, report_arguments, trivy_version, write_csv
 
 
 class Finding(NamedTuple):
@@ -47,29 +35,21 @@ class Finding(NamedTuple):
     path: str
 
 
-# The initials of the severities, the most severe first.
-SEVERITIES = "CHMLU"
-
-
-def one_line(text):
-    return (text or "").replace("\t", " ").replace("\n", " ")
-
-
-def findings(report, documents):
+def findings(report, scan):
     """Every failed check of a trivy config report with the document it fails
-    on, which documents.tsv traces to its template."""
-    found = []
+    on, which scan.json traces to its template."""
+    documents = {f"{document['render']}/{document['index']}.yml": document for document in scan["documents"]}
     for result in report.get("Results") or []:
         file = result["Target"].rpartition("manifests/")[2]
-        document = documents.get(file, Document(file, "", "", ""))
-        scope = "ours" if "/templates/" in document.location else "third-party"
+        document = documents[file]
+        scope = "ours" if "/templates/" in document["location"] else "third-party"
         for check in result.get("Misconfigurations") or []:
             if check["Status"] == "FAIL":
-                found.append(Finding(
-                    scope, one_line(check.get("ID")), one_line(check.get("Severity")), one_line(check.get("Title")),
-                    one_line(check.get("Resolution")), document.chart, document.location, file,
-                    one_line(check.get("Message")), one_line(check.get("PrimaryURL")), document.path))
-    return found
+                keys = ("ID", "Severity", "Title", "Resolution", "Message", "PrimaryURL")
+                check_id, severity, title, resolution, message, url = [
+                    (check.get(key) or "").replace("\t", " ").replace("\n", " ") for key in keys]
+                yield Finding(scope, check_id, severity, title, resolution, document["owner"], document["location"],
+                              file, message, url, document["path"])
 
 
 def checks_table(heading, found, blob):
@@ -79,9 +59,10 @@ def checks_table(heading, found, blob):
     where = {}  # check -> owner and location -> the owner
     for finding in found:
         first.setdefault(finding.check, finding)
-        owner = Owner(finding.owner, finding.location, finding.path)
-        where.setdefault(finding.check, {}).setdefault(owner[:2], owner)
-    checks = sorted(first.values(), key=lambda finding: (SEVERITIES.find(finding.severity[:1] or "-"), finding.check))
+        owner = {"chart": finding.owner, "location": finding.location, "path": finding.path}
+        where.setdefault(finding.check, {}).setdefault((finding.owner, finding.location), owner)
+    # By the initial of the severity: critical, high, medium, low, unknown.
+    checks = sorted(first.values(), key=lambda finding: ("CHMLU".find(finding.severity[:1] or "-"), finding.check))
     lines = ["", f"### {heading}: {len(checks)} failing checks", ""]
     if checks:
         lines += ["| | Check | Title | Resolution | Where |", "|-|-|-|-|-|"]
@@ -93,25 +74,20 @@ def checks_table(heading, found, blob):
 
 
 def main():
-    scan, summary, blob = report_arguments(__doc__.split("\n\n")[0])
-    report = scan / "reports" / "charts.json"
-    if not report.is_file() or report.stat().st_size == 0:
-        print(f"{sys.argv[0]}: {report} is missing or empty", file=sys.stderr)
-        return 1
-    documents = {document.file: document for document in read_tsv(scan / "documents.tsv", Document)}
-    found = findings(json.loads(report.read_text(encoding="utf-8")), documents)
-
-    write_csv(scan / "reports" / "misconfigurations.csv", Finding._fields[:-1], [finding[:-1] for finding in found])
+    directory, scan, summary, blob = report_arguments(__doc__.split("\n\n")[0])
+    report = json.loads((directory / "reports" / "charts.json").read_text(encoding="utf-8"))
+    found = list(findings(report, scan))
+    rows = [finding[:-1] for finding in found]
+    write_csv(directory / "reports" / "misconfigurations.csv", Finding._fields[:-1], rows)
     append_summary(summary, [
         "## Trivy: charts",
         "",
-        f"Trivy {trivy_version()[0]}, Kubernetes checks on every render. Report only: no finding fails the job. "
+        f"Trivy {trivy_version()}, Kubernetes checks on every render. Report only: no finding fails the job. "
         "Each failing resource is in `misconfigurations.csv` of the `trivy-chart-reports` artifact.",
         *checks_table("Our charts", [finding for finding in found if finding.scope == "ours"], blob),
         *checks_table("Third-party charts", [finding for finding in found if finding.scope != "ours"], blob),
         *not_rendered(scan)])
-    return 0
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()

@@ -372,7 +372,7 @@ jobs:
 
       # Every image alike, ours and third-party: the report tells them apart.
       - name: Scan the images
-        run: ./.github/scripts/trivy-images.sh scan .github/trivy.yaml
+        run: ./.github/scripts/trivy-images.py scan .github/trivy.yaml
 
       # Owners link to the files of the scanned commit, the checked-out one.
       - name: Report
@@ -398,7 +398,7 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
           path: |
-            scan/*.tsv
+            scan/*.json
             scan/reports/
 
   dockerhub:

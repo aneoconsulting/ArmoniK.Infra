@@ -3,14 +3,10 @@
 a SARIF file for code scanning and a CSV file. Report-only: findings never
 fail it.
 
-Reads, under <scan-dir>:
-  renders.tsv, images.tsv   charts/scan-inputs.py
-  switches.tsv              charts/scan-inputs.py -s <umbrella chart>; without
-                            it the report has no deployment tag
-  image-status.tsv          .github/scripts/trivy-images.sh
-  reports/images/<n>.json   trivy image report of images.tsv line <n>
-Writes the markdown summary to <summary-file>, a warning annotation to
-stdout when an image was not scanned, and under <scan-dir>:
+Reads, under <scan-dir>: scan.json (charts/scan-inputs.py, whose -s gives the
+deployment tags), image-status.json and reports/images/ (trivy-images.py).
+Appends the markdown summary to <summary-file>, prints a warning annotation
+when an image was not scanned, and writes, under <scan-dir>:
   sarif/images.sarif
   reports/vulnerabilities.csv   every vulnerability, one row per image and
                                 affected package
@@ -24,15 +20,11 @@ import json
 import os
 import re
 import subprocess
-import sys
 import tempfile
-from dataclasses import dataclass, field
-from pathlib import Path
+from dataclasses import dataclass
 from typing import NamedTuple
 
-from trivy_lib import (
-    Owner, append_summary, cell, emoji, not_rendered, owners_cell, read_tsv, report_arguments, trivy_version,
-    write_csv)
+from trivy_lib import append_summary, cell, emoji, not_rendered, owners_cell, report_arguments, trivy_version, write_csv
 
 # The rows of an image's critical and high vulnerabilities in the summary,
 # which GitHub drops whole past 1 MiB.
@@ -40,29 +32,6 @@ CAP = 30
 
 # The severities of the summary's columns, unknown folded into low.
 COLUMNS = {"CRITICAL": ["CRITICAL"], "HIGH": ["HIGH"], "MEDIUM": ["MEDIUM"], "LOW": ["LOW", "UNKNOWN"]}
-
-
-class ImageRow(NamedTuple):
-    """A line of images.tsv."""
-    image: str
-    uses: str       # comma-separated: <chart>/<case>[/test] or `operator`
-    owners: str
-
-
-class StatusRow(NamedTuple):
-    """A line of image-status.tsv."""
-    image: str
-    status: str     # ok, not-found, denied, rate-limited or error
-    reason: str
-
-
-class SwitchRow(NamedTuple):
-    """A line of switches.tsv."""
-    chart: str
-    image: str
-    default: str    # on or off
-    off_with: str   # the values removing the image, ` | `-separated
-    on_with: str    # the values deploying it
 
 
 class Vulnerability(NamedTuple):
@@ -80,29 +49,46 @@ class Vulnerability(NamedTuple):
 
 @dataclass
 class Image:
-    """An image of the charts, from the umbrella chart's point of view."""
-    number: int             # its line in images.tsv
-    name: str
+    """An image of scan.json with its scan status, from the point of view of
+    the umbrella chart, whose switches scan.json holds."""
+    number: int             # reports/images/<number>.json
+    image: str
+    uses: list
     owners: list
-    helm_test: bool         # only helm test pods run it
-    deployed: str           # always, opt-out, opt-in, or empty when unknown
-    removed_by: str         # opt-out: the values removing it
-    deployed_with: str      # opt-in: what deploys it
-    status: str
+    status: str             # ok, or why it was not scanned
     reason: str
-    vulnerabilities: list = field(default_factory=list)
+    default: str = ""       # on or off, empty when not measured
+    off_with: str = ""      # the values removing it
+    on_with: str = ""       # what deploys it
+    vulnerabilities: tuple = ()
+
+    @property
+    def deployed(self):
+        """Whether the umbrella deploys the image always, by default
+        (opt-out) or on request (opt-in: a value, or a request to an
+        operator); empty when unknown."""
+        if self.default == "on":
+            return "opt-out" if self.off_with else "always"
+        return "opt-in" if self.default == "off" or self.on_with else ""
+
+    @property
+    def helm_test(self):
+        return all(use.endswith("/test") for use in self.uses)
 
     @property
     def label(self):
         """The image with its tags, the deployment tag showing the values
         switching the image when hovered."""
-        label = f"<code>{self.name}</code>"
+        label = f"<code>{self.image}</code>"
         if self.helm_test:
             label += " <sub>helm test</sub>"
         if self.deployed in ("opt-out", "opt-in"):
-            hover = f"Removed by {self.removed_by}" if self.deployed == "opt-out" else (
-                f"Deployed with {self.deployed_with or '-'}")
-            label += f' <sub title="{attribute(hover.replace(" | ", " or "))}">{self.deployed}</sub>'
+            hover = f"Removed by {self.off_with}" if self.off_with else f"Deployed with {self.on_with or '-'}"
+            hover = hover.replace(" | ", " or ")
+            # A title attribute inside a table cell.
+            for character, entity in {"&": "&amp;", '"': "&quot;", "<": "&lt;", "|": "&#124;"}.items():
+                hover = hover.replace(character, entity)
+            label += f' <sub title="{hover}">{self.deployed}</sub>'
         return label
 
     def count(self, column, fixable=False):
@@ -112,49 +98,14 @@ class Image:
             if vulnerability.severity in COLUMNS[column] and (vulnerability.fixed or not fixable))
 
 
-def attribute(text):
-    """A title attribute inside a table cell."""
-    return text.replace("&", "&amp;").replace('"', "&quot;").replace("<", "&lt;").replace("|", "&#124;")
-
-
-def values_list(alternatives):
-    """The values switching an image, settings as code and prose as it is."""
-    if not alternatives:
-        return "-"
-    if "=" not in alternatives and not alternatives.startswith("ci/"):
-        return alternatives
-    return "`" + cell(alternatives).replace(" \\| ", "` or `").replace(" & ", "` & `") + "`"
-
-
-def deployment(row, switch):
-    """Whether the umbrella chart deploys an image always, by default
-    (opt-out, a value removing it) or on request (opt-in: a value, or a request
-    to an operator), as <deployed> <removed by> <deployed with>."""
-    if switch and switch.default == "on":
-        return ("opt-out" if switch.off_with else "always"), switch.off_with, ""
-    if switch and switch.default == "off":
-        return "opt-in", "", switch.on_with
-    if row.uses == "operator":
-        return "opt-in", "", "a resource having its operator run it, see charts/operator-images.yaml"
-    return "", "", ""
-
-
-def load_images(scan):
-    """Every image of images.tsv with its scan status and its deployment."""
-    rows = read_tsv(scan / "images.tsv", ImageRow)
-    statuses = read_tsv(scan / "image-status.tsv", StatusRow)
-    switches = {}
-    if (scan / "switches.tsv").is_file():
-        switches = {switch.image: switch for switch in read_tsv(scan / "switches.tsv", SwitchRow)}
-    images = []
-    for number, row in enumerate(rows, 1):
-        if number > len(statuses) or statuses[number - 1].image != row.image:
-            sys.exit(f"images.tsv and image-status.tsv disagree on line {number}")
-        status = statuses[number - 1]
-        helm_test = all(use.endswith("/test") for use in row.uses.split(","))
-        images.append(Image(
-            number, row.image, Owner.parse(row.owners), helm_test, *deployment(row, switches.get(row.image)),
-            status.status, status.reason))
+def load_images(directory, scan):
+    """Every image of scan.json with its scan status. An operator's own
+    image is deployed on request to the operator."""
+    statuses = json.loads((directory / "image-status.json").read_text(encoding="utf-8"))
+    images = [Image(number, **image, **statuses[image["image"]]) for number, image in enumerate(scan["images"], 1)]
+    for image in images:
+        if not image.default and image.uses == ["operator"]:
+            image.on_with = "a resource having its operator run it, see charts/operator-images.yaml"
     return images
 
 
@@ -171,14 +122,7 @@ def load_vulnerabilities(report):
                 found.get("Severity") or "UNKNOWN", found.get("Title") or "", found.get("PrimaryURL") or "")
             unique.setdefault(vulnerability[:4], vulnerability)
     ranks = {"CRITICAL": 0, "HIGH": 1, "MEDIUM": 2, "LOW": 3}
-    return sorted(unique.values(), key=lambda v: (ranks.get(v.severity, 4), not v.fixed, *v[:4]))
-
-
-def csv_rows(image):
-    names = "; ".join(owner.chart.replace("@", " ", 1) for owner in image.owners)
-    for vulnerability in image.vulnerabilities:
-        yield (image.name, names, image.deployed, image.removed_by, image.deployed_with, vulnerability.severity,
-               vulnerability.id, vulnerability.package, *vulnerability[2:6], vulnerability.title, vulnerability.url)
+    return sorted(unique.values(), key=lambda found: (ranks.get(found.severity, 4), not found.fixed, *found[:4]))
 
 
 def sarif_runs(image, report, work):
@@ -187,66 +131,77 @@ def sarif_runs(image, report, work):
     registry, and any other package at its path inside the image, which
     collides between images once merged. The tag is left out so an alert
     survives an image bump."""
-    converted = work / f"{image.number}.sarif"
+    converted = os.path.join(work, f"{image.number}.sarif")
     subprocess.run([
         "trivy", "convert", "--quiet", "--format", "sarif",
-        "--severity", os.environ.get("SARIF_SEVERITY") or "HIGH,CRITICAL",
-        "--output", str(converted), str(report)], check=True)
-    runs = json.loads(converted.read_text(encoding="utf-8"))["runs"]
-    prefix = re.sub(r":[^:/]*$", "", image.name.partition("@")[0])
+        "--severity", os.environ.get("SARIF_SEVERITY") or "HIGH,CRITICAL", "--output", converted, report], check=True)
+    with open(converted, encoding="utf-8") as file:
+        runs = json.load(file)["runs"]
+    prefix = re.sub(r":[^:/]*$", "", image.image.partition("@")[0])
     repository = re.sub(r"^[^/]*[.:][^/]*/", "", prefix)
     for run in runs:
         for result in run.get("results") or []:
+            result.pop("ruleIndex", None)  # it points into the rules of this run
             for location in result.get("locations") or []:
                 artifact = location["physicalLocation"]["artifactLocation"]
-                if artifact["uri"] in (repository, "library/" + repository):
-                    artifact["uri"] = prefix
-                else:
-                    artifact["uri"] = f"{prefix}/{artifact['uri']}"
+                is_repository = artifact["uri"] in (repository, "library/" + repository)
+                artifact["uri"] = prefix if is_repository else f"{prefix}/{artifact['uri']}"
     return runs
 
 
 def merge_sarif(runs):
     """Code scanning rejects two runs of one tool under one category, so the
-    runs are merged into one: rules deduplicated by id, ruleIndex dropped
-    since it pointed into each run's own rules array. With no image scanned,
-    an empty run still clears the alerts no longer found."""
+    runs are merged into one, rules deduplicated by id. With no image
+    scanned, an empty run still clears the alerts no longer found."""
     trivy = {"tool": {"driver": {"name": "Trivy", "informationUri": "https://github.com/aquasecurity/trivy"}}}
-    merged = dict(runs[0] if runs else trivy)
+    merged = runs[0] if runs else trivy
     merged.pop("properties", None)
     rules = {}
-    results = []
     for run in runs:
         for rule in run["tool"]["driver"].get("rules") or []:
             rules.setdefault(rule["id"], rule)
-        for result in run.get("results") or []:
-            result.pop("ruleIndex", None)
-            results.append(result)
+    results = [result for run in runs for result in run.get("results") or []]
     merged["tool"]["driver"]["rules"] = [rules[rule] for rule in sorted(rules)]
     merged["results"] = results
     return {"$schema": "https://json.schemastore.org/sarif-2.1.0.json", "version": "2.1.0", "runs": [merged]}
 
 
-def images_table(scanned, blob):
-    def count(image, column):
-        found = image.count(column)
-        return f"{emoji(column)} {found} ({image.count(column, fixable=True)})" if found else "-"
-
-    lines = ["| Image | Owner | Critical | High | Medium | Low |", "|-|-|-:|-:|-:|-:|"]
-    for image in scanned:
-        counts = " | ".join(count(image, column) for column in COLUMNS)
-        lines.append(f"| {image.label} | {owners_cell(image.owners, blob)} | {counts} |")
-    return lines
+def values_list(alternatives):
+    """The values switching an image, settings as code and prose as it is."""
+    if "=" not in alternatives and not alternatives.startswith("ci/"):
+        return alternatives or "-"
+    return "`" + cell(alternatives).replace(" \\| ", "` or `").replace(" & ", "` & `") + "`"
 
 
-def not_scanned(failed, blob):
-    if not failed:
-        return []
+def images_table(scanned, failed, blob):
+    """A row per scanned image, the most vulnerable first, then the images
+    that were not scanned."""
+    tags = [("test" if image.helm_test else image.deployed) for image in scanned]
     lines = [
-        "", "### Not scanned", "",
-        "Docker Hub answers a repository that does not exist as it does a private one: "
-        "a missing Docker Hub image reads as denied.",
-        "", "| Image | Owner | Failure | Reason |", "|-|-|-|-|"]
+        f"**{len(scanned)} images scanned** ({tags.count('always')} always deployed, {tags.count('opt-out')} opt-out, "
+        f"{tags.count('opt-in')} opt-in, {tags.count('test')} only for helm tests): "
+        f":red_circle: {sum(1 for image in scanned if image.count('CRITICAL'))} with critical vulnerabilities, "
+        f":orange_circle: {sum(1 for image in scanned if image.count('HIGH'))} with high ones"
+        + (f"; :x: {len(failed)} not scanned." if failed else "."),
+        "",
+        "Counts: found (fixable), low including unknown. "
+        "Every vulnerability is in `vulnerabilities.csv` of the `trivy-reports` artifact.",
+        "",
+        "No tag: always deployed. <sub>opt-out</sub>: deployed by default. <sub>opt-in</sub>: deployed on request. "
+        "<sub>helm test</sub>: run by `helm test` only. Hover a tag for the values that switch it.",
+        "",
+        "| Image | Owner | Critical | High | Medium | Low |", "|-|-|-:|-:|-:|-:|"]
+    for image in scanned:
+        counts = [
+            f"{emoji(column)} {image.count(column)} ({image.count(column, fixable=True)})" if image.count(column)
+            else "-" for column in COLUMNS]
+        lines.append(f"| {image.label} | {owners_cell(image.owners, blob)} | {' | '.join(counts)} |")
+    if failed:
+        lines += [
+            "", "### Not scanned", "",
+            "Docker Hub answers a repository that does not exist as it does a private one: "
+            "a missing Docker Hub image reads as denied.",
+            "", "| Image | Owner | Failure | Reason |", "|-|-|-|-|"]
     for image in failed:
         lines.append(f"| {image.label} | {owners_cell(image.owners, blob)} | :x: {image.status} "
                      f"| {cell(image.reason or 'no report')} |")
@@ -257,31 +212,30 @@ def vulnerabilities_details(image):
     """The critical and high vulnerabilities of an image, folded, under the
     values switching the image."""
     rows = []
-    for v in image.vulnerabilities:
-        row = (f"| {emoji(v.severity)} | [{v.id}]({v.url}) | `{cell(v.package)}` | {cell(v.installed)} "
-               f"| {cell(v.fixed) or '-'} | {cell(v.title)} |")
+    for found in image.vulnerabilities:
+        row = (f"| {emoji(found.severity)} | [{found.id}]({found.url}) | `{cell(found.package)}` "
+               f"| {cell(found.installed)} | {cell(found.fixed) or '-'} | {cell(found.title)} |")
         # One row for the copies of a package that differ by their path only.
-        if v.severity in ("CRITICAL", "HIGH") and row not in rows[-1:]:
+        if found.severity in ("CRITICAL", "HIGH") and row not in rows[-1:]:
             rows.append(row)
+    if len(rows) > CAP:
+        rows[CAP:] = [f"| | ... and {len(rows) - CAP} more in `vulnerabilities.csv` | | | | |"]
     critical, high = image.count("CRITICAL"), image.count("HIGH")
     deployed = {
         "always": ["Always deployed.", ""],
-        "opt-out": [f"Deployed by default, removed by {values_list(image.removed_by)}.", ""],
-        "opt-in": [f"Deployed with {values_list(image.deployed_with)}.", ""]}
-    lines = [
+        "opt-out": [f"Deployed by default, removed by {values_list(image.off_with)}.", ""],
+        "opt-in": [f"Deployed with {values_list(image.on_with)}.", ""]}
+    return [
         f"<details><summary>{emoji('CRITICAL' if critical else 'HIGH')} {image.label}: "
         f"{critical} critical ({image.count('CRITICAL', fixable=True)} fixable), "
         f"{high} high ({image.count('HIGH', fixable=True)} fixable)</summary>",
         "", *deployed.get(image.deployed, []),
-        "| | Vulnerability | Package | Installed | Fixed | Title |", "|-|-|-|-|-|-|", *rows[:CAP]]
-    if len(rows) > CAP:
-        lines.append(f"| | ... and {len(rows) - CAP} more in `vulnerabilities.csv` | | | | |")
-    return lines + ["", "</details>", ""]
+        "| | Vulnerability | Package | Installed | Fixed | Title |", "|-|-|-|-|-|-|", *rows, "", "</details>", ""]
 
 
 def what_deploys(images, chart):
     """Every image, scanned or not, with the values switching it."""
-    lines = [
+    return [
         "<details><summary>What deploys each image</summary>", "",
         f"Measured on the renders of `{chart}`, one change at a time: "
         "each `enabled` or `deploy` default turned off, each default partition set to null, "
@@ -289,79 +243,59 @@ def what_deploys(images, chart):
         "Settings joined by `&` are needed together; a fixture file stands for all its settings, "
         "when none could be tied to the image. "
         "The control and compute planes count as always deployed, in this release or in their own.",
-        "", "| Image | Removed by | Deployed with |", "|-|-|-|"]
-    for image in images:
-        lines.append(f"| {image.label} | {values_list(image.removed_by)} | {values_list(image.deployed_with)} |")
-    return lines + ["", "</details>"]
-
-
-def headline(scanned, failed):
-    tags = [("test" if image.helm_test else image.deployed) for image in scanned]
-    critical = sum(1 for image in scanned if image.count("CRITICAL"))
-    high = sum(1 for image in scanned if image.count("HIGH"))
-    return (
-        f"**{len(scanned)} images scanned** ({tags.count('always')} always deployed, {tags.count('opt-out')} opt-out, "
-        f"{tags.count('opt-in')} opt-in, {tags.count('test')} only for helm tests): "
-        f":red_circle: {critical} with critical vulnerabilities, :orange_circle: {high} with high ones"
-        + (f"; :x: {len(failed)} not scanned." if failed else "."))
+        "", "| Image | Removed by | Deployed with |", "|-|-|-|",
+        *(f"| {image.label} | {values_list(image.off_with)} | {values_list(image.on_with)} |" for image in images),
+        "", "</details>"]
 
 
 def main():
-    scan, summary, blob = report_arguments(__doc__.split("\n\n")[0])
-    images = load_images(scan)
-    scanned, failed, runs = [], [], []
+    directory, scan, summary, blob = report_arguments(__doc__.split("\n\n")[0])
+    images = load_images(directory, scan)
+    scanned, failed, runs, csv_rows = [], [], [], []
     with tempfile.TemporaryDirectory() as work:
         for image in images:
-            report = scan / "reports" / "images" / f"{image.number}.json"
+            report = directory / "reports" / "images" / f"{image.number}.json"
             if image.status != "ok" or not report.is_file() or report.stat().st_size == 0:
                 failed.append(image)
                 continue
             image.vulnerabilities = load_vulnerabilities(json.loads(report.read_text(encoding="utf-8")))
             scanned.append(image)
-            runs += sarif_runs(image, report, Path(work))
+            runs += sarif_runs(image, report, work)
+            names = "; ".join(owner["chart"].replace("@", " ", 1) for owner in image.owners)
+            deployment = (image.deployed, image.off_with, image.on_with)
+            csv_rows += [
+                (image.image, names, *deployment, found.severity, found.id, found.package, found.path,
+                 found.installed, found.fixed, found.status, found.title, found.url)
+                for found in image.vulnerabilities]
 
-    write_csv(
-        scan / "reports" / "vulnerabilities.csv",
-        ("image", "owners", "deployed", "off with", "on with", "severity", "vulnerability", "package", "path",
-         "installed", "fixed", "status", "title", "url"),
-        [row for image in scanned for row in csv_rows(image)])
-    (scan / "sarif").mkdir(exist_ok=True)
-    with open(scan / "sarif" / "images.sarif", "w", encoding="utf-8") as file:
+    write_csv(directory / "reports" / "vulnerabilities.csv", (
+        "image", "owners", "deployed", "off with", "on with", "severity", "vulnerability", "package", "path",
+        "installed", "fixed", "status", "title", "url"), csv_rows)
+    (directory / "sarif").mkdir(exist_ok=True)
+    with open(directory / "sarif" / "images.sarif", "w", encoding="utf-8") as file:
         json.dump(merge_sarif(runs), file, indent=2, ensure_ascii=False)
         file.write("\n")
     if failed:
         print(f"::warning title={len(failed)} images not scanned::see the job summary")
 
-    # The most vulnerable first.
     scanned.sort(key=lambda image: (*(-image.count(column) for column in COLUMNS), image.label))
-    version, database = trivy_version()
     lines = [
         "## Trivy: images",
         "",
-        f"Trivy {version}, vulnerability database of {database}. Report only: nothing here blocks a publication.",
+        f"Trivy {trivy_version()}, vulnerability database of {trivy_version('UpdatedAt')}. "
+        "Report only: nothing here blocks a publication.",
         "",
-        headline(scanned, failed),
-        "",
-        "Counts: found (fixable), low including unknown. "
-        "Every vulnerability is in `vulnerabilities.csv` of the `trivy-reports` artifact.",
-        "",
-        "No tag: always deployed. <sub>opt-out</sub>: deployed by default. <sub>opt-in</sub>: deployed on request. "
-        "<sub>helm test</sub>: run by `helm test` only. Hover a tag for the values that switch it.",
-        "",
-        *images_table(scanned, blob),
-        *not_scanned(failed, blob),
+        *images_table(scanned, failed, blob),
         "", "### Critical and high vulnerabilities", "",
         f"The most severe first, then the fixable, at most {CAP} an image: the rest is in `vulnerabilities.csv`.",
         ""]
     for image in scanned:
         if image.count("CRITICAL") or image.count("HIGH"):
             lines += vulnerabilities_details(image)
-    switches = scan / "switches.tsv"
-    if switches.is_file():
-        lines += what_deploys(images, switches.read_text(encoding="utf-8").partition("\t")[0])
+    if scan["switch_chart"]:
+        lines += what_deploys(images, scan["switch_chart"])
     append_summary(summary, lines + not_rendered(scan))
-    return 0
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()

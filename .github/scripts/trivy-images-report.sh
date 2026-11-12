@@ -101,7 +101,8 @@ while IFS="$tab" read -r image label owners deployed removed with status reason;
     | map(. as $s | $v | map(select(.severity as $x | $s | index($x)))
           | [length, (map(select(.fixed != "")) | length)])
     | flatten | @tsv' "$work/vulns.json")
-  printf '%s\t%s\t%s\t%s\t%s\n' "$counts" "$n" "$label" "$owners" "$deployed" >> "$work/scanned"
+  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$counts" "$n" "$label" "$owners" "$deployed" "$removed" "$with" \
+    >> "$work/scanned"
   jq -r 'map(select(.severity == "CRITICAL" or .severity == "HIGH"))
     | .[] | [.severity, .id, .url, .pkg, .installed, .fixed, .title] | @tsv' \
     "$work/vulns.json" | uniq > "$work/vulns/$n.tsv"
@@ -137,10 +138,21 @@ find "$work/sarif" -name '*.sarif' -exec cat {} + | jq -n '
       | .results = [$runs[].results[]? | del(.ruleIndex)]]}' > "$scan/sarif/images.sarif"
 
 # The most vulnerable first. Columns: found and fixable for critical, high,
-# medium and low, then <n> <label> <owners> <deployed>.
+# medium and low, then <n> <label> <owners> <deployed> <off with> <on with>.
 sort -t "$tab" -k1,1nr -k3,3nr -k5,5nr -k7,7nr -k10,10 "$work/scanned" > "$work/sorted"
 failed=$(wc -l < "$work/failed" | tr -d ' ')
 [ "$failed" -eq 0 ] || echo "::warning title=$failed images not scanned::see the job summary"
+
+# The values switching an image, settings as code and prose as it is.
+# shellcheck disable=SC2016 # awk program, not shell
+list_awk='
+  function list(s) {
+    if (s !~ /=|^ci\//) return s
+    s = cell(s)
+    gsub(/ \\\| /, "` or `", s)
+    gsub(/ & /, "` \\& `", s)
+    return "`" s "`"
+  }'
 
 {
   echo "## Trivy: images"
@@ -185,10 +197,13 @@ failed=$(wc -l < "$work/failed" | tr -d ' ')
   printf '\n### Critical and high vulnerabilities\n\n'
   echo "The most severe first, then the fixable, at most $cap an image: the rest is in \`vulnerabilities.csv\`."
   echo ""
-  awk -F '\t' -v cap="$cap" -v vulns="$work/vulns" "$md_awk"'
+  awk -F '\t' -v cap="$cap" -v vulns="$work/vulns" "$md_awk$list_awk"'
     $1 + $3 > 0 {
       printf "<details><summary>%s %s: %d critical (%d fixable), %d high (%d fixable)</summary>\n\n", \
         emoji($1 ? "CRITICAL" : "HIGH"), $10, $1, $2, $3, $4
+      if ($12 == "always") print "Always deployed.\n"
+      else if ($12 == "opt-out") print "Deployed by default, removed by " list($13) ".\n"
+      else if ($12 == "opt-in") print "Deployed with " list($14) ".\n"
       print "| | Vulnerability | Package | Installed | Fixed | Title |"
       print "|-|-|-|-|-|-|"
       file = vulns "/" $9 ".tsv"
@@ -216,15 +231,7 @@ failed=$(wc -l < "$work/failed" | tr -d ' ')
     }
     echo "| Image | Removed by | Deployed with |"
     echo "|-|-|-|"
-    awk -F '\t' "$md_awk"'
-      # Settings as code, prose as it is.
-      function list(s) {
-        if (s !~ /=|^ci\//) return s
-        s = cell(s)
-        gsub(/ \\\| /, "` or `", s)
-        gsub(/ & /, "` \\& `", s)
-        return "`" s "`"
-      }
+    awk -F '\t' "$md_awk$list_awk"'
       { printf "| %s | %s | %s |\n", $2, list($5), list($6) }' "$work/images"
     printf '\n</details>\n'
   fi

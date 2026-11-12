@@ -39,6 +39,19 @@
       "matchStrings": [
         "#\\s*renovate:\\s*datasource=(?<datasource>[a-z-]+)\\s+depName=(?<depName>\\S+)(\\s+extractVersion=(?<extractVersion>\\S+))?\\s*\\nappVersion:\\s*\"?(?<currentValue>[^\"\\s]+)\"?"
       ]
+    },
+    {
+      "customType": "regex",
+      "description": "CloudNativePG Postgres image, under a Cluster imageName key the helm-values manager does not read (https://github.com/cloudnative-pg/postgres-containers#renovate).",
+      "managerFilePatterns": [
+        "/^charts/armonik/values\\.yaml$/"
+      ],
+      "matchStrings": [
+        "imageName: (?<depName>[^\\s:]+):(?<currentValue>[^\\s@]+)(?:@(?<currentDigest>sha256:[a-f0-9]{64}))?"
+      ],
+      "datasourceTemplate": "docker",
+      "versioningTemplate": "regex:^(?<major>\\d+)\\.(?<minor>\\d+)-(?<compatibility>\\S+)$",
+      "autoReplaceStringTemplate": "imageName: {{{depName}}}:{{{newValue}}}{{#if newDigest}}@{{{newDigest}}}{{/if}}"
     }
   ],
   "packageRules": [
@@ -75,6 +88,27 @@
       "matchDatasources": [
         "docker"
       ]
+    },
+    {
+      "description": "A PostgreSQL major also needs dependencies.postgresql.version.postgresql of the umbrella, and a data migration.",
+      "matchPackageNames": [
+        "ghcr.io/cloudnative-pg/postgresql"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "dependencyDashboardApproval": true
+    },
+    {
+      "description": "Percona release tags end in a build number, which docker versioning would read as a fixed compatibility suffix.",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "percona/percona-server-mongodb",
+        "percona/fluentbit"
+      ],
+      "versioning": "regex:^(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)-(?<build>\\d+)$"
     },
     {
       "groupName": "third party charts",

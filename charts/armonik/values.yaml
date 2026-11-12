@@ -210,6 +210,8 @@ certManagerIssuer:
 # To bring your own backend (MongoDB, Redis, ActiveMQ, RabbitMQ), set
 # dependencies.<backend>.enabled=false and supply its connection through conf.core.env /
 # conf.core.envFromSecret.
+# An image whose tag is set here names its repository too, the chart's own, so that Renovate's
+# helm-values manager tracks the tag (it needs both in one map).
 dependencies:
   # == RabbitMQ ==
   rabbitmq:
@@ -247,6 +249,7 @@ dependencies:
     enabled: true
     image:
       registry: public.ecr.aws
+      repository: valkey/valkey
       # The chart's release on the Alpine base, far less exposed than the Debian default. The chart
       # does not tpl the tag, so keep it in step with the valkey chart's appVersion.
       tag: "9.1.3-alpine"
@@ -270,6 +273,8 @@ dependencies:
       enabled: true
       exporter:
         image:
+          registry: ghcr.io
+          repository: oliver006/redis_exporter
           # Ahead of the chart's default for its security fixes.
           tag: "v1.97.0"
       serviceMonitor:
@@ -299,15 +304,18 @@ dependencies:
     # (https://check.percona.com/versions/v1/psmdb-operator/1.23.1), for their security fixes. Check
     # them against that set whenever the operator moves.
     image:
+      repository: percona/percona-server-mongodb
       tag: "8.0.34-15"
     sharding:
       enabled: false
     backup:
       enabled: false
       image:
+        repository: percona/percona-backup-mongodb
         tag: "2.17.0"
     pmm:
       image:
+        repository: percona/pmm-client
         tag: "3.10.0"
     clusterSync:
       image: percona/percona-clustersync-mongodb:1.1.0
@@ -315,6 +323,7 @@ dependencies:
     logcollector:
       enabled: false
       image:
+        repository: percona/fluentbit
         tag: "5.1.4-1"
     replsets:
       rs0:
@@ -377,14 +386,15 @@ dependencies:
       # What ArmoniK.Core tests the adaptor against, rather than this chart's own default of 16.
       postgresql: "18"
     cluster:
-      # The major above, under a tag naming the image type and Debian release: CloudNativePG
+      # The major above, under a minor tag naming the image type and Debian release: CloudNativePG
       # deprecates the bare major tags. The chart reads that major as a number, so the tag cannot go
-      # there; keep the two in step. minimal holds no backup tool: enabling backups.enabled takes
+      # there; keep the two in step. Renovate moves the minor (renovate.json), a major waiting for
+      # approval on the dependency dashboard. minimal holds no backup tool: enabling backups.enabled takes
       # either backups.method=plugin with the Barman Cloud plugin installed, which minimal images are
       # designed to work with, or the chart's default method, barmanObjectStore, with 18-system-trixie,
       # which bundles the Barman Cloud binaries but is deprecated
       # (https://github.com/cloudnative-pg/postgres-containers).
-      imageName: ghcr.io/cloudnative-pg/postgresql:18-minimal-trixie
+      imageName: ghcr.io/cloudnative-pg/postgresql:18.6-minimal-trixie
       # Single instance, for a development/test cluster.
       instances: 1
       initdb:
@@ -502,6 +512,7 @@ dependencies:
   fluent-bit:
     enabled: true
     image:
+      repository: cr.fluentbit.io/fluent/fluent-bit
       # The compute-plane sidecar's release (armonik-compute-plane fluentBit.image.tag).
       tag: "5.2.0"
     # priorityClassName:

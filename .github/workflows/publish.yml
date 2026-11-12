@@ -312,7 +312,6 @@ jobs:
       security-events: write # SARIF upload
     timeout-minutes: 60
     env:
-      TRIVY_VERSION: v0.76.2
       TRIVY_DISABLE_TELEMETRY: "true"
       TRIVY_SKIP_VERSION_CHECK: "true"
       TRIVY_NO_PROGRESS: "true"
@@ -342,12 +341,10 @@ jobs:
 
       # Never pin aquasecurity actions by tag: their tags are mutable and have
       # served malicious commits (GHSA-69fq-xp46-6x23). Bump the commit and its
-      # version comment together.
+      # version comment together. trivy itself is its latest release, so that the
+      # scan gets its newest detections; setup-trivy caches no latest binary.
       - name: Set up trivy
         uses: aquasecurity/setup-trivy@81e514348e19b6112ce2a7e3ecbafe19c1e1f567 # v0.3.1
-        with:
-          version: ${{ env.TRIVY_VERSION }}
-          cache: true
 
       - name: Date the vulnerability databases
         id: db-date

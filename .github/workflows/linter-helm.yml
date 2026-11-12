@@ -60,7 +60,6 @@ jobs:
     permissions:
       contents: read
     env:
-      TRIVY_VERSION: v0.76.2
       TRIVY_DISABLE_TELEMETRY: "true"
       TRIVY_SKIP_VERSION_CHECK: "true"
       TRIVY_NO_PROGRESS: "true"
@@ -90,12 +89,10 @@ jobs:
       - name: Render the charts
         run: ./charts/scan-inputs.sh -d dist -o scan
 
-      # Pinned by commit: see the "Set up trivy" step of publish.yml.
+      # Pinned by commit, trivy itself at its latest release: see the "Set up trivy"
+      # step of publish.yml.
       - name: Set up trivy
         uses: aquasecurity/setup-trivy@81e514348e19b6112ce2a7e3ecbafe19c1e1f567 # v0.3.1
-        with:
-          version: ${{ env.TRIVY_VERSION }}
-          cache: true
 
       - name: Check the rendered charts
         run: |

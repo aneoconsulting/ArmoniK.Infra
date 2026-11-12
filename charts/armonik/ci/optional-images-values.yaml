@@ -1,5 +1,5 @@
 # Every optional component that brings an image of its own, so that the trivy
-# scan of .github/workflows/publish.yml (charts/scan-inputs.sh) sees the images
+# scan of .github/workflows/publish.yml (charts/scan-inputs.py) sees the images
 # a user can turn on, not only those of a default install. RabbitMQ excludes
 # ActiveMQ, so it has its own fixture (rabbitmq-values.yaml). Extend this one
 # when a dependency gains an optional component with its own image, or

@@ -22,7 +22,7 @@ name: Publish Charts
 # (vulnerabilities): those of the renders with their defaults and ci/ fixtures
 # (the placeholders the fixtures name left out), and the operators' own
 # defaults listed in charts/operator-images.yaml. An optional image is thus
-# scanned only if a fixture deploys it; charts/scan-inputs.sh warns about any
+# scanned only if a fixture deploys it; charts/scan-inputs.py warns about any
 # global.armonik.imageComponents repository none does. The renders themselves
 # are checked by the chart-checks job of linter-helm.yml.
 # Results land in the job summary, the trivy-reports artifact and code
@@ -335,11 +335,12 @@ jobs:
           name: packaged-charts
           path: dist
 
-      # The runner image ships mikefarah yq v4, which the script checks. -s
-      # measures which values deploy each image of the umbrella, a few hundred
-      # renders of it: the report takes the umbrella's point of view.
+      # The runner image ships the python3 the script runs on and mikefarah yq
+      # v4, which it checks. -s measures which values deploy each image of the
+      # umbrella, a few hundred renders of it: the report takes the umbrella's
+      # point of view.
       - name: Render the charts and list their images
-        run: ./charts/scan-inputs.sh -d dist -o scan -s armonik
+        run: ./charts/scan-inputs.py -d dist -o scan -s armonik
 
       # Never pin aquasecurity actions by tag: their tags are mutable and have
       # served malicious commits (GHSA-69fq-xp46-6x23). Bump the commit and its
@@ -376,7 +377,7 @@ jobs:
       # Owners link to the files of the scanned commit, the checked-out one.
       - name: Report
         run: |
-          ./.github/scripts/trivy-images-report.sh scan "$GITHUB_STEP_SUMMARY" \
+          ./.github/scripts/trivy-images-report.py scan "$GITHUB_STEP_SUMMARY" \
             "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/blob/$(git rev-parse HEAD)"
 
       # Not from a fork: its token cannot write security events.

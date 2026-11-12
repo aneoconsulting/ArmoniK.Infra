@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# Scans every image of charts/scan-inputs.sh's images.tsv with trivy, for
+# Scans every image of charts/scan-inputs.py's images.tsv with trivy, for
 # publish.yml's scan job, and records why an image could not be scanned.
 #
 # Usage: trivy-images.sh <scan-dir> [<trivy-config>]

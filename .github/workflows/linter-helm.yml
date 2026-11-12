@@ -53,7 +53,7 @@ jobs:
 
   # trivy matches each rendered resource against its Kubernetes checks, on
   # every chart whatever changed. The packaged archives are what
-  # charts/scan-inputs.sh renders and traces back to the templates.
+  # charts/scan-inputs.py renders and traces back to the templates.
   chart-checks:
     name: Check the charts with trivy
     runs-on: ubuntu-latest
@@ -85,9 +85,10 @@ jobs:
       - name: Package the charts
         run: ./charts/package-charts.sh -o dist
 
-      # The runner image ships mikefarah yq v4, which the script checks.
+      # The runner image ships the python3 the script runs on and mikefarah yq
+      # v4, which it checks.
       - name: Render the charts
-        run: ./charts/scan-inputs.sh -d dist -o scan
+        run: ./charts/scan-inputs.py -d dist -o scan
 
       # Pinned by commit, trivy itself at its latest release: see the "Set up trivy"
       # step of publish.yml.
@@ -103,7 +104,7 @@ jobs:
       # Templates link to the checked commit, the checked-out one.
       - name: Report
         run: |
-          ./.github/scripts/trivy-charts-report.sh scan "$GITHUB_STEP_SUMMARY" \
+          ./.github/scripts/trivy-charts-report.py scan "$GITHUB_STEP_SUMMARY" \
             "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/blob/$(git rev-parse HEAD)"
 
       - name: Upload the report

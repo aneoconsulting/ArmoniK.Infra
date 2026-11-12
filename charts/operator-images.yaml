@@ -1,5 +1,5 @@
 # Images an operator picks by itself at run time, so that no render names them.
-# charts/scan-inputs.sh adds them to the images the trivy scan of
+# charts/scan-inputs.py adds them to the images the trivy scan of
 # .github/workflows/publish.yml covers.
 #
 # An entry holds for one operator image, whose built-in default it is: once no

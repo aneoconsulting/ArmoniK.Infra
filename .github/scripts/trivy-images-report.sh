@@ -51,7 +51,7 @@ paste "$scan/images.tsv" "$scan/image-status.tsv" | awk -F '\t' -v OFS='\t' '
     gsub(/&/, "\\&amp;", s); gsub(/"/, "\\&quot;", s); gsub(/</, "\\&lt;", s); gsub(/\|/, "\\&#124;", s)
     return s
   }
-  FILENAME == ARGV[1] { default[$2] = $3; off[$2] = $4 == "" ? "-" : $4; on[$2] = $5 == "" ? "-" : $5; next }
+  FILENAME == ARGV[1] { def[$2] = $3; off[$2] = $4 == "" ? "-" : $4; on[$2] = $5 == "" ? "-" : $5; next }
   $1 != $4 { print "images.tsv and image-status.tsv disagree on line " FNR > "/dev/stderr"; exit 1 }
   {
     label = "<code>" $1 "</code>"
@@ -59,8 +59,8 @@ paste "$scan/images.tsv" "$scan/image-status.tsv" | awk -F '\t' -v OFS='\t' '
     gsub(/,[^,]*\/test/, "", uses)
     if (uses == "") label = label " <sub>helm test</sub>"
     deployed = removed = with = "-"
-    if (default[$1] == "on") { removed = off[$1]; deployed = removed == "-" ? "always" : "opt-out" }
-    else if (default[$1] == "off") { with = on[$1]; deployed = "opt-in" }
+    if (def[$1] == "on") { removed = off[$1]; deployed = removed == "-" ? "always" : "opt-out" }
+    else if (def[$1] == "off") { with = on[$1]; deployed = "opt-in" }
     else if ($2 == "operator") {
       with = "a resource having its operator run it, see charts/operator-images.yaml"
       deployed = "opt-in"

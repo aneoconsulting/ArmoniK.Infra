@@ -2,7 +2,8 @@
 # scan of .github/workflows/publish.yml (charts/scan-inputs.sh) sees the images
 # a user can turn on, not only those of a default install. RabbitMQ excludes
 # ActiveMQ, so it has its own fixture (rabbitmq-values.yaml). Extend this one
-# when a dependency gains an optional component with its own image.
+# when a dependency gains an optional component with its own image, or
+# global.armonik.imageComponents a repository no default deploys.
 global:
   armonik:
     operators:
@@ -86,3 +87,17 @@ compute-plane:
   # The per-pod sidecar, whose image is not the DaemonSet's.
   fluentBit:
     isDaemonSet: false
+  # The workers of global.armonik.imageComponents no default partition runs.
+  partitions:
+    bench:
+      worker:
+        image:
+          repository: dockerhubaneo/armonik_core_bench_test_worker
+    cpp:
+      worker:
+        image:
+          repository: dockerhubaneo/armonik-sdk-cpp-dynamicworker
+    java:
+      worker:
+        image:
+          repository: dockerhubaneo/armonik-dynamic-java-worker

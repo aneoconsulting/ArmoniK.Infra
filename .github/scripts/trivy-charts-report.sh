@@ -1,7 +1,7 @@
 #! /bin/sh
 
 # Turns the trivy config report of linter-helm.yml's chart-checks job into a job
-# summary, annotations and a CSV file. Report-only: findings never fail it.
+# summary and a CSV file. Report-only: findings never fail it.
 #
 # Usage: trivy-charts-report.sh <scan-dir> <summary-file> [<blob-url>]
 #
@@ -11,9 +11,9 @@
 # Reads, under <scan-dir>:
 #   renders.tsv, documents.tsv  charts/scan-inputs.sh
 #   reports/charts.json         trivy config report of manifests/
-# Writes the markdown summary to <summary-file>, annotations to stdout, and
-# under <scan-dir>:
-#   reports/misconfigurations.csv   every failed check, one row per document
+# Writes the markdown summary to <summary-file> and
+# <scan-dir>/reports/misconfigurations.csv, every failed check, one row per
+# document.
 #
 # A finding is ours when the resource comes from one of our templates, which
 # we can change, and third-party otherwise, which only the values we pass to
@@ -24,111 +24,61 @@ set -eu
 # shellcheck source=trivy-lib.sh
 . "$(dirname "$0")/trivy-lib.sh"
 report_init "$@"
-mkdir -p "$scan/reports"
-: > "$work/misconfigs"
-
-# Every failed check with the document it fails on, which documents.tsv
-# traces to its template: <document> <check> <severity> <title> <url>
-# <message> <resolution> <owner-entry> <render> <scope>.
-charts_report="$scan/reports/charts.json"
-if [ -s "$charts_report" ]; then
-  jq -r '.Results[]? | .Target as $t | .Misconfigurations[]? | select(.Status == "FAIL")
-    | [$t, .ID, (.Severity // "UNKNOWN"), (.Title // ""), (.PrimaryURL // "")]
-      + ([.Message, .Resolution] | map(. // "" | gsub("[\t\n]"; " ")))
-    | @tsv' "$charts_report" |
-    awk -F '\t' -v documents="$scan/documents.tsv" '
-      BEGIN {
-        while ((getline line < documents) > 0) {
-          split(line, f, "\t")
-          entry[f[1]] = f[4] "=" f[2] "=" f[3]
-          location[f[1]] = f[3]
-        }
-      }
-      {
-        doc = $1
-        if (!(doc in entry)) sub(/^.*manifests\//, "", doc)
-        render = doc; sub(/\/[^\/]*$/, "", render)
-        scope = location[doc] ~ /^charts\/[^\/]+\/templates\// ? "ours" : "third-party"
-        print $0 "\t" entry[doc] "\t" render "\t" scope
-      }' > "$work/misconfigs"
-else
-  warn "trivy did not scan the charts" "reports/charts.json is missing or empty"
+if [ ! -s "$scan/reports/charts.json" ]; then
+  printf '%s: %s/reports/charts.json is missing or empty\n' "$0" "$scan" >&2
+  exit 1
 fi
 
-printf '"scope","check","severity","title","resolution","owner","location","render","document","message","url"\n' \
-  > "$scan/reports/misconfigurations.csv"
-awk -F '\t' '
-  function csv(s) { gsub(/"/, "\"\"", s); return "\"" s "\"" }
-  {
-    split($8, f, "=")
-    owner = f[2]; sub(/@/, " ", owner)
-    print csv($10) "," csv($2) "," csv($3) "," csv($4) "," csv($7) "," csv(owner) "," csv(f[3]) "," csv($9) "," csv($1) "," csv($6) "," csv($5)
-  }' "$work/misconfigs" >> "$scan/reports/misconfigurations.csv"
-
-# One row per scope and check: <scope> <severity rank> <places> <check>
-# <severity> <title> <url> <resolution> <owner entries>, a place being a
-# template, or a chart for a third-party one. An empty field reads `-`: `read`
-# merges the tabs around an empty one.
-awk -F '\t' "$md_awk"'
-  function orDash(s) { return s == "" ? "-" : s }
-  {
-    k = $10 SUBSEP $2
-    if (!(k in severity)) { severity[k] = $3; title[k] = $4; url[k] = $5; resolution[k] = $7 }
-    split($8, f, "=")
-    place = $10 == "ours" ? f[3] : f[2]
-    if (!((k, place) in seen)) { seen[k, place] = 1; places[k]++ }
-    if (!((k, $8) in seen)) { seen[k, $8] = 1; owners[k] = owners[k] (owners[k] == "" ? "" : ",") $8 }
-  }
-  END {
-    for (k in severity) {
-      split(k, key, SUBSEP)
-      print key[1] "\t" rank(severity[k]) "\t" places[k] "\t" key[2] "\t" \
-        orDash(severity[k]) "\t" orDash(title[k]) "\t" orDash(url[k]) "\t" orDash(resolution[k]) "\t" owners[k]
+# Every failed check with the document it fails on, which documents.tsv traces
+# to its template: <scope> <check> <severity> <title> <resolution> <owner>
+# <location> <document> <message> <url>, the CSV columns, then <alias-path>.
+jq -r '.Results[]? | .Target as $t | .Misconfigurations[]? | select(.Status == "FAIL")
+  | [$t, .ID, .Severity, .Title, .Resolution, .Message, .PrimaryURL] | map(. // "" | gsub("[\t\n]"; " ")) | @tsv' \
+  "$scan/reports/charts.json" |
+  awk -F '\t' -v OFS='\t' -v documents="$scan/documents.tsv" '
+    BEGIN {
+      while ((getline line < documents) > 0) {
+        split(line, f, "\t")
+        owner[f[1]] = f[2]; location[f[1]] = f[3]; path[f[1]] = f[4]
+      }
     }
-  }' "$work/misconfigs" | sort -t "$tab" -k1,1 -k2,2n -k3,3nr -k4,4 > "$work/checks"
+    {
+      sub(/^.*manifests\//, "", $1)
+      scope = location[$1] ~ /\/templates\// ? "ours" : "third-party"
+      print scope, $2, $3, $4, $5, owner[$1], location[$1], $1, $6, $7, path[$1]
+    }' > "$work/misconfigs"
 
-checks_table() { # <scope> <owner-mode> <owner-heading>
-  echo "| | Check | Title | Resolution | $3 |"
-  echo "|-|-|-|-|-|"
-  while IFS="$tab" read -r scope _ _ check severity check_title url resolution owners; do
-    [ "$scope" = "$1" ] || continue
-    printf '%s\t%s\t%s\t%s\t%s\t%s\n' "$severity" "$check" "$url" "$check_title" "$resolution" \
-      "$(owners_cell "$owners" 5 "$2")"
-  done < "$work/checks" |
-    awk -F '\t' "$md_awk"'{
-      id = $3 == "-" ? $2 : "[" $2 "](" $3 ")"
-      printf "| %s | %s | %s | %s | %s |\n", emoji($1), id, cell($4), cell($5), $6
-    }'
+{
+  echo '"scope","check","severity","title","resolution","owner","location","document","message","url"'
+  cut -f1-10 "$work/misconfigs" | sed "s/\"/\"\"/g; s/$tab/\",\"/g; s/^/\"/; s/\$/\"/"
+} > "$scan/reports/misconfigurations.csv"
+
+# One row per failing check of a scope, the most severe first, with every
+# template (ours) or chart (third-party) it fails on.
+checks_table() { # <scope> <heading>
+  awk -F '\t' -v scope="$1" -v blob="$blob" "$md_awk"'
+    $1 == scope {
+      if (!($2 in row)) {
+        rank[$2] = index("CHMLU", substr($3, 1, 1))
+        row[$2] = sprintf("| %s | [%s](%s) | %s | %s |", emoji($3), $2, $10, cell($4), cell($5))
+      }
+      if (index("," where[$2], "," $6 "=" $7 "=") == 0)
+        where[$2] = where[$2] (where[$2] == "" ? "" : ",") $6 "=" $7 "=" $11
+    }
+    END { for (check in row) print rank[check] "\t" check "\t" row[check] " " owners(where[check], blob) " |" }
+  ' "$work/misconfigs" | sort -t "$tab" -k1,1n -k2,2 | cut -f3 > "$work/checks"
+  printf '\n### %s: %d failing checks\n\n' "$2" "$(wc -l < "$work/checks")"
+  [ ! -s "$work/checks" ] || printf '| | Check | Title | Resolution | Where |\n|-|-|-|-|-|\n'
+  cat "$work/checks"
 }
-
-ours=$(awk -F '\t' '$1 == "ours" { n++ } END { print n + 0 }' "$work/checks")
-theirs=$(awk -F '\t' '$1 == "third-party" { n++ } END { print n + 0 }' "$work/checks")
 
 {
   echo "## Trivy: charts"
   echo ""
-  printf "Trivy %s, Kubernetes checks on every render. Report only: no finding fails the job. Each failing resource is in \`misconfigurations.csv\` of the \`trivy-chart-reports\` artifact.\n" \
-    "$(trivy_info Version)"
-  echo ""
-  printf '**%d checks fail on our charts, %d on third-party charts.**\n' "$ours" "$theirs"
-  echo ""
-  echo "### Our charts"
-  echo ""
-  if [ "$ours" -gt 0 ]; then
-    checks_table ours "" Templates
-  else
-    echo "No check fails."
-  fi
-  echo ""
-  echo "### Third-party charts"
-  echo ""
-  if [ "$theirs" -gt 0 ]; then
-    checks_table third-party charts Charts
-  else
-    echo "No check fails."
-  fi
-  not_rendered "Not checked"
+  printf "Trivy %s, Kubernetes checks on every render. Report only: no finding fails the job. %s\n" \
+    "$(trivy --version 2>/dev/null | sed -n 's/^Version: //p')" \
+    "Each failing resource is in \`misconfigurations.csv\` of the \`trivy-chart-reports\` artifact."
+  checks_table ours "Our charts"
+  checks_table third-party "Third-party charts"
+  not_rendered
 } >> "$summary"
-
-warn_renders
-annotate "$work/warnings"

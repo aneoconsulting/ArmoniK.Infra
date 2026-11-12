@@ -1,175 +1,128 @@
 #! /bin/sh
 
 # Renders every packaged release-root chart, with its defaults and with each of
-# its ci/*-values.yaml fixtures, and lists the container images the charts can
-# deploy, each attributed to the chart that owns it. Feeds trivy: the
-# chart-checks job of .github/workflows/linter-helm.yml scans the renders for
+# its ci/*-values.yaml fixtures, and lists the container images of the renders,
+# each with the charts whose templates hold it. Feeds trivy: the chart-checks
+# job of .github/workflows/linter-helm.yml scans the renders for
 # misconfigurations, the scan job of .github/workflows/publish.yml the images
 # for vulnerabilities. Needs helm and mikefarah yq v4.
 #
-# The images come from three places:
-#   - the renders. The images a user can turn on come in through fixtures
-#     enabling them (armonik/ci/optional-images-values.yaml and
-#     rabbitmq-values.yaml); an image a fixture names is a placeholder
-#     (busybox:0.0.0-test), so a fixture's render contributes no image of a
-#     repository that fixture names;
-#   - ArmoniK's image map (global.armonik.imageComponents and versions), for
-#     the images a user picks rather than enables, the workers chiefly;
-#   - operator-images.yaml, for the images an operator picks by itself.
+# An image a user can turn on is listed because a fixture turns it on:
+# armonik/ci/optional-images-values.yaml and rabbitmq-values.yaml exist for
+# that. An image tagged 0.0.0-test is a fixture's placeholder and is left out.
+# operator-images.yaml adds the images an operator picks by itself.
 #
-# Outputs, under OUT:
+# Usage: scan-inputs.sh [-d DIR] [-o DIR] [-k VERSION] [-s CHART [-j N]]
+#   -d DIR      directory holding the packaged charts (default: the repo's dist/)
+#   -o DIR      output directory, cleared first (default: the repo's scan/)
+#   -k VERSION  Kubernetes version to render for
+#   -s CHART    also measure the values deciding which images CHART deploys
+#               (switches.tsv), a few hundred partial renders of it
+#   -j N        renders run at once for -s (default: one per processor)
+#
+# Outputs, under the output directory:
 #   manifests/<chart>/<case>/<n>.yml  document <n> of a render, one file each so
 #                                     that a finding names its document
 #   documents.tsv                     <chart>/<case>/<n>.yml <name>@<version>
 #                                     <location> <alias-path>, the chart whose
 #                                     template rendered the document
 #   renders.tsv                       <chart> <case> <ok|failed> <first error line>
-#   images.tsv                        <image> <uses> <owners>, one line per
-#                                     image, both comma-separated lists: uses
-#                                     are <chart>/<case>, <chart>/<case>/test
-#                                     when only a helm test pod runs it,
-#                                     `image-map` or `operator`; owners are
-#                                     <alias-path>=<name>@<version>=<location>,
-#                                     the charts whose templates hold the image
-#                                     by their path from the release root
-#   stale.tsv                         <image> <operator> for each
-#                                     operator-images.yaml entry whose operator
-#                                     no render carries
-#   switches.tsv                      with -s CHART: <chart> <image> <default>
-#                                     <off> <on>, the values deciding whether
-#                                     CHART deploys each image of its renders
-#                                     (see "Switches" below)
+#   images.tsv                        <image> <uses> <owners>, both
+#                                     comma-separated: a use is <chart>/<case>,
+#                                     <chart>/<case>/test for a helm test pod,
+#                                     or `operator`; an owner is
+#                                     <name>@<version>=<location>=<alias-path>,
+#                                     once a chart, by its longest path from a
+#                                     release root
+#   switches.tsv                      with -s: <chart> <image> <on|off> <off
+#                                     with> <on with>, see "Switches" below
 #
 # A location is a path in this repository: the template of one of our charts,
 # or, for a third-party chart, the line of our Chart.yaml that declares it or
 # its nearest third-party ancestor, where its version is set
-# (charts/armonik-operators/Chart.yaml#L33). An image-map entry is located at
-# its line of armonik-common's values.yaml.
+# (charts/armonik-operators/Chart.yaml#L33).
 #
 # A failed render is recorded, not fatal: a chart's bare defaults may be
-# invalid on purpose (armonik-compute-plane has no partition, armonik-ingress
-# no URLs Secret), its fixtures then covering it. test/matrix.sh is what
-# asserts which renders must succeed.
+# invalid on purpose (armonik-compute-plane has no partition), its fixtures
+# then covering it. test/matrix.sh is what asserts which renders must succeed.
 #
-# Switches. Whether a release deploys an image hangs on its values, and a
-# default can be off in production (Seq), so -s CHART measures it on CHART's
-# renders, one change at a time:
-#   - each `enabled` or `deploy` value that is true in CHART's coalesced
-#     defaults is set to false on its own, each entry of a `partitions` map to
-#     null, and each setting of each fixture is applied on its own over the
-#     defaults: a change that removes an image turns it off, one that adds it
-#     turns it on;
+# Switches. Whether a release deploys an image hangs on its values, so -s
+# measures it on renders of CHART, one change at a time:
+#   - each `enabled` or `deploy` value that is true in CHART's computed
+#     defaults is set to false, each entry of a `partitions` map to null, and
+#     each setting of each fixture is applied alone over the defaults: a
+#     change that removes an image turns it off, one that adds it turns it on;
 #   - each setting of each fixture is dropped from it, with the maps it alone
-#     fills: the images the fixture adds that leave the render need it, the
-#     images it removes that come back are off with it and the rest of the
-#     fixture (another table storage for MongoDB, say).
-# A setting several fixtures share is applied on its own once. The defaults,
-# the fixtures and every `global` setting are rendered whole. Any other
-# setting lies under one subchart, the deepest whose alias path prefixes its
-# keys, and is rendered on a copy of CHART keeping that subchart's templates,
-# every helper, and only the charts it may read values from (its ancestors,
-# the libraries and the charts importing values into them): values,
-# conditions and helpers still resolve as in CHART, the images of the other
-# subcharts are those of the defaults, a render the copy breaks is retried
-# whole, and a copy whose defaults do not render the images CHART's do is
-# rendered whole instead. CHART's own settings are rendered whole when its
-# templates name an image, skipped otherwise.
-# <default> is `on` when the defaults deploy the image, `off` otherwise. <off>
-# and <on> list the alternatives turning it off and on, ` | `-separated, each
-# a `<key>=<value>` setting or several joined by ` & ` that a fixture needs
-# together; <off> never holds turning the control or compute plane off (see
-# switches). A render a change breaks proves nothing and is left out. Neither
-# list catches a switch that is not a boolean, nor settings needed together
-# that no fixture holds.
+#     fills: when that brings an image back to what the defaults do with it,
+#     the fixture needs the setting to switch the image.
+# <on|off> is what the defaults do. <off with> and <on with> list the
+# alternatives, ` | `-separated, each a `<key>=<value>` setting or several
+# joined by ` & ` that a fixture needs together; <off with> never holds
+# turning the control or compute plane off, which run in this release or in
+# their own. A render a change breaks proves nothing. A fixture's file
+# (ci/<case>-values.yaml) stands for an image none of its settings could be
+# tied to. Neither list catches a switch that is not a boolean, nor settings
+# needed together that no fixture holds.
+#
+# The defaults, the fixtures and every `global` setting are rendered whole.
+# Any other setting lies under one subchart, the deepest whose alias path
+# prefixes its keys, and is rendered on a copy of CHART keeping every chart
+# and helper but only the templates of that subchart and of those below it:
+# values, conditions and helpers resolve as in CHART at a fraction of the
+# cost, the images of the other charts being those of the whole render the
+# change starts from. A render the copy breaks is retried whole, and a copy
+# whose defaults miss an image CHART renders is not used. CHART's own settings
+# are rendered whole when its templates name an image, skipped otherwise.
 
 set -eu
 
-self="$0"
-here=$(cd "$(dirname "$self")" && pwd)
+here=$(cd "$(dirname "$0")" && pwd)
 dist="$here/../dist"
 out="$here/../scan"
 # test/matrix.sh's default: the compute plane refuses anything below 1.29.
 kube_version=1.31.0
 switch_chart=
-switch_archive=
 jobs=$(getconf _NPROCESSORS_ONLN 2>/dev/null || echo 2)
-probe_job=
 tab=$(printf '\t')
-sep=$(printf '\001')
 
-usage() {
-  cat <<USAGE
-Usage: $self [-d DIR] [-o DIR] [-k VERSION] [-s CHART [-j N]] [-h]
-
-Renders the packaged charts and lists the images they can deploy.
-
-  -d DIR      directory holding the packaged charts (default: the repo's dist/)
-  -o DIR      output directory, cleared first (default: the repo's scan/)
-  -k VERSION  Kubernetes version to render for (default: $kube_version)
-  -s CHART    also measure the values deciding which images CHART deploys
-              (switches.tsv), a few hundred renders, most of one subchart alone
-  -j N        renders run at once for -s (default: $jobs)
-  -h          show this help
-USAGE
-}
-
-while getopts ':d:o:k:s:j:hP:' opt; do
+while getopts 'd:o:k:s:j:' opt; do
   case "$opt" in
     d) dist=$OPTARG ;;
     o) out=$OPTARG ;;
     k) kube_version=$OPTARG ;;
     s) switch_chart=$OPTARG ;;
     j) jobs=$OPTARG ;;
-    h) usage; exit 0 ;;
-    # Internal: one probe of switches(), the script re-entering itself.
-    P) probe_job=$OPTARG ;;
-    *)
-      printf '%s: invalid option -- %s\n\n' "$self" "$OPTARG" >&2
-      usage >&2
-      exit 2
-      ;;
+    *) printf 'Usage: %s [-d DIR] [-o DIR] [-k VERSION] [-s CHART [-j N]]\n' "$0" >&2; exit 2 ;;
   esac
 done
-shift $((OPTIND - 1))
 
-if [ -z "$probe_job" ]; then
-  if [ "$#" -gt 0 ]; then
-    printf "%s: unexpected argument '%s'\n" "$self" "$1" >&2
-    exit 2
-  fi
-
-  # The Python yq wrapper shares the name and takes jq syntax.
-  if ! yq --version 2>/dev/null | grep -q mikefarah; then
-    printf '%s: needs mikefarah yq v4 (https://github.com/mikefarah/yq)\n' "$self" >&2
-    exit 2
-  fi
-
-  set -- "$dist"/*.tgz
-  if [ ! -f "$1" ]; then
-    printf '%s: no packaged chart in %s; run package-charts.sh first\n' "$self" "$dist" >&2
-    exit 2
-  fi
-
-  rm -rf "$out"
-  mkdir -p "$out/manifests"
-  out=$(cd "$out" && pwd)
-  work=$(mktemp -d)
-  trap 'rm -rf "$work"' EXIT
-  : > "$out/renders.tsv"
-  : > "$work/rendered"
-  : > "$work/graph"
-  : > "$work/map"
-  : > "$work/documents"
-  err="$work/stderr"
-  # The switch chart's renders also serve as the full probes of switches().
-  probes="$work/probes"
-  settings="$work/settings"
-  mkdir -p "$probes" "$settings"
-  : > "$work/meta"
+# The Python yq wrapper shares the name and takes jq syntax.
+if ! yq --version 2>/dev/null | grep -q mikefarah; then
+  printf '%s: needs mikefarah yq v4 (https://github.com/mikefarah/yq)\n' "$0" >&2
+  exit 2
+fi
+set -- "$dist"/*.tgz
+if [ ! -f "$1" ]; then
+  printf '%s: no packaged chart in %s; run package-charts.sh first\n' "$0" "$dist" >&2
+  exit 2
 fi
 
-# Shared by every awk below: one spelling per image, so that
-# "docker.io/library/busybox", "busybox" and "busybox:latest" are one image.
+rm -rf "$out"
+mkdir -p "$out/manifests"
+work=$(mktemp -d)
+trap 'rm -rf "$work"' EXIT
+: > "$out/renders.tsv"
+: > "$work/found"
+
+# A workflow command: GitHub Actions shows it as an annotation.
+warn() {
+  printf '::warning title=%s::%s\n' "$1" "$2"
+}
+
+# One spelling per image: "docker.io/library/busybox", "busybox" and
+# "busybox:latest" are one image. Anything that is not one reference (a
+# template leftover, prose) is not an image, nor is a fixture's placeholder.
+# shellcheck disable=SC2016,SC2089 # awk program, not shell
 awk_lib='
   function norm(r,   n, p) {
     sub(/^(index\.)?docker\.io\//, "", r)
@@ -178,19 +131,9 @@ awk_lib='
     if (index(r, "@") == 0 && index(p[n], ":") == 0) r = r ":latest"
     return r
   }
-  function repo(r,   n, p) {
-    sub(/@.*$/, "", r)
-    n = split(r, p, "/")
-    if (index(p[n], ":")) sub(/:[^:\/]*$/, "", r)
-    return r
-  }
-  # One reference: anything else (a template leftover, prose) is not an image.
-  function isref(r) { return r ~ /^[A-Za-z0-9][A-Za-z0-9._\/:@-]*$/ }
-  # Appends <item> to the <sep>-separated <list> unless already there.
-  function addto(list, item, sep) {
-    if (item == "") return list
-    if (list == "") return item
-    return index(sep list sep, sep item sep) ? list : list sep item
+  function valid(r) { return r ~ /^[A-Za-z0-9][A-Za-z0-9._\/:@-]*$/ && r !~ /:0\.0\.0-test$/ }
+  function add(list, item, sep) {
+    return list == "" ? item : index(sep list sep, sep item sep) ? list : list sep item
   }
 '
 
@@ -199,11 +142,9 @@ awk_lib='
 # documentation. Beyond the `image` fields of pod specs and of CRs (percona's
 # PerconaServerMongoDB, the Prometheus CR), operators take the images of what
 # they spawn as flags (cert-manager's ACME solver, prometheus-operator's config
-# reloader) or env.
-# A block marked `enabled: false` deploys nothing: a CR names the image of a
-# component it leaves off (the PerconaServerMongoDB's pmm, backup and
-# logcollector).
-# shellcheck disable=SC2016 # yq expressions, not shell
+# reloader) or env. A block marked `enabled: false` deploys nothing: a CR names
+# the image of a component it leaves off (the PerconaServerMongoDB's backup).
+# shellcheck disable=SC2016,SC2089 # yq expressions, not shell
 in_render='
   select(.kind != "CustomResourceDefinition") |
   del(.. | select(tag == "!!map" and .enabled == false)) |
@@ -216,594 +157,329 @@ in_render='
   | [di, ., $test] | @tsv
 '
 
-# The repositories a fixture names.
-# shellcheck disable=SC2016
-in_fixture='
-  (
-    .. | select(tag == "!!map" and has("repository"))
-       | select(.repository | tag == "!!str" and . != "")
-       | select(path | map(tostring) | join(".") | test("(?i)image"))
-       | [(.registry // "" | tostring), .repository] | map(select(. != "")) | join("/")
-  ),
-  (
-    .. | select(tag == "!!str" and . != "")
-       | select(path | .[-1] | tostring | test("(?i)image$"))
-  )
-'
-
-render() { # render <archive> <chart> <case> [<fixture>]
-  archive=$1
-  chart=$2
-  case_name=$3
-  fixture=${4:-}
-  manifest="$work/render.yaml"
-  documents="$out/manifests/$chart/$case_name"
-  placeholders="$work/placeholders"
-  probe_name=
-  if [ "$chart" = "$switch_chart" ]; then
-    # The full probes of switches(): the defaults, then each fixture.
-    if [ -z "$fixture" ]; then
-      probe_name=base
-      printf 'base\tbase\t\t\n' >> "$work/meta"
-    else
-      probe_name=fix-$case_name
-      placeholders="$settings/$case_name.placeholders"
-      printf '%s\tfixture\t%s\t\n' "$probe_name" "$case_name" >> "$work/meta"
-    fi
-  fi
-  : > "$placeholders"
-  [ -z "$fixture" ] || yq ea -N "$in_fixture" "$fixture" > "$placeholders"
-  set -- --kube-version "$kube_version"
-  [ -z "$fixture" ] || set -- "$@" -f "$fixture"
-  # stderr apart: helm warnings would corrupt the manifest stream.
-  if helm template scan "$archive" "$@" >"$manifest" 2>"$err"; then
-    printf '%s\t%s\tok\t\n' "$chart" "$case_name" >> "$out/renders.tsv"
-  else
-    reason=$(grep -m1 -i 'error' "$err" || head -n1 "$err")
-    printf '%s\t%s\tfailed\t%s\n' "$chart" "$case_name" "$reason" >> "$out/renders.tsv"
-    printf '%s: %s/%s did not render: %s\n' "$self" "$chart" "$case_name" "$reason" >&2
-    return 0
-  fi
-
-  images_of "$manifest" "$placeholders" "$work/sources" > "$work/images"
-  if [ "$(wc -l < "$work/sources")" -ne "$(grep -c '^---$' "$manifest")" ]; then
-    printf '%s: %s/%s: not one "# Source:" line per document, cannot attribute its images\n' \
-      "$self" "$chart" "$case_name" >&2
-    exit 1
-  fi
-  if [ -n "$probe_name" ]; then
-    cut -f1,3 "$work/images" | sort -u > "$probes/$probe_name.pairs"
-    cut -f1 "$probes/$probe_name.pairs" | sort -u > "$probes/$probe_name"
-  fi
-  mkdir -p "$documents"
-  yq -s "\"$documents/\" + \$index" "$manifest"
-  awk -v prefix="$chart/$case_name/" '{ print prefix (NR - 1) ".yml\t" $0 }' "$work/sources" >> "$work/documents"
-  awk -F '\t' -v OFS='\t' -v use="$chart/$case_name" \
-    '{ print $1, use ($2 ? "/test" : ""), $3, $4 }' "$work/images" >> "$work/rendered"
-}
-
-# The images of a render but those its fixture names as placeholders, as
-# <image> <1 for a test pod, else 0> <alias path> <template>. helm heads every
-# document with the template it comes from, whose path holds the alias path of
-# the owning chart: armonik/charts/operators/charts/kube-prometheus/templates/
-# x.yaml is templates/x.yaml of armonik/operators/kube-prometheus. Those
-# sources, one line per document, go to <sources>.
-images_of() { # images_of <manifest> <placeholders> <sources>
-  awk '/^# Source: / {
-    s = substr($0, 11)
-    i = index(s, "/templates/")
-    path = substr(s, 1, i - 1)
-    gsub(/\/charts\//, "/", path)
-    print path "\t" substr(s, i + 1)
-  }' "$1" > "$3"
-  yq e -N "$in_render" "$1" |
-    awk -F '\t' -v sources="$3" -v placeholders="$2" "$awk_lib"'
-      BEGIN {
-        while ((getline line < sources) > 0) source[n++] = line
-        while ((getline line < placeholders) > 0) if (isref(line)) skip[repo(norm(line))] = 1
-      }
-      isref($2) && !(repo(norm($2)) in skip) { print norm($2) "\t" ($3 == "true") "\t" source[$1] }'
-}
-
-# Every chart of a packaged chart as <alias path> <name>@<version> <directory>,
-# the alias path starting with the root's name.
-walk() { # walk <chart-dir> <alias-path>
-  printf '%s\t%s\t%s\n' "$2" "$(yq -N '[.name, .version] | join("@")' "$1/Chart.yaml")" "$1"
+# Every chart of an unpacked chart as <alias path> <name>@<version> <base>
+# <directory>, the alias path starting with the root's name. Our charts are the directories of
+# $here: the base of one is its own, a template path completing it, the base of
+# a third-party chart is where its nearest ancestor of ours declares the
+# dependency leading to it: the line its list item starts at, read from the
+# text, yq's line numbers drifting after a head comment.
+walk() { # walk <chart-dir> <alias-path> [<base of a third-party chart>]
+  id=$(yq -N '[.name, .version] | join("@")' "$1/Chart.yaml")
+  base=${3:-}
+  [ ! -f "$here/${id%@*}/Chart.yaml" ] || base="charts/${id%@*}"
+  printf '%s\t%s\t%s\t%s\n' "$2" "$id" "$base" "$1"
   yq -N '.dependencies[]? | [.name, (.alias // .name)] | @tsv' "$1/Chart.yaml" |
     while IFS="$tab" read -r name alias; do
+      [ -d "$1/charts/$name" ] || continue
+      below=$base
+      [ "$base" = "${3:-}" ] || below="$base/Chart.yaml#L$(awk -v dep="$alias" '
+        /^ *- / { start = NR }
+        $0 ~ "^ *(- )?(name|alias): *[\"\047]?" dep "[\"\047]? *(#.*)?$" { line = start }
+        END { print line }' "$here/../$base/Chart.yaml")"
       # Subshell: the recursion reuses this function's variables.
-      [ ! -d "$1/charts/$name" ] || (walk "$1/charts/$name" "$2/$alias")
+      (walk "$1/charts/$name" "$2/$alias" "$below")
     done
 }
 
-image_map() { # image_map <chart-dir> <chart>: component <name> <repository> <version> <alias-path>
-  common="$1/charts/armonik-common"
-  [ -d "$common" ] || return 0
-  # The root's own global.armonik over armonik-common's, as import-values does.
-  # shellcheck disable=SC2016
-  yq ea -N '
-    . as $f ireduce ({}; . * $f) | .global.armonik as $a
-    | ($a.versions // {}) as $v
-    | ($a.imageComponents // {}) | to_entries | .[]
-    | .value as $c
-    | ["component", $c, .key, ($v[$c] // "" | tostring)] | @tsv' \
-    "$common/values.yaml" "$1/values.yaml" | sed "s#\$#$tab$2/armonik-common#"
-}
-
-# Our charts, as `own <name> <dir>`, the line of each dependency they declare,
-# as `dep <name> <dir> <alias> <line>`, and the line of each image-map entry,
-# as `mapline <repository> <line>`: where a location points. Read from the
-# text, yq's line numbers drifting after a head comment.
-repo_charts() {
-  for chart_yaml in "$here"/*/Chart.yaml; do
-    dir="charts/$(basename "$(dirname "$chart_yaml")")"
-    name=$(yq '.name' "$chart_yaml")
-    printf 'own\t%s\t%s\n' "$name" "$dir"
-    # An item starts at the list's own indentation; its keys sit two further.
-    awk -v prefix="dep$tab$name$tab$dir$tab" '
-      function flush() { if (start) print prefix (alias != "" ? alias : dep) "\t" start }
-      function value(s) { sub(/^[^:]*:[ \t]*/, "", s); sub(/[ \t]+#.*$/, "", s); gsub(/["\047]/, "", s); return s }
-      /^dependencies:/ { in_deps = 1; next }
-      in_deps && /^[^ #-]/ { flush(); start = 0; in_deps = 0 }
-      !in_deps { next }
-      {
-        line = $0
-        match(line, /^ */)
-        indent = RLENGTH
-        if (item == "" && substr(line, indent + 1, 2) == "- ") item = indent
-        if (indent == item && substr(line, indent + 1, 2) == "- ") {
-          flush(); start = NR; dep = ""; alias = ""
-          line = substr(line, 1, indent) "  " substr(line, indent + 3)
-        }
-        match(line, /^ */)
-        if (RLENGTH != item + 2) next
-        if (line ~ /^ *name:/) dep = value(line)
-        if (line ~ /^ *alias:/) alias = value(line)
+# helm heads every document with the template it comes from, whose path holds
+# the alias path of the owning chart: armonik/charts/operators/charts/
+# kube-prometheus/templates/x.yaml is templates/x.yaml of
+# armonik/operators/kube-prometheus.
+render() { # render <archive> <chart>/<case> [<fixture>]
+  use=$2
+  manifest="$work/render.yaml"
+  # stderr apart: helm warnings would corrupt the manifest stream.
+  if ! helm template scan "$1" --kube-version "$kube_version" ${3:+-f "$3"} >"$manifest" 2>"$work/stderr"; then
+    reason=$(grep -m1 -i 'error' "$work/stderr" || head -n1 "$work/stderr")
+    printf '%s\t%s\tfailed\t%s\n' "${use%/*}" "${use#*/}" "$reason" >> "$out/renders.tsv"
+    # A fixture is a valid render by contract; defaults need not be.
+    [ "${use#*/}" = defaults ] || warn "$use did not render" "$reason"
+    return 0
+  fi
+  printf '%s\t%s\tok\t\n' "${use%/*}" "${use#*/}" >> "$out/renders.tsv"
+  grep '^# Source: ' "$manifest" > "$work/sources"
+  if [ "$(wc -l < "$work/sources")" -ne "$(grep -c '^---$' "$manifest")" ]; then
+    printf '%s: %s: not one "# Source:" line per document\n' "$0" "$use" >&2
+    exit 1
+  fi
+  mkdir -p "$out/manifests/$use"
+  yq -s "\"$out/manifests/$use/\" + \$index" "$manifest"
+  yq e -N "$in_render" "$manifest" |
+    awk -F '\t' -v OFS='\t' -v use="$use" -v documents="$out/documents.tsv" "$awk_lib"'
+      BEGIN { n = 0 }
+      FILENAME == ARGV[1] { chart[$1] = $2; base[$1] = $3; next }
+      FILENAME == ARGV[2] {
+        path = substr($0, 11)
+        template = substr(path, index(path, "/templates/"))
+        path = substr(path, 1, length(path) - length(template))
+        gsub(/\/charts\//, "/", path)
+        location = base[path] (base[path] ~ /\/Chart\.yaml/ ? "" : template)
+        owner[n] = chart[path] "=" location "=" path
+        print use "/" n ".yml", chart[path], location, path >> documents
+        n++
+        next
       }
-      END { if (in_deps) flush() }' "$chart_yaml"
-  done
-  # shellcheck disable=SC2016
-  yq -N '.global.armonik.imageComponents | keys | .[]' "$here/armonik-common/values.yaml" |
-    while IFS= read -r key; do
-      printf 'mapline\t%s\t%s\n' "$key" \
-        "$(grep -n -m1 -F "  $key:" "$here/armonik-common/values.yaml" | cut -d: -f1)"
-    done
+      valid($2) { print norm($2), use ($3 == "true" ? "/test" : ""), owner[$1] }
+    ' "$work/graph" "$work/sources" - >> "$work/found"
 }
 
 # ---- Switches (-s), see the head comment.
 
-# One render of the switch chart over extra values files: $probes/<name> lists
-# its images, and is missing when the render fails; $probes/<name>.pairs keeps
-# them with their alias paths, as render() does for the full renders. A scoped
-# probe renders the copy of the chart at <scope> (see scope) and takes the
-# images of every other chart from the pairs of the full render <base>.
-probe() { # probe <name> <placeholders> <scope> <base> [<values-file>...]
-  name=$1
-  placeholders=$2
-  scope=$3
-  base=$4
-  shift 4
-  # Each values file becomes `-f <file>`, in order.
-  for f; do
-    set -- "$@" -f "$f"
-    shift
-  done
-  chart=$switch_archive
-  if [ -n "$scope" ]; then
-    [ -f "$probes/$base.pairs" ] || return 0
-    chart=$(scope_copy "$scope")
-  fi
-  # A copy lacks the charts its scope does not need, so a render it breaks
-  # is retried whole.
-  if helm template scan "$chart" --kube-version "$kube_version" "$@" \
-       >"$probes/$name.yaml" 2>/dev/null ||
-     { [ -n "$scope" ] && [ "$name" != scope-check ] && scope= &&
-       helm template scan "$switch_archive" --kube-version "$kube_version" "$@" \
-         >"$probes/$name.yaml" 2>/dev/null; }; then
-    images_of "$probes/$name.yaml" "$placeholders" "$probes/$name.sources" | cut -f1,3 | sort -u \
-      > "$probes/$name.pairs"
-    rm -f "$probes/$name.sources"
-    {
-      [ -z "$scope" ] ||
-        awk -F '\t' -v scope="$scope" '$2 != scope && index($2, scope "/") != 1 { print $1 }' \
-          "$probes/$base.pairs"
-      cut -f1 "$probes/$name.pairs"
-    } | sort -u > "$probes/$name.part"
-    mv "$probes/$name.part" "$probes/$name"
-  fi
-  rm -f "$probes/$name.yaml"
-}
-
-# At most $jobs probes at once, a batch at a time.
-# One probe per line, each argument ended by \001, so that the empty ones
-# survive the split.
-queue() { # queue <probe arguments>
-  for arg; do printf '%s%s' "$arg" "$sep"; done >> "$work/jobs"
-  printf '\n' >> "$work/jobs"
-}
-# Runs the queued probes, $jobs at a time. A probe that fails proves nothing,
-# as a render that fails.
-run_jobs() {
-  [ -s "$work/jobs" ] || return 0
-  tr '\n' '\000' < "$work/jobs" |
-    SCAN_WORK=$work SCAN_ARCHIVE=$switch_archive SCAN_CHART=$switch_chart \
-      xargs -0 -n 1 -P "$jobs" sh "$self" -k "$kube_version" -P ||
-    printf '%s: some switch probes failed\n' "$self" >&2
-  : > "$work/jobs"
-}
-
-# A chart's default values as helm coalesces them: every chart's values.yaml
-# under its alias path, but its globals, which join the root's; a parent's
-# over its children's.
-coalesce() { # coalesce <chart>, its charts in $work/tree as <depth> <directory> <dotted alias path>
-  awk -F '\t' -v OFS='\t' '{
-    keys = $1
-    sub(/^[^\/]*\/?/, "", keys)
-    gsub(/\//, ".", keys)
-    print (keys == "" ? 0 : split(keys, part, ".")), $3, keys
-  }' "$work/walk-$1" | sort -t "$tab" -k1,1nr > "$work/tree"
-  i=0
-  set --
-  while IFS="$tab" read -r _ dir keys; do
-    i=$((i + 1))
-    [ -f "$dir/values.yaml" ] || continue
-    layer="$work/layer-$i.yaml"
-    if [ -z "$keys" ]; then
-      cp "$dir/values.yaml" "$layer"
+# The probes of one values document, as <kind> <setting> <values as JSON>:
+# $kind `flip` for the computed defaults, `set` for a fixture, which gives a
+# `set` and a `drop` for each of its settings. A setting is a value outside a
+# list, a list counting as one; it is dropped at the shortest key prefix
+# holding no other setting.
+# shellcheck disable=SC2016 # jq program, not shell
+probes_jq='
+  def settings: paths(type != "object" and . != null) | select(all(.[]; type == "string"));
+  def probe($kind; $path; $value; $values):
+    [$kind, ($path | join(".")) + "=" + ($value | if type == "string" then gsub("[\t\n]+"; " ") else tojson end),
+     ($path | join("/")), ($values | tojson)] | join("\t");
+  . as $doc
+  | if $kind == "flip" then
+      ((paths(. == true) | select(.[-1] == "enabled" or .[-1] == "deploy") | [., false]),
+       (paths(. != null) | select(length > 1 and .[-2] == "partitions") | [., null]))
+      # helm copies the globals into every subchart: they are set at the root.
+      | . as [$path, $value]
+      | select($path | all(.[]; type == "string") and (.[1:] | index("global") | not))
+      | probe("flip"; $path; $value; {} | setpath($path; $value))
     else
-      # with_entries rather than del, which would edit $v in place.
-      # shellcheck disable=SC2016
-      KEYS=$keys VALUES=$dir/values.yaml yq -n '
-        (load(strenv(VALUES)) // {}) as $v
-        | setpath(strenv(KEYS) | split("."); $v | with_entries(select(.key != "global")))
-          * ($v | with_entries(select(.key == "global")))' > "$layer"
-    fi
-    set -- "$@" "$layer"
-  done < "$work/tree"
-  # shellcheck disable=SC2016
-  yq ea '. as $f ireduce ({}; . * $f)' "$@"
-}
+      settings as $path
+      | ($doc | getpath($path)) as $value
+      | (first(range(1; $path | length) as $d | select([$doc | getpath($path[:$d]) | settings] | length == 1) | $d)
+         // ($path | length)) as $depth
+      | probe("set"; $path; $value; {} | setpath($path; $value)),
+        probe("drop"; $path; $value; $doc | delpaths([$path[:$depth]]))
+    end'
 
-# Where a setting can change images, from its keys joined by \001: the alias
-# path of the deepest chart its keys lead into, empty for a global, which any
-# chart may read, and for a value of the switch chart itself when its own
-# templates name an image, `-` when they name none.
-scope_of() { # scope_of <joined keys>
-  case "$1" in
-    global|global"$sep"*) return 0 ;;
-  esac
-  awk -F '\t' -v keys="$1" -v sep="$sep" -v root="$switch_chart" -v whole="$root_images" '
-    {
-      k = $3
-      gsub(/\./, sep, k)
-      if (k != "" && (keys == k || index(keys, k sep) == 1) && length(k) > length(best)) best = k
-    }
-    END {
-      if (best == "") { if (!whole) print "-"; exit }
-      gsub(sep, "/", best)
-      print root "/" best
-    }' "$work/tree"
-}
-
-# scope_of, with the copy of a subchart scope prepared (see scope): empty when
-# that copy cannot stand in for the switch chart.
-scope_for() { # scope_for <joined keys>
-  found=$(scope_of "$1")
-  case "$found" in
-    - | "") printf '%s\n' "$found" ;;
-    *) scope "$found" ;;
-  esac
-}
-
-# The copy of the switch chart rendering only the chart at <scope> and its
-# subcharts: every template elsewhere goes, helpers aside, so that helm still
-# evaluates values, conditions and helpers in the switch chart's context.
-# Hard links keep the copies cheap.
-scope_copy() { # scope_copy <scope>: its chart directory
-  printf '%s/%s/%s\n' "$work/scopes" "$(printf '%s' "$1" | tr '/' '_')" "$switch_chart"
-}
-
-# Removes from <dir> every dependency off the path to <rel> but those that can
-# still reach it: a library, or one importing values into its parent. A
-# sibling's values and conditions never reach a chart otherwise, its globals
-# flowing down only. Each Chart.yaml is replaced, not edited, the copy being
-# hard-linked to the archive.
-trim() { # trim <dir> <rel>: rel being charts/<name>/[charts/<name>/...]
-  rel=${2#charts/}
-  [ "$rel" != "$2" ] || return 0
-  on=${rel%%/*}
-  drop=$(yq '.dependencies[] | select(has("import-values") | not) | .name' "$1/Chart.yaml" |
-    while IFS= read -r dep; do
-      [ "$dep" != "$on" ] || continue
-      [ "$(yq '.type // ""' "$1/charts/$dep/Chart.yaml" 2>/dev/null)" != library ] || continue
-      rm -rf "${1:?}/charts/$dep"
-      printf '%s\n' "$dep"
-    done)
-  # shellcheck disable=SC2016
-  DROP=$drop yq '.dependencies |= map(select(.name as $n | strenv(DROP) | split("\n") | all_c(. != $n)))' \
-    "$1/Chart.yaml" > "$1/Chart.yaml.new"
-  rm -f "$1/Chart.lock"
-  mv -f "$1/Chart.yaml.new" "$1/Chart.yaml"
-  trim "$1/charts/$on" "${rel#"$on"/}"
-}
-
-# Prepares <scope> and prints it, or prints nothing when its copy renders the
-# defaults differently from the full render, which then stands in.
-scope() { # scope <scope>
-  if ! grep -q "^$1$tab" "$work/scopes.tsv"; then
-    copy=$(scope_copy "$1")
-    mkdir -p "$(dirname "$copy")"
-    cp -R -l "$work/chart/$switch_chart" "$copy" 2>/dev/null ||
-      { rm -rf "$copy"; cp -R "$work/chart/$switch_chart" "$copy"; }
-    dir=$(awk -F '\t' -v scope="$1" -v root="$switch_chart" '
-      { k = $3; gsub(/\./, "/", k) } root "/" k == scope { print $2 }' "$work/tree")
-    keep="$copy${dir#"$work/chart/$switch_chart"}/"
-    # The archive is already filtered; read as a directory, the root's
-    # .helmignore (tests/) would also apply to every subchart's files.
-    find "$copy" -name .helmignore -exec rm -f {} +
-    trim "$copy" "${keep#"$copy"/}"
-    # $keep holds no glob character: a mktemp path and chart aliases.
-    find "$copy" -path '*/templates/*' -type f ! -name '_*' ! -name '*.tpl' ! -path "$keep*" -exec rm -f {} +
-    probe scope-check /dev/null "$1" base
-    if [ -f "$probes/scope-check" ] && cmp -s "$probes/scope-check" "$probes/base"; then
-      printf '%s\tok\n' "$1" >> "$work/scopes.tsv"
-    else
-      printf '%s: %s does not render alone as in %s, rendering %s whole for it\n' \
-        "$self" "$1" "$switch_chart" "$switch_chart" >&2
-      printf '%s\tfull\n' "$1" >> "$work/scopes.tsv"
-    fi
-    rm -f "$probes/scope-check" "$probes/scope-check.pairs"
+# One probe, as <probe file prefix> <chart> <scope> <base pairs>: the images of
+# <chart> rendered over <prefix>.json, in <prefix>.images. A scoped probe
+# renders the copy of the switch chart at <scope> and takes the images of every
+# other chart from the whole render <base pairs> lists; a render the copy
+# breaks is retried whole. A probe that does not render leaves no image list.
+# shellcheck disable=SC2016 # run by the pool's shells
+probe_sh='
+  images() {
+    helm template scan "$1" --kube-version "$kube_version" -f "$prefix.json" > "$prefix.yaml" 2>/dev/null &&
+      yq e -N "$in_render" "$prefix.yaml" | awk -F "\t" "$probe_awk" > "$prefix.own"
+  }
+  prefix=$1
+  if [ "$3" != - ] && images "$2"; then
+    awk -F "\t" -v scope="$3" "\$2 != scope && index(\$2, scope \"/\") != 1 { print \$1 }" "$4" >> "$prefix.own"
+  else
+    images "$switch_archive" || rm -f "$prefix.own"
   fi
-  grep -q "^$1${tab}ok\$" "$work/scopes.tsv" && printf '%s\n' "$1"
-  return 0
-}
+  [ ! -f "$prefix.own" ] || sort -u "$prefix.own" > "$prefix.images"
+  rm -f "$prefix.yaml" "$prefix.own"'
 
-# switches.tsv, from the full renders render() left in $probes and the probes
-# queued here.
+# switches.tsv, from the images render() found in the switch chart's renders
+# and those of each probe.
 switches() {
-  : > "$work/scopes.tsv"
-  : > "$work/seen"
-  : > "$work/jobs"
-  if [ ! -f "$probes/base" ]; then
-    printf '%s: %s does not render with its defaults, no switches.tsv\n' "$self" "$switch_chart" >&2
+  probes="$work/probes"
+  mkdir "$probes" "$work/scopes"
+  # Each whole render: its images, each with the alias path of its chart.
+  awk -F '\t' -v OFS='\t' -v dir="$probes" -v chart="$switch_chart" '
+    { split($2, use, "/"); split($3, owner, "=") }
+    use[1] == chart { print $1, owner[3] > (dir "/" use[2] ".pairs") }' "$work/found"
+  if [ ! -f "$probes/defaults.pairs" ]; then
+    printf '%s: %s does not render with its defaults, no switches.tsv\n' "$0" "$switch_chart" >&2
     return 0
   fi
-
-  root_images=$(awk -F '\t' -v root="$switch_chart" '$2 == root { print 1; exit }' "$probes/base.pairs")
-  coalesce "$switch_chart" > "$work/coalesced.yaml"
-  # As <value> <keys as JSON> <keys joined by \001> <dotted keys>.
-  # shellcheck disable=SC2016
-  { TAB=$tab SEP=$sep yq -N '.. | select(tag == "!!bool" and . == true) | path
-           | select(.[-1] == "enabled" or .[-1] == "deploy")
-           | ["false", to_json(0), join(strenv(SEP)), join(".")] | join(strenv(TAB))' "$work/coalesced.yaml"
-    # A partition set to null is removed: the compute-plane's own switch for
-    # its workers.
-    TAB=$tab SEP=$sep yq -N '.. | select(tag == "!!map" and (path | length) > 0 and (path | .[-1]) == "partitions") | .[]
-           | select(tag != "!!null") | path
-           | ["null", to_json(0), join(strenv(SEP)), join(".")] | join(strenv(TAB))' "$work/coalesced.yaml"
-  } > "$work/flips"
-  n=0
-  while IFS="$tab" read -r value keys joined dotted; do
-    n=$((n + 1))
-    scope=$(scope_for "$joined")
-    [ "$scope" != - ] || continue
-    KEYS=$keys VALUE=$value yq -n 'setpath(env(KEYS); env(VALUE))' > "$settings/flip-$n.yaml"
-    printf 'flip-%s\tflip\t\t%s=%s\n' "$n" "$dotted" "$value" >> "$work/meta"
-    queue "flip-$n" /dev/null "$scope" base "$settings/flip-$n.yaml"
-    printf '%s\t%s\n' "$keys" "$value" >> "$work/seen"
-  done < "$work/flips"
-
-  for fixture in "$here/$switch_chart"/ci/*-values.yaml; do
-    [ -f "$fixture" ] || continue
-    case_name=$(basename "$fixture" -values.yaml)
-    placeholders="$settings/$case_name.placeholders"
-    # Every setting outside a list, a list counting as one, a multi-line value
-    # showing as one line; with its keys joined by \001 to find its chart and
-    # the maps it alone fills.
-    # shellcheck disable=SC2016
-    TAB=$tab SEP=$sep yq -N '
-           .. | select(tag != "!!map" and tag != "!!null" and (parent | tag) == "!!map"
-                       and (path | all_c(tag != "!!int")))
-           | [(path | to_json(0)), (path | join(strenv(SEP))), (path | join(".")),
-              ((select(tag == "!!seq") | to_json(0)) // tostring | sub("[\t\n]+"; " ") | sub(" $"; "")),
-              to_json(0)]
-           | join(strenv(TAB))' "$fixture" |
-      # The depth to drop at: the shortest key prefix no other setting shares.
-      awk -F '\t' -v OFS='\t' -v sep="$sep" '
-        { line[NR] = $0; depth[NR] = n = split($2, part, sep); for (k = 1; k <= n; k++) keys[NR, k] = part[k] }
-        END {
-          for (i = 1; i <= NR; i++) {
-            d = 1
-            for (j = 1; j <= NR; j++) {
-              if (j == i) continue
-              k = 0
-              while (k < depth[i] && k < depth[j] && keys[i, k + 1] == keys[j, k + 1]) k++
-              if (k + 1 > d) d = k + 1
-            }
-            split(line[i], f, "\t")
-            # The value last: `read` merges the tabs around an empty one.
-            print f[1], f[2], (d < depth[i] ? d : depth[i]), f[3], f[5], f[4]
-          }
-        }' > "$work/leaves"
-    n=0
-    while IFS="$tab" read -r keys joined depth dotted json value; do
-      n=$((n + 1))
-      scope=$(scope_for "$joined")
-      [ "$scope" != - ] || continue
-      # shellcheck disable=SC2016
-      KEYS=$keys DEPTH=$depth yq 'env(KEYS) as $k | delpaths([$k | .[0:env(DEPTH)]])' "$fixture" \
-        > "$settings/drop-$case_name-$n.yaml"
-      printf 'drop-%s-%s\tdrop\t%s\t%s=%s\n' "$case_name" "$n" "$case_name" "$dotted" "$value" >> "$work/meta"
-      queue "drop-$case_name-$n" "$placeholders" "$scope" "fix-$case_name" "$settings/drop-$case_name-$n.yaml"
-      # A setting several fixtures share, or a flip above, is applied once.
-      ! grep -qxF "$keys$tab$json" "$work/seen" || continue
-      printf '%s\t%s\n' "$keys" "$json" >> "$work/seen"
-      KEYS=$keys VALUE=$json yq -n 'setpath(env(KEYS); env(VALUE))' > "$settings/set-$case_name-$n.yaml"
-      printf 'set-%s-%s\tset\t%s\t%s=%s\n' "$case_name" "$n" "$case_name" "$dotted" "$value" >> "$work/meta"
-      queue "set-$case_name-$n" "$placeholders" "$scope" base "$settings/set-$case_name-$n.yaml"
-    done < "$work/leaves"
+  for pairs in "$probes"/*.pairs; do
+    cut -f1 "$pairs" | sort -u > "${pairs%.pairs}.images"
   done
-  run_jobs
 
-  # The control and compute planes run in this release or in their own, so
-  # turning one off takes none of their images out of a deployment.
-  awk -F '\t' -v chart="$switch_chart" "$awk_lib"'
+  # The computed defaults, every subchart's under its alias, as a template of
+  # an unpacked copy prints them.
+  rm -rf "$work/chart"
+  mkdir "$work/chart"
+  tar -xzf "$switch_archive" -C "$work/chart"
+  root="$work/chart/$switch_chart"
+  walk "$root" "$switch_chart" > "$work/graph"
+  echo '{{ toJson .Values }}' > "$root/templates/scan-values.yaml"
+  {
+    helm template scan "$root" --kube-version "$kube_version" -s templates/scan-values.yaml |
+      tail -n 1 | jq -r --arg kind flip "$probes_jq" | sed "s/^/-$tab/"
+    for fixture in "$here/$switch_chart"/ci/*-values.yaml; do
+      [ ! -f "$fixture" ] ||
+        yq -o=json "$fixture" | jq -r --arg kind set "$probes_jq" | sed "s/^/$(basename "$fixture" -values.yaml)$tab/"
+    done
+  } |
+    # <probe> <kind> <fixture> <setting> <scope>, the values of probe <n> in
+    # <n>.json. A setting several fixtures share, or one that is a flip, is
+    # applied once. A setting can only change the images of the deepest chart
+    # its keys lead into, its scope: `-`, the whole chart, for a global, which
+    # any chart may read, and for a value of the switch chart itself, which is
+    # not probed when its own templates name no image.
+    awk -F '\t' -v OFS='\t' -v dir="$probes" -v root="$switch_chart" '
+      FILENAME == ARGV[1] { if ($2 == root) own = 1; next }
+      FILENAME == ARGV[2] { if ($1 != root) charts[substr($1, length(root) + 2)]; next }
+      $2 != "drop" && seen[$3]++ { next }
+      {
+        scope = ""
+        for (c in charts) if (index($4 "/", c "/") == 1 && length(c) > length(scope)) scope = c
+        if (scope == "" && !own && $4 !~ /^global(\/|$)/) next
+        file = dir "/" ++n ".json"
+        print $5 > file
+        close(file)
+        print n, $2, $1, $3, (scope == "" ? "-" : root "/" scope)
+      }' "$probes/defaults.pairs" "$work/graph" - > "$work/probes.tsv.all"
+  # ARGV[1] above: the images the switch chart's own templates render.
+  rm -f "$root/templates/scan-values.yaml"
+
+  # The copy of a scope renders the templates of its chart and of the charts
+  # below, and the helpers of all, so that values, conditions and helpers
+  # resolve as in the switch chart. Hard links keep it cheap. The archive is
+  # already filtered: read as a directory, the root .helmignore would apply to
+  # every subchart.
+  echo '{}' > "$probes/empty.json"
+  cut -f5 "$work/probes.tsv.all" | sort -u | grep -vx -e - > "$work/scope-list" || :
+  while IFS= read -r scope; do
+    name=$(printf '%s' "$scope" | tr '/' '_')
+    copy="$work/scopes/$name/$switch_chart"
+    mkdir "$work/scopes/$name"
+    cp -R -l "$root" "$copy" 2>/dev/null || { rm -rf "$copy"; cp -R "$root" "$copy"; }
+    keep=$(awk -F '\t' -v scope="$scope" '$1 == scope { print $4 }' "$work/graph")
+    keep="$copy${keep#"$root"}/"
+    find "$copy" -name .helmignore -exec rm -f {} +
+    find "$copy" -path '*/templates/*' -type f ! -name '_*' ! -name '*.tpl' ! -path "$keep*" -exec rm -f {} +
+    ln "$probes/empty.json" "$probes/scope-$name.json"
+  done < "$work/scope-list"
+
+  # shellcheck disable=SC2016,SC2090 # programs passed whole, expanded by the pool's shells
+  export switch_archive kube_version in_render probe_awk="$awk_lib"'valid($2) { print norm($2) }'
+  pool() { # pool: one probe per input line
+    xargs -P "$jobs" -L 1 sh -c "$probe_sh" sh
+  }
+  # A copy whose defaults do not render the images of the switch chart cannot
+  # stand in for it: its probes are rendered whole.
+  while IFS= read -r scope; do
+    name=$(printf '%s' "$scope" | tr '/' '_')
+    printf '%s %s %s %s\n' "$probes/scope-$name" "$work/scopes/$name/$switch_chart" "$scope" "$probes/defaults.pairs"
+  done < "$work/scope-list" | pool
+  while IFS="$tab" read -r n kind fixture setting scope; do
+    name=$(printf '%s' "$scope" | tr '/' '_')
+    if [ "$scope" != - ] && ! cmp -s "$probes/scope-$name.images" "$probes/defaults.images"; then
+      scope=-
+    fi
+    printf '%s\t%s\t%s\t%s\t%s\n' "$n" "$kind" "$fixture" "$setting" "$scope"
+  done < "$work/probes.tsv.all" > "$work/probes.tsv"
+  rm -f "$probes"/scope-*
+  while IFS="$tab" read -r n kind fixture _ scope; do
+    base=defaults
+    [ "$kind" != drop ] || base=$fixture
+    chart="$work/scopes/$(printf '%s' "$scope" | tr '/' '_')/$switch_chart"
+    # A drop probes a fixture that rendered.
+    [ ! -f "$probes/$base.pairs" ] || printf '%s %s %s %s\n' "$probes/$n" "$chart" "$scope" "$probes/$base.pairs"
+  done < "$work/probes.tsv" | pool
+
+  awk -F '\t' -v OFS='\t' -v chart="$switch_chart" "$awk_lib"'
     BEGIN { always["control-plane.enabled=false"]; always["compute-plane.enabled=false"] }
-    FILENAME == ARGV[1] { order[++probes] = $1; kind[$1] = $2; fixture[$1] = $3; setting[$1] = $4; next }
-    FNR == 1 { p = FILENAME; sub(/.*\//, "", p) }
-    p ~ /\.pairs$/ { next }
-    { ok[p] = 1; has[p, $1] = 1; images[$1] = 1 }
+    FILENAME == ARGV[1] {
+      kind[$1] = $2; fixture[$1] = $3; setting[$1] = $4; probes = $1
+      if (!($3 in file)) { file[$3] = "ci/" $3 "-values.yaml"; fixtures[++count] = $3 }
+      next
+    }
+    FNR == 1 { p = FILENAME; sub(/.*\//, "", p); sub(/\.images$/, "", p); ok[p] }
+    { has[p, $1]; images[$1] }
     END {
       for (image in images) {
-        on = (("base", image) in has)
-        # A change switches the image when it moves it away from its default.
+        on = ("defaults", image) in has
+        # A change switches the image when it moves it away from its default. A
+        # fixture that does needs the settings whose drop moves it back.
         alts = ""
-        delete changes; delete need
-        for (i = 1; i <= probes; i++) {
-          p = order[i]
-          if (!(p in ok)) continue
+        delete need
+        for (p = 1; p <= probes; p++) {
           f = fixture[p]
-          if (kind[p] == "fixture" && ((p, image) in has) != on) changes[f] = 1
-          if ((kind[p] == "flip" || kind[p] == "set") && ((p, image) in has) != on && !(on && setting[p] in always))
-            alts = addto(alts, setting[p], " | ")
-          if (kind[p] == "drop" && ((p, image) in has) == on)
-            need[f] = addto(need[f], setting[p], " & ")
+          moved = ((p, image) in has) != on
+          if (!(p in ok)) continue
+          if (kind[p] == "drop" && !moved) need[f] = add(need[f], setting[p], " & ")
+          if (kind[p] != "drop" && moved && !(on && setting[p] in always)) alts = add(alts, setting[p], " | ")
         }
-        # A fixture adds the settings it needs together, unless one of them
-        # switches the image alone.
-        for (i = 1; i <= probes; i++) {
-          f = fixture[order[i]]
-          if (kind[order[i]] != "fixture" || !(f in changes) || !(f in need)) continue
+        # Unless one of them switches the image alone, or nothing tells the
+        # settings of the fixture apart: it then stands for itself.
+        whole = ""
+        for (i = 1; i <= count; i++) {
+          f = fixtures[i]
+          if (!(f in ok) || ((f, image) in has) == on) continue
+          whole = add(whole, file[f], " | ")
           n = split(need[f], part, " & ")
           for (j = 1; j <= n; j++) if (index(" | " alts " | ", " | " part[j] " | ")) break
-          if (j > n) alts = addto(alts, need[f], " | ")
+          if (n && j > n && index(alts, need[f]) == 0) alts = add(alts, need[f], " | ")
         }
-        print chart "\t" image "\t" (on ? "on\t" alts "\t" : "off\t\t" alts)
+        if (alts == "") alts = whole
+        print chart, image, (on ? "on" OFS alts OFS : "off" OFS OFS alts)
       }
-    }' "$work/meta" "$probes"/* | sort > "$out/switches.tsv"
+    }' "$work/probes.tsv" "$probes"/*.images | sort > "$out/switches.tsv"
+
+  # The report takes the chart's point of view: its fixtures reach every image.
+  cut -f1,2 "$out/images.tsv" | while IFS="$tab" read -r image uses; do
+    [ "$uses" = operator ] || grep -q "$tab$image$tab" "$out/switches.tsv" ||
+      warn "$switch_chart does not deploy $image" "only $uses renders it: extend the ci fixtures of $switch_chart"
+  done
 }
 
-if [ -n "$probe_job" ]; then
-  work=$SCAN_WORK
-  probes="$work/probes"
-  switch_archive=$SCAN_ARCHIVE
-  switch_chart=$SCAN_CHART
-  set -f
-  IFS=$sep
-  # shellcheck disable=SC2086
-  set -- $probe_job
-  unset IFS
-  set +f
-  probe "$@"
-  exit 0
-fi
-
-# Each archive unpacks under its own <chart>/.
-mkdir -p "$work/chart"
 for archive in "$@"; do
   chart=$(helm show chart "$archive" | yq '.name')
   [ "$chart" != "$switch_chart" ] || switch_archive=$archive
-  render "$archive" "$chart" defaults
-  for fixture in "$here/$chart"/ci/*-values.yaml; do
-    [ -f "$fixture" ] || continue
-    render "$archive" "$chart" "$(basename "$fixture" -values.yaml)" "$fixture"
-  done
+  rm -rf "$work/chart"
+  mkdir "$work/chart"
   tar -xzf "$archive" -C "$work/chart"
-  walk "$work/chart/$chart" "$chart" > "$work/walk-$chart"
-  cut -f1,2 "$work/walk-$chart" >> "$work/graph"
-  image_map "$work/chart/$chart" "$chart" >> "$work/map"
+  walk "$work/chart/$chart" "$chart" > "$work/graph"
+  render "$archive" "$chart/defaults"
+  for fixture in "$here/$chart"/ci/*-values.yaml; do
+    [ ! -f "$fixture" ] || render "$archive" "$chart/$(basename "$fixture" -values.yaml)" "$fixture"
+  done
 done
 
-yq -N '.[] | ["operator", .image, .operator] | @tsv' "$here/operator-images.yaml" > "$work/operators"
-repo_charts > "$work/repo"
+# One line per image. An operator's image takes the operator's owners.
+yq -N '.[] | [.image, "operator", .operator] | @tsv' "$here/operator-images.yaml" |
+  awk -F '\t' -v OFS='\t' "$awk_lib"'
+    function owners(image,   n, c, i, list) {
+      n = split(charts[image], c, ",")
+      for (i = 1; i <= n; i++) list = add(list, entry[image, c[i]], ",")
+      return list
+    }
+    { $1 = norm($1); uses[$1] = add(uses[$1], $2, ",") }
+    $2 == "operator" { operator[$1] = norm($3); next }
+    {
+      split($3, f, "=")
+      depth = split(f[3], segment, "/")
+      if (!(($1, f[1]) in deepest)) charts[$1] = add(charts[$1], f[1], ",")
+      if (depth > deepest[$1, f[1]]) { deepest[$1, f[1]] = depth; entry[$1, f[1]] = $3 }
+    }
+    END {
+      for (image in uses) {
+        list = owners((image in operator) ? operator[image] : image)
+        print image, uses[image], (list == "" ? "unknown=charts/operator-images.yaml=" : list)
+      }
+    }
+  ' "$work/found" - | sort > "$out/images.tsv"
 
-# The image map and operator-images.yaml only add images no render shows. A map
-# component without a version takes the tag its rendered siblings carry, which
-# is what the charts default it to (their AppVersion); an operator's image
-# takes the operator's owners.
-awk -F '\t' -v stale="$out/stale.tsv" -v documents="$out/documents.tsv" "$awk_lib"'
-  function chartname(path,   name) { name = owner[path]; sub(/@[^@]*$/, "", name); return name }
-  # See "A location" above.
-  function locate(path, template,   name, child, parent) {
-    name = chartname(path)
-    if (name in own) return own[name] "/" template
-    for (child = path; match(child, /\/[^\/]*$/); child = parent) {
-      parent = substr(child, 1, RSTART - 1)
-      name = chartname(parent)
-      if (name in own)
-        return own[name] "/Chart.yaml" (((name, substr(child, RSTART + 1)) in depline) ? "#L" depline[name, substr(child, RSTART + 1)] : "")
-    }
-    return ""
-  }
-  function add(r, use, path, location) {
-    r = norm(r)
-    uses[r] = addto(uses[r], use, ",")
-    owners[r] = addto(owners[r], path "=" (path in owner ? owner[path] : "unknown") "=" location, ",")
-  }
-  FILENAME == ARGV[1] { owner[$1] = $2; next }
-  FILENAME == ARGV[2] {
-    if ($1 == "own") own[$2] = $3
-    else if ($1 == "dep") depline[$2, $4] = $5
-    else if ($1 == "mapline") mapline[$2] = $3
-    next
-  }
-  FILENAME == ARGV[3] { print $1 "\t" owner[$2] "\t" locate($2, $3) "\t" $2 > documents; next }
-  FILENAME == ARGV[4] {
-    add($1, $2, $3, locate($3, $4))
-    rendered[repo($1)] = 1
-    if (substr($1, length(repo($1)) + 1, 1) == ":")
-      tags[repo($1)] = addto(tags[repo($1)], substr($1, length(repo($1)) + 2), ",")
-    next
-  }
-  $1 == "component" { component[$3] = $2; version[$3] = $4; mapped[$3] = addto(mapped[$3], $5, ","); next }
-  $1 == "operator" { operators[$2] = $3; next }
-  END {
-    for (r in mapped) {
-      if (r in rendered) continue
-      list = version[r]
-      if (list == "")
-        for (sibling in tags)
-          if (component[sibling] == component[r]) list = addto(list, tags[sibling], ",")
-      n = split(list, t, ",")
-      m = split(mapped[r], p, ",")
-      location = own["armonik-common"] "/values.yaml" ((r in mapline) ? "#L" mapline[r] : "")
-      for (i = 1; i <= n; i++) for (j = 1; j <= m; j++) add(r ":" t[i], "image-map", p[j], location)
-    }
-    for (image in operators) {
-      op = norm(operators[image])
-      if (!(op in uses)) { print image "\t" operators[image] > stale; continue }
-      r = norm(image)
-      uses[r] = addto(uses[r], "operator", ",")
-      owners[r] = owners[op]
-    }
-    for (r in uses) print r "\t" uses[r] "\t" owners[r]
-  }' "$work/graph" "$work/repo" "$work/documents" "$work/rendered" "$work/map" "$work/operators" |
-  sort > "$out/images.tsv"
-touch "$out/stale.tsv"
+if [ ! -s "$out/images.tsv" ]; then
+  printf '%s: the charts reference no image, which means the extraction broke\n' "$0" >&2
+  exit 1
+fi
+# What only a review can keep true: an operator bump may change the images the
+# operator picks, and an image-map repository needs a fixture deploying it.
+grep "${tab}unknown=" "$out/images.tsv" | while IFS="$tab" read -r image _; do
+  warn "charts/operator-images.yaml is stale" "no render carries the operator of $image any more: review the entry"
+done
+yq -N '.global.armonik.imageComponents | keys | .[]' "$here/armonik-common/values.yaml" |
+  while IFS= read -r repository; do
+    grep -q "^$repository:" "$out/images.tsv" ||
+      warn "$repository is not scanned" \
+        "no fixture deploys this global.armonik.imageComponents entry: extend armonik/ci/optional-images-values.yaml"
+  done
 
 if [ -n "$switch_chart" ]; then
-  if [ -z "$switch_archive" ]; then
-    printf '%s: -s %s: no such packaged chart in %s\n' "$self" "$switch_chart" "$dist" >&2
+  if [ -z "${switch_archive:-}" ]; then
+    printf '%s: -s %s: no such packaged chart in %s\n' "$0" "$switch_chart" "$dist" >&2
     exit 2
   fi
   switches
 fi
 
-if ! grep -q "${tab}ok$tab" "$out/renders.tsv"; then
-  printf '%s: no chart rendered\n' "$self" >&2
-  exit 1
-fi
-if [ ! -s "$out/images.tsv" ]; then
-  printf '%s: the charts reference no image, which means the extraction broke\n' "$self" >&2
-  exit 1
-fi
-while IFS=$tab read -r image operator; do
-  printf '%s: operator-images.yaml lists %s as the default of %s, which no render carries any more: review it\n' \
-    "$self" "$image" "$operator" >&2
-done < "$out/stale.tsv"
-
-printf '%s: %s render(s), %s failed, %s image(s), in %s\n' "$self" \
-  "$(wc -l < "$out/renders.tsv" | tr -d ' ')" \
-  "$(grep -c "${tab}failed$tab" "$out/renders.tsv" || true)" \
-  "$(wc -l < "$out/images.tsv" | tr -d ' ')" \
-  "$out" >&2
+printf '%s: %s render(s), %s image(s), in %s\n' "$0" \
+  "$(wc -l < "$out/renders.tsv" | tr -d ' ')" "$(wc -l < "$out/images.tsv" | tr -d ' ')" "$out" >&2

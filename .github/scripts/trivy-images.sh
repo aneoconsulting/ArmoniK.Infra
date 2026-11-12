@@ -8,15 +8,10 @@
 # Writes, under <scan-dir>:
 #   reports/images/<n>.json  trivy image report of images.tsv line <n>
 #   image-status.tsv         <image> <status> <reason>, in images.tsv order,
-#                            status being one of
-#                              ok            scanned
-#                              not-found     the registry has no such image
-#                              denied        the registry refuses the pull
-#                              rate-limited  the registry throttles the pulls
-#                              error         anything else
+#                            status being ok, not-found, denied, rate-limited
+#                            or error
 #
 # The vulnerability databases must already be in place: no scan updates them.
-# Only rate-limited and error are retried, the others being final answers.
 
 set -eu
 
@@ -25,71 +20,35 @@ if [ "$#" -lt 1 ] || [ "$#" -gt 2 ]; then
   exit 2
 fi
 scan=$1
-config=${2:-}
-set --
-[ -z "$config" ] || set -- --config "$config"
-
-work=$(mktemp -d)
-trap 'rm -rf "$work"' EXIT
+stderr=$(mktemp)
+trap 'rm -f "$stderr"' EXIT
 mkdir -p "$scan/reports/images"
 : > "$scan/image-status.tsv"
-
-# <status> <reason> from trivy's stderr. A pull failure ends the FATAL line
-# with "N errors occurred:", one "* remote error: ..." line following per
-# registry tried: the mirrors first, the origin last. The origin's answer is
-# the one that counts, a mirror missing an image it has not cached being no
-# verdict. A Docker Hub repository that does not exist answers like a private
-# one (UNAUTHORIZED), so it reads as denied.
-classify() {
-  awk '
-    /^[ \t]*\* / { last = $0; bullets = 1; next }
-    /(FATAL|ERROR)[ \t]/ { fatal = $0 }
-    END {
-      if (bullets) {
-        s = last
-        sub(/^[ \t]*\* /, "", s)
-        sub(/^remote error: /, "", s)
-      } else {
-        s = fatal
-        sub(/^.*(FATAL|ERROR)[ \t]+/, "", s)
-      }
-      gsub(/\t/, " ", s)
-      if (s == "") { print "error\tno error line from trivy"; exit }
-      if (s ~ /TOOMANYREQUESTS|status code 429/) status = "rate-limited"
-      else if (s ~ /MANIFEST_UNKNOWN|NAME_UNKNOWN|NOT_FOUND|status code 404/) status = "not-found"
-      else if (s ~ /UNAUTHORIZED|DENIED|status code 40[13]/) status = "denied"
-      else status = "error"
-      # The cause comes last in the wrapped errors.
-      if (length(s) > 300) s = "..." substr(s, length(s) - 296)
-      print status "\t" s
-    }' "$1"
-}
 
 n=0
 while IFS="$(printf '\t')" read -r image _; do
   n=$((n + 1))
-  report="$scan/reports/images/$n.json"
-  attempt=1
-  while :; do
-    if trivy image "$@" --image-src remote --scanners vuln \
-         --skip-db-update --skip-java-db-update \
-         --format json --output "$report" \
-         "$image" 2>"$work/stderr" </dev/null; then
-      printf '%s\tok\t\n' "$image" >> "$scan/image-status.tsv"
-      break
-    fi
-    result=$(classify "$work/stderr")
-    case "$result" in
-      rate-limited*|error*)
-        if [ "$attempt" -lt 3 ]; then
-          sleep $((attempt * 10))
-          attempt=$((attempt + 1))
-          continue
-        fi
-        ;;
+  for attempt in 1 2 3; do
+    status=ok
+    reason=
+    ! trivy image ${2:+--config "$2"} --image-src remote --scanners vuln \
+      --skip-db-update --skip-java-db-update --format json \
+      --output "$scan/reports/images/$n.json" "$image" 2>"$stderr" </dev/null || break
+    # trivy ends on the answer of the registry it tried last, the origin: a
+    # mirror missing an image it has not cached is no verdict. A Docker Hub
+    # repository that does not exist answers like a private one, so it reads
+    # as denied.
+    reason=$(grep -v '^[[:space:]]*$' "$stderr" | tail -n 1 | tr '\t' ' ' |
+      sed 's/^ *\* //; s/^remote error: //; s/^.*\(.\{300\}\)$/...\1/')
+    case "$reason" in
+      *TOOMANYREQUESTS* | *"status code 429"*) status=rate-limited ;;
+      *MANIFEST_UNKNOWN* | *NAME_UNKNOWN* | *NOT_FOUND* | *"status code 404"*) status=not-found ;;
+      *UNAUTHORIZED* | *DENIED* | *"status code 40"[13]*) status=denied ;;
+      *) status=error ;;
     esac
-    printf '%s\t%s\n' "$image" "$result" >> "$scan/image-status.tsv"
-    rm -f "$report"
-    break
+    # The registry's final answers are not retried.
+    [ "$status" = rate-limited ] || [ "$status" = error ] || break
+    [ "$attempt" = 3 ] || sleep $((attempt * 10))
   done
+  printf '%s\t%s\t%s\n' "$image" "$status" "$reason" >> "$scan/image-status.tsv"
 done < "$scan/images.tsv"

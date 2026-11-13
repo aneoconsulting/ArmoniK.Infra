@@ -305,7 +305,7 @@ dependencies:
     # them against that set whenever the operator moves.
     image:
       repository: percona/percona-server-mongodb
-      tag: "8.0.34-15"
+      tag: "8.3.13-4"
     sharding:
       enabled: false
     backup:

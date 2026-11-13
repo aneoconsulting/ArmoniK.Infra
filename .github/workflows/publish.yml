@@ -302,11 +302,13 @@ jobs:
             dist/index.yaml
 
   # Report only, and nothing waits for it: third-party images rarely go a week
-  # without a new CVE, so a gate would hold every publication hostage.
+  # without a new CVE, so a gate would hold every publication hostage. A failure
+  # of the job itself shows on the job, not on the run.
   scan:
     name: Scan the chart images with trivy
     needs: [context, package]
     runs-on: ubuntu-latest
+    continue-on-error: true
     # No credentials: a Docker Hub token would reach a third-party scanner, and
     # what it pulls is public.
     permissions:
@@ -344,10 +346,12 @@ jobs:
 
       # Never pin aquasecurity actions by tag: their tags are mutable and have
       # served malicious commits (GHSA-69fq-xp46-6x23). Bump the commit and its
-      # version comment together. trivy itself is its latest release, so that the
-      # scan gets its newest detections; setup-trivy caches no latest binary.
+      # version comment together. trivy itself is pinned too, Renovate bumping
+      # it: detections come from the databases, not from the binary.
       - name: Set up trivy
         uses: aquasecurity/setup-trivy@81e514348e19b6112ce2a7e3ecbafe19c1e1f567 # v0.3.1
+        with:
+          version: v0.76.2
 
       - name: Date the vulnerability databases
         id: db-date

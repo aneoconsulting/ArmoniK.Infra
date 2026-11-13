@@ -41,7 +41,10 @@ def findings(report, scan):
     documents = {f"{document['render']}/{document['index']}.yml": document for document in scan["documents"]}
     for result in report.get("Results") or []:
         file = result["Target"].rpartition("manifests/")[2]
-        document = documents[file]
+        document = documents.get(file)
+        if document is None:
+            print(f"::warning title=Not a rendered document::trivy checked {result['Target']}, left out of the report")
+            continue
         scope = "ours" if "/templates/" in document["location"] else "third-party"
         for check in result.get("Misconfigurations") or []:
             if check["Status"] == "FAIL":

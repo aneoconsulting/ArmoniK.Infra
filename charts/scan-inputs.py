@@ -253,7 +253,7 @@ def image_list(documents):
     """Every image, sorted, with its uses (<chart>/<case>, <chart>/<case>/test
     in a helm test pod, or `operator`) and its owners: each chart whose
     templates hold it, once, by its longest path from a release root. An
-    operator's image takes the operator's owners."""
+    operator's image also takes the operator's owners."""
     images = {}
     for document in documents:
         use = document.render + ("/test" if document.helm_test else "")
@@ -266,18 +266,19 @@ def image_list(documents):
                 image["owners"][document.owner] = {
                     "chart": document.owner, "location": document.location, "path": document.path}
     for entry in read_yaml(HERE / "operator-images.yaml")[0]:
-        image = images.setdefault(normalize(entry["image"]), {"image": normalize(entry["image"]), "uses": []})
+        name = normalize(entry["image"])
+        image = images.setdefault(name, {"image": name, "uses": [], "owners": {}})
         image["uses"].append("operator")
-        image["owners"] = images.get(normalize(entry["operator"]), {}).get("owners", {})
-    listed = [{**images[name], "owners": list(images[name]["owners"].values())} for name in sorted(images)]
-    for image in listed:
-        if not image["owners"]:
+        operator = images.get(normalize(entry["operator"]))
+        if operator is None:
             # What only a review can keep true: an operator bump may change
             # the images the operator picks.
             warn("charts/operator-images.yaml is stale",
                  f"no render carries the operator of {image['image']} any more: review the entry")
-            image["owners"] = [{"chart": "unknown", "location": "charts/operator-images.yaml", "path": ""}]
-    return listed
+            unknown = {"chart": "unknown", "location": "charts/operator-images.yaml", "path": ""}
+            operator = {"owners": {"unknown": unknown}}
+        image["owners"].update(operator["owners"])
+    return [{**images[name], "owners": list(images[name]["owners"].values())} for name in sorted(images)]
 
 
 # ---- Switches (-s), see the head comment.

@@ -4,7 +4,7 @@ Bucket for ArmoniK object storage (native GCS adapter) or for shared files such 
 
 This module creates:
 
-* A bucket, with optional uniform bucket-level access and public access prevention.
+* A bucket, with optional uniform bucket-level access, public access prevention and hierarchical namespace.
 * Optional lifecycle rules, versioning or retention policy, Autoclass, soft delete retention, access logs, website,
   CORS and dual-region placement.
 * Optional encryption with a Cloud KMS key, IAM roles and ACLs on the bucket.
@@ -13,6 +13,10 @@ This module creates:
 
 > Note: set `soft_delete_retention_days = 0` on the object storage bucket, whose deleted objects are not worth
 > paying 7 more days for.
+
+> Note: a flat bucket starts at ~1000 object writes per second and doubles about every 20 minutes; beyond, GCS answers
+> 429 and Core stops after too many errors. Core writes 2 objects per task (payload and result): ramp the load up, or
+> set `hierarchical_namespace = true` (~8000 writes per second from the start, operations ~30 % dearer).
 
 ## Core adapter
 

@@ -39,13 +39,14 @@ TAGS = {"opt-out": "8250df", "opt-in": "0e8a8a", "test": "lightgrey"}
 
 
 def badge(tag, hover=""):
-    """A tag as a shields.io badge, GitHub stripping the styles that would
-    color text; its alt text stands in when the image does not load. The hover
-    text is a title attribute inside a table cell."""
+    """A tag as a shields.io badge centered on its line, GitHub stripping the
+    styles that would color text; its alt text stands in when the image does
+    not load. The hover text is a title attribute inside a table cell."""
     for character, entity in {"&": "&amp;", '"': "&quot;", "<": "&lt;", "|": "&#124;"}.items():
         hover = hover.replace(character, entity)
     title = f' title="{hover}"' if hover else ""
-    return f'<img src="https://img.shields.io/badge/{tag.replace("-", "--")}-{TAGS[tag]}" alt="{tag}"{title}>'
+    src = f"https://img.shields.io/badge/{tag.replace('-', '--')}-{TAGS[tag]}"
+    return f'<img src="{src}" alt="{tag}" align="absmiddle"{title}>'
 
 
 class Vulnerability(NamedTuple):

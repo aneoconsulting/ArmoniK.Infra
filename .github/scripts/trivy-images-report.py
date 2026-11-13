@@ -202,11 +202,15 @@ def images_table(scanned, failed, blob):
         f"{badge('test')} run by `helm test` only. Hover a tag for the values that switch it.",
         "",
         "| Image | Owner | Critical | High | Medium | Low |", "|-|-|-:|-:|-:|-:|"]
+    def owners(image):
+        """Each image has at most one template per chart."""
+        return owners_cell(image.owners, blob, template_in_title=True)
+
     for image in scanned:
         counts = [
             f"{emoji(column)} {image.count(column)} ({image.count(column, fixable=True)})" if image.count(column)
             else "-" for column in COLUMNS]
-        lines.append(f"| {image.label} | {owners_cell(image.owners, blob, template_in_title=True)} | {' | '.join(counts)} |")
+        lines.append(f"| {image.label} | {owners(image)} | {' | '.join(counts)} |")
     if failed:
         lines += [
             "", "### Not scanned", "",
@@ -214,7 +218,7 @@ def images_table(scanned, failed, blob):
             "a missing Docker Hub image reads as denied.",
             "", "| Image | Owner | Failure | Reason |", "|-|-|-|-|"]
     for image in failed:
-        lines.append(f"| {image.label} | {owners_cell(image.owners, blob, template_in_title=True)} | :x: {image.status} "
+        lines.append(f"| {image.label} | {owners(image)} | :x: {image.status} "
                      f"| {cell(image.reason or 'no report')} |")
     return lines
 

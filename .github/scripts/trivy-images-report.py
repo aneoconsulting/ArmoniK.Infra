@@ -33,6 +33,20 @@ CAP = 30
 # The severities of the summary's columns, unknown folded into low.
 COLUMNS = {"CRITICAL": ["CRITICAL"], "HIGH": ["HIGH"], "MEDIUM": ["MEDIUM"], "LOW": ["LOW", "UNKNOWN"]}
 
+# The color of each tag. Colors keep off the severities' red, orange, yellow
+# and blue.
+TAGS = {"opt-out": "purple", "opt-in": "green", "test": "lightgrey"}
+
+
+def badge(tag, hover=""):
+    """A tag as a shields.io badge, GitHub stripping the styles that would
+    color text; its alt text stands in when the image does not load. The hover
+    text is a title attribute inside a table cell."""
+    for character, entity in {"&": "&amp;", '"': "&quot;", "<": "&lt;", "|": "&#124;"}.items():
+        hover = hover.replace(character, entity)
+    title = f' title="{hover}"' if hover else ""
+    return f'<img src="https://img.shields.io/badge/{tag.replace("-", "--")}-{TAGS[tag]}" alt="{tag}"{title}>'
+
 
 class Vulnerability(NamedTuple):
     """A vulnerability of a package of an image."""
@@ -81,14 +95,10 @@ class Image:
         switching the image when hovered."""
         label = f"<code>{self.image}</code>"
         if self.helm_test:
-            label += " <sub>helm test</sub>"
+            label += " " + badge("test")
         if self.deployed in ("opt-out", "opt-in"):
             hover = f"Removed by {self.off_with}" if self.off_with else f"Deployed with {self.on_with or '-'}"
-            hover = hover.replace(" | ", " or ")
-            # A title attribute inside a table cell.
-            for character, entity in {"&": "&amp;", '"': "&quot;", "<": "&lt;", "|": "&#124;"}.items():
-                hover = hover.replace(character, entity)
-            label += f' <sub title="{hover}">{self.deployed}</sub>'
+            label += " " + badge(self.deployed, hover.replace(" | ", " or "))
         return label
 
     def count(self, column, fixable=False):
@@ -187,8 +197,8 @@ def images_table(scanned, failed, blob):
         "Counts: found (fixable), low including unknown. "
         "Every vulnerability is in `vulnerabilities.csv` of the `trivy-reports` artifact.",
         "",
-        "No tag: always deployed. <sub>opt-out</sub>: deployed by default. <sub>opt-in</sub>: deployed on request. "
-        "<sub>helm test</sub>: run by `helm test` only. Hover a tag for the values that switch it.",
+        f"No tag: always deployed. {badge('opt-out')} deployed by default. {badge('opt-in')} deployed on request. "
+        f"{badge('test')} run by `helm test` only. Hover a tag for the values that switch it.",
         "",
         "| Image | Owner | Critical | High | Medium | Low |", "|-|-|-:|-:|-:|-:|"]
     for image in scanned:

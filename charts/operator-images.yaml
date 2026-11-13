@@ -1,0 +1,20 @@
+# Images an operator picks by itself at run time, so that no render names them.
+# charts/scan-inputs.py adds them to the images the trivy scan of
+# .github/workflows/publish.yml covers.
+#
+# An entry holds for one operator image, whose built-in default it is: once no
+# render carries that exact operator image (an operator bump), the scan warns
+# that the entry needs reviewing against the new operator's sources.
+#
+# Reviewed, nothing to add: keda and external-secrets run no other image;
+# cert-manager and prometheus-operator get theirs as flags, which the renders
+# carry (--acme-http01-solver-image, --prometheus-config-reloader,
+# --thanos-default-base-image); percona-server-mongodb-operator requires
+# spec.image and runs its own image as the init container. CloudNativePG's
+# default PostgreSQL image (versions.DefaultImageName) is left out: the cluster
+# chart always sets spec.imageName.
+
+# CloudNativePG versions.DefaultPgbouncerImage, the image of a Pooler that does
+# not set one: https://github.com/cloudnative-pg/cloudnative-pg/blob/v1.30.1/pkg/versions/versions.go
+- image: ghcr.io/cloudnative-pg/pgbouncer:1.25.2
+  operator: ghcr.io/cloudnative-pg/cloudnative-pg:1.30.1

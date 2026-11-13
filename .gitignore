@@ -53,3 +53,9 @@ kubeconfig_*
 generated
 .external_modules
 **.tgz
+
+# Renders and image list, written by charts/scan-inputs.py
+/scan/
+
+# Bytecode of the scan scripts
+__pycache__/

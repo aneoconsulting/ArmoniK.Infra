@@ -16,6 +16,17 @@ name: Publish Charts
 # Hub repository is <namespace>/<name> with no deeper path, so chart names ARE
 # repository names: hyphenated armonik-* in dockerhubaneo is reserved for
 # charts, images keeping armonik_*.
+#
+# The `scan` job runs trivy on every channel, report only, on every image the
+# packaged charts can deploy, ArmoniK's and third-party alike
+# (vulnerabilities): those of the renders with their defaults and ci/ fixtures
+# (the placeholders the fixtures name left out), and the operators' own
+# defaults listed in charts/operator-images.yaml. An optional image is thus
+# scanned only if a fixture deploys it; charts/scan-inputs.py warns about any
+# global.armonik.imageComponents repository none does. The renders themselves
+# are checked by the chart-checks job of linter-helm.yml.
+# Results land in the job summary, the trivy-reports artifact and code
+# scanning; nothing waits for them.
 
 env:
   HELM_VERSION: v3.18.4
@@ -289,6 +300,111 @@ jobs:
           path: |
             dist/*.tgz
             dist/index.yaml
+
+  # Report only, and nothing waits for it: third-party images rarely go a week
+  # without a new CVE, so a gate would hold every publication hostage. A failure
+  # of the job itself shows on the job, not on the run.
+  scan:
+    name: Scan the chart images with trivy
+    needs: [context, package]
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    # No credentials: a Docker Hub token would reach a third-party scanner, and
+    # what it pulls is public.
+    permissions:
+      contents: read
+      security-events: write # SARIF upload
+    timeout-minutes: 60
+    env:
+      TRIVY_DISABLE_TELEMETRY: "true"
+      TRIVY_SKIP_VERSION_CHECK: "true"
+      TRIVY_NO_PROGRESS: "true"
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Set up Helm
+        uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5
+        with:
+          version: "${{ env.HELM_VERSION }}"
+
+      # The archives this run publishes, not the source tree.
+      - name: Download packaged charts
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: packaged-charts
+          path: dist
+
+      # The runner image ships the python3 the script runs on and mikefarah yq
+      # v4, which it checks. -s measures which values deploy each image of the
+      # umbrella, a few hundred renders of it: the report takes the umbrella's
+      # point of view.
+      - name: Render the charts and list their images
+        run: ./charts/scan-inputs.py -d dist -o scan -s armonik
+
+      # trivy at its latest release, for its newest detections, in a container
+      # holding it to what anyone on the internet can do: see
+      # .github/scripts/trivy-container.sh, `trivy` from here on.
+      - name: Set up trivy
+        run: |
+          docker pull --quiet ghcr.io/aquasecurity/trivy:latest
+          mkdir -p "$RUNNER_TEMP/trivy"
+          ln -s "$PWD/.github/scripts/trivy-container.sh" "$RUNNER_TEMP/trivy/trivy"
+          echo "$RUNNER_TEMP/trivy" >> "$GITHUB_PATH"
+
+      - name: Date the vulnerability databases
+        id: db-date
+        run: echo "date=$(date -u +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
+
+      # Once a day: both databases are rebuilt every few hours, and pulling them
+      # on every run is what gets the mirrors to answer 429.
+      - name: Cache the vulnerability databases
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cache/trivy/db
+            ~/.cache/trivy/java-db
+          key: trivy-db-${{ steps.db-date.outputs.date }}
+          restore-keys: trivy-db-
+
+      # Once, so that no image scan updates them under another.
+      - name: Update the vulnerability databases
+        run: |
+          trivy image --download-db-only
+          trivy image --download-java-db-only
+
+      # Every image alike, ours and third-party: the report tells them apart.
+      - name: Scan the images
+        run: ./.github/scripts/trivy-images.py scan .github/trivy.yaml
+
+      # Owners link to the files of the scanned commit, the checked-out one.
+      - name: Report
+        run: |
+          ./.github/scripts/trivy-images-report.py scan "$GITHUB_STEP_SUMMARY" \
+            "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/blob/$(git rev-parse HEAD)"
+
+      # Not from a fork: its token cannot write security events.
+      - name: Upload the image findings to code scanning
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        # Report only: a rejected upload is reported, not fatal.
+        continue-on-error: true
+        with:
+          sarif_file: scan/sarif/images.sarif
+          category: trivy-images
+
+      - name: Upload the reports
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: trivy-reports
+          if-no-files-found: warn
+          retention-days: 14
+          path: |
+            scan/*.json
+            scan/reports/
 
   dockerhub:
     name: Push charts to Docker Hub

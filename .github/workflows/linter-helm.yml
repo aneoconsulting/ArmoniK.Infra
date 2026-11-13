@@ -8,6 +8,8 @@ on:
     branches:
       - main
       - feat/revamp-helm
+env:
+  HELM_VERSION: v3.18.4
 jobs:
   HelmChartlint:
     name: Lint Helm charts
@@ -21,7 +23,7 @@ jobs:
       - name: Set up Helm
         uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5
         with:
-          version: v3.18.4
+          version: "${{ env.HELM_VERSION }}"
 
       - name: Set up Python
         uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
@@ -48,3 +50,76 @@ jobs:
       - name: Run chart-testing (lint)
         if: steps.list-changed.outputs.changed == 'true'
         run: ct lint --config ct.yaml --target-branch ${{ github.event.repository.default_branch }}
+
+  # trivy matches each rendered resource against its Kubernetes checks, on
+  # every chart whatever changed. The packaged archives are what
+  # charts/scan-inputs.py renders and traces back to the templates.
+  # Report only, like the scan of publish.yml.
+  chart-checks:
+    name: Check the charts with trivy
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    permissions:
+      contents: read
+    timeout-minutes: 20
+    env:
+      TRIVY_DISABLE_TELEMETRY: "true"
+      TRIVY_SKIP_VERSION_CHECK: "true"
+      TRIVY_NO_PROGRESS: "true"
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Set up Helm
+        uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5
+        with:
+          version: "${{ env.HELM_VERSION }}"
+
+      - name: Cache helm repositories
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/helm/repository
+          key: helm-repo-${{ hashFiles('charts/*/Chart.lock', 'charts/*/Chart.yaml', 'test/harness/*/Chart.lock') }}
+          restore-keys: helm-repo-
+
+      - name: Vendor chart dependencies
+        run: ./test/vendor.sh
+
+      - name: Package the charts
+        run: ./charts/package-charts.sh -o dist
+
+      # The runner image ships the python3 the script runs on and mikefarah yq
+      # v4, which it checks.
+      - name: Render the charts
+        run: ./charts/scan-inputs.py -d dist -o scan
+
+      # See the "Set up trivy" step of publish.yml.
+      - name: Set up trivy
+        run: |
+          docker pull --quiet ghcr.io/aquasecurity/trivy:latest
+          mkdir -p "$RUNNER_TEMP/trivy"
+          ln -s "$PWD/.github/scripts/trivy-container.sh" "$RUNNER_TEMP/trivy/trivy"
+          echo "$RUNNER_TEMP/trivy" >> "$GITHUB_PATH"
+
+      - name: Check the rendered charts
+        run: |
+          mkdir -p scan/reports
+          trivy config --misconfig-scanners kubernetes \
+            --format json --output scan/reports/charts.json scan/manifests
+
+      # Templates link to the checked commit, the checked-out one.
+      - name: Report
+        run: |
+          ./.github/scripts/trivy-charts-report.py scan "$GITHUB_STEP_SUMMARY" \
+            "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/blob/$(git rev-parse HEAD)"
+
+      - name: Upload the report
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: trivy-chart-reports
+          if-no-files-found: warn
+          retention-days: 14
+          path: |
+            scan/scan.json
+            scan/reports/misconfigurations.csv

@@ -513,10 +513,12 @@ Full details: [`cert-manager-issuer.md`](cert-manager-issuer.md).
 | Add partitions separately | `helm install <rel> $REPO/armonik-compute-plane --version $VERSION --set conf.source=armonik` |
 | Remove a partition | `--set compute-plane.partitions.<name>=null` |
 | Uninstall | check the release's `NOTES.txt` (`helm get notes <release> -n <namespace>`), or [`uninstall.md`](uninstall.md) |
+| Upgrade across an operator bump | [`upgrade.md`](upgrade.md): CRDs to apply before `helm upgrade` |
 
 ## See also
 
 - [`cert-manager-issuer.md`](cert-manager-issuer.md) — issuer resolution and providers in depth
 - [`uninstall.md`](uninstall.md) — teardown procedure per deployment mode
+- [`upgrade.md`](upgrade.md): manual steps an operator bump needs, CRDs first
 - [`network-policies.md`](network-policies.md) — NetworkPolicy for standalone releases
 - [`airgap.md`](airgap.md) — packaging and offline installation

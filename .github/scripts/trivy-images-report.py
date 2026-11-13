@@ -33,9 +33,9 @@ CAP = 30
 # The severities of the summary's columns, unknown folded into low.
 COLUMNS = {"CRITICAL": ["CRITICAL"], "HIGH": ["HIGH"], "MEDIUM": ["MEDIUM"], "LOW": ["LOW", "UNKNOWN"]}
 
-# The color of each tag. Colors keep off the severities' red, orange, yellow
-# and blue.
-TAGS = {"opt-out": "purple", "opt-in": "green", "test": "lightgrey"}
+# The color of each tag (GitHub's purple, teal, grey), off the severities'
+# red, orange, yellow and blue.
+TAGS = {"opt-out": "8250df", "opt-in": "0e8a8a", "test": "lightgrey"}
 
 
 def badge(tag, hover=""):

@@ -55,17 +55,21 @@ def cell(text):
     return re.sub(r"[\t\n]", " ", text.replace("|", "\\|").replace("<", "&lt;"))
 
 
-def owners_cell(owners, blob):
+def owners_cell(owners, blob, template_in_title=False):
     """Owners as one table cell, a line each: the template of one of our
     charts, or the name and version of a third-party chart, linked to its
     location when <blob> is set, the path of the chart from the release root
-    as the link title."""
+    as the link title. <template_in_title> moves the template's file name from
+    the text to the title, for a cell listing one template per chart."""
     lines = []
     for owner in owners:
         text = owner["chart"].replace("@", " ", 1)
-        if "/templates/" in owner["location"]:
-            text = re.sub(r"^charts/", "", owner["location"]).replace("/templates/", ": ", 1)
         title = owner["path"].replace("/", " > ")
+        if "/templates/" in owner["location"]:
+            chart, _, template = re.sub(r"^charts/", "", owner["location"]).partition("/templates/")
+            text = f"{chart}: {template}"
+            if blob and template_in_title:
+                text, title = chart, f"{title}: {template}"
         lines.append(f'[{text}]({blob}/{owner["location"]} "{title}")' if blob else text)
     return "<br>".join(lines)
 

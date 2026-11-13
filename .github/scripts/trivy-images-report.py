@@ -206,7 +206,7 @@ def images_table(scanned, failed, blob):
         counts = [
             f"{emoji(column)} {image.count(column)} ({image.count(column, fixable=True)})" if image.count(column)
             else "-" for column in COLUMNS]
-        lines.append(f"| {image.label} | {owners_cell(image.owners, blob)} | {' | '.join(counts)} |")
+        lines.append(f"| {image.label} | {owners_cell(image.owners, blob, template_in_title=True)} | {' | '.join(counts)} |")
     if failed:
         lines += [
             "", "### Not scanned", "",
@@ -214,7 +214,7 @@ def images_table(scanned, failed, blob):
             "a missing Docker Hub image reads as denied.",
             "", "| Image | Owner | Failure | Reason |", "|-|-|-|-|"]
     for image in failed:
-        lines.append(f"| {image.label} | {owners_cell(image.owners, blob)} | :x: {image.status} "
+        lines.append(f"| {image.label} | {owners_cell(image.owners, blob, template_in_title=True)} | :x: {image.status} "
                      f"| {cell(image.reason or 'no report')} |")
     return lines
 

@@ -69,7 +69,7 @@ def owners_cell(owners, blob, template_in_title=False):
             chart, _, template = re.sub(r"^charts/", "", owner["location"]).partition("/templates/")
             text = f"{chart}: {template}"
             if blob and template_in_title:
-                text, title = chart, f"{title}: {template}"
+                text, title = chart, f"{title} > {template}"
         lines.append(f'[{text}]({blob}/{owner["location"]} "{title}")' if blob else text)
     return "<br>".join(lines)
 

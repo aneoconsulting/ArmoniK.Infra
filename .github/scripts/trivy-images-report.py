@@ -268,7 +268,8 @@ def main():
     directory, scan, summary, blob = report_arguments(__doc__.split("\n\n")[0])
     images = load_images(directory, scan)
     scanned, failed, runs, csv_rows = [], [], [], []
-    with tempfile.TemporaryDirectory() as work:
+    # Under the scan directory, the only one trivy-container.sh lets trivy see.
+    with tempfile.TemporaryDirectory(dir=directory) as work:
         for image in images:
             report = directory / "reports" / "images" / f"{image.number}.json"
             if image.status != "ok" or not report.is_file() or report.stat().st_size == 0:

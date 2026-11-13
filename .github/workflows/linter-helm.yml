@@ -93,12 +93,13 @@ jobs:
       - name: Render the charts
         run: ./charts/scan-inputs.py -d dist -o scan
 
-      # Pinned by commit, trivy itself by version: see the "Set up trivy" step of
-      # publish.yml.
+      # See the "Set up trivy" step of publish.yml.
       - name: Set up trivy
-        uses: aquasecurity/setup-trivy@81e514348e19b6112ce2a7e3ecbafe19c1e1f567 # v0.3.1
-        with:
-          version: v0.76.2
+        run: |
+          docker pull --quiet ghcr.io/aquasecurity/trivy:latest
+          mkdir -p "$RUNNER_TEMP/trivy"
+          ln -s "$PWD/.github/scripts/trivy-container.sh" "$RUNNER_TEMP/trivy/trivy"
+          echo "$RUNNER_TEMP/trivy" >> "$GITHUB_PATH"
 
       - name: Check the rendered charts
         run: |

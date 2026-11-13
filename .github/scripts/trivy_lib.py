@@ -55,6 +55,16 @@ def cell(text):
     return re.sub(r"[\t\n]", " ", text.replace("|", "\\|").replace("<", "&lt;"))
 
 
+def owner_parts(owner):
+    """The name of an owner (one of our charts, or the name and version of a
+    third-party chart), its path from the release root, and its template,
+    empty for a third-party chart."""
+    name, template = owner["chart"].replace("@", " ", 1), ""
+    if "/templates/" in owner["location"]:
+        name, _, template = re.sub(r"^charts/", "", owner["location"]).partition("/templates/")
+    return name, owner["path"].replace("/", " > "), template
+
+
 def owners_cell(owners, blob, template_in_title=False):
     """Owners as one table cell, a line each: the template of one of our
     charts, or the name and version of a third-party chart, linked to its
@@ -63,15 +73,24 @@ def owners_cell(owners, blob, template_in_title=False):
     the text to the title, for a cell listing one template per chart."""
     lines = []
     for owner in owners:
-        text = owner["chart"].replace("@", " ", 1)
-        title = owner["path"].replace("/", " > ")
-        if "/templates/" in owner["location"]:
-            chart, _, template = re.sub(r"^charts/", "", owner["location"]).partition("/templates/")
-            text = f"{chart}: {template}"
-            if blob and template_in_title:
-                text, title = chart, f"{title} > {template}"
-        lines.append(f'[{text}]({blob}/{owner["location"]} "{title}")' if blob else text)
+        name, path, template = owner_parts(owner)
+        text = f"{name}: {template}" if template else name
+        if blob and template and template_in_title:
+            text, path = name, f"{path} > {template}"
+        lines.append(f'[{text}]({blob}/{owner["location"]} "{path}")' if blob else text)
     return "<br>".join(lines)
+
+
+def owners_list(owners, blob):
+    """Owners as a markdown list, an item each: the name, linked to its
+    location when <blob> is set, then the path from the release root down to
+    the template."""
+    lines = []
+    for owner in owners:
+        name, path, template = owner_parts(owner)
+        name = f"[{name}]({blob}/{owner['location']})" if blob else name
+        lines.append(f"- {name}: {path} > {template}" if template else f"- {name}: {path}")
+    return lines
 
 
 def not_rendered(scan):

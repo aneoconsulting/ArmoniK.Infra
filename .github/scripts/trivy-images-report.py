@@ -24,7 +24,8 @@ import tempfile
 from dataclasses import dataclass
 from typing import NamedTuple
 
-from trivy_lib import append_summary, cell, emoji, not_rendered, owners_cell, report_arguments, trivy_version, write_csv
+from trivy_lib import (
+    append_summary, cell, emoji, not_rendered, owners_cell, owners_list, report_arguments, trivy_version, write_csv)
 
 # The rows of an image's critical and high vulnerabilities in the summary,
 # which GitHub drops whole past 1 MiB.
@@ -223,9 +224,9 @@ def images_table(scanned, failed, blob):
     return lines
 
 
-def vulnerabilities_details(image):
+def vulnerabilities_details(image, blob):
     """The critical and high vulnerabilities of an image, folded, under the
-    values switching the image."""
+    values switching the image and its owners."""
     rows = []
     for found in image.vulnerabilities:
         row = (f"| {emoji(found.severity)} | [{found.id}]({found.url}) | `{cell(found.package)}` "
@@ -244,7 +245,7 @@ def vulnerabilities_details(image):
         f"<details><summary>{emoji('CRITICAL' if critical else 'HIGH')} {image.label}: "
         f"{critical} critical ({image.count('CRITICAL', fixable=True)} fixable), "
         f"{high} high ({image.count('HIGH', fixable=True)} fixable)</summary>",
-        "", *deployed.get(image.deployed, []),
+        "", *deployed.get(image.deployed, []), *owners_list(image.owners, blob), "",
         "| | Vulnerability | Package | Installed | Fixed | Title |", "|-|-|-|-|-|-|", *rows, "", "</details>", ""]
 
 
@@ -306,7 +307,7 @@ def main():
         ""]
     for image in scanned:
         if image.count("CRITICAL") or image.count("HIGH"):
-            lines += vulnerabilities_details(image)
+            lines += vulnerabilities_details(image, blob)
     if scan["switch_chart"]:
         lines += what_deploys(images, scan["switch_chart"])
     append_summary(summary, lines + not_rendered(scan))

@@ -252,8 +252,10 @@ def fixtures(chart):
 def image_list(documents):
     """Every image, sorted, with its uses (<chart>/<case>, <chart>/<case>/test
     in a helm test pod, or `operator`) and its owners: each chart whose
-    templates hold it, once, by its longest path from a release root. An
-    operator's image also takes the operator's owners."""
+    templates hold it, once, by its longest path from a release root. A chart
+    counts once whatever its version, package-charts.sh -v stamping a release
+    root but not its copies inside the umbrella. An operator's image also takes
+    the operator's owners."""
     images = {}
     for document in documents:
         use = document.render + ("/test" if document.helm_test else "")
@@ -261,9 +263,10 @@ def image_list(documents):
             image = images.setdefault(name, {"image": name, "uses": [], "owners": {}})
             if use not in image["uses"]:
                 image["uses"].append(use)
-            known = image["owners"].get(document.owner)
+            key = document.owner.partition("@")[0]
+            known = image["owners"].get(key)
             if known is None or document.path.count("/") > known["path"].count("/"):
-                image["owners"][document.owner] = {
+                image["owners"][key] = {
                     "chart": document.owner, "location": document.location, "path": document.path}
     for entry in read_yaml(HERE / "operator-images.yaml")[0]:
         name = normalize(entry["image"])

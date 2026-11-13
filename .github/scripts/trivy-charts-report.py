@@ -59,11 +59,16 @@ def checks_table(heading, found, blob):
     """One row per failing check, the most severe first, with every template
     (ours) or chart (third-party) it fails on."""
     first = {}
-    where = {}  # check -> owner and location -> the owner
+    where = {}  # check -> chart name and location -> the owner
     for finding in found:
         first.setdefault(finding.check, finding)
+        # A chart counts once whatever its version, at its longest path: see
+        # image_list in charts/scan-inputs.py.
         owner = {"chart": finding.owner, "location": finding.location, "path": finding.path}
-        where.setdefault(finding.check, {}).setdefault((finding.owner, finding.location), owner)
+        key = (finding.owner.partition("@")[0], finding.location)
+        known = where.setdefault(finding.check, {}).get(key)
+        if known is None or finding.path.count("/") > known["path"].count("/"):
+            where[finding.check][key] = owner
     # By the initial of the severity: critical, high, medium, low, unknown.
     checks = sorted(first.values(), key=lambda finding: ("CHMLU".find(finding.severity[:1] or "-"), finding.check))
     lines = ["", f"### {heading}: {len(checks)} failing checks", ""]

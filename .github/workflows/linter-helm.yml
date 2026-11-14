@@ -28,7 +28,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
         with:
-          python-version: '3.x'
+          python-version: '3.15.2'
           check-latest: true
 
       # v2.8.0 floor: the bundled yamale must be >= 6 to run on Python >= 3.12

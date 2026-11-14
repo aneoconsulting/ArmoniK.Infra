@@ -1,5 +1,7 @@
 {{- if list .Values "networkPolicy" "enabled" | include "armonik.utils.index"}}
+{{- $nginx := include "armonik.ingress.nginx" . }}
 
+{{- if $nginx }}
 {{/*
   nginx NetworkPolicy (ingress and egress).
 */}}
@@ -8,6 +10,7 @@
       "component" "nginx"
       "config" (include "armonik.netpol.ingressNginx" . | fromYaml)
   ) }}
+{{- end }}
 
 {{/*
   GUI NetworkPolicy (ingress and egress).
@@ -20,9 +23,9 @@
 
 {{/*
   Health-check NetworkPolicy, not scoped to nginx; rendered only when a gateway or HTTPRoute brings
-  a health checker to admit.
+  a health checker to admit in front of nginx.
 */}}
-{{- if or .Values.gateway.enabled .Values.httpRoute.enabled }}
+{{- if and $nginx (or .Values.gateway.enabled .Values.httpRoute.enabled) }}
 {{- include "armonik.netpol.render" (dict
       "context" .
       "component" "healthcheck"

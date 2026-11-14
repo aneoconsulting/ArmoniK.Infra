@@ -1,0 +1,22 @@
+suite: gateway mode guards
+# validate.yaml alone: these errors are raised by every template, and helm-unittest attributes a render
+# error to the first one of the suite.
+templates:
+  - validate.yaml
+values:
+  - ../ci/gateway-mode-values.yaml
+tests:
+  - it: fails on an unknown mode
+    set:
+      mode: traefik
+    asserts:
+      - failedTemplate:
+          errorPattern: "mode must be nginx or gateway"
+
+  - it: fails without a Gateway to attach to
+    set:
+      gateway:
+        enabled: false
+    asserts:
+      - failedTemplate:
+          errorPattern: "mode=gateway requires gateway.enabled=true or httpRoute.parentRefs"

@@ -1,0 +1,3 @@
+# Expected failure: mode=gateway with neither a Gateway of its own nor httpRoute.parentRefs leaves the
+# routes nothing to attach to.
+mode: gateway

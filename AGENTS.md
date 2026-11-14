@@ -80,7 +80,7 @@ charts/armonik (umbrella)
  |- armonik-operators       (alias operators: install-once cluster operators, see below)
  |- armonik-control-plane   (alias control-plane: deployment + service, metrics-exporter, init Job, auth builtin roles)
  |- armonik-compute-plane   (alias compute-plane: one deployment + KEDA ScaledObject per partition, init Job)
- |- armonik-ingress         (alias ingress: nginx gRPC/HTTP entry, admin GUI, grafana/seq routes, certificates)
+ |- armonik-ingress         (alias ingress: nginx gRPC/HTTP entry or, mode=gateway, Gateway API routes; admin GUI, certificates)
  |- armonik-dependencies    (alias dependencies: activemq [custom local chart], valkey, psmdb-db,
                              rabbitmq, grafana, fluent-bit, seq)
 ```

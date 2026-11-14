@@ -1,3 +1,5 @@
+{{- /* nginx mode only. */ -}}
+{{- if include "armonik.ingress.nginx" . }}
 {{- $ops := include "armonik.operators" . | fromYaml -}}
 {{- $urlsSecretKey := tpl (.Values.urlsSecretName | default "") $ -}}
 {{- $useEso := and $ops.externalSecrets.available (ne $urlsSecretKey "") -}}
@@ -60,4 +62,6 @@ type: Opaque
 stringData:
   armonik.conf: |
     {{- dict "root" . "useEso" false | include "armonik.conf.render" | nindent 4 }}
+{{- end }}
+
 {{- end }}

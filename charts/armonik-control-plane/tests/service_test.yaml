@@ -21,6 +21,15 @@ tests:
       - equal:
           path: spec.clusterIP
           value: None
+  - it: declares h2c on the control port, headless or not, for Gateway API proxies
+    template: services/control-plane.yaml
+    set:
+      service:
+        serviceType: HeadLess
+    asserts:
+      - equal:
+          path: spec.ports[0].appProtocol
+          value: kubernetes.io/h2c
   - it: renders no metrics-exporter service when the exporter is disabled
     template: services/metrics-exporter.yaml
     set:

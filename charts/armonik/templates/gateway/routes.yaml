@@ -1,0 +1,126 @@
+{{- /*
+ingress mode=gateway: the Gateway API routes to the backends nginx would front, rendered here as the
+only chart seeing their Services through .Subcharts. armonik-ingress renders the Gateway and the GUI
+route; every route shares its parentRefs. Each route lives in its backend's namespace, so the Gateway
+must admit that namespace (ingress.gateway.allowedRoutes) and no ReferenceGrant is needed.
+*/ -}}
+{{- if include "armonik.ingress.gatewayMode" . }}
+{{- $ingress := .Subcharts.ingress }}
+{{- $parentRefs := include "armonik.ingress.parentRefs" $ingress | trim }}
+
+{{- with index .Subcharts "control-plane" }}
+{{- $name := include "armonik.fullname" . }}
+{{- /* Catch-all, ArmoniK's gRPC paths (/armonik.<package>.<Service>/<Method>) having no common path
+       segment for a PathPrefix: the more specific GUI, Grafana and Seq matches win. gRPC and the GUI's
+       grpc-web share it, on every listener. HTTP/2 to the pods through the Service's appProtocol. */}}
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: {{ $name | quote }}
+  namespace: {{ include "armonik.namespace" . | quote }}
+  labels:
+    app.kubernetes.io/component: control-plane
+    {{- include "armonik.labels" $ | nindent 4 }}
+spec:
+  parentRefs:
+    {{- $parentRefs | nindent 4 }}
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: {{ $name | quote }}
+          port: {{ include "armonik.controlPlane.servicePort" $ | int }}
+{{- if list $ingress.Values "envoyGateway" "enabled" | include "armonik.utils.index" }}
+---
+# Envoy Gateway: lifts Envoy's per-call and stream idle timeouts (ingress.envoyGateway).
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: BackendTrafficPolicy
+metadata:
+  name: {{ $name | quote }}
+  namespace: {{ include "armonik.namespace" . | quote }}
+  labels:
+    app.kubernetes.io/component: control-plane
+    {{- include "armonik.labels" $ | nindent 4 }}
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: {{ $name | quote }}
+  timeout:
+    http:
+      requestTimeout: 0s
+      streamIdleTimeout: {{ $ingress.Values.envoyGateway.streamIdleTimeout | quote }}
+{{- end }}
+{{- end }}
+
+{{- with .Subcharts.dependencies.Subcharts.grafana }}
+{{- $name := include "grafana.fullname" . }}
+{{- /* Passed through as is: Grafana serves its /grafana sub-path, enforced by templates/validate.yaml. */}}
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: {{ $name | quote }}
+  namespace: {{ include "grafana.namespace" . | quote }}
+  labels:
+    app.kubernetes.io/component: grafana
+    {{- include "armonik.labels" $ | nindent 4 }}
+spec:
+  parentRefs:
+    {{- $parentRefs | nindent 4 }}
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /grafana
+      backendRefs:
+        - name: {{ $name | quote }}
+          port: {{ .Values.service.port | int }}
+{{- end }}
+
+{{- with .Subcharts.dependencies.Subcharts.seq }}
+{{- $name := include "seq.fullname" . }}
+{{- /* Seq serves at its root: /seq is stripped, Seq building its links from dependencies.seq.baseURI.
+       Its page links assets relatively, hence the redirect to /seq/. */}}
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: {{ $name | quote }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    app.kubernetes.io/component: seq
+    {{- include "armonik.labels" $ | nindent 4 }}
+spec:
+  parentRefs:
+    {{- $parentRefs | nindent 4 }}
+  rules:
+    - matches:
+        - path:
+            type: Exact
+            value: /seq
+      filters:
+        - type: RequestRedirect
+          requestRedirect:
+            path:
+              type: ReplaceFullPath
+              replaceFullPath: /seq/
+            statusCode: 301
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /seq
+      filters:
+        - type: URLRewrite
+          urlRewrite:
+            path:
+              type: ReplacePrefixMatch
+              replacePrefixMatch: /
+      backendRefs:
+        - name: {{ $name | quote }}
+          port: {{ .Values.ui.service.port | int }}
+{{- end }}
+{{- end }}

@@ -1,6 +1,7 @@
-{{- /* armonik-ingress injects Grafana's public prefix itself (armonik.grafana.locations in
-       templates/_armonik-conf.tpl) and needs an empty appSubUrl. Otherwise the UI breaks with no
-       error anywhere. */ -}}
+{{- /* Grafana's public path depends on the ingress mode; a mismatch breaks the UI with no error
+       anywhere. nginx (armonik.grafana.locations in armonik-ingress) injects the /grafana prefix
+       itself and needs an empty appSubUrl; a Gateway passes /grafana through, so Grafana must serve
+       that sub-path, and its /metrics moves under it. */ -}}
 {{- $grafanaEnabled := list .Values "dependencies" "grafana" "enabled" | include "armonik.utils.index" | empty | not -}}
 {{- $ingressEnabled := list .Values "ingress" "enabled" | include "armonik.utils.index" | empty | not -}}
 {{- if and $grafanaEnabled $ingressEnabled -}}
@@ -9,11 +10,24 @@
   {{- /* appSubUrl is root_url's path. */ -}}
   {{- $parts := splitList "://" $rootUrl | last | splitn "/" 2 -}}
   {{- $path := $parts._1 | default "" | trimSuffix "/" -}}
-  {{- if $path -}}
-    {{- printf `dependencies.grafana."grafana.ini".server.root_url must not carry a path, got %q: armonik-ingress injects Grafana's public prefix itself and needs an empty appSubUrl. Drop the %q segment, or set ingress.enabled=false to proxy Grafana yourself.` $rootUrl $path | fail -}}
-  {{- end -}}
-  {{- if $server.serve_from_sub_path -}}
-    {{- fail `dependencies.grafana."grafana.ini".server.serve_from_sub_path must stay false: armonik-ingress strips the prefix before proxying, so Grafana keeps serving at "/".` -}}
+  {{- if include "armonik.ingress.gatewayMode" . -}}
+    {{- if ne $path "grafana" -}}
+      {{- printf `ingress.mode=gateway routes /grafana to Grafana as is: set dependencies.grafana."grafana.ini".server.root_url to its public URL ending in /grafana/ (or "%%(protocol)s://%%(domain)s:%%(http_port)s/grafana/"), got %q.` $rootUrl | fail -}}
+    {{- end -}}
+    {{- if not $server.serve_from_sub_path -}}
+      {{- fail `ingress.mode=gateway routes /grafana to Grafana as is: set dependencies.grafana."grafana.ini".server.serve_from_sub_path=true.` -}}
+    {{- end -}}
+    {{- $monitor := list .Values "dependencies" "grafana" "serviceMonitor" | include "armonik.utils.index" | fromYaml | default dict -}}
+    {{- if and $monitor.enabled (ne ($monitor.path | default "/metrics") "/grafana/metrics") -}}
+      {{- fail `ingress.mode=gateway: Grafana serves /metrics under its sub-path, set dependencies.grafana.serviceMonitor.path=/grafana/metrics.` -}}
+    {{- end -}}
+  {{- else -}}
+    {{- if $path -}}
+      {{- printf `dependencies.grafana."grafana.ini".server.root_url must not carry a path, got %q: armonik-ingress injects Grafana's public prefix itself and needs an empty appSubUrl. Drop the %q segment, or set ingress.enabled=false to proxy Grafana yourself.` $rootUrl $path | fail -}}
+    {{- end -}}
+    {{- if $server.serve_from_sub_path -}}
+      {{- fail `dependencies.grafana."grafana.ini".server.serve_from_sub_path must stay false: armonik-ingress strips the prefix before proxying, so Grafana keeps serving at "/".` -}}
+    {{- end -}}
   {{- end -}}
 {{- end -}}
 

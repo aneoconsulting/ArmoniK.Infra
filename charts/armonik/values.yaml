@@ -471,9 +471,11 @@ dependencies:
       enabled: true
     grafana.ini:
       server:
-        # Keep root_url path-less and serve_from_sub_path false: the ingress injects Grafana's public
-        # prefix itself (armonik-ingress/templates/_armonik-conf.tpl), which needs an empty appSubUrl.
-        # Enforced by templates/validate.yaml.
+        # ingress.mode=nginx: keep root_url path-less and serve_from_sub_path false, nginx injects
+        # Grafana's public prefix itself (armonik-ingress/templates/_armonik-conf.tpl), which needs an
+        # empty appSubUrl. ingress.mode=gateway: the opposite, root_url ending in /grafana/,
+        # serve_from_sub_path true and serviceMonitor.path /grafana/metrics. Enforced by
+        # templates/validate.yaml.
         domain: grafana.local
         root_url: http://grafana
         serve_from_sub_path: false
@@ -693,6 +695,7 @@ dependencies:
     # See https://github.com/datalust/helm.datalust.co/blob/main/charts/seq/values.yaml
     firstRunNoAuthentication: true
     # Applied once networkPolicy.enabled=true: ingress from fluent-bit (5341) and the ingress (80).
+    # ingress.mode=gateway: replace the second rule's peer with ingress.networkPolicy.gatewayPeers.
     networkPolicy:
       ingress:
         # namespaceSelector {} admits any namespace; narrow it to the peers' namespaces once known.

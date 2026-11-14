@@ -79,8 +79,13 @@ volumeMounts:
 {{- $deployment := $v.deployment | default dict -}}
 {{- $container := list (include "armonik.ingress.nginx.container" .) $v.containerPatch "containerPatch" | include "armonik.utils.patch" | fromYaml -}}
 {{- $containers := $v.extraContainers | default list | concat (list $container) -}}
+{{- $initContainers := $v.extraInitContainers | default list -}}
+{{- /* Last init container: nginx starts as soon as the sidecar passes its startupProbe. */ -}}
+{{- if include "armonik.ingress.sso" $root | fromYaml | dig "enabled" false -}}
+  {{- $initContainers = include "armonik.ingress.oauth2Proxy.container" . | fromYaml | append $initContainers -}}
+{{- end -}}
 automountServiceAccountToken: true
-{{- with $v.extraInitContainers }}
+{{- with $initContainers }}
 initContainers:
   {{- toYaml . | nindent 2 }}
 {{- end }}

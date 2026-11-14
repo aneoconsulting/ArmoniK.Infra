@@ -1,0 +1,173 @@
+suite: umbrella sso identities bound to the sso fingerprint
+# sso needs Kubernetes 1.29 (native sidecar); helm-unittest defaults to 1.20.
+capabilities:
+  majorVersion: 1
+  minorVersion: 31
+release:
+  name: t
+  namespace: default
+templates:
+  - templates/validate.yaml
+set:
+  ingress:
+    sso:
+      enabled: true
+      publicUrl: https://armonik.example.com
+      oauth2Proxy:
+        issuerUrl: https://idp.example.com
+        clientId: armonik
+        existingSecret: armonik-oauth2-proxy
+tests:
+  # Core matches a null fingerprint to any: a certificate with CN=sso:alice@... would be alice.
+  - it: refuses a user entry without a fingerprint
+    set:
+      control-plane:
+        rbac:
+          userCertificates:
+            alice:
+              commonName: sso:alice@example.com
+    asserts:
+      - failedTemplate:
+          errorMessage: 'control-plane.rbac.userCertificates.alice.fingerprint must be "sso" (ingress.sso.fingerprint), got "": its commonName "sso:alice@example.com" starts with ingress.sso.cnPrefix "sso:", and without it a client certificate with that CN would match this entry'
+
+  - it: refuses a user entry with another fingerprint
+    set:
+      control-plane:
+        rbac:
+          userCertificates:
+            alice:
+              commonName: sso:alice@example.com
+              fingerprint: 0123456789abcdef0123456789abcdef01234567
+    asserts:
+      - failedTemplate:
+          errorPattern: 'userCertificates.alice.fingerprint must be "sso" \(ingress.sso.fingerprint\), got "0123456789abcdef0123456789abcdef01234567"'
+
+  - it: compares the prefix case-insensitively
+    set:
+      control-plane:
+        rbac:
+          userCertificates:
+            alice:
+              commonName: SSO:Alice@example.com
+    asserts:
+      - failedTemplate:
+          errorPattern: 'userCertificates.alice.fingerprint must be "sso"'
+
+  - it: accepts a user entry with the sso fingerprint, and certificate entries alongside
+    set:
+      control-plane:
+        rbac:
+          userCertificates:
+            alice:
+              commonName: sso:alice@example.com
+              fingerprint: sso
+            robot:
+              commonName: robot
+              fingerprint: 0123456789abcdef0123456789abcdef01234567
+            legacy:
+              commonName: legacy
+    asserts:
+      - notFailedTemplate: {}
+
+  - it: refuses a group entry without a fingerprint
+    set:
+      control-plane:
+        rbac:
+          userCertificates:
+            admins:
+              commonName: sso-group:admins
+    asserts:
+      - failedTemplate:
+          errorPattern: 'userCertificates.admins.fingerprint must be "sso" \(ingress.sso.fingerprint\), got "": its commonName "sso-group:admins" starts with ingress.sso.groupCnPrefix "sso-group:"'
+
+  - it: refuses a group entry with another fingerprint
+    set:
+      control-plane:
+        rbac:
+          userCertificates:
+            admins:
+              commonName: sso-group:admins
+              fingerprint: other
+    asserts:
+      - failedTemplate:
+          errorPattern: 'userCertificates.admins.fingerprint must be "sso" \(ingress.sso.fingerprint\), got "other"'
+
+  - it: accepts a group entry with the sso fingerprint
+    set:
+      control-plane:
+        rbac:
+          userCertificates:
+            admins:
+              commonName: sso-group:admins
+              fingerprint: sso
+    asserts:
+      - notFailedTemplate: {}
+
+  - it: follows custom prefixes and fingerprint
+    set:
+      ingress:
+        sso:
+          cnPrefix: "oidc/"
+          fingerprint: oidc
+      control-plane:
+        rbac:
+          userCertificates:
+            alice:
+              commonName: oidc/alice@example.com
+              fingerprint: sso
+    asserts:
+      - failedTemplate:
+          errorPattern: 'userCertificates.alice.fingerprint must be "oidc" \(ingress.sso.fingerprint\), got "sso": its commonName "oidc/alice@example.com" starts with ingress.sso.cnPrefix "oidc/"'
+
+  # groupCnPrefix may be empty in user mode: it must not claim every CN.
+  - it: ignores an empty groupCnPrefix in user mode
+    set:
+      ingress:
+        sso:
+          groupCnPrefix: ""
+      control-plane:
+        rbac:
+          userCertificates:
+            robot:
+              commonName: robot
+              fingerprint: 0123456789abcdef0123456789abcdef01234567
+            alice:
+              commonName: sso:alice@example.com
+              fingerprint: sso
+    asserts:
+      - notFailedTemplate: {}
+
+  - it: refuses an empty cnPrefix through the ingress resolver
+    set:
+      ingress:
+        sso:
+          cnPrefix: ""
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.cnPrefix must not be empty'
+
+  - it: refuses a hex sso.fingerprint through the ingress resolver
+    set:
+      ingress:
+        sso:
+          fingerprint: 0123456789abcdef0123456789abcdef01234567
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.fingerprint must not look like a certificate fingerprint'
+
+  - it: checks nothing with sso off
+    set:
+      ingress:
+        sso:
+          enabled: false
+          fingerprint: 0123456789abcdef0123456789abcdef01234567
+      control-plane:
+        rbac:
+          userCertificates:
+            alice:
+              commonName: sso:alice@example.com
+            admins:
+              commonName: sso-group:admins
+              fingerprint: other
+    asserts:
+      - notFailedTemplate: {}

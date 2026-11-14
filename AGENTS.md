@@ -172,6 +172,7 @@ Current state, not a wish list: check before assuming a path works, and prune an
 - **Init Jobs are fixed-name plain Jobs**, so `helm upgrade` fails with "field is immutable". Workaround: delete them, then upgrade. Fix: hook plus `before-hook-creation`.
 - **Kind-flip race in `conf-mounts.yaml`**: the same name renders as an empty `Secret` or as an `ExternalSecret` depending on whether the layer has sources, and toggling a layer's first or last source can let ESO garbage-collect the freshly created Secret, leaving the name absent while pods mount it non-optionally. Re-running the upgrade fixes it; the fix is to always render an ExternalSecret when ESO is available.
 - **Generated credentials break the GitOps contract on a required path**: `charts/armonik/templates/secrets/redis-users.yaml` combines `lookup` with `randAlphaNum`, and the grafana dependency auto-generates its admin password at render time. Both make the render non-deterministic; both need an `existingSecret`-style opt-out.
+- **SSO is refused in Gateway API mode** (`armonik.ingress.sso` fails with `gateway.enabled` or `httpRoute.enabled`): the default HTTPRoute matches `content-type: application/grpc` exactly, so `application/grpc+proto` reaches the web port; a Gateway terminating TLS leaves nginx no client certificate for the grpc port's mTLS; and `gateway.enabled` with `tls.enabled` makes the Service target 8080/9080 while nginx listens on 8443/9443. Supporting it needs a regex content-type match, mTLS at the Gateway, and that port fix.
 
 ## Conventions
 

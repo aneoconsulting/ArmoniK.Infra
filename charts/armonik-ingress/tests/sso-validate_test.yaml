@@ -1,0 +1,692 @@
+suite: sso validation guards
+# sso needs Kubernetes 1.29 (native sidecar); helm-unittest defaults to 1.20.
+capabilities:
+  majorVersion: 1
+  minorVersion: 31
+templates:
+  - validate.yaml
+values:
+  - ../ci/sso-values.yaml
+tests:
+  - it: accepts the user-mode fixture
+    asserts:
+      - notFailedTemplate: {}
+
+  - it: accepts the group-mode fixture
+    values:
+      - ../ci/sso-group-values.yaml
+    asserts:
+      - notFailedTemplate: {}
+
+  - it: refuses a string enabled, even "false"
+    set:
+      sso:
+        enabled: "false"
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.enabled must be true or false, got the string "false"'
+
+  - it: refuses a numeric enabled
+    set:
+      sso:
+        enabled: 1
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.enabled must be true or false, got the (int|float64) "1"'
+
+  - it: reads a null enabled as off, the other values left unchecked
+    set:
+      sso:
+        enabled: null
+        publicUrl: ""
+    asserts:
+      - notFailedTemplate: {}
+
+  - it: requires publicUrl
+    set:
+      sso:
+        publicUrl: ""
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.publicUrl is required when sso.enabled'
+
+  - it: requires the issuer URL
+    set:
+      sso:
+        oauth2Proxy:
+          issuerUrl: ""
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.oauth2Proxy.issuerUrl is required when sso.enabled'
+
+  - it: requires the client id
+    set:
+      sso:
+        oauth2Proxy:
+          clientId: ""
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.oauth2Proxy.clientId is required when sso.enabled'
+
+  - it: requires the Secret
+    set:
+      sso:
+        oauth2Proxy:
+          existingSecret: ""
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.oauth2Proxy.existingSecret is required when sso.enabled'
+
+  - it: requires an image tag
+    set:
+      sso:
+        oauth2Proxy:
+          image:
+            tag: ""
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.oauth2Proxy.image.tag is required when sso.enabled'
+
+  - it: refuses a floating image tag
+    set:
+      sso:
+        oauth2Proxy:
+          image:
+            tag: latest
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.oauth2Proxy.image.tag must be an exact version tag'
+
+  - it: refuses a tag without the CVE-2026-34457 fix
+    set:
+      sso:
+        oauth2Proxy:
+          image:
+            tag: v7.15.1
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.oauth2Proxy.image.tag "v7.15.1" is older than v7.15.2'
+
+  - it: accepts a suffixed tag at the minimum version
+    set:
+      sso:
+        oauth2Proxy:
+          image:
+            tag: v7.15.2-alpine
+    asserts:
+      - notFailedTemplate: {}
+
+  - it: refuses a publicUrl with a path
+    set:
+      sso:
+        publicUrl: https://example.com/armonik
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.publicUrl must be scheme://host\[:port\]'
+
+  - it: refuses a non-http issuer
+    set:
+      sso:
+        oauth2Proxy:
+          issuerUrl: idp.example.com
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.oauth2Proxy.issuerUrl must be an http or https URL'
+
+  - it: refuses an unknown identity mode
+    set:
+      sso:
+        identityMode: role
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.identityMode must be user or group, got "role"'
+
+  - it: refuses an unknown identity claim
+    set:
+      sso:
+        identityClaim: sub
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.identityClaim must be email, preferred_username or user, got "sub"'
+
+  - it: refuses an empty fingerprint
+    set:
+      sso:
+        fingerprint: ""
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.fingerprint must be non-empty'
+
+  # A certificate presenting that fingerprint would match the SSO entries.
+  - it: refuses a SHA-1 hex fingerprint
+    set:
+      sso:
+        fingerprint: 0123456789abcdef0123456789ABCDEF01234567
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.fingerprint must not look like a certificate fingerprint \(32 or more hex digits, with or without colons\), got "0123456789abcdef0123456789ABCDEF01234567"'
+
+  - it: refuses a colon-separated hex fingerprint
+    set:
+      sso:
+        fingerprint: "01:23:45:67:89:ab:cd:ef:01:23:45:67:89:ab:cd:ef"
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.fingerprint must not look like a certificate fingerprint'
+
+  - it: accepts a short hex fingerprint
+    set:
+      sso:
+        fingerprint: 0123456789abcdef0123456789abcde
+    asserts:
+      - notFailedTemplate: {}
+
+  - it: checks no fingerprint with sso off
+    set:
+      sso:
+        enabled: false
+        fingerprint: 0123456789abcdef0123456789abcdef01234567
+    asserts:
+      - notFailedTemplate: {}
+
+  # Before 1.29 the API server drops restartPolicy: the sidecar never exits and nginx never starts.
+  - it: refuses sso before Kubernetes 1.29
+    capabilities:
+      majorVersion: 1
+      minorVersion: 28
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.enabled needs Kubernetes 1.29 or later, oauth2-proxy running as a native sidecar \(an init container with restartPolicy Always\), got v1.28'
+
+  - it: accepts sso on Kubernetes 1.29
+    capabilities:
+      majorVersion: 1
+      minorVersion: 29
+    asserts:
+      - notFailedTemplate: {}
+
+  - it: still renders before 1.29 with sso off
+    capabilities:
+      majorVersion: 1
+      minorVersion: 25
+    set:
+      sso:
+        enabled: false
+    asserts:
+      - notFailedTemplate: {}
+
+  - it: refuses an extraArgs metrics address, which the probes depend on
+    set:
+      sso:
+        oauth2Proxy:
+          extraArgs: ["--metrics-address=:9100"]
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.oauth2Proxy.extraArgs: "--metrics-address=:9100" is refused, the chart sets the metrics listener its probes use'
+
+  - it: refuses an extraArgs metrics secure address
+    set:
+      sso:
+        oauth2Proxy:
+          extraArgs: ["--metrics-secure-address", ":9100"]
+    asserts:
+      - failedTemplate:
+          errorPattern: 'is refused, the chart sets the metrics listener'
+
+  # An empty prefix puts SSO identities in the certificate CN namespace.
+  - it: refuses an empty cnPrefix
+    set:
+      sso:
+        cnPrefix: ""
+    asserts:
+      - failedTemplate:
+          errorMessage: 'sso.cnPrefix must not be empty: SSO identities would share the certificate CN namespace'
+
+  - it: refuses an empty groupCnPrefix in group mode
+    values:
+      - ../ci/sso-group-values.yaml
+    set:
+      sso:
+        groupCnPrefix: ""
+    asserts:
+      - failedTemplate:
+          errorMessage: 'sso.groupCnPrefix must not be empty: SSO identities would share the certificate CN namespace'
+
+  - it: accepts an empty groupCnPrefix in user mode
+    set:
+      sso:
+        groupCnPrefix: ""
+    asserts:
+      - notFailedTemplate: {}
+
+  - it: refuses an unsafe fingerprint
+    set:
+      sso:
+        fingerprint: 'a"; add_header x y'
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.fingerprint may only hold'
+
+  - it: refuses an unsafe CN prefix
+    set:
+      sso:
+        cnPrefix: "sso $"
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.cnPrefix may only hold'
+
+  - it: refuses an unsafe group CN prefix
+    set:
+      sso:
+        groupCnPrefix: "g;"
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.groupCnPrefix may only hold'
+
+  - it: requires a group mapping in group mode
+    set:
+      sso:
+        identityMode: group
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.groupMapping must list at least one'
+
+  - it: requires a group and a cn on every mapping entry
+    set:
+      sso:
+        identityMode: group
+        groupMapping:
+          - group: admins
+            cn: admins
+          - group: users
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.groupMapping\[1\] needs a non-empty group and cn'
+
+  - it: refuses a group name that would break the nginx map
+    set:
+      sso:
+        identityMode: group
+        groupMapping:
+          - group: 'a"b'
+            cn: x
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.groupMapping\[0\].group may not contain'
+
+  - it: refuses an unsafe mapped cn
+    set:
+      sso:
+        identityMode: group
+        groupMapping:
+          - group: admins
+            cn: "a b"
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.groupMapping\[0\].cn may only hold'
+
+  - it: refuses a health path colliding with a served route
+    set:
+      sso:
+        healthPath: /admin
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.healthPath must be a single path segment'
+
+  # oauth2-proxy refuses to start with both (pkg/validation/sessions.go).
+  - it: refuses a cookie refresh with a minimal session cookie
+    set:
+      sso:
+        oauth2Proxy:
+          cookieRefresh: 1h
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.oauth2Proxy.cookieRefresh must be 0 with sso.oauth2Proxy.sessionCookieMinimal, got "1h"'
+
+  - it: accepts any zero refresh with a minimal session cookie
+    set:
+      sso:
+        oauth2Proxy:
+          cookieRefresh: 0s
+    asserts:
+      - notFailedTemplate: {}
+
+  # armonik.ingress.durationIsZero: any zero duration spelling, nothing else.
+  - it: accepts every zero spelling of cookieRefresh with a minimal session cookie
+    set:
+      sso:
+        oauth2Proxy:
+          cookieRefresh: 0h0m0.000s
+    asserts:
+      - notFailedTemplate: {}
+
+  - it: accepts an integer zero cookieRefresh
+    set:
+      sso:
+        oauth2Proxy:
+          cookieRefresh: 0
+    asserts:
+      - notFailedTemplate: {}
+
+  - it: counts a fractional refresh as non-zero
+    set:
+      sso:
+        oauth2Proxy:
+          cookieRefresh: 0.5s
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.oauth2Proxy.cookieRefresh must be 0 with sso.oauth2Proxy.sessionCookieMinimal, got "0.5s"'
+
+  - it: counts a refresh with a zero component as non-zero
+    set:
+      sso:
+        oauth2Proxy:
+          cookieRefresh: 0h10ms
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.oauth2Proxy.cookieRefresh must be 0 with sso.oauth2Proxy.sessionCookieMinimal, got "0h10ms"'
+
+  # armonik.ingress.isDuration
+  - it: accepts a compound duration
+    set:
+      sso:
+        oauth2Proxy:
+          cookieExpire: 1h30m
+    asserts:
+      - notFailedTemplate: {}
+
+  - it: refuses a duration without a unit
+    set:
+      sso:
+        oauth2Proxy:
+          cookieExpire: "30"
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.oauth2Proxy.cookieExpire must be a duration such as 8h or 30m, or 0, got "30"'
+
+  - it: refuses an unknown duration unit
+    set:
+      sso:
+        oauth2Proxy:
+          cookieRefresh: 1d
+          sessionCookieMinimal: false
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.oauth2Proxy.cookieRefresh must be a duration such as 8h or 30m, or 0, got "1d"'
+
+  - it: accepts a cookie refresh once sessionCookieMinimal is off
+    set:
+      sso:
+        oauth2Proxy:
+          sessionCookieMinimal: false
+          cookieRefresh: 1h
+    asserts:
+      - notFailedTemplate: {}
+
+  - it: refuses a malformed duration
+    set:
+      sso:
+        oauth2Proxy:
+          cookieExpire: 8 hours
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.oauth2Proxy.cookieExpire must be a duration such as 8h or 30m, or 0, got "8 hours"'
+
+  - it: refuses a non-boolean sessionCookieMinimal
+    set:
+      sso:
+        oauth2Proxy:
+          sessionCookieMinimal: "yes"
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.oauth2Proxy.sessionCookieMinimal must be true or false'
+
+  - it: refuses a non-boolean cookieCsrfPerRequest
+    set:
+      sso:
+        oauth2Proxy:
+          cookieCsrfPerRequest: "true"
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.oauth2Proxy.cookieCsrfPerRequest must be true or false'
+
+  - it: refuses a malformed CSRF cookie lifetime
+    set:
+      sso:
+        oauth2Proxy:
+          cookieCsrfExpire: 15 minutes
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.oauth2Proxy.cookieCsrfExpire must be a duration such as 8h or 30m, or 0, got "15 minutes"'
+
+  - it: refuses the health check User-Agent flags (CVE-2026-34457)
+    set:
+      sso:
+        oauth2Proxy:
+          extraArgs: [--gcp-healthchecks]
+    asserts:
+      - failedTemplate:
+          errorPattern: 'extraArgs: "--gcp-healthchecks" is refused'
+
+  - it: refuses --ping-user-agent in its = form too
+    set:
+      sso:
+        oauth2Proxy:
+          extraArgs: [--ping-user-agent=probe]
+    asserts:
+      - failedTemplate:
+          errorPattern: 'extraArgs: "--ping-user-agent=probe" is refused'
+
+  - it: refuses gateway mode
+    set:
+      gateway:
+        enabled: true
+        gatewayClassName: example
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.enabled is not supported with gateway mode yet: the HTTPRoute routes gRPC by an exact content-type match'
+
+  - it: refuses an HTTPRoute on a shared Gateway
+    set:
+      httpRoute:
+        enabled: true
+        parentRefs:
+          - name: shared
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.enabled is not supported with gateway mode yet'
+
+  - it: requires an HTTP HealthCheckPolicy to probe the health path
+    set:
+      healthCheckPolicy:
+        enabled: true
+        default:
+          config:
+            type: HTTP
+            httpHealthCheck:
+              requestPath: /admin/
+    asserts:
+      - failedTemplate:
+          errorPattern: 'healthCheckPolicy.default.config.httpHealthCheck.requestPath must be sso.healthPath \(/healthz\)'
+
+  - it: accepts an HTTP HealthCheckPolicy on the health path, and a TCP one
+    set:
+      healthCheckPolicy:
+        enabled: true
+        default:
+          config:
+            type: HTTP
+            httpHealthCheck:
+              requestPath: /healthz
+    asserts:
+      - notFailedTemplate: {}
+
+  - it: requires the IdP CIDRs once the NetworkPolicy is on
+    set:
+      networkPolicy:
+        enabled: true
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.networkPolicy.idpEgressCidrs must list the IdP'
+
+  - it: refuses the malformed CIDR example.com
+    set:
+      sso:
+        networkPolicy:
+          idpEgressCidrs: [198.51.100.0/24, "example.com"]
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.networkPolicy.idpEgressCidrs: "example\.com" is not a CIDR'
+
+  - it: refuses the malformed CIDR 10.0.0.0
+    set:
+      sso:
+        networkPolicy:
+          idpEgressCidrs: [198.51.100.0/24, "10.0.0.0"]
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.networkPolicy.idpEgressCidrs: "10\.0\.0\.0" is not a CIDR'
+
+  - it: refuses the malformed CIDR 256.0.0.0/8
+    set:
+      sso:
+        networkPolicy:
+          idpEgressCidrs: [198.51.100.0/24, "256.0.0.0/8"]
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.networkPolicy.idpEgressCidrs: "256\.0\.0\.0/8" is not a CIDR'
+
+  - it: refuses the malformed CIDR 10.0.0.300/32
+    set:
+      sso:
+        networkPolicy:
+          idpEgressCidrs: [198.51.100.0/24, "10.0.0.300/32"]
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.networkPolicy.idpEgressCidrs: "10\.0\.0\.300/32" is not a CIDR'
+
+  - it: refuses the malformed CIDR 010.0.0.0/8
+    set:
+      sso:
+        networkPolicy:
+          idpEgressCidrs: [198.51.100.0/24, "010.0.0.0/8"]
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.networkPolicy.idpEgressCidrs: "010\.0\.0\.0/8" is not a CIDR'
+
+  - it: refuses the malformed CIDR 10.0.0.0/33
+    set:
+      sso:
+        networkPolicy:
+          idpEgressCidrs: [198.51.100.0/24, "10.0.0.0/33"]
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.networkPolicy.idpEgressCidrs: "10\.0\.0\.0/33" is not a CIDR'
+
+  - it: refuses the malformed CIDR 10.0.0.0/08
+    set:
+      sso:
+        networkPolicy:
+          idpEgressCidrs: [198.51.100.0/24, "10.0.0.0/08"]
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.networkPolicy.idpEgressCidrs: "10\.0\.0\.0/08" is not a CIDR'
+
+  - it: refuses the malformed CIDR 10.0.0/8
+    set:
+      sso:
+        networkPolicy:
+          idpEgressCidrs: [198.51.100.0/24, "10.0.0/8"]
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.networkPolicy.idpEgressCidrs: "10\.0\.0/8" is not a CIDR'
+
+  - it: refuses the malformed CIDR 2001:db8::/129
+    set:
+      sso:
+        networkPolicy:
+          idpEgressCidrs: [198.51.100.0/24, "2001:db8::/129"]
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.networkPolicy.idpEgressCidrs: "2001:db8::/129" is not a CIDR'
+
+  - it: refuses the malformed CIDR 2001:db8:::/32
+    set:
+      sso:
+        networkPolicy:
+          idpEgressCidrs: [198.51.100.0/24, "2001:db8:::/32"]
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.networkPolicy.idpEgressCidrs: "2001:db8:::/32" is not a CIDR'
+
+  - it: refuses the malformed CIDR 2001:db8::g/64
+    set:
+      sso:
+        networkPolicy:
+          idpEgressCidrs: [198.51.100.0/24, "2001:db8::g/64"]
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.networkPolicy.idpEgressCidrs: "2001:db8::g/64" is not a CIDR'
+
+  - it: refuses the malformed CIDR 1:2:3:4:5:6:7:8:9/128
+    set:
+      sso:
+        networkPolicy:
+          idpEgressCidrs: [198.51.100.0/24, "1:2:3:4:5:6:7:8:9/128"]
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.networkPolicy.idpEgressCidrs: "1:2:3:4:5:6:7:8:9/128" is not a CIDR'
+
+  - it: refuses the malformed CIDR 2001:db8::/
+    set:
+      sso:
+        networkPolicy:
+          idpEgressCidrs: [198.51.100.0/24, "2001:db8::/"]
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.networkPolicy.idpEgressCidrs: "2001:db8::/" is not a CIDR'
+
+  - it: accepts IPv4 and IPv6 CIDRs at their bounds
+    set:
+      sso:
+        networkPolicy:
+          idpEgressCidrs:
+            - 0.0.0.0/0
+            - 255.255.255.255/32
+            - 203.0.113.7/32
+            - ::/0
+            - 2001:db8::/32
+            - fe80::1/128
+            - 2001:DB8:0:0:0:0:0:1/64
+            - ::1/128
+            - 2001:db8::/100
+    asserts:
+      - notFailedTemplate: {}
+
+  - it: needs ESO for an external store
+    set:
+      global:
+        armonik:
+          operators:
+            externalSecrets:
+              deploy: false
+              available: false
+      sso:
+        oauth2Proxy:
+          externalSecret:
+            storeName: vault
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.oauth2Proxy.externalSecret.storeName needs global.armonik.operators.externalSecrets.available'
+
+  - it: needs both remote keys with an external store
+    set:
+      sso:
+        oauth2Proxy:
+          externalSecret:
+            storeName: vault
+            clientSecret:
+              key: armonik/oauth2-proxy
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.oauth2Proxy.externalSecret.cookieSecret.key is required'

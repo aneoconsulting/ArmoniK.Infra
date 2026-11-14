@@ -1,0 +1,35 @@
+# SSO in group mode, the CN coming from the first matching IdP group. Group names carry regex
+# metacharacters and a space to exercise their escaping in the nginx map. The client and cookie
+# secrets come from an existing ESO store, and NetworkPolicies are on.
+global:
+  environment:
+    name: ci
+    description: ArmoniK CI environment
+urlsSecretName: example-urls
+networkPolicy:
+  enabled: true
+sso:
+  enabled: true
+  publicUrl: https://armonik.example.com:8443
+  identityMode: group
+  groupMapping:
+    - group: armonik.admins
+      cn: admins
+    - group: /armonik/c++ users
+      cn: users
+  oauth2Proxy:
+    issuerUrl: https://idp.example.com/realms/armonik
+    clientId: armonik
+    existingSecret: armonik-oauth2-proxy
+    externalSecret:
+      storeName: vault
+      storeKind: ClusterSecretStore
+      clientSecret:
+        key: armonik/oauth2-proxy
+        property: client-secret
+      cookieSecret:
+        key: armonik/oauth2-proxy
+        property: cookie-secret
+  networkPolicy:
+    idpEgressCidrs:
+      - 203.0.113.0/24

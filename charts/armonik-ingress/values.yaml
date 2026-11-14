@@ -166,6 +166,96 @@ mtls:
     existingSecret: ""
   trustedCommonNames: []
 
+# -- Identity headers nginx sets on gRPC requests to the control plane. The umbrella passes these
+# names to the control plane (Authenticator__*Header in its control conf layer); a control plane
+# installed as its own release keeps ArmoniK Core's defaults, which are the values below. With mTLS, the CN and fingerprint come from the client certificate (or from a
+# trustedCommonNames proxy) and the impersonation headers pass through; without mTLS, all four are
+# cleared so a client cannot assert an identity. Letters, digits and dashes only.
+identityHeaders:
+  commonName: X-Certificate-Client-CN
+  fingerprint: X-Certificate-Client-Fingerprint
+  impersonationUsername: X-Impersonate-Username
+  impersonationId: X-Impersonate-Id
+
+# OIDC single sign-on on the web port (admin GUI, gRPC-web, Grafana, Seq) through an oauth2-proxy
+# sidecar and nginx auth_request; the grpc port keeps mTLS for SDK and CLI clients. See
+# charts/sso.md. Not supported with gateway.enabled or httpRoute.enabled.
+sso:
+  enabled: false
+  # -- Public URL of the web port as browsers reach it, scheme://host[:port] with no path. The
+  # OIDC redirect URI is <publicUrl>/oauth2/callback; https makes the session cookie Secure.
+  publicUrl: ""
+  # -- user: one CN per person, <cnPrefix><identityClaim>. group: one CN per groupMapping entry.
+  identityMode: user
+  # -- oauth2-proxy session field the user-mode CN is built from: email, preferred_username, or
+  # user (the OIDC subject).
+  identityClaim: email
+  # -- Keeps SSO CNs apart from certificate CNs: non-empty.
+  cnPrefix: "sso:"
+  # -- Fingerprint header sent with every SSO identity. Declare the SSO userCertificates with this
+  # fingerprint: a client certificate presents its real one, so it cannot match them. Non-empty, and
+  # not a hex string of 32 digits or more.
+  fingerprint: sso
+  # -- Same as cnPrefix for the group-mode CNs: non-empty in group mode.
+  groupCnPrefix: "sso-group:"
+  # -- group mode: ordered list of {group, cn}, the first IdP group present wins. A user in none of
+  # them gets an empty CN, which ArmoniK Core rejects.
+  groupMapping: []
+  # - group: armonik-admins
+  #   cn: admins
+  # -- Unauthenticated path answering 200 on both ports, for load balancer health checks.
+  healthPath: /healthz
+  oauth2Proxy:
+    image:
+      registry: quay.io
+      repository: oauth2-proxy/oauth2-proxy
+      # -- Exact tag, v7.15.2 or later (CVE-2026-34457).
+      tag: v7.15.5
+      pullPolicy: IfNotPresent
+    issuerUrl: ""
+    clientId: ""
+    # -- Secret in the release namespace with keys client-secret and cookie-secret (16, 24 or 32
+    # bytes). Bring it yourself, or set externalSecret.storeName to have ESO build it.
+    existingSecret: ""
+    externalSecret:
+      # -- Existing SecretStore or ClusterSecretStore to build existingSecret from; empty: none.
+      storeName: ""
+      storeKind: ""
+      clientSecret:
+        key: ""
+        property: ""
+      cookieSecret:
+        key: ""
+        property: ""
+    scopes: "openid email profile"
+    groupsClaim: groups
+    # -- Groups allowed to log in (oauth2-proxy --allowed-group); empty: any authenticated user.
+    allowedGroups: []
+    emailDomains: ["*"]
+    # -- Session lifetime: removing a user or group at the IdP takes effect at the latest after it.
+    cookieExpire: 8h
+    # -- 0 disables the refresh, which needs the OAuth tokens in the cookie: incompatible with
+    # sessionCookieMinimal.
+    cookieRefresh: "0"
+    # -- Keep only the identity (user, email, groups) in the session cookie, not the OAuth tokens,
+    # so it stays one cookie under 4 KB: nginx passes on one Set-Cookie per auth subrequest, and a
+    # cookie split in _0/_1 breaks the session.
+    sessionCookieMinimal: true
+    # -- One CSRF cookie per login attempt, named after its state: parallel requests without a
+    # session (a page and its favicon) each start a login without overwriting the other's cookie.
+    cookieCsrfPerRequest: true
+    # -- Lifetime of a CSRF cookie, so per-request cookies of abandoned logins expire.
+    cookieCsrfExpire: 15m
+    # -- Appended to the generated flags. --ping-user-agent and --gcp-healthchecks are refused.
+    extraArgs: []
+    resources: {}
+    # -- Container securityContext; empty: the chart-level one with a read-only root filesystem.
+    securityContext: {}
+  networkPolicy:
+    # -- CIDRs the nginx pod may reach on TCP 443 for the IdP, required once a NetworkPolicy
+    # selects that pod (networkPolicy.enabled here, or the umbrella's).
+    idpEgressCidrs: []
+
 # Not read by any template.
 volumes:
   # ingressSecret: ingress-crt

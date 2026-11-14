@@ -4,7 +4,7 @@ terraform {
     # REMOVE_PEERING in deletion_policy needs 8.1
     google = {
       source  = "hashicorp/google"
-      version = ">= 6.0"
+      version = ">= 6.50.0"
     }
   }
 }

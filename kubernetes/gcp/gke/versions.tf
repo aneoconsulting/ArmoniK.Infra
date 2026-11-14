@@ -3,11 +3,11 @@ terraform {
   required_providers {
     google = {
       source  = "hashicorp/google"
-      version = ">= 8.9"
+      version = ">= 8.11.0"
     }
     local = {
       source  = "hashicorp/local"
-      version = ">= 2.2"
+      version = ">= 2.9.1"
     }
   }
 }

@@ -88,6 +88,12 @@ variable "enable_google_access" {
   default     = true
 }
 
+variable "enable_flow_logs" {
+  description = "VPC flow logs on the subnets, billed by volume (generation and Cloud Logging ingestion)"
+  type        = bool
+  default     = true
+}
+
 variable "flow_log_max_aggregation_interval" {
   description = "The maximum interval of time during which a flow of packets is captured and aggregated into a flow log"
   type        = string

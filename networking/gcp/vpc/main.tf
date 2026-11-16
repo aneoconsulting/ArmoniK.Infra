@@ -43,10 +43,13 @@ resource "google_compute_subnetwork" "subnets" {
   private_ip_google_access = var.enable_google_access
   region                   = each.value.region
   project                  = data.google_client_config.current.project
-  log_config {
-    aggregation_interval = var.flow_log_max_aggregation_interval
-    flow_sampling        = "1.0"
-    metadata             = "INCLUDE_ALL_METADATA"
+  dynamic "log_config" {
+    for_each = var.enable_flow_logs ? [1] : []
+    content {
+      aggregation_interval = var.flow_log_max_aggregation_interval
+      flow_sampling        = "1.0"
+      metadata             = "INCLUDE_ALL_METADATA"
+    }
   }
 }
 
@@ -60,10 +63,13 @@ resource "google_compute_subnetwork" "gke_subnet" {
   private_ip_google_access = var.enable_google_access
   region                   = var.gke_subnet.region
   project                  = data.google_client_config.current.project
-  log_config {
-    aggregation_interval = var.flow_log_max_aggregation_interval
-    flow_sampling        = "1.0"
-    metadata             = "INCLUDE_ALL_METADATA"
+  dynamic "log_config" {
+    for_each = var.enable_flow_logs ? [1] : []
+    content {
+      aggregation_interval = var.flow_log_max_aggregation_interval
+      flow_sampling        = "1.0"
+      metadata             = "INCLUDE_ALL_METADATA"
+    }
   }
   dynamic "secondary_ip_range" {
     for_each = ["pods_cidr_block", "services_cidr_block"]

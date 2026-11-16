@@ -659,9 +659,6 @@ dependencies:
             Format                  json_lines
             json_date_key           @t
             json_date_format        iso8601
-        [OUTPUT]
-            Name                    stdout
-            Match                   kube.*
       customParsers: |
         [PARSER]
             Name   json

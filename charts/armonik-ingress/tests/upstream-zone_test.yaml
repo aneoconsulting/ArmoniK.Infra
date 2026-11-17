@@ -1,0 +1,37 @@
+suite: control-plane upstream zone
+release:
+  name: t
+templates:
+  - armonik-nginx-conf.yaml
+values:
+  - ../ci/default-values.yaml
+tests:
+  - it: keeps the 32k zone by default
+    asserts:
+      - matchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: '(?m)^\s+zone armonik_zone 32k;$'
+  - it: takes the zone size from upstreamZoneSize
+    set:
+      upstreamZoneSize: 1m
+    asserts:
+      - matchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: '(?m)^\s+zone armonik_zone 1m;$'
+  - it: sizes the zone of the plain Secret too
+    set:
+      urlsSecretName: ""
+      control_plane_url: http://control-plane:5001
+      upstreamZoneSize: 256k
+    asserts:
+      - isKind:
+          of: Secret
+      - matchRegex:
+          path: stringData["armonik.conf"]
+          pattern: '(?m)^\s+zone armonik_zone 256k;$'
+  - it: rejects a size nginx would not parse
+    set:
+      upstreamZoneSize: 1 MB
+    asserts:
+      - failedTemplate:
+          errorPattern: 'upstreamZoneSize must be an nginx size'

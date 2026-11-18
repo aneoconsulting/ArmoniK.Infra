@@ -1,8 +1,14 @@
 {{/*
-Broker image reference, resolved as the container resolves it so NOTES.txt matches the pod.
+Broker image, the armonik.utils.imageConf result: the single resolution behind the container, its
+version label and NOTES.txt, so they cannot drift apart.
 */}}
+{{- define "activemq.imageConf" -}}
+{{- list . "image" .Values.image | include "armonik.utils.imageConf" }}
+{{- end }}
+
+{{/* Broker image reference, for NOTES.txt. */}}
 {{- define "activemq.image" -}}
-{{- list . "image" .Values.image | include "armonik.utils.imageConf" | fromYaml | dig "fullname" "" }}
+{{- include "activemq.imageConf" . | fromYaml | dig "fullname" "" }}
 {{- end }}
 
 {{/*

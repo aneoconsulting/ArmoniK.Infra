@@ -1,9 +1,9 @@
 {{/* Pod-template fragments: armonik.utils.patch parses what it patches, so each is a define. */}}
 
-{{/* ActiveMQ broker container: amqp and dashboard ports, JVM heap from activemqOptsMemory. */}}
+{{/* ActiveMQ broker container: amqp and dashboard ports, JVM heap from activemqOptsMemory. Takes (dict "root" $ "image" <activemq.imageConf>). */}}
 {{- define "activemq.container" -}}
 {{- $v := .root.Values -}}
-{{- $image := list .root "image" $v.image | include "armonik.utils.imageConf" | fromYaml -}}
+{{- $image := .image -}}
 name: activemq
 {{- with $v.securityContext }}
 securityContext:

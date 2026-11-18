@@ -10,7 +10,7 @@ metadata:
   namespace: {{ include "armonik.namespace" . | quote }}
   labels:
     app.kubernetes.io/component: load-balancer
-    {{- include "armonik.labels" . | nindent 4 }}
+    {{- include "armonik.labels" (list $ $image) | nindent 4 }}
     {{- with .Values.loadBalancer.labels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
@@ -35,7 +35,7 @@ spec:
         {{- end }}
       labels:
         app.kubernetes.io/component: load-balancer
-        {{- include "armonik.labels" . | nindent 8 }}
+        {{- include "armonik.labels" (list $ $image) | nindent 8 }}
         {{- with .Values.loadBalancer.labels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}

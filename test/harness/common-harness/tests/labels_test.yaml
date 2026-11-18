@@ -1,0 +1,56 @@
+suite: armonik.labels
+templates:
+  - templates/labels.yaml
+release:
+  name: t
+tests:
+  - it: takes the chart AppVersion from the root context
+    set:
+      labels: {root: true}
+    asserts:
+      - equal: {path: 'metadata.labels["app.kubernetes.io/version"]', value: "0.0.0-appversion"}
+
+  - it: takes the tag a workload image resolved to over the AppVersion
+    set:
+      labels:
+        confs:
+          - {repository: dockerhubaneo/armonik_control, tag: "0.0.0-override"}
+    asserts:
+      - equal: {path: 'metadata.labels["app.kubernetes.io/version"]', value: "0.0.0-override"}
+
+  - it: takes a global.armonik.versions entry for an ArmoniK image
+    set:
+      global.armonik.versions.core: "0.0.0-versions"
+      labels:
+        confs:
+          - {repository: dockerhubaneo/armonik_control}
+    asserts:
+      - equal: {path: 'metadata.labels["app.kubernetes.io/version"]', value: "0.0.0-versions"}
+
+  - it: leaves the version out for a digest-only image rather than claiming the AppVersion
+    set:
+      labels:
+        confs:
+          - {repository: dockerhubaneo/armonik_control, digest: "sha256:0000"}
+    asserts:
+      - notExists: {path: 'metadata.labels["app.kubernetes.io/version"]'}
+
+  - it: reduces a tag to the label charset and its alphanumeric ends
+    set:
+      labels:
+        confs:
+          - {repository: busybox, tag: "_1.2+build.3-"}
+    asserts:
+      - equal: {path: 'metadata.labels["app.kubernetes.io/version"]', value: "1.2_build.3"}
+
+  - it: keeps the other common labels and commonLabels for a workload
+    set:
+      commonLabels: {team: grid}
+      labels:
+        confs:
+          - {repository: busybox, tag: "1.37.0"}
+    asserts:
+      - equal: {path: 'metadata.labels["app.kubernetes.io/instance"]', value: "t"}
+      - equal: {path: 'metadata.labels["app.kubernetes.io/managed-by"]', value: "Helm"}
+      - equal: {path: 'metadata.labels["helm.sh/chart"]', value: "common-harness-0.1.0"}
+      - equal: {path: metadata.labels.team, value: grid}

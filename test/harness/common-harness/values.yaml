@@ -13,3 +13,6 @@ patch:
 pullSecrets:
 # securityContext: {input: <container securityContext>} for armonik.securityContext
 securityContext:
+# labels: {confs: [<image conf>...]} renders armonik.labels for a workload running that image,
+#   {root: true} for the root context alone
+labels:

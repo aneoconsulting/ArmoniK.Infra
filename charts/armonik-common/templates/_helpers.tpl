@@ -60,17 +60,33 @@ name, else armonik.fullname. Required when create=false.
 
 
 {{/*
-Common labels, plus .Values.commonLabels.
+Common labels, plus .Values.commonLabels. Takes the root context, or (list <root context> <image>) for a
+workload and its pod template, <image> being the armonik.utils.imageConf result of its main container:
+app.kubernetes.io/version is then the tag that image resolved to, so a per-component tag or a
+global.armonik.versions entry shows on the workload instead of the chart AppVersion. A digest-only image
+has no version to show, so the label is left out rather than claiming the AppVersion. The value is
+reduced to the label charset and length.
+
+  {{- include "armonik.labels" (list $ $image) | nindent 4 }}
 */}}
 {{- define "armonik.labels" -}}
-helm.sh/chart: {{ include "armonik.chart" . }}
-{{ include "armonik.selectorLabels" . }}
-{{- if .Chart.AppVersion }}
-app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+  {{- $ctx := . -}}
+  {{- $version := "" -}}
+  {{- if kindIs "slice" . -}}
+    {{- $ctx = first . -}}
+    {{- $version = index . 1 | default dict | dig "tag" "" | default "" -}}
+  {{- else -}}
+    {{- $version = .Chart.AppVersion | default "" -}}
+  {{- end -}}
+  {{- $version = regexReplaceAll "[^-A-Za-z0-9_.]" (toString $version) "_" | trunc 63 | trimAll "-_." -}}
+helm.sh/chart: {{ include "armonik.chart" $ctx }}
+{{ include "armonik.selectorLabels" $ctx }}
+{{- with $version }}
+app.kubernetes.io/version: {{ . | quote }}
 {{- end }}
-app.kubernetes.io/managed-by: {{ .Release.Service }}
-{{- if .Values.commonLabels }}
-{{ .Values.commonLabels | toYaml }}
+app.kubernetes.io/managed-by: {{ $ctx.Release.Service }}
+{{- with $ctx.Values.commonLabels }}
+{{ toYaml . }}
 {{- end }}
 {{- end }}
 

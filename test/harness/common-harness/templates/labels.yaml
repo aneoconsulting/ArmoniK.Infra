@@ -1,0 +1,13 @@
+{{- with .Values.labels }}
+{{- $arg := $ -}}
+{{- if .confs -}}
+  {{- $image := concat (list $ "image") .confs | include "armonik.utils.imageConf" | fromYaml -}}
+  {{- $arg = list $ $image -}}
+{{- end }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: labels-result
+  labels:
+    {{- include "armonik.labels" $arg | nindent 4 }}
+{{- end }}

@@ -52,6 +52,21 @@ metadata:
     {{- include "armonik.labels" . | nindent 4 }}
 ```
 
+`app.kubernetes.io/version` is the version of the image that runs, not the chart's, so that every
+resource of a component carries the same version
+([Kubernetes recommended labels](https://kubernetes.io/docs/concepts/overview/working-with-objects/common-labels/)):
+
+- A resource dedicated to one component (its workload and pods, and what exposes, configures, scales,
+  protects or monitors only them) passes that component's image:
+  `include "armonik.labels" (list $ $image)`.
+- A resource shared by components whose versions can differ, or belonging to none, passes the root
+  context and keeps the chart `AppVersion`.
+- Resolve each component image once, in a chart helper returning the `armonik.utils.imageConf`
+  result (`armonik.control.imageConf`, `armonik.ingress.gui.imageConf`...), and use it for the
+  container and every label, so they cannot drift apart.
+- `armonik.selectorLabels` stays name and instance only: selectors are immutable, and a version in
+  them would break upgrades.
+
 ### Documenting charts
 
 - Comments

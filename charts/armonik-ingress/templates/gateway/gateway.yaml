@@ -6,6 +6,7 @@ metadata:
   namespace: {{ include "armonik.namespace" . | quote }}
   labels:
     app.kubernetes.io/component: ingress
+    {{- /* Gateway API objects may front other backends than nginx: chart AppVersion. */}}
     {{- include "armonik.labels" . | nindent 4 }}
   {{- with .Values.annotations }}
   annotations:

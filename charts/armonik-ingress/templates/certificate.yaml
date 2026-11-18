@@ -18,7 +18,7 @@
       "kind" $issuer.kind
       "group" $issuer.group
       "spec" (index $certManager $provider | default dict)
-      "labels" (include "armonik.labels" .)
+      "labels" (include "armonik.labels" (include "armonik.ingress.nginx.imageConf" $ | fromYaml | list $))
       "specValuesPath" "tls.certManager") }}
 {{- end }}
 ---
@@ -40,7 +40,7 @@ metadata:
   {{- end }}
   labels:
     app.kubernetes.io/component: ingress
-    {{- include "armonik.labels" . | nindent 4 }}
+    {{- include "armonik.labels" (include "armonik.ingress.nginx.imageConf" $ | fromYaml | list $) | nindent 4 }}
     {{- with $certManager.labels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}

@@ -1,7 +1,7 @@
 {{- $pdc := .Values.podDeletionCost | default dict -}}
 {{- if $pdc.enabled }}
 {{- $sa := include "armonik.fullname" $ | printf "%s-pdc" | trunc 63 | trimSuffix "-" -}}
-{{- $image := list $ "podDeletionCost.image" $pdc.image | include "armonik.utils.imageConf" | fromYaml -}}
+{{- $image := include "armonik.control.podDeletionCost.imageConf" $ | fromYaml -}}
 {{- $env := dict -}}
 {{- with $pdc.prometheusUrl }}{{- $_ := set $env "PrometheusUrl" . -}}{{- end -}}
 {{- with $pdc.metricsName }}{{- $_ := set $env "MetricsName" . -}}{{- end -}}
@@ -20,7 +20,7 @@ metadata:
   name: {{ $sa | quote }}
   namespace: {{ include "armonik.namespace" $ | quote }}
   labels:
-    {{- include "armonik.labels" $ | nindent 4 }}
+    {{- include "armonik.labels" (list $ $image) | nindent 4 }}
 ---
 {{/* get/patch pods only. */}}
 apiVersion: rbac.authorization.k8s.io/v1
@@ -29,7 +29,7 @@ metadata:
   name: {{ $sa | quote }}
   namespace: {{ include "armonik.namespace" $ | quote }}
   labels:
-    {{- include "armonik.labels" $ | nindent 4 }}
+    {{- include "armonik.labels" (list $ $image) | nindent 4 }}
 rules:
   - apiGroups: [""]
     resources: ["pods"]
@@ -41,7 +41,7 @@ metadata:
   name: {{ $sa | quote }}
   namespace: {{ include "armonik.namespace" $ | quote }}
   labels:
-    {{- include "armonik.labels" $ | nindent 4 }}
+    {{- include "armonik.labels" (list $ $image) | nindent 4 }}
 subjects:
   - kind: ServiceAccount
     name: {{ $sa | quote }}
@@ -58,7 +58,7 @@ metadata:
   namespace: {{ include "armonik.namespace" $ | quote }}
   labels:
     app.kubernetes.io/component: pod-deletion-cost
-    {{- include "armonik.labels" $ | nindent 4 }}
+    {{- include "armonik.labels" (list $ $image) | nindent 4 }}
     {{- with $pdc.labels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
@@ -76,7 +76,7 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/component: pod-deletion-cost
-        {{- include "armonik.labels" $ | nindent 8 }}
+        {{- include "armonik.labels" (list $ $image) | nindent 8 }}
         {{- with $pdc.labels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}

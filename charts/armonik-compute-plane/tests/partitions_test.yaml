@@ -322,3 +322,14 @@ tests:
       - equal:
           path: spec.template.spec.containers[?(@.name == "agent")].readinessProbe.httpGet.path
           value: /ready
+  - it: labels each partition and its pods with the overridden agent tag, not the AppVersion
+    template: deployment.yaml
+    set:
+      partitionCommon.agent.image.tag: "0.0.0-override"
+    asserts:
+      - equal:
+          path: 'metadata.labels["app.kubernetes.io/version"]'
+          value: "0.0.0-override"
+      - equal:
+          path: 'spec.template.metadata.labels["app.kubernetes.io/version"]'
+          value: "0.0.0-override"

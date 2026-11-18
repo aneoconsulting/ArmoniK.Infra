@@ -11,6 +11,7 @@
 {{- include "armonik.netpol.render" (dict
       "context" .
       "component" "submitter"
+      "image" (include "armonik.control.imageConf" . | fromYaml)
       "config" (include "armonik.netpol.submitter" . | fromYaml)
   ) }}
 
@@ -28,6 +29,7 @@
 {{- include "armonik.netpol.render" (dict
       "context" .
       "component" "metrics-exporter"
+      "image" (include "armonik.control.metricsExporter.imageConf" . | fromYaml)
       "config" (include "armonik.netpol.metricsExporter" . | fromYaml)
   ) }}
 
@@ -45,6 +47,7 @@
 {{- include "armonik.netpol.render" (dict
       "context" .
       "component" "pod-deletion-cost"
+      "image" (include "armonik.control.podDeletionCost.imageConf" . | fromYaml)
       "config" (include "armonik.netpol.podDeletionCost" . | fromYaml)
   ) }}
 

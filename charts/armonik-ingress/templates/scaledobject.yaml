@@ -5,5 +5,5 @@
     {{- fail "hpa.enabled renders a KEDA ScaledObject: set global.armonik.operators.keda.available=true" -}}
   {{- end -}}
   {{- $labels := dict "app.kubernetes.io/component" "ingress" -}}
-{{ dict "root" $ "name" (include "armonik.fullname" .) "labels" $labels "hpa" $hpa | include "armonik.scaledObject" }}
+{{ dict "root" $ "name" (include "armonik.fullname" .) "labels" $labels "hpa" $hpa "image" (include "armonik.ingress.nginx.imageConf" $ | fromYaml) | include "armonik.scaledObject" }}
 {{- end }}

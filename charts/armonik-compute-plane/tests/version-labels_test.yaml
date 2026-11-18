@@ -1,0 +1,27 @@
+suite: version labels follow the partition agent image
+# A sentinel, so a resource keeping the AppVersion is told apart from one following its image.
+chart:
+  appVersion: 0.0.0-appversion
+templates:
+  - scaledobject.yaml
+  - podmonitor.yaml
+values:
+  - ../ci/partitions-values.yaml
+release:
+  name: t
+set:
+  partitionCommon.agent.image.tag: 0.0.0-common
+  partitions.htcmock.agent.image.tag: 0.0.0-htcmock
+  global.armonik.operators.prometheusOperator.available: true
+tests:
+  - it: labels each ScaledObject with the agent tag of its own partition
+    template: scaledobject.yaml
+    asserts:
+      - equal: {path: 'metadata.labels["app.kubernetes.io/version"]', value: 0.0.0-htcmock}
+        documentSelector: {path: metadata.name, value: t-armonik-compute-plane-htcmock}
+      - equal: {path: 'metadata.labels["app.kubernetes.io/version"]', value: 0.0.0-common}
+        documentSelector: {path: metadata.name, value: t-armonik-compute-plane-bench}
+  - it: keeps the AppVersion on the PodMonitor shared by every partition
+    template: podmonitor.yaml
+    asserts:
+      - equal: {path: 'metadata.labels["app.kubernetes.io/version"]', value: 0.0.0-appversion}

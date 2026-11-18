@@ -60,17 +60,31 @@ name, else armonik.fullname. Required when create=false.
 
 
 {{/*
-Common labels, plus .Values.commonLabels.
+Common labels, plus .Values.commonLabels. Takes the root context, or (list <root context> <image>)
+with a component's armonik.utils.imageConf result, whose tag becomes app.kubernetes.io/version (left
+out for a digest-only image). Resources dedicated to one component pass its image; shared ones keep
+the AppVersion.
+
+  {{- include "armonik.labels" (list $ $image) | nindent 4 }}
 */}}
 {{- define "armonik.labels" -}}
-helm.sh/chart: {{ include "armonik.chart" . }}
-{{ include "armonik.selectorLabels" . }}
-{{- if .Chart.AppVersion }}
-app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+  {{- $ctx := . -}}
+  {{- $version := "" -}}
+  {{- if kindIs "slice" . -}}
+    {{- $ctx = first . -}}
+    {{- $version = index . 1 | default dict | dig "tag" "" | default "" -}}
+  {{- else -}}
+    {{- $version = .Chart.AppVersion | default "" -}}
+  {{- end -}}
+  {{- $version = regexReplaceAll "[^-A-Za-z0-9_.]" (toString $version) "_" | trunc 63 | trimAll "-_." -}}
+helm.sh/chart: {{ include "armonik.chart" $ctx }}
+{{ include "armonik.selectorLabels" $ctx }}
+{{- with $version }}
+app.kubernetes.io/version: {{ . | quote }}
 {{- end }}
-app.kubernetes.io/managed-by: {{ .Release.Service }}
-{{- if .Values.commonLabels }}
-{{ .Values.commonLabels | toYaml }}
+app.kubernetes.io/managed-by: {{ $ctx.Release.Service }}
+{{- with $ctx.Values.commonLabels }}
+{{ toYaml . }}
 {{- end }}
 {{- end }}
 

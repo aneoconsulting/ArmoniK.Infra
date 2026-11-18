@@ -1,0 +1,34 @@
+suite: version labels follow the component image
+# A sentinel, so a resource keeping the AppVersion is told apart from one following its image.
+chart:
+  appVersion: 0.0.0-appversion
+templates:
+  - services/ingress.yaml
+  - services/gui.yaml
+  - configmaps/load-balancer.yaml
+  - gateway/gateway.yaml
+values:
+  - ../ci/gateway-values.yaml
+set:
+  image.tag: 0.0.0-nginx
+  gui.enabled: true
+  gui.image.tag: 0.0.0-gui
+  loadBalancer.enabled: true
+  loadBalancer.image.tag: 0.0.0-lb
+tests:
+  - it: labels the nginx Service with the nginx tag
+    template: services/ingress.yaml
+    asserts:
+      - equal: {path: 'metadata.labels["app.kubernetes.io/version"]', value: 0.0.0-nginx}
+  - it: labels the GUI Service with the GUI tag
+    template: services/gui.yaml
+    asserts:
+      - equal: {path: 'metadata.labels["app.kubernetes.io/version"]', value: 0.0.0-gui}
+  - it: labels the load-balancer ConfigMap with the load-balancer tag
+    template: configmaps/load-balancer.yaml
+    asserts:
+      - equal: {path: 'metadata.labels["app.kubernetes.io/version"]', value: 0.0.0-lb}
+  - it: keeps the AppVersion on the Gateway, which may front other backends than nginx
+    template: gateway/gateway.yaml
+    asserts:
+      - equal: {path: 'metadata.labels["app.kubernetes.io/version"]', value: 0.0.0-appversion}

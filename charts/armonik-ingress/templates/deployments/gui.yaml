@@ -1,4 +1,4 @@
-{{- $image := list . "gui.image" .Values.gui.image | include "armonik.utils.imageConf" | fromYaml }}
+{{- $image := include "armonik.ingress.gui.imageConf" $ | fromYaml }}
 {{- $ctx := dict "root" $ "image" $image -}}
 {{- $podSpec := list (include "armonik.ingress.gui.podSpec" $ctx) .Values.gui.podSpecPatch "gui.podSpecPatch" | include "armonik.utils.patch" -}}
 apiVersion: apps/v1
@@ -8,7 +8,7 @@ metadata:
   namespace: {{ include "armonik.namespace" . | quote }}
   labels:
     app.kubernetes.io/component: gui
-    {{- include "armonik.labels" . | nindent 4 }}
+    {{- include "armonik.labels" (list $ $image) | nindent 4 }}
     {{- with .Values.gui.labels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
@@ -25,7 +25,7 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/component: gui
-        {{- include "armonik.labels" . | nindent 8 }}
+        {{- include "armonik.labels" (list $ $image) | nindent 8 }}
         {{- with .Values.gui.labels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}

@@ -37,7 +37,7 @@ metadata:
   namespace: {{ include "armonik.namespace" . | quote }}
   labels:
     app.kubernetes.io/component: load-balancer
-    {{- include "armonik.labels" . | nindent 4 }}
+    {{- include "armonik.labels" (include "armonik.ingress.loadBalancer.imageConf" $ | fromYaml | list $) | nindent 4 }}
 data:
   lb.yml: |-
     {{- $lbConf | toPrettyJson | nindent 4 }}

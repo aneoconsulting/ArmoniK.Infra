@@ -20,7 +20,7 @@ metadata:
     "helm.sh/hook-weight": "10"
   {{- end }}
   labels:
-    {{- include "armonik.labels" . | nindent 4 }}
+    {{- include "armonik.labels" (include "armonik.ingress.nginx.imageConf" $ | fromYaml | list $) | nindent 4 }}
 spec:
   refreshInterval: {{ include "armonik.conf.refreshInterval" . | quote }}
   {{- with (include "armonik.conf.refreshPolicy" .) }}
@@ -55,7 +55,7 @@ metadata:
   name: {{ $name | quote }}
   namespace: {{ include "armonik.namespace" . | quote }}
   labels:
-    {{- include "armonik.labels" . | nindent 4 }}
+    {{- include "armonik.labels" (include "armonik.ingress.nginx.imageConf" $ | fromYaml | list $) | nindent 4 }}
 type: Opaque
 stringData:
   armonik.conf: |

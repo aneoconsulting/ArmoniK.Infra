@@ -97,3 +97,15 @@ egress:
         "extra" .Values.networkPolicy.extraEgressRules
     ) | nindent 2 }}
 {{- end -}}
+
+{{/*
+Agent image of one partition, the armonik.utils.imageConf result, resolved once for its Deployment and
+ScaledObject. Takes (list $ <merged partition>). Dot access, not armonik.utils.index: a reference string
+would not survive its fromYaml.
+*/}}
+{{- define "armonik.compute.agent.imageConf" -}}
+  {{- $root := first . -}}
+  {{- $partition := index . 1 | default dict -}}
+  {{- $partitionCommon := $root.Values.partitionCommon | default dict -}}
+  {{- list $root "partitionCommon.agent.image" ($partition.agent | default dict).image ($partitionCommon.agent | default dict).image | include "armonik.utils.imageConf" -}}
+{{- end -}}

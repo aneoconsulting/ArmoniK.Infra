@@ -1,4 +1,5 @@
-{{- $ctx := dict "root" $ -}}
+{{- $image := include "activemq.imageConf" $ | fromYaml -}}
+{{- $ctx := dict "root" $ "image" $image -}}
 {{- $podSpec := list (include "activemq.podSpec" $ctx) .Values.podSpecPatch "podSpecPatch" | include "armonik.utils.patch" -}}
 apiVersion: apps/v1
 kind: Deployment
@@ -6,7 +7,7 @@ metadata:
   name: {{ include "armonik.fullname" . }}
   namespace: {{ include "armonik.namespace" . | quote }}
   labels:
-    {{- include "armonik.labels" . | nindent 4 }}
+    {{- include "armonik.labels" (list $ $image) | nindent 4 }}
   {{- with .Values.deploymentAnnotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
@@ -26,7 +27,7 @@ spec:
   template:
     metadata:
       labels:
-        {{- include "armonik.labels" . | nindent 8 }}
+        {{- include "armonik.labels" (list $ $image) | nindent 8 }}
         {{- with .Values.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}

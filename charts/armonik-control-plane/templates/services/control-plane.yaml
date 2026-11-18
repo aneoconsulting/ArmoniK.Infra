@@ -5,7 +5,7 @@ metadata:
   namespace: {{ include "armonik.namespace" . }}
   labels:
     app.kubernetes.io/component: control-plane
-    {{- include "armonik.labels" . | nindent 4 }}
+    {{- include "armonik.labels" (include "armonik.control.imageConf" $ | fromYaml | list $) | nindent 4 }}
     {{- with .Values.service.labels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}

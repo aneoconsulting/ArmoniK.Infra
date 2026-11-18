@@ -13,6 +13,8 @@
     component: component name, in the policy name and labels.
     config: podSelector, ingress, egress, optional namespace and policyTypes. policyTypes
             defaults to the non-empty ones of ingress and egress.
+    image: optional, the armonik.utils.imageConf result of the component the policy is dedicated
+           to, for its version label (see armonik.labels).
 */}}
 {{- define "armonik.netpol.render" -}}
 {{- $ctx := .context | default dict -}}
@@ -32,7 +34,7 @@ metadata:
   namespace: {{ $cfg.namespace | default (include "armonik.namespace" $ctx) | quote }}
   labels:
     app.kubernetes.io/component: {{ $component | quote }}
-    {{- include "armonik.labels" $ctx | nindent 4 }}
+    {{- include "armonik.labels" (.image | empty | ternary $ctx (list $ctx .image)) | nindent 4 }}
 spec:
   podSelector:
     {{- toYaml $cfg.podSelector | nindent 4 }}

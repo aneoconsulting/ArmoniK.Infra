@@ -5,7 +5,7 @@ metadata:
   name: {{ include "armonik.fullname" . }}
   namespace: {{ include "armonik.namespace" . | quote }}
   labels:
-    {{- include "armonik.labels" . | nindent 4 }}
+    {{- include "armonik.labels" (include "activemq.imageConf" $ | fromYaml | list $) | nindent 4 }}
 spec:
   {{- if .Values.podDisruptionBudget.minAvailable }}
   minAvailable: {{ .Values.podDisruptionBudget.minAvailable }}

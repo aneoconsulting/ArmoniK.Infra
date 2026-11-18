@@ -1,6 +1,6 @@
 {{- if .Values.loadBalancer.enabled }}
 {{/* Tag from global.armonik.versions.infraPlugins, not the chart appVersion. */}}
-{{- $image := list $ "loadBalancer.image" .Values.loadBalancer.image | include "armonik.utils.imageConf" | fromYaml }}
+{{- $image := include "armonik.ingress.loadBalancer.imageConf" $ | fromYaml }}
 {{- $ctx := dict "root" $ "image" $image -}}
 {{- $podSpec := list (include "armonik.ingress.lb.podSpec" $ctx) .Values.loadBalancer.podSpecPatch "loadBalancer.podSpecPatch" | include "armonik.utils.patch" -}}
 apiVersion: apps/v1

@@ -128,3 +128,15 @@ tests:
     asserts:
       - failedTemplate:
           errorPattern: "extraVolumes.activemq-conf-xml: the chart mounts that volume itself"
+
+  - it: labels every broker resource with the broker tag
+    set:
+      image.tag: 0.0.0-broker
+    templates:
+      - activemq-deployment.yaml
+      - service.yaml
+      - configmap-activemq-configs.yaml
+    asserts:
+      - equal:
+          path: 'metadata.labels["app.kubernetes.io/version"]'
+          value: 0.0.0-broker

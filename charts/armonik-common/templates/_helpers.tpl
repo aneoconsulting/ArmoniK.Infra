@@ -60,12 +60,14 @@ name, else armonik.fullname. Required when create=false.
 
 
 {{/*
-Common labels, plus .Values.commonLabels. Takes the root context, or (list <root context> <image>) for a
-workload and its pod template, <image> being the armonik.utils.imageConf result of its main container:
-app.kubernetes.io/version is then the tag that image resolved to, so a per-component tag or a
-global.armonik.versions entry shows on the workload instead of the chart AppVersion. A digest-only image
-has no version to show, so the label is left out rather than claiming the AppVersion. The value is
-reduced to the label charset and length.
+Common labels, plus .Values.commonLabels. Takes the root context, or (list <root context> <image>),
+<image> being the armonik.utils.imageConf result of a component's main container: app.kubernetes.io/version
+is then the tag that image resolved to, so a per-component tag or a global.armonik.versions entry shows
+instead of the chart AppVersion. Every resource dedicated to one component (its workload and pods, and
+what exposes, configures, scales, protects or monitors only them) passes that component's image; a
+resource shared by components whose versions can differ, or belonging to none, keeps the AppVersion. A
+digest-only image has no version to show, so the label is left out rather than claiming the AppVersion.
+The value is reduced to the label charset and length.
 
   {{- include "armonik.labels" (list $ $image) | nindent 4 }}
 */}}

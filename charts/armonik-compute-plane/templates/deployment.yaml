@@ -29,8 +29,7 @@
   $commonConf
 | include "armonik.conf.merge" | fromYaml -}}
 {{- $workerConf = list $workerConf $ | include "armonik.conf.resolve" | fromYaml -}}
-{{/* Dot access, not armonik.utils.index: a reference string would not survive its fromYaml. */}}
-{{- $agentImage := list $ "partitionCommon.agent.image" $agent.image ($partitionCommon.agent | default dict).image | include "armonik.utils.imageConf" | fromYaml -}}
+{{- $agentImage := list $ $partition | include "armonik.compute.agent.imageConf" | fromYaml -}}
 {{/* User-supplied: a repository missing from global.armonik.imageComponents must carry its own tag. */}}
 {{- $workerImage := list $ (printf "partitions.%s.worker.image" $partitionName) $worker.image ($partitionCommon.worker | default dict).image | include "armonik.utils.imageConf" | fromYaml -}}
 {{/* Third party: the chart AppVersion must not become its tag. */}}

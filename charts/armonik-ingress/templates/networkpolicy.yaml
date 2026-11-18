@@ -6,6 +6,7 @@
 {{- include "armonik.netpol.render" (dict
       "context" .
       "component" "nginx"
+      "image" (include "armonik.ingress.nginx.imageConf" . | fromYaml)
       "config" (include "armonik.netpol.ingressNginx" . | fromYaml)
   ) }}
 
@@ -15,6 +16,7 @@
 {{- include "armonik.netpol.render" (dict
       "context" .
       "component" "gui"
+      "image" (include "armonik.ingress.gui.imageConf" . | fromYaml)
       "config" (include "armonik.netpol.ingressGui" . | fromYaml)
   ) }}
 

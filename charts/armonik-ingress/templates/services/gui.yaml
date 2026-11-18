@@ -5,7 +5,7 @@ metadata:
   namespace: {{ include "armonik.namespace" . | quote }}
   labels:
     app.kubernetes.io/component: gui
-    {{- include "armonik.labels" . | nindent 4 }}
+    {{- include "armonik.labels" (include "armonik.ingress.gui.imageConf" $ | fromYaml | list $) | nindent 4 }}
     {{- with .Values.gui.service.labels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}

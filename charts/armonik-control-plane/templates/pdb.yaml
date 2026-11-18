@@ -1,1 +1,1 @@
-{{- dict "root" $ "component" "control-plane" "values" .Values.podDisruptionBudget | include "armonik.pdb" }}
+{{- dict "root" $ "component" "control-plane" "values" .Values.podDisruptionBudget "image" (include "armonik.control.imageConf" $ | fromYaml) | include "armonik.pdb" }}

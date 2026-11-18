@@ -1,4 +1,20 @@
 {{/*
+Component images, the armonik.utils.imageConf results: each is resolved once here so the workload, its
+version label and the resources dedicated to it cannot drift apart.
+*/}}
+{{- define "armonik.ingress.nginx.imageConf" -}}
+{{- list . "image" .Values.image | include "armonik.utils.imageConf" }}
+{{- end }}
+
+{{- define "armonik.ingress.gui.imageConf" -}}
+{{- list . "gui.image" .Values.gui.image | include "armonik.utils.imageConf" }}
+{{- end }}
+
+{{- define "armonik.ingress.loadBalancer.imageConf" -}}
+{{- list . "loadBalancer.image" .Values.loadBalancer.image | include "armonik.utils.imageConf" }}
+{{- end }}
+
+{{/*
 nginx container port for .protocol (http or grpc): 8443/9443 when nginx terminates TLS (tls.enabled
 without a gateway), else 8080/9080.
 */}}

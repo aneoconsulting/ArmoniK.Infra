@@ -23,7 +23,7 @@
       "group" $issuer.group
       "spec" (index $certManager $provider | default dict)
       "extraAnnotations" $extraAnnotations
-      "labels" (include "armonik.labels" .)
+      "labels" (include "armonik.labels" (include "activemq.imageConf" $ | fromYaml | list $))
       "specValuesPath" "tls.certManager") }}
 {{- end }}
 ---
@@ -44,7 +44,7 @@ metadata:
     {{- end }}
   {{- end }}
   labels:
-    {{- include "armonik.labels" . | nindent 4 }}
+    {{- include "armonik.labels" (include "activemq.imageConf" $ | fromYaml | list $) | nindent 4 }}
     {{- with $certManager.labels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}

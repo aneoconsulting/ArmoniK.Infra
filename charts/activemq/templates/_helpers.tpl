@@ -1,6 +1,7 @@
 {{/*
-Broker image, the armonik.utils.imageConf result: the single resolution behind the container, its
-version label and NOTES.txt, so they cannot drift apart.
+Broker image, the armonik.utils.imageConf result: the single resolution behind the container, the
+version label of every resource of this chart (all dedicated to the broker) and NOTES.txt, so they
+cannot drift apart.
 */}}
 {{- define "activemq.imageConf" -}}
 {{- list . "image" .Values.image | include "armonik.utils.imageConf" }}

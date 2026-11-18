@@ -1,0 +1,35 @@
+suite: version labels follow the component image
+# A sentinel, so a resource keeping the AppVersion is told apart from one following its image.
+chart:
+  appVersion: 0.0.0-appversion
+templates:
+  - services/control-plane.yaml
+  - services/metrics-exporter.yaml
+  - servicemonitor.yaml
+  - deployments/pod-deletion-cost.yaml
+  - serviceaccount.yaml
+set:
+  image.tag: 0.0.0-control
+  metricsExporter.image.tag: 0.0.0-exporter
+  podDeletionCost.enabled: true
+  podDeletionCost.image.tag: 0.0.0-pdc
+  global.armonik.operators.prometheusOperator.available: true
+tests:
+  - it: labels the control-plane Service with the control-plane tag
+    template: services/control-plane.yaml
+    asserts:
+      - equal: {path: 'metadata.labels["app.kubernetes.io/version"]', value: 0.0.0-control}
+  - it: labels the metrics-exporter Service and ServiceMonitor with the metrics-exporter tag
+    templates:
+      - services/metrics-exporter.yaml
+      - servicemonitor.yaml
+    asserts:
+      - equal: {path: 'metadata.labels["app.kubernetes.io/version"]', value: 0.0.0-exporter}
+  - it: labels every pod-deletion-cost resource with its own tag
+    template: deployments/pod-deletion-cost.yaml
+    asserts:
+      - equal: {path: 'metadata.labels["app.kubernetes.io/version"]', value: 0.0.0-pdc}
+  - it: keeps the AppVersion on the ServiceAccount shared by the control plane, the metrics-exporter and the init Job
+    template: serviceaccount.yaml
+    asserts:
+      - equal: {path: 'metadata.labels["app.kubernetes.io/version"]', value: 0.0.0-appversion}

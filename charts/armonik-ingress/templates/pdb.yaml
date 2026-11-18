@@ -1,1 +1,1 @@
-{{- dict "root" $ "component" "ingress" "values" .Values.podDisruptionBudget | include "armonik.pdb" }}
+{{- dict "root" $ "component" "ingress" "values" .Values.podDisruptionBudget "image" (include "armonik.ingress.nginx.imageConf" $ | fromYaml) | include "armonik.pdb" }}

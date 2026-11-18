@@ -1,4 +1,25 @@
 {{/*
+Component images, the armonik.utils.imageConf results: each is resolved once here so the workload, its
+version label and the resources dedicated to it cannot drift apart. The init Job and the
+metrics-exporter fall back on the control-plane image.
+*/}}
+{{- define "armonik.control.imageConf" -}}
+{{- list . "image" .Values.image | include "armonik.utils.imageConf" }}
+{{- end }}
+
+{{- define "armonik.control.metricsExporter.imageConf" -}}
+{{- list . "metricsExporter.image" .Values.metricsExporter.image .Values.image | include "armonik.utils.imageConf" }}
+{{- end }}
+
+{{- define "armonik.control.init.imageConf" -}}
+{{- list . "init.image" .Values.init.image .Values.image | include "armonik.utils.imageConf" }}
+{{- end }}
+
+{{- define "armonik.control.podDeletionCost.imageConf" -}}
+{{- list . "podDeletionCost.image" (.Values.podDeletionCost | default dict).image | include "armonik.utils.imageConf" }}
+{{- end }}
+
+{{/*
 Control-plane conf: auth flags, and Submitter__DefaultPartition set to defaultPartition when it is
 one of extraPartitions, else to an arbitrary one of them (keys is unordered), else empty.
 Authorization without authentication fails.

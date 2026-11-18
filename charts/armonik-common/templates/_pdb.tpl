@@ -2,7 +2,8 @@
   PodDisruptionBudget over the pods of one component.
   Takes dict "root" $ "component" <app.kubernetes.io/component> "values" <podDisruptionBudget block>:
   {enabled, minAvailable, maxUnavailable, labels, annotations}, at most one bound set (0 counts as set);
-  maxUnavailable 1 otherwise.
+  maxUnavailable 1 otherwise. An optional "image" (the component's armonik.utils.imageConf result) sets
+  the version label, see armonik.labels.
 */}}
 {{- define "armonik.pdb" -}}
   {{- $root := .root -}}
@@ -26,7 +27,7 @@ metadata:
   {{- end }}
   labels:
     app.kubernetes.io/component: {{ .component | quote }}
-    {{- include "armonik.labels" $root | nindent 4 }}
+    {{- include "armonik.labels" (.image | empty | ternary $root (list $root .image)) | nindent 4 }}
     {{- with $v.labels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}

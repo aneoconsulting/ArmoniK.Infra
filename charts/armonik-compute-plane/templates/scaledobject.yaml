@@ -14,7 +14,7 @@
     "app.kubernetes.io/component" (printf "compute-plane-%s" $partitionName)
     "app.kubernetes.io/part-of" "compute-plane"
     "armonik.fr/partition" $partitionName }}
-{{ dict "root" $ "name" (printf "%s-%s" (include "armonik.fullname" $) $partitionName | trunc 63 | trimSuffix "-") "labels" $labels "hpa" $partition.hpa | include "armonik.scaledObject" }}
+{{ dict "root" $ "name" (printf "%s-%s" (include "armonik.fullname" $) $partitionName | trunc 63 | trimSuffix "-") "labels" $labels "hpa" $partition.hpa "image" (list $ $partition | include "armonik.compute.agent.imageConf" | fromYaml) | include "armonik.scaledObject" }}
 {{- end }}
 {{ end }}
 {{ end }}

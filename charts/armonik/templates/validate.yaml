@@ -35,6 +35,29 @@
   {{- end -}}
 {{- end -}}
 
+{{- /* ArmoniK Core matches an entry without a fingerprint to any fingerprint, so an SSO CN entry
+       without sso.fingerprint would also admit a client certificate signed with that CN. */ -}}
+{{- with .Subcharts.ingress -}}
+  {{- $sso := include "armonik.ingress.sso" . | fromYaml -}}
+  {{- if $sso.enabled -}}
+    {{- with index $.Subcharts "control-plane" -}}
+      {{- $certs := list .Values "rbac" "userCertificates" | include "armonik.utils.index" | fromYaml | default dict -}}
+      {{- range $user := keys $certs | sortAlpha -}}
+        {{- $cert := index $certs $user | default dict -}}
+        {{- $cn := $cert.commonName | default "" | toString -}}
+        {{- $fingerprint := $cert.fingerprint | default "" | toString -}}
+        {{- range $key := list "cnPrefix" "groupCnPrefix" -}}
+          {{- $prefix := index $sso $key | default "" | toString -}}
+          {{- /* Empty only for groupCnPrefix in user mode, where no SSO identity carries it. */ -}}
+          {{- if and $prefix (hasPrefix (lower $prefix) (lower $cn)) (ne $fingerprint (toString $sso.fingerprint)) -}}
+            {{- printf "control-plane.rbac.userCertificates.%s.fingerprint must be %q (ingress.sso.fingerprint), got %q: its commonName %q starts with ingress.sso.%s %q, and without it a client certificate with that CN would match this entry" $user (toString $sso.fingerprint) $fingerprint $cn $key $prefix | fail -}}
+          {{- end -}}
+        {{- end -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+
 {{- /* The Cluster CR has no CRD without the CloudNativePG operator: fail at render. */ -}}
 {{- $ops := include "armonik.operators" $ | fromYaml -}}
 {{- $postgresqlEnabled := list .Values "dependencies" "postgresql" "enabled" | include "armonik.utils.index" | empty | not -}}

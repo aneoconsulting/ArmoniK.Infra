@@ -227,8 +227,9 @@ ports:
 
 
 {{/*
-  Ingress (nginx) NetworkPolicy: egress-only, to control-plane + Grafana + Seq, plus the DNS and GUI
-  rules of armonik-ingress's own policy, since this one isolates nginx's egress without it.
+  Ingress (nginx) NetworkPolicy: egress-only, to DNS, the GUI, control-plane, Grafana and Seq, plus
+  the IdP with sso. It can be the only policy selecting nginx (ingress.networkPolicy off), so it
+  repeats the DNS and GUI rules of armonik-ingress's own policy.
 */}}
 {{- define "armonik.netpol.ingressEgress" -}}
 {{- with .Subcharts.ingress -}}
@@ -237,16 +238,24 @@ podSelector:
   matchLabels:
     app.kubernetes.io/component: ingress
     {{- include "armonik.selectorLabels" . | nindent 4 }}
+{{- $rules := dict
+      "armonik.netpol.dnsRule" dict
+      "armonik.netpol.rule.guiTo" .
+      "armonik.netpol.rule.ingressToControlPlane" $
+      "armonik.netpol.rule.ingressToGrafana" $
+      "armonik.netpol.rule.ingressToSeq" $ }}
+{{- /* This policy alone selecting nginx would cut its oauth2-proxy sidecar off the IdP. sso is read
+       through the ingress resolver, so a malformed value fails with its own message first. */}}
+{{- $sso := include "armonik.ingress.sso" . | fromYaml }}
+{{- if $sso.enabled }}
+  {{- $required := list $.Values "networkPolicy" "enabled" | include "armonik.utils.index" }}
+  {{- if and $required (empty $sso.idpEgressCidrs) }}
+    {{- fail "ingress.sso.networkPolicy.idpEgressCidrs must list the IdP's CIDRs with networkPolicy.enabled: oauth2-proxy reaches the IdP on TCP 443 from the nginx pod" }}
+  {{- end }}
+  {{- $_ := set $rules "armonik.netpol.rule.ssoIdpTo" . }}
+{{- end }}
 egress:
-  {{- dict
-        "armonik.netpol.dnsRule" dict
-        "armonik.netpol.rule.guiTo" .
-        "armonik.netpol.rule.ingressToControlPlane" $
-        "armonik.netpol.rule.ingressToGrafana" $
-        "armonik.netpol.rule.ingressToSeq" $
-    | include "armonik.netpol.mergeRules"
-    | nindent 2
-  }}
+  {{- $rules | include "armonik.netpol.mergeRules" | nindent 2 }}
 {{- end -}}
 {{- end -}}
 

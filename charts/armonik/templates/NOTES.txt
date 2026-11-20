@@ -64,7 +64,7 @@ does NOT prove a worker exists.
 {{- $cpRbac := $cp.rbac | default dict }}
 {{- $cpAuth := $cpRbac.authentication | default dict }}
 {{- if and (not $cpRbac.userCertificates) $cpAuth.required }}
-Authentication in ArmoniK is enabled{{ if $cpRbac.createBuiltinRoles }}, default roles "Submitter" and "Monitoring" were created{{ end }}.
+Authentication in ArmoniK is enabled{{ if $cpRbac.createBuiltInRoles }}, default roles "Submitter" and "Monitoring" were created{{ end }}.
 To query the cluster:
 
   1. Give each user an x509 certificate.
@@ -77,7 +77,7 @@ init:
 rbac:
   authentication:
     required: true
-{{- if not $cpRbac.createBuiltinRoles }}
+{{- if not $cpRbac.createBuiltInRoles }}
   roles:
     <Role1>: [<Permission1>, <PermissionN>]
     <Role2>: [<Permission1>, <PermissionN>]
@@ -209,3 +209,5 @@ The operator CRDs belong to the operators release; this one leaves them alone.
 {{- end }}
 A reinstall reuses the old MongoDB volume, so partitions of a previous release stay registered in the
 database.
+
+{{- with .Subcharts.ingress }}{{ include "armonik.ingress.sso.notes" . }}{{ end }}

@@ -114,6 +114,12 @@ service:
 # cluster.local.
 clusterDomain: ""
 
+# -- Shared memory zone of the nginx upstream of the control planes (an nginx size: 32k, 1m).
+# The control-plane Service is resolved to one address per pod, each a peer of this zone (~3 KB):
+# 32k holds about 11 replicas. An address that does not fit gets no request, nginx only logging
+# "no memory in upstream zone". Raise it with the control-plane replicas, 1m holds a few hundred.
+upstreamZoneSize: 32k
+
 tls:
   enabled: false
   certManager:

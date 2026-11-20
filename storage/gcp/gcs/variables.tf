@@ -140,6 +140,13 @@ variable "requester_pays" {
   default     = null
 }
 
+variable "hierarchical_namespace" {
+  description = "Creates the bucket with a hierarchical namespace: real folders, and about 8 times the initial request rate of a flat bucket (8000 object writes and 40000 reads per second instead of 1000 and 5000), so a load can start high without ramping the bucket up first. Operations cost ~30 % more. Needs uniform_bucket_level_access = true; set at creation only, changing it replaces the bucket."
+  type        = bool
+  default     = false
+  nullable    = false
+}
+
 variable "uniform_bucket_level_access" {
   description = "Access through IAM only (var.roles), without ACL on the bucket nor on its objects. The native GCS adapter of Core works with it, the S3 adapter does not: through the XML API of GCS, it checks that the bucket exists with GetBucketAcl, which GCS rejects with \"Invalid argument\" on a bucket with uniform bucket-level access."
   type        = bool

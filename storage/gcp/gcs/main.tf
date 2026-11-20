@@ -127,10 +127,22 @@ resource "google_storage_bucket" "gcs" {
       data_locations = var.data_locations
     }
   }
+  # Set at creation only: changing it replaces the bucket
+  dynamic "hierarchical_namespace" {
+    for_each = var.hierarchical_namespace ? [1] : []
+    content {
+      enabled = true
+    }
+  }
   lifecycle {
     precondition {
       condition     = var.kms_key == null || var.default_kms_key_name == null
       error_message = "Set \"kms_key\" or the deprecated \"default_kms_key_name\", not both."
+    }
+    precondition {
+      condition = !var.hierarchical_namespace || (coalesce(var.uniform_bucket_level_access, false) && !coalesce(var.versioning, false)
+      && var.retention_policy == null && !coalesce(var.default_event_based_hold, false))
+      error_message = "A bucket with hierarchical namespace needs uniform_bucket_level_access = true, and supports neither versioning, retention_policy nor default_event_based_hold."
     }
   }
   depends_on = [google_kms_crypto_key_iam_member.kms]

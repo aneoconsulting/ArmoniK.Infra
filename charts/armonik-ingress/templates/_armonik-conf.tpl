@@ -89,6 +89,10 @@ Usage:
 {{- $lbHost := include "armonik.fullname" $root | printf "%s-load-balancer" | trunc 63 | trimSuffix "-" }}
 {{- $guiHost := include "armonik.fullname" $root | printf "%s-gui" | trunc 63 | trimSuffix "-" }}
 {{- $svcSuffix := printf "%s.svc.%s" (include "armonik.namespace" $root) (include "armonik.clusterDomain" $root) }}
+{{- $zoneSize := $root.Values.upstreamZoneSize | toString }}
+{{- if not (regexMatch "^[0-9]+[kKmM]?$" $zoneSize) }}
+  {{- printf "upstreamZoneSize must be an nginx size (32k, 1m), got %q" $zoneSize | fail }}
+{{- end }}
 resolver kube-dns.kube-system ipv6=off;
 
 map $http_accept_language $accept_language {
@@ -124,7 +128,7 @@ map "$http_x_certificate_client_fingerprint|$ssl_client_s_dn_cn" $client_fingerp
 {{- end }}
 
 upstream armonik {
-    zone armonik_zone 32k;
+    zone armonik_zone {{ $zoneSize }};
     {{- if $root.Values.loadBalancer.enabled }}
     # gRPC through the multi-cluster load balancer
     server {{ $lbHost }}.{{ $svcSuffix }}:{{ $root.Values.loadBalancer.conf.listenPort }} resolve;

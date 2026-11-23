@@ -308,6 +308,28 @@ tests:
           path: spec.triggers[0].metadata.metricName
           value: armonik_htcmock_tasks_queued
 
+  - it: drops an idleReplicaCount not below minReplicaCount, keeping an idle pod
+    template: scaledobject.yaml
+    documentSelector:
+      path: metadata.name
+      value: "t-armonik-compute-plane-bench"
+    asserts:
+      - notExists:
+          path: spec.idleReplicaCount
+      - equal:
+          path: spec.minReplicaCount
+          value: 1
+
+  - it: keeps the default idleReplicaCount of 0
+    template: scaledobject.yaml
+    documentSelector:
+      path: metadata.name
+      value: "t-armonik-compute-plane-htcmock"
+    asserts:
+      - equal:
+          path: spec.idleReplicaCount
+          value: 0
+
   - it: renders the agent readinessProbe, which ships empty and so never rendered before
     template: deployment.yaml
     set:

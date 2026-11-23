@@ -314,6 +314,7 @@ partitionCommon:
     annotations: {}
     pollingInterval: 15
     cooldownPeriod: 300
+    # 0 scales an idle partition to zero; minReplicaCount or more keeps minReplicaCount pods.
     idleReplicaCount: 0
     minReplicaCount: 1
     maxReplicaCount: 5

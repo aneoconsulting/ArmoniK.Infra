@@ -13,8 +13,8 @@ deployment:
   imagePullSecrets: []
 image:
   registry:
-  repository: nginxinc/nginx-unprivileged
-  tag: 1.31.7-alpine-slim
+  repository: nginx/nginx-unprivileged
+  tag: 1.31.9-alpine-slim
   pullPolicy: IfNotPresent
 
 # -- Ignored when `hpa.enabled`.

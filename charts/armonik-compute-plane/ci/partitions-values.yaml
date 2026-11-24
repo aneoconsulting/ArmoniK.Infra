@@ -1,9 +1,11 @@
 # Partition fan-out: one Deployment (+ one ScaledObject with keda enabled) per
 # partition, per-partition values merged over partitionCommon: worker image,
 # tcp agent/worker channel (bench keeps the unix-socket default), custom KEDA
-# trigger threshold.
+# trigger threshold, an idle pod kept (bench).
 partitions:
   bench:
+    hpa:
+      idleReplicaCount: 1
     worker:
       # Reference-string form, accepted anywhere an image object is.
       image: dockerhubaneo/armonik_core_bench_test_worker:0.0.0-test

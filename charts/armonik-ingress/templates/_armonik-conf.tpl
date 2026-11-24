@@ -90,6 +90,17 @@ Usage:
 {{- $guiHost := include "armonik.fullname" $root | printf "%s-gui" | trunc 63 | trimSuffix "-" }}
 {{- $svcSuffix := printf "%s.svc.%s" (include "armonik.namespace" $root) (include "armonik.clusterDomain" $root) }}
 {{- $zoneSize := $root.Values.upstreamZoneSize | toString }}
+{{- /* Events upstream: control_plane_events_url, else the URLs Secret key under ESO. Never through the
+        multi-cluster load balancer, which fronts the main control plane only. */}}
+{{- $eventsUrl := $root.Values.control_plane_events_url | default "" }}
+{{- $eventsServer := "" }}
+{{- if not $root.Values.loadBalancer.enabled }}
+  {{- if $eventsUrl }}
+    {{- $eventsServer = $eventsUrl | quote }}
+  {{- else if $useEso }}
+    {{- $eventsServer = `{{ index . "control-plane-events" | quote }}` }}
+  {{- end }}
+{{- end }}
 {{- if not (regexMatch "^[0-9]+[kKmM]?$" $zoneSize) }}
   {{- printf "upstreamZoneSize must be an nginx size (32k, 1m), got %q" $zoneSize | fail }}
 {{- end }}
@@ -142,6 +153,21 @@ upstream armonik {
     keepalive_time 8h;
     keepalive_timeout 1h;
 }
+{{- if $eventsServer }}
+{{- if not $eventsUrl }}
+{{`{{- if index . "control-plane-events" }}`}}
+{{- end }}
+upstream armonik_events {
+    zone armonik_events_zone {{ $zoneSize }};
+    server {{ $eventsServer }} resolve;
+    keepalive 128;
+    keepalive_time 8h;
+    keepalive_timeout 1h;
+}
+{{- if not $eventsUrl }}
+{{`{{- end }}`}}
+{{- end }}
+{{- end }}
 
 server {
     {{- if $tls }}
@@ -195,20 +221,20 @@ server {
     location /admin/ {
         proxy_pass $admin_app_upstream$uri$is_args$args;
     }
+    {{- if $eventsServer }}
+    {{- if not $eventsUrl }}
+    {{`{{- if index . "control-plane-events" }}`}}
+    {{- end }}
+    # Events service to the control plane Deployment dedicated to it; ^~ wins over the regex below.
+    location ^~ /armonik.api.grpc.v1.events.Events/ {
+        {{- dict "mtls" $mtls "upstream" "armonik_events" | include "armonik.ingress.grpcLocation" | nindent 8 }}
+    }
+    {{- if not $eventsUrl }}
+    {{`{{- end }}`}}
+    {{- end }}
+    {{- end }}
     location ~* ^/armonik\. {
-        {{- if $mtls }}
-        grpc_set_header X-Certificate-Client-CN $client_cn;
-        grpc_set_header X-Certificate-Client-Fingerprint $client_fingerprint;
-        {{- end }}
-        grpc_pass grpc://armonik;
-        # A whole gRPC stream seems to count as one body, so disable the size limit.
-        client_max_body_size 0;
-        # 30-day read timeout so long tasks do not raise a gRPC exception.
-        # TODO: find a better configuration
-        proxy_read_timeout 30d;
-        proxy_send_timeout 1d;
-        grpc_read_timeout 30d;
-        grpc_send_timeout 1d;
+        {{- dict "mtls" $mtls "upstream" "armonik" | include "armonik.ingress.grpcLocation" | nindent 8 }}
     }
 
     location /static/ {
@@ -237,4 +263,24 @@ server {
     {{`{{- end }}`}}
     {{- end }}
 }
+{{- end -}}
+
+
+{{/*
+Body of a gRPC location proxying to the upstream .upstream, with the mTLS identity headers when .mtls.
+*/}}
+{{- define "armonik.ingress.grpcLocation" -}}
+{{- if .mtls -}}
+grpc_set_header X-Certificate-Client-CN $client_cn;
+grpc_set_header X-Certificate-Client-Fingerprint $client_fingerprint;
+{{ end -}}
+grpc_pass grpc://{{ .upstream }};
+# A whole gRPC stream seems to count as one body, so disable the size limit.
+client_max_body_size 0;
+# 30-day read timeout so long tasks do not raise a gRPC exception.
+# TODO: find a better configuration
+proxy_read_timeout 30d;
+proxy_send_timeout 1d;
+grpc_read_timeout 30d;
+grpc_send_timeout 1d;
 {{- end -}}

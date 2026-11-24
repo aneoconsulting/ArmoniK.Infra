@@ -1,0 +1,3 @@
+{{- if list .Values "events" "enabled" | include "armonik.utils.index" }}
+{{- dict "root" $ "component" "control-plane-events" "name" (include "armonik.control.events.name" .) | include "armonik.control.service" }}
+{{- end }}

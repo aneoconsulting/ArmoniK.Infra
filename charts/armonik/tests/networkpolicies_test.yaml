@@ -40,6 +40,7 @@ tests:
                       operator: In
                       values:
                         - control-plane
+                        - control-plane-events
                         - init
             ports:
               - protocol: TCP
@@ -290,6 +291,7 @@ tests:
                       operator: In
                       values:
                         - control-plane
+                        - control-plane-events
                         - init
             ports:
               - protocol: TCP
@@ -407,6 +409,7 @@ tests:
               operator: In
               values:
                 - control-plane
+                - control-plane-events
                 - init
       - equal:
           path: spec.ingress
@@ -526,8 +529,12 @@ tests:
                   matchLabels:
                     kubernetes.io/metadata.name: default
                 podSelector:
-                  matchLabels:
-                    app.kubernetes.io/component: control-plane
+                  matchExpressions:
+                    - key: app.kubernetes.io/component
+                      operator: In
+                      values:
+                        - control-plane
+                        - control-plane-events
 
   - it: selects Grafana by the name its own chart gives it
     template: templates/networkpolicies/nginx-egress.yaml

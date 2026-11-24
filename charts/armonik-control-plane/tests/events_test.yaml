@@ -1,0 +1,264 @@
+suite: events Deployment
+release:
+  name: t
+templates:
+  - deployments/control-plane.yaml
+  - deployments/events.yaml
+  - services/control-plane.yaml
+  - services/events.yaml
+  - scaledobject.yaml
+  - pdb.yaml
+  - podmonitor.yaml
+tests:
+  - it: renders nothing for events by default
+    asserts:
+      - hasDocuments:
+          count: 0
+        template: deployments/events.yaml
+      - hasDocuments:
+          count: 0
+        template: services/events.yaml
+
+  - it: renders a Deployment and a Service of their own component, apart from the main ones
+    set:
+      events.enabled: true
+    asserts:
+      - equal:
+          path: metadata.name
+          value: t-armonik-control-plane-events
+        template: deployments/events.yaml
+      - equal:
+          path: spec.selector.matchLabels["app.kubernetes.io/component"]
+          value: control-plane-events
+        template: deployments/events.yaml
+      - equal:
+          path: spec.template.metadata.labels["app.kubernetes.io/component"]
+          value: control-plane-events
+        template: deployments/events.yaml
+      - equal:
+          path: spec.replicas
+          value: 1
+        template: deployments/events.yaml
+      - equal:
+          path: metadata.name
+          value: t-armonik-control-plane-events
+        template: services/events.yaml
+      - equal:
+          path: spec.selector["app.kubernetes.io/component"]
+          value: control-plane-events
+        template: services/events.yaml
+      - equal:
+          path: spec.selector["app.kubernetes.io/component"]
+          value: control-plane
+        template: services/control-plane.yaml
+      - equal:
+          path: spec.selector.matchLabels["app.kubernetes.io/component"]
+          value: control-plane
+        template: deployments/control-plane.yaml
+
+  - it: never runs the init, and reads the same conf layers as the main Deployment
+    set:
+      events.enabled: true
+    template: deployments/events.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: InitServices__InitDatabase
+            value: "false"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: InitServices__InitObjectStorage
+            value: "false"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: InitServices__InitQueue
+            value: "false"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: InitServices__StopAfterInit
+            value: "false"
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            secretRef:
+              name: armonik-conf-control
+              optional: false
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            secretRef:
+              name: armonik-conf-core
+              optional: false
+
+  - it: takes events.conf for its pods only
+    set:
+      events.enabled: true
+      events.conf.env.PostgreSQL__MaxPoolSize: "20"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: PostgreSQL__MaxPoolSize
+            value: "20"
+        template: deployments/events.yaml
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: PostgreSQL__MaxPoolSize
+            value: "20"
+        template: deployments/control-plane.yaml
+
+  - it: merges its pod-level keys over the chart-level ones, leaving the main Deployment as is
+    set:
+      nodeSelector:
+        pool: control
+      events.enabled: true
+      events.resources.limits.cpu: "2"
+      events.nodeSelector:
+        tier: events
+      events.extraEnv:
+        - name: EXTRA
+          value: events
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].resources
+          value:
+            limits:
+              cpu: "2"
+              memory: 1Gi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+        template: deployments/events.yaml
+      - equal:
+          path: spec.template.spec.nodeSelector
+          value:
+            pool: control
+            tier: events
+        template: deployments/events.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: EXTRA
+            value: events
+        template: deployments/events.yaml
+      - equal:
+          path: spec.template.spec.containers[0].resources.limits.cpu
+          value: 1
+        template: deployments/control-plane.yaml
+      - equal:
+          path: spec.template.spec.nodeSelector
+          value:
+            pool: control
+        template: deployments/control-plane.yaml
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: EXTRA
+            value: events
+        template: deployments/control-plane.yaml
+
+  - it: hands its replica count to a ScaledObject of its own
+    set:
+      events.enabled: true
+      events.hpa.enabled: true
+    asserts:
+      - notExists:
+          path: spec.replicas
+        template: deployments/events.yaml
+      - equal:
+          path: spec.replicas
+          value: 1
+        template: deployments/control-plane.yaml
+      - hasDocuments:
+          count: 1
+        template: scaledobject.yaml
+      - equal:
+          path: spec.scaleTargetRef.name
+          value: t-armonik-control-plane-events
+        template: scaledobject.yaml
+      - equal:
+          path: metadata.labels["app.kubernetes.io/component"]
+          value: control-plane-events
+        template: scaledobject.yaml
+
+  - it: renders both ScaledObjects when both are enabled
+    set:
+      hpa.enabled: true
+      events.enabled: true
+      events.hpa.enabled: true
+    template: scaledobject.yaml
+    asserts:
+      - hasDocuments:
+          count: 2
+      - equal:
+          path: spec.scaleTargetRef.name
+          value: t-armonik-control-plane
+        documentIndex: 0
+      - equal:
+          path: spec.scaleTargetRef.name
+          value: t-armonik-control-plane-events
+        documentIndex: 1
+
+  - it: ignores events.hpa while events is disabled
+    set:
+      events.hpa.enabled: true
+    template: scaledobject.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: fails when its ScaledObject has no KEDA
+    template: scaledobject.yaml
+    set:
+      events.enabled: true
+      events.hpa.enabled: true
+      global.armonik.operators.keda.available: false
+    asserts:
+      - failedTemplate:
+          errorMessage: "events.hpa.enabled renders a KEDA ScaledObject: set global.armonik.operators.keda.available=true"
+
+  - it: renders a PodDisruptionBudget of its own name and component
+    set:
+      podDisruptionBudget.enabled: true
+      events.enabled: true
+      events.podDisruptionBudget.enabled: true
+      events.podDisruptionBudget.minAvailable: 1
+    template: pdb.yaml
+    asserts:
+      - hasDocuments:
+          count: 2
+      - equal:
+          path: metadata.name
+          value: t-armonik-control-plane
+        documentIndex: 0
+      - equal:
+          path: metadata.name
+          value: t-armonik-control-plane-events
+        documentIndex: 1
+      - equal:
+          path: spec.selector.matchLabels["app.kubernetes.io/component"]
+          value: control-plane-events
+        documentIndex: 1
+      - equal:
+          path: spec.minAvailable
+          value: 1
+        documentIndex: 1
+
+  - it: scrapes the events pods with the control-plane PodMonitor
+    template: podmonitor.yaml
+    asserts:
+      - equal:
+          path: spec.selector.matchExpressions
+          value:
+            - key: app.kubernetes.io/component
+              operator: In
+              values:
+                - control-plane
+                - control-plane-events
+      - notExists:
+          path: spec.selector.matchLabels["app.kubernetes.io/component"]

@@ -23,5 +23,8 @@ dependencies:
 - name: cert-manager-google-cas-issuer
   repository: https://charts.jetstack.io
   version: v0.14.0
-digest: sha256:1e2dd2f7db6d5f2ddf01b428c9c66564c4deaddcc91691815712d49367734613
-generated: "2026-11-06T14:49:02.67501951Z"
+- name: keycloak-operator-helm
+  repository: oci://quay.io/keycloak
+  version: 26.8.2
+digest: sha256:d7b9692975522c73165b9e63ca364e67690988a60e719a007e8431faa2ebd174
+generated: "2026-11-24T20:57:53.807299000Z"

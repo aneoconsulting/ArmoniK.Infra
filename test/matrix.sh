@@ -105,6 +105,7 @@ ok umbrella-mongodb-exporter     armonik        -f charts/armonik/ci/mongodb-exp
 ok umbrella-mongodb-exporter-tls armonik        -f charts/armonik/ci/mongodb-exporter-tls-values.yaml
 ok umbrella-postgresql-certmanager armonik       -f charts/armonik/ci/postgresql-certmanager-values.yaml
 ok umbrella-authz         armonik               -f charts/armonik/ci/authz-values.yaml
+ok operators-keycloak     armonik-operators     --set global.armonik.operators.keycloakOperator.deploy=true
 ok compute-partitions     armonik-compute-plane -f charts/armonik-compute-plane/ci/partitions-values.yaml
 ok compute-keda-off       armonik-compute-plane -f charts/armonik-compute-plane/ci/keda-off-values.yaml
 ok compute-fluent-bit-sidecar armonik-compute-plane -f charts/armonik-compute-plane/ci/partitions-values.yaml \

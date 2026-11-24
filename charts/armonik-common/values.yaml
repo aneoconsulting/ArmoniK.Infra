@@ -50,6 +50,10 @@ global:
         deploy: false
         available: true
         namespace: '{{ .Values.global.armonik.operators.googleCasIssuer.deploy | empty | ternary "" .Release.Namespace }}'
+      keycloakOperator:
+        deploy: false
+        available: true
+        namespace: '{{ .Values.global.armonik.operators.keycloakOperator.deploy | empty | ternary "" .Release.Namespace }}'
     # Shared cert-manager issuer that Certificates reference unless a component sets its own
     # (resolved by armonik.certManager.issuer / getIssuer, _certmanager.tpl).
     certManager:

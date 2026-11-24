@@ -108,6 +108,32 @@ tests:
       - failedTemplate:
           errorPattern: 'podSpecPatch.initContainers: the chart builds initContainers'
 
+  - it: validates bearer tokens of the issuer for clientId and the extra audiences
+    template: deployments/nginx.yaml
+    set:
+      sso:
+        oauth2Proxy:
+          bearerTokens:
+            enabled: true
+            extraAudiences: [armonik-cli, api://armonik]
+    asserts:
+      - contains:
+          path: spec.template.spec.initContainers[0].args
+          content: --skip-jwt-bearer-tokens=true
+      - contains:
+          path: spec.template.spec.initContainers[0].args
+          content: --extra-jwt-issuers=https://idp.example.com/realms/armonik=armonik-cli
+      - contains:
+          path: spec.template.spec.initContainers[0].args
+          content: --extra-jwt-issuers=https://idp.example.com/realms/armonik=api://armonik
+
+  - it: accepts no bearer token by default
+    template: deployments/nginx.yaml
+    asserts:
+      - notContains:
+          path: spec.template.spec.initContainers[0].args
+          content: --skip-jwt-bearer-tokens=true
+
   - it: configures oauth2-proxy for nginx auth_request on loopback
     template: deployments/nginx.yaml
     set:

@@ -124,6 +124,8 @@ the call.
 | `sso.oauth2Proxy.cookieCsrfPerRequest` | `true` | One CSRF cookie per login attempt |
 | `sso.oauth2Proxy.cookieCsrfExpire` | `15m` | CSRF cookie lifetime |
 | `sso.oauth2Proxy.extraArgs` | `[]` | `--ping-user-agent` and `--gcp-healthchecks` are refused |
+| `sso.oauth2Proxy.bearerTokens.enabled` | `false` | Accept IdP bearer tokens on the web port, see [Bearer tokens](#bearer-tokens) |
+| `sso.oauth2Proxy.bearerTokens.extraAudiences` | `[]` | Audiences accepted besides `clientId` |
 | `sso.oauth2Proxy.resources`, `securityContext` | `{}` | securityContext defaults to the chart's, read-only root filesystem |
 | `sso.networkPolicy.idpEgressCidrs` | `[]` | Required once a NetworkPolicy selects the nginx pod |
 
@@ -285,6 +287,23 @@ default 30 s, the chart sets none, `podSpecPatch` can): nginx uses most of it, o
 within a second of its SIGTERM. A gRPC stream still open at the deadline is cut as before SSO, and
 both containers are then killed together.
 
+## Bearer tokens
+
+With `sso.oauth2Proxy.bearerTokens.enabled`, SDK and CLI clients present a token of the IdP in
+`Authorization: Bearer` on the web port instead of a session cookie. oauth2-proxy validates its
+signature, issuer (`issuerUrl`), audience (`clientId`, or one of `extraAudiences`) and lifetime
+(`--skip-jwt-bearer-tokens`), and answers its user and groups: nginx writes them as for a session
+and clears `Authorization`, so ArmoniK Core reads them with the `Proxy` method, like the browser
+sessions. The token is checked on every request, so its lifetime bounds a revocation, not
+`cookieExpire`.
+
+- The user is the claim oauth2-proxy takes as its user, `sub` for Keycloak: pick
+  `identityClaim: user` for browsers and tokens to name the same principal.
+- The groups come from `groupsClaim`, which the token must carry: with Keycloak, the "Group
+  Membership" mapper must also write to the access token.
+- Such requests are exempt from the redirect to the `publicUrl` host, so clients may use any name
+  of the web port, the in-cluster Service's included.
+
 ## Network policies
 
 oauth2-proxy runs in the nginx pod, so the nginx pod needs TCP 443 to the IdP. Once a
@@ -295,10 +314,10 @@ fails without them. The umbrella's nginx egress policy also allows DNS, as it do
 ## Limits
 
 - **SDK and CLI do not use the SSO session.** They authenticate with client certificates
-  (`mtls.enabled`, method `Xfcc`), or with tokens of the IdP that the control plane validates
-  (method `Token`, `control-plane.authorization.identity.Authority` and `Audience`), which nginx
-  passes through on a port verifying no certificate. Without either, they cannot authenticate;
-  NOTES.txt warns about it.
+  (`mtls.enabled`, method `Xfcc`), with tokens of the IdP on the web port
+  ([Bearer tokens](#bearer-tokens), method `Proxy`), or with tokens the control plane validates
+  itself (method `Token`), which nginx passes through on a port verifying no certificate. Without
+  any of them, they cannot authenticate; NOTES.txt warns about it.
 - **No Gateway API mode yet.** `sso.enabled` fails with `gateway.enabled` or `httpRoute.enabled`:
   the default HTTPRoute sends only `content-type: application/grpc` to the grpc port, so
   `application/grpc+proto` reaches the web port, and a Gateway terminating TLS leaves nginx no client

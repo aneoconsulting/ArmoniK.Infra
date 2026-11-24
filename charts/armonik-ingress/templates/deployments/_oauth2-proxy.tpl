@@ -56,6 +56,12 @@ args:
   - "--ready-path=/oauth2/ready"
   - "--silence-ping-logging=true"
   - {{ printf "--metrics-address=:%d" $metricsPort | quote }}
+  {{- if list $proxy "bearerTokens" "enabled" | include "armonik.utils.index" }}
+  - "--skip-jwt-bearer-tokens=true"
+  {{- range list $proxy "bearerTokens" "extraAudiences" | include "armonik.utils.index" | fromYamlArray }}
+  - {{ printf "--extra-jwt-issuers=%s=%s" $proxy.issuerUrl (toString .) | quote }}
+  {{- end }}
+  {{- end }}
   {{- range $proxy.extraArgs }}
   - {{ . | toString | quote }}
   {{- end }}

@@ -133,6 +133,27 @@ tests:
       - failedTemplate:
           errorPattern: 'sso.oauth2Proxy.issuerUrl must be an http or https URL'
 
+  - it: refuses a string bearerTokens.enabled
+    set:
+      sso:
+        oauth2Proxy:
+          bearerTokens:
+            enabled: "true"
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.oauth2Proxy.bearerTokens.enabled must be true or false'
+
+  - it: refuses an extra audience that would split the issuer=audience value
+    set:
+      sso:
+        oauth2Proxy:
+          bearerTokens:
+            enabled: true
+            extraAudiences: ["a=b"]
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.oauth2Proxy.bearerTokens.extraAudiences\[0\] may only hold'
+
   - it: refuses sso.identityMode of the removed CN identity
     set:
       sso:

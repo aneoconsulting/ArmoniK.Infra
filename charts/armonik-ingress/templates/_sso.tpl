@@ -13,7 +13,7 @@ The single entry point: the armonik.ingress.sso.validate* helpers below fail and
   {{- if not $sso.enabled -}}
 enabled: false
   {{- else -}}
-    {{- range list "KubeVersion" "Gateway" "Required" "Urls" "Image" "Identity" "Health" "Cookie" "ExtraArgs" "ExternalSecret" "Network" -}}
+    {{- range list "KubeVersion" "Gateway" "Required" "Urls" "Image" "Identity" "BearerTokens" "Health" "Cookie" "ExtraArgs" "ExternalSecret" "Network" -}}
       {{- include (printf "armonik.ingress.sso.validate%s" .) $ -}}
     {{- end -}}
     {{- $url := $sso.publicUrl | toString | trimSuffix "/" -}}
@@ -110,6 +110,20 @@ user: $upstream_http_x_auth_request_user
   {{- $claim := $sso.identityClaim | default "" | toString -}}
   {{- if not (hasKey (include "armonik.ingress.sso.identityVars" . | fromYaml) $claim) -}}
     {{- printf "sso.identityClaim must be email, preferred_username or user, got %q" $claim | fail -}}
+  {{- end -}}
+{{- end -}}
+
+{{/* bearerTokens: a real bool, and audiences that stay one value of --extra-jwt-issuers
+     (issuer=audience). */}}
+{{- define "armonik.ingress.sso.validateBearerTokens" -}}
+  {{- $bearer := .Values.sso.oauth2Proxy.bearerTokens | default dict -}}
+  {{- if not (or (kindIs "invalid" $bearer.enabled) (kindIs "bool" $bearer.enabled)) -}}
+    {{- printf "sso.oauth2Proxy.bearerTokens.enabled must be true or false, got %v" $bearer.enabled | fail -}}
+  {{- end -}}
+  {{- range $i, $audience := $bearer.extraAudiences -}}
+    {{- if not (regexMatch "^[A-Za-z0-9._:/@-]+$" (toString $audience)) -}}
+      {{- printf "sso.oauth2Proxy.bearerTokens.extraAudiences[%d] may only hold letters, digits and ._:/@-, got %q" $i (toString $audience) | fail -}}
+    {{- end -}}
   {{- end -}}
 {{- end -}}
 
@@ -316,11 +330,20 @@ $grpc_error_content_type mirroring the request's gRPC flavor. Takes the root.
 # 1 when a request must first move to the publicUrl host: a login started on another host (an IP)
 # sets its CSRF cookie there, and the IdP returns to publicUrl. The port is not compared, cookies
 # ignoring it. Exempt: the health path and the sidecar probes, whose Host is the pod IP.
-map "$host $uri" $sso_redirect {
+{{- $bearer := list $sso.oauth2Proxy "bearerTokens" "enabled" | include "armonik.utils.index" }}
+map "$host $uri" {{ $bearer | empty | ternary "$sso_redirect" "$sso_redirect_host" }} {
     default 1;
     "~^{{ regexQuoteMeta $sso.hostName }} " 0;
     "~ ({{ regexQuoteMeta $sso.healthPath }}|/oauth2/ping|/oauth2/ready)$" 0;
 }
+{{- if $bearer }}
+# A bearer token carries no cookie bound to a host: SDK and CLI clients reach the web port under any
+# name, the Service's included.
+map $http_authorization $sso_redirect {
+    default $sso_redirect_host;
+    "~*^bearer " 0;
+}
+{{- end }}
 map $http_content_type $grpc_error_content_type {
     default application/grpc;
     ~*^application/grpc-web-text application/grpc-web-text+proto;
@@ -352,9 +375,11 @@ SSO is enabled on the web port (admin GUI, gRPC-web, Grafana, Seq) through oauth
   4 KB (common with Keycloak or Entra ID) oauth2-proxy splits it in _0/_1, and nginx passes on only
   the first Set-Cookie of a refresh: the session breaks. Keep it on unless the tokens are needed.
   {{- end }}
-  {{- if not .Values.mtls.enabled }}
+  {{- if list $sso.oauth2Proxy "bearerTokens" "enabled" | include "armonik.utils.index" }}
+  SDK and CLI clients may present a token of the IdP on the web port (bearerTokens).
+  {{- else if not .Values.mtls.enabled }}
   WARNING: mTLS is off, so the grpc port forwards no client certificate: SDK and CLI clients cannot
-  authenticate with one. Enable tls and mtls for them, or have them present tokens (Token method).
+  authenticate with one. Enable tls and mtls for them, or sso.oauth2Proxy.bearerTokens.enabled.
   {{- end }}
 {{- end }}
 {{- end -}}

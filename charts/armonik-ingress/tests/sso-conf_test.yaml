@@ -108,6 +108,20 @@ tests:
           path: spec.target.template.data["armonik.conf"]
           pattern: '(?s)# web port.*if \(\$sso_redirect\) \{.*auth_request /oauth2/auth;.*# grpc port'
 
+  - it: exempts bearer token requests from the publicUrl host redirect
+    set:
+      sso:
+        oauth2Proxy:
+          bearerTokens:
+            enabled: true
+    asserts:
+      - matchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: '\nmap "\$host \$uri" \$sso_redirect_host \{\n    default 1;\n    "~\^armonik\\\.example\\\.com " 0;\n'
+      - matchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: '\nmap \$http_authorization \$sso_redirect \{\n    default \$sso_redirect_host;\n    "~\*\^bearer " 0;\n\}\n'
+
   - it: compares the publicUrl host lowercased, without its port, and exempts a custom health path
     set:
       sso:

@@ -1,0 +1,31 @@
+suite: sso lines of the ingress NOTES
+# sso needs Kubernetes 1.29 (native sidecar); helm-unittest defaults to 1.20.
+capabilities:
+  majorVersion: 1
+  minorVersion: 31
+templates:
+  - NOTES.txt
+values:
+  - ../ci/sso-values.yaml
+tests:
+  - it: names the principals the SSO identity reaches ArmoniK Core as
+    asserts:
+      - matchRegexRaw:
+          pattern: 'Each user reaches ArmoniK as oid:<email>, with each group of the session as role:<group>'
+
+  - it: warns that SDK clients cannot authenticate without mTLS nor bearer tokens
+    asserts:
+      - matchRegexRaw:
+          pattern: 'WARNING: mTLS is off'
+
+  - it: points SDK clients to bearer tokens when they are accepted
+    set:
+      sso:
+        oauth2Proxy:
+          bearerTokens:
+            enabled: true
+    asserts:
+      - matchRegexRaw:
+          pattern: 'SDK and CLI clients may present a token of the IdP on the web port'
+      - notMatchRegexRaw:
+          pattern: 'WARNING: mTLS is off'

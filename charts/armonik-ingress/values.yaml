@@ -232,6 +232,14 @@ sso:
     cookieCsrfExpire: 15m
     # -- Appended to the generated flags. --ping-user-agent and --gcp-healthchecks are refused.
     extraArgs: []
+    # -- Bearer tokens of the IdP in the Authorization header, for SDK and CLI clients on the web port:
+    # oauth2-proxy validates their signature, issuer, audience and lifetime instead of a session
+    # cookie, and nginx writes their user and groups as for a session. Such requests are exempt from
+    # the redirect to the publicUrl host.
+    bearerTokens:
+      enabled: false
+      # -- Audiences accepted besides clientId, from issuerUrl (--extra-jwt-issuers).
+      extraAudiences: []
     resources: {}
     # -- Container securityContext; empty: the chart-level one with a read-only root filesystem.
     securityContext: {}

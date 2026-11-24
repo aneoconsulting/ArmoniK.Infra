@@ -1,0 +1,86 @@
+suite: nginx servers per port role
+templates:
+  - armonik-nginx-conf.yaml
+values:
+  - ../ci/default-values.yaml
+tests:
+  - it: renders exactly two servers, the http-level blocks once
+    asserts:
+      - matchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: '(?ms)^server \{$.*^server \{$'
+      - notMatchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: '(?ms)(^server \{$.*){3}'
+      - notMatchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: '(?s)upstream armonik \{.*upstream armonik \{'
+      - notMatchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: '(?s)map \$http_upgrade .*map \$http_upgrade '
+
+  - it: listens on 8080 for web and 9080 for grpc without TLS
+    asserts:
+      - matchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: 'server \{\n    # web port\n    # TLS disabled\n    listen 8080;\n    listen \[::\]:8080;\n    http2 on;\n'
+      - matchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: 'server \{\n    # grpc port\n    # TLS disabled\n    listen 9080;\n    listen \[::\]:9080;\n    http2 on;\n'
+      - notMatchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: '(?s)listen 8080;.*listen 8080;'
+      - notMatchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: '(?s)listen 9080;.*listen 9080;'
+      - notMatchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: 'listen (\[::\]:)?(8443|9443)'
+
+  - it: listens on 8443 for web and 9443 for grpc with TLS, TLS settings in both
+    set:
+      tls:
+        enabled: true
+    asserts:
+      - matchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: 'server \{\n    # web port\n    # TLS enabled\n    listen 8443 ssl;\n    listen \[::\]:8443 ssl;\n    http2 on;\n    ssl_certificate '
+      - matchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: 'server \{\n    # grpc port\n    # TLS enabled\n    listen 9443 ssl;\n    listen \[::\]:9443 ssl;\n    http2 on;\n    ssl_certificate '
+      - matchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: '(?s)# web port.*ssl_verify_client off;.*ssl_protocols .*# grpc port.*ssl_verify_client off;.*ssl_protocols '
+      - notMatchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: 'listen (\[::\]:)?(8080|9080)'
+      # "listen ... http2" is deprecated since nginx 1.25.1
+      - notMatchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: 'listen [^;]*http2'
+
+  - it: verifies client certificates on both servers with mTLS, the mTLS maps once
+    values:
+      - ../ci/tls-mtls-values.yaml
+    asserts:
+      - matchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: '(?s)# web port.*ssl_verify_client on;\n    ssl_client_certificate /ingressclient/ca.crt;.*# grpc port.*ssl_verify_client on;\n    ssl_client_certificate /ingressclient/ca.crt;'
+      - notMatchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: '(?s)map \$ssl_client_s_dn .*map \$ssl_client_s_dn '
+
+  - it: serves the admin GUI and the gRPC API on both servers
+    asserts:
+      - matchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: '(?s)# web port.*location /admin/ \{.*location ~\* \^/armonik\\\. \{.*# grpc port.*location /admin/ \{.*location ~\* \^/armonik\\\. \{'
+
+  - it: serves Grafana and Seq on both servers when their URLs are set
+    set:
+      grafana_url: http://grafana.example
+      seq_url: http://seq.example
+    asserts:
+      - matchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: '(?s)# web port.*set \$seq_upstream "http://seq.example";.*location /grafana/ \{.*# grpc port.*set \$seq_upstream "http://seq.example";.*location /grafana/ \{'

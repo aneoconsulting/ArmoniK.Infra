@@ -10,3 +10,4 @@
   NetworkPolicy is enabled for the ingress and GUI pods. The chart's own nginx egress allows DNS
   and the GUI only: add a rule for each backend under networkPolicy.nginx.extraEgressRules.
 {{- end }}
+{{- include "armonik.ingress.sso.notes" . }}

@@ -9,3 +9,6 @@
 {{- if and (empty .Values.urlsSecretName) (empty .Values.control_plane_url) (empty .Values.grafana_url) (empty .Values.seq_url) -}}
 {{- fail "Invalid configuration: specify urlsSecretName or at least one of control_plane_url, grafana_url, or seq_url." -}}
 {{- end -}}
+
+{{- /* Every sso guard lives in the resolver. */ -}}
+{{- $_ := include "armonik.ingress.sso" . -}}

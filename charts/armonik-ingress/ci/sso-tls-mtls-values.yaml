@@ -1,0 +1,28 @@
+# SSO on the web port with TLS, mTLS kept on the grpc port: the web server stops verifying client
+# certificates, the grpc server serves the gRPC API alone. The CA is inline, as in
+# tls-mtls-values.yaml.
+global:
+  environment:
+    name: ci
+    description: ArmoniK CI environment
+urlsSecretName: example-urls
+tls:
+  enabled: true
+mtls:
+  enabled: true
+  certificationAuthority:
+    pem: |
+      -----BEGIN CERTIFICATE-----
+      MIIBszCCAVmgAwIBAgIUfake0000000000000000000000000000
+      -----END CERTIFICATE-----
+  trustedCommonNames:
+    - proxy.armonik.local
+sso:
+  enabled: true
+  publicUrl: https://armonik.example.com
+  oauth2Proxy:
+    issuerUrl: https://idp.example.com/realms/armonik
+    clientId: armonik
+    existingSecret: armonik-oauth2-proxy
+    allowedGroups:
+      - armonik-users

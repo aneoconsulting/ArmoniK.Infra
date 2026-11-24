@@ -34,28 +34,49 @@ from:
 
 
 {{/*
-  Ingress rule: any source to nginx on 8080/9080.
-  TODO: the TLS ports 8443/9443 (armonik.ingress.containerPort) are not admitted.
+  Ingress rule: any source to nginx on its http and grpc container ports, which follow TLS.
 */}}
 {{- define "armonik.netpol.rule.nginxExternal" -}}
 from: []
 ports:
+  {{- range list "http" "grpc" }}
   - protocol: TCP
-    port: 8080
-  - protocol: TCP
-    port: 9080
+    port: {{ dict "protocol" . "root" $ | include "armonik.ingress.containerPort" }}
+  {{- end }}
 {{- end -}}
 
 
 {{/*
-  nginx egress rules: DNS and the GUI.
+  Egress rule: the oauth2-proxy sidecar to the IdP, TCP 443 to sso.networkPolicy.idpEgressCidrs.
+  Empty without sso or CIDRs, an empty "to" admitting every destination. Takes the ingress chart's
+  root, so the umbrella passes .Subcharts.ingress.
+*/}}
+{{- define "armonik.netpol.rule.ssoIdpTo" -}}
+{{- $sso := include "armonik.ingress.sso" . | fromYaml -}}
+{{- if and $sso.enabled $sso.idpEgressCidrs -}}
+to:
+  {{- range $sso.idpEgressCidrs }}
+  - ipBlock:
+      cidr: {{ . | quote }}
+  {{- end }}
+ports:
+  - protocol: TCP
+    port: 443
+{{- end -}}
+{{- end -}}
+
+
+{{/*
+  nginx egress rules: DNS and the GUI, plus the IdP with sso.
 */}}
 {{- define "armonik.netpol.nginxEgress" -}}
-  {{- dict
+  {{- $rules := dict
         "armonik.netpol.dnsRule" dict
-        "armonik.netpol.rule.guiTo" .
-      | include "armonik.netpol.mergeRules"
-  -}}
+        "armonik.netpol.rule.guiTo" . -}}
+  {{- if include "armonik.ingress.sso" . | fromYaml | dig "enabled" false -}}
+    {{- $_ := set $rules "armonik.netpol.rule.ssoIdpTo" . -}}
+  {{- end -}}
+  {{- $rules | include "armonik.netpol.mergeRules" -}}
 {{- end -}}
 
 

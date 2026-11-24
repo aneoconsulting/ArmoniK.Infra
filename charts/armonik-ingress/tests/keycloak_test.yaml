@@ -1,0 +1,55 @@
+suite: Keycloak route of the ingress
+# sso needs Kubernetes 1.29 (native sidecar); helm-unittest defaults to 1.20.
+capabilities:
+  majorVersion: 1
+  minorVersion: 31
+templates:
+  - armonik-nginx-conf.yaml
+values:
+  - ../ci/default-values.yaml
+set:
+  global:
+    armonik:
+      keycloak:
+        enabled: true
+      operators:
+        externalSecrets:
+          deploy: false
+          available: false
+  urlsSecretName: ""
+  control_plane_url: control-plane:1080
+  keycloak_url: http://keycloak:8080
+tests:
+  - it: serves no Keycloak route unless the umbrella deploys Keycloak
+    set:
+      global:
+        armonik:
+          keycloak:
+            enabled: false
+    asserts:
+      - notMatchRegex:
+          path: stringData["armonik.conf"]
+          pattern: 'keycloak'
+
+  - it: serves Keycloak under /auth on both ports without SSO, URI unchanged
+    asserts:
+      - matchRegex:
+          path: stringData["armonik.conf"]
+          pattern: '(?s)# web port.*set \$keycloak_upstream "http://keycloak:8080";.*location = /auth \{\n    return 301 \$real_scheme://\$http_host/auth/;\n\}.*location \^~ /auth/ \{\n    proxy_pass \$keycloak_upstream;\n    proxy_set_header Host \$http_host;.*# grpc port.*location \^~ /auth/'
+      - notMatchRegex:
+          path: stringData["armonik.conf"]
+          pattern: 'auth_request'
+
+  - it: serves it on the web port alone outside of the SSO, which it hosts the login of
+    values:
+      - ../ci/sso-values.yaml
+    set:
+      urlsSecretName: ""
+      control_plane_url: control-plane:1080
+    asserts:
+      - matchRegex:
+          path: stringData["armonik.conf"]
+          pattern: '(?s)# web port.*location \^~ /auth/ \{\n    auth_request off;\n    proxy_pass \$keycloak_upstream;.*# grpc port'
+      - notMatchRegex:
+          path: stringData["armonik.conf"]
+          pattern: '(?s)# grpc port.*keycloak'

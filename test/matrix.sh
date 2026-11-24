@@ -106,6 +106,7 @@ ok umbrella-mongodb-exporter-tls armonik        -f charts/armonik/ci/mongodb-exp
 ok umbrella-postgresql-certmanager armonik       -f charts/armonik/ci/postgresql-certmanager-values.yaml
 ok umbrella-authz         armonik               -f charts/armonik/ci/authz-values.yaml
 ok operators-keycloak     armonik-operators     --set global.armonik.operators.keycloakOperator.deploy=true
+ok umbrella-keycloak      armonik               -f charts/armonik/ci/keycloak-values.yaml
 ok compute-partitions     armonik-compute-plane -f charts/armonik-compute-plane/ci/partitions-values.yaml
 ok compute-keda-off       armonik-compute-plane -f charts/armonik-compute-plane/ci/keda-off-values.yaml
 ok compute-fluent-bit-sidecar armonik-compute-plane -f charts/armonik-compute-plane/ci/partitions-values.yaml \
@@ -163,6 +164,10 @@ fail_with control-unknown-method armonik-control-plane \
 fail_with umbrella-proxy-without-sso armonik \
   "selects Proxy, but ingress.sso.enabled is false" \
   --set control-plane.authorization.authentication=Proxy
+fail_with umbrella-keycloak-without-sso armonik \
+  "global.armonik.keycloak.enabled needs ingress.sso.enabled" \
+  -f charts/armonik/ci/keycloak-values.yaml --set ingress.sso.enabled=false \
+  --set control-plane.authorization.authentication=None
 fail_with umbrella-sso-authz-without-proxy armonik \
   "does not select Proxy" \
   -f charts/armonik/ci/authz-values.yaml --set control-plane.authorization.authentication=Xfcc

@@ -27,6 +27,34 @@ location /seq/ {
 
 
 {{/*
+nginx locations proxying the Keycloak path to $keycloak_upstream, URI unchanged (Keycloak runs with
+that http-relative-path). Keycloak builds its public URLs from the X-Forwarded-* headers. Outside of
+the SSO: it serves the login itself. Takes {root, sso}.
+*/}}
+{{- define "armonik.keycloak.locations" }}
+{{- $path := (include "armonik.keycloak" .root | fromYaml).path }}
+location = {{ $path }} {
+    return 301 $real_scheme://$http_host{{ $path }}/;
+}
+
+location ^~ {{ $path }}/ {
+    {{- if .sso }}
+    auth_request off;
+    {{- end }}
+    proxy_pass $keycloak_upstream;
+    proxy_set_header Host $http_host;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $real_scheme;
+    proxy_set_header X-Forwarded-Host $host;
+    proxy_set_header X-Forwarded-Port $server_port;
+    # Keycloak's cookies and redirects exceed the 4 KB default
+    proxy_buffer_size 64k;
+    proxy_buffers 8 64k;
+    proxy_busy_buffers_size 128k;
+}
+{{- end }}
+
+{{/*
 nginx locations proxying /grafana/ to $grafana_upstream.
 */}}
 {{- /* Grafana runs with a path-less root_url and never learns its public path, so it is injected
@@ -247,6 +275,19 @@ adds the oauth2-proxy routes, the grpc server keeps the gRPC API alone.
     set $seq_upstream {{`{{ index . "seq" | quote }}`}};
     {{ include "armonik.seq.locations" $root }}
     {{`{{- end }}`}}
+    {{- end }}
+
+    {{- if (include "armonik.keycloak" $root | fromYaml).enabled }}
+    {{- $keycloakArgs := dict "root" $root "sso" (and $sso.enabled (eq .role "web")) }}
+    {{- if $root.Values.keycloak_url }}
+    set $keycloak_upstream {{ $root.Values.keycloak_url | quote }};
+    {{ include "armonik.keycloak.locations" $keycloakArgs }}
+    {{- else if $useEso }}
+    {{`{{- if index . "keycloak" }}`}}
+    set $keycloak_upstream {{`{{ index . "keycloak" | quote }}`}};
+    {{ include "armonik.keycloak.locations" $keycloakArgs }}
+    {{`{{- end }}`}}
+    {{- end }}
     {{- end }}
 
     {{- if $root.Values.grafana_url }}

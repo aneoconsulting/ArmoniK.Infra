@@ -306,10 +306,11 @@ loadBalancer:
   # Pod labels are out of reach: the selector is immutable.
   podSpecPatch: {}
 
-# Secret holding the upstream URLs (keys control-plane, grafana, seq), read through ESO: its name in
-# urlsSecretNamespace (default: the release namespace), or its key in urlsSecretStoreName.
+# Secret holding the upstream URLs (keys control-plane, grafana, seq, keycloak), read through ESO: its
+# name in urlsSecretNamespace (default: the release namespace), or its key in urlsSecretStoreName.
 # Empty, or ESO unavailable: the nginx conf is a plain Secret built from control_plane_url,
-# grafana_url and seq_url.
+# grafana_url, seq_url and keycloak_url. Keycloak is served under /auth only with
+# global.armonik.keycloak.enabled.
 #
 # Flipping this on an existing release fails: both modes produce a Secret of the same name, and Helm
 # refuses to adopt one it does not own. Delete the ExternalSecret first (its Secret goes with it),

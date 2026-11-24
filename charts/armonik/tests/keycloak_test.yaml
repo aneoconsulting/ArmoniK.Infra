@@ -1,0 +1,285 @@
+suite: Keycloak identity provider served by the ingress
+release:
+  name: t
+  namespace: armonik
+# sso needs Kubernetes 1.29 (native sidecar); helm-unittest defaults to 1.20.
+capabilities:
+  majorVersion: 1
+  minorVersion: 31
+templates:
+  - keycloak/keycloak.yaml
+  - secrets/armonik-urls.yaml
+  - validate.yaml
+  - charts/ingress/templates/deployments/nginx.yaml
+  - charts/ingress/templates/armonik-nginx-conf.yaml
+  # Raises first the guards of the ingress
+  - charts/ingress/templates/secrets/oauth2-proxy.yaml
+values:
+  - ../ci/keycloak-values.yaml
+tests:
+  - it: renders nothing while it is disabled
+    template: keycloak/keycloak.yaml
+    set:
+      global:
+        armonik:
+          keycloak:
+            enabled: false
+      ingress:
+        sso:
+          enabled: false
+      control-plane:
+        authorization:
+          authentication: None
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: imports the default realm with the client of the ingress SSO
+    template: keycloak/keycloak.yaml
+    documentIndex: 0
+    asserts:
+      - isKind:
+          of: Secret
+      - equal:
+          path: metadata.name
+          value: t-keycloak-realm
+      - matchRegex:
+          path: stringData["armonik-realm.json"]
+          pattern: '"realm":"armonik"'
+      # The secret of the client is a placeholder, resolved from the environment of the import
+      - matchRegex:
+          path: stringData["armonik-realm.json"]
+          pattern: '"secret":"\$\{ARMONIK_KEYCLOAK_CLIENT_SECRET\}"'
+      - matchRegex:
+          path: stringData["armonik-realm.json"]
+          pattern: '"redirectUris":\["https://armonik\.example\.com/oauth2/callback"\]'
+      - matchRegex:
+          path: stringData["armonik-realm.json"]
+          pattern: '"groups":\[\{"name":"armonik-admins"\},\{"name":"armonik-users"\}\]'
+      # Group names, not paths: grants name them role:<group>
+      - matchRegex:
+          path: stringData["armonik-realm.json"]
+          pattern: '"claim\.name":"groups","full\.path":"false"'
+      - matchRegex:
+          path: stringData["armonik-realm.json"]
+          pattern: '"directAccessGrantsEnabled":false'
+
+  - it: follows the groups claim of oauth2-proxy and merges keycloak.realm last
+    template: keycloak/keycloak.yaml
+    documentIndex: 0
+    set:
+      ingress:
+        sso:
+          oauth2Proxy:
+            groupsClaim: teams
+      keycloak:
+        directAccessGrants: true
+        realm:
+          sslRequired: none
+          users:
+            - username: alice
+              groups: [/armonik-users]
+    asserts:
+      - matchRegex:
+          path: stringData["armonik-realm.json"]
+          pattern: '"claim\.name":"teams"'
+      - matchRegex:
+          path: stringData["armonik-realm.json"]
+          pattern: '"sslRequired":"none"'
+      - matchRegex:
+          path: stringData["armonik-realm.json"]
+          pattern: '"users":\[\{"groups":\["/armonik-users"\],"username":"alice"\}\]'
+      - matchRegex:
+          path: stringData["armonik-realm.json"]
+          pattern: '"directAccessGrantsEnabled":true'
+
+  - it: serves Keycloak under the public URL of the ingress, its realm imported before the server starts
+    template: keycloak/keycloak.yaml
+    documentIndex: 1
+    asserts:
+      - isKind:
+          of: Keycloak
+      - equal:
+          path: spec.instances
+          value: 1
+      - equal:
+          path: spec.startOptimized
+          value: false
+      - equal:
+          path: spec.unsupported.podTemplate.spec.containers[0]
+          value:
+            volumeMounts:
+              - name: data
+                mountPath: /opt/keycloak/data/h2
+      - equal:
+          path: spec.hostname
+          value:
+            hostname: https://armonik.example.com/auth
+            backchannelDynamic: true
+      - equal:
+          path: spec.http.serviceName
+          value: t-keycloak
+      - contains:
+          path: spec.additionalOptions
+          content:
+            name: http-relative-path
+            value: /auth
+      - equal:
+          path: spec.unsupported.podTemplate.spec.initContainers[0].args
+          value: [import, --dir, /opt/keycloak/data/import, --override, "false"]
+      - equal:
+          path: spec.unsupported.podTemplate.spec.initContainers[0].env[0]
+          value:
+            name: ARMONIK_KEYCLOAK_CLIENT_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: armonik-oauth2-proxy
+                key: client-secret
+      - contains:
+          path: spec.unsupported.podTemplate.spec.volumes
+          content:
+            name: data
+            emptyDir: {}
+
+  # This release installs the operator: the CR waits for its CRD
+  - it: is a hook when this release installs the operator
+    template: keycloak/keycloak.yaml
+    documentIndex: 1
+    asserts:
+      - equal:
+          path: metadata.annotations["helm.sh/hook"]
+          value: post-install,post-upgrade
+
+  - it: is a plain resource with an operator installed elsewhere
+    template: keycloak/keycloak.yaml
+    documentIndex: 1
+    set:
+      global:
+        armonik:
+          operators:
+            keycloakOperator:
+              deploy: false
+    asserts:
+      - notExists:
+          path: metadata.annotations
+
+  - it: passes the bootstrap admin Secret, resources and extra options
+    template: keycloak/keycloak.yaml
+    documentIndex: 1
+    set:
+      keycloak:
+        bootstrapAdminSecret: kc-admin
+        resources:
+          limits:
+            memory: 2Gi
+        additionalOptions:
+          - name: log-level
+            value: debug
+    asserts:
+      - equal:
+          path: spec.bootstrapAdmin.user.secret
+          value: kc-admin
+      - equal:
+          path: spec.resources.limits.memory
+          value: 2Gi
+      - contains:
+          path: spec.additionalOptions
+          content:
+            name: log-level
+            value: debug
+
+  - it: gives the ingress the URL of the Keycloak Service
+    template: secrets/armonik-urls.yaml
+    asserts:
+      - equal:
+          path: data.keycloak
+          decodeBase64: true
+          value: http://t-keycloak.armonik.svc.cluster.local:8080
+
+  - it: points oauth2-proxy at the realm and its client when they are not set
+    template: charts/ingress/templates/deployments/nginx.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.initContainers[0].args
+          content: --oidc-issuer-url=https://armonik.example.com/auth/realms/armonik
+      - contains:
+          path: spec.template.spec.initContainers[0].args
+          content: --client-id=armonik
+
+  - it: keeps an issuerUrl and a clientId set explicitly
+    template: charts/ingress/templates/deployments/nginx.yaml
+    set:
+      ingress:
+        sso:
+          oauth2Proxy:
+            issuerUrl: https://idp.example.com/realms/other
+            clientId: other
+    asserts:
+      - contains:
+          path: spec.template.spec.initContainers[0].args
+          content: --oidc-issuer-url=https://idp.example.com/realms/other
+      - contains:
+          path: spec.template.spec.initContainers[0].args
+          content: --client-id=other
+
+  - it: serves Keycloak under /auth on the web port, outside of the SSO
+    template: charts/ingress/templates/armonik-nginx-conf.yaml
+    asserts:
+      - matchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: '(?s)# web port.*set \$keycloak_upstream \{\{ index \. "keycloak" \| quote \}\};.*location \^~ /auth/ \{\n    auth_request off;\n    proxy_pass \$keycloak_upstream;.*# grpc port'
+      - notMatchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: '(?s)# grpc port.*keycloak'
+
+  - it: fails without the ingress SSO
+    template: keycloak/keycloak.yaml
+    set:
+      ingress:
+        sso:
+          enabled: false
+    asserts:
+      - failedTemplate:
+          errorPattern: 'global.armonik.keycloak.enabled needs ingress.sso.enabled'
+
+  - it: fails without the operator
+    template: validate.yaml
+    set:
+      global:
+        armonik:
+          operators:
+            keycloakOperator:
+              deploy: false
+              available: false
+    asserts:
+      - failedTemplate:
+          errorPattern: 'needs global.armonik.operators.keycloakOperator.available'
+
+  - it: fails with network policies, no rule letting nginx reach it yet
+    template: validate.yaml
+    set:
+      networkPolicy:
+        enabled: true
+    asserts:
+      - failedTemplate:
+          errorPattern: 'not supported with networkPolicy.enabled yet'
+
+  - it: fails on a group holding a comma
+    template: validate.yaml
+    set:
+      keycloak:
+        groups: ["a,b"]
+    asserts:
+      - failedTemplate:
+          errorPattern: 'keycloak.groups: "a,b" holds a comma'
+
+  - it: fails on a realm name that is not a plain name
+    template: charts/ingress/templates/secrets/oauth2-proxy.yaml
+    set:
+      global:
+        armonik:
+          keycloak:
+            realm: "my realm"
+    asserts:
+      - failedTemplate:
+          errorPattern: 'global.armonik.keycloak.realm must be letters, digits'

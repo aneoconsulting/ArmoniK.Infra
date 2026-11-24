@@ -195,6 +195,51 @@ control-plane:
         condition: session.owner == request.caller && grant.principal in session.createdUnder
 ```
 
+## Keycloak
+
+The umbrella can deploy the identity provider itself: a Keycloak served by the ArmoniK ingress under
+`/auth`, through the official Keycloak operator. It is the turnkey path: no IdP to provision, and
+the ingress SSO points at it without `issuerUrl` nor `clientId`.
+
+```yaml
+global:
+  armonik:
+    keycloak:
+      enabled: true          # realm and clientId default to armonik
+    operators:
+      keycloakOperator:
+        deploy: true         # or available: true with the operator installed elsewhere
+ingress:
+  sso:
+    enabled: true
+    publicUrl: https://armonik.example.com
+    identityClaim: user      # the sub of the session and of bearer tokens alike
+    oauth2Proxy:
+      existingSecret: armonik-oauth2-proxy
+      bearerTokens:
+        enabled: true
+```
+
+- **Issuer**: `<publicUrl>/auth/realms/<realm>`, the default of `sso.oauth2Proxy.issuerUrl`; its
+  client, the default of `clientId`. Values set explicitly win. oauth2-proxy reads the discovery
+  document through the public URL, which the nginx pod must therefore reach.
+- **Default realm**: the groups of `keycloak.groups` (`armonik-admins`, `armonik-users`), and the
+  client of the ingress: standard flow with PKCE, redirect URI `<publicUrl>/oauth2/callback`, an
+  audience mapper for oauth2-proxy, and a mapper writing the group names to the `groupsClaim` of
+  every token. Its secret is the `client-secret` of `sso.oauth2Proxy.existingSecret`, shared with
+  oauth2-proxy. `keycloak.realm` is merged over this realm, last: users, other clients, any realm
+  setting; a list replaces the generated one.
+- **No database**: an init container imports the realm into the pod's own `dev-file` database
+  before the server starts, at every pod start. Users created and changes made in Keycloak are lost
+  when the pod is replaced, hence a single instance: write them in `keycloak.realm` instead.
+- **Admin**: `keycloak.bootstrapAdminSecret` (keys `username`, `password`), else the operator
+  generates `<release>-keycloak-initial-admin`. The console is at `<publicUrl>/auth/admin/`.
+- **Grants** name the groups as roles: `role:armonik-admins`, `role:armonik-users`.
+
+Keycloak needs `ingress.sso.enabled`; the render fails without it, without the operator, with
+`networkPolicy.enabled` (no rule lets nginx reach Keycloak yet), and on a group name holding a
+comma.
+
 ## The Secret
 
 The cookie secret must be 16, 24 or 32 bytes:

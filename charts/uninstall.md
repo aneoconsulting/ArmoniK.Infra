@@ -30,6 +30,7 @@ manifest is applied. Those CRs are then invisible to `helm uninstall`.
 | `activemq/templates/certificate.yaml` | `Certificate` | `certManager.deploy` |
 | `armonik.certManager.issuerManifest` (`armonik-common/templates/_certmanager.tpl`) | every `Issuer` the charts create, shared or local | `certManager.deploy` |
 | same helper, `provider: googleCas` | `GoogleCASIssuer` / `GoogleCASClusterIssuer` | `googleCasIssuer.deploy` |
+| `armonik/templates/keycloak/keycloak.yaml` | `Keycloak` | `keycloakOperator.deploy` |
 
 `PodMonitor`, `ServiceMonitor` and `PerconaServerMongoDB` are never hooked: kube-prometheus-stack
 and psmdb-operator ship their CRDs in an untemplated `crds/` directory, which Helm applies before

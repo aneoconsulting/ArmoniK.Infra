@@ -13,8 +13,25 @@ The single entry point: the armonik.ingress.sso.validate* helpers below fail and
   {{- if not $sso.enabled -}}
 enabled: false
   {{- else -}}
+    {{- /* With the Keycloak of the umbrella, an empty issuerUrl or clientId is its realm and client.
+           The validators run on the resulting values, through a context keeping the whole root. */ -}}
+    {{- $root := . -}}
+    {{- $keycloak := include "armonik.keycloak" . | fromYaml -}}
+    {{- if $keycloak.enabled -}}
+      {{- $values := deepCopy .Values -}}
+      {{- $proxy := $values.sso.oauth2Proxy | default dict -}}
+      {{- if not $proxy.issuerUrl -}}
+        {{- $_ := printf "%s%s/realms/%s" ($sso.publicUrl | toString | trimSuffix "/") $keycloak.path $keycloak.realm | set $proxy "issuerUrl" -}}
+      {{- end -}}
+      {{- if not $proxy.clientId -}}
+        {{- $_ := set $proxy "clientId" $keycloak.clientId -}}
+      {{- end -}}
+      {{- $_ := set $values.sso "oauth2Proxy" $proxy -}}
+      {{- $root = omit . "Values" | merge (dict "Values" $values) -}}
+      {{- $sso = $values.sso -}}
+    {{- end -}}
     {{- range list "KubeVersion" "Gateway" "Required" "Urls" "Image" "Identity" "BearerTokens" "Health" "Cookie" "ExtraArgs" "ExternalSecret" "Network" -}}
-      {{- include (printf "armonik.ingress.sso.validate%s" .) $ -}}
+      {{- include (printf "armonik.ingress.sso.validate%s" .) $root -}}
     {{- end -}}
     {{- $url := $sso.publicUrl | toString | trimSuffix "/" -}}
     {{- $claim := $sso.identityClaim | toString -}}

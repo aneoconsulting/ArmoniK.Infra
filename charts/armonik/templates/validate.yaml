@@ -55,6 +55,29 @@
   {{- end -}}
 {{- end -}}
 
+{{- /* Keycloak is served by the ingress, under the publicUrl of its SSO, through the operator. */ -}}
+{{- if (include "armonik.keycloak" . | fromYaml).enabled -}}
+  {{- if not $.Subcharts.ingress -}}
+    {{- fail "global.armonik.keycloak.enabled needs the ingress, which serves Keycloak under /auth: enable ingress" -}}
+  {{- end -}}
+  {{- if not (include "armonik.ingress.sso" .Subcharts.ingress | fromYaml).enabled -}}
+    {{- fail "global.armonik.keycloak.enabled needs ingress.sso.enabled: Keycloak is the identity provider of the ingress SSO, and its publicUrl is Keycloak's" -}}
+  {{- end -}}
+  {{- if not (include "armonik.operators" $ | fromYaml).keycloakOperator.available -}}
+    {{- fail "global.armonik.keycloak.enabled needs global.armonik.operators.keycloakOperator.available: the Keycloak CR needs the Keycloak operator CRDs" -}}
+  {{- end -}}
+  {{- if list .Values "networkPolicy" "enabled" | include "armonik.utils.index" -}}
+    {{- fail "global.armonik.keycloak.enabled is not supported with networkPolicy.enabled yet: no rule lets nginx reach Keycloak" -}}
+  {{- end -}}
+  {{- if gt (len (list .Values "keycloak" "groups" | include "armonik.utils.index" | fromYamlArray)) 0 -}}
+    {{- range list .Values "keycloak" "groups" | include "armonik.utils.index" | fromYamlArray -}}
+      {{- if not (regexMatch "^[^,]+$" (toString .)) -}}
+        {{- printf "keycloak.groups: %q holds a comma, which ArmoniK Core would read as several roles" (toString .) | fail -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+
 {{- /* The Cluster CR has no CRD without the CloudNativePG operator: fail at render. */ -}}
 {{- $ops := include "armonik.operators" $ | fromYaml -}}
 {{- $postgresqlEnabled := list .Values "dependencies" "postgresql" "enabled" | include "armonik.utils.index" | empty | not -}}

@@ -159,6 +159,37 @@ ingress:
     # not stored yet, and is ignored unless its `version` matches the GUI's major.minor.
     gui_configuration: {}
 
+# ==== Keycloak ====
+# Identity provider of the ingress SSO, a Keycloak CR of the Keycloak operator, served by the ArmoniK
+# ingress under /auth. Enabled by global.armonik.keycloak.enabled, which also names its realm and the
+# client of the ingress: with it, ingress.sso.oauth2Proxy.issuerUrl and clientId default to them. It
+# needs ingress.sso (its publicUrl is Keycloak's) and
+# global.armonik.operators.keycloakOperator.available.
+#
+# No database: an init container imports the realm below into the pod's own dev-file database at
+# every pod start. Users, sessions and changes made in Keycloak are lost when the pod is replaced,
+# hence a single instance; write them in realm to keep them. The client secret is
+# ingress.sso.oauth2Proxy.existingSecret's client-secret, shared with oauth2-proxy.
+keycloak:
+  # -- Image of the server and of the realm import, the operator's default.
+  image: quay.io/keycloak/keycloak:26.8.2
+  # -- Secret with the username and password keys of the initial admin user. Empty: the operator
+  # generates <release>-keycloak-initial-admin.
+  bootstrapAdminSecret: ""
+  resources: {}
+  # -- Groups of the default realm. The groups claim names them, so grants reach their members as
+  # role:<group>.
+  groups:
+    - armonik-admins
+    - armonik-users
+  # -- Let the client exchange a user's password for a token (password grant), for scripts and tests.
+  directAccessGrants: false
+  # -- Merged over the generated realm representation, last: users, other clients, settings. A list
+  # replaces the generated one (clients, groups).
+  realm: {}
+  # -- Extra Keycloak server options, {name, value} or {name, secret: {name, key}}.
+  additionalOptions: []
+
 # ==== Shared cert-manager issuer ====
 # The Issuer named by global.armonik.certManager.issuer, rendered when both that issuer.enabled and
 # create are true; otherwise the Issuer must already exist and nothing below is used. See

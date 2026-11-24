@@ -38,7 +38,7 @@ variable "ingress" {
     name                   = optional(string, "ingress")
     service_type           = optional(string, "LoadBalancer")
     replicas               = optional(number, 1)
-    image                  = optional(string, "nginxinc/nginx-unprivileged")
+    image                  = optional(string, "nginx/nginx-unprivileged")
     tag                    = optional(string)
     image_pull_policy      = optional(string, "IfNotPresent")
     http_port              = optional(number, 5000)

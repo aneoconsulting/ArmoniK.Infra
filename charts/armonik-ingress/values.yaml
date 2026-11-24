@@ -14,7 +14,7 @@ deployment:
 image:
   registry:
   repository: nginx/nginx-unprivileged
-  tag: 1.31.9-alpine-slim
+  tag: 1.31.10
   pullPolicy: IfNotPresent
 
 # -- Ignored when `hpa.enabled`.

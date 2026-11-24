@@ -7,8 +7,11 @@
   {{- end -}}
 env:
   Serilog__MinimumLevel: {{ $level }}
+{{- /* The authorization decisions and changes are recorded at Information: kept above it. */}}
+{{- if has $level (list "Warning" "Error" "Fatal") }}
+  Serilog__MinimumLevel__Override__ArmoniK.Authorization.Audit: Information
+{{- end }}
 {{- if eq $level "Information" }}
-  Serilog__MinimumLevel__Override__ArmoniK.Core.Common.Auth.Authentication.Authenticator: Warning
   Serilog__MinimumLevel__Override__Grpc.AspNetCore.Server.ServerCallHandler: Warning
   Serilog__MinimumLevel__Override__Microsoft.AspNetCore.Authorization: Warning
   Serilog__MinimumLevel__Override__Microsoft.AspNetCore.Hosting.Diagnostics: Warning

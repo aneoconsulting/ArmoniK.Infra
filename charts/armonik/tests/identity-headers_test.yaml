@@ -1,49 +1,105 @@
 suite: identity header names passed to the control plane
 release:
   name: t
+# sso needs Kubernetes 1.29 (native sidecar); helm-unittest defaults to 1.20.
+capabilities:
+  majorVersion: 1
+  minorVersion: 31
 templates:
   - secrets/conf-secrets.yaml
+  - validate.yaml
+values:
+  - ../ci/authz-values.yaml
 tests:
-  - it: passes the default header names to ArmoniK Core
+  - it: passes the header names of the selected methods to the control plane
+    template: secrets/conf-secrets.yaml
     documentSelector:
       path: metadata.name
       value: t-conf-control
     asserts:
       - equal:
-          path: stringData.Authenticator__CNHeader
-          value: X-Certificate-Client-CN
+          path: stringData.Identity__CertificateHeader
+          value: X-Forwarded-Client-Cert
       - equal:
-          path: stringData.Authenticator__FingerprintHeader
-          value: X-Certificate-Client-Fingerprint
+          path: stringData.Identity__UserHeader
+          value: X-Forwarded-User
       - equal:
-          path: stringData.Authenticator__ImpersonationUsernameHeader
-          value: X-Impersonate-Username
-      - equal:
-          path: stringData.Authenticator__ImpersonationIdHeader
-          value: X-Impersonate-Id
+          path: stringData.Identity__RolesHeader
+          value: X-Forwarded-Groups
 
-  # nginx sends the renamed header: Core must read that one.
+  # The init Job validates the same configuration at startup
+  - it: passes them to the init Job too
+    template: secrets/conf-secrets.yaml
+    documentSelector:
+      path: metadata.name
+      value: t-conf-init
+    asserts:
+      - equal:
+          path: stringData.Identity__UserHeader
+          value: X-Forwarded-User
+
+  # nginx writes the renamed header: Core must read that one.
   - it: follows a renamed header in ingress.identityHeaders
+    template: secrets/conf-secrets.yaml
     documentSelector:
       path: metadata.name
       value: t-conf-control
     set:
       ingress:
         identityHeaders:
-          commonName: X-User-Cn
-          impersonationId: X-As-Id
+          user: X-User
+          groups: X-Roles
     asserts:
       - equal:
-          path: stringData.Authenticator__CNHeader
-          value: X-User-Cn
+          path: stringData.Identity__UserHeader
+          value: X-User
       - equal:
-          path: stringData.Authenticator__ImpersonationIdHeader
-          value: X-As-Id
+          path: stringData.Identity__RolesHeader
+          value: X-Roles
       - equal:
-          path: stringData.Authenticator__FingerprintHeader
-          value: X-Certificate-Client-Fingerprint
+          path: stringData.Identity__CertificateHeader
+          value: X-Forwarded-Client-Cert
+
+  # Core warns about the settings of a method it does not select
+  - it: passes only the names of the selected methods
+    template: secrets/conf-secrets.yaml
+    documentSelector:
+      path: metadata.name
+      value: t-conf-control
+    set:
+      control-plane:
+        authorization:
+          authentication: Xfcc
+      ingress:
+        sso:
+          enabled: false
+    asserts:
+      - equal:
+          path: stringData.Identity__CertificateHeader
+          value: X-Forwarded-Client-Cert
+      - notExists:
+          path: stringData.Identity__UserHeader
+
+  - it: passes none while authorization is off
+    template: secrets/conf-secrets.yaml
+    documentSelector:
+      path: metadata.name
+      value: t-conf-control
+    set:
+      control-plane:
+        authorization:
+          authentication: None
+      ingress:
+        sso:
+          enabled: false
+    asserts:
+      - notExists:
+          path: stringData.Identity__CertificateHeader
+      - notExists:
+          path: stringData.Identity__UserHeader
 
   - it: lets conf.control.env override them
+    template: secrets/conf-secrets.yaml
     documentSelector:
       path: metadata.name
       value: t-conf-control
@@ -51,13 +107,14 @@ tests:
       conf:
         control:
           env:
-            Authenticator__CNHeader: X-Other
+            Identity__UserHeader: X-Other
     asserts:
       - equal:
-          path: stringData.Authenticator__CNHeader
+          path: stringData.Identity__UserHeader
           value: X-Other
 
   - it: renders none without the ingress
+    template: secrets/conf-secrets.yaml
     documentSelector:
       path: metadata.name
       value: t-conf-control
@@ -66,13 +123,62 @@ tests:
         enabled: false
     asserts:
       - notExists:
-          path: stringData.Authenticator__CNHeader
+          path: stringData.Identity__UserHeader
 
   - it: fails on a malformed header name, as the ingress does
+    template: secrets/conf-secrets.yaml
     set:
       ingress:
         identityHeaders:
-          fingerprint: "X Fp"
+          groups: "X Roles"
     asserts:
       - failedTemplate:
-          errorPattern: 'identityHeaders.fingerprint must be a header name'
+          errorPattern: 'identityHeaders.groups must be a header name'
+
+  - it: fails on Xfcc without mTLS on the ingress
+    template: validate.yaml
+    set:
+      ingress:
+        mtls:
+          enabled: false
+    asserts:
+      - failedTemplate:
+          errorPattern: 'selects Xfcc, but ingress.mtls.enabled is false'
+
+  - it: fails on Proxy without SSO on the ingress
+    template: validate.yaml
+    set:
+      ingress:
+        sso:
+          enabled: false
+    asserts:
+      - failedTemplate:
+          errorPattern: 'selects Proxy, but ingress.sso.enabled is false'
+
+  - it: fails on SSO with authorization but without Proxy
+    template: validate.yaml
+    set:
+      control-plane:
+        authorization:
+          authentication: Xfcc
+    asserts:
+      - failedTemplate:
+          errorPattern: 'does not select Proxy'
+
+  - it: accepts SSO while authorization is off
+    template: validate.yaml
+    set:
+      control-plane:
+        authorization:
+          authentication: None
+    asserts:
+      - notFailedTemplate: {}
+
+  # Another proxy in front of the control plane is the operator's own
+  - it: checks nothing without the ingress
+    template: validate.yaml
+    set:
+      ingress:
+        enabled: false
+    asserts:
+      - notFailedTemplate: {}

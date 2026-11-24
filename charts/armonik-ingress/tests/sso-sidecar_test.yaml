@@ -347,7 +347,7 @@ tests:
   - it: builds existingSecret through ESO from a named store
     template: secrets/oauth2-proxy.yaml
     values:
-      - ../ci/sso-group-values.yaml
+      - ../ci/sso-eso-values.yaml
     asserts:
       - isKind:
           of: ExternalSecret
@@ -374,7 +374,7 @@ tests:
   - it: lets the nginx pod reach the IdP on 443, after DNS and the GUI
     template: networkpolicy.yaml
     values:
-      - ../ci/sso-group-values.yaml
+      - ../ci/sso-eso-values.yaml
     documentIndex: 0
     asserts:
       - lengthEqual:

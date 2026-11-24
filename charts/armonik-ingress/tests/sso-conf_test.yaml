@@ -136,20 +136,17 @@ tests:
           path: spec.target.template.data["armonik.conf"]
           pattern: 'map \$http_content_type \$grpc_error_content_type \{\n    default application/grpc;\n    ~\*\^application/grpc-web-text application/grpc-web-text\+proto;\n    ~\*\^application/grpc-web application/grpc-web\+proto;\n\}'
 
-  - it: sets the gRPC-web identity from the session and clears impersonation
+  - it: writes the user and groups of the session, and clears the other credentials
     asserts:
       - matchRegex:
           path: spec.target.template.data["armonik.conf"]
-          pattern: '# web port(.*\n)*?    location ~\* \^/armonik\\\. \{\n        auth_request /oauth2/auth;\n        error_page 401 = @grpc_unauthenticated;\n        # [^\n]*\n        error_page 403 = @grpc_permission_denied;\n        auth_request_set \$auth_cookie \$upstream_http_set_cookie;\n        auth_request_set \$sso_identity \$upstream_http_x_auth_request_email;\n        auth_request_set \$sso_groups \$upstream_http_x_auth_request_groups;\n        # [^\n]*\n        grpc_set_header X-Certificate-Client-CN \$sso_cn;\n        grpc_set_header X-Certificate-Client-Fingerprint "sso";\n        grpc_set_header X-Impersonate-Username "";\n        grpc_set_header X-Impersonate-Id "";\n        grpc_pass grpc://armonik;'
+          pattern: '# web port(.*\n)*?    location ~\* \^/armonik\\\. \{\n        auth_request /oauth2/auth;\n        error_page 401 = @grpc_unauthenticated;\n        # [^\n]*\n        error_page 403 = @grpc_permission_denied;\n        auth_request_set \$auth_cookie \$upstream_http_set_cookie;\n        auth_request_set \$sso_identity \$upstream_http_x_auth_request_email;\n        # [^\n]*\n        auth_request_set \$sso_groups \$upstream_http_x_auth_request_groups;\n        # [^\n]*\n        grpc_set_header X-Forwarded-User \$sso_identity;\n        grpc_set_header X-Forwarded-Groups \$sso_groups;\n        grpc_set_header X-Forwarded-Client-Cert "";\n        grpc_set_header Authorization "";\n        grpc_pass grpc://armonik;'
 
-  - it: builds the user-mode CN in an http-level map, empty without a claim
-    set:
-      sso:
-        cnPrefix: "user:"
+  - it: builds no CN from the session
     asserts:
-      - matchRegex:
+      - notMatchRegex:
           path: spec.target.template.data["armonik.conf"]
-          pattern: '\nmap \$sso_identity \$sso_cn \{\n    default "user:\$sso_identity";\n    "" "";\n\}\n'
+          pattern: 'sso_cn|X-Certificate-Client|X-Impersonate'
 
   - it: reads the configured identity claim
     set:
@@ -163,15 +160,12 @@ tests:
   - it: names the identity headers through identityHeaders
     set:
       identityHeaders:
-        commonName: X-User-Cn
-        impersonationId: X-As-Id
+        user: X-User
+        groups: X-Roles
     asserts:
       - matchRegex:
           path: spec.target.template.data["armonik.conf"]
-          pattern: 'grpc_set_header X-User-Cn \$sso_cn;'
-      - matchRegex:
-          path: spec.target.template.data["armonik.conf"]
-          pattern: '(?s)# web port.*grpc_set_header X-As-Id "";.*# grpc port'
+          pattern: '(?s)# web port.*grpc_set_header X-User \$sso_identity;\n        grpc_set_header X-Roles \$sso_groups;.*# grpc port'
 
   - it: serves a custom health path
     set:
@@ -186,7 +180,7 @@ tests:
     asserts:
       - matchRegex:
           path: spec.target.template.data["armonik.conf"]
-          pattern: '# grpc port\n(.*\n)*?    tcp_nopush on;\n\n    location ~\* \^/armonik\\\. \{\n        # No client certificate[^\n]*\n        grpc_set_header X-Certificate-Client-CN "";(.*\n)*?    \}\n    location / \{\n        return 404;\n    \}\n\}'
+          pattern: '# grpc port\n(.*\n)*?    tcp_nopush on;\n\n    location ~\* \^/armonik\\\. \{\n        # No identity verified here[^\n]*\n        grpc_set_header X-Forwarded-Client-Cert "";(.*\n)*?    \}\n    location / \{\n        return 404;\n    \}\n\}'
       - notMatchRegex:
           path: spec.target.template.data["armonik.conf"]
           pattern: '(?s)# grpc port.*(location /admin/|location /static/|/grafana|/seq|oauth2|auth_request|sso_|healthz)'
@@ -203,21 +197,15 @@ tests:
           pattern: '(?s)ssl_verify_client on;.*ssl_verify_client on;'
       - matchRegex:
           path: spec.target.template.data["armonik.conf"]
-          pattern: '(?s)# grpc port.*grpc_set_header X-Certificate-Client-CN \$client_cn;\n        grpc_set_header X-Certificate-Client-Fingerprint \$client_fingerprint;\n        grpc_pass'
+          pattern: '(?s)# grpc port.*grpc_set_header X-Forwarded-Client-Cert "Cert=\\"\$ssl_client_escaped_cert\\"";\n        grpc_set_header X-Forwarded-User "";\n        grpc_set_header X-Forwarded-Groups "";\n        grpc_set_header Authorization "";\n        grpc_pass'
       - matchRegex:
           path: spec.target.template.data["armonik.conf"]
-          pattern: '~\^\(\.\+\)\\\|\(proxy\\\.armonik\\\.local\)\$ \$http_x_certificate_client_cn;'
-      - matchRegex:
-          path: spec.target.template.data["armonik.conf"]
-          pattern: '(?s)# web port.*grpc_set_header X-Certificate-Client-CN \$sso_cn;.*# grpc port'
+          pattern: '(?s)# web port.*grpc_set_header X-Forwarded-User \$sso_identity;.*grpc_set_header X-Forwarded-Client-Cert "";.*# grpc port'
 
-  - it: maps IdP groups in order, escaped, matched whole, empty by default
+  - it: reads the configured claim with the ESO fixture
     values:
-      - ../ci/sso-group-values.yaml
+      - ../ci/sso-eso-values.yaml
     asserts:
       - matchRegex:
           path: spec.target.template.data["armonik.conf"]
-          pattern: '\nmap \$sso_groups \$sso_cn \{\n    default "";\n    "~\(\^\|,\)armonik\\\.admins\(,\|\$\)" "sso-group:admins";\n    "~\(\^\|,\)/armonik/c\\\+\\\+ users\(,\|\$\)" "sso-group:users";\n\}\n'
-      - notMatchRegex:
-          path: spec.target.template.data["armonik.conf"]
-          pattern: 'map \$sso_identity'
+          pattern: 'auth_request_set \$sso_identity \$upstream_http_x_auth_request_preferred_username;'

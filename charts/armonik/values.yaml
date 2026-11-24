@@ -75,8 +75,10 @@ control-plane:
     #   priority: 1
   init:
     enabled: true
-  rbac:
-    createBuiltInRoles: true
+  authorization:
+    # The sets of the Core access model, for grants to name; nothing is rendered until
+    # authorization.authentication selects a method.
+    accessModelSets: true
   # priorityClassName:
 
 compute-plane:

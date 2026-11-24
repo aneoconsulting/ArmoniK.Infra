@@ -164,18 +164,17 @@ mtls:
     # resolves (existingIssuer, else global.armonik.certManager.issuer, else a local Issuer).
     pem: ""
     existingSecret: ""
-  trustedCommonNames: []
 
-# -- Identity headers nginx sets on gRPC requests to the control plane. The umbrella passes these
-# names to the control plane (Authenticator__*Header in its control conf layer); a control plane
-# installed as its own release keeps ArmoniK Core's defaults, which are the values below. With mTLS, the CN and fingerprint come from the client certificate (or from a
-# trustedCommonNames proxy) and the impersonation headers pass through; without mTLS, all four are
-# cleared so a client cannot assert an identity. Letters, digits and dashes only.
+# -- Identity headers nginx writes on gRPC requests to the control plane, replacing any sent by the
+# client. The umbrella passes these names to the control plane (Identity__* in its control and init
+# conf layers); a control plane installed as its own release keeps ArmoniK Core's defaults, which
+# are the values below. certificate: the client certificate verified with mTLS (ArmoniK Core method
+# Xfcc). user and groups: the identity of the SSO session on the web port (method Proxy). nginx
+# writes one of them at most and clears the others. Letters, digits and dashes only.
 identityHeaders:
-  commonName: X-Certificate-Client-CN
-  fingerprint: X-Certificate-Client-Fingerprint
-  impersonationUsername: X-Impersonate-Username
-  impersonationId: X-Impersonate-Id
+  certificate: X-Forwarded-Client-Cert
+  user: X-Forwarded-User
+  groups: X-Forwarded-Groups
 
 # OIDC single sign-on on the web port (admin GUI, gRPC-web, Grafana, Seq) through an oauth2-proxy
 # sidecar and nginx auth_request; the grpc port keeps mTLS for SDK and CLI clients. See
@@ -185,24 +184,9 @@ sso:
   # -- Public URL of the web port as browsers reach it, scheme://host[:port] with no path. The
   # OIDC redirect URI is <publicUrl>/oauth2/callback; https makes the session cookie Secure.
   publicUrl: ""
-  # -- user: one CN per person, <cnPrefix><identityClaim>. group: one CN per groupMapping entry.
-  identityMode: user
-  # -- oauth2-proxy session field the user-mode CN is built from: email, preferred_username, or
-  # user (the OIDC subject).
+  # -- oauth2-proxy session field written as the user: email, preferred_username, or user (the OIDC
+  # subject). ArmoniK Core names the caller oid:<value>, and each group of the session role:<group>.
   identityClaim: email
-  # -- Keeps SSO CNs apart from certificate CNs: non-empty.
-  cnPrefix: "sso:"
-  # -- Fingerprint header sent with every SSO identity. Declare the SSO userCertificates with this
-  # fingerprint: a client certificate presents its real one, so it cannot match them. Non-empty, and
-  # not a hex string of 32 digits or more.
-  fingerprint: sso
-  # -- Same as cnPrefix for the group-mode CNs: non-empty in group mode.
-  groupCnPrefix: "sso-group:"
-  # -- group mode: ordered list of {group, cn}, the first IdP group present wins. A user in none of
-  # them gets an empty CN, which ArmoniK Core rejects.
-  groupMapping: []
-  # - group: armonik-admins
-  #   cn: admins
   # -- Unauthenticated path answering 200 on both ports, for load balancer health checks.
   healthPath: /healthz
   oauth2Proxy:

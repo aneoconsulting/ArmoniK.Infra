@@ -1,0 +1,7 @@
+# Expected failure: the rbac values of the removed ArmoniK Core authentication would be ignored,
+# leaving every request allowed.
+rbac:
+  authentication:
+    required: true
+  authorization:
+    required: true

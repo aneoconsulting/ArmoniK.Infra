@@ -84,9 +84,6 @@ Usage:
 {{- define "armonik.conf.render" -}}
 {{- $root := .root -}}
 {{- $useEso := .useEso -}}
-{{- $mtls := $root.Values.mtls.enabled | default false }}
-{{- $cnPattern := include "armonik.ingress.mtlsCnPattern" $root.Values }}
-{{- $headers := include "armonik.ingress.identityHeaders" $root.Values | fromYaml }}
 {{- $sso := include "armonik.ingress.sso" $root | fromYaml }}
 {{- $lbHost := include "armonik.fullname" $root | printf "%s-load-balancer" | trunc 63 | trimSuffix "-" }}
 {{- $svcSuffix := printf "%s.svc.%s" (include "armonik.namespace" $root) (include "armonik.clusterDomain" $root) }}
@@ -105,24 +102,6 @@ default   $scheme;
 https     https;
 }
 
-{{- if $mtls }}
-map $ssl_client_s_dn $ssl_client_s_dn_cn {
-    default "";
-    ~CN=(?<CN>[^,/]+) $CN;
-}
-map "{{ $headers.commonName.var }}|$ssl_client_s_dn_cn" $client_cn {
-    default $ssl_client_s_dn_cn;
-{{- if $cnPattern }}
-    ~^(.+)\|({{ $cnPattern }})$ {{ $headers.commonName.var }};
-{{- end }}
-}
-map "{{ $headers.fingerprint.var }}|$ssl_client_s_dn_cn" $client_fingerprint {
-    default $ssl_client_fingerprint;
-{{- if $cnPattern }}
-    ~^(.+)\|({{ $cnPattern }})$ {{ $headers.fingerprint.var }};
-{{- end }}
-}
-{{- end }}
 {{- if $sso.enabled }}
 {{ include "armonik.ingress.conf.ssoMaps" $root }}
 {{- end }}
@@ -161,7 +140,6 @@ Usage:
 {{- $root := .root -}}
 {{- $tls := $root.Values.tls.enabled | default false }}
 {{- $mtls := $root.Values.mtls.enabled | default false }}
-{{- $headers := include "armonik.ingress.identityHeaders" $root.Values | fromYaml }}
 {{- $ports := index (dict "web" (list 8080 8443) "grpc" (list 9080 9443)) .role }}
 {{- if not $ports }}
   {{- printf "armonik.ingress.conf.server: unknown role %q, expected web or grpc" .role | fail }}
@@ -187,8 +165,6 @@ server {
     ssl_client_certificate /ingressclient/ca.crt;
     {{- else }}
     ssl_verify_client off;
-    proxy_hide_header {{ $headers.commonName.name }};
-    proxy_hide_header {{ $headers.fingerprint.name }};
     {{- end }}
     ssl_protocols {{ default "TLSv1.2 TLSv1.3" $root.Values.tls.ssl.protocols }};
     ssl_ciphers {{ default "EECDH+AESGCM:EECDH+AES256" $root.Values.tls.ssl.ciphers }};
@@ -286,8 +262,12 @@ adds the oauth2-proxy routes, the grpc server keeps the gRPC API alone.
 {{- end -}}
 
 {{/*
-The gRPC API location (also gRPC-web): identity headers from the SSO session on the web server
-under SSO, else from the client certificate with mTLS, else cleared. Takes the server's dict.
+The gRPC API location (also gRPC-web). nginx writes at most one identity in the format ArmoniK Core
+reads, replacing whatever the client sent, and clears the others: the user and groups of the SSO
+session on the web server under SSO (Core method Proxy), else the verified client certificate with
+mTLS (Xfcc), else none. Authorization is cleared where nginx writes an identity, Core refusing a
+request with two credentials, and passed through elsewhere for the Token method. An empty value
+makes nginx drop the header.
 */}}
 {{- define "armonik.ingress.conf.apiLocation" -}}
 {{- $root := .root -}}
@@ -303,21 +283,25 @@ under SSO, else from the client certificate with mTLS, else cleared. Takes the s
         error_page 403 = @grpc_permission_denied;
         auth_request_set $auth_cookie $upstream_http_set_cookie;
         auth_request_set $sso_identity {{ $sso.identityVar }};
+        # One line, groups joined by commas, as ArmoniK Core reads it
         auth_request_set $sso_groups $upstream_http_x_auth_request_groups;
         # Identity from the SSO session only, never from the client
-        grpc_set_header {{ $headers.commonName.name }} $sso_cn;
-        grpc_set_header {{ $headers.fingerprint.name }} "{{ $sso.fingerprint }}";
-        grpc_set_header {{ $headers.impersonationUsername.name }} "";
-        grpc_set_header {{ $headers.impersonationId.name }} "";
+        grpc_set_header {{ $headers.user.name }} $sso_identity;
+        grpc_set_header {{ $headers.groups.name }} $sso_groups;
+        grpc_set_header {{ $headers.certificate.name }} "";
+        grpc_set_header Authorization "";
         {{- else if $mtls }}
-        grpc_set_header {{ $headers.commonName.name }} $client_cn;
-        grpc_set_header {{ $headers.fingerprint.name }} $client_fingerprint;
+        # The client certificate verified on this server, in the Envoy XFCC format. No Hash:
+        # $ssl_client_fingerprint is SHA-1 where Envoy writes SHA-256
+        grpc_set_header {{ $headers.certificate.name }} "Cert=\"$ssl_client_escaped_cert\"";
+        grpc_set_header {{ $headers.user.name }} "";
+        grpc_set_header {{ $headers.groups.name }} "";
+        grpc_set_header Authorization "";
         {{- else }}
-        # No client certificate: never forward identity headers sent by the client
-        grpc_set_header {{ $headers.commonName.name }} "";
-        grpc_set_header {{ $headers.fingerprint.name }} "";
-        grpc_set_header {{ $headers.impersonationUsername.name }} "";
-        grpc_set_header {{ $headers.impersonationId.name }} "";
+        # No identity verified here: never forward one sent by the client
+        grpc_set_header {{ $headers.certificate.name }} "";
+        grpc_set_header {{ $headers.user.name }} "";
+        grpc_set_header {{ $headers.groups.name }} "";
         {{- end }}
         grpc_pass grpc://armonik;
         # A whole gRPC stream seems to count as one body, so disable the size limit.

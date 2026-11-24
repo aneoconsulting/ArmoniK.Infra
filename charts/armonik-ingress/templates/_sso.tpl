@@ -13,7 +13,7 @@ The single entry point: the armonik.ingress.sso.validate* helpers below fail and
   {{- if not $sso.enabled -}}
 enabled: false
   {{- else -}}
-    {{- range list "KubeVersion" "Gateway" "Required" "Urls" "Image" "Identity" "Groups" "Health" "Cookie" "ExtraArgs" "ExternalSecret" "Network" -}}
+    {{- range list "KubeVersion" "Gateway" "Required" "Urls" "Image" "Identity" "Health" "Cookie" "ExtraArgs" "ExternalSecret" "Network" -}}
       {{- include (printf "armonik.ingress.sso.validate%s" .) $ -}}
     {{- end -}}
     {{- $url := $sso.publicUrl | toString | trimSuffix "/" -}}
@@ -98,56 +98,18 @@ user: $upstream_http_x_auth_request_user
   {{- end -}}
 {{- end -}}
 
+{{/* The session field written as the user, and the keys of the CN-based identity, which ArmoniK
+     Core no longer reads: set, they would be silently ignored. */}}
 {{- define "armonik.ingress.sso.validateIdentity" -}}
   {{- $sso := .Values.sso -}}
-  {{- $mode := $sso.identityMode | default "" | toString -}}
-  {{- if not (has $mode (list "user" "group")) -}}
-    {{- printf "sso.identityMode must be user or group, got %q" $mode | fail -}}
+  {{- range $key := list "identityMode" "cnPrefix" "fingerprint" "groupCnPrefix" "groupMapping" -}}
+    {{- if hasKey $sso $key -}}
+      {{- printf "sso.%s is removed: nginx writes the user and the groups of the session, which ArmoniK Core reads as oid:<%s> and role:<group> (control-plane.authorization.grants)" $key ($sso.identityClaim | default "email") | fail -}}
+    {{- end -}}
   {{- end -}}
   {{- $claim := $sso.identityClaim | default "" | toString -}}
   {{- if not (hasKey (include "armonik.ingress.sso.identityVars" . | fromYaml) $claim) -}}
     {{- printf "sso.identityClaim must be email, preferred_username or user, got %q" $claim | fail -}}
-  {{- end -}}
-  {{- if $sso.fingerprint | empty -}}
-    {{- fail "sso.fingerprint must be non-empty: ArmoniK Core rejects a request without a fingerprint header" -}}
-  {{- end -}}
-  {{- /* A real certificate fingerprint here would let that certificate match the SSO entries. */ -}}
-  {{- if $sso.fingerprint | toString | replace ":" "" | regexMatch "^[0-9A-Fa-f]{32,}$" -}}
-    {{- printf "sso.fingerprint must not look like a certificate fingerprint (32 or more hex digits, with or without colons), got %q" ($sso.fingerprint | toString) | fail -}}
-  {{- end -}}
-  {{- /* The prefixes keep SSO identities apart from certificate CNs. */ -}}
-  {{- $prefixes := list "cnPrefix" -}}
-  {{- if eq $mode "group" -}}
-    {{- $prefixes = append $prefixes "groupCnPrefix" -}}
-  {{- end -}}
-  {{- range $key := $prefixes -}}
-    {{- if index $sso $key | empty -}}
-      {{- printf "sso.%s must not be empty: SSO identities would share the certificate CN namespace" $key | fail -}}
-    {{- end -}}
-  {{- end -}}
-  {{- range $key := list "cnPrefix" "fingerprint" "groupCnPrefix" -}}
-    {{- dict "key" (printf "sso.%s" $key) "value" (index $sso $key) | include "armonik.ingress.sso.validateLiteral" -}}
-  {{- end -}}
-{{- end -}}
-
-{{- define "armonik.ingress.sso.validateGroups" -}}
-  {{- $sso := .Values.sso -}}
-  {{- if eq ($sso.identityMode | toString) "group" -}}
-    {{- if not $sso.groupMapping -}}
-      {{- fail "sso.groupMapping must list at least one {group, cn} with sso.identityMode=group" -}}
-    {{- end -}}
-    {{- range $i, $entry := $sso.groupMapping -}}
-      {{- $entry = $entry | default dict -}}
-      {{- $group := $entry.group | default "" | toString -}}
-      {{- $cn := $entry.cn | default "" | toString -}}
-      {{- if or (not $group) (not $cn) -}}
-        {{- printf "sso.groupMapping[%d] needs a non-empty group and cn" $i | fail -}}
-      {{- end -}}
-      {{- if regexMatch "[\"\\\\,[:cntrl:]]" $group -}}
-        {{- printf "sso.groupMapping[%d].group may not contain a double quote, a backslash, a comma or a control character, got %q" $i $group | fail -}}
-      {{- end -}}
-      {{- dict "key" (printf "sso.groupMapping[%d].cn" $i) "value" $cn | include "armonik.ingress.sso.validateLiteral" -}}
-    {{- end -}}
   {{- end -}}
 {{- end -}}
 
@@ -346,9 +308,8 @@ Takes {name, status, message}.
 {{- end }}
 
 {{/*
-http-level maps of the SSO identity: $sso_cn, the CN the web server sends, empty when the session
-yields none so ArmoniK Core rejects the call, and $grpc_error_content_type mirroring the request's
-gRPC flavor. Takes the root.
+http-level maps of the SSO web server: $sso_redirect to the publicUrl host, and
+$grpc_error_content_type mirroring the request's gRPC flavor. Takes the root.
 */}}
 {{- define "armonik.ingress.conf.ssoMaps" -}}
 {{- $sso := include "armonik.ingress.sso" . | fromYaml }}
@@ -365,19 +326,6 @@ map $http_content_type $grpc_error_content_type {
     ~*^application/grpc-web-text application/grpc-web-text+proto;
     ~*^application/grpc-web application/grpc-web+proto;
 }
-{{- if eq $sso.identityMode "user" }}
-map $sso_identity $sso_cn {
-    default "{{ $sso.cnPrefix }}$sso_identity";
-    "" "";
-}
-{{- else }}
-map $sso_groups $sso_cn {
-    default "";
-{{- range $sso.groupMapping }}
-    "~(^|,){{ regexQuoteMeta .group }}(,|$)" "{{ $sso.groupCnPrefix }}{{ .cn }}";
-{{- end }}
-}
-{{- end }}
 {{- end -}}
 
 {{/*
@@ -392,28 +340,21 @@ SSO is enabled on the web port (admin GUI, gRPC-web, Grafana, Seq) through oauth
     {{ $sso.publicUrl }}/oauth2/callback
   Browsers reaching the web port on another host (an IP, another name) are redirected to {{ $sso.publicUrl }}.
   The Secret {{ $sso.oauth2Proxy.existingSecret | quote }} must hold client-secret and cookie-secret.
-  {{- if eq $sso.identityMode "user" }}
-  Each user reaches ArmoniK as CN "{{ $sso.cnPrefix }}<{{ $sso.identityClaim }}>" and fingerprint {{ $sso.fingerprint | quote }}. Declare them with both:
-    control-plane.rbac.userCertificates.<user>.commonName: "{{ $sso.cnPrefix }}<{{ $sso.identityClaim }}>"
-    control-plane.rbac.userCertificates.<user>.fingerprint: {{ $sso.fingerprint | quote }}
-  {{- else }}
-  Each groupMapping entry reaches ArmoniK as one CN, with fingerprint {{ $sso.fingerprint | quote }}; a user in no
-  mapped group is rejected. Declare them with both:
-    {{- range $sso.groupMapping }}
-    control-plane.rbac.userCertificates.<user>.commonName: "{{ $sso.groupCnPrefix }}{{ .cn }}"   (group {{ .group | quote }})
-    {{- end }}
-    control-plane.rbac.userCertificates.<user>.fingerprint: {{ $sso.fingerprint | quote }}
-  {{- end }}
-  A client certificate always presents its real fingerprint, so it never matches these entries,
-  even one whose CA signed a "{{ $sso.cnPrefix }}..." CN.
+  Each user reaches ArmoniK as oid:<{{ $sso.identityClaim }}>, with each group of the session as role:<group>
+  (groups from the IdP claim {{ $sso.oauth2Proxy.groupsClaim | quote }}). Select the Proxy method and grant them in the
+  control plane, for instance:
+    control-plane.authorization.authentication: Proxy
+    control-plane.authorization.grants.<id>: {principal: role:<group>, permissionSet: <set>}
+  A group whose name holds a comma reaches ArmoniK as several roles: grant only groups users cannot
+  name themselves.
   {{- if not $sso.oauth2Proxy.sessionCookieMinimal }}
   WARNING: sessionCookieMinimal is off, so the session cookie also carries the OAuth tokens. Past
   4 KB (common with Keycloak or Entra ID) oauth2-proxy splits it in _0/_1, and nginx passes on only
   the first Set-Cookie of a refresh: the session breaks. Keep it on unless the tokens are needed.
   {{- end }}
   {{- if not .Values.mtls.enabled }}
-  WARNING: mTLS is off, so the grpc port clears every identity header: SDK and CLI clients cannot
-  authenticate. Enable tls and mtls for them, or keep authentication off in the control plane.
+  WARNING: mTLS is off, so the grpc port forwards no client certificate: SDK and CLI clients cannot
+  authenticate with one. Enable tls and mtls for them, or have them present tokens (Token method).
   {{- end }}
 {{- end }}
 {{- end -}}

@@ -12,3 +12,15 @@
 
 {{- /* Every sso guard lives in the resolver. */ -}}
 {{- $_ := include "armonik.ingress.sso" . -}}
+
+{{- /* Settings of the CN and fingerprint identity, which ArmoniK Core no longer reads: set, they
+       would be silently ignored. */ -}}
+{{- if list .Values "mtls" "trustedCommonNames" | include "armonik.utils.index" -}}
+  {{- fail "mtls.trustedCommonNames is removed: ArmoniK Core reads one client certificate, written by this ingress, so a proxy cannot forward the identity of another client. A proxy authenticating callers itself uses the Proxy or Token method instead" -}}
+{{- end -}}
+{{- range $key := list "commonName" "fingerprint" "impersonationUsername" "impersonationId" -}}
+  {{- if list $.Values "identityHeaders" $key | include "armonik.utils.index" -}}
+    {{- printf "identityHeaders.%s is removed with the CN and fingerprint identity: nginx writes identityHeaders.certificate, user and groups" $key | fail -}}
+  {{- end -}}
+{{- end -}}
+{{- $_ := include "armonik.ingress.identityHeaders" .Values -}}

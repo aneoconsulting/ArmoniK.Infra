@@ -27,19 +27,21 @@ web port and authenticate with the IdP.
    |                         |   403: gRPC-web -> grpc-status 7       |                    |
    |   /oauth2/callback ---> |   /oauth2/*   ----------------------> |  ---> IdP (443)    |
    |                         |                                                            |
-   |   gRPC-web + cookie --> |   CN <- session claim or group, fingerprint <- fixed     |
-   |                         |   impersonation headers cleared                            |
+   |   gRPC-web + cookie --> |   user and groups <- session, certificate cleared          |
+   |                         |   Authorization cleared                                    |
    |                         |   grpc_pass  -------------------------------> control plane
    |                         |                                                            |
  SDK / CLI                   | grpc server (9080/9443)                                    |
-   |   gRPC + client cert -> |   ssl_verify_client on, CN and fingerprint from the cert   |
+   |   gRPC + client cert -> |   ssl_verify_client on, certificate forwarded (XFCC)       |
    |                         |   grpc_pass  -------------------------------> control plane
                              ------------------------------------------------------------
 ```
 
-ArmoniK Core needs no change: it still authenticates on the `X-Certificate-Client-CN` and
-`X-Certificate-Client-Fingerprint` headers (`identityHeaders`, whose names the umbrella passes to
-the control plane), which nginx now fills from the SSO session on the web port. nginx sets them on every request, so a client never chooses its identity.
+nginx writes the identity in the headers ArmoniK Core reads (`identityHeaders`, whose names the
+umbrella passes to the control plane), replacing whatever the client sent, so a client never
+chooses its identity: the user and groups of the SSO session on the web port (Core method
+`Proxy`), the verified client certificate on the grpc port (method `Xfcc`). Select the methods in
+`control-plane.authorization.authentication`; see [Identity](#identity).
 
 - **Pages** (GUI, Grafana, Seq, `/static/`) without a session: nginx hands the request to
   `/oauth2/start`, which answers a 302 to the IdP. The original URI travels in
@@ -74,25 +76,30 @@ without overwriting each other's cookie. Each expires after `cookieCsrfExpire`.
 
 ## Identity
 
-ArmoniK Core requires both headers non-empty, and nginx always sends `sso.fingerprint` (default
-`sso`) with an SSO identity. So SSO identities are declared in `rbac.userCertificates` with their
-`commonName` and `fingerprint: <sso.fingerprint>`. A client certificate always presents its real
-fingerprint on the grpc port, never `sso`, so it cannot match an SSO entry, even when the CA signed
-a `sso:...` CN. An entry without a fingerprint would match any fingerprint for its CN, such a
-certificate included: with SSO on, the umbrella refuses any `userCertificates` entry whose
-`commonName` starts with `cnPrefix` or `groupCnPrefix` (case-insensitive) unless its `fingerprint`
-is `sso.fingerprint`, and the ingress refuses an `sso.fingerprint` that looks like a certificate
-fingerprint. The prefixes keep SSO identities apart from certificate CNs, so the ingress refuses an
-empty `cnPrefix`, and an empty `groupCnPrefix` in group mode; an empty `groupCnPrefix` in user mode
-is ignored by the umbrella check.
+On the web port, nginx writes the session's `identityClaim` (default `email`) in
+`identityHeaders.user` (`X-Forwarded-User`) and its groups in `identityHeaders.groups`
+(`X-Forwarded-Groups`), as oauth2-proxy returns them: one line, joined with commas. It clears the
+certificate header and `Authorization`, ArmoniK Core refusing a request with two credentials.
+Core's `Proxy` method reads them:
 
-- `identityMode: user`: CN is `<cnPrefix><identityClaim>`, by default `sso:<email>`. A session
-  without that claim gets an empty CN, which Core rejects.
-- `identityMode: group`: CN is `<groupCnPrefix><cn>` for the first `groupMapping` entry whose group
-  the user is in (whole group names, case-sensitive). A user in none of them gets an empty CN.
-  The ArmoniK user is then the group, not the person.
+| Session | ArmoniK Core principal |
+|---|---|
+| `identityClaim` value | `oid:<value>`, the caller |
+| each group | `role:<group>` |
 
-`X-Impersonate-*` are always cleared on the web port.
+Grants name them in `control-plane.authorization.grants`. A role is the same principal whichever
+credential carries it: `role:platform-team` from an IdP group and from the `OU=platform-team` of a
+client certificate are one. A session without the claim reaches Core without a user, which refuses
+the call.
+
+- **Groups** come from the IdP claim `oauth2Proxy.groupsClaim` (default `groups`). Keycloak with
+  "Full group path" on sends `/armonik-admins`: grant `role:/armonik-admins`.
+- **A group name holding a comma** reaches Core as several roles, oauth2-proxy joining the groups
+  without escaping: `x,platform-team` gives `role:x` and `role:platform-team`. Grant roles only to
+  groups whose names users cannot choose.
+- The umbrella fails a render whose methods do not match the ingress: `Proxy` without
+  `sso.enabled`, `Xfcc` without `mtls.enabled`, or `sso.enabled` with authorization on but without
+  `Proxy`, which would refuse every call of the admin GUI.
 
 ## Values
 
@@ -100,12 +107,7 @@ is ignored by the umbrella check.
 |---|---|---|
 | `sso.enabled` | `false` | A boolean: a string such as `"false"` fails the render |
 | `sso.publicUrl` | `""` | Required. `scheme://host[:port]`, no path. Redirect URI `<publicUrl>/oauth2/callback`; `https` makes the cookie Secure |
-| `sso.identityMode` | `user` | `user` or `group` |
 | `sso.identityClaim` | `email` | `email`, `preferred_username` or `user` (the `sub` claim, oauth2-proxy's user) |
-| `sso.cnPrefix` | `sso:` | Non-empty |
-| `sso.fingerprint` | `sso` | Non-empty, not 32 or more hex digits. Every SSO `userCertificates` entry carries it |
-| `sso.groupCnPrefix` | `sso-group:` | group mode, non-empty there |
-| `sso.groupMapping` | `[]` | group mode, ordered `{group, cn}` |
 | `sso.healthPath` | `/healthz` | |
 | `sso.oauth2Proxy.image` | `quay.io/oauth2-proxy/oauth2-proxy:v7.15.5` | Exact tag, v7.15.2 or later |
 | `sso.oauth2Proxy.issuerUrl` | `""` | Required |
@@ -127,7 +129,9 @@ is ignored by the umbrella check.
 
 Every value is validated at render time and a bad one fails with its key in the message.
 
-## Example: user mode
+## Example: grants per user (Google)
+
+Google ID tokens carry no groups claim, so grants name each user by email.
 
 ```yaml
 ingress:
@@ -144,57 +148,49 @@ ingress:
       existingSecret: armonik-oauth2-proxy
       emailDomains: [example.com]
 control-plane:
-  rbac:
-    authentication:
-      required: true
-    authorization:
-      required: true
-    users:
-      alice: [Submitter]
-      bob: [Monitoring]
-    userCertificates:
-      alice:
-        commonName: "sso:alice@example.com"
-        fingerprint: sso
-      bob:
-        commonName: "sso:bob@example.com"
-        fingerprint: sso
+  authorization:
+    authentication: Xfcc,Proxy   # certificates on the grpc port, SSO on the web port
+    configRevision: 1            # increase it with every change of the grants
+    grants:
+      alice-create:
+        principal: oid:alice@example.com
+        permissionSet: session-create
+      alice-own:
+        principal: oid:alice@example.com
+        permissionSet: session-own
+        condition: session.owner == request.caller && grant.principal in session.createdUnder
+      bob-supervise:
+        principal: oid:bob@example.com
+        permissionSet: session-supervise
 ```
 
-## Example: group mode
+## Example: grants per group (Keycloak)
 
 ```yaml
 ingress:
   sso:
     enabled: true
     publicUrl: https://armonik.example.com
-    identityMode: group
-    groupMapping:
-      - group: armonik-admins
-        cn: admins
-      - group: armonik-users
-        cn: users
     oauth2Proxy:
       issuerUrl: https://keycloak.example.com/realms/armonik
       clientId: armonik
       existingSecret: armonik-oauth2-proxy
       allowedGroups: [armonik-admins, armonik-users]
 control-plane:
-  rbac:
-    authentication:
-      required: true
-    authorization:
-      required: true
-    users:
-      sso-admins: [Submitter]
-      sso-users: [Monitoring]
-    userCertificates:
-      sso-admins:
-        commonName: "sso-group:admins"
-        fingerprint: sso
-      sso-users:
-        commonName: "sso-group:users"
-        fingerprint: sso
+  authorization:
+    authentication: Proxy
+    configRevision: 1
+    grants:
+      admins:
+        principal: role:armonik-admins
+        permissionSet: cluster-admin
+      users-create:
+        principal: role:armonik-users
+        permissionSet: session-create
+      users-own:
+        principal: role:armonik-users
+        permissionSet: session-own
+        condition: session.owner == request.caller && grant.principal in session.createdUnder
 ```
 
 ## The Secret
@@ -228,16 +224,17 @@ ingress:
 - OAuth client of type "Web application", authorized redirect URI
   `https://armonik.example.com/oauth2/callback`.
 - `issuerUrl: https://accounts.google.com`, scopes `openid email profile`.
-- Google ID tokens carry no `groups` claim: use user mode, and restrict with `emailDomains`.
+- Google ID tokens carry no `groups` claim: grant users by email (`oid:<email>`), and restrict with
+  `emailDomains`.
 
 ### Keycloak
 
 - Client with "Client authentication" on, standard flow, valid redirect URI
   `https://armonik.example.com/oauth2/callback`.
 - `issuerUrl: https://<keycloak>/realms/<realm>`.
-- For group mode, add a "Group Membership" mapper to the client's dedicated scope, token claim
-  name `groups`. With "Full group path" on, groups read `/armonik-admins`: write them so in
-  `groupMapping` and `allowedGroups`.
+- For grants per group, add a "Group Membership" mapper to the client's dedicated scope, token
+  claim name `groups`. With "Full group path" on, groups read `/armonik-admins`: write them so in
+  the grants (`role:/armonik-admins`) and in `allowedGroups`.
 
 ## The sidecar
 
@@ -297,8 +294,11 @@ fails without them. The umbrella's nginx egress policy also allows DNS, as it do
 
 ## Limits
 
-- **SDK and CLI authenticate with certificates only.** Without `mtls.enabled` the grpc port clears
-  every identity header, so they cannot authenticate at all; NOTES.txt warns about it.
+- **SDK and CLI do not use the SSO session.** They authenticate with client certificates
+  (`mtls.enabled`, method `Xfcc`), or with tokens of the IdP that the control plane validates
+  (method `Token`, `control-plane.authorization.identity.Authority` and `Audience`), which nginx
+  passes through on a port verifying no certificate. Without either, they cannot authenticate;
+  NOTES.txt warns about it.
 - **No Gateway API mode yet.** `sso.enabled` fails with `gateway.enabled` or `httpRoute.enabled`:
   the default HTTPRoute sends only `content-type: application/grpc` to the grpc port, so
   `application/grpc+proto` reaches the web port, and a Gateway terminating TLS leaves nginx no client

@@ -63,20 +63,34 @@ extraPartitions:
   #   preemptionPercentage: 20
   #   priority: 1
 
-rbac:
-  authentication:
-    required: false
-  authorization:
-    required: false
-  createBuiltInRoles: false
-  roles:
-    # <roleName>: [""]
-  users:
-    # <username>: [""]
-  userCertificates:
-    # <username>:
-    #   commonName: ""
-    #   fingerprint: ""
+# -- Authorization of requests by ArmoniK Core, rendered in the control plane and the init Job (which
+# reconciles the grants and permission sets with the database). See the Core documentation,
+# "Authentication and Authorization".
+authorization:
+  # -- Methods callers authenticate with: None (every request allowed, nothing else rendered), or
+  # Xfcc (client certificate forwarded by the ingress), Token (OIDC token) and Proxy (user and groups
+  # written by the ingress SSO), separated by commas, such as "Xfcc,Proxy".
+  authentication: None
+  # -- Revision of the grants and sets below: increase it with every change, a lower or equal stored
+  # revision being kept as it is by the reconciliation.
+  configRevision: 0
+  # -- Render the permission sets of the Core access model (access-model/permission-sets.yaml):
+  # session-view, session-create, session-own, session-supervise, access-admin, cluster-admin.
+  accessModelSets: false
+  # -- Permission sets by name, each a list of permissions ("*" for all). Joins the access model
+  # sets and wins on a name; null removes one.
+  permissionSets: {}
+  # <name>: [<permission>, ...]
+  # -- Grants by id: principal (oid:<user>, cn:<common name>, role:<role>, or * for every caller),
+  # permissionSet, and an optional condition. null removes one.
+  grants: {}
+  # team-own:
+  #   principal: role:modelling-team
+  #   permissionSet: session-own
+  #   condition: session.owner == request.caller && grant.principal in session.createdUnder
+  # -- Identity settings (Identity__<key>), such as Authority and Audience for Token. The umbrella
+  # derives the header names from the ingress; a value here wins.
+  identity: {}
 
 serviceAccount:
   create: true

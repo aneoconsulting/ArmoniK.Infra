@@ -15,8 +15,6 @@ mtls:
       -----BEGIN CERTIFICATE-----
       MIIBszCCAVmgAwIBAgIUfake0000000000000000000000000000
       -----END CERTIFICATE-----
-  trustedCommonNames:
-    - proxy.armonik.local
 sso:
   enabled: true
   publicUrl: https://armonik.example.com

@@ -104,6 +104,7 @@ ok umbrella-layered-operators armonik           -f charts/armonik/ci/layered-ope
 ok umbrella-mongodb-exporter     armonik        -f charts/armonik/ci/mongodb-exporter-values.yaml
 ok umbrella-mongodb-exporter-tls armonik        -f charts/armonik/ci/mongodb-exporter-tls-values.yaml
 ok umbrella-postgresql-certmanager armonik       -f charts/armonik/ci/postgresql-certmanager-values.yaml
+ok umbrella-authz         armonik               -f charts/armonik/ci/authz-values.yaml
 ok compute-partitions     armonik-compute-plane -f charts/armonik-compute-plane/ci/partitions-values.yaml
 ok compute-keda-off       armonik-compute-plane -f charts/armonik-compute-plane/ci/keda-off-values.yaml
 ok compute-fluent-bit-sidecar armonik-compute-plane -f charts/armonik-compute-plane/ci/partitions-values.yaml \
@@ -111,7 +112,7 @@ ok compute-fluent-bit-sidecar armonik-compute-plane -f charts/armonik-compute-pl
 # The worker and fluent-bit run as native sidecars (restartable init containers).
 fail_with compute-kube-1.28 armonik-compute-plane "incompatible with Kubernetes v1.28.0" \
   -f charts/armonik-compute-plane/ci/partitions-values.yaml --kube-version 1.28.0
-ok control-rbac-full      armonik-control-plane -f charts/armonik-control-plane/ci/rbac-values.yaml
+ok control-authz-full     armonik-control-plane -f charts/armonik-control-plane/ci/authorization-values.yaml
 ok control-headless-init  armonik-control-plane -f charts/armonik-control-plane/ci/headless-init-values.yaml
 ok ingress-near-default   armonik-ingress       -f charts/armonik-ingress/ci/default-values.yaml
 ok ingress-tls-mtls       armonik-ingress       -f charts/armonik-ingress/ci/tls-mtls-values.yaml
@@ -120,7 +121,7 @@ ok ingress-lb             armonik-ingress       -f charts/armonik-ingress/ci/lb-
 ok ingress-patches        armonik-ingress       -f charts/armonik-ingress/ci/patch-values.yaml
 ok ingress-sso            armonik-ingress       -f charts/armonik-ingress/ci/sso-values.yaml
 ok ingress-sso-tls-mtls   armonik-ingress       -f charts/armonik-ingress/ci/sso-tls-mtls-values.yaml
-ok ingress-sso-group      armonik-ingress       -f charts/armonik-ingress/ci/sso-group-values.yaml
+ok ingress-sso-eso        armonik-ingress       -f charts/armonik-ingress/ci/sso-eso-values.yaml
 ok umbrella-sso-netpol    armonik               --set networkPolicy.enabled=true \
   --set ingress.sso.enabled=true --set ingress.sso.publicUrl=https://armonik.example.com \
   --set ingress.sso.oauth2Proxy.issuerUrl=https://idp.example.com \
@@ -151,9 +152,19 @@ fail_with ingress-sso-gateway armonik-ingress \
 fail_with ingress-sso-before-1.29 armonik-ingress \
   "sso.enabled needs Kubernetes 1.29 or later" \
   -f charts/armonik-ingress/ci/sso-values.yaml --kube-version 1.28.0
-fail_with control-authz-without-authn armonik-control-plane \
-  "Authorization requires authentication to be enabled" \
-  -f test/fixtures/armonik-control-plane/authz-values.yaml
+fail_with control-legacy-rbac armonik-control-plane \
+  "rbac (users, roles, user certificates) is removed" \
+  -f test/fixtures/armonik-control-plane/legacy-rbac-values.yaml
+fail_with control-unknown-method armonik-control-plane \
+  "holds \"Mtls\": use None, or Xfcc, Token and Proxy" \
+  --set authorization.authentication=Mtls
+# The methods must match the identity the ingress writes
+fail_with umbrella-proxy-without-sso armonik \
+  "selects Proxy, but ingress.sso.enabled is false" \
+  --set control-plane.authorization.authentication=Proxy
+fail_with umbrella-sso-authz-without-proxy armonik \
+  "does not select Proxy" \
+  -f charts/armonik/ci/authz-values.yaml --set control-plane.authorization.authentication=Xfcc
 fail_with umbrella-envsecret-without-eso armonik \
   "envSecret and envFromSecret require ExternalSecretsOperator" \
   --set global.armonik.operators.externalSecrets.available=false \

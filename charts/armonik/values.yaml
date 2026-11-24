@@ -976,15 +976,19 @@ operators:
               - protocol: TCP
                 port: 53
 
-          # Control plane
+          # Control plane, its events Deployment included
           - ports:
               - protocol: TCP
                 port: 1081
             to:
               - namespaceSelector: {}
                 podSelector:
-                  matchLabels:
-                    app.kubernetes.io/component: control-plane
+                  matchExpressions:
+                    - key: app.kubernetes.io/component
+                      operator: In
+                      values:
+                        - control-plane
+                        - control-plane-events
 
           # Metrics exporter
           - ports:

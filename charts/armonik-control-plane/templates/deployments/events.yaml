@@ -1,0 +1,30 @@
+{{- $events := .Values.events | default dict -}}
+{{- if $events.enabled -}}
+{{- $deployment := .Values.deployment | default dict -}}
+{{- /* Never the init: the main Deployment or the init Job owns it. */}}
+{{- $conf := list
+    (include "armonik.control.confHelper" . | fromYaml)
+    (include "armonik.control.events.confHelper" . | fromYaml)
+    .Values.conf
+    $deployment.conf
+    $events.conf
+  | include "armonik.conf.merge" | fromYaml -}}
+{{- $conf = list $conf $ | include "armonik.conf.resolve" | fromYaml -}}
+{{- /* The pod-level keys of events over the chart-level ones: maps merged key by key, a non-empty list
+        replacing the chart-level one. The full Values stay, so the shared helpers render unchanged. */}}
+{{- $override := pick $events
+      "resources" "nodeSelector" "tolerations" "affinity" "priorityClassName"
+      "podSecurityContext" "securityContext" "livenessProbe" "startupProbe"
+      "extraEnv" "extraEnvFrom" "extraVolumeMounts" "extraVolumes" "extraContainers" "extraInitContainers"
+      "containerPatch" "podSpecPatch" "labels" "annotations" "podLabels" "podAnnotations" -}}
+{{- $context := omit $ "Values" -}}
+{{- $_ := deepCopy $override | mergeOverwrite (deepCopy .Values) | set $context "Values" -}}
+{{- $hpa := $events.hpa | default dict -}}
+{{- dict
+      "root" $context
+      "component" "control-plane-events"
+      "name" (include "armonik.control.events.name" .)
+      "conf" $conf
+      "replicas" ($hpa.enabled | empty | ternary $events.replicas nil)
+  | include "armonik.control.deployment" }}
+{{- end }}

@@ -1,9 +1,18 @@
+{{- $image := include "armonik.control.imageConf" $ | fromYaml -}}
+{{- $ops := include "armonik.operators" . | fromYaml -}}
 {{- $hpa := .Values.hpa | default dict -}}
 {{- if $hpa.enabled -}}
-  {{- $ops := include "armonik.operators" . | fromYaml -}}
   {{- if not $ops.keda.available -}}
     {{- fail "hpa.enabled renders a KEDA ScaledObject: set global.armonik.operators.keda.available=true" -}}
-  {{- end -}}
-  {{- $labels := dict "app.kubernetes.io/component" "control-plane" -}}
-{{ dict "root" $ "name" (include "armonik.fullname" .) "labels" $labels "hpa" $hpa "image" (include "armonik.control.imageConf" $ | fromYaml) | include "armonik.scaledObject" }}
+  {{- end }}
+{{ dict "root" $ "name" (include "armonik.fullname" .) "labels" (dict "app.kubernetes.io/component" "control-plane") "hpa" $hpa "image" $image | include "armonik.scaledObject" }}
+{{- end }}
+{{- $events := .Values.events | default dict -}}
+{{- $eventsHpa := $events.hpa | default dict -}}
+{{- if and $events.enabled $eventsHpa.enabled }}
+  {{- if not $ops.keda.available -}}
+    {{- fail "events.hpa.enabled renders a KEDA ScaledObject: set global.armonik.operators.keda.available=true" -}}
+  {{- end }}
+---
+{{ dict "root" $ "name" (include "armonik.control.events.name" .) "labels" (dict "app.kubernetes.io/component" "control-plane-events") "hpa" $eventsHpa "image" $image | include "armonik.scaledObject" }}
 {{- end }}

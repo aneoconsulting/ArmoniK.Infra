@@ -1,6 +1,6 @@
 {{- $ops := include "armonik.operators" $ | fromYaml }}
 {{- if $ops.prometheusOperator.available }}
-{{/* Control-plane pod metrics (1081). */}}
+{{/* Control-plane pod metrics (1081), the events Deployment's included: same process, same job. */}}
 apiVersion: monitoring.coreos.com/v1
 kind: PodMonitor
 metadata:
@@ -15,8 +15,13 @@ spec:
       - {{ include "armonik.namespace" . | quote }}
   selector:
     matchLabels:
-      app.kubernetes.io/component: control-plane
       {{- include "armonik.selectorLabels" . | nindent 6 }}
+    matchExpressions:
+      - key: app.kubernetes.io/component
+        operator: In
+        values:
+          - control-plane
+          - control-plane-events
   {{/* Release labels on every series, as on the metrics-exporter ServiceMonitor and compute-plane PodMonitor. */}}
   podTargetLabels:
     - app.kubernetes.io/instance

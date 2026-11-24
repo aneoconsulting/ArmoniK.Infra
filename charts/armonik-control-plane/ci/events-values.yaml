@@ -1,0 +1,18 @@
+# Control plane Deployment dedicated to the Events service, autoscaled, with its own budget, sizing
+# and connection pool.
+events:
+  enabled: true
+  hpa:
+    enabled: true
+    minReplicaCount: 2
+    maxReplicaCount: 4
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
+  resources:
+    limits:
+      cpu: 2
+      memory: 2Gi
+  conf:
+    env:
+      PostgreSQL__MaxPoolSize: "20"

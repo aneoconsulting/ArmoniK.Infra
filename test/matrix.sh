@@ -116,6 +116,7 @@ fail_with compute-kube-1.28 armonik-compute-plane "incompatible with Kubernetes 
   -f charts/armonik-compute-plane/ci/partitions-values.yaml --kube-version 1.28.0
 ok control-rbac-full      armonik-control-plane -f charts/armonik-control-plane/ci/rbac-values.yaml
 ok control-headless-init  armonik-control-plane -f charts/armonik-control-plane/ci/headless-init-values.yaml
+ok control-events        armonik-control-plane -f charts/armonik-control-plane/ci/events-values.yaml
 ok ingress-near-default   armonik-ingress       -f charts/armonik-ingress/ci/default-values.yaml
 ok ingress-tls-mtls       armonik-ingress       -f charts/armonik-ingress/ci/tls-mtls-values.yaml
 ok ingress-gateway        armonik-ingress       -f charts/armonik-ingress/ci/gateway-values.yaml
@@ -125,6 +126,10 @@ ok activemq-pdb           activemq              -f charts/activemq/ci/pdb-values
 ok activemq-tls           activemq              -f charts/activemq/ci/tls-values.yaml
 ok activemq-patches       activemq              -f charts/activemq/ci/patch-values.yaml
 ok umbrella-no-control-plane armonik -f charts/armonik/ci/minimal-values.yaml --set control-plane.enabled=false
+ok umbrella-control-plane-events armonik -f charts/armonik/ci/minimal-values.yaml \
+  --set control-plane.events.enabled=true --set networkPolicy.enabled=true
+ok ingress-events-url     armonik-ingress       -f charts/armonik-ingress/ci/tls-mtls-values.yaml \
+  --set control_plane_events_url=control-plane-events:1080
 ok compute-patches        armonik-compute-plane -f charts/armonik-compute-plane/ci/patch-values.yaml
 ok control-patches        armonik-control-plane -f charts/armonik-control-plane/ci/patch-values.yaml
 ok umbrella-external-store armonik -f charts/armonik/ci/external-store-values.yaml

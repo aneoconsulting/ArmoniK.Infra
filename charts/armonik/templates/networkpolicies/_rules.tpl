@@ -62,14 +62,15 @@ ports:
 
 
 {{/*
-  Allows the control-plane submitter and init Job as a source, on the given port.
+  Allows the control-plane submitter, its events Deployment and the init Job as a source, on the given
+  port.
   Args (list): [root, port]
 */}}
 {{- define "armonik.netpol.rule.controlPlaneFrom" -}}
   {{- $root := index . 0 -}}
   {{- $port := index . 1 -}}
   {{- $podSelector := dict "matchExpressions" (list
-      (dict "key" "app.kubernetes.io/component" "operator" "In" "values" (list "control-plane" "init"))
+      (dict "key" "app.kubernetes.io/component" "operator" "In" "values" (list "control-plane" "control-plane-events" "init"))
     ) -}}
   {{- list $root $podSelector $port | include "armonik.netpol.rule.componentFrom" -}}
 {{- end -}}
@@ -193,12 +194,14 @@ ports:
 
 
 {{/*
-  Egress rule: nginx -> control-plane control port.
+  Egress rule: nginx -> control-plane control port, the events Deployment included.
 */}}
 {{- define "armonik.netpol.rule.ingressToControlPlane" -}}
   {{- with index .Subcharts "control-plane" -}}
     {{- $ns := include "armonik.netpol.namespaceSelector" . -}}
-    {{- $podSelector := dict "matchLabels" (dict "app.kubernetes.io/component" "control-plane") | toYaml -}}
+    {{- $podSelector := dict "matchExpressions" (list
+        (dict "key" "app.kubernetes.io/component" "operator" "In" "values" (list "control-plane" "control-plane-events"))
+      ) | toYaml -}}
     {{- $controlPort := include "armonik.netpol.port" (dict "ports" .Values.ports "name" "control-port") | int -}}
     {{- list $ns $podSelector $controlPort "to" | include "armonik.netpol.rule.peerOnPort" -}}
   {{- end -}}
@@ -392,8 +395,9 @@ ports:
 
 
 {{/*
-  Control-plane submitter + init Job: one policy, since they share egress needs and init has no
-  ingress of its own. Ingress is explicit so that, without the ingress subchart, nothing is admitted.
+  Control-plane submitter, its events Deployment and the init Job: one policy, since they share egress
+  needs and init has no ingress of its own. Ingress is explicit so that, without the ingress subchart,
+  nothing is admitted.
 */}}
 {{- define "armonik.netpol.controlPlaneSubmitter" -}}
 podSelector:
@@ -402,6 +406,7 @@ podSelector:
       operator: In
       values:
         - control-plane
+        - control-plane-events
         - init
 policyTypes:
   - Ingress

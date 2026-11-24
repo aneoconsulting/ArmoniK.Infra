@@ -92,3 +92,14 @@ env:
   InitServices__InitQueue: "false"
   InitServices__StopAfterInit: "false"
 {{- end }}
+
+{{/*
+Events Deployment conf, over armonik.control.confHelper: no database, object storage or queue setup,
+so it never races the init over the schema.
+*/}}
+{{- define "armonik.control.events.confHelper" }}
+env:
+  InitServices__InitDatabase: "false"
+  InitServices__InitObjectStorage: "false"
+  InitServices__InitQueue: "false"
+{{- end }}

@@ -99,8 +99,8 @@ locals {
       tag   = "v1.5.0"
     },
     nginx = {
-      image = "nginxinc/nginx-unprivileged"
-      tag   = "1.23.3"
+      image = "nginx/nginx-unprivileged"
+      tag   = "1.31.10"
     },
     keda = {
       image = "ghcr.io/kedacore/keda"

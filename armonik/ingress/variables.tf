@@ -92,7 +92,7 @@ variable "nginx" {
   description = "Parameters of the ingress controller"
   type = object({
     replicas           = optional(number, 1)
-    image              = optional(string, "nginxinc/nginx-unprivileged")
+    image              = optional(string, "nginx/nginx-unprivileged")
     tag                = optional(string)
     image_pull_policy  = optional(string, "IfNotPresent")
     http_port          = optional(number, 5000)

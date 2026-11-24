@@ -309,6 +309,32 @@ tests:
       - contains:
           path: spec.dnsNames
           content: custom-pg-r.custom-ns
+  - it: postgresql server Certificate also covers every Pooler, which serves it
+    template: certificate/postgresql-certificate.yaml
+    values:
+      - ../ci/postgresql-certmanager-values.yaml
+    set:
+      global:
+        armonik:
+          certManager:
+            issuer:
+              kind: ClusterIssuer
+      dependencies:
+        postgresql:
+          poolers:
+            - name: rw
+              poolMode: transaction
+              instances: 2
+    documentSelector:
+      path: metadata.name
+      value: t-postgresql-server
+    asserts:
+      - lengthEqual:
+          path: spec.dnsNames
+          count: 16
+      - contains:
+          path: spec.dnsNames
+          content: t-postgresql-pooler-rw.NAMESPACE.svc.cluster.local
   - it: postgresql Cluster CR gets the same four Secret names the Certificates write
     template: charts/dependencies/charts/postgresql/templates/cluster.yaml
     values:

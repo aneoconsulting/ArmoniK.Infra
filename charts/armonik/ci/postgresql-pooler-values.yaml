@@ -1,0 +1,20 @@
+# PostgreSQL as the table storage, every Core process connecting through a CloudNativePG Pooler
+# (PgBouncer, transaction mode). ssl=false keeps the fixture independent of the release name: with ssl,
+# the Pooler's service name goes in cluster.certificates.serverAltDNSNames.
+dependencies:
+  mongodb:
+    enabled: false
+  mongodb-exporter:
+    enabled: false
+  postgresql:
+    enabled: true
+    ssl: false
+    corePooler: rw
+    poolers:
+      - name: rw
+        type: rw
+        poolMode: transaction
+        instances: 2
+        parameters:
+          max_client_conn: "10000"
+          default_pool_size: "50"

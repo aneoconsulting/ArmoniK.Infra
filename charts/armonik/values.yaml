@@ -411,13 +411,15 @@ dependencies:
         parameters:
           # Already the CloudNativePG default. Stated because the watchers do not work without it.
           wal_level: logical
-          # One replication slot and one WAL sender per watcher per subscribed process, so these scale
-          # with the number of control-plane and polling-agent replicas.
+          # One replication slot and one WAL sender per watcher per process serving GetEvents, so these
+          # scale with the number of control-plane replicas. Polling agents open none.
           max_replication_slots: "32"
           max_wal_senders: "16"
-          # Server-wide connection limit, 100 by default in PostgreSQL. Every Core process (control
-          # plane, polling agents) keeps its own client pool of up to PostgreSQL__MaxPoolSize
-          # connections (Core default 100), so the default limit runs out with a few dozen pods.
+          # Server-wide connection limit, 100 by default in PostgreSQL. Without corePooler, every Core
+          # process (control plane, polling agents) keeps its own client pool of up to
+          # PostgreSQL__MaxPoolSize connections (Core default 100), so the default limit runs out with a
+          # few dozen pods. Behind a transaction Pooler, the server sees at most its default_pool_size
+          # per Pooler instance, plus one per WAL stream.
           max_connections: "500"
           # An orphaned transaction blocks replication slot creation, hence the watchers.
           idle_in_transaction_session_timeout: "60s"
@@ -431,6 +433,26 @@ dependencies:
       monitoring:
         # PodMonitor over the instances.
         enabled: true
+    # -- PgBouncer Poolers (CloudNativePG Pooler CRs), passed through to the cluster chart. Core uses one
+    # only when corePooler names it. Each is served at <cluster>-pooler-<name>. With ssl and the
+    # operator's own certificates, list that service in cluster.certificates.serverAltDNSNames. With
+    # certManager.enabled, the Certificate lists every Pooler itself, but the operator can no longer
+    # authenticate the Pooler to PostgreSQL by client certificate: the entry then needs authQuerySecret and
+    # authQuery, set up by hand as the CloudNativePG documentation describes. Example, for corePooler: rw:
+    #   - name: rw
+    #     type: rw
+    #     poolMode: transaction
+    #     instances: 2  # one instance is a single point of failure for every Core process
+    #     parameters:
+    #       max_client_conn: "10000"
+    #       default_pool_size: "50"
+    poolers: []
+    # -- Name of the poolers entry every Core process connects through, control plane, polling agents
+    # and init Jobs alike: a transaction Pooler holds the server-side connections to its own pool
+    # whatever the number of agents. The WAL streams of GetEvents go through it too, PgBouncer passing
+    # replication connections through since 1.23. The entry must have type rw and poolMode
+    # transaction or session. Empty: Core connects to the Cluster's read-write service.
+    corePooler: ""
 
   # == External PostgreSQL ==
   # A server outside this release (RDS, Cloud SQL, on-prem). Exclusive with mongodb and postgresql.

@@ -14,6 +14,21 @@ through armonik.postgresqlConnection.conf.
   {{- if $pg.ssl -}}
     {{- $_ = required "dependencies.externalPostgresql.ca.secret is required when dependencies.externalPostgresql.ssl is true" ($pg.ca | default dict).secret -}}
   {{- end }}
-{{ list $pg . | include "armonik.postgresqlConnection.conf" }}
+  {{- $pooler := $pg.pooler | default dict -}}
+  {{- $connection := $pg -}}
+  {{- if $pooler.host -}}
+    {{- $connection = merge (dict "host" $pooler.host "port" ($pooler.port | default $pg.port)) $pg -}}
+  {{- end }}
+{{ list $connection . | include "armonik.postgresqlConnection.conf" }}
+{{- end }}
+{{- end -}}
+
+{{/* events layer: the server itself, never pooler.host (see armonik.postgresql.eventsConf). */}}
+{{- define "armonik.externalPostgresql.eventsConf" -}}
+{{- $pg := list .Values "dependencies" "externalPostgresql" | include "armonik.utils.index" | fromYaml -}}
+{{- if $pg.enabled }}
+env:
+  PostgreSQL__Host: {{ $pg.host | quote }}
+  PostgreSQL__Port: {{ $pg.port | default 5432 | toString | quote }}
 {{- end }}
 {{- end -}}

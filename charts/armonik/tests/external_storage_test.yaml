@@ -231,3 +231,45 @@ tests:
               storeRef:
                 kind: ClusterSecretStore
                 name: aws-secrets-manager
+  - it: connects Core through externalPostgresql.pooler, the events layer to the server itself
+    values:
+      - ../ci/minimal-values.yaml
+    set:
+      global:
+        armonik:
+          operators:
+            externalSecrets:
+              available: true
+      dependencies:
+        externalPostgresql:
+          enabled: true
+          host: pg.example
+          database: armonik
+          credentials:
+            secret: rds-master
+          ca:
+            secret: rds-ca
+          pooler:
+            host: proxy.example
+            port: 6432
+    asserts:
+      - equal:
+          path: spec.target.template.data.PostgreSQL__Host
+          value: proxy.example
+        documentSelector:
+          path: metadata.name
+          value: t-conf-core
+      - equal:
+          path: spec.target.template.data.PostgreSQL__Port
+          value: "6432"
+        documentSelector:
+          path: metadata.name
+          value: t-conf-core
+      - equal:
+          path: stringData
+          value:
+            PostgreSQL__Host: pg.example
+            PostgreSQL__Port: "5432"
+        documentSelector:
+          path: metadata.name
+          value: t-conf-events

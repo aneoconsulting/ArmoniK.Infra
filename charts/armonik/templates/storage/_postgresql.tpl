@@ -30,8 +30,25 @@ is set. CNPG derives both from the Cluster name, itself taken from the subchart'
 */}}
 {{- define "armonik.postgresql.host" -}}
   {{- $pooler := include "armonik.postgresql.corePooler" . | fromYaml -}}
-  {{- $service := empty $pooler | ternary "rw" (printf "pooler-%s" $pooler.name) -}}
-  {{- include "cluster.fullname" . }}-{{ $service }}.{{ include "cluster.namespace" . }}.svc.{{ include "armonik.clusterDomain" . }}
+  {{- empty $pooler | ternary "rw" (printf "pooler-%s" $pooler.name) | list . | include "armonik.postgresql.serviceHost" -}}
+{{- end -}}
+
+{{/* FQDN of the CNPG service <cluster>-<suffix>. Takes list $ <suffix>. */}}
+{{- define "armonik.postgresql.serviceHost" -}}
+  {{- $root := index . 0 -}}
+  {{- include "cluster.fullname" $root }}-{{ index . 1 }}.{{ include "cluster.namespace" $root }}.svc.{{ include "armonik.clusterDomain" $root }}
+{{- end -}}
+
+{{/*
+events layer: the read-write service, never a Pooler. PgBouncer relays the GetEvents replication
+connections one to one, pooling nothing, and delays the walsender keepalive replies past
+wal_sender_timeout.
+*/}}
+{{- define "armonik.postgresql.eventsConf" -}}
+{{- with .Subcharts.dependencies.Subcharts.postgresql }}
+env:
+  PostgreSQL__Host: {{ list . "rw" | include "armonik.postgresql.serviceHost" | quote }}
+{{- end }}
 {{- end -}}
 
 {{/*

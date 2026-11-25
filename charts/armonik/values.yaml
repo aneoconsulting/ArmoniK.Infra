@@ -106,7 +106,7 @@ compute-plane:
           repository: "dockerhubaneo/armonik_core_htcmock_test_worker"
 
 # Conf layers, rendered as the <source>-conf-<layer>[-mount] Secrets. Schema at the top of
-# armonik-common/templates/_conf.tpl.
+# armonik-common/templates/_conf.tpl. events goes over core for the control-plane events Deployment.
 conf:
   log:
     minimumLevel: Information
@@ -449,8 +449,9 @@ dependencies:
     poolers: []
     # -- Name of the poolers entry every Core process connects through, control plane, polling agents
     # and init Jobs alike: a transaction Pooler holds the server-side connections to its own pool
-    # whatever the number of agents. The WAL streams of GetEvents go through it too, PgBouncer passing
-    # replication connections through since 1.23. The entry must have type rw and poolMode
+    # whatever the number of agents. The control-plane events Deployment stays on the read-write
+    # service (events conf layer): PgBouncer relays its WAL streams one to one and delays the replies
+    # past wal_sender_timeout. Other GetEvents servers go through it. The entry must have type rw and poolMode
     # transaction or session. Empty: Core connects to the Cluster's read-write service.
     # Each Core process still keeps its Npgsql pool, now against PgBouncer: max_client_conn per
     # instance caps the agent count (~800 per instance at 10000), so scale instances or lower
@@ -464,6 +465,12 @@ dependencies:
     enabled: false
     host: ""  # required when externalPostgresql.enabled
     port: 5432
+    # -- Pooler in front of the server (RDS Proxy, PgBouncer) for every Core process but the
+    # control-plane events Deployment, which stays on host:port (events conf layer). port defaults to
+    # the server's. With ssl, ca must validate both certificates.
+    pooler:
+      host: ""
+      port:
     database: ""  # required when externalPostgresql.enabled
     ssl: true
     credentials:

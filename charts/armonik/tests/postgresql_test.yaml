@@ -199,3 +199,21 @@ tests:
     asserts:
       - failedTemplate:
           errorPattern: poolers "rw" needs instances
+  - it: keeps the events layer on the -rw service whatever corePooler
+    template: secrets/conf-secrets.yaml
+    set:
+      dependencies:
+        postgresql:
+          ssl: false
+          corePooler: rw
+          poolers:
+            - name: rw
+              poolMode: transaction
+              instances: 1
+    documentSelector:
+      path: metadata.name
+      value: t-conf-events
+    asserts:
+      - equal:
+          path: stringData.PostgreSQL__Host
+          value: t-postgresql-rw.NAMESPACE.svc.cluster.local

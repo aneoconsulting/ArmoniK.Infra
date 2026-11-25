@@ -116,16 +116,22 @@ tests:
               optional: false
         template: deployments/control-plane.yaml
 
-  - it: takes events.conf for its pods only
+  - it: takes events.conf for its pods only, a 20-connection pool by default
     set:
       events.enabled: true
-      events.conf.env.PostgreSQL__MaxPoolSize: "20"
+      events.conf.env.Serilog__MinimumLevel: Debug
     asserts:
       - contains:
           path: spec.template.spec.containers[0].env
           content:
             name: PostgreSQL__MaxPoolSize
             value: "20"
+        template: deployments/events.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: Serilog__MinimumLevel
+            value: Debug
         template: deployments/events.yaml
       - notContains:
           path: spec.template.spec.containers[0].env

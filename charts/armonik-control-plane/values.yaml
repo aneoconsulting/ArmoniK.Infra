@@ -232,10 +232,11 @@ events:
   affinity: {}
   # -- Merged last over the chart conf and deployment.conf, for the events pods only. They never
   # run the init (InitServices__Init* false). The events layer, after core, holds the PostgreSQL
-  # server itself, so the WAL streams skip any pooler. Pool size, e.g.:
-  #   env:
-  #     PostgreSQL__MaxPoolSize: "20"
+  # server itself, so the WAL streams skip any pooler. Each pod holds its own pool on it (Core
+  # default 100, the replication connections apart): 20 keeps events.hpa.maxReplicaCount 5 at 100.
   conf:
+    env:
+      PostgreSQL__MaxPoolSize: "20"
     envSecret:
       - '{{ list "events" . | include "armonik.conf.secretName" }}'
     mountSecret:

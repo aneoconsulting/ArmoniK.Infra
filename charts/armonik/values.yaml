@@ -411,10 +411,11 @@ dependencies:
         parameters:
           # Already the CloudNativePG default. Stated because the watchers do not work without it.
           wal_level: logical
-          # One replication slot and one WAL sender per watcher per process serving GetEvents, so these
-          # scale with the number of control-plane replicas. Polling agents open none.
-          max_replication_slots: "32"
-          max_wal_senders: "16"
+          # One replication slot and one WAL sender per watcher (4) per process serving GetEvents, so these
+          # scale with the control-plane replicas: 20 for control-plane.events.hpa.maxReplicaCount 5, plus
+          # the main control plane's and the standbys'. Polling agents open none.
+          max_replication_slots: "40"
+          max_wal_senders: "32"
           # Server-wide connection limit, 100 by default in PostgreSQL. Without corePooler, every Core
           # process (control plane, polling agents) keeps its own client pool of up to
           # PostgreSQL__MaxPoolSize connections (Core default 100), so the default limit runs out with a

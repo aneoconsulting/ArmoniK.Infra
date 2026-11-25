@@ -452,6 +452,9 @@ dependencies:
     # whatever the number of agents. The WAL streams of GetEvents go through it too, PgBouncer passing
     # replication connections through since 1.23. The entry must have type rw and poolMode
     # transaction or session. Empty: Core connects to the Cluster's read-write service.
+    # Each Core process still keeps its Npgsql pool, now against PgBouncer: max_client_conn per
+    # instance caps the agent count (~800 per instance at 10000), so scale instances or lower
+    # PostgreSQL__MaxPoolSize.
     corePooler: ""
 
   # == External PostgreSQL ==

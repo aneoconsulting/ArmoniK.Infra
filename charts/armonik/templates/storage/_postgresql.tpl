@@ -83,6 +83,12 @@ through armonik.postgresqlConnection.conf. The postgres OPERATOR may be managed 
 {{- with .Subcharts.dependencies.Subcharts.postgresql -}}
   {{- $namespace := include "armonik.postgresql.namespace" . -}}
   {{- $ssl := kindIs "bool" .Values.ssl | ternary .Values.ssl true -}}
+  {{- /* The cluster chart renders instances as is: unset gives an empty field. */ -}}
+  {{- range $p := .Values.poolers | default list -}}
+    {{- if not (kindIs "float64" $p.instances | or (kindIs "int64" $p.instances) | and $p.instances) -}}
+      {{- printf "dependencies.postgresql.poolers %q needs instances, a positive integer." ($p.name | toString) | fail -}}
+    {{- end -}}
+  {{- end -}}
   {{- $host := include "armonik.postgresql.host" . -}}
   {{- /* The Pooler serves the Cluster's server certificate, which Core checks against the host name. The
          cert-manager Certificate lists the Pooler names itself (postgresql-certificate.yaml); the

@@ -187,3 +187,15 @@ tests:
     asserts:
       - failedTemplate:
           errorPattern: needs authQuerySecret and authQuery with certManager.enabled
+  - it: fails on a poolers entry without instances
+    template: secrets/conf-secrets.yaml
+    set:
+      dependencies:
+        postgresql:
+          ssl: false
+          poolers:
+            - name: rw
+              poolMode: transaction
+    asserts:
+      - failedTemplate:
+          errorPattern: poolers "rw" needs instances

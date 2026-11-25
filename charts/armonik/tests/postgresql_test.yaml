@@ -200,6 +200,47 @@ tests:
     asserts:
       - failedTemplate:
           errorPattern: poolers "rw" needs instances
+  - it: fails on a fractional instances
+    template: secrets/conf-secrets.yaml
+    set:
+      dependencies:
+        postgresql:
+          ssl: false
+          poolers:
+            - name: rw
+              poolMode: transaction
+              instances: 1
+            - name: half
+              poolMode: transaction
+              instances: 1.5
+    asserts:
+      - failedTemplate:
+          errorPattern: poolers "half" needs instances
+  - it: fails on a negative instances
+    template: secrets/conf-secrets.yaml
+    set:
+      dependencies:
+        postgresql:
+          ssl: false
+          poolers:
+            - name: rw
+              poolMode: transaction
+              instances: -1
+    asserts:
+      - failedTemplate:
+          errorPattern: poolers "rw" needs instances
+  - it: accepts a paused Pooler, instances 0
+    template: secrets/conf-secrets.yaml
+    set:
+      dependencies:
+        postgresql:
+          ssl: false
+          poolers:
+            - name: rw
+              poolMode: transaction
+              instances: 0
+    asserts:
+      - notFailedTemplate: {}
   - it: keeps the events layer on the -rw service whatever corePooler
     template: secrets/conf-secrets.yaml
     set:

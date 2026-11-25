@@ -100,10 +100,11 @@ through armonik.postgresqlConnection.conf. The postgres OPERATOR may be managed 
 {{- with .Subcharts.dependencies.Subcharts.postgresql -}}
   {{- $namespace := include "armonik.postgresql.namespace" . -}}
   {{- $ssl := kindIs "bool" .Values.ssl | ternary .Values.ssl true -}}
-  {{- /* The cluster chart renders instances as is: unset gives an empty field. */ -}}
+  {{- /* The cluster chart renders instances as is: unset gives an empty field. 0 pauses the Pooler. */ -}}
   {{- range $p := .Values.poolers | default list -}}
-    {{- if not (kindIs "float64" $p.instances | or (kindIs "int64" $p.instances) | and $p.instances) -}}
-      {{- printf "dependencies.postgresql.poolers %q needs instances, a positive integer." ($p.name | toString) | fail -}}
+    {{- $n := $p.instances -}}
+    {{- if not (and (or (kindIs "float64" $n) (kindIs "int64" $n)) (eq (float64 $n) ($n | int | float64)) (ge ($n | int) 0)) -}}
+      {{- printf "dependencies.postgresql.poolers %q needs instances, an integer >= 0." ($p.name | toString) | fail -}}
     {{- end -}}
   {{- end -}}
   {{- $host := include "armonik.postgresql.host" . -}}

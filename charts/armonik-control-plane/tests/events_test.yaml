@@ -112,10 +112,13 @@ tests:
             value: "20"
         template: deployments/control-plane.yaml
 
-  - it: merges its pod-level keys over the chart-level ones, leaving the main Deployment as is
+  - it: replaces the chart-level pod keys with its non-empty ones, leaving the main Deployment as is
     set:
       nodeSelector:
         pool: control
+      tolerations:
+        - key: dedicated
+          operator: Exists
       events.enabled: true
       events.resources.limits.cpu: "2"
       events.nodeSelector:
@@ -129,16 +132,17 @@ tests:
           value:
             limits:
               cpu: "2"
-              memory: 1Gi
-            requests:
-              cpu: 100m
-              memory: 128Mi
         template: deployments/events.yaml
       - equal:
           path: spec.template.spec.nodeSelector
           value:
-            pool: control
             tier: events
+        template: deployments/events.yaml
+      - equal:
+          path: spec.template.spec.tolerations
+          value:
+            - key: dedicated
+              operator: Exists
         template: deployments/events.yaml
       - contains:
           path: spec.template.spec.containers[0].env

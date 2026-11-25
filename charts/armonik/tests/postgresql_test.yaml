@@ -4,6 +4,7 @@ release:
 templates:
   - secrets/conf-secrets.yaml
   - secrets/conf-mounts.yaml
+  - charts/dependencies/charts/postgresql/templates/cluster.yaml
 values:
   - ../ci/minimal-values.yaml
 set:
@@ -44,3 +45,223 @@ tests:
           value: "false"
       - notExists:
           path: spec.target.template.data.PostgreSQL__CAFile
+  - it: connects Core to the -rw service without corePooler
+    template: secrets/conf-secrets.yaml
+    documentSelector:
+      path: metadata.name
+      value: t-conf-core
+    asserts:
+      - equal:
+          path: spec.target.template.data.PostgreSQL__Host
+          value: t-postgresql-rw.NAMESPACE.svc.cluster.local
+  - it: connects Core to the Pooler named by corePooler
+    template: secrets/conf-secrets.yaml
+    set:
+      dependencies:
+        postgresql:
+          corePooler: rw
+          poolers:
+            - name: rw
+              type: rw
+              poolMode: transaction
+              instances: 2
+          cluster:
+            certificates:
+              serverAltDNSNames:
+                - t-postgresql-pooler-rw.NAMESPACE.svc.cluster.local
+    documentSelector:
+      path: metadata.name
+      value: t-conf-core
+    asserts:
+      - equal:
+          path: spec.target.template.data.PostgreSQL__Host
+          value: t-postgresql-pooler-rw.NAMESPACE.svc.cluster.local
+  - it: defaults a poolers entry's type to rw, as the operator does
+    template: secrets/conf-secrets.yaml
+    set:
+      dependencies:
+        postgresql:
+          ssl: false
+          corePooler: main
+          poolers:
+            - name: main
+              poolMode: transaction
+              instances: 1
+    documentSelector:
+      path: metadata.name
+      value: t-conf-core
+    asserts:
+      - equal:
+          path: spec.target.template.data.PostgreSQL__Host
+          value: t-postgresql-pooler-main.NAMESPACE.svc.cluster.local
+  - it: fails when corePooler names no poolers entry
+    template: secrets/conf-secrets.yaml
+    set:
+      dependencies:
+        postgresql:
+          ssl: false
+          corePooler: rw
+    asserts:
+      - failedTemplate:
+          errorPattern: corePooler="rw" names no entry of dependencies.postgresql.poolers
+  - it: fails on a read-only Pooler
+    template: secrets/conf-secrets.yaml
+    set:
+      dependencies:
+        postgresql:
+          ssl: false
+          corePooler: ro
+          poolers:
+            - name: ro
+              type: ro
+              poolMode: transaction
+              instances: 1
+    asserts:
+      - failedTemplate:
+          errorPattern: must have type rw
+  - it: fails on statement pooling
+    template: secrets/conf-secrets.yaml
+    set:
+      dependencies:
+        postgresql:
+          ssl: false
+          corePooler: rw
+          poolers:
+            - name: rw
+              poolMode: statement
+              instances: 1
+    asserts:
+      - failedTemplate:
+          errorPattern: cannot use poolMode statement
+  - it: fails when the operator's server certificate does not cover the Pooler
+    template: secrets/conf-secrets.yaml
+    set:
+      dependencies:
+        postgresql:
+          corePooler: rw
+          poolers:
+            - name: rw
+              poolMode: transaction
+              instances: 1
+    asserts:
+      - failedTemplate:
+          errorPattern: serverAltDNSNames must list "t-postgresql-pooler-rw.NAMESPACE.svc.cluster.local"
+  - it: fails on corePooler with cert-manager certificates and no authQuerySecret
+    template: secrets/conf-secrets.yaml
+    values:
+      - ../ci/postgresql-certmanager-values.yaml
+    set:
+      global:
+        armonik:
+          certManager:
+            issuer:
+              kind: ClusterIssuer
+      dependencies:
+        postgresql:
+          corePooler: rw
+          poolers:
+            - name: rw
+              poolMode: transaction
+              instances: 1
+    asserts:
+      - failedTemplate:
+          errorPattern: needs authQuerySecret and authQuery with certManager.enabled
+  - it: fails on corePooler with cert-manager certificates and authQuerySecret but no authQuery
+    template: secrets/conf-secrets.yaml
+    values:
+      - ../ci/postgresql-certmanager-values.yaml
+    set:
+      global:
+        armonik:
+          certManager:
+            issuer:
+              kind: ClusterIssuer
+      dependencies:
+        postgresql:
+          corePooler: rw
+          poolers:
+            - name: rw
+              poolMode: transaction
+              instances: 1
+              authQuerySecret:
+                name: pooler-auth
+    asserts:
+      - failedTemplate:
+          errorPattern: needs authQuerySecret and authQuery with certManager.enabled
+  - it: fails on a poolers entry without instances
+    template: secrets/conf-secrets.yaml
+    set:
+      dependencies:
+        postgresql:
+          ssl: false
+          poolers:
+            - name: rw
+              poolMode: transaction
+    asserts:
+      - failedTemplate:
+          errorPattern: poolers "rw" needs instances
+  - it: fails on a fractional instances
+    template: secrets/conf-secrets.yaml
+    set:
+      dependencies:
+        postgresql:
+          ssl: false
+          poolers:
+            - name: rw
+              poolMode: transaction
+              instances: 1
+            - name: half
+              poolMode: transaction
+              instances: 1.5
+    asserts:
+      - failedTemplate:
+          errorPattern: poolers "half" needs instances
+  - it: fails on a negative instances
+    template: secrets/conf-secrets.yaml
+    set:
+      dependencies:
+        postgresql:
+          ssl: false
+          poolers:
+            - name: rw
+              poolMode: transaction
+              instances: -1
+    asserts:
+      - failedTemplate:
+          errorPattern: poolers "rw" needs instances
+  - it: accepts a paused Pooler, instances 0
+    template: secrets/conf-secrets.yaml
+    set:
+      dependencies:
+        postgresql:
+          ssl: false
+          poolers:
+            - name: rw
+              poolMode: transaction
+              instances: 0
+    asserts:
+      - notFailedTemplate: {}
+  - it: keeps the events layer on the -rw service whatever corePooler
+    template: secrets/conf-secrets.yaml
+    set:
+      dependencies:
+        postgresql:
+          ssl: false
+          corePooler: rw
+          poolers:
+            - name: rw
+              poolMode: transaction
+              instances: 1
+    documentSelector:
+      path: metadata.name
+      value: t-conf-events
+    asserts:
+      - equal:
+          path: stringData.PostgreSQL__Host
+          value: t-postgresql-rw.NAMESPACE.svc.cluster.local
+  - it: gives a pooled GetEvents WAL stream 30s before the walsender times out
+    template: charts/dependencies/charts/postgresql/templates/cluster.yaml
+    asserts:
+      - equal:
+          path: spec.postgresql.parameters.wal_sender_timeout
+          value: 30s

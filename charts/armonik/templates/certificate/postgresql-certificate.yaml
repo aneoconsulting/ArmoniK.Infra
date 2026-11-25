@@ -62,7 +62,12 @@
        names serve clients verifying the host. */}}
 {{- $domain := include "armonik.clusterDomain" . }}
 {{- $dnsNames := list }}
-{{- range $svc := list "rw" "ro" "r" }}
+{{- /* Every Pooler serves this same certificate. */}}
+{{- $services := list "rw" "ro" "r" }}
+{{- range $pooler := $pg.poolers | default list }}
+{{- $services = append $services (printf "pooler-%s" $pooler.name) }}
+{{- end }}
+{{- range $svc := $services }}
 {{- $host := printf "%s-%s" $cluster $svc }}
 {{- $dnsNames = concat $dnsNames (list $host (printf "%s.%s" $host $ns) (printf "%s.%s.svc" $host $ns) (printf "%s.%s.svc.%s" $host $ns $domain)) }}
 {{- end }}

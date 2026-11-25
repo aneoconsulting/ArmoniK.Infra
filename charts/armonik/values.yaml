@@ -106,7 +106,7 @@ compute-plane:
           repository: "dockerhubaneo/armonik_core_htcmock_test_worker"
 
 # Conf layers, rendered as the <source>-conf-<layer>[-mount] Secrets. Schema at the top of
-# armonik-common/templates/_conf.tpl.
+# armonik-common/templates/_conf.tpl. events goes over core for the control-plane events Deployment.
 conf:
   log:
     minimumLevel: Information
@@ -411,13 +411,15 @@ dependencies:
         parameters:
           # Already the CloudNativePG default. Stated because the watchers do not work without it.
           wal_level: logical
-          # One replication slot and one WAL sender per watcher per subscribed process, so these scale
-          # with the number of control-plane and polling-agent replicas.
+          # One replication slot and one WAL sender per watcher per process serving GetEvents, so these
+          # scale with the number of control-plane replicas. Polling agents open none.
           max_replication_slots: "32"
           max_wal_senders: "16"
-          # Server-wide connection limit, 100 by default in PostgreSQL. Every Core process (control
-          # plane, polling agents) keeps its own client pool of up to PostgreSQL__MaxPoolSize
-          # connections (Core default 100), so the default limit runs out with a few dozen pods.
+          # Server-wide connection limit, 100 by default in PostgreSQL. Without corePooler, every Core
+          # process (control plane, polling agents) keeps its own client pool of up to
+          # PostgreSQL__MaxPoolSize connections (Core default 100), so the default limit runs out with a
+          # few dozen pods. Behind a transaction Pooler, the server sees at most its default_pool_size
+          # per Pooler instance, plus one per WAL stream.
           max_connections: "500"
           # An orphaned transaction blocks replication slot creation, hence the watchers.
           idle_in_transaction_session_timeout: "60s"
@@ -426,11 +428,39 @@ dependencies:
           tcp_keepalives_idle: "30"
           tcp_keepalives_interval: "10"
           tcp_keepalives_count: "3"
+          # CloudNativePG sets 5s. Through a Pooler, PgBouncer delays the replies of a GetEvents WAL
+          # stream past it (up to 6s measured); Npgsql's own status every 10s keeps a stream alive
+          # above 20s.
+          wal_sender_timeout: "30s"
       # Nothing needs an external superuser.
       enableSuperuserAccess: false
       monitoring:
         # PodMonitor over the instances.
         enabled: true
+    # -- PgBouncer Poolers (CloudNativePG Pooler CRs), passed through to the cluster chart. Core uses one
+    # only when corePooler names it. Each is served at <cluster>-pooler-<name>. With ssl and the
+    # operator's own certificates, list that service in cluster.certificates.serverAltDNSNames. With
+    # certManager.enabled, the Certificate lists every Pooler itself, but the operator can no longer
+    # authenticate the Pooler to PostgreSQL by client certificate: the entry then needs authQuerySecret and
+    # authQuery, set up by hand as the CloudNativePG documentation describes. Example, for corePooler: rw:
+    #   - name: rw
+    #     type: rw
+    #     poolMode: transaction
+    #     instances: 2  # one instance is a single point of failure for every Core process
+    #     parameters:
+    #       max_client_conn: "10000"
+    #       default_pool_size: "50"
+    poolers: []
+    # -- Name of the poolers entry every Core process connects through, control plane, polling agents
+    # and init Jobs alike: a transaction Pooler holds the server-side connections to its own pool
+    # whatever the number of agents. Core reads its WAL on the same host: the control-plane events
+    # Deployment stays on the read-write service (events conf layer), and any other pod serving
+    # GetEvents streams through the Pooler, hence wal_sender_timeout above. The entry must have type rw
+    # and poolMode transaction or session. Empty: Core connects to the Cluster's read-write service.
+    # Each Core process still keeps its Npgsql pool, now against PgBouncer: max_client_conn per
+    # instance caps the agent count (~800 per instance at 10000), so scale instances or lower
+    # PostgreSQL__MaxPoolSize.
+    corePooler: ""
 
   # == External PostgreSQL ==
   # A server outside this release (RDS, Cloud SQL, on-prem). Exclusive with mongodb and postgresql.
@@ -439,6 +469,14 @@ dependencies:
     enabled: false
     host: ""  # required when externalPostgresql.enabled
     port: 5432
+    # -- Pooler in front of the server (RDS Proxy, PgBouncer) for every Core process but the
+    # control-plane events Deployment, which stays on host:port (events conf layer). Any other pod
+    # serving GetEvents streams its WAL through it: RDS Proxy does not relay replication, and behind
+    # PgBouncer the server's wal_sender_timeout should be 30s or more. port defaults to the server's.
+    # With ssl, ca must validate both certificates.
+    pooler:
+      host: ""
+      port:
     database: ""  # required when externalPostgresql.enabled
     ssl: true
     credentials:

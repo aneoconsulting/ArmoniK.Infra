@@ -220,8 +220,8 @@ events:
     maxUnavailable:
     labels: {}
     annotations: {}
-  # -- Over the chart-level `resources`. Each of these keys is merged over its chart-level twin
-  # (maps key by key, a non-empty list replacing it): resources, nodeSelector, tolerations,
+  # -- Instead of the chart-level `resources`. Each of these keys, when non-empty, replaces its
+  # chart-level twin as a whole; empty, the chart-level one applies: resources, nodeSelector, tolerations,
   # affinity, priorityClassName, podSecurityContext, securityContext, livenessProbe, startupProbe,
   # extraEnv, extraEnvFrom, extraVolumeMounts, extraVolumes, extraContainers,
   # extraInitContainers, containerPatch, podSpecPatch, labels, annotations, podLabels,

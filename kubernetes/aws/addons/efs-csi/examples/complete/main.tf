@@ -30,7 +30,7 @@ data "aws_subnets" "subnets" {
 #EKS cluster
 module "eks" {
   source                                   = "terraform-aws-modules/eks/aws"
-  version                                  = "21.29.0"
+  version                                  = "21.30.2"
   name                                     = "test-cluster"
   kubernetes_version                       = "1.32"
   vpc_id                                   = data.aws_vpc.default.id

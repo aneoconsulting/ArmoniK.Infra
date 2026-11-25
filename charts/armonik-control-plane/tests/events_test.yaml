@@ -81,18 +81,40 @@ tests:
           content:
             name: InitServices__StopAfterInit
             value: "false"
+      - equal:
+          path: spec.template.spec.containers[0].envFrom
+          value:
+            - secretRef:
+                name: armonik-conf-core
+                optional: false
+            - secretRef:
+                name: armonik-conf-log
+                optional: false
+            - secretRef:
+                name: armonik-conf-control
+                optional: false
+            - secretRef:
+                name: armonik-conf-events
+                optional: false
+
+  - it: reads the events layer, after core, for its pods only
+    set:
+      events.enabled: true
+    asserts:
       - contains:
+          path: spec.template.spec.volumes[0].projected.sources
+          content:
+            secret:
+              name: armonik-conf-events-mount
+              optional: false
+        template: deployments/events.yaml
+      - notContains:
           path: spec.template.spec.containers[0].envFrom
           content:
             secretRef:
-              name: armonik-conf-control
+              name: armonik-conf-events
               optional: false
-      - contains:
-          path: spec.template.spec.containers[0].envFrom
-          content:
-            secretRef:
-              name: armonik-conf-core
-              optional: false
+        template: deployments/control-plane.yaml
 
   - it: takes events.conf for its pods only
     set:

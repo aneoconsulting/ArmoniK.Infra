@@ -230,14 +230,16 @@ events:
   nodeSelector: {}
   tolerations: []
   affinity: {}
-  # conf:
+  # -- Merged last over the chart conf and deployment.conf, for the events pods only. They never
+  # run the init (InitServices__Init* false). The events layer, after core, holds the PostgreSQL
+  # server itself, so the WAL streams skip any pooler. Pool size, e.g.:
   #   env:
   #     PostgreSQL__MaxPoolSize: "20"
-  #     MongoDB__MaxConnectionPoolSize: "20"
-  #
-  # -- Merged last over the chart conf and deployment.conf, for the events pods only. They never
-  # run the init (InitServices__Init* false).
-  conf: {}
+  conf:
+    envSecret:
+      - '{{ list "events" . | include "armonik.conf.secretName" }}'
+    mountSecret:
+      - secret: '{{ list "events" . | include "armonik.conf.mountSecretName" }}'
 
 ports:
   - name: control-port

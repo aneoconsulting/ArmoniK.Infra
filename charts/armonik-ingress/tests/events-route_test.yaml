@@ -13,7 +13,7 @@ tests:
           pattern: '(?s)\{\{- if index \. "control-plane-events" \}\}\s+upstream armonik_events \{\s+zone armonik_events_zone 32k;\s+server \{\{ index \. "control-plane-events" \| quote \}\} resolve;.*?\}\s+\{\{- end \}\}'
       - matchRegex:
           path: spec.target.template.data["armonik.conf"]
-          pattern: '(?s)\{\{- if index \. "control-plane-events" \}\}\s+# [^\n]*\n\s+location \^~ /armonik\.api\.grpc\.v1\.events\.Events/ \{\s+grpc_pass grpc://armonik_events;.*?\}\s+\{\{- end \}\}\s+location ~\* \^/armonik\\\. \{\s+grpc_pass grpc://armonik;'
+          pattern: '(?s)\{\{- if index \. "control-plane-events" \}\}\s+(# [^\n]*\n\s+)+location \^~ /armonik\.api\.grpc\.v1\.events\.Events/ \{\s+error_page 502 = @armonik_events_fallback;\s+grpc_pass grpc://armonik_events;.*?\}\s+location @armonik_events_fallback \{\s+grpc_pass grpc://armonik;.*?\}\s+\{\{- end \}\}\s+location ~\* \^/armonik\\\. \{\s+grpc_pass grpc://armonik;'
 
   - it: routes Events to control_plane_events_url without any template condition
     set:
@@ -51,7 +51,7 @@ tests:
     asserts:
       - matchRegex:
           path: stringData["armonik.conf"]
-          pattern: '(?s)location \^~ /armonik\.api\.grpc\.v1\.events\.Events/ \{\s+grpc_set_header X-Certificate-Client-CN \$client_cn;\s+grpc_set_header X-Certificate-Client-Fingerprint \$client_fingerprint;\s+grpc_pass grpc://armonik_events;'
+          pattern: '(?s)location \^~ /armonik\.api\.grpc\.v1\.events\.Events/ \{\s+error_page 502 = @armonik_events_fallback;\s+grpc_set_header X-Certificate-Client-CN \$client_cn;\s+grpc_set_header X-Certificate-Client-Fingerprint \$client_fingerprint;\s+grpc_pass grpc://armonik_events;.*?location @armonik_events_fallback \{\s+grpc_set_header X-Certificate-Client-CN \$client_cn;\s+grpc_set_header X-Certificate-Client-Fingerprint \$client_fingerprint;\s+grpc_pass grpc://armonik;'
 
   - it: leaves Events on the main upstream with no events URL and no ESO
     set:

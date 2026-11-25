@@ -226,8 +226,14 @@ server {
     {{`{{- if index . "control-plane-events" }}`}}
     {{- end }}
     # Events service to the control plane Deployment dedicated to it; ^~ wins over the regex below.
+    # No live events pod (none ready, or the Deployment removed while this conf is not reloaded):
+    # nginx's own 502, before any stream starts, falls back to the main control plane.
     location ^~ /armonik.api.grpc.v1.events.Events/ {
+        error_page 502 = @armonik_events_fallback;
         {{- dict "mtls" $mtls "upstream" "armonik_events" | include "armonik.ingress.grpcLocation" | nindent 8 }}
+    }
+    location @armonik_events_fallback {
+        {{- dict "mtls" $mtls "upstream" "armonik" | include "armonik.ingress.grpcLocation" | nindent 8 }}
     }
     {{- if not $eventsUrl }}
     {{`{{- end }}`}}

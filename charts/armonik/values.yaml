@@ -428,6 +428,10 @@ dependencies:
           tcp_keepalives_idle: "30"
           tcp_keepalives_interval: "10"
           tcp_keepalives_count: "3"
+          # CloudNativePG sets 5s. Through a Pooler, PgBouncer delays the replies of a GetEvents WAL
+          # stream past it (up to 6s measured); Npgsql's own status every 10s keeps a stream alive
+          # above 20s.
+          wal_sender_timeout: "30s"
       # Nothing needs an external superuser.
       enableSuperuserAccess: false
       monitoring:
@@ -449,10 +453,10 @@ dependencies:
     poolers: []
     # -- Name of the poolers entry every Core process connects through, control plane, polling agents
     # and init Jobs alike: a transaction Pooler holds the server-side connections to its own pool
-    # whatever the number of agents. The control-plane events Deployment stays on the read-write
-    # service (events conf layer): PgBouncer relays its WAL streams one to one and delays the replies
-    # past wal_sender_timeout. Other GetEvents servers go through it. The entry must have type rw and poolMode
-    # transaction or session. Empty: Core connects to the Cluster's read-write service.
+    # whatever the number of agents. Core reads its WAL on the same host: the control-plane events
+    # Deployment stays on the read-write service (events conf layer), and any other pod serving
+    # GetEvents streams through the Pooler, hence wal_sender_timeout above. The entry must have type rw
+    # and poolMode transaction or session. Empty: Core connects to the Cluster's read-write service.
     # Each Core process still keeps its Npgsql pool, now against PgBouncer: max_client_conn per
     # instance caps the agent count (~800 per instance at 10000), so scale instances or lower
     # PostgreSQL__MaxPoolSize.
@@ -466,8 +470,10 @@ dependencies:
     host: ""  # required when externalPostgresql.enabled
     port: 5432
     # -- Pooler in front of the server (RDS Proxy, PgBouncer) for every Core process but the
-    # control-plane events Deployment, which stays on host:port (events conf layer). port defaults to
-    # the server's. With ssl, ca must validate both certificates.
+    # control-plane events Deployment, which stays on host:port (events conf layer). Any other pod
+    # serving GetEvents streams its WAL through it: RDS Proxy does not relay replication, and behind
+    # PgBouncer the server's wal_sender_timeout should be 30s or more. port defaults to the server's.
+    # With ssl, ca must validate both certificates.
     pooler:
       host: ""
       port:

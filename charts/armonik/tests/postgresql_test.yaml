@@ -4,6 +4,7 @@ release:
 templates:
   - secrets/conf-secrets.yaml
   - secrets/conf-mounts.yaml
+  - charts/dependencies/charts/postgresql/templates/cluster.yaml
 values:
   - ../ci/minimal-values.yaml
 set:
@@ -217,3 +218,9 @@ tests:
       - equal:
           path: stringData.PostgreSQL__Host
           value: t-postgresql-rw.NAMESPACE.svc.cluster.local
+  - it: gives a pooled GetEvents WAL stream 30s before the walsender times out
+    template: charts/dependencies/charts/postgresql/templates/cluster.yaml
+    asserts:
+      - equal:
+          path: spec.postgresql.parameters.wal_sender_timeout
+          value: 30s

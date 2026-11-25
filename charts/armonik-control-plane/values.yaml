@@ -189,6 +189,58 @@ deployment:
       - secret: '{{ list "control" . | include "armonik.conf.mountSecretName" }}'
   imagePullSecrets: []
 
+# Second Deployment of the control-plane image, dedicated to the Events service (GetEvents): its
+# long-lived streams and their database watchers (MongoDB change streams, PostgreSQL replication
+# slots) then get their own pods, connection pools and scaling, away from submission. The ingress
+# routes /armonik.api.grpc.v1.events.Events/ to its Service, <fullname>-events; a client reaching
+# the main Service directly still gets Events there, since both run every gRPC service.
+events:
+  # -- Render the events Deployment, its Service, and its PDB and ScaledObject when enabled.
+  enabled: false
+  # -- Ignored when `events.hpa.enabled`.
+  replicas: 1
+  # -- KEDA ScaledObject of the events Deployment, same shape as `hpa`. A stream holds its pod for
+  # its whole life, so scale-in cuts streams (clients get Unavailable and resubscribe).
+  hpa:
+    enabled: false
+    annotations: {}
+    pollingInterval: 30
+    cooldownPeriod: 300
+    minReplicaCount: 1
+    maxReplicaCount: 5
+    triggers:
+      - type: cpu
+        metricType: Utilization
+        metadata:
+          value: "80"
+  # -- PodDisruptionBudget of the events Deployment, same shape as `podDisruptionBudget`.
+  podDisruptionBudget:
+    enabled: false
+    minAvailable:
+    maxUnavailable:
+    labels: {}
+    annotations: {}
+  # -- Instead of the chart-level `resources`. Each of these keys, when non-empty, replaces its
+  # chart-level twin as a whole; empty, the chart-level one applies: resources, nodeSelector, tolerations,
+  # affinity, priorityClassName, podSecurityContext, securityContext, livenessProbe, startupProbe,
+  # extraEnv, extraEnvFrom, extraVolumeMounts, extraVolumes, extraContainers,
+  # extraInitContainers, containerPatch, podSpecPatch, labels, annotations, podLabels,
+  # podAnnotations.
+  resources: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  # -- Merged last over the chart conf and deployment.conf, for the events pods only. They never
+  # run the init (InitServices__Init* false). The events layer, after core, holds the PostgreSQL
+  # server itself, so the WAL streams skip any pooler. Pool size, e.g.:
+  #   env:
+  #     PostgreSQL__MaxPoolSize: "20"
+  conf:
+    envSecret:
+      - '{{ list "events" . | include "armonik.conf.secretName" }}'
+    mountSecret:
+      - secret: '{{ list "events" . | include "armonik.conf.mountSecretName" }}'
+
 ports:
   - name: control-port
     containerPort: 1080

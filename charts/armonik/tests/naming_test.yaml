@@ -51,6 +51,36 @@ tests:
           path: data.control-plane
           value: dC1jb250cm9sLXBsYW5lLnJlbC5zdmMuY2x1c3Rlci5sb2NhbDo1MDAx # t-control-plane.rel.svc.cluster.local:5001
 
+  - it: URLs Secret has no events key unless the control plane deploys its events Deployment
+    template: secrets/armonik-urls.yaml
+    asserts:
+      - notExists:
+          path: data.control-plane-events
+
+  - it: URLs Secret dials the Service of the events Deployment, on the control port
+    template: secrets/armonik-urls.yaml
+    set:
+      control-plane:
+        events:
+          enabled: true
+    asserts:
+      - equal:
+          path: data.control-plane-events
+          value: dC1jb250cm9sLXBsYW5lLWV2ZW50cy5yZWwuc3ZjLmNsdXN0ZXIubG9jYWw6MTA4MA== # t-control-plane-events.rel.svc.cluster.local:1080
+
+  - it: URLs Secret takes the events URL from ingress.control_plane_events_url
+    template: secrets/armonik-urls.yaml
+    set:
+      control-plane:
+        events:
+          enabled: true
+      ingress:
+        control_plane_events_url: events.example:443
+    asserts:
+      - equal:
+          path: data.control-plane-events
+          value: ZXZlbnRzLmV4YW1wbGU6NDQz # events.example:443
+
   - it: redis users Secret is the one valkey reads, and the one the core layer reads back
     set:
       dependencies:

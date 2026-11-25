@@ -3,7 +3,8 @@
   Takes dict "root" $ "component" <app.kubernetes.io/component> "values" <podDisruptionBudget block>:
   {enabled, minAvailable, maxUnavailable, labels, annotations}, at most one bound set (0 counts as set);
   maxUnavailable 1 otherwise. An optional "image" (the component's armonik.utils.imageConf result) sets
-  the version label, see armonik.labels.
+  the version label, see armonik.labels. An optional "name" replaces armonik.fullname, for a chart with
+  several PDBs.
 */}}
 {{- define "armonik.pdb" -}}
   {{- $root := .root -}}
@@ -19,7 +20,7 @@
 apiVersion: {{ include "armonik.pdb.apiVersion" $root }}
 kind: PodDisruptionBudget
 metadata:
-  name: {{ include "armonik.fullname" $root | quote }}
+  name: {{ .name | default (include "armonik.fullname" $root) | quote }}
   namespace: {{ include "armonik.namespace" $root | quote }}
   {{- with $v.annotations }}
   annotations:

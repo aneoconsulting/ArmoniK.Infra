@@ -91,3 +91,68 @@ securityContext:
 {{- end }}
 enableServiceLinks: true
 {{- end -}}
+
+
+{{/*
+Control-plane Deployment, shared by the main one and the events one. Takes dict "root" (the chart
+context, or the fabricated one of the events Deployment), "component", "name", "conf" (resolved), and
+"replicas" (nil leaves the count to the ScaledObject). Labels, annotations and the pod spec come from
+.root.Values.
+*/}}
+{{- define "armonik.control.deployment" -}}
+{{- $root := .root -}}
+{{- $v := $root.Values -}}
+{{- $image := include "armonik.control.imageConf" $root | fromYaml -}}
+{{- $ctx := dict "root" $root "conf" .conf "image" $image -}}
+{{- $podSpec := list (include "armonik.control.podSpec" $ctx) $v.podSpecPatch "podSpecPatch" | include "armonik.utils.patch" -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .name | quote }}
+  namespace: {{ include "armonik.namespace" $root }}
+  labels:
+    app.kubernetes.io/component: {{ .component | quote }}
+    {{- include "armonik.labels" (list $root $image) | nindent 4 }}
+    {{- with $v.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with $v.annotations}}
+  annotations:
+  {{- range $key, $value := . }}
+    {{ $key }}: {{ $value }}
+  {{- end }}
+  {{- end }}
+spec:
+  progressDeadlineSeconds: 600
+  {{- if not (kindIs "invalid" .replicas) }}
+  replicas: {{ .replicas }}
+  {{- end }}
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: {{ .component | quote }}
+      {{- include "armonik.selectorLabels" $root | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: {{ .component | quote }}
+        armonik.fr/deployment: {{ include "armonik.conf.source" $root | quote }}
+        {{- include "armonik.labels" (list $root $image) | nindent 8 }}
+        {{- with $v.labels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with $v.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with $v.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec: {{- $podSpec | nindent 6 }}
+{{- end -}}
+
+
+{{/* Name of the events Deployment and of its Service. */}}
+{{- define "armonik.control.events.name" -}}
+  {{- include "armonik.fullname" . | printf "%s-events" | trunc 63 | trimSuffix "-" -}}
+{{- end -}}

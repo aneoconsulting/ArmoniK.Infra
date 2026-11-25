@@ -1,1 +1,7 @@
-{{- dict "root" $ "component" "control-plane" "values" .Values.podDisruptionBudget "image" (include "armonik.control.imageConf" $ | fromYaml) | include "armonik.pdb" }}
+{{- $image := include "armonik.control.imageConf" $ | fromYaml -}}
+{{- dict "root" $ "component" "control-plane" "values" .Values.podDisruptionBudget "image" $image | include "armonik.pdb" }}
+{{- $events := .Values.events | default dict -}}
+{{- if $events.enabled }}
+---
+{{ dict "root" $ "component" "control-plane-events" "name" (include "armonik.control.events.name" .) "values" $events.podDisruptionBudget "image" $image | include "armonik.pdb" }}
+{{- end }}

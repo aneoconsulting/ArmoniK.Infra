@@ -114,7 +114,8 @@ service:
 # cluster.local.
 clusterDomain: ""
 
-# -- Shared memory zone of the nginx upstream of the control planes (an nginx size: 32k, 1m).
+# -- Shared memory zone of each nginx upstream of the control planes, the events one included (an
+# nginx size: 32k, 1m).
 # The control-plane Service is resolved to one address per pod, each a peer of this zone (~3 KB):
 # 32k holds about 11 replicas. An address that does not fit gets no request, nginx only logging
 # "no memory in upstream zone". Raise it with the control-plane replicas, 1m holds a few hundred.
@@ -230,10 +231,15 @@ loadBalancer:
   # Pod labels are out of reach: the selector is immutable.
   podSpecPatch: {}
 
-# Secret holding the upstream URLs (keys control-plane, grafana, seq), read through ESO: its name in
-# urlsSecretNamespace (default: the release namespace), or its key in urlsSecretStoreName.
-# Empty, or ESO unavailable: the nginx conf is a plain Secret built from control_plane_url,
-# grafana_url and seq_url.
+# Secret holding the upstream URLs (keys control-plane, control-plane-events, grafana, seq), read
+# through ESO: its name in urlsSecretNamespace (default: the release namespace), or its key in
+# urlsSecretStoreName. Empty, or ESO unavailable: the nginx conf is a plain Secret built from
+# control_plane_url, control_plane_events_url, grafana_url and seq_url.
+#
+# control-plane-events (control_plane_events_url) is the Service of the control plane Deployment
+# dedicated to the Events service (armonik-control-plane events.enabled): when set, nginx routes
+# /armonik.api.grpc.v1.events.Events/ there and every other gRPC call to control-plane. Absent, Events
+# goes to control-plane like the rest. Ignored with loadBalancer.enabled.
 #
 # Flipping this on an existing release fails: both modes produce a Secret of the same name, and Helm
 # refuses to adopt one it does not own. Delete the ExternalSecret first (its Secret goes with it),

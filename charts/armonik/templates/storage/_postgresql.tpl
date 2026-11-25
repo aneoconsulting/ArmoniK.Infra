@@ -91,7 +91,7 @@ through armonik.postgresqlConnection.conf. The postgres OPERATOR may be managed 
   {{- /* The operator authenticates its Poolers with a client certificate from its own CA, which a
          cert-manager clientCASecret no longer trusts. */ -}}
   {{- $pooler := include "armonik.postgresql.corePooler" . | fromYaml -}}
-  {{- if and $pooler $certManager (not $pooler.authQuerySecret) -}}
+  {{- if and $pooler $certManager (not (and $pooler.authQuerySecret $pooler.authQuery)) -}}
     {{- printf "dependencies.postgresql.poolers %q needs authQuerySecret and authQuery with certManager.enabled: PostgreSQL then trusts only the cert-manager client CA and rejects the certificate the operator gives the Pooler. Set them up as the CloudNativePG Pooler documentation describes, or leave certManager.enabled=false." $pooler.name | fail -}}
   {{- end -}}
   {{- if and $ssl $pooler (not $certManager) -}}

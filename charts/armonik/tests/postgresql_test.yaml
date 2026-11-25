@@ -165,3 +165,25 @@ tests:
     asserts:
       - failedTemplate:
           errorPattern: needs authQuerySecret and authQuery with certManager.enabled
+  - it: fails on corePooler with cert-manager certificates and authQuerySecret but no authQuery
+    template: secrets/conf-secrets.yaml
+    values:
+      - ../ci/postgresql-certmanager-values.yaml
+    set:
+      global:
+        armonik:
+          certManager:
+            issuer:
+              kind: ClusterIssuer
+      dependencies:
+        postgresql:
+          corePooler: rw
+          poolers:
+            - name: rw
+              poolMode: transaction
+              instances: 1
+              authQuerySecret:
+                name: pooler-auth
+    asserts:
+      - failedTemplate:
+          errorPattern: needs authQuerySecret and authQuery with certManager.enabled

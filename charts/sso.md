@@ -201,6 +201,13 @@ The umbrella can deploy the identity provider itself: a Keycloak served by the A
 `/auth`, through the official Keycloak operator. It is the turnkey path: no IdP to provision, and
 the ingress SSO points at it without `issuerUrl` nor `clientId`.
 
+> **Development only.** This Keycloak has no database and runs a single instance: users and
+> changes made in Keycloak are lost when its pod is replaced, and reimported users get new ids, so
+> with `identityClaim: user` they lose their ArmoniK sessions. It also relies on
+> `spec.unsupported.podTemplate`, a Tech Preview of the operator. In production, set `issuerUrl` to
+> an identity provider of your own, such as a Keycloak with a database (see
+> [Identity providers](#identity-providers)).
+
 ```yaml
 global:
   armonik:

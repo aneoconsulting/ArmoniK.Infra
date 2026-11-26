@@ -160,6 +160,10 @@ ingress:
     gui_configuration: {}
 
 # ==== Keycloak ====
+# DEVELOPMENT ONLY: no database, a single instance, and a pod template the operator supports as a Tech
+# Preview only (see below). In production, point ingress.sso.oauth2Proxy.issuerUrl at an identity
+# provider of your own (charts/sso.md).
+#
 # Identity provider of the ingress SSO, a Keycloak CR of the Keycloak operator, served by the ArmoniK
 # ingress under /auth. Enabled by global.armonik.keycloak.enabled, which also names its realm and the
 # client of the ingress: with it, ingress.sso.oauth2Proxy.issuerUrl and clientId default to them. It
@@ -168,7 +172,8 @@ ingress:
 #
 # No database: an init container imports the realm below into the pod's own dev-file database at
 # every pod start. Users, sessions and changes made in Keycloak are lost when the pod is replaced,
-# hence a single instance; write them in realm to keep them. The client secret is
+# hence a single instance; write them in realm to keep them. Reimported users get new ids, so with
+# ingress.sso.identityClaim user their ArmoniK identity changes and they lose their sessions. The client secret is
 # ingress.sso.oauth2Proxy.existingSecret's client-secret, shared with oauth2-proxy.
 keycloak:
   # -- Image of the server and of the realm import, the operator's default.

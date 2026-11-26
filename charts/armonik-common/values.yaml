@@ -55,7 +55,8 @@ global:
         available: true
         namespace: '{{ .Values.global.armonik.operators.keycloakOperator.deploy | empty | ternary "" .Release.Namespace }}'
     # -- Keycloak identity provider deployed by the umbrella (keycloak.*) and served by the ArmoniK
-    # ingress under /auth: its realm and the client of the ingress SSO. Global because the umbrella
+    # ingress under /auth, for development only (see keycloak in the umbrella values): its realm and
+    # the client of the ingress SSO. Global because the umbrella
     # (Keycloak CR, realm) and the ingress (oauth2-proxy issuer and client, /auth route) both read it.
     keycloak:
       enabled: false

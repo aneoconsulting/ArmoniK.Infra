@@ -203,3 +203,10 @@ A reinstall reuses the old MongoDB volume, so partitions of a previous release s
 database.
 
 {{- with .Subcharts.ingress }}{{ include "armonik.ingress.sso.notes" . }}{{ end }}
+{{- if (include "armonik.keycloak" . | fromYaml).enabled }}
+
+WARNING: the Keycloak of global.armonik.keycloak.enabled is for development only. It has no
+  database: users and changes made in Keycloak are lost when its pod is replaced, and reimported
+  users get new ids, so they may lose their sessions. In production, set
+  ingress.sso.oauth2Proxy.issuerUrl to an identity provider of your own.
+{{- end }}

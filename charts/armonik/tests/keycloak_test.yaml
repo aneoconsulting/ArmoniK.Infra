@@ -7,6 +7,7 @@ capabilities:
   majorVersion: 1
   minorVersion: 31
 templates:
+  - NOTES.txt
   - keycloak/keycloak.yaml
   - secrets/armonik-urls.yaml
   - validate.yaml
@@ -356,3 +357,25 @@ tests:
     asserts:
       - failedTemplate:
           errorPattern: 'global.armonik.keycloak.realm must be letters, digits'
+
+  - it: warns in the NOTES that it is for development only
+    template: NOTES.txt
+    asserts:
+      - matchRegexRaw:
+          pattern: 'WARNING: the Keycloak of global\.armonik\.keycloak\.enabled is for development only'
+
+  - it: does not warn without it
+    template: NOTES.txt
+    set:
+      global:
+        armonik:
+          keycloak:
+            enabled: false
+      ingress:
+        sso:
+          oauth2Proxy:
+            issuerUrl: https://idp.example.com/realms/armonik
+            clientId: armonik
+    asserts:
+      - notMatchRegexRaw:
+          pattern: 'for development only'

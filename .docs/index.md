@@ -34,6 +34,7 @@ charts/keda-hpa/index
 :caption: ArmoniK
 
 armonik/index
+armonik-charts/index
 ```
 
 ```{toctree}

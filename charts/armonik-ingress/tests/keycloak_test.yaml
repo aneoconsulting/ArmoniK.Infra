@@ -53,3 +53,63 @@ tests:
       - notMatchRegex:
           path: stringData["armonik.conf"]
           pattern: '(?s)# grpc port.*keycloak'
+
+  # oauth2-proxy reaches the realm through the Keycloak Service, nginx starting after it
+  - it: gives oauth2-proxy the URL of Keycloak when the issuer is its realm
+    values:
+      - ../ci/sso-values.yaml
+    set:
+      urlsSecretName: ""
+      control_plane_url: control-plane:1080
+      sso:
+        oauth2Proxy:
+          issuerUrl: ""
+          clientId: ""
+    asserts:
+      - equal:
+          path: stringData["keycloak-url"]
+          value: http://keycloak:8080
+
+  - it: reads that URL from the URLs Secret through ESO
+    values:
+      - ../ci/sso-values.yaml
+    set:
+      global:
+        armonik:
+          operators:
+            externalSecrets:
+              available: true
+      urlsSecretName: example-urls
+      sso:
+        oauth2Proxy:
+          issuerUrl: ""
+          clientId: ""
+    asserts:
+      - equal:
+          path: spec.target.template.data["keycloak-url"]
+          value: '{{ .keycloak }}'
+
+  - it: gives none for an issuer set explicitly, discovered as usual
+    values:
+      - ../ci/sso-values.yaml
+    set:
+      urlsSecretName: ""
+      control_plane_url: control-plane:1080
+    asserts:
+      - notExists:
+          path: stringData["keycloak-url"]
+
+  - it: fails without a URL of Keycloak
+    values:
+      - ../ci/sso-values.yaml
+    set:
+      urlsSecretName: ""
+      control_plane_url: control-plane:1080
+      keycloak_url: ""
+      sso:
+        oauth2Proxy:
+          issuerUrl: ""
+          clientId: ""
+    asserts:
+      - failedTemplate:
+          errorPattern: 'global.armonik.keycloak.enabled needs keycloak_url, or urlsSecretName with ESO'

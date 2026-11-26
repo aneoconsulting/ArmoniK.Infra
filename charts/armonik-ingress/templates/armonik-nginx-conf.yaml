@@ -7,6 +7,10 @@
   {{- fail "urlsSecretStoreName excludes urlsSecretNamespace, which routes the Kubernetes provider only" -}}
 {{- end -}}
 {{- /* No namespace key: without a storeName, sourceRef returns nothing and this chart's own SecretStore is used. */ -}}
+{{- $keycloakUrl := (include "armonik.ingress.sso" . | fromYaml).keycloakRealmPath | empty | not -}}
+{{- if and $keycloakUrl (not $useEso) (empty .Values.keycloak_url) -}}
+  {{- fail "global.armonik.keycloak.enabled needs keycloak_url, or urlsSecretName with ESO: nginx and oauth2-proxy reach Keycloak through it" -}}
+{{- end -}}
 {{- $store := dict "storeName" $storeName "storeKind" (.Values.urlsSecretStoreKind | default "") "version" (.Values.urlsSecretVersion | default "") -}}
 {{- if $useEso }}
 apiVersion: external-secrets.io/v1
@@ -42,6 +46,10 @@ spec:
       data:
         armonik.conf: |
           {{- dict "root" . "useEso" true | include "armonik.conf.render" | nindent 10 }}
+        {{- if $keycloakUrl }}
+        # In-cluster URL of Keycloak, for oauth2-proxy
+        keycloak-url: {{ `{{ .keycloak }}` | squote }}
+        {{- end }}
   dataFrom:
     - extract:
         key: {{ $urlsSecretKey | quote }}
@@ -60,4 +68,7 @@ type: Opaque
 stringData:
   armonik.conf: |
     {{- dict "root" . "useEso" false | include "armonik.conf.render" | nindent 4 }}
+  {{- if $keycloakUrl }}
+  keycloak-url: {{ .Values.keycloak_url | quote }}
+  {{- end }}
 {{- end }}

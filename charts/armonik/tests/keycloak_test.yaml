@@ -206,6 +206,51 @@ tests:
           path: spec.template.spec.initContainers[0].args
           content: --client-id=armonik
 
+  # nginx serves the issuer and starts after oauth2-proxy: discovery would fail at the first start
+  - it: reaches the realm through the Keycloak Service, without discovery
+    template: charts/ingress/templates/deployments/nginx.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.initContainers[0].args
+          content: --skip-oidc-discovery=true
+      - contains:
+          path: spec.template.spec.initContainers[0].args
+          content: --login-url=https://armonik.example.com/auth/realms/armonik/protocol/openid-connect/auth
+      - contains:
+          path: spec.template.spec.initContainers[0].args
+          content: --redeem-url=$(ARMONIK_KEYCLOAK_URL)/auth/realms/armonik/protocol/openid-connect/token
+      - contains:
+          path: spec.template.spec.initContainers[0].args
+          content: --oidc-jwks-url=$(ARMONIK_KEYCLOAK_URL)/auth/realms/armonik/protocol/openid-connect/certs
+      - contains:
+          path: spec.template.spec.initContainers[0].args
+          content: --profile-url=$(ARMONIK_KEYCLOAK_URL)/auth/realms/armonik/protocol/openid-connect/userinfo
+      - contains:
+          path: spec.template.spec.initContainers[0].env
+          content:
+            name: ARMONIK_KEYCLOAK_URL
+            valueFrom:
+              secretKeyRef:
+                name: t-ingress-nginx-conf
+                key: keycloak-url
+
+  # An extra issuer runs its own discovery
+  - it: checks extra audiences with the verifier of the provider
+    template: charts/ingress/templates/deployments/nginx.yaml
+    set:
+      ingress:
+        sso:
+          oauth2Proxy:
+            bearerTokens:
+              extraAudiences: [armonik-cli]
+    asserts:
+      - contains:
+          path: spec.template.spec.initContainers[0].args
+          content: --oidc-extra-audience=armonik-cli
+      - notContains:
+          path: spec.template.spec.initContainers[0].args
+          content: --extra-jwt-issuers=https://armonik.example.com/auth/realms/armonik=armonik-cli
+
   - it: keeps an issuerUrl and a clientId set explicitly
     template: charts/ingress/templates/deployments/nginx.yaml
     set:
@@ -218,6 +263,9 @@ tests:
       - contains:
           path: spec.template.spec.initContainers[0].args
           content: --oidc-issuer-url=https://idp.example.com/realms/other
+      - notContains:
+          path: spec.template.spec.initContainers[0].args
+          content: --skip-oidc-discovery=true
       - contains:
           path: spec.template.spec.initContainers[0].args
           content: --client-id=other

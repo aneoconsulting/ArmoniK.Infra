@@ -1,8 +1,9 @@
 {{/*
 sso values, validated, as YAML: `enabled: false` when sso is off, else the values plus publicUrl
 without a trailing slash, host (host[:port] of publicUrl), hostName (host alone, lowercased),
-secure (publicUrl is https) and identityVar (the nginx variable carrying identityClaim from the
-auth subrequest). Takes the root.
+secure (publicUrl is https), identityVar (the nginx variable carrying identityClaim from the
+auth subrequest) and keycloakRealmPath (the realm path when the issuer is the Keycloak of the
+umbrella, else empty). Takes the root.
 The single entry point: the armonik.ingress.sso.validate* helpers below fail and render nothing.
 */}}
 {{- define "armonik.ingress.sso" -}}
@@ -17,11 +18,13 @@ enabled: false
            The validators run on the resulting values, through a context keeping the whole root. */ -}}
     {{- $root := . -}}
     {{- $keycloak := include "armonik.keycloak" . | fromYaml -}}
+    {{- $realmPath := "" -}}
     {{- if $keycloak.enabled -}}
       {{- $values := deepCopy .Values -}}
       {{- $proxy := $values.sso.oauth2Proxy | default dict -}}
       {{- if not $proxy.issuerUrl -}}
-        {{- $_ := printf "%s%s/realms/%s" ($sso.publicUrl | toString | trimSuffix "/") $keycloak.path $keycloak.realm | set $proxy "issuerUrl" -}}
+        {{- $realmPath = printf "%s/realms/%s" $keycloak.path $keycloak.realm -}}
+        {{- $_ := printf "%s%s" ($sso.publicUrl | toString | trimSuffix "/") $realmPath | set $proxy "issuerUrl" -}}
       {{- end -}}
       {{- if not $proxy.clientId -}}
         {{- $_ := set $proxy "clientId" $keycloak.clientId -}}
@@ -40,6 +43,8 @@ enabled: false
     {{- $_ := regexReplaceAll "^https?://" $url "" | set $out "host" -}}
     {{- $_ := regexReplaceAll "^https?://|:[0-9]+$" $url "" | lower | set $out "hostName" -}}
     {{- $_ := hasPrefix "https://" $url | set $out "secure" -}}
+    {{- /* Path of the realm when the issuer is the Keycloak of the umbrella, else empty */ -}}
+    {{- $_ := set $out "keycloakRealmPath" $realmPath -}}
     {{- $_ := index (include "armonik.ingress.sso.identityVars" . | fromYaml) $claim | set $out "identityVar" -}}
     {{- $_ := list $sso "networkPolicy" "idpEgressCidrs" | include "armonik.utils.index" | fromYamlArray | default list | set $out "idpEgressCidrs" -}}
     {{- $out | toYaml -}}

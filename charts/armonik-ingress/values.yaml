@@ -238,7 +238,8 @@ sso:
     # the redirect to the publicUrl host.
     bearerTokens:
       enabled: false
-      # -- Audiences accepted besides clientId, from issuerUrl (--extra-jwt-issuers).
+      # -- Audiences accepted besides clientId, from issuerUrl (--extra-jwt-issuers, or
+      # --oidc-extra-audience when the issuer is the Keycloak of the umbrella).
       extraAudiences: []
     resources: {}
     # -- Container securityContext; empty: the chart-level one with a read-only root filesystem.

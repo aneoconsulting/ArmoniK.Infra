@@ -221,8 +221,12 @@ ingress:
 ```
 
 - **Issuer**: `<publicUrl>/auth/realms/<realm>`, the default of `sso.oauth2Proxy.issuerUrl`; its
-  client, the default of `clientId`. Values set explicitly win. oauth2-proxy reads the discovery
-  document through the public URL, which the nginx pod must therefore reach.
+  client, the default of `clientId`. Values set explicitly win. With the derived issuer,
+  oauth2-proxy skips OIDC discovery: the issuer is served by the nginx of the same pod, which starts
+  after oauth2-proxy, so discovery would fail at the first start. Browsers go to the public login
+  URL; oauth2-proxy redeems codes and fetches keys and user info from the Keycloak Service, whose
+  tokens still carry the public issuer. `bearerTokens.extraAudiences` then become
+  `--oidc-extra-audience`, an extra issuer running its own discovery.
 - **Default realm**: the groups of `keycloak.groups` (`armonik-admins`, `armonik-users`), and the
   client of the ingress: standard flow with PKCE, redirect URI `<publicUrl>/oauth2/callback`, an
   audience mapper for oauth2-proxy, and a mapper writing the group names to the `groupsClaim` of
@@ -295,8 +299,8 @@ server by `helm install` and from `--kube-version` by `helm template`. The ingre
 still installs on 1.25 with SSO off.
 
 **Startup.** nginx starts once the sidecar's `startupProbe` passes, so nginx never serves a request
-oauth2-proxy cannot answer. oauth2-proxy runs OIDC discovery before listening and exits if the IdP
-is unreachable: the sidecar then restarts with a back-off and nginx waits, the grpc port included.
+oauth2-proxy cannot answer. oauth2-proxy runs OIDC discovery before listening (except with the
+Keycloak of the umbrella, see above) and exits if the IdP is unreachable: the sidecar then restarts with a back-off and nginx waits, the grpc port included.
 That port has no use for oauth2-proxy, but an IdP outage at pod start now delays it; a running pod
 is not affected.
 

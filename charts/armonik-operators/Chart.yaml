@@ -1,6 +1,6 @@
 apiVersion: v2
 name: armonik-operators
-description: Install-once cluster operators for ArmoniK (External Secrets, KEDA, cert-manager, Percona MongoDB operator, CloudNativePG, kube-prometheus-stack, optionally google-cas-issuer). Deploy once per cluster, ahead of the ArmoniK application release(s).
+description: Install-once cluster operators for ArmoniK (External Secrets, KEDA, cert-manager, Percona MongoDB operator, CloudNativePG, kube-prometheus-stack, optionally google-cas-issuer and the Keycloak operator). Deploy once per cluster, ahead of the ArmoniK application release(s).
 icon: https://25070129.fs1.hubspotusercontent-eu1.net/hubfs/25070129/Website/Images%20-%20Website/ArmoniK/logo_armonik_by_aneo%201.svg
 kubeVersion: ">=v1.25.0-0"
 keywords:
@@ -58,3 +58,9 @@ dependencies:
     repository: https://charts.jetstack.io
     condition: global.armonik.operators.googleCasIssuer.deploy
     alias: google-cas-issuer
+  # Official chart, published as an OCI artifact with each operator release (labelled experimental).
+  - name: keycloak-operator-helm
+    version: 26.x.x
+    repository: oci://quay.io/keycloak
+    alias: keycloak-operator
+    condition: global.armonik.operators.keycloakOperator.deploy

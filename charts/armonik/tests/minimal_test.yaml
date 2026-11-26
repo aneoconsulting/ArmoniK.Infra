@@ -32,6 +32,31 @@ tests:
       - equal:
           path: stringData.Serilog__MinimumLevel
           value: Information
+  # Core records the authorization decisions at Information
+  - it: keeps the authorization audit at Information above it
+    template: secrets/conf-secrets.yaml
+    documentSelector:
+      path: metadata.name
+      value: t-conf-log
+    set:
+      conf:
+        log:
+          minimumLevel: Warning
+    asserts:
+      - equal:
+          path: stringData.Serilog__MinimumLevel
+          value: Warning
+      - equal:
+          path: stringData["Serilog__MinimumLevel__Override__ArmoniK.Authorization.Audit"]
+          value: Information
+  - it: needs no audit override at Information
+    template: secrets/conf-secrets.yaml
+    documentSelector:
+      path: metadata.name
+      value: t-conf-log
+    asserts:
+      - notExists:
+          path: stringData["Serilog__MinimumLevel__Override__ArmoniK.Authorization.Audit"]
   - it: injects no storage env when the backends are disabled
     template: secrets/conf-secrets.yaml
     documentSelector:

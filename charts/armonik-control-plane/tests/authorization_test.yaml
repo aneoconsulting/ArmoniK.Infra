@@ -1,0 +1,156 @@
+suite: authorization and partitions
+templates:
+  - jobs/init.yaml
+  - deployments/control-plane.yaml
+values:
+  - ../ci/authorization-values.yaml
+tests:
+  - it: feeds the authorization to the init job, which reconciles it
+    template: jobs/init.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: Authorization__Authentication
+            value: Xfcc,Proxy
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: Authorization__ConfigRevision
+            value: "3"
+      # grants are indexed in id order; a null grant is dropped
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: Authorization__Grants__0__Id
+            value: platform
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: Authorization__Grants__0__Condition
+          any: true
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: Authorization__Grants__1__Condition
+            value: session.owner == request.caller && grant.principal in session.createdUnder
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: Authorization__Grants__2__Id
+          any: true
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: Identity__UserHeader
+            value: X-Auth-Request-Email
+  - it: renders the access model sets in name order, an added set, and drops a null one
+    template: jobs/init.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: Authorization__PermissionSets__0__Name
+            value: cluster-admin
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: Authorization__PermissionSets__0__Permissions__0
+            value: "*"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: Authorization__PermissionSets__5__Name
+            value: team-reader
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: Authorization__PermissionSets__6__Name
+          any: true
+  - it: gives the control plane the same authorization, which it validates at startup
+    template: deployments/control-plane.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: Authorization__Authentication
+            value: Xfcc,Proxy
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: Authorization__Grants__1__Principal
+            value: role:modelling-team
+  - it: renders no authorization with None, Core then allowing every request
+    template: jobs/init.yaml
+    set:
+      authorization:
+        authentication: None
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: Authorization__Authentication
+          any: true
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: Identity__UserHeader
+          any: true
+  - it: feeds extra partitions to the init job as indexed env
+    template: jobs/init.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: InitServices__Partitioning__Partitions__0
+            value: '{"ParentPartitionIds":[],"PartitionId":"default","PodConfiguration":null,"PodMax":100,"PodReserved":50,"PreemptionPercentage":20,"Priority":1}'
+  - it: fails on an unknown method
+    template: jobs/init.yaml
+    set:
+      authorization.authentication: Mtls
+    asserts:
+      - failedTemplate:
+          errorPattern: 'authorization.authentication "Mtls" holds "Mtls"'
+  - it: fails on a repeated method
+    template: jobs/init.yaml
+    set:
+      authorization.authentication: Xfcc,Xfcc
+    asserts:
+      - failedTemplate:
+          errorPattern: 'repeats "Xfcc"'
+  - it: fails on None combined with a method
+    template: jobs/init.yaml
+    set:
+      authorization.authentication: None,Xfcc
+    asserts:
+      - failedTemplate:
+          errorPattern: "combines None with a method"
+  - it: fails on a revision that is not a non-negative integer
+    template: jobs/init.yaml
+    set:
+      authorization.configRevision: -1
+    asserts:
+      - failedTemplate:
+          errorPattern: "authorization.configRevision must be a non-negative integer"
+  - it: fails on a grant without principal
+    template: jobs/init.yaml
+    set:
+      authorization.grants.broken.permissionSet: session-view
+    asserts:
+      - failedTemplate:
+          errorPattern: "authorization.grants.broken.principal is required"
+  - it: fails on a permission set that is not a list
+    template: jobs/init.yaml
+    set:
+      authorization.permissionSets.broken: session:read
+    asserts:
+      - failedTemplate:
+          errorPattern: "authorization.permissionSets.broken must be a list"
+  - it: fails on the rbac values of the removed authentication
+    # the guard is raised from the first template that calls the helper
+    template: jobs/init.yaml
+    set:
+      rbac.authentication.required: true
+    asserts:
+      - failedTemplate:
+          errorPattern: "rbac .* is removed"

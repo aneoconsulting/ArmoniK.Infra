@@ -1,0 +1,42 @@
+suite: Keycloak operator
+templates:
+  - charts/keycloak-operator/templates/deployment.yaml
+  - NOTES.txt
+release:
+  name: op
+tests:
+  # Disabled, the subchart is not rendered at all: NOTES list the operators installed
+  - it: is not installed by default, only the optional Keycloak needs it
+    template: NOTES.txt
+    asserts:
+      - notMatchRegexRaw:
+          pattern: 'keycloakOperator \(CRD groups'
+
+  - it: installs the official operator with keycloakOperator.deploy
+    template: charts/keycloak-operator/templates/deployment.yaml
+    set:
+      global:
+        armonik:
+          operators:
+            keycloakOperator:
+              deploy: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - matchRegex:
+          path: spec.template.spec.containers[0].image
+          pattern: '^quay\.io/keycloak/keycloak-operator:26\.'
+
+  - it: lists its CRD group and the resources to check before uninstalling
+    template: NOTES.txt
+    set:
+      global:
+        armonik:
+          operators:
+            keycloakOperator:
+              deploy: true
+    asserts:
+      - matchRegexRaw:
+          pattern: 'keycloakOperator \(CRD groups: k8s\.keycloak\.org\)'
+      - matchRegexRaw:
+          pattern: 'kubectl get keycloaks\.k8s\.keycloak\.org,keycloakrealmimports\.k8s\.keycloak\.org -A'

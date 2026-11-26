@@ -5,6 +5,8 @@
 # subchart's own configuration.
 # googleCasIssuer keeps deploy=false: it is GCP-specific, needed only by a googleCas issuer provider.
 # Opt in with --set global.armonik.operators.googleCasIssuer.deploy=true.
+# keycloakOperator keeps deploy=false: only the optional Keycloak identity provider needs it
+# (dependencies.keycloak). Opt in with --set global.armonik.operators.keycloakOperator.deploy=true.
 global:
   armonik:
     operators:
@@ -21,6 +23,8 @@ global:
       prometheusOperator:
         deploy: true
       googleCasIssuer:
+        deploy: false
+      keycloakOperator:
         deploy: false
 
 # --- Operator subchart configuration, at operators.<op>.* under the umbrella ---

@@ -37,40 +37,28 @@ without a gateway), else 8080/9080.
 {{- end }}
 {{- end }}
 
-{{/* Regex alternation of mtls.trustedCommonNames, each quoted as a literal; empty unless mTLS is on. Takes .Values. */}}
-{{- define "armonik.ingress.mtlsCnPattern" -}}
-  {{- $mtls := .mtls | default dict -}}
-  {{- if $mtls.enabled -}}
-    {{- if $mtls.trustedCommonNames -}}
-      {{- $patterns := list -}}
-      {{- range $mtls.trustedCommonNames -}}
-        {{- $patterns = append $patterns (regexQuoteMeta .) -}}
-      {{- end -}}
-      {{- join "|" $patterns -}}
-    {{- end -}}
-  {{- end -}}
-{{- end -}}
-
 {{/*
-identityHeaders as YAML: per key, the header name and the nginx variable carrying the client's own
-value ($http_ plus the name lowercased, dashes as underscores). Fails on a malformed or repeated
-name. Takes .Values.
+identityHeaders as YAML: per key, the header name. Fails on a malformed or repeated name, and on
+Authorization, which carries the tokens of ArmoniK Core's Token method. Takes .Values.
 */}}
 {{- define "armonik.ingress.identityHeaders" -}}
   {{- $headers := .identityHeaders | default dict -}}
   {{- $out := dict -}}
   {{- $seen := dict -}}
-  {{- range $key := list "commonName" "fingerprint" "impersonationUsername" "impersonationId" -}}
+  {{- range $key := list "certificate" "user" "groups" -}}
     {{- $name := index $headers $key | default "" | toString -}}
     {{- if not (regexMatch "^[A-Za-z0-9]+(-[A-Za-z0-9]+)*$" $name) -}}
       {{- printf "identityHeaders.%s must be a header name of letters, digits and dashes, got %q" $key $name | fail -}}
     {{- end -}}
-    {{- $var := $name | lower | replace "-" "_" -}}
-    {{- if hasKey $seen $var -}}
-      {{- printf "identityHeaders.%s repeats identityHeaders.%s (%q): header names are case-insensitive" $key (index $seen $var) $name | fail -}}
+    {{- $lower := lower $name -}}
+    {{- if eq $lower "authorization" -}}
+      {{- printf "identityHeaders.%s cannot be Authorization, which carries the tokens of ArmoniK Core's Token method" $key | fail -}}
     {{- end -}}
-    {{- $_ := set $seen $var $key -}}
-    {{- $_ := set $out $key (dict "name" $name "var" (printf "$http_%s" $var)) -}}
+    {{- if hasKey $seen $lower -}}
+      {{- printf "identityHeaders.%s repeats identityHeaders.%s (%q): header names are case-insensitive" $key (index $seen $lower) $name | fail -}}
+    {{- end -}}
+    {{- $_ := set $seen $lower $key -}}
+    {{- $_ := set $out $key (dict "name" $name) -}}
   {{- end -}}
   {{- $out | toYaml -}}
 {{- end -}}

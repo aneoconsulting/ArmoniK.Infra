@@ -1,0 +1,47 @@
+# Permission sets of the ArmoniK Core access model (.docs/content/1.concepts/3.authentication.md,
+# "Permission sets"). Core ships none: authorization.accessModelSets renders these, and
+# authorization.permissionSets adds to them or overrides one by name.
+session-view:
+  - session:read
+  - task:read
+  - data:read
+  - data:download
+  - event:watch
+session-create:
+  - session:create
+  - partition:read
+session-own:
+  - session:read
+  - task:read
+  - data:read
+  - data:download
+  - event:watch
+  - task:submit
+  - session:share
+  - session:delegate
+  - session:transfer
+  - session:pause
+  - session:resume
+  - session:stop-submission
+  - session:cancel
+  - session:close
+  - session:purge
+  - session:delete
+  - task:cancel
+  - data:declare
+  - data:provide
+  - data:delete
+session-supervise:
+  - session:read
+  - session:pause
+  - session:resume
+  - session:stop-submission
+  - session:cancel
+  - task:read
+  - task:cancel
+access-admin:
+  - grant:read
+  - grant:manage
+  - permission-set:manage
+cluster-admin:
+  - "*"

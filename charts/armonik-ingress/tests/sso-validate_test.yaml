@@ -12,9 +12,9 @@ tests:
     asserts:
       - notFailedTemplate: {}
 
-  - it: accepts the group-mode fixture
+  - it: accepts the ESO fixture
     values:
-      - ../ci/sso-group-values.yaml
+      - ../ci/sso-eso-values.yaml
     asserts:
       - notFailedTemplate: {}
 
@@ -133,13 +133,68 @@ tests:
       - failedTemplate:
           errorPattern: 'sso.oauth2Proxy.issuerUrl must be an http or https URL'
 
-  - it: refuses an unknown identity mode
+  - it: refuses a string bearerTokens.enabled
     set:
       sso:
-        identityMode: role
+        oauth2Proxy:
+          bearerTokens:
+            enabled: "true"
     asserts:
       - failedTemplate:
-          errorPattern: 'sso.identityMode must be user or group, got "role"'
+          errorPattern: 'sso.oauth2Proxy.bearerTokens.enabled must be true or false'
+
+  - it: refuses an extra audience that would split the issuer=audience value
+    set:
+      sso:
+        oauth2Proxy:
+          bearerTokens:
+            enabled: true
+            extraAudiences: ["a=b"]
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.oauth2Proxy.bearerTokens.extraAudiences\[0\] may only hold'
+
+  - it: refuses sso.identityMode of the removed CN identity
+    set:
+      sso:
+        identityMode: group
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.identityMode is removed'
+
+  - it: refuses sso.cnPrefix of the removed CN identity
+    set:
+      sso:
+        cnPrefix: "sso:"
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.cnPrefix is removed'
+
+  - it: refuses sso.fingerprint of the removed CN identity
+    set:
+      sso:
+        fingerprint: sso
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.fingerprint is removed'
+
+  - it: refuses sso.groupCnPrefix of the removed CN identity
+    set:
+      sso:
+        groupCnPrefix: "sso-group:"
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.groupCnPrefix is removed'
+
+  - it: refuses sso.groupMapping of the removed CN identity
+    set:
+      sso:
+        groupMapping:
+          - group: armonik-admins
+            cn: admins
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso.groupMapping is removed'
 
   - it: refuses an unknown identity claim
     set:
@@ -148,38 +203,6 @@ tests:
     asserts:
       - failedTemplate:
           errorPattern: 'sso.identityClaim must be email, preferred_username or user, got "sub"'
-
-  - it: refuses an empty fingerprint
-    set:
-      sso:
-        fingerprint: ""
-    asserts:
-      - failedTemplate:
-          errorPattern: 'sso.fingerprint must be non-empty'
-
-  # A certificate presenting that fingerprint would match the SSO entries.
-  - it: refuses a SHA-1 hex fingerprint
-    set:
-      sso:
-        fingerprint: 0123456789abcdef0123456789ABCDEF01234567
-    asserts:
-      - failedTemplate:
-          errorPattern: 'sso.fingerprint must not look like a certificate fingerprint \(32 or more hex digits, with or without colons\), got "0123456789abcdef0123456789ABCDEF01234567"'
-
-  - it: refuses a colon-separated hex fingerprint
-    set:
-      sso:
-        fingerprint: "01:23:45:67:89:ab:cd:ef:01:23:45:67:89:ab:cd:ef"
-    asserts:
-      - failedTemplate:
-          errorPattern: 'sso.fingerprint must not look like a certificate fingerprint'
-
-  - it: accepts a short hex fingerprint
-    set:
-      sso:
-        fingerprint: 0123456789abcdef0123456789abcde
-    asserts:
-      - notFailedTemplate: {}
 
   - it: checks no fingerprint with sso off
     set:
@@ -234,97 +257,6 @@ tests:
           errorPattern: 'is refused, the chart sets the metrics listener'
 
   # An empty prefix puts SSO identities in the certificate CN namespace.
-  - it: refuses an empty cnPrefix
-    set:
-      sso:
-        cnPrefix: ""
-    asserts:
-      - failedTemplate:
-          errorMessage: 'sso.cnPrefix must not be empty: SSO identities would share the certificate CN namespace'
-
-  - it: refuses an empty groupCnPrefix in group mode
-    values:
-      - ../ci/sso-group-values.yaml
-    set:
-      sso:
-        groupCnPrefix: ""
-    asserts:
-      - failedTemplate:
-          errorMessage: 'sso.groupCnPrefix must not be empty: SSO identities would share the certificate CN namespace'
-
-  - it: accepts an empty groupCnPrefix in user mode
-    set:
-      sso:
-        groupCnPrefix: ""
-    asserts:
-      - notFailedTemplate: {}
-
-  - it: refuses an unsafe fingerprint
-    set:
-      sso:
-        fingerprint: 'a"; add_header x y'
-    asserts:
-      - failedTemplate:
-          errorPattern: 'sso.fingerprint may only hold'
-
-  - it: refuses an unsafe CN prefix
-    set:
-      sso:
-        cnPrefix: "sso $"
-    asserts:
-      - failedTemplate:
-          errorPattern: 'sso.cnPrefix may only hold'
-
-  - it: refuses an unsafe group CN prefix
-    set:
-      sso:
-        groupCnPrefix: "g;"
-    asserts:
-      - failedTemplate:
-          errorPattern: 'sso.groupCnPrefix may only hold'
-
-  - it: requires a group mapping in group mode
-    set:
-      sso:
-        identityMode: group
-    asserts:
-      - failedTemplate:
-          errorPattern: 'sso.groupMapping must list at least one'
-
-  - it: requires a group and a cn on every mapping entry
-    set:
-      sso:
-        identityMode: group
-        groupMapping:
-          - group: admins
-            cn: admins
-          - group: users
-    asserts:
-      - failedTemplate:
-          errorPattern: 'sso.groupMapping\[1\] needs a non-empty group and cn'
-
-  - it: refuses a group name that would break the nginx map
-    set:
-      sso:
-        identityMode: group
-        groupMapping:
-          - group: 'a"b'
-            cn: x
-    asserts:
-      - failedTemplate:
-          errorPattern: 'sso.groupMapping\[0\].group may not contain'
-
-  - it: refuses an unsafe mapped cn
-    set:
-      sso:
-        identityMode: group
-        groupMapping:
-          - group: admins
-            cn: "a b"
-    asserts:
-      - failedTemplate:
-          errorPattern: 'sso.groupMapping\[0\].cn may only hold'
-
   - it: refuses a health path colliding with a served route
     set:
       sso:

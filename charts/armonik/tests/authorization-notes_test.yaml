@@ -1,0 +1,43 @@
+suite: authorization in the umbrella NOTES
+release:
+  name: t
+# sso needs Kubernetes 1.29 (native sidecar); helm-unittest defaults to 1.20.
+capabilities:
+  majorVersion: 1
+  minorVersion: 31
+templates:
+  - NOTES.txt
+values:
+  - ../ci/authz-values.yaml
+tests:
+  - it: names the methods and the revision to increase
+    asserts:
+      - matchRegexRaw:
+          pattern: 'Authorization in ArmoniK is enabled \(Xfcc,Proxy\), at configRevision 1\.'
+      - matchRegexRaw:
+          pattern: 'Increase control-plane\.authorization\.configRevision with every change'
+      - notMatchRegexRaw:
+          pattern: 'grants is empty'
+
+  - it: warns that every request is refused without grants
+    set:
+      control-plane:
+        authorization:
+          grants: null
+    asserts:
+      - matchRegexRaw:
+          pattern: 'WARNING: control-plane\.authorization\.grants is empty, so every request is refused'
+
+  - it: says nothing of authorization while it is off
+    set:
+      control-plane:
+        authorization:
+          authentication: None
+      ingress:
+        sso:
+          enabled: false
+    asserts:
+      - notMatchRegexRaw:
+          pattern: 'Authorization in ArmoniK'
+      - notMatchRegexRaw:
+          pattern: 'userCertificates|fingerprint'

@@ -1,0 +1,118 @@
+{{- $keycloak := include "armonik.keycloak" . | fromYaml }}
+{{- if $keycloak.enabled }}
+{{- $ops := include "armonik.operators" $ | fromYaml }}
+{{- $values := .Values.keycloak | default dict }}
+{{- if not .Subcharts.ingress }}
+  {{- fail "global.armonik.keycloak.enabled needs the ingress, which serves Keycloak under /auth: enable ingress" }}
+{{- end }}
+{{- $sso := include "armonik.ingress.sso" .Subcharts.ingress | fromYaml }}
+{{- if not $sso.enabled }}
+  {{- fail "global.armonik.keycloak.enabled needs ingress.sso.enabled: Keycloak is the identity provider of the ingress SSO, and its publicUrl is Keycloak's" }}
+{{- end }}
+{{- $name := include "armonik.keycloak.name" . }}
+{{- $realmFile := printf "%s-realm.json" $keycloak.realm }}
+{{- $ns := include "armonik.namespace" . }}
+{{- $clientSecret := dict "name" $sso.oauth2Proxy.existingSecret "key" "client-secret" }}
+{{- /* Named by the operator when bootstrapAdminSecret is empty */}}
+{{- $adminSecret := $values.bootstrapAdminSecret | default (printf "%s-initial-admin" $name) }}
+{{- $mounts := dict "realm" "/opt/keycloak/data/import" "data" "/opt/keycloak/data/h2" }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ printf "%s-realm" $name | quote }}
+  namespace: {{ $ns | quote }}
+  labels:
+    {{- include "armonik.labels" . | nindent 4 }}
+type: Opaque
+stringData:
+  {{ $realmFile }}: {{ include "armonik.keycloak.realm" . | quote }}
+---
+apiVersion: k8s.keycloak.org/v2beta1
+kind: Keycloak
+metadata:
+  name: {{ $name | quote }}
+  namespace: {{ $ns | quote }}
+  {{- if $ops.keycloakOperator.deploy }}
+  {{- /* Hooked only when this release installs the CRDs; otherwise a plain resource. */}}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "10"
+  {{- end }}
+  labels:
+    {{- include "armonik.labels" . | nindent 4 }}
+spec:
+  # Each pod holds its own database
+  instances: 1
+  image: {{ $values.image | quote }}
+  # With an image set, the operator would otherwise start it --optimized, which needs a built image
+  startOptimized: false
+  hostname:
+    # Public URL under the ingress, the issuer of its tokens; the pods of the cluster may reach the
+    # Service instead (backchannel)
+    hostname: {{ printf "%s%s" $sso.publicUrl $keycloak.path | quote }}
+    backchannelDynamic: true
+  http:
+    # TLS ends at the ingress
+    httpEnabled: true
+    serviceName: {{ $name | quote }}
+  proxy:
+    headers: xforwarded
+  ingress:
+    enabled: false
+  additionalOptions:
+    - name: http-relative-path
+      value: {{ $keycloak.path | quote }}
+    {{- with $values.additionalOptions }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with $values.bootstrapAdminSecret }}
+  bootstrapAdmin:
+    user:
+      secret: {{ . | quote }}
+  {{- end }}
+  {{- with $values.resources }}
+  resources:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  # The realm is imported into the pod's own dev-file database before the server starts, the
+  # placeholder of the client secret resolved from the environment of the import. --import-realm is
+  # a start argument the operator owns, hence the init container. The import creates the master
+  # realm, so the server finds it at start and skips its bootstrap admin: the import creates that
+  # admin instead, from the Secret the operator gives the server.
+  unsupported:
+    podTemplate:
+      spec:
+        initContainers:
+          - name: import-realm
+            image: {{ $values.image | quote }}
+            args: [import, --dir, {{ $mounts.realm | quote }}, --override, "false"]
+            env:
+              - name: {{ include "armonik.keycloak.clientSecretEnv" . }}
+                valueFrom:
+                  secretKeyRef:
+                    {{- toYaml $clientSecret | nindent 20 }}
+              {{- range $env, $key := dict "KC_BOOTSTRAP_ADMIN_USERNAME" "username" "KC_BOOTSTRAP_ADMIN_PASSWORD" "password" }}
+              - name: {{ $env }}
+                valueFrom:
+                  secretKeyRef:
+                    name: {{ $adminSecret | quote }}
+                    key: {{ $key }}
+              {{- end }}
+            volumeMounts:
+              - name: realm
+                mountPath: {{ $mounts.realm | quote }}
+                readOnly: true
+              - name: data
+                mountPath: {{ $mounts.data | quote }}
+        # The operator merges the first container into its own, whose name it owns
+        containers:
+          - volumeMounts:
+              - name: data
+                mountPath: {{ $mounts.data | quote }}
+        volumes:
+          - name: realm
+            secret:
+              secretName: {{ printf "%s-realm" $name | quote }}
+          - name: data
+            emptyDir: {}
+{{- end }}

@@ -1,5 +1,5 @@
 # TLS through cert-manager with the default local selfSigned Issuer, plus mTLS from an inline CA:
-# Issuer, Certificate, the mTLS CA Secret, and the nginx conf CN allow-list.
+# Issuer, Certificate, the mTLS CA Secret, and the client certificate forwarded in XFCC.
 urlsSecretName: example-urls
 tls:
   enabled: true
@@ -10,6 +10,3 @@ mtls:
       -----BEGIN CERTIFICATE-----
       MIIBszCCAVmgAwIBAgIUfake0000000000000000000000000000
       -----END CERTIFICATE-----
-  trustedCommonNames:
-    - client.armonik.local
-    - admin.armonik.local

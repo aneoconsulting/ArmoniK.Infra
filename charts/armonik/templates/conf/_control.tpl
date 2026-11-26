@@ -2,18 +2,28 @@
 {{- define "armonik.conf.controlHelper" -}}
 {{- end -}}
 {{/*
-Authenticator header names from ingress.identityHeaders, the single source nginx sends them from,
-so a renamed header reaches ArmoniK Core too. Rendered even at Core's defaults, which the umbrella
-does not duplicate. Nothing without the ingress subchart.
+ArmoniK Core identity header names (Identity__*) from ingress.identityHeaders, the single source
+nginx writes them from, so a renamed header reaches Core too. Only those of the methods
+control-plane.authorization.authentication selects: Core warns about the settings of the others.
+Shared by the control and init layers, the init validating the same configuration. Nothing without
+the ingress subchart or the control plane; a value in control-plane.authorization.identity wins,
+being the pod's own env.
 */}}
 {{- define "armonik.conf.identityHeaders" -}}
+  {{- $controlPlane := index .Subcharts "control-plane" -}}
   {{- with .Subcharts.ingress -}}
-    {{- $headers := include "armonik.ingress.identityHeaders" .Values | fromYaml -}}
+    {{- if $controlPlane -}}
+      {{- $headers := include "armonik.ingress.identityHeaders" .Values | fromYaml -}}
+      {{- $methods := include "armonik.control.authentication" $controlPlane.Values | splitList "," -}}
 env:
-  Authenticator__CNHeader: {{ $headers.commonName.name | quote }}
-  Authenticator__FingerprintHeader: {{ $headers.fingerprint.name | quote }}
-  Authenticator__ImpersonationUsernameHeader: {{ $headers.impersonationUsername.name | quote }}
-  Authenticator__ImpersonationIdHeader: {{ $headers.impersonationId.name | quote }}
+      {{- if has "Xfcc" $methods }}
+  Identity__CertificateHeader: {{ $headers.certificate.name | quote }}
+      {{- end }}
+      {{- if has "Proxy" $methods }}
+  Identity__UserHeader: {{ $headers.user.name | quote }}
+  Identity__RolesHeader: {{ $headers.groups.name | quote }}
+      {{- end }}
+    {{- end -}}
   {{- end -}}
 {{- end -}}
 {{- define "armonik.conf.control" -}}

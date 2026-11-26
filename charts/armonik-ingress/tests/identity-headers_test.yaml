@@ -1,30 +1,31 @@
 suite: identity headers on gRPC requests
 templates:
   - armonik-nginx-conf.yaml
+  - validate.yaml
 values:
   - ../ci/default-values.yaml
 tests:
   # A client without a certificate must not be able to assert an identity: an empty value makes
   # nginx drop the header instead of passing the client's own through.
-  - it: clears the four identity headers without mTLS
+  - it: clears the three identity headers without mTLS and passes tokens through
+    template: armonik-nginx-conf.yaml
     asserts:
       - matchRegex:
           path: spec.target.template.data["armonik.conf"]
-          pattern: 'grpc_set_header X-Certificate-Client-CN "";'
+          pattern: 'grpc_set_header X-Forwarded-Client-Cert "";'
       - matchRegex:
           path: spec.target.template.data["armonik.conf"]
-          pattern: 'grpc_set_header X-Certificate-Client-Fingerprint "";'
+          pattern: 'grpc_set_header X-Forwarded-User "";'
       - matchRegex:
           path: spec.target.template.data["armonik.conf"]
-          pattern: 'grpc_set_header X-Impersonate-Username "";'
-      - matchRegex:
-          path: spec.target.template.data["armonik.conf"]
-          pattern: 'grpc_set_header X-Impersonate-Id "";'
+          pattern: 'grpc_set_header X-Forwarded-Groups "";'
+      # Token method: nginx verified nothing, the control plane validates the token
       - notMatchRegex:
           path: spec.target.template.data["armonik.conf"]
-          pattern: '\$client_(cn|fingerprint)'
+          pattern: 'grpc_set_header Authorization'
 
   - it: clears the identity headers on the plain Secret path too
+    template: armonik-nginx-conf.yaml
     set:
       global:
         armonik:
@@ -39,104 +40,110 @@ tests:
           of: Secret
       - matchRegex:
           path: stringData["armonik.conf"]
-          pattern: 'grpc_set_header X-Impersonate-Id "";'
+          pattern: 'grpc_set_header X-Forwarded-Client-Cert "";'
 
-  - it: sets CN and fingerprint from the certificate with mTLS and leaves impersonation alone
+  - it: forwards the verified certificate in the XFCC format with mTLS, and clears the other credentials
+    template: armonik-nginx-conf.yaml
     values:
       - ../ci/tls-mtls-values.yaml
     asserts:
       - matchRegex:
           path: spec.target.template.data["armonik.conf"]
-          pattern: 'grpc_set_header X-Certificate-Client-CN \$client_cn;'
+          pattern: 'grpc_set_header X-Forwarded-Client-Cert "Cert=\\"\$ssl_client_escaped_cert\\"";'
       - matchRegex:
           path: spec.target.template.data["armonik.conf"]
-          pattern: 'grpc_set_header X-Certificate-Client-Fingerprint \$client_fingerprint;'
+          pattern: 'grpc_set_header X-Forwarded-User "";'
+      - matchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: 'grpc_set_header X-Forwarded-Groups "";'
+      # ArmoniK Core refuses a request presenting a certificate and a token
+      - matchRegex:
+          path: spec.target.template.data["armonik.conf"]
+          pattern: 'grpc_set_header Authorization "";'
       - notMatchRegex:
           path: spec.target.template.data["armonik.conf"]
-          pattern: 'X-Impersonate-'
-      - notMatchRegex:
-          path: spec.target.template.data["armonik.conf"]
-          pattern: 'grpc_set_header \S+ "";'
+          pattern: '\$client_(cn|fingerprint)|ssl_client_s_dn'
 
-  - it: keeps the trustedCommonNames maps as they were
-    values:
-      - ../ci/tls-mtls-values.yaml
-    asserts:
-      - matchRegex:
-          path: spec.target.template.data["armonik.conf"]
-          pattern: 'map "\$http_x_certificate_client_cn\|\$ssl_client_s_dn_cn" \$client_cn \{\n    default \$ssl_client_s_dn_cn;\n    ~\^\(\.\+\)\\\|\(client\\\.armonik\\\.local\|admin\\\.armonik\\\.local\)\$ \$http_x_certificate_client_cn;\n\}'
-      - matchRegex:
-          path: spec.target.template.data["armonik.conf"]
-          pattern: 'map "\$http_x_certificate_client_fingerprint\|\$ssl_client_s_dn_cn" \$client_fingerprint \{\n    default \$ssl_client_fingerprint;\n    ~\^\(\.\+\)\\\|\(client\\\.armonik\\\.local\|admin\\\.armonik\\\.local\)\$ \$http_x_certificate_client_fingerprint;\n\}'
-
-  - it: hides the configured headers from responses with TLS but no mTLS
-    set:
-      tls:
-        enabled: true
-      identityHeaders:
-        commonName: X-User-Cn
-    asserts:
-      - matchRegex:
-          path: spec.target.template.data["armonik.conf"]
-          pattern: 'proxy_hide_header X-User-Cn;'
-      - matchRegex:
-          path: spec.target.template.data["armonik.conf"]
-          pattern: 'proxy_hide_header X-Certificate-Client-Fingerprint;'
-
-  - it: derives the map variables from renamed headers
+  - it: writes renamed headers
+    template: armonik-nginx-conf.yaml
     values:
       - ../ci/tls-mtls-values.yaml
     set:
       identityHeaders:
-        commonName: X-User-Cn
-        fingerprint: X-User-Print
+        certificate: X-Client-Cert
+        user: X-User
+        groups: X-Roles
     asserts:
       - matchRegex:
           path: spec.target.template.data["armonik.conf"]
-          pattern: 'map "\$http_x_user_cn\|\$ssl_client_s_dn_cn" \$client_cn'
+          pattern: 'grpc_set_header X-Client-Cert "Cert='
       - matchRegex:
           path: spec.target.template.data["armonik.conf"]
-          pattern: '\$ \$http_x_user_print;'
+          pattern: 'grpc_set_header X-User "";'
       - matchRegex:
           path: spec.target.template.data["armonik.conf"]
-          pattern: 'grpc_set_header X-User-Cn \$client_cn;'
+          pattern: 'grpc_set_header X-Roles "";'
       - notMatchRegex:
           path: spec.target.template.data["armonik.conf"]
-          pattern: 'x_certificate_client'
+          pattern: 'X-Forwarded-'
 
-  - it: clears renamed impersonation headers without mTLS
+  - it: rejects a header name nginx cannot write
+    # raised first by validate.yaml, which resolves the headers too
+    template: validate.yaml
     set:
       identityHeaders:
-        impersonationUsername: X-As-User
-        impersonationId: X-As-Id
-    asserts:
-      - matchRegex:
-          path: spec.target.template.data["armonik.conf"]
-          pattern: 'grpc_set_header X-As-User "";'
-      - matchRegex:
-          path: spec.target.template.data["armonik.conf"]
-          pattern: 'grpc_set_header X-As-Id "";'
-
-  - it: rejects a header name nginx cannot map to a variable
-    set:
-      identityHeaders:
-        commonName: X_Certificate CN
+        certificate: X_Client Cert
     asserts:
       - failedTemplate:
-          errorPattern: 'identityHeaders.commonName must be a header name of letters, digits and dashes'
+          errorPattern: 'identityHeaders.certificate must be a header name of letters, digits and dashes'
 
   - it: rejects an empty header name
+    # raised first by validate.yaml, which resolves the headers too
+    template: validate.yaml
     set:
       identityHeaders:
-        impersonationId: ""
+        groups: ""
     asserts:
       - failedTemplate:
-          errorPattern: 'identityHeaders.impersonationId must be a header name'
+          errorPattern: 'identityHeaders.groups must be a header name'
 
   - it: rejects two keys naming the same header, case aside
+    # raised first by validate.yaml, which resolves the headers too
+    template: validate.yaml
     set:
       identityHeaders:
-        impersonationId: x-impersonate-username
+        groups: x-forwarded-user
     asserts:
       - failedTemplate:
-          errorPattern: 'identityHeaders.impersonationId repeats identityHeaders.impersonationUsername'
+          errorPattern: 'identityHeaders.groups repeats identityHeaders.user'
+
+  - it: rejects the Authorization header, which carries tokens
+    # raised first by validate.yaml, which resolves the headers too
+    template: validate.yaml
+    set:
+      identityHeaders:
+        user: authorization
+    asserts:
+      - failedTemplate:
+          errorPattern: 'identityHeaders.user cannot be Authorization'
+
+  - it: rejects a header key of the removed CN and fingerprint identity
+    template: validate.yaml
+    set:
+      identityHeaders:
+        commonName: X-Certificate-Client-CN
+    asserts:
+      - failedTemplate:
+          errorPattern: 'identityHeaders.commonName is removed'
+
+  - it: rejects mtls.trustedCommonNames, which ArmoniK Core cannot honor
+    template: validate.yaml
+    values:
+      - ../ci/tls-mtls-values.yaml
+    set:
+      mtls:
+        trustedCommonNames:
+          - proxy.armonik.local
+    asserts:
+      - failedTemplate:
+          errorPattern: 'mtls.trustedCommonNames is removed'

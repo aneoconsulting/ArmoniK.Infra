@@ -6,6 +6,8 @@ release:
 tests:
   - it: falls back to the chart AppVersion for an ArmoniK image
     set:
+      # The fallback, whatever version the defaults pin
+      global.armonik.versions.core: ""
       image:
         path: image
         confs:
@@ -35,6 +37,8 @@ tests:
 
   - it: includes the registry when one is set
     set:
+      # The fallback, whatever version the defaults pin
+      global.armonik.versions.core: ""
       image:
         path: image
         confs:
@@ -108,6 +112,8 @@ tests:
 
   - it: gives a tagless ArmoniK reference string the chart AppVersion
     set:
+      # The fallback, whatever version the defaults pin
+      global.armonik.versions.core: ""
       image:
         path: image
         confs: ["dockerhubaneo/armonik_control"]

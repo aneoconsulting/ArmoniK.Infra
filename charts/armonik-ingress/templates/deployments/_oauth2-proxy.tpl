@@ -56,10 +56,40 @@ args:
   - "--ready-path=/oauth2/ready"
   - "--silence-ping-logging=true"
   - {{ printf "--metrics-address=:%d" $metricsPort | quote }}
+  {{- with $sso.keycloakRealmPath }}
+  {{- /* The issuer is served by this same nginx, which starts after oauth2-proxy: discovery would
+         fail at the first start. The browser goes to the public login URL, oauth2-proxy itself to
+         the Keycloak Service, whose tokens still carry the public issuer (backchannelDynamic). */}}
+  {{- $backchannel := printf "$(ARMONIK_KEYCLOAK_URL)%s/protocol/openid-connect" . }}
+  - "--skip-oidc-discovery=true"
+  - {{ printf "--login-url=%s%s/protocol/openid-connect/auth" $sso.publicUrl . | quote }}
+  - {{ printf "--redeem-url=%s/token" $backchannel | quote }}
+  - {{ printf "--oidc-jwks-url=%s/certs" $backchannel | quote }}
+  - {{ printf "--profile-url=%s/userinfo" $backchannel | quote }}
+  {{- end }}
+  {{- if list $proxy "bearerTokens" "enabled" | include "armonik.utils.index" }}
+  - "--skip-jwt-bearer-tokens=true"
+  {{- range list $proxy "bearerTokens" "extraAudiences" | include "armonik.utils.index" | fromYamlArray }}
+  {{- if $sso.keycloakRealmPath }}
+  {{- /* An extra issuer runs its own discovery, which cannot reach the issuer either; the
+         provider's own verifier checks bearer tokens too */}}
+  - {{ printf "--oidc-extra-audience=%s" (toString .) | quote }}
+  {{- else }}
+  - {{ printf "--extra-jwt-issuers=%s=%s" $proxy.issuerUrl (toString .) | quote }}
+  {{- end }}
+  {{- end }}
+  {{- end }}
   {{- range $proxy.extraArgs }}
   - {{ . | toString | quote }}
   {{- end }}
 env:
+  {{- if $sso.keycloakRealmPath }}
+  - name: ARMONIK_KEYCLOAK_URL
+    valueFrom:
+      secretKeyRef:
+        name: {{ include "armonik.ingress.confName" $root | quote }}
+        key: keycloak-url
+  {{- end }}
   - name: OAUTH2_PROXY_CLIENT_SECRET
     valueFrom:
       secretKeyRef:

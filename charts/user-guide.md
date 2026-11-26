@@ -422,7 +422,8 @@ ingress:
 ### Example 2 — Add mTLS
 
 ```yaml
-# Clients must present a cert signed by this CA with an allowed CN
+# Clients must present a cert signed by this CA; nginx forwards it to the control plane, which
+# names the caller cn:<common name> with a role:<unit> per organizational unit (method Xfcc)
 ingress:
   tls:
     enabled: true
@@ -430,9 +431,19 @@ ingress:
     enabled: true
     certificationAuthority:
       existingSecret: client-ca   # or pem: | ... ; empty = issued by cert-manager
-    trustedCommonNames:
-      - client.armonik.local
+control-plane:
+  authorization:
+    authentication: Xfcc
+    configRevision: 1             # increase it with every change of the grants
+    grants:
+      platform:
+        principal: role:platform-team   # certificates issued with OU=platform-team
+        permissionSet: cluster-admin
 ```
+
+Without `control-plane.authorization.authentication`, the control plane allows every request: the
+certificate only gates the connection. Browsers can authenticate on the web port with SSO instead
+(method `Proxy`), see [sso.md](sso.md).
 
 ### Example 3 — Disable TLS
 

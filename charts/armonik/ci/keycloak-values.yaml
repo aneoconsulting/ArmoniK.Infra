@@ -1,0 +1,36 @@
+# Turnkey Keycloak: the operator installed by this release, a Keycloak CR served by the ingress under
+# /auth with its default realm, and the ingress SSO using it without issuerUrl nor clientId (derived
+# from the realm). SDK clients present its tokens (bearerTokens), read with the Proxy method.
+global:
+  armonik:
+    keycloak:
+      enabled: true
+    operators:
+      keycloakOperator:
+        deploy: true
+control-plane:
+  authorization:
+    authentication: Proxy
+    configRevision: 1
+    grants:
+      admins:
+        principal: role:armonik-admins
+        permissionSet: cluster-admin
+      users-create:
+        principal: role:armonik-users
+        permissionSet: session-create
+      users-own:
+        principal: role:armonik-users
+        permissionSet: session-own
+        condition: session.owner == request.caller && grant.principal in session.createdUnder
+ingress:
+  tls:
+    enabled: true
+  sso:
+    enabled: true
+    publicUrl: https://armonik.example.com
+    identityClaim: user
+    oauth2Proxy:
+      existingSecret: armonik-oauth2-proxy
+      bearerTokens:
+        enabled: true

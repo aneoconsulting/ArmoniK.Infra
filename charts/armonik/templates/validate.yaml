@@ -35,24 +35,44 @@
   {{- end -}}
 {{- end -}}
 
-{{- /* ArmoniK Core matches an entry without a fingerprint to any fingerprint, so an SSO CN entry
-       without sso.fingerprint would also admit a client certificate signed with that CN. */ -}}
+{{- /* The methods the control plane selects must match what this ingress writes: a method whose
+       header the ingress never writes deploys cleanly and refuses every caller. Only checked with
+       the ingress subchart; another proxy in front of the control plane is the operator's own. */ -}}
 {{- with .Subcharts.ingress -}}
-  {{- $sso := include "armonik.ingress.sso" . | fromYaml -}}
-  {{- if $sso.enabled -}}
-    {{- with index $.Subcharts "control-plane" -}}
-      {{- $certs := list .Values "rbac" "userCertificates" | include "armonik.utils.index" | fromYaml | default dict -}}
-      {{- range $user := keys $certs | sortAlpha -}}
-        {{- $cert := index $certs $user | default dict -}}
-        {{- $cn := $cert.commonName | default "" | toString -}}
-        {{- $fingerprint := $cert.fingerprint | default "" | toString -}}
-        {{- range $key := list "cnPrefix" "groupCnPrefix" -}}
-          {{- $prefix := index $sso $key | default "" | toString -}}
-          {{- /* Empty only for groupCnPrefix in user mode, where no SSO identity carries it. */ -}}
-          {{- if and $prefix (hasPrefix (lower $prefix) (lower $cn)) (ne $fingerprint (toString $sso.fingerprint)) -}}
-            {{- printf "control-plane.rbac.userCertificates.%s.fingerprint must be %q (ingress.sso.fingerprint), got %q: its commonName %q starts with ingress.sso.%s %q, and without it a client certificate with that CN would match this entry" $user (toString $sso.fingerprint) $fingerprint $cn $key $prefix | fail -}}
-          {{- end -}}
-        {{- end -}}
+  {{- $ingress := . -}}
+  {{- with index $.Subcharts "control-plane" -}}
+    {{- $methods := include "armonik.control.authentication" .Values | splitList "," -}}
+    {{- $sso := include "armonik.ingress.sso" $ingress | fromYaml -}}
+    {{- if and (has "Xfcc" $methods) (not $ingress.Values.mtls.enabled) -}}
+      {{- fail "control-plane.authorization.authentication selects Xfcc, but ingress.mtls.enabled is false: the ingress verifies no client certificate, so it forwards none. Enable ingress.tls and ingress.mtls, or remove Xfcc" -}}
+    {{- end -}}
+    {{- if and (has "Proxy" $methods) (not $sso.enabled) -}}
+      {{- fail "control-plane.authorization.authentication selects Proxy, but ingress.sso.enabled is false: the ingress writes no SSO user. Enable ingress.sso, or remove Proxy" -}}
+    {{- end -}}
+    {{- if and $sso.enabled (not (has "None" $methods)) (not (has "Proxy" $methods)) -}}
+      {{- fail "ingress.sso.enabled writes the SSO user and groups, but control-plane.authorization.authentication does not select Proxy: every gRPC-web call of the admin GUI would be refused. Add Proxy" -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+
+{{- /* Keycloak is served by the ingress, under the publicUrl of its SSO, through the operator. */ -}}
+{{- if (include "armonik.keycloak" . | fromYaml).enabled -}}
+  {{- if not $.Subcharts.ingress -}}
+    {{- fail "global.armonik.keycloak.enabled needs the ingress, which serves Keycloak under /auth: enable ingress" -}}
+  {{- end -}}
+  {{- if not (include "armonik.ingress.sso" .Subcharts.ingress | fromYaml).enabled -}}
+    {{- fail "global.armonik.keycloak.enabled needs ingress.sso.enabled: Keycloak is the identity provider of the ingress SSO, and its publicUrl is Keycloak's" -}}
+  {{- end -}}
+  {{- if not (include "armonik.operators" $ | fromYaml).keycloakOperator.available -}}
+    {{- fail "global.armonik.keycloak.enabled needs global.armonik.operators.keycloakOperator.available: the Keycloak CR needs the Keycloak operator CRDs" -}}
+  {{- end -}}
+  {{- if list .Values "networkPolicy" "enabled" | include "armonik.utils.index" -}}
+    {{- fail "global.armonik.keycloak.enabled is not supported with networkPolicy.enabled yet: no rule lets nginx reach Keycloak" -}}
+  {{- end -}}
+  {{- if gt (len (list .Values "keycloak" "groups" | include "armonik.utils.index" | fromYamlArray)) 0 -}}
+    {{- range list .Values "keycloak" "groups" | include "armonik.utils.index" | fromYamlArray -}}
+      {{- if not (regexMatch "^[^,]+$" (toString .)) -}}
+        {{- printf "keycloak.groups: %q holds a comma, which ArmoniK Core would read as several roles" (toString .) | fail -}}
       {{- end -}}
     {{- end -}}
   {{- end -}}

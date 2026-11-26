@@ -60,41 +60,33 @@ does NOT prove a worker exists.
 {{- end }}
 **********************************************************
 
-{{- $cp := index .Values "control-plane" | default dict }}
-{{- $cpRbac := $cp.rbac | default dict }}
-{{- $cpAuth := $cpRbac.authentication | default dict }}
-{{- if and (not $cpRbac.userCertificates) $cpAuth.required }}
-Authentication in ArmoniK is enabled{{ if $cpRbac.createBuiltInRoles }}, default roles "Submitter" and "Monitoring" were created{{ end }}.
-To query the cluster:
-
-  1. Give each user an x509 certificate.
-  2. Note each certificate's common name and fingerprint.
-  3. Write a values file of this shape (replace the <...> placeholders):
+{{- $authentication := "None" }}
+{{- $authorization := dict }}
+{{- with index .Subcharts "control-plane" }}
+{{- $authentication = include "armonik.control.authentication" .Values }}
+{{- $authorization = .Values.authorization | default dict }}
+{{- end }}
+{{- if ne $authentication "None" }}
+Authorization in ArmoniK is enabled ({{ $authentication }}), at configRevision {{ $authorization.configRevision | default 0 }}.
+  Increase control-plane.authorization.configRevision with every change of the grants or permission
+  sets: the init Job reconciles them with the database, and keeps a stored revision as it is when the
+  configured one is not higher.
+{{- if not $authorization.grants }}
+  WARNING: control-plane.authorization.grants is empty, so every request is refused. For instance:
 
 ### YAML start ###
-init:
-  enabled: true
-rbac:
-  authentication:
-    required: true
-{{- if not $cpRbac.createBuiltInRoles }}
-  roles:
-    <Role1>: [<Permission1>, <PermissionN>]
-    <Role2>: [<Permission1>, <PermissionN>]
-{{- end }}
-  users:
-    <username1>: [<RoleName1>, <RoleNameN>]
-    <usernameN>: [<RoleName1>, <RoleNameN>]
-  userCertificates:
-    <username1>:
-      commonName: <user1commonName>
-      fingerprint: <user1fingerprint>
-    <usernameN>:
-      commonName: <userNcommonName>
-      fingerprint: <userNfingerprint>
+control-plane:
+  authorization:
+    grants:
+      team-create:
+        principal: role:<group or certificate OU>
+        permissionSet: session-create
+      team-own:
+        principal: role:<group or certificate OU>
+        permissionSet: session-own
+        condition: session.owner == request.caller && grant.principal in session.createdUnder
 ### YAML end ###
-  4. Use the same keys in users and userCertificates.
-  5. Pass it as a values file to a standalone control-plane (recipe below).
+{{- end }}
 {{- end }}
 
 {{- $mountPath := include "armonik.conf.mountPath" $ }}
@@ -150,8 +142,8 @@ To add a standalone control-plane (with optional external partitions):
       {{- if ne $mountPath "/mounts" }}
        --set conf.mountPath={{ $mountPath }} \
       {{- end }}
-      {{- if $cpAuth.required }}
-       -f <your-authentication-data>.yaml \
+      {{- if ne $authentication "None" }}
+       -f <your-authorization>.yaml \
       {{- end }}
        [-f <your-control-plane>.yaml]
 **********************************************************
@@ -211,3 +203,10 @@ A reinstall reuses the old MongoDB volume, so partitions of a previous release s
 database.
 
 {{- with .Subcharts.ingress }}{{ include "armonik.ingress.sso.notes" . }}{{ end }}
+{{- if (include "armonik.keycloak" . | fromYaml).enabled }}
+
+WARNING: the Keycloak of global.armonik.keycloak.enabled is for development only. It has no
+  database: users and changes made in Keycloak are lost when its pod is replaced, and reimported
+  users get new ids, so they may lose their sessions. In production, set
+  ingress.sso.oauth2Proxy.issuerUrl to an identity provider of your own.
+{{- end }}

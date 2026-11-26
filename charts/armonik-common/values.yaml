@@ -50,6 +50,18 @@ global:
         deploy: false
         available: true
         namespace: '{{ .Values.global.armonik.operators.googleCasIssuer.deploy | empty | ternary "" .Release.Namespace }}'
+      keycloakOperator:
+        deploy: false
+        available: true
+        namespace: '{{ .Values.global.armonik.operators.keycloakOperator.deploy | empty | ternary "" .Release.Namespace }}'
+    # -- Keycloak identity provider deployed by the umbrella (keycloak.*) and served by the ArmoniK
+    # ingress under /auth, for development only (see keycloak in the umbrella values): its realm and
+    # the client of the ingress SSO. Global because the umbrella
+    # (Keycloak CR, realm) and the ingress (oauth2-proxy issuer and client, /auth route) both read it.
+    keycloak:
+      enabled: false
+      realm: armonik
+      clientId: armonik
     # Shared cert-manager issuer that Certificates reference unless a component sets its own
     # (resolved by armonik.certManager.issuer / getIssuer, _certmanager.tpl).
     certManager:
@@ -77,7 +89,9 @@ global:
     # which keeps core and gui in lockstep with the charts. The others release separately: review them
     # on each ArmoniK release.
     versions:
-      core: ""
+      # ArmoniK Core prerelease carrying the grants authorization (aneoconsulting/ArmoniK.Core#1323),
+      # which the authorization values need. Back to "" once it is released.
+      core: "0.41.6-featauthz.147.sha.50e29181"
       gui: ""
       # renovate: datasource=github-releases depName=aneoconsulting/ArmoniK.Infra.Plugins
       infraPlugins: "0.3.4"

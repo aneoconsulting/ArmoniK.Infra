@@ -1,0 +1,35 @@
+# Authorization with both identities the ingress writes: client certificates on the grpc port
+# (Xfcc, mTLS) and the SSO user and groups on the web port (Proxy), with the access model sets and a
+# grant per kind of principal. The header names reach the control and init conf layers.
+control-plane:
+  authorization:
+    authentication: Xfcc,Proxy
+    configRevision: 1
+    grants:
+      team-create:
+        principal: role:modelling-team
+        permissionSet: session-create
+      team-own:
+        principal: role:modelling-team
+        permissionSet: session-own
+        condition: session.owner == request.caller && grant.principal in session.createdUnder
+      platform:
+        principal: role:platform-team
+        permissionSet: cluster-admin
+ingress:
+  tls:
+    enabled: true
+  mtls:
+    enabled: true
+    certificationAuthority:
+      pem: |
+        -----BEGIN CERTIFICATE-----
+        MIIBszCCAVmgAwIBAgIUfake0000000000000000000000000000
+        -----END CERTIFICATE-----
+  sso:
+    enabled: true
+    publicUrl: https://armonik.example.com
+    oauth2Proxy:
+      issuerUrl: https://idp.example.com/realms/armonik
+      clientId: armonik
+      existingSecret: armonik-oauth2-proxy

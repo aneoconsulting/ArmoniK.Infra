@@ -1,17 +1,14 @@
 {{/*
-Control-plane conf: auth flags, and Submitter__DefaultPartition set to defaultPartition when it is
-one of extraPartitions, else to an arbitrary one of them (keys is unordered), else empty.
-Authorization without authentication fails.
+Control-plane conf: authorization (armonik.control.authorizationEnv), and Submitter__DefaultPartition
+set to defaultPartition when it is one of extraPartitions, else to an arbitrary one of them (keys is
+unordered), else empty.
 */}}
 {{- define "armonik.control.confHelper" }}
 {{- $defaultPartition := .Values.defaultPartition }}
 {{- $partitionNames := .Values.extraPartitions | default dict | keys | default list }}
+{{- include "armonik.control.legacyRbacGuard" .Values }}
 env:
-  {{- if and (not .Values.rbac.authentication.required) .Values.rbac.authorization.required  -}}
-    {{- fail "Authorization requires authentication to be enabled" }}
-  {{- end }}
-  Authenticator__RequireAuthentication: {{ .Values.rbac.authentication.required }}
-  Authenticator__RequireAuthorization: {{ .Values.rbac.authorization.required }}
+  {{- include "armonik.control.authorizationEnv" . | nindent 2 }}
   {{- if and $defaultPartition (has $defaultPartition $partitionNames) }}
   Submitter__DefaultPartition: {{ $defaultPartition }}
   {{- else if gt (len $partitionNames) 0 }}
@@ -23,12 +20,14 @@ env:
 {{- end }}
 
 {{/*
-Init conf: one-shot database, object storage and queue setup, then one indexed InitServices entry
-per partition of extraPartitions, role, user and user certificate. With createBuiltInRoles, the
-built-in roles join rbac.roles, which wins on a name collision.
+Init conf: one-shot database, object storage and queue setup, one indexed InitServices entry per
+partition of extraPartitions, and the authorization the init reconciles with the database (the same
+as the control plane's, which validates it at startup).
 */}}
 {{- define "armonik.control.init.confHelper" }}
+{{- include "armonik.control.legacyRbacGuard" .Values }}
 env:
+  {{- include "armonik.control.authorizationEnv" . | nindent 2 }}
   Submitter__DefaultPartition: ""
   InitServices__InitDatabase: "true"
   InitServices__InitObjectStorage: "true"
@@ -37,27 +36,6 @@ env:
   {{- $i := 0 }}
   {{- range $name, $config := .Values.extraPartitions }}
   InitServices__Partitioning__Partitions__{{ $i }}: {{ dict "ParentPartitionIds" ($config.parentPartitionIds | default list) "PartitionId" $name "PodConfiguration" nil "PodMax" ($config.podMax | default 100) "PodReserved" ($config.podReserved | default 50) "PreemptionPercentage" ($config.preemptionPercentage | default 20) "Priority" ($config.priority | default 1) | toJson | quote }}
-    {{- $i = add $i 1 }}
-  {{- end }}
-  {{- $roles := .Values.rbac.roles | default dict }}
-  {{- if .Values.rbac.createBuiltInRoles }}
-    {{- $_ := include "armonik.control.rbac.builtInRoles" . | fromYaml | merge $roles -}}
-  {{- end }}
-  {{- $i := 0 }}
-  {{- range $role, $permissions := $roles }}
-  InitServices__Authentication__Roles__{{ $i }}: {{ include "armonik.control.rbac.role.format" (list $role $permissions) | quote }}
-    {{- $i = add $i 1 }}
-  {{- end }}
-  {{- $i = 0 }} {{/* Each list is indexed from 0. */}}
-  {{- range $user, $roles := .Values.rbac.users }}
-  InitServices__Authentication__Users__{{ $i }}: {{ include "armonik.control.rbac.user.format" (list $user $roles) | quote }}
-      {{- $i = add $i 1 }}
-    {{- end }}
-  {{- $i = 0 }} {{/* Each list is indexed from 0. */}}
-  {{- range $user, $certData := .Values.rbac.userCertificates }}
-    {{- $commonName := $certData.commonName }}
-    {{- $fingerprint := $certData.fingerprint }}
-  InitServices__Authentication__UserCertificates__{{ $i }}: {{ include "armonik.control.rbac.userCertificate.format" (list $user $commonName $fingerprint) | quote }}
     {{- $i = add $i 1 }}
   {{- end }}
 {{- end }}

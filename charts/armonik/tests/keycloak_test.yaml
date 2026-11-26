@@ -140,6 +140,23 @@ tests:
           content:
             name: data
             emptyDir: {}
+      # The import creates the master realm, and with it the bootstrap admin the server then skips
+      - contains:
+          path: spec.unsupported.podTemplate.spec.initContainers[0].env
+          content:
+            name: KC_BOOTSTRAP_ADMIN_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: t-keycloak-initial-admin
+                key: username
+      - contains:
+          path: spec.unsupported.podTemplate.spec.initContainers[0].env
+          content:
+            name: KC_BOOTSTRAP_ADMIN_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: t-keycloak-initial-admin
+                key: password
 
   # This release installs the operator: the CR waits for its CRD
   - it: is a hook when this release installs the operator
@@ -179,6 +196,14 @@ tests:
       - equal:
           path: spec.bootstrapAdmin.user.secret
           value: kc-admin
+      - contains:
+          path: spec.unsupported.podTemplate.spec.initContainers[0].env
+          content:
+            name: KC_BOOTSTRAP_ADMIN_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: kc-admin
+                key: password
       - equal:
           path: spec.resources.limits.memory
           value: 2Gi

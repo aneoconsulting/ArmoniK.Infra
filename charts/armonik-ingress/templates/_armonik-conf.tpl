@@ -45,8 +45,8 @@ location ^~ {{ $path }}/ {
     proxy_set_header Host $http_host;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     proxy_set_header X-Forwarded-Proto $real_scheme;
-    proxy_set_header X-Forwarded-Host $host;
-    proxy_set_header X-Forwarded-Port $server_port;
+    # The host and port the client used: $server_port is nginx's own, behind the Service
+    proxy_set_header X-Forwarded-Host $http_host;
     # Keycloak's cookies and redirects exceed the 4 KB default
     proxy_buffer_size 64k;
     proxy_buffers 8 64k;

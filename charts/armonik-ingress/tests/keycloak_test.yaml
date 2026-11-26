@@ -40,6 +40,16 @@ tests:
           path: stringData["armonik.conf"]
           pattern: 'auth_request'
 
+  # Keycloak builds its redirects from them: nginx's own port is not the one the client reached
+  - it: forwards the host and port the client used
+    asserts:
+      - matchRegex:
+          path: stringData["armonik.conf"]
+          pattern: 'location \^~ /auth/ \{(\n    [^\n]*)*\n    proxy_set_header X-Forwarded-Host \$http_host;'
+      - notMatchRegex:
+          path: stringData["armonik.conf"]
+          pattern: 'X-Forwarded-Port'
+
   - it: serves it on the web port alone outside of the SSO, which it hosts the login of
     values:
       - ../ci/sso-values.yaml

@@ -13,6 +13,8 @@
 {{- $realmFile := printf "%s-realm.json" $keycloak.realm }}
 {{- $ns := include "armonik.namespace" . }}
 {{- $clientSecret := dict "name" $sso.oauth2Proxy.existingSecret "key" "client-secret" }}
+{{- /* Named by the operator when bootstrapAdminSecret is empty */}}
+{{- $adminSecret := $values.bootstrapAdminSecret | default (printf "%s-initial-admin" $name) }}
 {{- $mounts := dict "realm" "/opt/keycloak/data/import" "data" "/opt/keycloak/data/h2" }}
 apiVersion: v1
 kind: Secret
@@ -74,7 +76,9 @@ spec:
   {{- end }}
   # The realm is imported into the pod's own dev-file database before the server starts, the
   # placeholder of the client secret resolved from the environment of the import. --import-realm is
-  # a start argument the operator owns, hence the init container.
+  # a start argument the operator owns, hence the init container. The import creates the master
+  # realm, so the server finds it at start and skips its bootstrap admin: the import creates that
+  # admin instead, from the Secret the operator gives the server.
   unsupported:
     podTemplate:
       spec:
@@ -87,6 +91,13 @@ spec:
                 valueFrom:
                   secretKeyRef:
                     {{- toYaml $clientSecret | nindent 20 }}
+              {{- range $env, $key := dict "KC_BOOTSTRAP_ADMIN_USERNAME" "username" "KC_BOOTSTRAP_ADMIN_PASSWORD" "password" }}
+              - name: {{ $env }}
+                valueFrom:
+                  secretKeyRef:
+                    name: {{ $adminSecret | quote }}
+                    key: {{ $key }}
+              {{- end }}
             volumeMounts:
               - name: realm
                 mountPath: {{ $mounts.realm | quote }}
